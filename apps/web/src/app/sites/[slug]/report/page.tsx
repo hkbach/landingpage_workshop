@@ -15,7 +15,7 @@ export default async function ReportPage({ params }: PageProps<"/sites/[slug]/re
     <SiteIntlProvider locale={shop.defaultLocale}>
       <SiteFrame theme={theme} locale={shop.defaultLocale}>
         <main className="mx-auto w-full max-w-xl px-4 py-10">
-          <ReportForm homeHref={base || "/"} />
+          <ReportForm slug={shop.slug} homeHref={base || "/"} />
         </main>
       </SiteFrame>
     </SiteIntlProvider>

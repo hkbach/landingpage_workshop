@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { Clock, ExternalLink, Mail, MapPin, MessageCircle, Phone, Play } from "lucide-react";
 import { isYoutubeId, MAX_SECTION_VIDEOS, youtubeEmbedUrl, youtubeThumbnailUrl } from "@workshop/shared";
@@ -9,6 +9,7 @@ import type { ContactProps, FaqProps, FooterProps, LocationProps, TestimonialsPr
 import {
   arr, box, card, Heading, Img, linkClass, localizer, primaryButton, Section, Socials, str, type RenderProps,
 } from "./renderer-kit";
+import { useReportActions } from "./report-context";
 import { safeMaps, telHref, whatsappHref } from "./safe-url";
 
 // Section renderers (part 2): testimonials, faq, location, contact, video, footer.
@@ -272,6 +273,27 @@ export function VideoSection({ section, props, ctx, variant }: RenderProps<Video
   );
 }
 
+/**
+ * "Report this site": opens the report popup where one exists (public site, builder preview). A modified click
+ * (new tab, new window) and the case without JavaScript still go to the stand-alone report page.
+ */
+function ReportLink({ href, className, children }: { href: string; className?: string; children: ReactNode }) {
+  const { open } = useReportActions();
+  return (
+    <a
+      href={href} className={className}
+      {...(open ? { "aria-haspopup": "dialog" as const } : {})}
+      onClick={open ? (e) => {
+        if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        e.preventDefault();
+        open();
+      } : undefined}
+    >
+      {children}
+    </a>
+  );
+}
+
 export function FooterSection({ section, props, ctx, variant }: RenderProps<FooterProps>) {
   const L = localizer(ctx);
   const t = useTranslations("site");
@@ -286,7 +308,7 @@ export function FooterSection({ section, props, ctx, variant }: RenderProps<Foot
         <p className="whitespace-pre-line text-sm">{L(props.text) || `© ${ctx.shop.name}`}</p>
         <Socials items={props.socials} className={cn("text-sm", centered && "justify-center")} linkClassName={footerLink} />
         <nav aria-label={t("footer.legal")} className={cn("flex flex-wrap gap-x-4 gap-y-2 text-sm", centered && "justify-center")}>
-          <a href={ctx.reportHref} className={footerLink}>{t("footer.report")}</a>
+          <ReportLink href={ctx.reportHref} className={footerLink}>{t("footer.report")}</ReportLink>
           <a href={ctx.privacyHref} className={footerLink}>{t("footer.privacy")}</a>
         </nav>
       </div>

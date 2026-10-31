@@ -2,6 +2,7 @@
 
 import type { Locale } from "@workshop/shared";
 import { BookingProvider } from "@/components/booking/BookingProvider";
+import { ReportProvider } from "./ReportProvider";
 import type { BookingShop } from "@/components/booking/BookingModal";
 import { PageRenderer } from "@/components/sections/PageRenderer";
 import type { RenderContext } from "@/components/sections/context";
@@ -13,7 +14,9 @@ export function SiteBody({ content, theme, ctx, shop, workshops, sessions, local
 }) {
   return (
     <BookingProvider shop={shop} workshops={workshops} sessions={sessions} theme={theme} locale={locale} basePath={basePath}>
-      <PageRenderer content={content} theme={theme} ctx={ctx} />
+      <ReportProvider slug={shop.slug} theme={theme}>
+        <PageRenderer content={content} theme={theme} ctx={ctx} />
+      </ReportProvider>
     </BookingProvider>
   );
 }

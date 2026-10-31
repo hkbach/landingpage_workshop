@@ -1,6 +1,6 @@
 import type {
   BookingSource, BookingStatus, Localized, Locale, OrgStatus, PaymentMethod,
-  PaymentStatus, SectionType, SessionStatus, WorkshopStatus,
+  PaymentStatus, ReportRecord, SectionType, SessionStatus, WorkshopStatus,
 } from "@workshop/shared";
 
 // UI-side view models. Money is minor units (number here; bigint is serialized by the API). Times are ISO UTC strings.
@@ -72,7 +72,5 @@ export interface PageTheme {
 export interface AuditEntry {
   id: string; organizationId?: string; actor: string; action: string; entityType: string; entityId: string; createdAt: string; ip?: string;
 }
-export interface AbuseReport {
-  id: string; shopSlug: string; reason: "SCAM" | "PHISHING" | "INAPPROPRIATE" | "OTHER";
-  description: string; reporterEmail?: string; status: "OPEN" | "RESOLVED" | "DISMISSED"; createdAt: string;
-}
+/** A report of a landing page (see @workshop/shared reports). */
+export type AbuseReport = ReportRecord;

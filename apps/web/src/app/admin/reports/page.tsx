@@ -1,6 +1,5 @@
 import { getTranslations } from "next-intl/server";
-import { ReportsList } from "@/components/admin/reports-list";
-import { adminReports } from "@/lib/mock/admin";
+import { ReportManagement } from "@/components/admin/report-management";
 import { shops } from "@/lib/mock/data";
 
 export default async function ReportsPage() {
@@ -12,7 +11,7 @@ export default async function ReportsPage() {
         <h1 className="text-2xl font-semibold">{t("title")}</h1>
         <p className="text-sm text-muted-foreground">{t("description")}</p>
       </header>
-      <ReportsList initial={adminReports} shopIds={shopIds} />
+      <ReportManagement shopIds={shopIds} />
     </div>
   );
 }

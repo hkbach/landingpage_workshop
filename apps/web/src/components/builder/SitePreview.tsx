@@ -8,6 +8,7 @@ import type { Locale } from "@workshop/shared";
 import { buttonVariants } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { PageRenderer } from "@/components/sections/PageRenderer";
+import { ReportProvider } from "@/components/site/ReportProvider";
 import type { RenderContext } from "@/components/sections/context";
 import type { PageContent, PageTheme, Shop, Workshop } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -111,7 +112,10 @@ export function SitePreview({ shop, initial, workshops, siteMessages, previewTem
         >
           <NextIntlClientProvider locale={lang} messages={{ site: siteMessages[lang] ?? {} }}>
             <SiteChromeContext.Provider value={chrome}>
-              <PageRenderer content={draft.content} theme={draft.theme} ctx={ctx} />
+              {/* The report popup opens as on the public site, but nothing is ever sent from the preview. */}
+              <ReportProvider slug="preview" theme={draft.theme} preview>
+                <PageRenderer content={draft.content} theme={draft.theme} ctx={ctx} />
+              </ReportProvider>
             </SiteChromeContext.Provider>
           </NextIntlClientProvider>
         </div>

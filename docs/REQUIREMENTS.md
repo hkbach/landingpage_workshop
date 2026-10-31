@@ -448,8 +448,12 @@ Browser ────────────────────────
 **FR-ADM-03 – Khóa / mở khóa shop (Must)**
 - `ACTIVE ↔ SUSPENDED`, bắt buộc lý do. Shop bị khóa: landing page trả 404, dashboard chỉ đọc + banner thông báo, không nhận booking mới. Booking đã có vẫn giữ.
 
-**FR-ADM-04 – Báo cáo vi phạm (Should)**
-- Form public "Report this site": lý do (scam, phishing, nội dung không phù hợp, khác), mô tả, email (tùy chọn), Turnstile. Admin xem danh sách và xử lý (`OPEN | RESOLVED | DISMISSED`).
+**FR-ADM-04 – Quản lý báo cáo vi phạm / Report management (Should)**
+- Form public "Report this site": lý do (scam, phishing, nội dung không phù hợp, khác), mô tả (10–2000 ký tự), email (tùy chọn), Turnstile. Link ở footer của **mọi template** mở form dạng **popup** (dialog) ngay trên landing page; không có JS thì link dẫn tới trang `/report` có cùng form. Trong preview của builder, popup mở được nhưng không gửi báo cáo.
+- Backend giới hạn 5 báo cáo được nhận / giờ / client (429 + `Retry-After`). Shop không tồn tại hoặc không `ACTIVE` trả 404.
+- Trang admin `/admin/reports` ("Report management"): thẻ tổng hợp theo trạng thái (cũng là bộ lọc), tìm kiếm (mô tả, email, shop), lọc theo lý do / shop, sắp xếp mới nhất / cũ nhất, xem chi tiết, **Resolve** hoặc **Dismiss** (ghi chú tùy chọn, ≤ 500 ký tự). Danh sách tự làm mới. Nội dung do khách nhập chỉ hiển thị dạng text thuần. Xử lý (`OPEN → RESOLVED | DISMISSED`) chỉ áp dụng cho báo cáo đang `OPEN`, báo cáo đã xử lý trả 409.
+- API (mock trong frontend, hợp đồng theo backend thật): `POST /public/sites/{slug}/reports`; `GET /admin/reports`, `PATCH /admin/reports/{id}` (chỉ `SUPER_ADMIN`; mock hiện chưa kiểm tra quyền).
+- Ngoài phạm vi hiện tại: shop owner xem báo cáo về shop của mình; thông báo email cho admin.
 
 **FR-ADM-05 – Audit log (Must)**
 - Admin xem audit log toàn hệ thống; shop owner xem audit log của shop mình (Should).

@@ -5,3 +5,4 @@ export * from "./money";
 export * from "./youtube";
 export * from "./color";
 export * from "./locales";
+export * from "./reports";

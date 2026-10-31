@@ -13,7 +13,7 @@
   "nav": {
     "organizations": "Organizations",
     "reviews": "Review queue",
-    "reports": "Abuse reports",
+    "reports": "Report management",
     "auditLogs": "Audit logs"
   },
   "guard": {
@@ -141,10 +141,10 @@
     "decisionTitle": "Decision"
   },
   "reports": {
-    "title": "Abuse reports",
-    "description": "Reports submitted through the public \"Report this site\" form.",
+    "title": "Report management",
+    "description": "Reports sent by visitors with \"Report this site\" on a shop's landing page. Review each one, then resolve it or dismiss it.",
     "filterLabel": "Filter by status",
-    "empty": "No reports match this filter.",
+    "empty": "No reports match your filters.",
     "shop": "Shop",
     "reason": {
       "SCAM": "Scam",
@@ -168,7 +168,43 @@
     "dismissTitle": "Dismiss this report?",
     "dismissBody": "Mark the report as not actionable. Add an optional note for the audit log.",
     "resolved": "Report marked as resolved.",
-    "dismissed": "Report dismissed."
+    "dismissed": "Report dismissed.",
+    "summary": {
+      "total": "All reports"
+    },
+    "searchLabel": "Search",
+    "searchPlaceholder": "Description, email or shop",
+    "reasonFilter": "Reason",
+    "allReasons": "All reasons",
+    "shopFilter": "Shop",
+    "allShops": "All shops",
+    "sortLabel": "Sort by",
+    "sort": {
+      "newest": "Newest first",
+      "oldest": "Oldest first"
+    },
+    "clearFilters": "Clear filters",
+    "refresh": "Refresh",
+    "lastUpdated": "Updated {time}",
+    "loading": "Loading reports...",
+    "loadError": "The reports could not be loaded.",
+    "retry": "Try again",
+    "noReports": "No reports yet.",
+    "viewDetails": "View details",
+    "conflict": "This report was already handled by someone else. The list was refreshed.",
+    "saveError": "The report could not be updated. Please try again.",
+    "detail": {
+      "title": "Report details",
+      "reporter": "Reporter",
+      "anonymous": "Anonymous",
+      "received": "Received",
+      "handled": "Handled",
+      "description": "What the visitor wrote",
+      "note": "Admin note",
+      "noNote": "No note was added.",
+      "openSite": "Open the site",
+      "close": "Close"
+    }
   },
   "audit": {
     "title": "Audit logs",

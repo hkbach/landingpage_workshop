@@ -114,8 +114,14 @@
       "required": "This field is required.",
       "descriptionShort": "Please describe the problem (at least 10 characters).",
       "tooLong": "This value is too long.",
-      "email": "Enter a valid email address."
-    }
+      "email": "Enter a valid email address.",
+      "rateLimited": "You have sent several reports recently. Please try again later.",
+      "network": "We could not send your report. Check your connection and try again.",
+      "failed": "Something went wrong. Please try again."
+    },
+    "cancel": "Cancel",
+    "close": "Close",
+    "previewNote": "Preview: reports are not sent from the builder."
   },
   "nav": {
     "skip": "Skip to main content",
