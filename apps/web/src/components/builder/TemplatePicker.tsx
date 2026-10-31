@@ -202,7 +202,9 @@ export function LayoutWireframe({ layout, template }: { layout: LayoutKey; templ
   }
   return (
     <div
-      aria-hidden className="h-36 overflow-hidden border"
+      // `isolate` keeps the z-index of the parts drawn inside (e.g. the numbered badges) local to the thumbnail,
+      // so they can never paint over the sticky builder header while the page scrolls.
+      aria-hidden className="isolate h-36 overflow-hidden border"
       style={{ "--wf-r": `${rad}px`, backgroundColor: p.background, color: p.text, borderRadius: Math.max(rad, 3) } as CSSProperties}
     >
       {body}

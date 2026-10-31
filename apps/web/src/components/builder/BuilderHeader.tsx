@@ -38,7 +38,9 @@ export function BuilderHeader({ saveState, status, action, message, onPublish, o
     : { icon: null, text: t("autosave.idle") };
 
   return (
-    <div className="sticky top-14 z-10 -mx-4 -mt-4 border-b bg-background px-4 py-2 shadow-sm sm:-mx-6 sm:-mt-6 sm:px-6 sm:py-2.5">
+    // z-20: above page content that uses z-10 (dragged section rows, ...) and level with the dashboard top bar it sits under;
+    // below the mobile menu backdrop (z-30), the drawer (z-40) and dialogs (z-50).
+    <div className="sticky top-14 z-20 -mx-4 -mt-4 border-b bg-background px-4 py-2 shadow-sm sm:-mx-6 sm:-mt-6 sm:px-6 sm:py-2.5">
       <div className="flex items-center justify-between gap-2 sm:gap-4">
         <div className="min-w-0">
           <h1 className="truncate text-lg font-semibold tracking-tight sm:text-2xl">{t("title")}</h1>
