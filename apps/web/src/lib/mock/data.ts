@@ -138,7 +138,7 @@ const mockContent: PageContent = {
       photo("g5", 900, 700), photo("g6", 700, 900), photo("g7", 700, 700), photo("g8", 800, 600),
     ] } },
     // Placeholder video ID for the mock; shops paste a YouTube link and only the ID is stored.
-    { id: "s-video", type: "video", enabled: true, props: { heading: { en: "A day in the studio" }, caption: { en: "Watch how a bowl is made, from a lump of clay to the kiln." }, videoId: "dQw4w9WgXcQ" } },
+    { id: "s-video", type: "video", enabled: true, props: { heading: { en: "A day in the studio" }, caption: { en: "Watch how a bowl is made, from a lump of clay to the kiln." }, videos: ["dQw4w9WgXcQ", "9bZkp7q19f0", "jNQXAC9IVRw"] } },
     { id: "s-test", type: "testimonials", enabled: true, props: { heading: { en: "Guests say" }, items: [
       { name: "Emma", country: "GB", text: { en: "Best afternoon of our trip!" } },
       { name: "Min-jun", country: "KR", text: { en: "Patient teachers and a very relaxed atmosphere." } },

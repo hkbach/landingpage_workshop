@@ -23,7 +23,9 @@ describe("draft store", () => {
       expect(sectionInstanceSchema.safeParse(s).success, s.type).toBe(true);
       expect(needsAttention(s, sitePage.theme), s.type).toBe(false);
     }
-    expect(sitePage.draft.sections.find((s) => s.type === "video")?.props.videoId).toBe("dQw4w9WgXcQ");
+    const videos = sitePage.draft.sections.find((s) => s.type === "video")?.props.videos as string[];
+    expect(videos[0]).toBe("dQw4w9WgXcQ");
+    expect(videos.length).toBeLessThanOrEqual(5);
   });
 
   it.each([
@@ -78,5 +80,33 @@ describe("draft store", () => {
     expect(sanitizeDraft({ ...valid(), content: { ...sitePage.draft, layout: "<script>" } })?.content.layout).toBe(own);
     expect(sanitizeDraft({ ...valid(), content: { ...sitePage.draft, layout: 42 } })?.content.layout).toBe(own);
     expect(sanitizeDraft({ ...valid(), content: { ...sitePage.draft, layout: "magazine" } })?.content.layout).toBe("magazine");
+  });
+});
+
+describe("draft store: single video -> video list migration", () => {
+  const withVideoProps = (props: Record<string, unknown>) => {
+    const d = valid();
+    return {
+      ...d,
+      content: { ...d.content, sections: d.content.sections.map((s) => (s.type === "video" ? { ...s, props } : s)) },
+    };
+  };
+  const videoOf = (raw: unknown) => parseDraft(JSON.stringify(raw))?.content.sections.find((s) => s.type === "video");
+
+  it("upgrades a stored v1 draft (videoId) to videos: [id] without losing the video", () => {
+    const v = videoOf(withVideoProps({ heading: { en: "H" }, caption: {}, videoId: "dQw4w9WgXcQ" }));
+    expect(v?.props.videos).toEqual(["dQw4w9WgXcQ"]);
+    expect("videoId" in (v?.props ?? {})).toBe(false);
+    expect(v?.props.heading).toEqual({ en: "H" });
+  });
+
+  it("a v1 draft without a video becomes an empty list", () => {
+    expect(videoOf(withVideoProps({ heading: {}, caption: {}, videoId: "" }))?.props.videos).toEqual([]);
+  });
+
+  it("keeps a v2 list and clamps anything above five", () => {
+    const ids = ["aaaaaaaaaaa", "bbbbbbbbbbb", "ccccccccccc", "ddddddddddd", "eeeeeeeeeee", "fffffffffff", "ggggggggggg"];
+    expect(videoOf(withVideoProps({ heading: {}, caption: {}, videos: ids.slice(0, 3) }))?.props.videos).toEqual(ids.slice(0, 3));
+    expect(videoOf(withVideoProps({ heading: {}, caption: {}, videos: ids }))?.props.videos).toEqual(ids.slice(0, 5));
   });
 });

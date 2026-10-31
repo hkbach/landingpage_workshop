@@ -36,7 +36,7 @@ export function isRenderable(section: SectionInstance): boolean {
     case "team": return nonEmptyList(p.members, "x");
     case "testimonials":
     case "faq": return nonEmptyList(p.items, "x");
-    case "video": return isYoutubeId(p.videoId);
+    case "video": return Array.isArray(p.videos) && p.videos.some((v) => isYoutubeId(v));
     default: return true;
   }
 }

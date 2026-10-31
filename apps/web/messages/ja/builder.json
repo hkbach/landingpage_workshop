@@ -46,14 +46,19 @@
   },
   "fields": {
     "videoId": "YouTubeリンク",
-    "caption": "キャプション"
+    "caption": "キャプション",
+    "videos": "YouTube動画"
   },
   "video": {
     "hint": "YouTubeのリンクを貼り付けてください（youtube.com/watch、youtu.be、youtube.com/shorts、youtube.com/embed）。保存されるのは動画IDのみです。",
     "replaceHint": "別のYouTubeリンクを貼り付けると動画が置き換わります。",
     "invalid": "有効なYouTubeリンクではありません。",
     "current": "YouTube動画：{id}",
-    "remove": "削除"
+    "remove": "削除",
+    "item": "動画 {n}",
+    "add": "動画を追加",
+    "limit": "動画は最大{max}件まで追加できます。",
+    "maxReached": "動画の上限（{max}件）に達しました。"
   },
   "colors": {
     "title": "色",

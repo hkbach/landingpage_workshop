@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Clock, ExternalLink, Mail, MapPin, MessageCircle, Phone, Play } from "lucide-react";
-import { isYoutubeId, youtubeEmbedUrl, youtubeThumbnailUrl } from "@workshop/shared";
+import { isYoutubeId, MAX_SECTION_VIDEOS, youtubeEmbedUrl, youtubeThumbnailUrl } from "@workshop/shared";
 import { cn } from "@/lib/utils";
 import type { ContactProps, FaqProps, FooterProps, LocationProps, TestimonialsProps, VideoProps } from "./context";
 import {
@@ -228,18 +228,29 @@ export function YoutubeFacade({ videoId, title }: { videoId: string; title: stri
   );
 }
 
+/** Grid columns for n videos: 1 -> one, 2 or 4 -> two, 3 or 5 -> two on medium and three on wide containers. */
+function videoGridClass(n: number): string {
+  if (n <= 1) return "grid-cols-1";
+  if (n === 2 || n === 4) return "grid-cols-1 @3xl:grid-cols-2";
+  return "grid-cols-1 @3xl:grid-cols-2 @5xl:grid-cols-3";
+}
+
 export function VideoSection({ section, props, ctx, variant }: RenderProps<VideoProps>) {
   const L = localizer(ctx);
   const t = useTranslations("site");
-  const id = props.videoId;
-  if (!isYoutubeId(id)) return null;
+  // At most 5 valid, distinct-by-position IDs; empty editing slots and anything invalid are ignored.
+  const ids = arr<unknown>(props.videos).filter((v): v is string => isYoutubeId(v)).slice(0, MAX_SECTION_VIDEOS);
+  if (ids.length === 0) return null;
   const title = L(props.heading) || t("sections.videoTitle");
   const caption = L(props.caption);
+  const label = (i: number) => (ids.length > 1 ? t("sections.videoItem", { title, n: i + 1, total: ids.length }) : title);
   if (variant === "split") {
     return (
       <Section id={section.id}>
         <div className="grid gap-8 @3xl:grid-cols-5 @3xl:items-center">
-          <div className="@3xl:col-span-3"><YoutubeFacade videoId={id} title={title} /></div>
+          <div className="grid gap-4 @3xl:col-span-3">
+            {ids.map((id, i) => <YoutubeFacade key={`${id}-${i}`} videoId={id} title={label(i)} />)}
+          </div>
           <div className="@3xl:col-span-2">
             <Heading className="mb-4">{L(props.heading)}</Heading>
             {caption ? <p className="whitespace-pre-line text-[var(--site-muted)]">{caption}</p> : null}
@@ -250,9 +261,11 @@ export function VideoSection({ section, props, ctx, variant }: RenderProps<Video
   }
   return (
     <Section id={section.id}>
-      <div className="mx-auto max-w-4xl">
+      <div className={cn("mx-auto", ids.length === 1 ? "max-w-4xl" : "max-w-6xl")}>
         <Heading className="text-center">{L(props.heading)}</Heading>
-        <YoutubeFacade videoId={id} title={title} />
+        <div className={cn("grid gap-6", videoGridClass(ids.length))}>
+          {ids.map((id, i) => <YoutubeFacade key={`${id}-${i}`} videoId={id} title={label(i)} />)}
+        </div>
         {caption ? <p className="mt-4 whitespace-pre-line text-center text-[var(--site-muted)]">{caption}</p> : null}
       </div>
     </Section>

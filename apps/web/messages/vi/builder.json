@@ -46,14 +46,19 @@
   },
   "fields": {
     "videoId": "Liên kết YouTube",
-    "caption": "Chú thích"
+    "caption": "Chú thích",
+    "videos": "Video YouTube"
   },
   "video": {
     "hint": "Dán liên kết YouTube (youtube.com/watch, youtu.be, youtube.com/shorts hoặc youtube.com/embed). Chỉ lưu mã video.",
     "replaceHint": "Dán liên kết YouTube khác để thay video.",
     "invalid": "Đây không phải liên kết YouTube hợp lệ.",
     "current": "Video YouTube: {id}",
-    "remove": "Xóa"
+    "remove": "Xóa",
+    "item": "Video {n}",
+    "add": "Thêm video",
+    "limit": "Bạn có thể thêm tối đa {max} video.",
+    "maxReached": "Bạn đã đạt giới hạn {max} video."
   },
   "colors": {
     "title": "Màu sắc",

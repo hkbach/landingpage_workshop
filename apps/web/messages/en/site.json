@@ -12,7 +12,8 @@
     "videoTitle": "Video",
     "galleryLabel": "Photo gallery",
     "phone": "Phone",
-    "email": "Email"
+    "email": "Email",
+    "videoItem": "{title} – video {n} of {total}"
   },
   "header": {
     "language": "Language"

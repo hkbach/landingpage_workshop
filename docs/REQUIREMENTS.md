@@ -288,7 +288,7 @@ Browser ────────────────────────
 | `faq` | heading, danh sách Q&A | Mặc định có câu hỏi về chính sách đến trễ |
 | `location` | heading, địa chỉ, giờ mở cửa, Google Maps URL | Chỉ cho phép link `google.com/maps` / `maps.app.goo.gl` |
 | `contact` | heading, phone, WhatsApp, email, mạng xã hội | |
-| `video` | heading, caption, **link YouTube** | Chỉ lưu **video ID** (trích từ link `youtube.com/watch?v=`, `youtu.be/`, `youtube.com/shorts/`, `youtube.com/embed/`); nhúng `youtube-nocookie.com`, tải khi khách bấm Play (facade). *(v1.2)* |
+| `video` | heading, caption, **danh sách tối đa 5 link YouTube** (`videos: string[]`, schema v2; v1 lưu một `videoId` và được tự chuyển thành danh sách 1 phần tử) | Chỉ lưu **video ID** (trích từ link `youtube.com/watch?v=`, `youtu.be/`, `youtube.com/shorts/`, `youtube.com/embed/`); nhúng `youtube-nocookie.com`, tải khi khách bấm Play (facade). *(v1.2)* |
 | `footer` | text, link mạng xã hội | Luôn có, không xóa được |
 
 - Thao tác: thêm, xóa, bật/tắt, sắp xếp (dnd-kit), sửa props.

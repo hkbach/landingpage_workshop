@@ -1,6 +1,6 @@
 import { SECTION_TYPES, type SectionType } from "@workshop/shared";
 import type { PageContent, PageTheme, SectionInstance, ThemeDensity, ThemeRadius } from "@/lib/types";
-import { createSection, isValidVariant } from "@/components/sections/registry";
+import { createSection, isValidVariant, migrateSectionProps } from "@/components/sections/registry";
 import { isImageUrl } from "@/components/sections/safe-url";
 import { isLayoutKey } from "@/components/sections/layouts";
 import { resolveTemplateKey, TEMPLATES, type TemplateKey } from "@/components/sections/templates";
@@ -44,7 +44,7 @@ function sanitizeSection(raw: unknown): SectionInstance | null {
   const type = raw.type as SectionType;
   const style = sanitizeSectionStyle(raw.style);
   return {
-    id: raw.id, type, enabled: raw.enabled, props: raw.props,
+    id: raw.id, type, enabled: raw.enabled, props: migrateSectionProps(type, raw.props),
     ...(isValidVariant(type, raw.variant) ? { variant: raw.variant } : {}),
     ...(Object.keys(style).length ? { style } : {}),
     ...(typeof raw.showBook === "boolean" ? { showBook: raw.showBook } : {}),

@@ -195,7 +195,8 @@
     "url": "Link (https)",
     "description": "Description",
     "videoId": "YouTube link",
-    "caption": "Caption"
+    "caption": "Caption",
+    "videos": "YouTube videos"
   },
   "language": {
     "label": "Content language",
@@ -280,7 +281,11 @@
     "replaceHint": "Paste another YouTube link to replace the video.",
     "invalid": "This is not a valid YouTube link.",
     "current": "YouTube video: {id}",
-    "remove": "Remove"
+    "remove": "Remove",
+    "item": "Video {n}",
+    "add": "Add video",
+    "limit": "You can add up to {max} videos.",
+    "maxReached": "You have reached the limit of {max} videos."
   },
   "variants": {
     "hero": {

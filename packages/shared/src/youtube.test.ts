@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isYoutubeId, parseYoutubeId, youtubeEmbedUrl, youtubeThumbnailUrl } from "./youtube";
+import { isYoutubeId, MAX_SECTION_VIDEOS, migrateVideoProps, parseYoutubeId, youtubeEmbedUrl, youtubeThumbnailUrl } from "./youtube";
 
 const ID = "dQw4w9WgXcQ";
 
@@ -83,5 +83,31 @@ describe("youtube id/url helpers", () => {
   it("throws for an invalid id instead of building a url", () => {
     expect(() => youtubeEmbedUrl("../evil")).toThrow();
     expect(() => youtubeThumbnailUrl("x")).toThrow();
+  });
+});
+
+describe("migrateVideoProps", () => {
+  it("v1 single video becomes a one-item list and drops videoId", () => {
+    expect(migrateVideoProps({ heading: { en: "H" }, videoId: "dQw4w9WgXcQ" })).toEqual({ heading: { en: "H" }, videos: ["dQw4w9WgXcQ"] });
+  });
+  it("v1 without a video becomes an empty list", () => {
+    expect(migrateVideoProps({ videoId: "" })).toEqual({ videos: [] });
+    expect(migrateVideoProps({})).toEqual({ videos: [] });
+  });
+  it("v2 props pass through (idempotent)", () => {
+    const v2 = { heading: {}, videos: ["dQw4w9WgXcQ", "9bZkp7q19f0"] };
+    expect(migrateVideoProps(v2)).toEqual(v2);
+    expect(migrateVideoProps(migrateVideoProps({ videoId: "dQw4w9WgXcQ" }))).toEqual({ videos: ["dQw4w9WgXcQ"] });
+  });
+  it("clamps to the maximum and ignores non-string entries", () => {
+    const many = Array.from({ length: 9 }, (_, i) => `aaaaaaaaaa${i}`);
+    expect(migrateVideoProps({ videos: many }).videos).toHaveLength(MAX_SECTION_VIDEOS);
+    expect(migrateVideoProps({ videos: ["dQw4w9WgXcQ", 5, null, {}] }).videos).toEqual(["dQw4w9WgXcQ"]);
+  });
+  it("prefers videos over a stale videoId when both exist", () => {
+    expect(migrateVideoProps({ videoId: "dQw4w9WgXcQ", videos: ["9bZkp7q19f0"] })).toEqual({ videos: ["9bZkp7q19f0"] });
+  });
+  it("the maximum is five", () => {
+    expect(MAX_SECTION_VIDEOS).toBe(5);
   });
 });

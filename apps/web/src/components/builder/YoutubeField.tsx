@@ -9,7 +9,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 /** Paste a YouTube link; only the validated 11-char video ID is stored (the raw link is discarded). */
-export function YoutubeField({ id, label, value, onChange }: { id: string; label: string; value: string; onChange: (videoId: string) => void }) {
+export function YoutubeField({ id, label, value, onChange, onRemove }: {
+  id: string; label: string; value: string; onChange: (videoId: string) => void;
+  /** Inside a list of videos: removes the whole row instead of only clearing the video. */
+  onRemove?: () => void;
+}) {
   const t = useTranslations("builder");
   const [text, setText] = useState("");
   const [invalid, setInvalid] = useState(false);
@@ -24,14 +28,21 @@ export function YoutubeField({ id, label, value, onChange }: { id: string; label
 
   return (
     <div className="space-y-2">
-      <Label htmlFor={id}>{label}</Label>
+      <div className="flex items-center justify-between gap-2">
+        <Label htmlFor={id}>{label}</Label>
+        {!has && onRemove ? (
+          <Button type="button" variant="ghost" size="sm" onClick={onRemove}>
+            <Trash2 />{t("video.remove")}<span className="sr-only"> ({label})</span>
+          </Button>
+        ) : null}
+      </div>
       {has ? (
         <div className="flex items-center gap-3 rounded-lg border p-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={youtubeThumbnailUrl(value)} alt="" className="h-12 w-20 rounded object-cover" referrerPolicy="no-referrer" />
           <p className="min-w-0 flex-1 truncate text-sm">{t("video.current", { id: value })}</p>
-          <Button type="button" variant="ghost" size="sm" onClick={() => { onChange(""); setText(""); }}>
-            <Trash2 />{t("video.remove")}
+          <Button type="button" variant="ghost" size="sm" onClick={() => { if (onRemove) onRemove(); else { onChange(""); setText(""); } }}>
+            <Trash2 />{t("video.remove")}<span className="sr-only"> ({label})</span>
           </Button>
         </div>
       ) : null}

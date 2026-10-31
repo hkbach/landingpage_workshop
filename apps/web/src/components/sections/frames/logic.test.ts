@@ -15,7 +15,7 @@ const sec = (type: SectionType, props: Record<string, unknown> = {}, enabled = t
 const full = (): SectionInstance[] => [
   sec("hero"), sec("about"), sec("team", { members: [{ name: "A", role: {}, bio: {}, imageUrl: "" }] }), sec("workshops"),
   sec("gallery", { imageUrls: ["https://example.com/a.jpg", "https://example.com/b.jpg"] }),
-  sec("video", { videoId: "dQw4w9WgXcQ" }), sec("testimonials", { items: [{ name: "E", country: "GB", text: {} }] }),
+  sec("video", { videos: ["dQw4w9WgXcQ"] }), sec("testimonials", { items: [{ name: "E", country: "GB", text: {} }] }),
   sec("faq"), sec("location"), sec("contact"), sec("footer"),
 ];
 
@@ -39,7 +39,9 @@ describe("isRenderable / navItems", () => {
   it("skips empty galleries, teams and invalid videos; the hero and footer are not nav items", () => {
     expect(isRenderable(sec("gallery"))).toBe(false);
     expect(isRenderable(sec("team"))).toBe(false);
-    expect(isRenderable(sec("video", { videoId: "x" }))).toBe(false);
+    expect(isRenderable(sec("video", { videos: ["x"] }))).toBe(false);
+    expect(isRenderable(sec("video", { videos: [] }))).toBe(false);
+    expect(isRenderable(sec("video", { videos: ["", "dQw4w9WgXcQ"] }))).toBe(true);
     const { body } = splitSections(full());
     const items = navItems(body);
     expect(items.some((i) => i.type === "hero" || i.type === "footer")).toBe(false);

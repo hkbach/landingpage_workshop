@@ -44,5 +44,8 @@
     "choose": "Chọn workshop",
     "duration": "Thời lượng",
     "price": "Giá"
+  },
+  "sections": {
+    "videoItem": "{title} – video {n}/{total}"
   }
 }

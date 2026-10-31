@@ -79,6 +79,27 @@ export function FieldsEditor({ fields, value, onChange, lang, defaultLocale, idP
             const v = typeof value[f.key] === "string" ? (value[f.key] as string) : "";
             return <YoutubeField key={f.key} id={id} label={label} value={v} onChange={(vid) => set(f.key, vid)} />;
           }
+          case "youtubeList": {
+            const ids = Array.isArray(value[f.key]) ? (value[f.key] as unknown[]).map((x) => (typeof x === "string" ? x : "")) : [];
+            return (
+              <fieldset key={f.key} className="space-y-3">
+                <legend className="text-sm font-medium">{label} <span className="text-muted-foreground">({ids.length}/{f.max})</span></legend>
+                {ids.map((vid, i) => (
+                  <div key={i} className="rounded-lg border p-3">
+                    <YoutubeField
+                      id={`${id}-${i}`} label={t("video.item", { n: i + 1 })} value={vid}
+                      onChange={(next) => set(f.key, ids.map((x, j) => (j === i ? next : x)))}
+                      onRemove={() => set(f.key, ids.filter((_, j) => j !== i))}
+                    />
+                  </div>
+                ))}
+                <Button type="button" variant="outline" size="sm" disabled={ids.length >= f.max} onClick={() => set(f.key, [...ids, ""])}>
+                  <Plus />{t("video.add")}
+                </Button>
+                <p className="text-xs text-muted-foreground">{ids.length >= f.max ? t("video.maxReached", { max: f.max }) : t("video.limit", { max: f.max })}</p>
+              </fieldset>
+            );
+          }
           case "link":
           case "maps": {
             const v = typeof value[f.key] === "string" ? (value[f.key] as string) : "";

@@ -44,5 +44,8 @@
     "choose": "워크숍 선택",
     "duration": "소요 시간",
     "price": "가격"
+  },
+  "sections": {
+    "videoItem": "{title} – 동영상 {n}/{total}"
   }
 }

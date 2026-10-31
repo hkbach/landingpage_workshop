@@ -44,5 +44,8 @@
     "choose": "ワークショップを選択",
     "duration": "所要時間",
     "price": "料金"
+  },
+  "sections": {
+    "videoItem": "{title} – 動画 {n}/{total}"
   }
 }

@@ -57,3 +57,20 @@ export function youtubeEmbedUrl(id: string): string {
   if (!isYoutubeId(id)) throw new Error("Invalid YouTube video id");
   return `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`;
 }
+
+/** A video section holds at most this many YouTube videos (v1.2). */
+export const MAX_SECTION_VIDEOS = 5;
+
+/**
+ * Props of a `video` section after the single-video -> list change (section schema v2).
+ * v1 stored `videoId: string`; v2 stores `videos: string[]` (validated IDs, "" = an empty slot while editing).
+ * Idempotent: v2 props pass through unchanged apart from being clamped to the maximum.
+ */
+export function migrateVideoProps(props: Record<string, unknown>): Record<string, unknown> {
+  const { videoId, videos, ...rest } = props;
+  let list: unknown[];
+  if (Array.isArray(videos)) list = videos;
+  else if (typeof videoId === "string" && videoId !== "") list = [videoId];
+  else list = [];
+  return { ...rest, videos: list.filter((v): v is string => typeof v === "string").slice(0, MAX_SECTION_VIDEOS) };
+}

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { isYoutubeId, LOCALES, type Localized, type SectionType } from "@workshop/shared";
+import { isYoutubeId, LOCALES, MAX_SECTION_VIDEOS, migrateVideoProps, type Localized, type SectionType } from "@workshop/shared";
 import type { SectionInstance } from "@/lib/types";
 import { isAllowedMapsUrl, isHttpsUrl, isImageUrl, MAX_DATA_IMAGE_LENGTH } from "./safe-url";
 import type { Tone } from "./theme";
@@ -12,6 +12,7 @@ export type FieldDef =
   | { kind: "plain"; key: string; max: number; inputType?: "text" | "tel" | "email" }
   | { kind: "image"; key: string }
   | { kind: "youtube"; key: string }
+  | { kind: "youtubeList"; key: string; max: number }
   | { kind: "link"; key: string }
   | { kind: "maps"; key: string }
   | { kind: "select"; key: string; options: readonly string[] }
@@ -20,7 +21,9 @@ export type FieldDef =
 
 export interface SectionDef {
   type: SectionType;
-  schemaVersion: 1;
+  /** Bumped when the stored props shape changes; `migrateProps` upgrades older stored props (never edit stored JSON by hand). */
+  schemaVersion: 1 | 2;
+  migrateProps?: (props: Record<string, unknown>) => Record<string, unknown>;
   /** Strict schema (public site / backend): https image URLs only. */
   schema: z.ZodType<Record<string, unknown>>;
   /** Builder/preview schema: additionally accepts uploaded data:image URLs. */
@@ -186,12 +189,16 @@ const DEFINITIONS: Record<SectionType, Define> = {
     ],
   },
   video: {
-    type: "video", schemaVersion: 1, removable: true,
+    // v2: up to MAX_SECTION_VIDEOS videos (v1 stored a single `videoId`).
+    type: "video", schemaVersion: 2, removable: true, migrateProps: migrateVideoProps,
     variants: ["wide", "split"], tone: fixed("bg"),
-    // Only the validated 11-char video ID is stored; the raw link is never kept (see parseYoutubeId).
-    make: () => z.object({ heading: localized(80), caption: localized(300), videoId }),
-    defaultProps: () => ({ heading: { en: "See it in action" }, caption: { en: "" }, videoId: "" }),
-    fields: [{ kind: "localized", key: "heading", max: 80 }, { kind: "localized", key: "caption", max: 300, multiline: true }, { kind: "youtube", key: "videoId" }],
+    // Only validated 11-char video IDs are stored; the raw link is never kept (see parseYoutubeId).
+    make: () => z.object({ heading: localized(80), caption: localized(300), videos: z.array(videoId).max(MAX_SECTION_VIDEOS) }),
+    defaultProps: () => ({ heading: { en: "See it in action" }, caption: { en: "" }, videos: [] }),
+    fields: [
+      { kind: "localized", key: "heading", max: 80 }, { kind: "localized", key: "caption", max: 300, multiline: true },
+      { kind: "youtubeList", key: "videos", max: MAX_SECTION_VIDEOS },
+    ],
   },
   footer: {
     type: "footer", schemaVersion: 1, removable: false,
@@ -291,6 +298,11 @@ function prune(v: unknown): unknown {
 }
 
 /** True when the props differ from the registry defaults (ignoring empty values). Auto-content sections never do. */
+/** Upgrade stored props written by an older schema version of the section type (no-op for types without a migration). */
+export function migrateSectionProps(type: SectionType, props: Record<string, unknown>): Record<string, unknown> {
+  return SECTION_REGISTRY[type].migrateProps?.(props) ?? props;
+}
+
 export function hasContent(section: Pick<SectionInstance, "type" | "props">): boolean {
   const def = SECTION_REGISTRY[section.type];
   if (def.autoContent) return false;

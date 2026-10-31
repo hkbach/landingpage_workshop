@@ -108,11 +108,16 @@ describe("instance schema", () => {
     expect(validateSection("about", props)).not.toEqual([]);
     expect(validateSection("about", props, { allowDataImages: true })).toEqual([]);
   });
-  it("video stores only a valid 11-char id", () => {
-    const ok = { heading: {}, caption: {}, videoId: "dQw4w9WgXcQ" };
+  it("video stores only valid 11-char ids, at most five", () => {
+    const ok = { heading: {}, caption: {}, videos: ["dQw4w9WgXcQ"] };
     expect(validateSection("video", ok)).toEqual([]);
-    expect(validateSection("video", { ...ok, videoId: "https://youtu.be/dQw4w9WgXcQ" })).not.toEqual([]);
-    expect(validateSection("video", { ...ok, videoId: "" })).toEqual([]);
+    expect(validateSection("video", { ...ok, videos: ["https://youtu.be/dQw4w9WgXcQ"] })).not.toEqual([]);
+    expect(validateSection("video", { ...ok, videos: [""] })).toEqual([]); // an empty slot while editing
+    expect(validateSection("video", { ...ok, videos: [] })).toEqual([]);
+    const five = ["aaaaaaaaaaa", "bbbbbbbbbbb", "ccccccccccc", "ddddddddddd", "eeeeeeeeeee"];
+    expect(validateSection("video", { ...ok, videos: five })).toEqual([]);
+    expect(validateSection("video", { ...ok, videos: [...five, "fffffffffff"] })).not.toEqual([]);
+    expect(validateSection("video", { ...ok, videos: ["dQw4w9WgXcQ", "not-valid"] })).not.toEqual([]);
   });
 });
 
@@ -160,7 +165,7 @@ describe("template switch preserves content", () => {
   it.each(TEMPLATE_KEYS)("%s: keeps every section's props and colour overrides and always has one enabled footer", (key) => {
     const styled = (["hero", "about", "workshops", "faq"] as SectionType[]).map((t, i) =>
       make(t, {}, { style: { background: "#112233", text: "#ffffff", accent: i % 2 ? "#ffcc00" : "#00aa88" } }));
-    const video = make("video", { videoId: "dQw4w9WgXcQ" });
+    const video = make("video", { videos: ["dQw4w9WgXcQ"] });
     const content = pageWith([...styled, video, createSection("footer")]);
     const out = applyTemplate(content, key);
     expect(out.layout).toBe(TEMPLATES[key].layout);
@@ -177,7 +182,7 @@ describe("template switch preserves content", () => {
   it("never loses content across a round trip through every template", () => {
     const about = make("about", { body: { en: "Our story" }, imageUrl: "https://example.com/a.jpg" });
     const team = make("team", { members: [{ name: "Linh", role: { en: "Founder" }, bio: {}, imageUrl: "" }] });
-    const video = make("video", { videoId: "dQw4w9WgXcQ", caption: { en: "Hi" } });
+    const video = make("video", { videos: ["dQw4w9WgXcQ", "9bZkp7q19f0"], caption: { en: "Hi" } });
     let content = pageWith([createSection("hero"), about, team, video, createSection("footer")]);
     for (const key of [...TEMPLATE_KEYS, "classic" as const]) content = applyTemplate(content, key);
     for (const original of [about, team, video]) {

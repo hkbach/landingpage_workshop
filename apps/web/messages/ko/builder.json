@@ -46,14 +46,19 @@
   },
   "fields": {
     "videoId": "YouTube 링크",
-    "caption": "설명"
+    "caption": "설명",
+    "videos": "YouTube 동영상"
   },
   "video": {
     "hint": "YouTube 링크를 붙여넣으세요(youtube.com/watch, youtu.be, youtube.com/shorts, youtube.com/embed). 동영상 ID만 저장됩니다.",
     "replaceHint": "다른 YouTube 링크를 붙여넣으면 동영상이 바뀝니다.",
     "invalid": "올바른 YouTube 링크가 아닙니다.",
     "current": "YouTube 동영상: {id}",
-    "remove": "삭제"
+    "remove": "삭제",
+    "item": "동영상 {n}",
+    "add": "동영상 추가",
+    "limit": "동영상은 최대 {max}개까지 추가할 수 있습니다.",
+    "maxReached": "동영상 {max}개 한도에 도달했습니다."
   },
   "colors": {
     "title": "색상",

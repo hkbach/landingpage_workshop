@@ -25,5 +25,5 @@ export interface TestimonialsProps { heading: Localized; items: { name: string; 
 export interface FaqProps { heading: Localized; items: { q: Localized; a: Localized }[] }
 export interface LocationProps { heading: Localized; address: Localized; hours: Localized; mapsUrl: string }
 export interface ContactProps { heading: Localized; phone: string; whatsapp: string; email: string; socials: SocialLink[] }
-export interface VideoProps { heading: Localized; caption: Localized; videoId: string }
+export interface VideoProps { heading: Localized; caption: Localized; /** Validated YouTube IDs, at most 5 (v1 had a single `videoId`). */ videos: string[] }
 export interface FooterProps { text: Localized; socials: SocialLink[] }
