@@ -159,9 +159,11 @@ function BuilderInner({ shop, initial, initialStatus, upcomingWorkshopCount, app
   }, [sections, draft.theme.logoUrl, shop, upcomingWorkshopCount]);
 
   // One source of truth for the publish control: the sticky header and the Publish card follow the same rules.
-  const headerAction = publishAction({ status, prerequisites, invalidSections, invalidTheme });
-  const publishNow = () => { saveDraft(draft); setPublishMessage("published"); };
-  const submitNow = () => { setStatus("PENDING_REVIEW"); setPublishMessage("submitted"); };
+  const saving = saveState === "pending";
+  const headerAction = publishAction({ status, prerequisites, invalidSections, invalidTheme, saving });
+  // Also guarded here: a disabled button cannot be clicked, but a stale handler must never publish a half-saved draft.
+  const publishNow = () => { if (saving) return; saveDraft(draft); setPublishMessage("published"); };
+  const submitNow = () => { if (saving) return; setStatus("PENDING_REVIEW"); setPublishMessage("submitted"); };
 
   const names = (types: SectionType[]) => types.map((ty) => t(`sectionTypes.${ty}`)).join(", ");
   const editorLabel = selected ? t(`sectionTypes.${selected.type}`) : t("seo.title");
@@ -251,7 +253,7 @@ function BuilderInner({ shop, initial, initialStatus, upcomingWorkshopCount, app
           <CardContent>
             <PublishPanel
               status={status} prerequisites={prerequisites} invalidSections={invalidSections} invalidTheme={invalidTheme}
-              message={publishMessage} onSubmitForReview={submitNow} onPublish={publishNow}
+              saving={saving} message={publishMessage} onSubmitForReview={submitNow} onPublish={publishNow}
             />
             <SupportContactBox contact={support} />
           </CardContent>

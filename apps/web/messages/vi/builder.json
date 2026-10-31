@@ -131,7 +131,8 @@
   "publish": {
     "blockedHint": "Hãy sửa các phần hoặc màu sắc được đánh dấu cần chú ý trước.",
     "publishedShort": "Đã xuất bản (bản demo)",
-    "submittedShort": "Đã gửi duyệt (bản demo)"
+    "submittedShort": "Đã gửi duyệt (bản demo)",
+    "savingHint": "Đang lưu thay đổi của bạn. Bạn có thể xuất bản trong giây lát."
   },
   "language": {
     "barTitle": "Ngôn ngữ đang chỉnh sửa",

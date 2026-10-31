@@ -26,7 +26,7 @@ export function BuilderHeader({ saveState, status, action, message, onPublish, o
   const t = useTranslations("builder");
   const disabledHint =
     action.kind === "submit" || action.kind === "publish"
-      ? action.reason === "checklist" ? t("publish.submitDisabled") : action.reason === "errors" ? t("publish.blockedHint") : undefined
+      ? action.reason === "saving" ? t("publish.savingHint") : action.reason === "checklist" ? t("publish.submitDisabled") : action.reason === "errors" ? t("publish.blockedHint") : undefined
       : undefined;
   // The confirmation disappears as soon as the shop edits again (autosave pending).
   const confirmation = saveState === "pending" ? null : message === "published" ? t("publish.publishedShort") : message === "submitted" ? t("publish.submittedShort") : null;
@@ -59,7 +59,7 @@ export function BuilderHeader({ saveState, status, action, message, onPublish, o
               aria-describedby={action.disabled && disabledHint ? "builder-publish-hint" : undefined}
               onClick={action.kind === "publish" ? onPublish : onSubmit}
             >
-              {action.kind === "publish" ? <Rocket /> : <Send />}
+              {action.reason === "saving" ? <LoaderCircle className="animate-spin" aria-hidden /> : action.kind === "publish" ? <Rocket /> : <Send />}
               {action.kind === "publish" ? t("publish.publish") : t("publish.submit")}
             </Button>
           ) : (

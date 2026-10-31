@@ -131,7 +131,8 @@
   "publish": {
     "blockedHint": "먼저 주의가 필요하다고 표시된 섹션이나 색상을 수정하세요.",
     "publishedShort": "게시됨 (데모)",
-    "submittedShort": "검토 요청됨 (데모)"
+    "submittedShort": "검토 요청됨 (데모)",
+    "savingHint": "변경 사항을 저장하는 중입니다. 잠시 후 게시할 수 있습니다."
   },
   "language": {
     "barTitle": "편집 중인 언어",

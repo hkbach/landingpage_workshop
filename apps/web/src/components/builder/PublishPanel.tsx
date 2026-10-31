@@ -14,6 +14,8 @@ interface Props {
   invalidSections: number;
   /** Theme colours fail the 4.5:1 contrast rule. */
   invalidTheme: boolean;
+  /** The draft is still being saved after an edit: the publish / submit button stays disabled until it is done. */
+  saving?: boolean;
   /** Confirmation shown after the last publish / submit (state lives in the builder, shared with the sticky header). */
   message: "published" | "submitted" | null;
   onSubmitForReview: () => void;
@@ -21,11 +23,12 @@ interface Props {
 }
 
 /** FR-SITE-04: first time "Submit for review" (with prerequisites), afterwards "Publish". Mock only: nothing is sent. */
-export function PublishPanel({ status, prerequisites, invalidSections, invalidTheme, message, onSubmitForReview, onPublish }: Props) {
+export function PublishPanel({ status, prerequisites, invalidSections, invalidTheme, saving = false, message, onSubmitForReview, onPublish }: Props) {
   const t = useTranslations("builder");
-  const action = publishAction({ status, prerequisites, invalidSections, invalidTheme });
+  const action = publishAction({ status, prerequisites, invalidSections, invalidTheme, saving });
   const issues = (
     <>
+      {action.kind !== "pending" && action.kind !== "suspended" && action.reason === "saving" ? <p role="status" className="text-xs text-muted-foreground">{t("publish.savingHint")}</p> : null}
       {invalidSections > 0 ? <p className="text-xs text-amber-800">{t("publish.fixErrors", { count: invalidSections })}</p> : null}
       {invalidTheme ? <p className="text-xs text-amber-800">{t("publish.fixTheme")}</p> : null}
     </>
