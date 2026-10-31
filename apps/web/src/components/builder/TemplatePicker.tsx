@@ -254,7 +254,7 @@ export function TemplatePicker({ current, onSelect }: { current: TemplateKey; on
                 ))}
               </span>
               <Link
-                href={`/dashboard/site/preview?template=${k}`} aria-label={t("template.previewLabel", { name })}
+                href={`/shopowner/site/preview?template=${k}`} aria-label={t("template.previewLabel", { name })}
                 className={buttonVariants({ variant: "outline", size: "sm" })}
               >
                 <Eye />{t("template.preview")}

@@ -29,19 +29,19 @@ function computeOverview() {
 }
 
 const CHECKLIST_LINKS = {
-  identity: "/dashboard/settings",
-  hero: "/dashboard/site",
-  contact: "/dashboard/settings",
-  workshop: "/dashboard/sessions",
+  identity: "/shopowner/settings",
+  hero: "/shopowner/site",
+  contact: "/shopowner/settings",
+  workshop: "/shopowner/sessions",
 } as const;
 
 export default async function OverviewPage() {
   const t = await getTranslations("dashboard.overview");
   const o = computeOverview();
   const kpis = [
-    { key: "today", value: o.todayBookings, href: "/dashboard/today", icon: CalendarClock },
-    { key: "upcoming", value: o.upcomingSessions, href: "/dashboard/sessions", icon: ClipboardList },
-    { key: "unpaid", value: o.unpaid, href: "/dashboard/bookings", icon: Wallet },
+    { key: "today", value: o.todayBookings, href: "/shopowner/today", icon: CalendarClock },
+    { key: "upcoming", value: o.upcomingSessions, href: "/shopowner/sessions", icon: ClipboardList },
+    { key: "unpaid", value: o.unpaid, href: "/shopowner/bookings", icon: Wallet },
   ] as const;
   const items = Object.entries(o.checklist) as [keyof typeof o.checklist, boolean][];
   const allDone = items.every(([, done]) => done);

@@ -9,7 +9,7 @@ import { BookingStatusBadge, PaymentStatusBadge } from "@/components/ops/status-
 import { formatDateTime } from "@/lib/format";
 import { bookings, currentShop, customers } from "@/lib/mock/data";
 
-export default async function CustomerDetailPage(props: PageProps<"/dashboard/customers/[id]">) {
+export default async function CustomerDetailPage(props: PageProps<"/shopowner/customers/[id]">) {
   const { id } = await props.params;
   const customer = customers.find((c) => c.id === id);
   if (!customer) notFound();
@@ -20,7 +20,7 @@ export default async function CustomerDetailPage(props: PageProps<"/dashboard/cu
 
   return (
     <div className="grid gap-4">
-      <Link href="/dashboard/customers" className="inline-flex items-center gap-1 text-sm text-muted-foreground underline-offset-4 hover:underline">
+      <Link href="/shopowner/customers" className="inline-flex items-center gap-1 text-sm text-muted-foreground underline-offset-4 hover:underline">
         <ArrowLeft className="size-4" aria-hidden="true" />
         {t("customers.title")}
       </Link>
@@ -60,7 +60,7 @@ export default async function CustomerDetailPage(props: PageProps<"/dashboard/cu
               <TableBody>
                 {history.map((b) => (
                   <TableRow key={b.id}>
-                    <TableCell><Link href={`/dashboard/bookings/${b.id}`} className="font-mono font-medium underline-offset-4 hover:underline">{b.bookingCode}</Link></TableCell>
+                    <TableCell><Link href={`/shopowner/bookings/${b.id}`} className="font-mono font-medium underline-offset-4 hover:underline">{b.bookingCode}</Link></TableCell>
                     <TableCell>{b.workshopTitle}</TableCell>
                     <TableCell>{formatDateTime(b.startsAt, tz, locale)}</TableCell>
                     <TableCell><BookingStatusBadge status={b.status} /></TableCell>

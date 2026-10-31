@@ -40,7 +40,7 @@ export function BookingDetail({
   return (
     <div className="grid gap-4">
       <div>
-        <Link href="/dashboard/bookings" className="inline-flex items-center gap-1 text-sm text-muted-foreground underline-offset-4 hover:underline">
+        <Link href="/shopowner/bookings" className="inline-flex items-center gap-1 text-sm text-muted-foreground underline-offset-4 hover:underline">
           <ArrowLeft className="size-4" aria-hidden="true" />
           {t("bookings.title")}
         </Link>
@@ -88,7 +88,7 @@ export function BookingDetail({
             {customer ? (
               <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
                 <Row label={t("customers.name")}>
-                  <Link href={`/dashboard/customers/${customer.id}`} className="font-medium underline-offset-4 hover:underline">{customer.fullName}</Link>
+                  <Link href={`/shopowner/customers/${customer.id}`} className="font-medium underline-offset-4 hover:underline">{customer.fullName}</Link>
                 </Row>
                 <Row label={t("customers.email")}>{customer.email ?? t("common.noEmail")}</Row>
                 <Row label={t("customers.phone")}>{customer.phone ?? "-"}</Row>

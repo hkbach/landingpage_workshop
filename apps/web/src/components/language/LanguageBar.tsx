@@ -27,7 +27,7 @@ export function LanguageBar({ value, onChange, enabled, defaultLocale, missingBy
         <p id="language-bar-label" className="flex items-center gap-1.5 text-sm font-medium">
           <Languages className="size-4" aria-hidden />{t("language.barTitle")}
         </p>
-        <Link href="/dashboard/settings" className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground">
+        <Link href="/shopowner/settings" className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground">
           {t("language.manage")}
         </Link>
       </div>

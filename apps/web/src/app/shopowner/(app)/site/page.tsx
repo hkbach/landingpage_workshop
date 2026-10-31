@@ -5,7 +5,7 @@ import { countWorkshopsWithUpcomingSessions } from "@/components/builder/prereqs
 import { currentShop, sessions, sitePage, workshops } from "@/lib/mock/data";
 
 // Frontend-only: mock draft + shop. `?status=DRAFT|PENDING_REVIEW|ACTIVE|SUSPENDED` previews the submit/publish states.
-export default async function SiteBuilderPage({ searchParams }: PageProps<"/dashboard/site">) {
+export default async function SiteBuilderPage({ searchParams }: PageProps<"/shopowner/site">) {
   const sp = await searchParams;
   const requested = typeof sp.status === "string" ? sp.status : undefined;
   const status: OrgStatus = (ORG_STATUSES as readonly string[]).includes(requested ?? "") ? (requested as OrgStatus) : currentShop.status;

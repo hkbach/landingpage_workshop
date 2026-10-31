@@ -17,7 +17,7 @@ export default async function VerifyEmailPage({ searchParams }: PageProps<"/veri
       {expired ? (
         <Link href="/signup" className={buttonVariants({ size: "lg" })}>{t("signupAgain")}</Link>
       ) : (
-        <Link href="/dashboard/onboarding" className={buttonVariants({ size: "lg" })}>{t("continue")}</Link>
+        <Link href="/shopowner/onboarding" className={buttonVariants({ size: "lg" })}>{t("continue")}</Link>
       )}
     </div>
   );

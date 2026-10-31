@@ -136,7 +136,7 @@ export function OnboardingWizard({ platformDomain }: { platformDomain: string })
           <CardDescription>{t("done.body", { host: `${getValues("slug")}.${platformDomain}` })}</CardDescription>
         </CardHeader>
         <CardContent>
-          <Link href="/dashboard" className={buttonVariants()}>{t("done.cta")}</Link>
+          <Link href="/shopowner" className={buttonVariants()}>{t("done.cta")}</Link>
         </CardContent>
       </Card>
     );

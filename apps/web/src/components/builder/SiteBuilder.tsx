@@ -105,7 +105,7 @@ function BuilderInner({ shop, initial, initialStatus, upcomingWorkshopCount, app
   function closeTemplateDialog() {
     setPendingTemplate(null);
     // Drop ?apply=KEY so a reload does not reopen the dialog.
-    if (applyTemplate) window.history.replaceState(null, "", "/dashboard/site");
+    if (applyTemplate) window.history.replaceState(null, "", "/shopowner/site");
   }
   function confirmTemplate() {
     if (!pendingTemplate) return;

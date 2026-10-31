@@ -17,7 +17,7 @@ export default async function WorkshopsPage() {
     <div className="grid gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-xl font-semibold sm:text-2xl">{t("list.title")}</h1>
-        <Link href="/dashboard/workshops/new" className={buttonVariants()}>
+        <Link href="/shopowner/workshops/new" className={buttonVariants()}>
           <Plus aria-hidden="true" />
           {t("list.new")}
         </Link>
@@ -40,7 +40,7 @@ export default async function WorkshopsPage() {
               {rows.map((w) => (
                 <TableRow key={w.id}>
                   <TableCell>
-                    <Link href={`/dashboard/workshops/${w.id}`} className="font-medium underline-offset-4 hover:underline">
+                    <Link href={`/shopowner/workshops/${w.id}`} className="font-medium underline-offset-4 hover:underline">
                       {pickLocalized(w.title, displayLocale, currentShop.defaultLocale)}
                     </Link>
                   </TableCell>

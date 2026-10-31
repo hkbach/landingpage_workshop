@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { bookings, currentShop, customers, sessions } from "@/lib/mock/data";
 import { BookingDetail } from "@/components/ops/booking-detail";
 
-export default async function BookingDetailPage(props: PageProps<"/dashboard/bookings/[id]">) {
+export default async function BookingDetailPage(props: PageProps<"/shopowner/bookings/[id]">) {
   const { id } = await props.params;
   const booking = bookings.find((b) => b.id === id);
   if (!booking) notFound();

@@ -46,7 +46,7 @@ Giá trị cốt lõi:
 | Actor | Mô tả | Khu vực |
 |---|---|---|
 | **Platform Admin** | Đội vận hành nền tảng | `app.{PLATFORM_DOMAIN}/admin` |
-| **Shop Owner** | Chủ shop; đăng ký, tạo landing page, quản lý workshop/lịch/booking | `app.{PLATFORM_DOMAIN}/dashboard` |
+| **Shop Owner** | Chủ shop; đăng ký, tạo landing page, quản lý workshop/lịch/booking | `app.{PLATFORM_DOMAIN}/shopowner` |
 | **Traveler (Guest)** | Khách du lịch; xem landing page và đặt chỗ, không có tài khoản | `{shop}.{PLATFORM_DOMAIN}` |
 
 ### 1.2 Trong phạm vi MVP
@@ -154,7 +154,7 @@ Browser ────────────────────────
 
 | Host | Xử lý |
 |---|---|
-| `app.{PLATFORM_DOMAIN}` | Dashboard shop (`/dashboard/*`), admin (`/admin/*`), auth (`/login`, `/signup`…) |
+| `app.{PLATFORM_DOMAIN}` | Khu vực quản lý của shop owner (`/shopowner/*`; đường dẫn cũ `/dashboard/*` được chuyển hướng sang `/shopowner/*`), admin (`/admin/*`), auth (`/login`, `/signup`…) |
 | `{PLATFORM_DOMAIN}` | Trang marketing của nền tảng (đơn giản, tĩnh) |
 | `{slug}.{PLATFORM_DOMAIN}` | Landing page của shop. Next.js middleware/proxy (tùy phiên bản Next.js) rewrite sang `/sites/[slug]/[[...locale]]` |
 | `media.{PLATFORM_DOMAIN}` | R2 public bucket (custom domain của R2) |
@@ -171,7 +171,7 @@ Browser ────────────────────────
 │  │  ├─ src/app/
 │  │  │  ├─ (marketing)/        # trang chủ nền tảng
 │  │  │  ├─ (auth)/             # login, signup, verify, reset
-│  │  │  ├─ dashboard/          # shop owner
+│  │  │  ├─ shopowner/          # shop owner (trước đây: dashboard/)
 │  │  │  ├─ admin/              # platform admin
 │  │  │  └─ sites/[slug]/       # landing page public (SSR)
 │  │  ├─ src/components/

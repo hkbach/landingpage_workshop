@@ -57,7 +57,7 @@ export function BookingsList({
     <div className="grid gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-xl font-semibold sm:text-2xl">{t("bookings.title")}</h1>
-        <Link href="/dashboard/bookings/new" className={buttonVariants()}>
+        <Link href="/shopowner/bookings/new" className={buttonVariants()}>
           <Plus aria-hidden="true" />
           {t("bookings.new")}
         </Link>
@@ -127,7 +127,7 @@ export function BookingsList({
                 return (
                   <TableRow key={b.id}>
                     <TableCell>
-                      <Link href={`/dashboard/bookings/${b.id}`} className="font-mono font-medium underline-offset-4 hover:underline">{b.bookingCode}</Link>
+                      <Link href={`/shopowner/bookings/${b.id}`} className="font-mono font-medium underline-offset-4 hover:underline">{b.bookingCode}</Link>
                     </TableCell>
                     <TableCell>
                       <div className="font-medium">{c?.fullName ?? "-"}</div>

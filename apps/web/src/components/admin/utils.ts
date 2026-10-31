@@ -21,5 +21,5 @@ export function fmt(iso: string, locale: string): string {
  * TODO(api): per-shop admin preview via GET /admin/organizations/{id}/preview (FR-ADM-02).
  */
 export function previewHref(): string {
-  return "/dashboard/site/preview";
+  return "/shopowner/site/preview";
 }

@@ -57,7 +57,7 @@ export function LoginForm() {
       className="grid gap-4"
       onSubmit={handleSubmit(async () => {
         await fakeRequest();
-        router.push("/dashboard");
+        router.push("/shopowner");
       })}
     >
       <Field htmlFor="login-email" label={t("fields.email")} error={err("email")}>

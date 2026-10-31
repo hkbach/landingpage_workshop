@@ -107,7 +107,7 @@ export function BookingForm({
               <Button onClick={() => { setCreated(null); setV((p) => ({ ...p, fullName: "", email: "", phone: "", specialRequest: "", quantity: "1" })); }}>
                 {t("newBooking.another")}
               </Button>
-              <Link href="/dashboard/bookings" className={buttonVariants({ variant: "outline" })}>{t("bookings.title")}</Link>
+              <Link href="/shopowner/bookings" className={buttonVariants({ variant: "outline" })}>{t("bookings.title")}</Link>
             </div>
           </CardContent>
         </Card>
@@ -181,7 +181,7 @@ export function BookingForm({
         </Card>
         <div className="flex gap-2">
           <Button type="submit">{t("newBooking.submit")}</Button>
-          <Link href="/dashboard/bookings" className={buttonVariants({ variant: "outline" })}>{t("common.back")}</Link>
+          <Link href="/shopowner/bookings" className={buttonVariants({ variant: "outline" })}>{t("common.back")}</Link>
         </div>
       </form>
     </div>

@@ -56,7 +56,7 @@ export function SitePreview({ shop, initial, workshops, siteMessages, previewTem
     <div className="space-y-4 p-4 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <Link href="/dashboard/site" className={buttonVariants({ variant: "outline" })}><ArrowLeft />{t("previewPage.back")}</Link>
+          <Link href="/shopowner/site" className={buttonVariants({ variant: "outline" })}><ArrowLeft />{t("previewPage.back")}</Link>
           <h1 className="text-xl font-semibold tracking-tight">{t("previewPage.title")}</h1>
         </div>
         <div className="flex flex-wrap items-center gap-4">
@@ -95,8 +95,8 @@ export function SitePreview({ shop, initial, workshops, siteMessages, previewTem
             </span>
           </p>
           <div className="flex gap-2">
-            <Link href="/dashboard/site" className={buttonVariants({ variant: "outline" })}>{t("previewPage.templateBack")}</Link>
-            <Link href={`/dashboard/site?apply=${previewTemplate}`} className={buttonVariants()}>{t("previewPage.templateApply")}</Link>
+            <Link href="/shopowner/site" className={buttonVariants({ variant: "outline" })}>{t("previewPage.templateBack")}</Link>
+            <Link href={`/shopowner/site?apply=${previewTemplate}`} className={buttonVariants()}>{t("previewPage.templateApply")}</Link>
           </div>
         </div>
       ) : null}

@@ -249,7 +249,7 @@ export function WorkshopForm({
 
       <div className="flex flex-wrap items-center gap-2">
         <Button type="submit">{t("form.save")}</Button>
-        <Link href="/dashboard/workshops" className={buttonVariants({ variant: "outline" })}>{t("form.back")}</Link>
+        <Link href="/shopowner/workshops" className={buttonVariants({ variant: "outline" })}>{t("form.back")}</Link>
         {workshop && d.status !== "ARCHIVED" ? (
           <Button type="button" variant="destructive" onClick={() => setArchiveOpen(true)}>
             <Archive aria-hidden="true" />

@@ -22,7 +22,7 @@ export function WorkshopDetail({
   const [status, setStatus] = useState<WorkshopStatus>(workshop.status);
   return (
     <div className="grid gap-4">
-      <Link href="/dashboard/workshops" className="inline-flex items-center gap-1 text-sm text-muted-foreground underline-offset-4 hover:underline">
+      <Link href="/shopowner/workshops" className="inline-flex items-center gap-1 text-sm text-muted-foreground underline-offset-4 hover:underline">
         <ArrowLeft className="size-4" aria-hidden="true" />
         {t("list.title")}
       </Link>

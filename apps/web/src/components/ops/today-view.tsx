@@ -84,7 +84,7 @@ export function TodayView({
                   {t("today.completeAll", { count: checkedIn.length })}
                 </Button>
                 <Link
-                  href={`/dashboard/bookings/new?session=${s.id}`}
+                  href={`/shopowner/bookings/new?session=${s.id}`}
                   className="inline-flex h-7 items-center rounded-lg border border-border px-2.5 text-[0.8rem] font-medium hover:bg-muted"
                 >
                   {t("today.addWalkIn")}
@@ -102,7 +102,7 @@ export function TodayView({
                     <li key={b.id} className={`grid gap-2 rounded-lg border p-3 ${inactive ? "bg-muted/40" : ""}`}>
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <div className="min-w-0">
-                          <Link href={`/dashboard/bookings/${b.id}`} className="font-medium underline-offset-4 hover:underline">
+                          <Link href={`/shopowner/bookings/${b.id}`} className="font-medium underline-offset-4 hover:underline">
                             {c?.fullName ?? "-"}
                           </Link>
                           <p className="flex flex-wrap items-center gap-x-3 text-xs text-muted-foreground">

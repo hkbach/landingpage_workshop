@@ -30,7 +30,7 @@ export function DashboardShell({ shop, banner, children }: { shop: ShellShop; ba
     return () => document.removeEventListener("keydown", onKey);
   }, [open]);
 
-  const isActive = (href: string) => (href === "/dashboard" ? pathname === href : pathname.startsWith(href));
+  const isActive = (href: string) => (href === "/shopowner" ? pathname === href : pathname.startsWith(href));
 
   return (
     <div className="flex min-h-screen bg-muted/30">
@@ -48,7 +48,7 @@ export function DashboardShell({ shop, banner, children }: { shop: ShellShop; ba
         )}
       >
         <div className="flex h-14 items-center justify-between border-b px-4">
-          <Link href="/dashboard" className="truncate font-semibold" onClick={() => setOpen(false)}>
+          <Link href="/shopowner" className="truncate font-semibold" onClick={() => setOpen(false)}>
             {t("common.appName")}
           </Link>
           <Button variant="ghost" size="icon" className="md:hidden" aria-label={t("dashboard.shell.closeMenu")} onClick={() => setOpen(false)}>

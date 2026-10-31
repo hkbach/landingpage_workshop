@@ -4,7 +4,7 @@ import { SitePreview } from "@/components/builder/SitePreview";
 import { currentShop, sitePage, workshops } from "@/lib/mock/data";
 
 // Preview of the DRAFT with the same PageRenderer as the public site (FR-SITE-03). Dashboard-only route.
-export default async function SitePreviewPage({ searchParams }: PageProps<"/dashboard/site/preview">) {
+export default async function SitePreviewPage({ searchParams }: PageProps<"/shopowner/site/preview">) {
   const sp = await searchParams;
   const template = typeof sp.template === "string" && isTemplateKey(sp.template) ? sp.template : undefined;
   const messages = await Promise.all(

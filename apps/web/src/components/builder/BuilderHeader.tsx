@@ -50,7 +50,7 @@ export function BuilderHeader({ saveState, status, action, message, onPublish, o
             <span className={cn("sr-only sm:not-sr-only", saveState === "idle" && "hidden sm:inline")}>{save.text}</span>
           </p>
           <Badge variant="secondary" className="hidden sm:inline-flex">{t(`publish.status.${status}`)}</Badge>
-          <Link href="/dashboard/site/preview" className={cn(buttonVariants({ variant: "outline" }), "px-2.5 sm:px-3")} title={t("preview")}>
+          <Link href="/shopowner/site/preview" className={cn(buttonVariants({ variant: "outline" }), "px-2.5 sm:px-3")} title={t("preview")}>
             <Eye /><span className="sr-only sm:not-sr-only">{t("preview")}</span>
           </Link>
           {action.kind === "publish" || action.kind === "submit" ? (

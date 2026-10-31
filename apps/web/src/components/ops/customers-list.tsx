@@ -63,7 +63,7 @@ export function CustomersList({ customers, bookings, timezone }: { customers: Cu
             <TableBody>
               {rows.map(({ c, count, last, spent, currency }) => (
                 <TableRow key={c.id}>
-                  <TableCell><Link href={`/dashboard/customers/${c.id}`} className="font-medium underline-offset-4 hover:underline">{c.fullName}</Link></TableCell>
+                  <TableCell><Link href={`/shopowner/customers/${c.id}`} className="font-medium underline-offset-4 hover:underline">{c.fullName}</Link></TableCell>
                   <TableCell>{c.email ?? t("common.noEmail")}</TableCell>
                   <TableCell>{c.country}</TableCell>
                   <TableCell>{count}</TableCell>
