@@ -456,6 +456,11 @@ Browser ────────────────────────
 **FR-ADM-06 – Template (Should)**
 - MVP: template định nghĩa trong code (`packages/shared`). Admin chỉ bật/tắt template.
 
+**FR-ADM-07 – Thông tin liên hệ hỗ trợ của nền tảng (Should, phát triển sau)**
+- Admin cấu hình các kênh hỗ trợ của nền tảng: **WhatsApp, Phone, Zalo, Email** (giá trị toàn nền tảng, không theo shop; lưu trong `platform_settings`).
+- Shop owner thấy các kênh này trong khung **Publish** của trình dựng trang ("Need help?") ở mọi trạng thái shop. Chỉ hiển thị kênh đã nhập; liên kết được dựng ở phía ứng dụng sau khi kiểm tra định dạng (`wa.me`, `tel:`, `zalo.me`, `mailto:`), giá trị sai bị bỏ qua.
+- Hiện tại (MVP, chưa có trang admin này) dùng dữ liệu mock tại `apps/web/src/lib/mock/platform.ts`.
+
 ---
 
 ## 6. Quy tắc nghiệp vụ

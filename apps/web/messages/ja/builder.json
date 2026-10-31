@@ -140,5 +140,16 @@
   },
   "editor": {
     "editingIn": "{language}で編集中"
+  },
+  "support": {
+    "title": "お困りですか？",
+    "hint": "公開、ウェブサイトの審査、アカウントについては当社チームまでご連絡ください。",
+    "opensNewTab": "新しいタブで開きます",
+    "channels": {
+      "whatsapp": "WhatsApp",
+      "phone": "電話",
+      "zalo": "Zalo",
+      "email": "メール"
+    }
   }
 }

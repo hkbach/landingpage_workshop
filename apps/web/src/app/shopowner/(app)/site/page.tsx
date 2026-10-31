@@ -3,6 +3,7 @@ import { isTemplateKey } from "@/components/sections/templates";
 import { SiteBuilder } from "@/components/builder/SiteBuilder";
 import { countWorkshopsWithUpcomingSessions } from "@/components/builder/prereqs";
 import { currentShop, sessions, sitePage, workshops } from "@/lib/mock/data";
+import { platformSupport } from "@/lib/mock/platform";
 
 // Frontend-only: mock draft + shop. `?status=DRAFT|PENDING_REVIEW|ACTIVE|SUSPENDED` previews the submit/publish states.
 export default async function SiteBuilderPage({ searchParams }: PageProps<"/shopowner/site">) {
@@ -21,6 +22,7 @@ export default async function SiteBuilderPage({ searchParams }: PageProps<"/shop
       initialStatus={status}
       applyTemplate={apply}
       upcomingWorkshopCount={countWorkshopsWithUpcomingSessions(workshops, sessions)}
+      support={platformSupport}
     />
   );
 }

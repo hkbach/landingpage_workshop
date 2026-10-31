@@ -20,6 +20,8 @@ import { PublishPanel, type Prerequisite } from "./PublishPanel";
 import { normalizeOrder } from "@/components/sections/order";
 import { BookButtonToggle } from "./BookButtonToggle";
 import { BuilderHeader } from "./BuilderHeader";
+import { SupportContactBox } from "./SupportContactBox";
+import type { SupportContact } from "@/lib/support-contact";
 import { LanguageBar } from "@/components/language/LanguageBar";
 import { useEditingLanguage } from "@/lib/use-shop-language";
 import { publishAction } from "./publish-state";
@@ -36,6 +38,8 @@ interface Props {
   initial: { content: PageContent; theme: PageTheme; template: TemplateKey };
   initialStatus: OrgStatus;
   upcomingWorkshopCount: number;
+  /** Platform support contact (configured by a platform admin later; mock data for now). */
+  support?: SupportContact;
   /** Template requested via ?apply=KEY (template preview banner): opens the confirmation dialog. */
   applyTemplate?: TemplateKey;
 }
@@ -51,7 +55,7 @@ export function SiteBuilder(props: Props) {
 
 const SEO_ID = "__seo__";
 
-function BuilderInner({ shop, initial, initialStatus, upcomingWorkshopCount, applyTemplate }: Props) {
+function BuilderInner({ shop, initial, initialStatus, upcomingWorkshopCount, applyTemplate, support }: Props) {
   const t = useTranslations("builder");
   const [draft, setDraft] = useState<Draft>(() => loadDraft() ?? { ...initial });
   const [rev, setRev] = useState(0);
@@ -249,6 +253,7 @@ function BuilderInner({ shop, initial, initialStatus, upcomingWorkshopCount, app
               status={status} prerequisites={prerequisites} invalidSections={invalidSections} invalidTheme={invalidTheme}
               message={publishMessage} onSubmitForReview={submitNow} onPublish={publishNow}
             />
+            <SupportContactBox contact={support} />
           </CardContent>
         </Card>
 

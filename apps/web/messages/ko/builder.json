@@ -140,5 +140,16 @@
   },
   "editor": {
     "editingIn": "{language}(으)로 편집 중"
+  },
+  "support": {
+    "title": "도움이 필요하세요?",
+    "hint": "게시, 웹사이트 검토 또는 계정에 대해 저희 팀에 문의하세요.",
+    "opensNewTab": "새 탭에서 열림",
+    "channels": {
+      "whatsapp": "WhatsApp",
+      "phone": "전화",
+      "zalo": "Zalo",
+      "email": "이메일"
+    }
   }
 }

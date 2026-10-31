@@ -361,5 +361,16 @@
       "workshops": "Shows a Book button on each workshop. When off, the workshops are shown for information only.",
       "generic": "Adds a Book button at the end of this section. Visitors click it to open the booking window."
     }
+  },
+  "support": {
+    "title": "Need help?",
+    "hint": "Contact our team about publishing, the review of your website or your account.",
+    "opensNewTab": "opens in a new tab",
+    "channels": {
+      "whatsapp": "WhatsApp",
+      "phone": "Phone",
+      "zalo": "Zalo",
+      "email": "Email"
+    }
   }
 }
