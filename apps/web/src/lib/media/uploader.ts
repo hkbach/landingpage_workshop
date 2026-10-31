@@ -1,4 +1,5 @@
 import { validateImageFile, type ImageErrorCode } from "./validate";
+import { newUuid } from "@/lib/uuid";
 
 // Media upload seam (FR-MEDIA-01). Today: a mock that resizes in the browser and returns a data: URL.
 // M2: replace `mediaUploader` with an implementation that calls POST /media/presign-upload, PUTs the file to R2 and
@@ -87,7 +88,7 @@ export const mockMediaUploader: MediaUploader = {
       }
       if (!url.startsWith("data:image/")) throw new MediaUploadError("failed");
       if (!fitsInStorage(url)) throw new MediaUploadError("storageFull");
-      return { id: crypto.randomUUID(), url, width, height };
+      return { id: newUuid(), url, width, height };
     } catch (e) {
       throw e instanceof MediaUploadError ? e : new MediaUploadError("failed");
     } finally {

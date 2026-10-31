@@ -18,6 +18,7 @@ import { modalThemeStyle } from "@/components/sections/theme";
 import { COUNTRY_CODES, countryName } from "./countries";
 import { bookingContactSchema, type BookingFormValues } from "./schema";
 import { simulateBooking } from "./simulate";
+import { newUuid } from "@/lib/uuid";
 
 export type BookingShop = Pick<Shop, "name" | "slug" | "timezone" | "currency" | "defaultLocale" | "bookingCutoffMinutes">;
 
@@ -96,7 +97,7 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
   const tp = useTranslations("site");
   const router = useRouter();
   const [now] = useState(() => Date.now());
-  const [idempotencyKey] = useState(() => crypto.randomUUID());
+  const [idempotencyKey] = useState(() => newUuid());
   const L = (v: Parameters<typeof pickLocalized>[0]) => pickLocalized(v, locale, shop.defaultLocale);
 
   // Bookable = OPEN and starts after now + cutoff (FR-BOOK-01). Full sessions stay visible as "Sold out".

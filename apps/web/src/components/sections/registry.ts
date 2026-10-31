@@ -3,6 +3,7 @@ import { isYoutubeId, LOCALES, MAX_SECTION_VIDEOS, migrateVideoProps, type Local
 import type { SectionInstance } from "@/lib/types";
 import { isAllowedMapsUrl, isHttpsUrl, isImageUrl, MAX_DATA_IMAGE_LENGTH } from "./safe-url";
 import type { Tone } from "./theme";
+import { newUuid } from "@/lib/uuid";
 
 // Section registry (FR-SITE-02): per type -> schema, defaults, layout variants and a field descriptor that drives the
 // generic editor. All templates share these 11 types and one renderer per type (the variant is a renderer prop).
@@ -247,7 +248,7 @@ export function effectiveVariant(section: Pick<SectionInstance, "type" | "varian
 
 export function createSection(type: SectionType, variant?: string): SectionInstance {
   return {
-    id: crypto.randomUUID(), type, enabled: true,
+    id: newUuid(), type, enabled: true,
     variant: isValidVariant(type, variant) ? variant : defaultVariant(type),
     props: SECTION_REGISTRY[type].defaultProps(),
   };
