@@ -110,3 +110,23 @@ describe("draft store: single video -> video list migration", () => {
     expect(videoOf(withVideoProps({ heading: {}, caption: {}, videos: ids }))?.props.videos).toEqual(ids.slice(0, 5));
   });
 });
+
+describe("draft store: hero first, footer last", () => {
+  const reorder = (order: string[]) => {
+    const d = valid();
+    const byType = new Map(d.content.sections.map((s) => [s.type, s]));
+    return { ...d, content: { ...d.content, sections: order.map((t) => byType.get(t as never)!).filter(Boolean) } };
+  };
+  const typesOf = (raw: unknown) => parseDraft(JSON.stringify(raw))?.content.sections.map((s) => s.type);
+
+  it("repairs a stored draft whose hero is not first and whose footer is not last", () => {
+    const order = typesOf(reorder(["about", "footer", "workshops", "hero", "faq"]));
+    expect(order?.[0]).toBe("hero");
+    expect(order?.[order.length - 1]).toBe("footer");
+    expect(order?.slice(1, -1)).toEqual(["about", "workshops", "faq"]);
+  });
+
+  it("leaves a valid order untouched", () => {
+    expect(typesOf(reorder(["hero", "faq", "about", "footer"]))).toEqual(["hero", "faq", "about", "footer"]);
+  });
+});

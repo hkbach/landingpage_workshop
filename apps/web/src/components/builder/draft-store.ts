@@ -1,5 +1,6 @@
 import { SECTION_TYPES, type SectionType } from "@workshop/shared";
 import type { PageContent, PageTheme, SectionInstance, ThemeDensity, ThemeRadius } from "@/lib/types";
+import { normalizeOrder } from "@/components/sections/order";
 import { createSection, isValidVariant, migrateSectionProps } from "@/components/sections/registry";
 import { isImageUrl } from "@/components/sections/safe-url";
 import { isLayoutKey } from "@/components/sections/layouts";
@@ -66,7 +67,7 @@ export function sanitizeDraft(raw: unknown): Draft | null {
   return {
     template, theme,
     content: {
-      schemaVersion: 1, layout, sections,
+      schemaVersion: 1, layout, sections: normalizeOrder(sections),
       seo: { title: isObj(seo.title) ? seo.title : {}, description: isObj(seo.description) ? seo.description : {} },
     } as PageContent,
   };

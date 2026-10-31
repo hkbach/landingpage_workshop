@@ -122,6 +122,10 @@
   "sections": {
     "show": "ページに表示",
     "showHint": "チェックするとこのセクションがウェブサイトに表示されます。外すと非表示になり、内容は保持されます。",
-    "enable": "ページに表示: {name}"
+    "enable": "ページに表示: {name}",
+    "moveUp": "{name}を上へ移動",
+    "moveDown": "{name}を下へ移動",
+    "moved": "{name}を{total}件中{position}番目に移動しました。",
+    "heroLocked": "ヒーローバナーは常に一番上に固定されます。"
   }
 }

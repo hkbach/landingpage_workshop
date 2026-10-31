@@ -292,6 +292,7 @@ Browser ────────────────────────
 | `footer` | text, link mạng xã hội | Luôn có, không xóa được |
 
 - Thao tác: thêm, xóa, bật/tắt, sắp xếp (dnd-kit), sửa props.
+- **Thứ tự section (v1.2):** đổi thứ tự bằng kéo thả (dnd-kit) hoặc nút mũi tên lên/xuống (có bàn phím và thông báo cho trình đọc màn hình). **Hero luôn là section đầu tiên và Footer luôn là section cuối cùng; cả hai bị khóa vị trí** (không kéo, không có mũi tên, không section nào chen lên trước Hero hoặc xuống sau Footer). Quy tắc này được áp dụng ở mọi nơi tạo danh sách section: kéo thả, mũi tên, thêm section, đổi template và nạp bản nháp đã lưu.
 - Theme: chọn palette có sẵn + 1 màu primary (hex, kiểm tra contrast tối thiểu 4.5:1 với text), font từ danh sách cho phép (tối đa 6 font, hỗ trợ đủ glyph VI/KO/JA/ZH/ZH-TW hoặc có fallback; thứ tự font CJK dự phòng phải theo ngôn ngữ của trang để chữ Hán dùng đúng dạng chữ vùng miền), logo, favicon.
 - **Tùy chỉnh màu (v1.2):** ngoài theme token toàn trang (primary, nền, chữ, nút), mỗi section có thể ghi đè `style` gồm `background`, `text`, `accent` (hex). Chỉ nhận hex hợp lệ; builder cảnh báo khi contrast chữ/nền < 4.5:1 và chặn publish nếu không đạt. Màu render qua CSS variables, không nhận CSS tùy ý.
 - **Ảnh (v1.2):** shop upload ảnh theo FR-MEDIA-01 (jpeg/png/webp, tối đa 5 MB) cho logo, favicon, hero, about, gallery, team. Builder tạm dùng bộ upload mock cho tới khi có API (M2).

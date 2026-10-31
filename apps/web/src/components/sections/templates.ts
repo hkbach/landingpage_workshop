@@ -1,5 +1,6 @@
 import type { SectionType } from "@workshop/shared";
 import type { LayoutKey, PageContent, PageTheme, SectionInstance, ThemeDensity, ThemeRadius } from "@/lib/types";
+import { normalizeOrder } from "./order";
 import { createSection, defaultVariant, hasContent } from "./registry";
 import { paletteTokens } from "./theme";
 
@@ -186,7 +187,8 @@ export function planTemplateSwitch(content: PageContent, key: TemplateKey): Temp
   // Keep the footer last.
   const footerIdx = listed.findIndex((x) => x.type === "footer");
   const sections = footerIdx < 0 ? [...listed, ...kept] : [...listed.slice(0, footerIdx), ...kept, ...listed.slice(footerIdx)];
-  return { layout: TEMPLATES[key].layout, sections, added, hidden, removed };
+  // The hero is always first and the footer always last, whatever the template or the page had.
+  return { layout: TEMPLATES[key].layout, sections: normalizeOrder(sections), added, hidden, removed };
 }
 
 export function applyTemplate(content: PageContent, key: TemplateKey): PageContent {

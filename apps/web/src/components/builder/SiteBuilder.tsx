@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { loadDraft, saveDraft, type Draft } from "./draft-store";
 import { FieldsEditor } from "./FieldsEditor";
 import { PublishPanel, type Prerequisite } from "./PublishPanel";
+import { normalizeOrder } from "@/components/sections/order";
 import { BookButtonToggle } from "./BookButtonToggle";
 import { SectionColorsGroup } from "./SectionColorsGroup";
 import { SectionList } from "./SectionList";
@@ -75,7 +76,8 @@ function BuilderInner({ shop, initial, initialStatus, upcomingWorkshopCount, app
     setSaveState("pending");
   }
   const setContent = (content: PageContent) => change({ ...draft, content });
-  const setSections = (sections: SectionInstance[]) => setContent({ ...draft.content, sections });
+  // Every change goes through normalizeOrder: the hero stays first and the footer last, whatever the caller did.
+  const setSections = (sections: SectionInstance[]) => setContent({ ...draft.content, sections: normalizeOrder(sections) });
   const patchSection = (id: string, patch: Partial<SectionInstance>) =>
     setSections(draft.content.sections.map((s) => (s.id === id ? { ...s, ...patch } : s)));
 

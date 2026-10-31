@@ -71,7 +71,11 @@
     "choose": "Choose a section type",
     "add": "Add",
     "show": "Show on page",
-    "showHint": "Tick to show this section on your website. Untick to hide it; your content is kept."
+    "showHint": "Tick to show this section on your website. Untick to hide it; your content is kept.",
+    "moveUp": "Move {name} up",
+    "moveDown": "Move {name} down",
+    "moved": "{name} moved to position {position} of {total}.",
+    "heroLocked": "The hero banner is required to stay at the top."
   },
   "sectionTypes": {
     "hero": "Hero",

@@ -122,6 +122,10 @@
   "sections": {
     "show": "Hiện trên trang",
     "showHint": "Đánh dấu để hiện phần này trên website. Bỏ đánh dấu để ẩn; nội dung của bạn vẫn được giữ.",
-    "enable": "Hiện trên trang: {name}"
+    "enable": "Hiện trên trang: {name}",
+    "moveUp": "Chuyển {name} lên",
+    "moveDown": "Chuyển {name} xuống",
+    "moved": "{name} đã chuyển đến vị trí {position}/{total}.",
+    "heroLocked": "Banner đầu trang luôn nằm ở trên cùng."
   }
 }

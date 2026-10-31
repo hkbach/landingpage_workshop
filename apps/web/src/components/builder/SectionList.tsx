@@ -6,15 +6,16 @@ import {
 } from "@dnd-kit/core";
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Lock, Plus, Trash2, TriangleAlert } from "lucide-react";
+import { ArrowDown, ArrowUp, GripVertical, Lock, Plus, Trash2, TriangleAlert } from "lucide-react";
 import type { SectionType } from "@workshop/shared";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { canMove, isPositionLocked, moveSection, movablePosition, movableSections } from "@/components/sections/order";
 import { ADDABLE_TYPES, SECTION_REGISTRY } from "@/components/sections/registry";
 import type { SectionInstance } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface Props {
   sections: SectionInstance[];
@@ -28,13 +29,17 @@ interface Props {
   onAdd: (type: SectionType) => void;
 }
 
-function Row({ section, invalid, selected, onSelect, onToggle, onRemove }: {
-  section: SectionInstance; invalid: boolean; selected: boolean; onSelect: () => void; onToggle: (enabled: boolean) => void; onRemove: () => void;
+function Row({ section, invalid, selected, canUp, canDown, onMove, onSelect, onToggle, onRemove }: {
+  section: SectionInstance; invalid: boolean; selected: boolean; canUp: boolean; canDown: boolean;
+  onMove: (direction: -1 | 1) => void; onSelect: () => void; onToggle: (enabled: boolean) => void; onRemove: () => void;
 }) {
   const t = useTranslations("builder");
   const def = SECTION_REGISTRY[section.type];
+  // fixed: the footer (cannot be hidden or removed). locked: hero and footer keep their position (first / last).
   const fixed = !def.removable;
-  const { setNodeRef, setActivatorNodeRef, attributes, listeners, transform, transition, isDragging } = useSortable({ id: section.id, disabled: fixed });
+  const locked = isPositionLocked(section.type);
+  const lockedHint = section.type === "hero" ? t("sections.heroLocked") : t("sections.footerLocked");
+  const { setNodeRef, setActivatorNodeRef, attributes, listeners, transform, transition, isDragging } = useSortable({ id: section.id, disabled: locked });
   const name = t(`sectionTypes.${section.type}`);
   return (
     <li
@@ -47,9 +52,9 @@ function Row({ section, invalid, selected, onSelect, onToggle, onRemove }: {
         !section.enabled && "opacity-70",
       )}
     >
-      {fixed ? (
-        <span className="flex size-8 items-center justify-center text-muted-foreground" title={t("sections.footerLocked")}>
-          <Lock className="size-4" aria-hidden /><span className="sr-only">{t("sections.footerLocked")}</span>
+      {locked ? (
+        <span className="flex size-8 items-center justify-center text-muted-foreground" title={lockedHint}>
+          <Lock className="size-4" aria-hidden /><span className="sr-only">{lockedHint}</span>
         </span>
       ) : (
         <button
@@ -71,6 +76,25 @@ function Row({ section, invalid, selected, onSelect, onToggle, onRemove }: {
           </span>
         ) : null}
       </button>
+      {/* Up/down buttons; locked rows keep the same width so the columns line up. */}
+      <div className="flex w-[3.75rem] shrink-0 items-center justify-end gap-0.5">
+        {locked ? null : (
+          <>
+            <Button
+              type="button" variant="ghost" size="icon-sm" disabled={!canUp} onClick={() => onMove(-1)}
+              data-move={`${section.id}:-1`} title={t("sections.moveUp", { name })} aria-label={t("sections.moveUp", { name })}
+            >
+              <ArrowUp />
+            </Button>
+            <Button
+              type="button" variant="ghost" size="icon-sm" disabled={!canDown} onClick={() => onMove(1)}
+              data-move={`${section.id}:1`} title={t("sections.moveDown", { name })} aria-label={t("sections.moveDown", { name })}
+            >
+              <ArrowDown />
+            </Button>
+          </>
+        )}
+      </div>
       <div className="flex items-center gap-1.5 px-1" title={fixed ? t("sections.footerLocked") : t("sections.showHint")}>
         <Checkbox
           id={`en-${section.id}`} checked={section.enabled} disabled={fixed}
@@ -93,13 +117,17 @@ function Row({ section, invalid, selected, onSelect, onToggle, onRemove }: {
 export function SectionList({ sections, attention, selectedId, onSelect, onReorder, onToggle, onRemove, onAdd }: Props) {
   const t = useTranslations("builder");
   const [toAdd, setToAdd] = useState<SectionType | "">("");
+  const [announcement, setAnnouncement] = useState("");
+  const listRef = useRef<HTMLDivElement>(null);
+  const pendingFocus = useRef<{ id: string; direction: -1 | 1 } | null>(null);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
-  // The footer is mandatory and always last: only the other sections take part in sorting.
+  // The hero is always first and the footer always last (locked positions): only the sections between them are sortable.
+  const hero = sections.filter((s) => s.type === "hero");
   const footer = sections.filter((s) => s.type === "footer");
-  const movable = sections.filter((s) => s.type !== "footer");
+  const movable = movableSections(sections);
   const present = new Set(sections.map((s) => s.type));
   const addable = ADDABLE_TYPES.filter((ty) => !present.has(ty));
   const nameOf = (id: string | number) => {
@@ -112,11 +140,42 @@ export function SectionList({ sections, attention, selectedId, onSelect, onReord
     const from = movable.findIndex((s) => s.id === e.active.id);
     const to = movable.findIndex((s) => s.id === e.over!.id);
     if (from < 0 || to < 0) return;
-    onReorder([...arrayMove(movable, from, to), ...footer]);
+    onReorder([...hero, ...arrayMove(movable, from, to), ...footer]);
   }
 
+  function move(id: string, direction: -1 | 1) {
+    const next = moveSection(sections, id, direction);
+    const pos = movablePosition(next, id);
+    pendingFocus.current = { id, direction };
+    onReorder(next);
+    if (pos) setAnnouncement(t("sections.moved", { name: nameOf(id), position: pos.position, total: pos.total }));
+  }
+
+  // Keep keyboard focus on the button that was used (re-ordering moves DOM nodes); at an edge fall back to the other one.
+  useEffect(() => {
+    const pending = pendingFocus.current;
+    if (!pending) return;
+    pendingFocus.current = null;
+    const root = listRef.current;
+    const same = root?.querySelector<HTMLButtonElement>(`[data-move="${pending.id}:${pending.direction}"]`);
+    const other = root?.querySelector<HTMLButtonElement>(`[data-move="${pending.id}:${-pending.direction}"]`);
+    (same && !same.disabled ? same : other)?.focus();
+  }, [sections]);
+
+  const rowProps = (s: SectionInstance) => ({
+    section: s, invalid: attention.has(s.id), selected: selectedId === s.id,
+    canUp: canMove(sections, s.id, -1), canDown: canMove(sections, s.id, 1),
+    onMove: (d: -1 | 1) => move(s.id, d), onSelect: () => onSelect(s.id),
+  });
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" ref={listRef}>
+      <p role="status" aria-live="polite" className="sr-only">{announcement}</p>
+      <ul className="space-y-1.5">
+        {hero.map((s) => (
+          <Row key={s.id} {...rowProps(s)} onToggle={(en) => onToggle(s.id, en)} onRemove={() => onRemove(s.id)} />
+        ))}
+      </ul>
       <DndContext
         sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}
         accessibility={{
@@ -132,15 +191,14 @@ export function SectionList({ sections, attention, selectedId, onSelect, onReord
         <SortableContext items={movable.map((s) => s.id)} strategy={verticalListSortingStrategy}>
           <ul className="space-y-1.5">
             {movable.map((s) => (
-              <Row key={s.id} section={s} invalid={attention.has(s.id)} selected={selectedId === s.id} onSelect={() => onSelect(s.id)}
-                onToggle={(en) => onToggle(s.id, en)} onRemove={() => onRemove(s.id)} />
+              <Row key={s.id} {...rowProps(s)} onToggle={(en) => onToggle(s.id, en)} onRemove={() => onRemove(s.id)} />
             ))}
           </ul>
         </SortableContext>
       </DndContext>
       <ul className="space-y-1.5">
         {footer.map((s) => (
-          <Row key={s.id} section={s} invalid={attention.has(s.id)} selected={selectedId === s.id} onSelect={() => onSelect(s.id)} onToggle={() => {}} onRemove={() => {}} />
+          <Row key={s.id} {...rowProps(s)} onToggle={() => {}} onRemove={() => {}} />
         ))}
       </ul>
 
