@@ -94,7 +94,43 @@ export function loadDraft(): Draft | null {
   }
 }
 
+/** Where the content shown when the builder opens comes from. */
+export type BuilderSource = "draft" | "published" | "starter";
+
+/**
+ * Opening rule of the website builder: the LAST SAVED DRAFT; if there is none but the page is already published (public),
+ * the PUBLISHED version; only a shop with neither starts from the template starter content.
+ * A draft with unpublished changes is never replaced by older published content, and a public page never opens empty.
+ */
+export function chooseInitialDraft(c: { saved: Draft | null; published: Draft | null; starter: Draft }): { draft: Draft; source: BuilderSource } {
+  if (c.saved) return { draft: c.saved, source: "draft" };
+  if (c.published) return { draft: c.published, source: "published" };
+  return { draft: c.starter, source: "starter" };
+}
+
+/** Published version (frontend-only stand-in for site_pages.published_content): written when the shop publishes. */
+export const PUBLISHED_KEY = "builder:published:v1";
+
+export function loadPublished(): Draft | null {
+  try {
+    return parseDraft(window.localStorage.getItem(PUBLISHED_KEY));
+  } catch {
+    return null;
+  }
+}
+
 export type SaveResult = { ok: true } | { ok: false; reason: "quota" | "unavailable" };
+
+/** Publishing copies the draft to the published version. Never throws, like saveDraft. */
+export function savePublished(draft: Draft): SaveResult {
+  try {
+    window.localStorage.setItem(PUBLISHED_KEY, JSON.stringify(draft));
+    return { ok: true };
+  } catch (e) {
+    const quota = e instanceof DOMException && (e.name === "QuotaExceededError" || e.name === "NS_ERROR_DOM_QUOTA_REACHED");
+    return { ok: false, reason: quota ? "quota" : "unavailable" };
+  }
+}
 
 /** Never throws: a full or blocked localStorage is reported to the UI instead of crashing it. */
 export function saveDraft(draft: Draft): SaveResult {

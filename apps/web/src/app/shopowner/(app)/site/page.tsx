@@ -19,6 +19,8 @@ export default async function SiteBuilderPage({ searchParams }: PageProps<"/shop
         contactEmail: currentShop.contactEmail, contactPhone: currentShop.contactPhone,
       }}
       initial={{ content: sitePage.draft, theme: sitePage.theme, template: sitePage.template }}
+      // A shop that is already live has a published version: it is shown when there is no saved draft.
+      initialSource={status === "ACTIVE" ? "published" : "starter"}
       initialStatus={status}
       applyTemplate={apply}
       upcomingWorkshopCount={countWorkshopsWithUpcomingSessions(workshops, sessions)}

@@ -14,7 +14,7 @@ import { failingThemeChecks, needsAttention } from "@/components/sections/instan
 import { planTemplateSwitch, TEMPLATES, themeForTemplate, type TemplateKey } from "@/components/sections/templates";
 import type { PageContent, PageTheme, SectionInstance, Shop } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { loadDraft, saveDraft, type Draft } from "./draft-store";
+import { loadDraft, saveDraft, type Draft, chooseInitialDraft, loadPublished, savePublished, type BuilderSource } from "./draft-store";
 import { FieldsEditor } from "./FieldsEditor";
 import { PublishPanel, type Prerequisite } from "./PublishPanel";
 import { normalizeOrder } from "@/components/sections/order";
@@ -35,7 +35,9 @@ export type BuilderShop = Pick<Shop, "name" | "defaultLocale" | "enabledLocales"
 
 interface Props {
   shop: BuilderShop;
+  /** Content of the page as the server has it: the published version when `initialSource` is "published", else a template starter. */
   initial: { content: PageContent; theme: PageTheme; template: TemplateKey };
+  initialSource?: "published" | "starter";
   initialStatus: OrgStatus;
   upcomingWorkshopCount: number;
   /** Platform support contact (configured by a platform admin later; mock data for now). */
@@ -55,9 +57,16 @@ export function SiteBuilder(props: Props) {
 
 const SEO_ID = "__seo__";
 
-function BuilderInner({ shop, initial, initialStatus, upcomingWorkshopCount, applyTemplate, support }: Props) {
+function BuilderInner({ shop, initial, initialSource = "starter", initialStatus, upcomingWorkshopCount, applyTemplate, support }: Props) {
   const t = useTranslations("builder");
-  const [draft, setDraft] = useState<Draft>(() => loadDraft() ?? { ...initial });
+  // Opening rule: last saved draft > published version > template starter (see chooseInitialDraft).
+  const [opened] = useState(() => chooseInitialDraft({
+    saved: loadDraft(),
+    published: loadPublished() ?? (initialSource === "published" ? initial : null),
+    starter: { ...initial },
+  }));
+  const [draft, setDraft] = useState<Draft>(opened.draft);
+  const [view, setView] = useState<BuilderSource>(opened.source);
   const [rev, setRev] = useState(0);
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [status, setStatus] = useState<OrgStatus>(initialStatus);
@@ -78,6 +87,7 @@ function BuilderInner({ shop, initial, initialStatus, upcomingWorkshopCount, app
   }, [rev, draft]);
 
   function change(next: Draft) {
+    setView("draft");
     setDraft(next);
     setRev((r) => r + 1);
     setSaveState("pending");
@@ -162,7 +172,13 @@ function BuilderInner({ shop, initial, initialStatus, upcomingWorkshopCount, app
   const saving = saveState === "pending";
   const headerAction = publishAction({ status, prerequisites, invalidSections, invalidTheme, saving });
   // Also guarded here: a disabled button cannot be clicked, but a stale handler must never publish a half-saved draft.
-  const publishNow = () => { if (saving) return; saveDraft(draft); setPublishMessage("published"); };
+  const publishNow = () => {
+    if (saving) return;
+    saveDraft(draft);
+    savePublished(draft); // publishing copies the draft to the published version
+    setView("published");
+    setPublishMessage("published");
+  };
   const submitNow = () => { if (saving) return; setStatus("PENDING_REVIEW"); setPublishMessage("submitted"); };
 
   const names = (types: SectionType[]) => types.map((ty) => t(`sectionTypes.${ty}`)).join(", ");
@@ -177,7 +193,10 @@ function BuilderInner({ shop, initial, initialStatus, upcomingWorkshopCount, app
 
       <div className="flex items-start gap-2 rounded-lg border bg-muted/40 p-3 text-sm">
         <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
-        <p>{t("draftNote")}</p>
+        <div>
+          <p>{t("draftNote")}</p>
+          <p data-testid="builder-source" className="mt-1 font-medium">{t(`source.${view}`)}</p>
+        </div>
       </div>
 
       <Card>

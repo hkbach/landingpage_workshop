@@ -152,5 +152,10 @@
       "zalo": "Zalo",
       "email": "Email"
     }
+  },
+  "source": {
+    "draft": "Đang hiển thị bản nháp bạn đã lưu gần nhất.",
+    "published": "Đang hiển thị website đã xuất bản. Chỉnh sửa của bạn được lưu thành bản nháp cho đến khi bạn xuất bản.",
+    "starter": "Đang bắt đầu từ một mẫu. Chưa có gì được xuất bản."
   }
 }
