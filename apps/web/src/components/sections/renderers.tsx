@@ -10,6 +10,7 @@ import type { AboutProps, GalleryProps, HeroProps, RenderContext, TeamProps, Wor
 import {
   arr, box, card, focusRing, Heading, imageOf, Img, localizer, primaryButton, Section, str, type RenderProps,
 } from "./renderer-kit";
+import { isBookButtonShown } from "./registry";
 
 // Section renderers (part 1). Each renderer implements every layout variant declared in the registry.
 // All shop text is rendered as plain text (React escapes it). Never use dangerouslySetInnerHTML here.
@@ -23,9 +24,10 @@ export function HeroSection({ section, props, ctx, variant }: RenderProps<HeroPr
   const title = L(props.title) || ctx.shop.name;
   const subtitle = L(props.subtitle);
   const ctaLabel = L(props.ctaText) || t("sections.bookCta");
-  const cta = (extra?: string) => (
+  const showCta = isBookButtonShown(section);
+  const cta = (extra?: string) => (showCta ? (
     <button type="button" onClick={() => open()} className={cn(primaryButton, "mt-8 px-6", extra)}>{ctaLabel}</button>
-  );
+  ) : null);
   const root = "relative isolate overflow-hidden bg-[var(--site-bg)] text-[var(--site-text)]";
   const pad = "px-[var(--sec-px,1rem)] @xl:px-[var(--sec-px,1.5rem)]";
 
@@ -141,7 +143,7 @@ export function AboutSection({ section, props, ctx, variant }: RenderProps<About
   );
 }
 
-export function WorkshopCard({ w, ctx, horizontal, featured }: { w: Workshop; ctx: RenderContext; horizontal?: boolean; featured?: boolean }) {
+export function WorkshopCard({ w, ctx, horizontal, featured, showBook = true }: { w: Workshop; ctx: RenderContext; horizontal?: boolean; featured?: boolean; showBook?: boolean }) {
   const L = localizer(ctx);
   const t = useTranslations("site");
   const { open } = useBookingActions();
@@ -162,38 +164,52 @@ export function WorkshopCard({ w, ctx, horizontal, featured }: { w: Workshop; ct
           <span className="font-semibold">{formatMoney(w.priceAmount, w.currency, ctx.locale)}</span>
           <span className="text-[var(--site-muted)]">{t("sections.perPerson")}</span>
         </p>
-        <div className="mt-auto pt-3">
-          <button type="button" className={primaryButton} onClick={() => open(w.id)} aria-label={t("sections.bookWorkshop", { title: L(w.title) })}>
-            {t("sections.book")}
-          </button>
-        </div>
+        {showBook ? (
+          <div className="mt-auto pt-3">
+            <button type="button" className={primaryButton} onClick={() => open(w.id)} aria-label={t("sections.bookWorkshop", { title: L(w.title) })}>
+              {t("sections.book")}
+            </button>
+          </div>
+        ) : null}
       </div>
     </li>
   );
 }
 
 /** Big stacked "link" row used by the compact workshops variant: the whole row opens the booking modal. */
-function WorkshopLinkRow({ w, ctx }: { w: Workshop; ctx: RenderContext }) {
+function WorkshopLinkRow({ w, ctx, showBook }: { w: Workshop; ctx: RenderContext; showBook: boolean }) {
   const L = localizer(ctx);
   const t = useTranslations("site");
   const { open } = useBookingActions();
   const cover = imageOf(ctx)(w.coverUrl);
+  const content = (
+    <>
+      {cover ? <Img src={cover} className={cn("size-16 shrink-0 object-cover", box)} /> : null}
+      <span className="min-w-0 flex-1">
+        <span className="block font-semibold text-[var(--site-text)]">{L(w.title)}</span>
+        <span className="mt-0.5 flex flex-wrap items-center gap-x-3 text-sm text-[var(--site-muted)]">
+          <span className="inline-flex items-center gap-1"><Clock className="size-3.5" aria-hidden />{t("sections.duration", { minutes: w.durationMinutes })}</span>
+          <span className="font-semibold text-[var(--site-text)]">{formatMoney(w.priceAmount, w.currency, ctx.locale)}</span>
+        </span>
+      </span>
+      {showBook ? (
+        <span aria-hidden className="grid size-9 shrink-0 place-items-center rounded-full bg-[var(--site-primary)] text-[var(--site-primary-fg)]"><ChevronRight className="size-5" /></span>
+      ) : null}
+    </>
+  );
+  // With the Book button turned off the row is plain information, not a control.
   return (
     <li>
-      <button
-        type="button" onClick={() => open(w.id)} aria-label={t("sections.bookWorkshop", { title: L(w.title) })}
-        className={cn("flex min-h-20 w-full items-center gap-3 p-3 text-left transition hover:shadow-md", card, focusRing)}
-      >
-        {cover ? <Img src={cover} className={cn("size-16 shrink-0 object-cover", box)} /> : null}
-        <span className="min-w-0 flex-1">
-          <span className="block font-semibold text-[var(--site-text)]">{L(w.title)}</span>
-          <span className="mt-0.5 flex flex-wrap items-center gap-x-3 text-sm text-[var(--site-muted)]">
-            <span className="inline-flex items-center gap-1"><Clock className="size-3.5" aria-hidden />{t("sections.duration", { minutes: w.durationMinutes })}</span>
-            <span className="font-semibold text-[var(--site-text)]">{formatMoney(w.priceAmount, w.currency, ctx.locale)}</span>
-          </span>
-        </span>
-        <span aria-hidden className="grid size-9 shrink-0 place-items-center rounded-full bg-[var(--site-primary)] text-[var(--site-primary-fg)]"><ChevronRight className="size-5" /></span>
-      </button>
+      {showBook ? (
+        <button
+          type="button" onClick={() => open(w.id)} aria-label={t("sections.bookWorkshop", { title: L(w.title) })}
+          className={cn("flex min-h-20 w-full items-center gap-3 p-3 text-left transition hover:shadow-md", card, focusRing)}
+        >
+          {content}
+        </button>
+      ) : (
+        <div className={cn("flex min-h-20 w-full items-center gap-3 p-3 text-left", card)}>{content}</div>
+      )}
     </li>
   );
 }
@@ -202,12 +218,13 @@ export function WorkshopsSection({ section, props, ctx, variant }: RenderProps<W
   const L = localizer(ctx);
   const t = useTranslations("site");
   const list = ctx.workshops.filter((w) => w.status === "ACTIVE").sort((a, b) => a.sortOrder - b.sortOrder);
+  const showBook = isBookButtonShown(section);
   if (variant === "compact") {
     return (
       <Section id={section.id}>
         <Heading className="mb-5">{L(props.heading)}</Heading>
         {list.length === 0 ? <p className="text-[var(--site-muted)]">{t("sections.noWorkshops")}</p> : null}
-        <ul className="grid gap-3">{list.map((w) => <WorkshopLinkRow key={w.id} w={w} ctx={ctx} />)}</ul>
+        <ul className="grid gap-3">{list.map((w) => <WorkshopLinkRow key={w.id} w={w} ctx={ctx} showBook={showBook} />)}</ul>
       </Section>
     );
   }
@@ -217,7 +234,7 @@ export function WorkshopsSection({ section, props, ctx, variant }: RenderProps<W
       {list.length === 0 ? <p className="text-[var(--site-muted)]">{t("sections.noWorkshops")}</p> : null}
       <ul className={cn("grid gap-6", variant === "list" ? "grid-cols-1" : "@xl:grid-cols-2 @5xl:grid-cols-3")}>
         {list.map((w, i) => (
-          <WorkshopCard key={w.id} w={w} ctx={ctx} horizontal={variant === "list" || (variant === "featured" && i === 0)} featured={variant === "featured" && i === 0} />
+          <WorkshopCard key={w.id} w={w} ctx={ctx} horizontal={variant === "list" || (variant === "featured" && i === 0)} featured={variant === "featured" && i === 0} showBook={showBook} />
         ))}
       </ul>
     </Section>

@@ -214,7 +214,7 @@ export function LayoutWireframe({ layout, template }: { layout: LayoutKey; templ
 export function TemplatePicker({ current, onSelect }: { current: TemplateKey; onSelect: (key: TemplateKey) => void }) {
   const t = useTranslations("builder");
   return (
-    <div role="radiogroup" aria-label={t("template.title")} className="grid gap-3 sm:grid-cols-2">
+    <div role="radiogroup" aria-label={t("template.title")} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
       {TEMPLATE_KEYS.map((k) => {
         const selected = current === k;
         const def = TEMPLATES[k];

@@ -15,6 +15,7 @@ export const sectionInstanceSchema = z
     type: z.enum(SECTION_TYPES),
     enabled: z.boolean(),
     variant: z.string().max(40).optional(),
+    showBook: z.boolean().optional(),
     props: z.record(z.string(), z.unknown()),
     style: z.object({ background: hex.optional(), text: hex.optional(), accent: hex.optional() }).strict().optional(),
   })

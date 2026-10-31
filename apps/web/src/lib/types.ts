@@ -47,6 +47,8 @@ export interface SectionInstance {
   id: string; type: SectionType; enabled: boolean;
   /** Layout variant declared by the section registry; falls back to the registry default when missing/unknown. */
   variant?: string;
+  /** Show a Book button in this section. Missing = the type's default (hero and workshops on, others off). Never on the footer. */
+  showBook?: boolean;
   props: Record<string, unknown>;
   style?: SectionStyle;
 }

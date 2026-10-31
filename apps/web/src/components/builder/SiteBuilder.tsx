@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { loadDraft, saveDraft, type Draft } from "./draft-store";
 import { FieldsEditor } from "./FieldsEditor";
 import { PublishPanel, type Prerequisite } from "./PublishPanel";
+import { BookButtonToggle } from "./BookButtonToggle";
 import { SectionColorsGroup } from "./SectionColorsGroup";
 import { SectionList } from "./SectionList";
 import { TemplatePicker } from "./TemplatePicker";
@@ -176,56 +177,32 @@ function BuilderInner({ shop, initial, initialStatus, upcomingWorkshopCount, app
         <p>{t("draftNote")}</p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-        <div className="space-y-6">
-          <Card>
-            <CardHeader><CardTitle>{t("template.title")}</CardTitle></CardHeader>
-            <CardContent className="space-y-3">
-              <TemplatePicker current={draft.template} onSelect={setPendingTemplate} />
-              <p className="text-xs text-muted-foreground">{t("template.hint")}</p>
-            </CardContent>
-          </Card>
+      <Card>
+        <CardHeader><CardTitle>{t("template.title")}</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          <TemplatePicker current={draft.template} onSelect={setPendingTemplate} />
+          <p className="text-xs text-muted-foreground">{t("template.hint")}</p>
+        </CardContent>
+      </Card>
 
-          <Card>
-            <CardHeader><CardTitle>{t("sections.title")}</CardTitle></CardHeader>
-            <CardContent className="space-y-3">
-              <SectionList
-                sections={sections} attention={attention} selectedId={activeSelectedId} onSelect={setSelectedId} onReorder={setSections}
-                onToggle={(id, enabled) => patchSection(id, { enabled })} onRemove={removeSection} onAdd={addSection}
-              />
-              <button
-                type="button" onClick={() => setSelectedId(SEO_ID)} aria-current={activeSelectedId === SEO_ID ? "true" : undefined}
-                className={cn("w-full rounded-lg border p-2 text-left text-sm font-medium outline-none focus-visible:ring-3 focus-visible:ring-ring/50", activeSelectedId === SEO_ID && "border-primary ring-2 ring-primary/30")}
-              >
-                {t("seo.title")}
-              </button>
-            </CardContent>
-          </Card>
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:items-start">
+        <Card>
+          <CardHeader><CardTitle>{t("sections.title")}</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            <SectionList
+              sections={sections} attention={attention} selectedId={activeSelectedId} onSelect={setSelectedId} onReorder={setSections}
+              onToggle={(id, enabled) => patchSection(id, { enabled })} onRemove={removeSection} onAdd={addSection}
+            />
+            <button
+              type="button" onClick={() => setSelectedId(SEO_ID)} aria-current={activeSelectedId === SEO_ID ? "true" : undefined}
+              className={cn("w-full rounded-lg border p-2 text-left text-sm font-medium outline-none focus-visible:ring-3 focus-visible:ring-ring/50", activeSelectedId === SEO_ID && "border-primary ring-2 ring-primary/30")}
+            >
+              {t("seo.title")}
+            </button>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardHeader><CardTitle>{t("theme.title")}</CardTitle></CardHeader>
-            <CardContent>
-              <ThemePanel theme={draft.theme} templateTheme={TEMPLATES[draft.template].theme} onChange={(patch) => change({ ...draft, theme: { ...draft.theme, ...patch } })} />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                {t("publish.title")}
-                <Badge variant="secondary">{t(`publish.status.${status}`)}</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <PublishPanel
-                status={status} prerequisites={prerequisites} invalidSections={invalidSections} invalidTheme={invalidTheme}
-                onSubmitForReview={() => setStatus("PENDING_REVIEW")} onPublish={() => saveDraft(draft)}
-              />
-            </CardContent>
-          </Card>
-        </div>
-
-        <Card className="self-start">
+        <Card>
           <CardHeader>
             <CardTitle>{t("editor.title", { name: editorLabel })}</CardTitle>
           </CardHeader>
@@ -273,6 +250,32 @@ function BuilderInner({ shop, initial, initialStatus, upcomingWorkshopCount, app
             </Tabs>
           </CardContent>
         </Card>
+
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
+        <Card>
+          <CardHeader><CardTitle>{t("theme.title")}</CardTitle></CardHeader>
+          <CardContent>
+            <ThemePanel theme={draft.theme} templateTheme={TEMPLATES[draft.template].theme} onChange={(patch) => change({ ...draft, theme: { ...draft.theme, ...patch } })} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              {t("publish.title")}
+              <Badge variant="secondary">{t(`publish.status.${status}`)}</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <PublishPanel
+              status={status} prerequisites={prerequisites} invalidSections={invalidSections} invalidTheme={invalidTheme}
+              onSubmitForReview={() => setStatus("PENDING_REVIEW")} onPublish={() => saveDraft(draft)}
+            />
+          </CardContent>
+        </Card>
+
       </div>
 
       <Dialog open={pendingTemplate !== null} onOpenChange={(o) => { if (!o) closeTemplateDialog(); }}>
@@ -329,6 +332,7 @@ function SectionEditorBody({ section, lang, defaultLocale, theme, onChange, onPa
         </div>
       ) : null}
       <FieldsEditor idPrefix={section.id} fields={def.fields} value={section.props} lang={lang} defaultLocale={defaultLocale} onChange={onChange} />
+      <BookButtonToggle section={section} onChange={(showBook) => onPatch({ showBook })} />
       <SectionColorsGroup section={section} theme={theme} onChange={(style) => onPatch({ style })} />
     </div>
   );

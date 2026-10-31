@@ -217,6 +217,22 @@ export function defaultVariant(type: SectionType): string {
 export function isValidVariant(type: SectionType, variant: unknown): variant is string {
   return typeof variant === "string" && SECTION_REGISTRY[type].variants.includes(variant);
 }
+/** Whether each section type shows a Book button when the shop has not chosen (hero CTA and workshop cards are on). */
+export const BOOK_BUTTON_DEFAULT: Record<SectionType, boolean> = {
+  hero: true, about: false, workshops: true, gallery: false, team: false, testimonials: false,
+  faq: false, location: false, contact: false, video: false, footer: false,
+};
+
+/** The footer is locked and never carries a Book button; every other section can. */
+export function supportsBookButton(type: SectionType): boolean {
+  return type !== "footer";
+}
+
+export function isBookButtonShown(section: Pick<SectionInstance, "type" | "showBook">): boolean {
+  if (!supportsBookButton(section.type)) return false;
+  return section.showBook ?? BOOK_BUTTON_DEFAULT[section.type];
+}
+
 /** Variant to render: the section's own when valid, otherwise the registry default. */
 export function effectiveVariant(section: Pick<SectionInstance, "type" | "variant">): string {
   return isValidVariant(section.type, section.variant) ? section.variant : defaultVariant(section.type);

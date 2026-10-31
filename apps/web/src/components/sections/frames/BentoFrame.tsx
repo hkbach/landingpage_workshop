@@ -2,6 +2,7 @@
 
 import type { CSSProperties } from "react";
 import { cn } from "@/lib/utils";
+import { isBookButtonShown } from "../registry";
 import { WorkshopCard } from "../renderers";
 import { Img } from "../renderer-kit";
 import { sectionVarsFor } from "../SectionRenderer";
@@ -35,7 +36,7 @@ export function BentoFrame({ body, footer, theme, ctx }: FrameProps) {
       const w = workshops[t.index]!;
       return (
         <div style={sectionVarsFor(t.section, theme)} className={cn(tileShell, "p-3")}>
-          <ul className="flex flex-1 flex-col [&>li]:flex-1"><WorkshopCard w={w} ctx={ctx} horizontal={t.size === "wide"} /></ul>
+          <ul className="flex flex-1 flex-col [&>li]:flex-1"><WorkshopCard w={w} ctx={ctx} horizontal={t.size === "wide"} showBook={isBookButtonShown(t.section)} /></ul>
         </div>
       );
     }

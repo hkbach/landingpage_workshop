@@ -336,5 +336,13 @@
       "light": "Light",
       "centered": "Centered"
     }
+  },
+  "bookButton": {
+    "label": "Show Book button",
+    "hint": {
+      "hero": "Shows the main call-to-action button in the top banner.",
+      "workshops": "Shows a Book button on each workshop. When off, the workshops are shown for information only.",
+      "generic": "Adds a Book button at the end of this section. Visitors click it to open the booking window."
+    }
   }
 }

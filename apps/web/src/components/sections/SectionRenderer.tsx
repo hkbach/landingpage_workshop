@@ -5,7 +5,8 @@ import type {
   AboutProps, ContactProps, FaqProps, FooterProps, GalleryProps, HeroProps, LocationProps, RenderContext,
   TeamProps, TestimonialsProps, VideoProps, WorkshopsProps,
 } from "./context";
-import { effectiveVariant, SECTION_REGISTRY } from "./registry";
+import { BookCtaProvider } from "./renderer-kit";
+import { effectiveVariant, isBookButtonShown, SECTION_REGISTRY } from "./registry";
 import { AboutSection, GallerySection, HeroSection, TeamSection, WorkshopsSection } from "./renderers";
 import { ContactSection, FaqSection, FooterSection, LocationSection, TestimonialsSection, VideoSection } from "./renderers-more";
 import { resolveThemeColors, sectionStyleVars } from "./theme";
@@ -41,6 +42,8 @@ export function SectionRenderer({ section, ctx, theme }: { section: SectionInsta
     case "footer": body = <FooterSection {...common} props={p as unknown as FooterProps} />; break;
   }
   if (!body) return null;
+  // Hero and workshops place their own Book buttons; every other section gets a generic one at its end.
+  const genericBookCta = section.type !== "hero" && section.type !== "workshops" && isBookButtonShown(section);
   // display:contents keeps the layout unchanged; the variables inherit into the section element.
-  return <div className="contents" style={vars} data-section={section.type} data-variant={variant}>{body}</div>;
+  return <div className="contents" style={vars} data-section={section.type} data-variant={variant}><BookCtaProvider value={genericBookCta}>{body}</BookCtaProvider></div>;
 }

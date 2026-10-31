@@ -105,5 +105,13 @@
     "workshops": {
       "compact": "Nút gọn"
     }
+  },
+  "bookButton": {
+    "label": "Hiện nút Đặt chỗ",
+    "hint": {
+      "hero": "Hiện nút kêu gọi hành động chính ở banner đầu trang.",
+      "workshops": "Hiện nút Đặt chỗ ở từng workshop. Khi tắt, workshop chỉ hiển thị để xem thông tin.",
+      "generic": "Thêm nút Đặt chỗ ở cuối phần này. Khách bấm vào sẽ mở cửa sổ đặt chỗ."
+    }
   }
 }

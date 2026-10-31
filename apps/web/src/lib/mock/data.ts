@@ -123,7 +123,7 @@ const mockContent: PageContent = {
       title: { en: "Make something with your hands", vi: "Tự tay tạo nên điều đặc biệt", ko: "손으로 직접 만들어 보세요", ja: "自分の手で作ってみましょう", zh: "亲手创作属于你的作品", "zh-TW": "親手創作屬於你的作品" },
       subtitle: { en: "Pottery workshops in the heart of Saigon", vi: "Workshop làm gốm giữa lòng Sài Gòn", ja: "サイゴンの中心で陶芸体験", zh: "西贡市中心的陶艺工作坊", "zh-TW": "西貢市中心的陶藝工作坊" },
       imageUrl: photo("hero", 1600, 1000), ctaText: { en: "Book a workshop", vi: "Đặt chỗ", ko: "예약하기", ja: "予約する", zh: "立即预订", "zh-TW": "立即預訂" } } },
-    { id: "s-about", type: "about", enabled: true, props: {
+    { id: "s-about", type: "about", enabled: true, showBook: true, props: {
       heading: { en: "About us", vi: "Về chúng tôi", ja: "私たちについて", zh: "关于我们", "zh-TW": "關於我們" },
       body: { en: "We are a small family studio. Every class is led by a local artisan, in small groups, with everything included.", vi: "Chúng tôi là xưởng gốm gia đình nhỏ. Mỗi lớp do một nghệ nhân địa phương hướng dẫn." },
       imageUrl: photo("about", 900, 700) } },
@@ -144,7 +144,7 @@ const mockContent: PageContent = {
       { name: "Min-jun", country: "KR", text: { en: "Patient teachers and a very relaxed atmosphere." } },
       { name: "Sofia", country: "ES", text: { en: "I made a bowl I actually use every day." } },
     ] } },
-    { id: "s-faq", type: "faq", enabled: true, props: { heading: { en: "FAQ" }, items: [
+    { id: "s-faq", type: "faq", enabled: true, showBook: true, props: { heading: { en: "FAQ" }, items: [
       { q: { en: "What if I arrive late?" }, a: { en: "Please arrive on time; bookings may be released after 30 minutes." } },
       { q: { en: "Do I need experience?" }, a: { en: "No. Every class is designed for complete beginners." } },
       { q: { en: "Can I bring children?" }, a: { en: "Children from 8 years old are welcome with an adult." } },

@@ -47,6 +47,7 @@ function sanitizeSection(raw: unknown): SectionInstance | null {
     id: raw.id, type, enabled: raw.enabled, props: raw.props,
     ...(isValidVariant(type, raw.variant) ? { variant: raw.variant } : {}),
     ...(Object.keys(style).length ? { style } : {}),
+    ...(typeof raw.showBook === "boolean" ? { showBook: raw.showBook } : {}),
   };
 }
 

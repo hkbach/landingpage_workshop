@@ -1,10 +1,12 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { createContext, useContext, type ReactNode } from "react";
+import { useTranslations } from "next-intl";
 import { pickLocalized, type Locale, type Localized } from "@workshop/shared";
 import type { SectionInstance } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import type { RenderContext, SocialLink } from "./context";
+import { useBookingActions } from "./booking-context";
 import { safeImage, safeLink } from "./safe-url";
 
 // Frames tune the shell through CSS variables: --sec-px (side padding), --sec-max (content width), --site-pad (vertical).
@@ -48,16 +50,37 @@ export const primaryButton = cn(
 export const linkClass =
   "font-medium text-[var(--site-primary)] underline underline-offset-4 outline-none focus-visible:ring-2 focus-visible:ring-[var(--site-primary)]";
 
+/**
+ * Whether the section being rendered shows a generic Book button at its end (set by SectionRenderer for sections other
+ * than the hero and workshops, which place their own buttons).
+ */
+const BookCtaContext = createContext(false);
+export const BookCtaProvider = BookCtaContext.Provider;
+
+function SectionBookCta() {
+  const t = useTranslations("site");
+  const { open } = useBookingActions();
+  return (
+    <div className="mt-10 flex justify-center">
+      <button type="button" onClick={() => open()} className={cn(primaryButton, "px-6")}>{t("sections.bookCta")}</button>
+    </div>
+  );
+}
+
 /** Standard section shell: own background, text colour and vertical rhythm. */
 export function Section({ id, label, className, children, narrow }: {
   id: string; label?: string; className?: string; children: ReactNode; narrow?: boolean;
 }) {
+  const showBook = useContext(BookCtaContext);
   return (
     <section
       id={`s-${id}`} aria-label={label}
       className={cn("bg-[var(--site-bg)] px-[var(--sec-px,1rem)] py-[var(--site-pad)] text-[var(--site-text)] @xl:px-[var(--sec-px,1.5rem)]", className)}
     >
-      <div className={cn("mx-auto w-full", narrow ? "max-w-[min(var(--sec-max,48rem),48rem)]" : "max-w-[var(--sec-max,64rem)]")}>{children}</div>
+      <div className={cn("mx-auto w-full", narrow ? "max-w-[min(var(--sec-max,48rem),48rem)]" : "max-w-[var(--sec-max,64rem)]")}>
+        {children}
+        {showBook ? <SectionBookCta /> : null}
+      </div>
     </section>
   );
 }
