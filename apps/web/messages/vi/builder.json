@@ -120,7 +120,8 @@
     }
   },
   "sections": {
-    "show": "Hiện",
-    "showHint": "Đánh dấu để hiện phần này trên website. Bỏ đánh dấu để ẩn; nội dung của bạn vẫn được giữ."
+    "show": "Hiện trên trang",
+    "showHint": "Đánh dấu để hiện phần này trên website. Bỏ đánh dấu để ẩn; nội dung của bạn vẫn được giữ.",
+    "enable": "Hiện trên trang: {name}"
   }
 }

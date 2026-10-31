@@ -58,7 +58,7 @@
     "footerLocked": "The footer is required and always stays last.",
     "dragHandle": "Reorder {name}",
     "needsAttention": "Needs attention",
-    "enable": "Show {name} on the website",
+    "enable": "Show on page: {name}",
     "remove": "Remove {name}",
     "dndInstructions": "Press space to pick up a section, use the arrow keys to move it, then press space to drop it. Press escape to cancel.",
     "dndPickedUp": "Picked up {name}.",
@@ -70,7 +70,7 @@
     "allAdded": "All sections are in use",
     "choose": "Choose a section type",
     "add": "Add",
-    "show": "Show",
+    "show": "Show on page",
     "showHint": "Tick to show this section on your website. Untick to hide it; your content is kept."
   },
   "sectionTypes": {
