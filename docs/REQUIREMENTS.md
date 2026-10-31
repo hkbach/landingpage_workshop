@@ -1,0 +1,939 @@
+# REQUIREMENTS – Workshop Landing Page & Booking Platform (MVP)
+
+> **Mục đích file:** Đây là tài liệu requirement dùng làm nguồn sự thật (source of truth) khi vibe code với Claude Code trong VS Code.
+> Claude phải đọc file này trước khi code, làm theo từng milestone ở **Mục 13**, và tuân thủ các quy tắc ở **Mục 14**.
+>
+> - Phiên bản: 1.1-MVP (draft)
+> - Ngày: 31/10/2026
+> - Nguồn: WS-SaaS-BRS-SRS-001 v1.0 + định hướng sản phẩm mới (3 actor, shop tự đăng ký, landing page builder)
+> - Ngôn ngữ tài liệu: tiếng Việt. **Code, tên biến, enum, commit message: tiếng Anh.**
+
+---
+
+## 0. Giả định đang áp dụng (cần PO xác nhận)
+
+Các mục dưới đây là **giả định** để có thể bắt đầu code. Nếu thay đổi, cập nhật file này trước rồi mới sửa code.
+
+| # | Giả định | Ảnh hưởng nếu đổi |
+|---|---|---|
+| A1 | Khách du lịch **thanh toán tại shop**. MVP không có thanh toán online. | Lớn: thanh toán online cần Stripe Connect (hoặc tương đương), KYC, refund, phí nền tảng |
+| A2 | Mỗi shop có **1 landing page** trong MVP | Trung bình: schema đã chuẩn bị cho nhiều page |
+| A3 | Shop tự đăng ký; **lần publish đầu tiên cần admin duyệt** | Thấp |
+| A4 | Tính phí shop **chưa làm**, chỉ có cột `plan` và giới hạn theo gói trong code | Thấp |
+| A5 | Chỉ có lịch **cố định** (fixed schedule) và **instant booking**. Request booking và lịch linh hoạt để phase sau | Trung bình |
+| A6 | Ngôn ngữ hỗ trợ: EN (mặc định), VI, KO, JA. Shop tự chọn bật ngôn ngữ nào | Thấp |
+| A7 | Shop chỉ có 1 role là `OWNER` trong MVP. Schema vẫn hỗ trợ nhiều member/role | Thấp |
+| A8 | Domain: `{shop}.{PLATFORM_DOMAIN}`. Custom domain để phase sau | Trung bình |
+| A9 | Sinh session trước **60 ngày**, job chạy hằng ngày | Thấp |
+| A10 | Email provider: **Resend** (qua interface để thay được). Dev dùng Mailpit | Thấp |
+
+`{PLATFORM_DOMAIN}` là placeholder, ví dụ `workshopkit.com`. Không hard-code trong code; đọc từ env.
+
+---
+
+## 1. Tổng quan sản phẩm
+
+Nền tảng SaaS cho phép **shop owner** (xưởng gốm, trang sức, nến, nấu ăn…) tự tạo **landing page** giới thiệu workshop và nhận **booking** từ **khách du lịch**. Khách không cần tạo tài khoản.
+
+Giá trị cốt lõi:
+
+1. Shop có một landing page đẹp, đa ngôn ngữ trong vài phút, không cần dev.
+2. Booking không bao giờ vượt quá số chỗ (no overbooking).
+3. Shop quản lý booking, check-in và ghi nhận thanh toán tại chỗ trên cùng một dashboard.
+
+### 1.1 Actor
+
+| Actor | Mô tả | Khu vực |
+|---|---|---|
+| **Platform Admin** | Đội vận hành nền tảng | `app.{PLATFORM_DOMAIN}/admin` |
+| **Shop Owner** | Chủ shop; đăng ký, tạo landing page, quản lý workshop/lịch/booking | `app.{PLATFORM_DOMAIN}/dashboard` |
+| **Traveler (Guest)** | Khách du lịch; xem landing page và đặt chỗ, không có tài khoản | `{shop}.{PLATFORM_DOMAIN}` |
+
+### 1.2 Trong phạm vi MVP
+
+- Shop đăng ký, xác minh email, đăng nhập, quên mật khẩu.
+- Onboarding: tên shop, subdomain, timezone, currency, ngôn ngữ.
+- Landing page builder theo **template + section** (không cho viết HTML/JS tùy ý), preview desktop/mobile theo từng ngôn ngữ, gửi duyệt, publish.
+- Quản lý workshop, schedule rule (lịch cố định), session, capacity.
+- Trang public: render landing page, xem lịch còn chỗ, đặt chỗ instant, email xác nhận.
+- Dashboard shop: danh sách booking, tạo booking thủ công (walk-in/điện thoại), check-in, late release, no-show, hủy có lý do, đổi session, ghi nhận thanh toán, hủy session hàng loạt.
+- Admin: duyệt/khóa shop, xem danh sách shop, xử lý báo cáo vi phạm, audit log.
+- Anti-spam: Cloudflare Turnstile và rate limit.
+
+### 1.3 Ngoài phạm vi MVP (KHÔNG code)
+
+- Thanh toán online, refund online, tính phí shop (billing).
+- Request booking, lịch linh hoạt, promotion/khuyến mãi.
+- Nhiều page/shop, revision/rollback đầy đủ, custom domain.
+- Nhân viên shop (Manager/Staff), Product Order, Custom Order.
+- Marketplace tổng hợp shop, tài khoản khách, app mobile native.
+- Khách tự hủy booking.
+
+---
+
+## 2. Tech stack (đã chốt cho MVP)
+
+### 2.1 Ngôn ngữ
+
+- **TypeScript** (strict mode) cho toàn bộ frontend, backend, shared packages.
+- **SQL** (PostgreSQL) cho migration và các truy vấn cần lock.
+
+### 2.2 Stack chi tiết
+
+| Lớp | Công nghệ | Ghi chú |
+|---|---|---|
+| Runtime | Node.js **LTS hiện hành** | Ghi version trong `.nvmrc` và `engines` |
+| Package manager / monorepo | **pnpm workspaces + Turborepo** | |
+| Frontend (public + dashboard + admin) | **Next.js (App Router)** + React | SSR cho landing page public; dashboard dùng client components |
+| UI | **Tailwind CSS** + **shadcn/ui** | Icon: lucide-react |
+| Form | **react-hook-form** + **Zod** | |
+| Data fetching (dashboard) | **TanStack Query** | |
+| i18n | **next-intl** | Áp dụng cho cả UI dashboard và landing page |
+| Drag & drop (builder) | **dnd-kit** | Sắp xếp section |
+| Backend API | **NestJS** (adapter Fastify) | REST, module theo domain |
+| ORM / query | **Drizzle ORM** + drizzle-kit | Viết SQL tường minh, hỗ trợ `SELECT ... FOR UPDATE` |
+| Database | **PostgreSQL** (bản stable hiện hành) | Một database dùng chung, tenant-scoped bằng `organization_id` |
+| Background jobs | **pg-boss** | Queue chạy trên Postgres; không cần Redis |
+| Validation dùng chung | **Zod** trong `packages/shared` | Cùng schema cho frontend, backend và section registry |
+| Auth | Tự xây: session cookie lưu DB + **argon2id** | Không dùng JWT cho dashboard |
+| Object storage | **Cloudflare R2** qua `@aws-sdk/client-s3` + `@aws-sdk/s3-request-presigner` | Presigned PUT/GET |
+| Email | **Resend** (qua `EmailProvider` interface); template bằng **React Email** | Dev: **Mailpit** |
+| Anti-bot | **Cloudflare Turnstile** | Form đăng ký shop và form booking |
+| Rate limit | `@nestjs/throttler` | In-memory là đủ cho 1 instance MVP |
+| Ngày giờ | `date-fns` + `@date-fns/tz` | Lưu UTC, hiển thị theo timezone của shop |
+| Logging | **pino** (JSON structured) | Không log secret, token, presigned URL |
+| Error monitoring | **Sentry** (tùy chọn, bật qua env) | |
+| Test | **Vitest** (unit/integration), **Testcontainers** (Postgres thật), **Playwright** (E2E) | |
+| Lint/format | ESLint + Prettier + `tsc --noEmit` | |
+| API docs | `@nestjs/swagger` → OpenAPI | Sinh type client từ OpenAPI nếu cần |
+| Container | **Docker** + **Docker Compose** | |
+| Reverse proxy / TLS | **Caddy** + **Cloudflare** (DNS proxy, wildcard `*.{PLATFORM_DOMAIN}`) | Cloudflare Origin CA cert, SSL mode Full (strict) |
+| Hạ tầng MVP | 1 VPS 4 vCPU / 4 GB RAM | Nâng cấp theo monitoring |
+| CI | GitHub Actions hoặc Azure DevOps Pipelines | lint, typecheck, test, build image |
+
+### 2.3 Không dùng trong MVP
+
+Microservices, Kubernetes, Redis, GraphQL, message broker riêng, SQLite, MongoDB, vector DB, AI. Chỉ thêm khi có lý do rõ ràng và đã cập nhật file này.
+
+---
+
+## 3. Kiến trúc
+
+### 3.1 Sơ đồ logic
+
+```
+Traveler ──► {shop}.PLATFORM_DOMAIN ─┐
+                                     │   Cloudflare (DNS, TLS, cache tĩnh)
+Shop/Admin ─► app.PLATFORM_DOMAIN ───┤
+                                     ▼
+                                   Caddy
+                                     │
+                         ┌───────────┴───────────┐
+                         ▼                       ▼
+                 apps/web (Next.js)  ──/api/*──► apps/api (NestJS)
+                 - resolve host                  - auth, RBAC, tenant guard
+                 - render landing (SSR)          - business rules, transactions
+                 - dashboard, admin              │
+                                                 ├──► PostgreSQL (private network)
+                 apps/api worker (pg-boss) ◄─────┤
+                 - email, generate sessions      └──► Cloudflare R2 (media)
+                 - outbox dispatcher                       ▲
+                                                           │ presigned PUT/GET
+Browser ───────────────────────────────────────────────────┘
+```
+
+### 3.2 Nguyên tắc
+
+- **Modular monolith**: một API NestJS chia module theo domain, một app Next.js.
+- Next.js **proxy `/api/*`** sang NestJS (rewrites) để dashboard và landing page dùng chung origin, tránh lỗi CORS và cookie cross-site.
+- Next.js không truy cập database trực tiếp. Mọi dữ liệu đi qua API.
+- Worker là một entrypoint riêng trong `apps/api` (`main.worker.ts`), chạy thành container riêng.
+- PostgreSQL chỉ mở trong Docker network, **không public port**.
+
+### 3.3 Định tuyến theo host (multi-tenant)
+
+| Host | Xử lý |
+|---|---|
+| `app.{PLATFORM_DOMAIN}` | Dashboard shop (`/dashboard/*`), admin (`/admin/*`), auth (`/login`, `/signup`…) |
+| `{PLATFORM_DOMAIN}` | Trang marketing của nền tảng (đơn giản, tĩnh) |
+| `{slug}.{PLATFORM_DOMAIN}` | Landing page của shop. Next.js middleware/proxy (tùy phiên bản Next.js) rewrite sang `/sites/[slug]/[[...locale]]` |
+| `media.{PLATFORM_DOMAIN}` | R2 public bucket (custom domain của R2) |
+
+- Shop chưa ACTIVE hoặc page chưa PUBLISHED: trả về **404**.
+- Shop SUSPENDED: trả về trang "Site unavailable" (HTTP 451 hoặc 404, chốt 404 cho MVP).
+
+### 3.4 Cấu trúc thư mục
+
+```
+/
+├─ apps/
+│  ├─ web/                      # Next.js
+│  │  ├─ src/app/
+│  │  │  ├─ (marketing)/        # trang chủ nền tảng
+│  │  │  ├─ (auth)/             # login, signup, verify, reset
+│  │  │  ├─ dashboard/          # shop owner
+│  │  │  ├─ admin/              # platform admin
+│  │  │  └─ sites/[slug]/       # landing page public (SSR)
+│  │  ├─ src/components/
+│  │  │  ├─ ui/                 # shadcn
+│  │  │  ├─ builder/            # page builder
+│  │  │  └─ sections/           # renderer cho từng section type
+│  │  ├─ src/lib/               # api client, i18n, utils
+│  │  └─ messages/              # en.json, vi.json, ko.json, ja.json
+│  └─ api/                      # NestJS
+│     ├─ src/modules/
+│     │  ├─ auth/  organizations/  members/  sites/  media/
+│     │  ├─ workshops/  schedules/  sessions/  bookings/
+│     │  ├─ customers/  payments/  notifications/  admin/
+│     │  ├─ audit/  reports/  public/
+│     ├─ src/common/            # guards, interceptors, filters, tenant context
+│     ├─ src/db/                # drizzle schema, migrations, client
+│     ├─ src/jobs/              # pg-boss handlers
+│     ├─ src/main.ts
+│     └─ src/main.worker.ts
+├─ packages/
+│  ├─ shared/                   # Zod schemas, enums, section registry, types
+│  ├─ email-templates/          # React Email
+│  └─ config/                   # eslint, tsconfig, prettier dùng chung
+├─ infra/
+│  ├─ docker-compose.yml        # production
+│  ├─ docker-compose.dev.yml    # postgres, mailpit
+│  ├─ Caddyfile
+│  └─ backup/                   # script pg_dump → R2
+├─ docs/
+│  └─ REQUIREMENTS.md           # file này
+├─ CLAUDE.md
+└─ .env.example
+```
+
+---
+
+## 4. Multi-tenancy và phân quyền
+
+### 4.1 Mô hình tenant
+
+- Mỗi shop là một `organization` (tenant).
+- Mọi bảng nghiệp vụ có cột `organization_id NOT NULL`.
+- Tenant context được xác định **ở server**:
+  - Dashboard: từ session của user + membership (`organization_members`). User chọn shop đang thao tác; API kiểm tra membership trên **mọi** request.
+  - Public: từ `slug` của host, resolve thành `organization_id` ở backend.
+- **Không bao giờ tin `organization_id`, giá, status, role do client gửi lên.**
+
+### 4.2 Role
+
+| Role | Phạm vi | Quyền |
+|---|---|---|
+| `SUPER_ADMIN` | Platform (`users.platform_role`) | Toàn quyền khu vực `/admin`; không dùng cho thao tác trong shop |
+| `OWNER` | Organization | Toàn quyền trong shop của mình |
+
+- Phase sau sẽ thêm `MANAGER`, `STAFF`, `EDITOR`. Code permission dạng **action-based** ngay từ đầu (ví dụ `booking.check_in`, `site.publish`) và map `OWNER` sang tất cả quyền, để thêm role mới mà không phải sửa logic.
+- Kiểm tra quyền ở **backend** bằng Guard. Ẩn nút ở frontend chỉ để cải thiện UX, không phải bảo mật.
+
+### 4.3 Bắt buộc về tenant isolation
+
+1. Mọi repository/query trên bảng tenant-scoped phải có điều kiện `organization_id = :currentOrgId`.
+2. Tạo helper `tenantScope(table, orgId)` và dùng thống nhất; code review phải kiểm tra điểm này.
+3. FK giữa các bảng cùng tenant dùng **composite FK `(organization_id, id)`** cho các quan hệ chính: bookings→workshop_sessions, bookings→customers, workshop_sessions→workshops.
+4. Truy cập tài nguyên của tenant khác: trả về **404** (không tiết lộ tài nguyên có tồn tại).
+5. Bắt buộc có integration test cho tenant isolation ở mọi module (xem Mục 12).
+
+---
+
+## 5. Yêu cầu chức năng
+
+Định dạng: `ID – Tên` · Ưu tiên: **Must** (MVP bắt buộc) / **Should** (nên có nếu kịp).
+
+### 5.1 Auth và onboarding shop
+
+**FR-AUTH-01 – Đăng ký shop owner (Must)**
+- Form: email, mật khẩu (tối thiểu 10 ký tự), họ tên, đồng ý Terms và Privacy Policy, Turnstile.
+- Tạo `users` với status `UNVERIFIED` và gửi email xác minh (token một lần, lưu **hash**, hết hạn sau 24 giờ).
+- Email đã tồn tại: trả về thông báo chung, không tiết lộ email đã đăng ký.
+- AC: user chưa xác minh không đăng nhập được dashboard; link xác minh dùng lần hai báo hết hiệu lực.
+
+**FR-AUTH-02 – Đăng nhập, đăng xuất, quên mật khẩu (Must)**
+- Session lưu bảng `auth_sessions`; cookie `httpOnly`, `Secure`, `SameSite=Lax`; hết hạn sau 7 ngày không hoạt động.
+- Reset password: token một lần, lưu hash, hết hạn 1 giờ; reset xong thì xóa toàn bộ session cũ.
+- Rate limit login: 5 lần sai / 15 phút / IP+email.
+
+**FR-ORG-01 – Tạo shop / onboarding (Must)**
+- Sau khi xác minh email, user đi qua wizard: tên shop, **slug** (dùng làm subdomain), quốc gia, timezone (IANA), currency (ISO 4217), ngôn ngữ mặc định, các ngôn ngữ bật thêm, thông tin liên hệ (địa chỉ, phone/WhatsApp, email, Google Maps URL).
+- Slug: `^[a-z0-9](?:[a-z0-9-]{1,30}[a-z0-9])$`, unique toàn hệ thống, chặn danh sách reserved (`app, admin, api, www, mail, media, static, help, support, status, blog, docs, cdn, assets, dashboard, login, signup`).
+- Tạo `organizations` (status `DRAFT`) và `organization_members` (role `OWNER`).
+- AC: slug trùng hoặc reserved bị từ chối kèm thông báo rõ ràng.
+
+**FR-ORG-02 – Cài đặt shop (Must)**
+- Sửa thông tin shop, timezone, currency, ngôn ngữ.
+- **Đổi currency hoặc timezone** khi đã có booking: hiển thị cảnh báo; không chuyển đổi dữ liệu cũ.
+- Đổi slug: Should; nếu làm thì lưu slug cũ để redirect 301.
+
+### 5.2 Landing page builder
+
+**FR-SITE-01 – Chọn template (Must)**
+- MVP có **2 template** (`classic`, `minimal`). Mỗi template là một bộ section mặc định và theme mặc định.
+- Đổi template giữ lại nội dung các section cùng type.
+
+**FR-SITE-02 – Chỉnh section (Must)**
+- Section registry nằm trong `packages/shared/src/sections/`. Mỗi section type có: `type`, `schemaVersion`, Zod schema cho props, giá trị mặc định, form editor, component renderer.
+- Section type MVP:
+
+| type | Nội dung | Ghi chú |
+|---|---|---|
+| `hero` | title, subtitle, ảnh nền, CTA text | CTA mở booking modal |
+| `about` | heading, body (text thuần + xuống dòng), ảnh | |
+| `workshops` | heading, chế độ hiển thị (grid/list) | **Tự lấy** workshop ACTIVE từ DB, không nhập tay |
+| `gallery` | heading, tối đa 12 ảnh | |
+| `team` | heading, danh sách (tên, vai trò, ảnh, mô tả ngắn) | Nghệ nhân / host |
+| `testimonials` | heading, danh sách (tên, quốc gia, nội dung) | Shop chịu trách nhiệm tính xác thực; hiển thị ghi chú trong builder |
+| `faq` | heading, danh sách Q&A | Mặc định có câu hỏi về chính sách đến trễ |
+| `location` | heading, địa chỉ, giờ mở cửa, Google Maps URL | Chỉ cho phép link `google.com/maps` / `maps.app.goo.gl` |
+| `contact` | heading, phone, WhatsApp, email, mạng xã hội | |
+| `footer` | text, link mạng xã hội | Luôn có, không xóa được |
+
+- Thao tác: thêm, xóa, bật/tắt, sắp xếp (dnd-kit), sửa props.
+- Theme: chọn palette có sẵn + 1 màu primary (hex, kiểm tra contrast tối thiểu 4.5:1 với text), font từ danh sách cho phép (tối đa 6 font, hỗ trợ đủ glyph VI/KO/JA hoặc có fallback), logo, favicon.
+- **Không** cho nhập HTML, CSS, JS, iframe tùy ý. Text render dạng text thuần (React tự escape). Không dùng `dangerouslySetInnerHTML` với dữ liệu của shop.
+- Mọi field dạng text hiển thị cho khách đều là **localized**: `{ en: "...", vi: "...", ... }`. Builder có tab chọn ngôn ngữ, hiển thị cảnh báo khi ngôn ngữ đã bật còn thiếu bản dịch. Thiếu bản dịch: fallback về ngôn ngữ mặc định của shop.
+- Autosave bản nháp (debounce 2 giây) vào `site_pages.draft_content`.
+- AC: props sai schema bị backend từ chối (422); bản nháp không ảnh hưởng trang đang live.
+
+**FR-SITE-03 – Preview (Must)**
+- Preview desktop/mobile, chọn ngôn ngữ, render bằng **cùng component** với trang public, dùng `draft_content`.
+- URL preview chỉ truy cập được khi đã đăng nhập và là member của shop.
+
+**FR-SITE-04 – Gửi duyệt và publish (Must)**
+- Lần đầu: shop bấm **"Submit for review"**. `organizations.status` chuyển sang `PENDING_REVIEW`. Admin duyệt thì chuyển sang `ACTIVE` và publish bản nháp tại thời điểm duyệt.
+- Điều kiện submit: có logo hoặc tên shop, hero, thông tin liên hệ, ít nhất 1 workshop ACTIVE có session sắp tới.
+- Từ lần thứ hai (shop đã ACTIVE): bấm **"Publish"** thì có hiệu lực ngay. Publish là thao tác **atomic**: copy `draft_content` sang `published_content`, ghi một dòng `site_page_versions`, tăng `version`.
+- Admin từ chối: lưu lý do, gửi email cho shop, status về `DRAFT`.
+- Should: rollback về một version trước đó.
+
+**FR-SITE-05 – Trang public (Must)**
+- URL: `{slug}.{PLATFORM_DOMAIN}/` cho ngôn ngữ mặc định của shop; `/{locale}` cho ngôn ngữ khác (ví dụ `/ko`).
+- Không tự redirect theo `Accept-Language`; có thể hiển thị banner gợi ý đổi ngôn ngữ. Có language switcher.
+- SEO: `<title>`, meta description, Open Graph image (lấy từ hero), `hreflang` cho mỗi ngôn ngữ đã bật, `sitemap.xml` và `robots.txt` theo host, canonical URL.
+- Cache: dùng ISR/revalidate theo tag; revalidate khi publish và khi workshop thay đổi. Dữ liệu chỗ còn trống **không cache** (lấy client-side hoặc `no-store`).
+- Footer có link "Report this site" (FR-ADM-04) và link Privacy Policy.
+
+### 5.3 Media
+
+**FR-MEDIA-01 – Upload ảnh (Must)**
+- Luồng: client gọi `POST /media/presign-upload` (gửi mime, size), nhận presigned PUT URL (hết hạn 5 phút), upload thẳng lên R2, rồi gọi `POST /media/{id}/complete`.
+- Chỉ cho phép `image/jpeg`, `image/png`, `image/webp`; tối đa **5 MB**/ảnh. Backend kiểm tra lại size và mime thật (đọc magic bytes) khi complete.
+- Object key: `org/{orgId}/{purpose}/{uuid}.{ext}`; purpose ∈ `site`, `workshop`, `branding`.
+- Ảnh public phục vụ qua `media.{PLATFORM_DOMAIN}`. Dùng `next/image` (hoặc Cloudflare Image Resizing nếu có) để resize.
+- Giới hạn dung lượng theo plan (ví dụ FREE: 200 MB/shop). Đặt trong `PLAN_LIMITS`.
+- Ảnh không còn được tham chiếu sau 7 ngày: job dọn dẹp (Should).
+
+### 5.4 Workshop, lịch và session
+
+**FR-WS-01 – Workshop (Must)**
+- Trường: title (localized), short description (localized), description (localized), duration (phút, 15–600), giá mỗi khách (`price_amount` minor units), currency (lấy theo shop, không sửa riêng), capacity mặc định mỗi session (1–50; giá trị tối đa đặt trong `PLAN_LIMITS`), số khách tối đa mỗi booking (mặc định 6), ảnh cover + tối đa 6 ảnh, những gì đã bao gồm (localized list), ghi chú/yêu cầu (localized), status `DRAFT | ACTIVE | ARCHIVED`, sort order.
+- Workshop đã có booking: không cho xóa, chỉ cho archive.
+- Đổi giá: chỉ áp dụng cho booking mới (booking cũ đã lưu snapshot giá).
+
+**FR-SCHED-01 – Schedule rule (Must)**
+- Một workshop có nhiều rule. Rule gồm: các thứ trong tuần (`weekdays` 0–6), danh sách giờ bắt đầu (`HH:mm`, theo timezone của shop), `effective_from`, `effective_to` (tùy chọn), capacity override (tùy chọn), status.
+- Job `generate-sessions` chạy hằng ngày lúc 02:00 (timezone của shop) và ngay khi rule được tạo/sửa: sinh session cho **60 ngày** tới. Phải **idempotent** (unique `(organization_id, workshop_id, starts_at)`).
+- Sửa hoặc xóa rule: **không** sửa/xóa session đã có booking. Session tương lai chưa có booking thì xóa và sinh lại.
+
+**FR-SCHED-02 – Session thủ công (Must)**
+- Shop có thể thêm session lẻ (ngày giờ cụ thể), đóng session (`CLOSED`: ngừng nhận booking online), sửa capacity của session (không được nhỏ hơn `reserved_count`).
+
+**FR-SCHED-03 – Hủy session (Must)**
+- Shop hủy session: nhập lý do. Toàn bộ booking `CONFIRMED` của session chuyển sang `CANCELLED` (reason = lý do hủy session), gửi email cho từng khách theo ngôn ngữ của họ (kèm thông tin liên hệ shop để sắp xếp lại).
+- Thực hiện trong một transaction; email đi qua outbox.
+
+### 5.5 Booking (phía khách)
+
+**FR-BOOK-01 – Xem lịch còn chỗ (Must)**
+- `GET /public/sites/{slug}/workshops/{id}/availability?from=&to=` trả về các session `OPEN`, `starts_at` > now + `booking_cutoff` (mặc định 2 giờ, cấu hình theo shop), kèm `remaining = capacity - reserved_count`.
+- Hiển thị giờ theo **timezone của shop**, ghi rõ tên timezone (ví dụ "Times shown in Asia/Ho_Chi_Minh"). Session hết chỗ hiển thị "Sold out".
+
+**FR-BOOK-02 – Đặt chỗ instant (Must)**
+- Booking modal gồm các bước: chọn ngày → chọn giờ → số khách → thông tin liên hệ → xác nhận.
+- Field: họ tên (bắt buộc), email (bắt buộc), quốc gia (bắt buộc, chọn từ danh sách ISO), phone/WhatsApp (tùy chọn), special request (tùy chọn, tối đa 500 ký tự), checkbox đồng ý chính sách (bao gồm chính sách đến trễ), Turnstile token.
+- Request có header `Idempotency-Key` (UUID do client sinh khi mở form).
+- Backend:
+  1. Xác minh Turnstile.
+  2. Resolve tenant từ slug; kiểm tra shop `ACTIVE`, workshop `ACTIVE`, session `OPEN`, chưa qua cutoff.
+  3. Kiểm tra quantity ≤ max mỗi booking.
+  4. **Tính giá ở backend**: `total = price_amount × quantity`. Bỏ qua mọi giá client gửi.
+  5. Transaction chống overbooking (Mục 7.1).
+  6. Upsert customer theo `(organization_id, email_normalized)`. Khách cũ đặt lại: cập nhật name/phone/country/locale theo lần đặt mới nhất.
+  7. Tạo booking `CONFIRMED`, `payment_status = UNPAID`, `booking_code` (8 ký tự Crockford Base32, unique), snapshot giá.
+  8. Ghi outbox event `booking.confirmed` (email cho khách + email thông báo cho shop).
+- Cùng `Idempotency-Key` gửi lại: trả về đúng booking đã tạo (HTTP 200), không tạo booking mới.
+- Lỗi hết chỗ: HTTP 409, code `SESSION_FULL`, UI yêu cầu chọn giờ khác.
+- AC: 2 khách tranh chỗ cuối cùng thì chỉ 1 người thành công (có test concurrency).
+
+**FR-BOOK-03 – Trang xác nhận (Must)**
+- Sau khi đặt: hiển thị booking code, workshop, ngày giờ (timezone của shop), số khách, tổng tiền ("Pay at the studio"), địa chỉ + link bản đồ, chính sách đến trễ, thông tin liên hệ shop.
+- Không có nút hủy. Hướng dẫn: "To change or cancel, please contact the studio."
+
+### 5.6 Vận hành booking (dashboard shop)
+
+**FR-OPS-01 – Danh sách booking (Must)**
+- Xem theo ngày (mặc định hôm nay), theo session, theo trạng thái; tìm theo booking code, tên, email.
+- View "Today": danh sách session hôm nay, mỗi session hiển thị danh sách khách để check-in nhanh (tối ưu cho tablet/mobile).
+
+**FR-OPS-02 – Tạo booking thủ công (Must)**
+- Shop tạo booking cho khách walk-in, điện thoại hoặc WhatsApp. `source ∈ ONLINE | WALK_IN | PHONE | OTHER`.
+- Cùng logic chống overbooking. Không bắt buộc email với `WALK_IN` (khi đó customer không có email; không gửi email).
+- Cho phép tạo cho session đã bắt đầu (walk-in) nếu còn chỗ.
+
+**FR-OPS-03 – Check-in (Must)**
+- `CONFIRMED → CHECKED_IN`. Ghi `checked_in_at`, `checked_in_by`.
+- Check-in và thanh toán là **hai thao tác riêng**.
+
+**FR-OPS-04 – Late release (Must)**
+- Chỉ cho phép khi `now ≥ session.starts_at + 30 phút` và booking đang `CONFIRMED`.
+- `CONFIRMED → LATE_RELEASED`; giảm `reserved_count` theo quantity; bắt buộc ghi audit.
+- **Không có job tự động** late release.
+- Khách đến trễ sau khi đã bị release: nếu session còn đủ chỗ thì cho phép `LATE_RELEASED → CHECKED_IN` (tăng lại `reserved_count` trong transaction có lock); nếu hết chỗ thì từ chối và hiển thị thông báo.
+
+**FR-OPS-05 – No-show (Must)**
+- Sau khi session kết thúc, shop đánh dấu `CONFIRMED → NO_SHOW`. Không thay đổi `reserved_count` (session đã qua).
+
+**FR-OPS-06 – Hủy booking (Must)**
+- Shop hủy: bắt buộc nhập lý do; `CONFIRMED → CANCELLED`; giảm `reserved_count`; gửi email cho khách (nếu có email); ghi audit.
+
+**FR-OPS-07 – Đổi session (Should)**
+- Chuyển booking `CONFIRMED` sang session khác cùng workshop: transaction lock **cả hai** session (lock theo thứ tự `id` tăng dần để tránh deadlock), kiểm tra chỗ ở session mới, cập nhật `reserved_count` hai bên. Giữ nguyên snapshot giá. Gửi email cập nhật.
+
+**FR-OPS-08 – Hoàn tất (Must)**
+- Shop có thể đánh dấu `CHECKED_IN → COMPLETED` thủ công hoặc hàng loạt cho cả session. Should: job tự chuyển `CHECKED_IN → COMPLETED` sau khi session kết thúc 12 giờ.
+
+**FR-PAY-01 – Ghi nhận thanh toán tại shop (Must)**
+- Thêm payment entry: amount, method (`CASH | CARD | BANK_TRANSFER | E_WALLET | OTHER`), type (`PAYMENT | REFUND`), note. Ghi `recorded_by`, `recorded_at`.
+- `bookings.payment_status` được **tính lại** từ tổng các payment entry trong cùng transaction: `UNPAID` (0), `PARTIALLY_PAID` (0 < net < total), `PAID` (net ≥ total), `REFUNDED` (có refund và net ≤ 0), `PARTIALLY_REFUNDED` (có refund và 0 < net < tổng đã trả).
+- Không sửa/xóa payment entry; sai thì tạo entry điều chỉnh (refund). Ghi audit.
+
+**FR-CUST-01 – Khách hàng (Must)**
+- Danh sách customer của shop, chi tiết và lịch sử booking. Tìm theo tên/email.
+- Customer thuộc riêng từng shop; không gộp giữa các shop.
+- Should: export CSV; xóa/ẩn danh customer theo yêu cầu (quyền riêng tư).
+
+### 5.7 Thông báo email
+
+**FR-MAIL-01 – Email (Must)**
+
+| Event | Người nhận | Ngôn ngữ |
+|---|---|---|
+| Xác minh email, reset password | Shop owner | Ngôn ngữ UI của user (mặc định EN) |
+| Shop được duyệt / bị từ chối / bị khóa | Shop owner | Như trên |
+| `booking.confirmed` | Khách | Locale khách chọn khi đặt |
+| `booking.confirmed` (thông báo booking mới) | Email của shop | Ngôn ngữ của shop |
+| `booking.cancelled`, `booking.rescheduled`, `session.cancelled` | Khách | Locale của khách |
+| Nhắc lịch 24 giờ trước (Should) | Khách | Locale của khách |
+
+- Email gửi khách phải có: booking code, workshop, ngày giờ + timezone, địa chỉ, link bản đồ, tổng tiền "pay at studio", chính sách đến trễ (Mục 6, BR-09), liên hệ shop. Should: đính kèm file `.ics`.
+- Gửi qua **outbox + worker**; không gửi trong request handler. Retry tối đa 5 lần (backoff lũy thừa); lỗi cuối cùng ghi log + `outbox_events.status = FAILED`.
+- From: `"{Shop name} via {Platform}" <bookings@{PLATFORM_DOMAIN}>`, `Reply-To`: email của shop. Cấu hình SPF/DKIM/DMARC cho `{PLATFORM_DOMAIN}`.
+
+### 5.8 Platform admin
+
+**FR-ADM-01 – Danh sách shop (Must)**
+- Lọc theo status; xem chi tiết (owner, ngày tạo, số workshop, số booking 30 ngày, link landing page).
+
+**FR-ADM-02 – Duyệt shop (Must)**
+- Hàng đợi `PENDING_REVIEW`. Admin xem preview bản nháp, chọn **Approve** hoặc **Reject** (bắt buộc lý do).
+
+**FR-ADM-03 – Khóa / mở khóa shop (Must)**
+- `ACTIVE ↔ SUSPENDED`, bắt buộc lý do. Shop bị khóa: landing page trả 404, dashboard chỉ đọc + banner thông báo, không nhận booking mới. Booking đã có vẫn giữ.
+
+**FR-ADM-04 – Báo cáo vi phạm (Should)**
+- Form public "Report this site": lý do (scam, phishing, nội dung không phù hợp, khác), mô tả, email (tùy chọn), Turnstile. Admin xem danh sách và xử lý (`OPEN | RESOLVED | DISMISSED`).
+
+**FR-ADM-05 – Audit log (Must)**
+- Admin xem audit log toàn hệ thống; shop owner xem audit log của shop mình (Should).
+
+**FR-ADM-06 – Template (Should)**
+- MVP: template định nghĩa trong code (`packages/shared`). Admin chỉ bật/tắt template.
+
+---
+
+## 6. Quy tắc nghiệp vụ
+
+| ID | Quy tắc |
+|---|---|
+| BR-01 | Dữ liệu nghiệp vụ thuộc đúng một organization; không truy cập chéo tenant. |
+| BR-02 | Slug shop unique toàn hệ thống và không thuộc danh sách reserved. |
+| BR-03 | Không được vượt capacity, kể cả khi có request đồng thời; kiểm tra bằng transaction + row lock. |
+| BR-04 | Backend tính giá; không tin giá/discount/status từ client. |
+| BR-05 | Booking lưu snapshot: `unit_price_amount`, `quantity`, `total_amount`, `currency`, tên workshop, `starts_at`, timezone. Lịch sử không bị tính lại khi workshop đổi giá. |
+| BR-06 | `booking.status` và `payment_status` độc lập; `CONFIRMED` không có nghĩa là đã trả tiền. |
+| BR-07 | Các status chiếm chỗ: `CONFIRMED`, `CHECKED_IN`, `COMPLETED`. Chuyển sang `CANCELLED` hoặc `LATE_RELEASED` thì giải phóng chỗ. `NO_SHOW` không thay đổi `reserved_count`. |
+| BR-08 | Late release chỉ làm thủ công, sau 30 phút kể từ giờ bắt đầu; luôn có audit. |
+| BR-09 | Thông báo chính sách đến trễ (hiển thị ở booking modal, trang xác nhận, email): *"Please arrive on time for your workshop. If you arrive more than 30 minutes late, your booking may be released and your reserved spot may be offered to walk-in guests. If there are still available spots when you arrive, you may still be able to join."* Cần bản dịch VI/KO/JA trong `messages/*.json`. |
+| BR-10 | Customer nhận diện bằng `email_normalized` (trim + lowercase) trong một organization; không tự gộp theo tên/phone. |
+| BR-11 | Khách không tự hủy; mọi thao tác hủy/đổi do shop thực hiện và ghi lý do. |
+| BR-12 | Token (verify, reset) dùng một lần, lưu hash (SHA-256), có hạn. |
+| BR-13 | Shop chỉ public được sau khi admin duyệt lần đầu. |
+| BR-14 | Tiền lưu bằng `BIGINT` minor units + `currency`. Số chữ số thập phân lấy theo ISO 4217 (VND = 0, USD = 2, JPY = 0, KRW = 0). Không dùng float. |
+| BR-15 | Mọi timestamp lưu `timestamptz` (UTC). Giờ hiển thị và giờ trong schedule rule hiểu theo timezone IANA của shop. |
+
+### 6.1 State machine booking
+
+```
+                ┌──────────────► CANCELLED (shop, có lý do)        [giải phóng chỗ]
+                │
+  (tạo) ──► CONFIRMED ──► CHECKED_IN ──► COMPLETED
+                │   ▲          ▲
+                │   │          │ (khách trễ đến, còn chỗ → chiếm lại chỗ)
+                │   │          │
+                ├───┼──► LATE_RELEASED  (≥ start + 30 phút)          [giải phóng chỗ]
+                │   │
+                └───┴──► NO_SHOW        (sau khi session kết thúc)
+```
+
+Chuyển trạng thái hợp lệ (mọi chuyển khác → HTTP 409 `INVALID_TRANSITION`):
+
+| Từ | Sang | Điều kiện |
+|---|---|---|
+| CONFIRMED | CHECKED_IN | Session chưa bị hủy |
+| CONFIRMED | LATE_RELEASED | now ≥ starts_at + 30 phút |
+| CONFIRMED | NO_SHOW | now ≥ ends_at |
+| CONFIRMED | CANCELLED | Có lý do |
+| LATE_RELEASED | CHECKED_IN | Session còn đủ chỗ (lock) |
+| CHECKED_IN | COMPLETED | — |
+
+Implement state machine trong **một chỗ** (`bookings/booking-state.ts`) và có unit test đầy đủ.
+
+### 6.2 State organization
+
+`DRAFT → PENDING_REVIEW → ACTIVE ↔ SUSPENDED`; `PENDING_REVIEW → DRAFT` (bị từ chối).
+
+### 6.3 State session
+
+`OPEN ↔ CLOSED`; `OPEN | CLOSED → CANCELLED` (không quay lại).
+
+---
+
+## 7. Yêu cầu kỹ thuật quan trọng
+
+### 7.1 Chống overbooking (bắt buộc đúng mẫu này)
+
+```sql
+BEGIN;
+
+SELECT id, capacity, reserved_count, status, starts_at
+FROM workshop_sessions
+WHERE id = :session_id AND organization_id = :org_id
+FOR UPDATE;
+
+-- validate: status = 'OPEN', starts_at > now() + cutoff (với booking online),
+--           reserved_count + :qty <= capacity
+
+INSERT INTO bookings (...) VALUES (...);
+
+UPDATE workshop_sessions
+SET reserved_count = reserved_count + :qty, updated_at = now()
+WHERE id = :session_id AND organization_id = :org_id;
+
+INSERT INTO outbox_events (...) VALUES (...);
+
+COMMIT;
+```
+
+- Thêm `CHECK (reserved_count >= 0 AND reserved_count <= capacity)` trên `workshop_sessions` làm lớp bảo vệ cuối.
+- Mọi thao tác thay đổi `reserved_count` (tạo, hủy, late release, check-in lại, đổi session) phải đi qua `SessionCapacityService` và dùng mẫu lock trên.
+- Job đối soát hằng ngày (Should): so sánh `reserved_count` với tổng quantity của các booking đang chiếm chỗ; lệch thì log cảnh báo.
+
+### 7.2 Idempotency
+
+- `POST /public/sites/{slug}/bookings` và `POST /dashboard/bookings` bắt buộc có header `Idempotency-Key`.
+- Lưu `idempotency_key` trên booking, `UNIQUE (organization_id, idempotency_key)`. Gặp lỗi unique violation thì trả về booking đã có.
+
+### 7.3 Outbox
+
+- Ghi `outbox_events` trong cùng transaction với thay đổi nghiệp vụ.
+- Worker poll mỗi 5 giây (`SELECT ... FOR UPDATE SKIP LOCKED LIMIT 20`), dispatch sang pg-boss job, đánh dấu `DISPATCHED`.
+
+### 7.4 Plan limits (chuẩn bị cho billing)
+
+```ts
+// packages/shared/src/plans.ts
+export const PLAN_LIMITS = {
+  FREE: { maxWorkshops: 3, maxSessionCapacity: 20, storageMb: 200, enabledLocales: 2 },
+  PRO:  { maxWorkshops: 50, maxSessionCapacity: 50, storageMb: 5000, enabledLocales: 4 },
+} as const;
+```
+
+Các con số là **placeholder**, cần PO chốt. Backend kiểm tra giới hạn tại service layer, trả HTTP 402/403 với code `PLAN_LIMIT_REACHED`.
+
+### 7.5 Chuẩn API
+
+- REST, JSON, prefix `/api/v1`.
+- Lỗi theo dạng:
+  ```json
+  { "error": { "code": "SESSION_FULL", "message": "Human readable", "details": {} } }
+  ```
+- Validate body bằng Zod (dùng chung schema từ `packages/shared`), lỗi validate trả 422.
+- Phân trang: cursor-based (`?cursor=&limit=`, limit tối đa 100).
+- Mutating endpoints của dashboard: kiểm tra header `Origin` khớp `app.{PLATFORM_DOMAIN}` (chống CSRF) ngoài `SameSite=Lax`.
+
+---
+
+## 8. Data model (PostgreSQL)
+
+Quy ước: PK `uuid` (UUIDv7 sinh ở app nếu có, không thì `gen_random_uuid()`); `created_at`, `updated_at` dạng `timestamptz`; tên bảng/cột `snake_case`; enum dùng PostgreSQL enum hoặc `text` + `CHECK`. Viết bằng Drizzle schema trong `apps/api/src/db/schema/`.
+
+### 8.1 Identity và tenant
+
+**users**: `id`, `email` (unique, lowercase), `password_hash`, `full_name`, `status` (`UNVERIFIED|ACTIVE|DISABLED`), `platform_role` (`SUPER_ADMIN` | null), `ui_locale`, `email_verified_at`, `last_login_at`.
+
+**auth_sessions**: `id`, `user_id`, `token_hash` (unique), `active_organization_id` (nullable), `ip`, `user_agent`, `expires_at`, `last_seen_at`.
+
+**user_tokens**: `id`, `user_id`, `type` (`EMAIL_VERIFY|PASSWORD_RESET`), `token_hash` (unique), `expires_at`, `used_at`.
+
+**organizations**: `id`, `name`, `slug` (unique), `status` (`DRAFT|PENDING_REVIEW|ACTIVE|SUSPENDED`), `status_reason`, `country`, `timezone`, `currency`, `default_locale`, `enabled_locales text[]`, `plan` (`FREE` mặc định), `contact_email`, `contact_phone`, `whatsapp`, `address`, `maps_url`, `booking_cutoff_minutes` (mặc định 120), `approved_at`, `approved_by`.
+
+**organization_members**: `organization_id`, `user_id`, `role` (`OWNER`), `status`. PK `(organization_id, user_id)`.
+
+### 8.2 Site
+
+**site_pages**: `id`, `organization_id`, `slug` (MVP luôn là `home`), `template_key`, `theme jsonb`, `draft_content jsonb`, `published_content jsonb` (nullable), `version int`, `published_at`, `published_by`. `UNIQUE (organization_id, slug)`.
+
+**site_page_versions**: `id`, `organization_id`, `page_id`, `version`, `content jsonb`, `theme jsonb`, `published_by`, `published_at`. `UNIQUE (page_id, version)`.
+
+Cấu trúc `content` (validate bằng Zod):
+
+```ts
+type PageContent = {
+  schemaVersion: 1;
+  sections: Array<{
+    id: string;          // uuid
+    type: SectionType;   // 'hero' | 'about' | ...
+    enabled: boolean;
+    props: unknown;      // validate theo registry[type].schema
+  }>;
+  seo: { title: Localized; description: Localized };
+};
+type Localized = Partial<Record<'en' | 'vi' | 'ko' | 'ja', string>>;
+```
+
+Khi `schemaVersion` của một section type thay đổi, viết hàm migrate trong registry; không sửa trực tiếp JSON trong DB bằng tay.
+
+### 8.3 Media
+
+**media_assets**: `id`, `organization_id`, `object_key` (unique), `purpose`, `mime`, `size_bytes`, `width`, `height`, `status` (`PENDING|READY|DELETED`), `uploaded_by`.
+
+### 8.4 Workshop và lịch
+
+**workshops**: `id`, `organization_id`, `title jsonb`, `short_description jsonb`, `description jsonb`, `includes jsonb`, `notes jsonb`, `duration_minutes`, `price_amount bigint`, `currency`, `default_capacity`, `max_per_booking`, `cover_media_id`, `gallery_media_ids uuid[]`, `status`, `sort_order`. `UNIQUE (organization_id, id)`.
+
+**schedule_rules**: `id`, `organization_id`, `workshop_id`, `weekdays smallint[]`, `start_times text[]` (`HH:mm`), `effective_from date`, `effective_to date` (nullable), `capacity_override` (nullable), `status` (`ACTIVE|INACTIVE`).
+
+**workshop_sessions**: `id`, `organization_id`, `workshop_id`, `schedule_rule_id` (nullable), `starts_at timestamptz`, `ends_at timestamptz`, `capacity`, `reserved_count` (mặc định 0), `status` (`OPEN|CLOSED|CANCELLED`), `cancel_reason`. `UNIQUE (organization_id, workshop_id, starts_at)`; `CHECK (reserved_count BETWEEN 0 AND capacity)`; index `(organization_id, starts_at, status)`.
+
+### 8.5 Customer, booking, payment
+
+**customers**: `id`, `organization_id`, `email_normalized` (nullable, cho walk-in), `full_name`, `country`, `phone`, `preferred_locale`, `anonymized_at`. Partial unique `(organization_id, email_normalized) WHERE email_normalized IS NOT NULL`.
+
+**bookings**: `id`, `organization_id`, `booking_code` (unique), `session_id`, `workshop_id`, `customer_id`, `source`, `quantity`, `status`, `payment_status`, `unit_price_amount bigint`, `total_amount bigint`, `currency`, `snapshot jsonb` (tên workshop theo locale, starts_at, ends_at, timezone, địa chỉ), `locale`, `special_request`, `idempotency_key`, `cancel_reason`, `checked_in_at`, `checked_in_by`, `status_changed_at`, `status_changed_by`, `created_by` (nullable: null = khách online).
+- Composite FK `(organization_id, session_id)` → `workshop_sessions (organization_id, id)`; tương tự cho `customer_id`.
+- `UNIQUE (organization_id, idempotency_key)`; index `(organization_id, session_id, status)`, `(organization_id, created_at DESC)`.
+
+**payments**: `id`, `organization_id`, `booking_id`, `type` (`PAYMENT|REFUND`), `amount bigint` (luôn dương), `currency`, `method`, `note`, `recorded_by`, `recorded_at`.
+
+### 8.6 Hệ thống
+
+**audit_logs**: `id`, `organization_id` (nullable cho thao tác platform), `actor_user_id` (nullable cho hệ thống), `action` (ví dụ `booking.late_release`), `entity_type`, `entity_id`, `before jsonb`, `after jsonb`, `ip`, `created_at`. Index `(organization_id, created_at DESC)`. Chỉ insert, không update/delete.
+
+**outbox_events**: `id`, `organization_id`, `type`, `payload jsonb`, `status` (`PENDING|DISPATCHED|FAILED`), `attempts`, `last_error`, `available_at`, `created_at`.
+
+**abuse_reports**: `id`, `organization_id`, `reason`, `description`, `reporter_email`, `status`, `resolved_by`, `resolved_at`.
+
+pg-boss tự tạo schema riêng `pgboss`.
+
+### 8.7 Audit bắt buộc
+
+Ghi audit cho các action: đăng nhập thất bại nhiều lần, tạo/duyệt/từ chối/khóa shop, publish page, tạo/sửa/archive workshop, đổi giá, hủy session, tạo booking thủ công, check-in, late release, no-show, hủy booking, đổi session, ghi nhận payment/refund, xóa/ẩn danh customer.
+
+---
+
+## 9. API endpoints (MVP)
+
+Prefix `/api/v1`. Auth: cookie session. `{org}` lấy từ session (active organization), **không** truyền trên URL.
+
+### 9.1 Auth
+| Method | Path | Mô tả |
+|---|---|---|
+| POST | `/auth/signup` | Đăng ký |
+| POST | `/auth/verify-email` | Xác minh email |
+| POST | `/auth/login` · `/auth/logout` | |
+| POST | `/auth/forgot-password` · `/auth/reset-password` | |
+| GET | `/auth/me` | User + danh sách membership |
+| POST | `/auth/switch-organization` | Đổi active organization |
+
+### 9.2 Dashboard (shop owner)
+| Method | Path |
+|---|---|
+| POST | `/organizations` (onboarding) · GET/PATCH `/organization` |
+| GET | `/organization/slug-availability?slug=` |
+| GET/PUT | `/site/page` (draft) · POST `/site/page/submit-review` · POST `/site/page/publish` |
+| GET | `/site/page/versions` · POST `/site/page/rollback/{version}` (Should) |
+| POST | `/media/presign-upload` · POST `/media/{id}/complete` · GET `/media` · DELETE `/media/{id}` |
+| CRUD | `/workshops` · POST `/workshops/{id}/archive` |
+| CRUD | `/workshops/{id}/schedule-rules` |
+| GET | `/sessions?from=&to=&workshopId=` · POST `/sessions` · PATCH `/sessions/{id}` · POST `/sessions/{id}/cancel` |
+| GET | `/bookings?date=&sessionId=&status=&q=` · GET `/bookings/{id}` · POST `/bookings` (thủ công) |
+| POST | `/bookings/{id}/check-in` · `/late-release` · `/no-show` · `/cancel` · `/complete` · `/reschedule` |
+| POST | `/bookings/{id}/payments` |
+| GET | `/customers` · GET `/customers/{id}` |
+| GET | `/audit-logs` (Should) |
+
+### 9.3 Public (không cần auth, có rate limit)
+| Method | Path |
+|---|---|
+| GET | `/public/sites/{slug}?locale=` (published content + shop info + workshops ACTIVE) |
+| GET | `/public/sites/{slug}/workshops/{id}/availability?from=&to=` |
+| POST | `/public/sites/{slug}/bookings` (Idempotency-Key + Turnstile) |
+| GET | `/public/sites/{slug}/bookings/{bookingCode}?email=` (trang xác nhận; yêu cầu khớp email) |
+| POST | `/public/sites/{slug}/reports` |
+
+Rate limit public: availability 60 req/phút/IP; tạo booking 10 req/phút/IP; report 5 req/giờ/IP.
+
+### 9.4 Admin (`SUPER_ADMIN`)
+| Method | Path |
+|---|---|
+| GET | `/admin/organizations?status=` · GET `/admin/organizations/{id}` |
+| POST | `/admin/organizations/{id}/approve` · `/reject` · `/suspend` · `/reactivate` |
+| GET | `/admin/organizations/{id}/preview` |
+| GET/PATCH | `/admin/reports` |
+| GET | `/admin/audit-logs` |
+
+---
+
+## 10. Yêu cầu phi chức năng
+
+| ID | Yêu cầu |
+|---|---|
+| NFR-SEC-01 | HTTPS toàn bộ; HSTS; secrets chỉ trong env server, không commit; `.env.example` không chứa giá trị thật. |
+| NFR-SEC-02 | Mật khẩu hash bằng argon2id; token lưu hash; cookie httpOnly/Secure/SameSite. |
+| NFR-SEC-03 | Validate mọi input bằng Zod; query qua Drizzle (parameterized); không ghép chuỗi SQL. |
+| NFR-SEC-04 | Header bảo mật: CSP (không `unsafe-inline` script ở landing page nếu khả thi), `X-Content-Type-Options`, `Referrer-Policy`, `frame-ancestors 'none'` cho dashboard. |
+| NFR-SEC-05 | Không log password, token, cookie, presigned URL; email khách trong log phải được mask. |
+| NFR-PRIV-01 | Có Privacy Policy và Terms (nội dung do pháp chế cung cấp). Chỉ thu thập dữ liệu tối thiểu. Cần xác nhận nghĩa vụ theo GDPR (khách EU), PIPA (Hàn), APPI (Nhật) và luật bảo vệ dữ liệu cá nhân Việt Nam trước khi go-live. |
+| NFR-PERF-01 | API p95 < 500 ms cho request thông thường (không tính email/upload) trên VPS MVP. |
+| NFR-PERF-02 | Landing page: mục tiêu LCP < 2.5 s trên mobile 4G; ảnh dùng WebP và responsive sizes. |
+| NFR-REL-01 | Không overbooking trong mọi trường hợp (Mục 7.1). |
+| NFR-REL-02 | Backup `pg_dump` hằng ngày, đẩy ra bucket R2 riêng (không public), giữ 14 bản; diễn tập restore mỗi tháng. RPO/RTO chính thức cần PO chốt. |
+| NFR-OPS-01 | Endpoint `/health` (liveness) và `/ready` (kiểm tra DB) cho api và web. |
+| NFR-OPS-02 | Log JSON (pino) có `requestId`, `organizationId`, `userId`. |
+| NFR-OPS-03 | Cảnh báo: CPU/RAM > 80% kéo dài, disk > 80%, backup thất bại, outbox FAILED tăng, tỷ lệ lỗi 5xx tăng. |
+| NFR-I18N-01 | UTF-8; font hiển thị đúng tiếng Việt/Hàn/Nhật; không hard-code text UI, tất cả qua `messages/*.json`. |
+| NFR-A11Y-01 | Landing page và booking modal: dùng được bằng bàn phím, có label cho form, contrast ≥ 4.5:1 (mục tiêu WCAG 2.1 AA). |
+| NFR-UX-01 | Landing page và view "Today" của dashboard tối ưu cho mobile trước (mobile-first). |
+| NFR-MAINT-01 | TypeScript strict; module theo domain; migration có version và kế hoạch rollback; OpenAPI luôn được cập nhật. |
+
+---
+
+## 11. Môi trường và cấu hình
+
+### 11.1 Biến môi trường (`.env.example`)
+
+```
+NODE_ENV=development
+PLATFORM_DOMAIN=localtest.me          # *.localtest.me trỏ về 127.0.0.1, dùng để test subdomain khi dev
+APP_URL=http://app.localtest.me:3000
+API_INTERNAL_URL=http://localhost:4000
+
+DATABASE_URL=postgres://app:app@localhost:5432/workshop
+SESSION_COOKIE_NAME=wsp_sid
+SESSION_SECRET=change-me
+
+R2_ACCOUNT_ID=
+R2_ACCESS_KEY_ID=
+R2_SECRET_ACCESS_KEY=
+R2_BUCKET_PUBLIC=
+R2_PUBLIC_BASE_URL=
+R2_BUCKET_BACKUP=
+
+EMAIL_PROVIDER=mailpit                # mailpit | resend
+RESEND_API_KEY=
+EMAIL_FROM=bookings@localtest.me
+SMTP_HOST=localhost
+SMTP_PORT=1025
+
+TURNSTILE_SITE_KEY=
+TURNSTILE_SECRET_KEY=
+
+SENTRY_DSN=
+```
+
+### 11.2 Dev local
+
+- `docker compose -f infra/docker-compose.dev.yml up -d` chạy postgres + mailpit.
+- `pnpm dev` chạy web (3000) + api (4000) + worker.
+- Test subdomain: `http://{slug}.localtest.me:3000`.
+- Seed: 1 super admin, 2 shop mẫu (1 ACTIVE có workshop, schedule và booking mẫu; 1 DRAFT).
+
+### 11.3 Production (VPS)
+
+- Docker Compose: `caddy`, `web`, `api`, `worker`, `postgres`. Postgres dùng volume, không expose port ra ngoài.
+- Cloudflare: DNS `*.{PLATFORM_DOMAIN}` và `app`, `{PLATFORM_DOMAIN}` bật proxy; Caddy dùng Cloudflare Origin CA cert; firewall VPS chỉ mở 80/443 (từ IP Cloudflare) và SSH (key-only).
+- Gợi ý giới hạn bộ nhớ: postgres ~1.5 GB (`shared_buffers` khoảng 512 MB), web ~768 MB, api ~512 MB, worker ~256 MB. Theo dõi và điều chỉnh.
+- Migration chạy như một bước riêng trong deploy (`pnpm db:migrate`), không chạy tự động khi app khởi động.
+- Deploy production cần **người duyệt** (human approval) theo quy định của tổ chức.
+
+---
+
+## 12. Kiểm thử và nghiệm thu
+
+### 12.1 Test bắt buộc
+
+| Loại | Phạm vi |
+|---|---|
+| Unit (Vitest) | Booking state machine; tính giá; tính payment_status; validate slug; Zod schema của section; sinh session từ rule (bao gồm timezone); localization fallback |
+| Integration (Vitest + Testcontainers Postgres) | **Concurrency**: 20 request đồng thời tranh 1 chỗ cuối → đúng 1 thành công, `reserved_count` không vượt capacity; idempotency (gửi lại cùng key); late release/check-in lại; hủy session hàng loạt; **tenant isolation**: shop A gọi API với id tài nguyên của shop B → 404 cho mọi module |
+| E2E (Playwright) | Shop đăng ký → onboarding → tạo workshop + rule → chỉnh landing → submit; admin duyệt; khách mở landing → đặt chỗ → thấy trang xác nhận; email xuất hiện trong Mailpit; shop check-in + ghi nhận thanh toán |
+
+Mục tiêu coverage: ≥ 80% cho `bookings`, `sessions`, `payments`, `auth`; các module khác ưu tiên test hành vi quan trọng thay vì chạy theo con số.
+
+### 12.2 Acceptance criteria MVP
+
+| ID | Tiêu chí |
+|---|---|
+| AC-01 | Shop tự đăng ký, xác minh email, hoàn tất onboarding và có subdomain riêng. |
+| AC-02 | Shop tạo landing page từ template, chỉnh section, preview đa ngôn ngữ mà không cần deploy code. |
+| AC-03 | Landing page chỉ public sau khi admin duyệt; shop bị khóa thì landing page trả 404. |
+| AC-04 | Khách đặt chỗ không cần tài khoản; nhận email xác nhận đúng ngôn ngữ đã chọn. |
+| AC-05 | Không overbooking khi có request đồng thời (có test chứng minh). |
+| AC-06 | Giá do backend tính; booking giữ snapshot khi workshop đổi giá. |
+| AC-07 | Shop tạo booking walk-in, check-in, late release, no-show, hủy, ghi nhận thanh toán; tất cả có audit log. |
+| AC-08 | Hủy session thì toàn bộ booking liên quan bị hủy và khách nhận email. |
+| AC-09 | Dữ liệu và quyền được cô lập giữa các shop (có test cho mọi module). |
+| AC-10 | Landing page có hreflang, sitemap, meta/OG đúng theo từng ngôn ngữ. |
+| AC-11 | Backup chạy hằng ngày ra ngoài VPS và đã restore thử thành công. |
+
+---
+
+## 13. Lộ trình triển khai (làm theo thứ tự)
+
+Mỗi milestone: code → test → `pnpm lint && pnpm typecheck && pnpm test` pass → cập nhật checklist này → commit.
+
+### M0 – Khởi tạo
+- [ ] Monorepo pnpm + Turborepo, `packages/config` (tsconfig strict, eslint, prettier)
+- [ ] `apps/web` (Next.js + Tailwind + shadcn + next-intl), `apps/api` (NestJS Fastify), `packages/shared`
+- [ ] Docker compose dev (postgres, mailpit), `.env.example`, `.nvmrc`
+- [ ] Drizzle setup + migration đầu tiên; pino logger; `/health`, `/ready`
+- [ ] Format lỗi chuẩn (exception filter), Zod validation pipe, request id
+- [ ] CI: lint, typecheck, test
+
+### M1 – Auth và tenant
+- [ ] Bảng users, auth_sessions, user_tokens, organizations, organization_members, audit_logs, outbox_events
+- [ ] Signup + Turnstile + verify email, login/logout, forgot/reset password
+- [ ] `TenantGuard`, `PermissionGuard`, decorator `@CurrentOrg()`, helper `tenantScope`
+- [ ] Onboarding wizard + kiểm tra slug
+- [ ] Worker + pg-boss + outbox dispatcher + EmailProvider (Mailpit/Resend) + React Email templates
+- [ ] Test tenant isolation khung chung
+
+### M2 – Workshop và lịch
+- [ ] Media presign upload + complete
+- [ ] CRUD workshop (localized fields)
+- [ ] Schedule rules + job generate-sessions (idempotent, đúng timezone)
+- [ ] Quản lý session: thêm lẻ, đóng, sửa capacity, hủy session
+
+### M3 – Landing page builder
+- [ ] Section registry trong `packages/shared` (10 section type, Zod schema, defaults)
+- [ ] 2 template, theme (palette, primary color, font, logo)
+- [ ] Builder UI: danh sách section, dnd-kit, form editor theo schema, tab ngôn ngữ, autosave
+- [ ] Preview desktop/mobile theo ngôn ngữ
+- [ ] Submit review / publish atomic / site_page_versions
+
+### M4 – Trang public và booking
+- [ ] Host middleware/proxy → `/sites/[slug]/[[...locale]]`
+- [ ] Renderer SSR, SEO (meta, OG, hreflang, sitemap, robots), ISR + revalidate
+- [ ] Availability API + UI lịch
+- [ ] Booking modal + Turnstile + Idempotency-Key
+- [ ] `SessionCapacityService` + transaction lock + **test concurrency**
+- [ ] Trang xác nhận + email xác nhận (khách + shop)
+
+### M5 – Vận hành booking
+- [ ] Danh sách booking, view "Today"
+- [ ] Booking thủ công (walk-in/phone)
+- [ ] State machine: check-in, late release, check-in lại, no-show, cancel, complete
+- [ ] Ghi nhận payment + tính payment_status
+- [ ] Customers list/detail
+- [ ] (Should) Đổi session, email nhắc lịch 24h, file .ics
+
+### M6 – Admin
+- [ ] Danh sách shop, hàng đợi duyệt, approve/reject/suspend/reactivate + email
+- [ ] Audit log viewer
+- [ ] (Should) Abuse reports
+
+### M7 – Hardening và deploy
+- [ ] Security headers, CSP, rate limits, mask log
+- [ ] E2E Playwright cho luồng chính
+- [ ] Dockerfile production (multi-stage), docker-compose prod, Caddyfile
+- [ ] Backup script `pg_dump` → R2 + hướng dẫn restore (runbook trong `docs/`)
+- [ ] Monitoring/alert cơ bản, Sentry
+- [ ] Rà soát lại toàn bộ AC ở Mục 12.2
+
+---
+
+## 14. Quy tắc dành cho Claude khi code
+
+1. **Đọc file này trước** mỗi phiên làm việc. Chỉ làm milestone/task được yêu cầu; không tự mở rộng phạm vi.
+2. Gặp điểm chưa rõ hoặc mâu thuẫn trong requirement: **dừng lại và hỏi**, không tự bịa yêu cầu. Nếu buộc phải giả định, ghi rõ giả định vào Mục 0.
+3. Không thêm thư viện ngoài danh sách ở Mục 2 nếu chưa nêu lý do và được đồng ý.
+4. Mọi query trên bảng tenant-scoped phải lọc theo `organization_id` lấy từ server context. Viết test tenant isolation cho mỗi endpoint mới.
+5. Mọi thay đổi `reserved_count` phải đi qua `SessionCapacityService` với `SELECT ... FOR UPDATE`.
+6. Không tin dữ liệu client về `organization_id`, giá, status, role.
+7. Tiền dùng `bigint` minor units; thời gian dùng `timestamptz` UTC; dùng helper format theo currency/timezone của shop.
+8. Schema thay đổi thì tạo migration mới bằng drizzle-kit; **không sửa migration đã merge**.
+9. Text hiển thị cho người dùng phải qua i18n (`messages/*.json`), có đủ key EN; VI/KO/JA có thể để TODO nhưng phải có key.
+10. Không dùng `dangerouslySetInnerHTML` với dữ liệu do shop hoặc khách nhập.
+11. Không log secret, token, password, presigned URL, cookie.
+12. Mỗi task kết thúc phải pass `pnpm lint`, `pnpm typecheck`, `pnpm test`. Commit nhỏ, message theo Conventional Commits (tiếng Anh).
+13. Không tự chạy lệnh phá hủy dữ liệu (drop database, xóa volume, force push) và không deploy production khi chưa có người duyệt.
+14. Code do AI sinh ra phải được người review trước khi merge.
+
+---
+
+## 15. Câu hỏi còn mở
+
+| # | Câu hỏi | Mặc định đang dùng |
+|---|---|---|
+| Q1 | Thanh toán online ở phase nào? Mô hình (Stripe Connect, cổng nội địa…)? | Chưa làm (A1) |
+| Q2 | Tên nền tảng và domain chính thức? | `{PLATFORM_DOMAIN}` |
+| Q3 | Giá trị plan limits và giá gói? | Placeholder Mục 7.4 |
+| Q4 | Booking cutoff mặc định (2 giờ) có phù hợp? | 120 phút, shop cấu hình được |
+| Q5 | Số khách tối đa mỗi booking mặc định? | 6 |
+| Q6 | Nội dung Terms, Privacy Policy và nghĩa vụ pháp lý về dữ liệu cá nhân? | Pháp chế cung cấp |
+| Q7 | RPO/RTO chính thức? | Backup daily, giữ 14 bản |
+| Q8 | Có cần request booking / lịch linh hoạt ở phase 2 không? | Phase 2 |
+| Q9 | Email nhắc lịch 24h có bắt buộc ở MVP? | Should |
+| Q10 | Shop có được đổi slug sau khi publish? | Should, kèm redirect 301 |
+
+---
+
+## Phụ lục A – Gợi ý `CLAUDE.md` đặt ở root repo
+
+```md
+# CLAUDE.md
+
+Project: Workshop Landing Page & Booking Platform (MVP).
+Source of truth: docs/REQUIREMENTS.md — read it before any change.
+
+## Stack
+TypeScript strict · pnpm + Turborepo · Next.js (App Router) · NestJS (Fastify) · Drizzle ORM · PostgreSQL · pg-boss · Zod · Tailwind + shadcn/ui · next-intl · Cloudflare R2 · Resend.
+
+## Commands
+- pnpm dev · pnpm lint · pnpm typecheck · pnpm test · pnpm test:e2e
+- pnpm db:generate · pnpm db:migrate · pnpm db:seed
+
+## Non-negotiables
+- Every tenant-scoped query filters by organization_id from server context.
+- Seat changes only via SessionCapacityService (SELECT ... FOR UPDATE).
+- Backend computes prices; never trust client price/status/org id.
+- Money = bigint minor units; time = timestamptz UTC.
+- No new dependencies without asking. Never edit merged migrations.
+- All user-facing text through i18n messages.
+- Run lint + typecheck + test before declaring a task done.
+
+## Workflow
+Work milestone by milestone (REQUIREMENTS.md §13). Ask when requirements are unclear.
+```
