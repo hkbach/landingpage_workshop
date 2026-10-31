@@ -13,7 +13,8 @@ import type { PageTheme, Session, Shop, Workshop } from "@/lib/types";
 import { dayKey, formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@/lib/zod-resolver";
-import { themeStyle } from "@/components/sections/theme";
+import { siteFontClass } from "@/components/sections/site-fonts";
+import { modalThemeStyle } from "@/components/sections/theme";
 import { COUNTRY_CODES, countryName } from "./countries";
 import { bookingContactSchema, type BookingFormValues } from "./schema";
 import { simulateBooking } from "./simulate";
@@ -49,8 +50,8 @@ export function BookingModal(props: Props) {
   return (
     <Dialog open={props.open} onOpenChange={props.onOpenChange}>
       <DialogContent
-        style={themeStyle(props.theme)}
-        className="max-h-[92dvh] gap-4 overflow-y-auto p-5 sm:max-w-lg"
+        style={modalThemeStyle(props.theme)}
+        className={cn("max-h-[92dvh] gap-4 overflow-y-auto p-5 sm:max-w-lg", siteFontClass(props.theme.font))}
       >
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">{t("title")}</DialogTitle>

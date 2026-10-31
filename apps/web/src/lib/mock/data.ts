@@ -2,6 +2,7 @@
 import type {
   AbuseReport, AuditEntry, Booking, Customer, PageContent, PageTheme, Session, Shop, Workshop,
 } from "../types";
+import { themeForTemplate, type TemplateKey } from "@/components/sections/templates";
 
 const TZ = "Asia/Ho_Chi_Minh"; // UTC+7
 const DAY = 86_400_000;
@@ -108,27 +109,31 @@ export const abuseReports: AbuseReport[] = [
   { id: "ar-2", shopSlug: "clayco", reason: "OTHER", description: "Address looks wrong.", status: "DISMISSED", createdAt: at(-20, 10) },
 ];
 
-export const defaultTheme: PageTheme = { palette: "warm", primary: "#9a3412", font: "Inter" };
+// Default site of the current shop: the "artisan" template (craft-focused) with a video section.
+export const defaultTheme: PageTheme = themeForTemplate("artisan");
 
-export const sitePage: { draft: PageContent; theme: PageTheme } = {
+export const sitePage: { draft: PageContent; theme: PageTheme; template: TemplateKey } = {
   theme: defaultTheme,
+  template: "artisan",
   draft: {
     schemaVersion: 1,
     seo: { title: { en: "Clay & Co Studio – Pottery workshops in Saigon" }, description: { en: "Hands-on pottery classes for travellers." } },
     sections: [
-      { id: "s-hero", type: "hero", enabled: true, props: {
+      { id: "s-hero", type: "hero", enabled: true, variant: "split", props: {
         title: { en: "Make something with your hands", vi: "Tự tay tạo nên điều đặc biệt" },
         subtitle: { en: "Pottery workshops in the heart of Saigon" }, imageUrl: "https://picsum.photos/seed/hero/1600/900", ctaText: { en: "Book a workshop", vi: "Đặt chỗ" } } },
-      { id: "s-about", type: "about", enabled: true, props: {
+      { id: "s-about", type: "about", enabled: true, variant: "image-right", props: {
         heading: { en: "About us" }, body: { en: "We are a small family studio.\nEvery class is led by a local artisan." }, imageUrl: "https://picsum.photos/seed/about/800/600" } },
-      { id: "s-ws", type: "workshops", enabled: true, props: { heading: { en: "Our workshops" }, layout: "grid" } },
-      { id: "s-gal", type: "gallery", enabled: true, props: { heading: { en: "Gallery" }, imageUrls: ["https://picsum.photos/seed/g1/600/600", "https://picsum.photos/seed/g2/600/600", "https://picsum.photos/seed/g3/600/600"] } },
-      { id: "s-team", type: "team", enabled: true, props: { heading: { en: "Meet the artisans" }, members: [{ name: "Linh", role: { en: "Founder" }, bio: { en: "15 years of experience." }, imageUrl: "https://picsum.photos/seed/t1/400/400" }] } },
-      { id: "s-test", type: "testimonials", enabled: true, props: { heading: { en: "Guests say" }, items: [{ name: "Emma", country: "GB", text: { en: "Best afternoon of our trip!" } }] } },
-      { id: "s-faq", type: "faq", enabled: true, props: { heading: { en: "FAQ" }, items: [{ q: { en: "What if I arrive late?" }, a: { en: "Please arrive on time; bookings may be released after 30 minutes." } }] } },
-      { id: "s-loc", type: "location", enabled: true, props: { heading: { en: "Find us" }, address: { en: "12 Nguyen Hue, District 1, HCMC" }, hours: { en: "Daily 9:00–18:00" }, mapsUrl: "https://maps.app.goo.gl/example" } },
-      { id: "s-con", type: "contact", enabled: true, props: { heading: { en: "Contact" }, phone: "+84 90 000 0000", whatsapp: "+84 90 000 0000", email: "hello@clayco.example", socials: [] } },
-      { id: "s-foot", type: "footer", enabled: true, props: { text: { en: "© Clay & Co Studio" }, socials: [] } },
+      { id: "s-team", type: "team", enabled: true, variant: "cards", props: { heading: { en: "Meet the artisans" }, members: [{ name: "Linh", role: { en: "Founder" }, bio: { en: "15 years of experience." }, imageUrl: "https://picsum.photos/seed/t1/400/400" }] } },
+      { id: "s-ws", type: "workshops", enabled: true, variant: "grid", props: { heading: { en: "Our workshops" } } },
+      { id: "s-gal", type: "gallery", enabled: true, variant: "masonry", props: { heading: { en: "Gallery" }, imageUrls: ["https://picsum.photos/seed/g1/600/600", "https://picsum.photos/seed/g2/600/800", "https://picsum.photos/seed/g3/600/500"] } },
+      // Placeholder video ID for the mock; shops paste a YouTube link and only the ID is stored.
+      { id: "s-video", type: "video", enabled: true, variant: "split", props: { heading: { en: "A day in the studio" }, caption: { en: "Watch how a bowl is made, from a lump of clay to the kiln." }, videoId: "dQw4w9WgXcQ" } },
+      { id: "s-test", type: "testimonials", enabled: true, variant: "cards", props: { heading: { en: "Guests say" }, items: [{ name: "Emma", country: "GB", text: { en: "Best afternoon of our trip!" } }] } },
+      { id: "s-faq", type: "faq", enabled: true, variant: "accordion", props: { heading: { en: "FAQ" }, items: [{ q: { en: "What if I arrive late?" }, a: { en: "Please arrive on time; bookings may be released after 30 minutes." } }] } },
+      { id: "s-loc", type: "location", enabled: true, variant: "card", props: { heading: { en: "Find us" }, address: { en: "12 Nguyen Hue, District 1, HCMC" }, hours: { en: "Daily 9:00–18:00" }, mapsUrl: "https://maps.app.goo.gl/example" } },
+      { id: "s-con", type: "contact", enabled: true, variant: "list", props: { heading: { en: "Contact" }, phone: "+84 90 000 0000", whatsapp: "+84 90 000 0000", email: "hello@clayco.example", socials: [] } },
+      { id: "s-foot", type: "footer", enabled: true, variant: "dark", props: { text: { en: "© Clay & Co Studio" }, socials: [] } },
     ],
   },
 };

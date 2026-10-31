@@ -7,10 +7,21 @@
     "bookWorkshop": "Book {title}",
     "book": "Book now",
     "openMap": "Open in Google Maps",
-    "whatsapp": "WhatsApp"
+    "whatsapp": "WhatsApp",
+    "playVideo": "Play video: {title}",
+    "videoTitle": "Video",
+    "galleryLabel": "Photo gallery",
+    "phone": "Phone",
+    "email": "Email"
   },
-  "header": { "language": "Language" },
-  "footer": { "legal": "Legal", "report": "Report this site", "privacy": "Privacy Policy" },
+  "header": {
+    "language": "Language"
+  },
+  "footer": {
+    "legal": "Legal",
+    "report": "Report this site",
+    "privacy": "Privacy Policy"
+  },
   "latePolicy": {
     "title": "Late arrival policy",
     "text": "Please arrive on time for your workshop. If you arrive more than 30 minutes late, your booking may be released and your reserved spot may be offered to walk-in guests. If there are still available spots when you arrive, you may still be able to join."
@@ -19,7 +30,13 @@
     "title": "Book a workshop",
     "subtitle": "Reserve your spot at {shop}.",
     "stepOf": "Step {current} of {total}",
-    "steps": { "date": "Date", "time": "Time", "guests": "Guests", "contact": "Your details", "confirm": "Confirm" },
+    "steps": {
+      "date": "Date",
+      "time": "Time",
+      "guests": "Guests",
+      "contact": "Your details",
+      "confirm": "Confirm"
+    },
     "timesShownIn": "Times shown in {tz}",
     "workshop": "Workshop",
     "noAvailability": "No upcoming sessions are available for this workshop.",
@@ -77,7 +94,12 @@
     "intro": "Tell us what is wrong with this site. Our team will review your report.",
     "reason": "Reason",
     "reasonPlaceholder": "Select a reason",
-    "reasons": { "SCAM": "Scam or fraud", "PHISHING": "Phishing", "INAPPROPRIATE": "Inappropriate content", "OTHER": "Other" },
+    "reasons": {
+      "SCAM": "Scam or fraud",
+      "PHISHING": "Phishing",
+      "INAPPROPRIATE": "Inappropriate content",
+      "OTHER": "Other"
+    },
     "description": "Description",
     "email": "Your email (optional)",
     "emailHint": "Only used if we need to follow up with you.",

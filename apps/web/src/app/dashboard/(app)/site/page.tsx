@@ -14,7 +14,7 @@ export default async function SiteBuilderPage({ searchParams }: PageProps<"/dash
         name: currentShop.name, defaultLocale: currentShop.defaultLocale, enabledLocales: currentShop.enabledLocales,
         contactEmail: currentShop.contactEmail, contactPhone: currentShop.contactPhone,
       }}
-      initial={{ content: sitePage.draft, theme: sitePage.theme }}
+      initial={{ content: sitePage.draft, theme: sitePage.theme, template: sitePage.template }}
       initialStatus={status}
       upcomingWorkshopCount={countWorkshopsWithUpcomingSessions(workshops, sessions)}
     />

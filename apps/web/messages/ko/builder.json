@@ -1,1 +1,84 @@
-{}
+{
+  "autosave": {
+    "quota": "브라우저 저장 공간이 가득 찼습니다. 큰 이미지를 삭제하거나 교체하지 않으면 최근 변경 사항이 저장되지 않습니다."
+  },
+  "template": {
+    "names": {
+      "classic": "클래식",
+      "minimal": "미니멀",
+      "bold": "볼드",
+      "elegant": "엘레강트",
+      "rustic": "러스틱",
+      "modern": "모던",
+      "vibrant": "비브란트",
+      "serene": "세레네",
+      "artisan": "아티잔",
+      "noir": "누아르"
+    },
+    "descriptions": {
+      "classic": "따뜻하고 친근한 구성: 팀, 후기, 자주 묻는 질문까지 담은 전체 소개.",
+      "minimal": "짧고 단색: 히어로, 워크숍, 자주 묻는 질문, 위치.",
+      "bold": "각진 모서리, 강렬한 빨강, 영상과 함께 크게 강조된 워크숍.",
+      "elegant": "세리프 서체의 세련된 느낌, 큰 인용문과 넉넉한 여백.",
+      "rustic": "흙빛 초록, 세리프 서체, 벽돌식 배치 갤러리와 지도 카드.",
+      "modern": "깔끔한 파랑, 둥근 모서리, 분할 히어로와 나란히 놓인 영상.",
+      "vibrant": "발랄한 마젠타, 알약형 버튼, 강조된 워크숍과 영상.",
+      "serene": "차분한 세이지 톤, 여유로운 간격, 가로 스크롤 사진 띠.",
+      "artisan": "공예 중심: 크림색 바탕의 인디고, 장인을 맨 앞에 소개.",
+      "noir": "골드 포인트의 다크 모드, 강조된 워크숍과 큰 인용문."
+    },
+    "current": "사용 중",
+    "confirmTitle": "템플릿을 변경할까요?",
+    "confirmFor": "{name} 템플릿으로 전환합니다.",
+    "keeps": "유지:",
+    "keepsText": "모든 텍스트, 이미지, 동영상, 섹션별 색상 설정.",
+    "changes": "변경:",
+    "changesText": "섹션 레이아웃, 순서, 테마 색상, 글꼴, 간격이 템플릿 기본값으로 재설정됩니다. 로고와 파비콘은 유지됩니다.",
+    "cancel": "취소",
+    "apply": "템플릿 변경"
+  },
+  "sectionTypes": {
+    "video": "동영상"
+  },
+  "fields": {
+    "videoId": "YouTube 링크",
+    "caption": "설명"
+  },
+  "video": {
+    "hint": "YouTube 링크를 붙여넣으세요(youtube.com/watch, youtu.be, youtube.com/shorts, youtube.com/embed). 동영상 ID만 저장됩니다.",
+    "replaceHint": "다른 YouTube 링크를 붙여넣으면 동영상이 바뀝니다.",
+    "invalid": "올바른 YouTube 링크가 아닙니다.",
+    "current": "YouTube 동영상: {id}",
+    "remove": "삭제"
+  },
+  "colors": {
+    "title": "색상",
+    "hint": "선택 사항입니다. 비워 두면 템플릿 색상을 사용합니다. #1f2937 같은 hex 값을 사용하세요.",
+    "keys": {
+      "background": "배경",
+      "text": "텍스트",
+      "accent": "강조색(버튼, 링크)"
+    },
+    "auto": "템플릿",
+    "hexInvalid": "#1f2937 또는 #fff 같은 hex 색상을 사용하세요.",
+    "warning": "일부 색상 조합의 대비가 {min}:1 미만이라 읽기 어렵습니다. 게시 또는 제출 전에 수정해 주세요.",
+    "resetTemplate": "템플릿 색상으로 되돌리기"
+  },
+  "image": {
+    "upload": "이미지 업로드",
+    "replace": "교체",
+    "remove": "삭제",
+    "uploading": "업로드 중...",
+    "orPaste": "또는 이미지 URL 붙여넣기",
+    "hint": "JPEG, PNG 또는 WebP, 최대 5MB.",
+    "errors": {
+      "empty": "빈 파일입니다.",
+      "tooLarge": "이미지가 5MB보다 큽니다.",
+      "unsupportedType": "JPEG, PNG, WebP 이미지만 사용할 수 있습니다.",
+      "typeMismatch": "파일 내용이 형식과 일치하지 않습니다. 실제 JPEG, PNG 또는 WebP 이미지를 사용하세요.",
+      "decodeFailed": "이 이미지를 읽을 수 없습니다. 다른 파일을 시도해 보세요.",
+      "storageFull": "브라우저 저장 공간이 가득 찼습니다. 다른 이미지를 삭제하거나 더 작은 이미지를 사용하거나 이미지 URL을 붙여넣으세요.",
+      "failed": "업로드에 실패했습니다. 다시 시도해 주세요."
+    }
+  }
+}

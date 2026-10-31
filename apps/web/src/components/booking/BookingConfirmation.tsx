@@ -57,7 +57,7 @@ export function BookingConfirmation({ data, shop, locale, homeHref }: { data: Co
         <p className="pt-2 text-[var(--site-muted)]">{t("confirmation.changeOrCancel")}</p>
       </section>
 
-      <a href={homeHref} className="inline-flex min-h-11 items-center rounded-lg border border-black/20 bg-white px-5 py-2 text-sm font-medium outline-none focus-visible:ring-4 focus-visible:ring-[var(--site-primary)]/40">
+      <a href={homeHref} className="inline-flex min-h-11 items-center rounded-lg border border-black/20 bg-white px-5 py-2 text-sm font-medium text-zinc-900 outline-none focus-visible:ring-4 focus-visible:ring-[var(--site-primary)]/40">
         {t("confirmation.backToSite")}
       </a>
     </article>
@@ -70,7 +70,7 @@ export function BookingNotFound({ homeHref }: { homeHref: string }) {
     <div className="mx-auto w-full max-w-xl space-y-4 px-4 py-16 text-center">
       <h1 className="text-2xl font-bold">{t("confirmation.notFoundTitle")}</h1>
       <p className="text-[var(--site-muted)]">{t("confirmation.notFoundText")}</p>
-      <a href={homeHref} className="inline-flex min-h-11 items-center rounded-lg border border-black/20 bg-white px-5 py-2 text-sm font-medium">{t("confirmation.backToSite")}</a>
+      <a href={homeHref} className="inline-flex min-h-11 items-center rounded-lg border border-black/20 bg-white px-5 py-2 text-sm font-medium text-zinc-900">{t("confirmation.backToSite")}</a>
     </div>
   );
 }

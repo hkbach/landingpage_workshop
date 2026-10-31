@@ -8,23 +8,27 @@ import { LOCALES, missingLocales, type Locale, type Localized, type OrgStatus, t
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { collectLocalized, createSection, SECTION_REGISTRY, validateSection } from "@/components/sections/registry";
-import { applyTemplate, TEMPLATES, type TemplateKey } from "@/components/sections/templates";
+import { collectLocalized, createSection, effectiveVariant, SECTION_REGISTRY } from "@/components/sections/registry";
+import { failingThemeChecks, needsAttention } from "@/components/sections/instance";
+import { planTemplateSwitch, TEMPLATES, themeForTemplate, type TemplateKey } from "@/components/sections/templates";
 import type { PageContent, PageTheme, SectionInstance, Shop } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { loadDraft, saveDraft, type Draft } from "./draft-store";
 import { FieldsEditor } from "./FieldsEditor";
 import { PublishPanel, type Prerequisite } from "./PublishPanel";
+import { SectionColorsGroup } from "./SectionColorsGroup";
 import { SectionList } from "./SectionList";
+import { TemplatePicker } from "./TemplatePicker";
 import { ThemePanel } from "./ThemePanel";
 
 export type BuilderShop = Pick<Shop, "name" | "defaultLocale" | "enabledLocales" | "contactEmail" | "contactPhone">;
 
 interface Props {
   shop: BuilderShop;
-  initial: { content: PageContent; theme: PageTheme };
+  initial: { content: PageContent; theme: PageTheme; template: TemplateKey };
   initialStatus: OrgStatus;
   upcomingWorkshopCount: number;
 }
@@ -38,12 +42,12 @@ export function SiteBuilder(props: Props) {
   return <BuilderInner {...props} />;
 }
 
-type SaveState = "idle" | "pending" | "saved";
+type SaveState = "idle" | "pending" | "saved" | "quota" | "unavailable";
 const SEO_ID = "__seo__";
 
 function BuilderInner({ shop, initial, initialStatus, upcomingWorkshopCount }: Props) {
   const t = useTranslations("builder");
-  const [draft, setDraft] = useState<Draft>(() => loadDraft() ?? { ...initial, template: "classic" });
+  const [draft, setDraft] = useState<Draft>(() => loadDraft() ?? { ...initial });
   const [rev, setRev] = useState(0);
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [status, setStatus] = useState<OrgStatus>(initialStatus);
@@ -56,8 +60,8 @@ function BuilderInner({ shop, initial, initialStatus, upcomingWorkshopCount }: P
   useEffect(() => {
     if (rev === 0) return;
     const id = setTimeout(() => {
-      saveDraft(draft);
-      setSaveState("saved");
+      const res = saveDraft(draft);
+      setSaveState(res.ok ? "saved" : res.reason);
     }, 2000);
     return () => clearTimeout(id);
   }, [rev, draft]);
@@ -92,9 +96,9 @@ function BuilderInner({ shop, initial, initialStatus, upcomingWorkshopCount }: P
   }
   function confirmTemplate() {
     if (!pendingTemplate) return;
-    const content = applyTemplate(draft.content, pendingTemplate);
-    // Template default theme, but keep the shop's logo and favicon.
-    const theme = { ...TEMPLATES[pendingTemplate].theme, logoUrl: draft.theme.logoUrl, faviconUrl: draft.theme.faviconUrl };
+    // Content (props + per-section colours) is kept; variants, theme and section order follow the template.
+    const content = { ...draft.content, sections: planTemplateSwitch(draft.content, pendingTemplate).sections };
+    const theme = themeForTemplate(pendingTemplate, draft.theme);
     change({ content, theme, template: pendingTemplate });
     setSelectedId(content.sections[0]?.id ?? SEO_ID);
     setPendingTemplate(null);
@@ -111,7 +115,17 @@ function BuilderInner({ shop, initial, initialStatus, upcomingWorkshopCount }: P
     ) as Record<Locale, number>;
   }, [draft.content, enabledLocales]);
 
-  const invalidSections = sections.filter((s) => s.enabled && validateSection(s.type, s.props).length > 0).length;
+  // Sections with invalid props/colours (Needs attention) and a failing theme block Publish / Submit.
+  const attention = useMemo(
+    () => new Set(sections.filter((s) => needsAttention(s, draft.theme)).map((s) => s.id)),
+    [sections, draft.theme],
+  );
+  const invalidSections = sections.filter((s) => s.enabled && attention.has(s.id)).length;
+  const invalidTheme = failingThemeChecks(draft.theme).length > 0;
+  const switchPlan = useMemo(
+    () => (pendingTemplate ? planTemplateSwitch(draft.content, pendingTemplate) : null),
+    [pendingTemplate, draft.content],
+  );
 
   const prerequisites: Prerequisite[] = useMemo(() => {
     const hero = sections.find((s) => s.type === "hero" && s.enabled);
@@ -126,6 +140,7 @@ function BuilderInner({ shop, initial, initialStatus, upcomingWorkshopCount }: P
     ];
   }, [sections, draft.theme.logoUrl, shop, upcomingWorkshopCount]);
 
+  const names = (types: SectionType[]) => types.map((ty) => t(`sectionTypes.${ty}`)).join(", ");
   const editorLabel = selected ? t(`sectionTypes.${selected.type}`) : t("seo.title");
 
   return (
@@ -139,6 +154,7 @@ function BuilderInner({ shop, initial, initialStatus, upcomingWorkshopCount }: P
           <p role="status" aria-live="polite" className="flex items-center gap-1.5 text-sm text-muted-foreground">
             {saveState === "pending" ? <><LoaderCircle className="size-4 animate-spin" aria-hidden />{t("autosave.saving")}</>
               : saveState === "saved" ? <><CircleCheck className="size-4 text-green-700" aria-hidden />{t("autosave.saved")}</>
+              : saveState === "quota" || saveState === "unavailable" ? <><TriangleAlert className="size-4 text-amber-800" aria-hidden />{t(`autosave.${saveState}`)}</>
               : t("autosave.idle")}
           </p>
           <Link href="/dashboard/site/preview" className={buttonVariants({ variant: "outline" })}>
@@ -157,21 +173,7 @@ function BuilderInner({ shop, initial, initialStatus, upcomingWorkshopCount }: P
           <Card>
             <CardHeader><CardTitle>{t("template.title")}</CardTitle></CardHeader>
             <CardContent className="space-y-3">
-              <div role="radiogroup" aria-label={t("template.title")} className="grid gap-2 sm:grid-cols-2">
-                {(Object.keys(TEMPLATES) as TemplateKey[]).map((k) => (
-                  <button
-                    key={k} type="button" role="radio" aria-checked={draft.template === k}
-                    onClick={() => { if (draft.template !== k) setPendingTemplate(k); }}
-                    className={cn(
-                      "rounded-lg border p-3 text-left text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
-                      draft.template === k && "border-primary ring-2 ring-primary/30",
-                    )}
-                  >
-                    <span className="block font-medium">{t(`template.names.${k}`)}</span>
-                    <span className="mt-1 block text-xs text-muted-foreground">{t(`template.descriptions.${k}`)}</span>
-                  </button>
-                ))}
-              </div>
+              <TemplatePicker current={draft.template} onSelect={setPendingTemplate} />
               <p className="text-xs text-muted-foreground">{t("template.hint")}</p>
             </CardContent>
           </Card>
@@ -180,7 +182,7 @@ function BuilderInner({ shop, initial, initialStatus, upcomingWorkshopCount }: P
             <CardHeader><CardTitle>{t("sections.title")}</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               <SectionList
-                sections={sections} selectedId={activeSelectedId} onSelect={setSelectedId} onReorder={setSections}
+                sections={sections} attention={attention} selectedId={activeSelectedId} onSelect={setSelectedId} onReorder={setSections}
                 onToggle={(id, enabled) => patchSection(id, { enabled })} onRemove={removeSection} onAdd={addSection}
               />
               <button
@@ -195,7 +197,7 @@ function BuilderInner({ shop, initial, initialStatus, upcomingWorkshopCount }: P
           <Card>
             <CardHeader><CardTitle>{t("theme.title")}</CardTitle></CardHeader>
             <CardContent>
-              <ThemePanel theme={draft.theme} onChange={(patch) => change({ ...draft, theme: { ...draft.theme, ...patch } })} />
+              <ThemePanel theme={draft.theme} templateTheme={TEMPLATES[draft.template].theme} onChange={(patch) => change({ ...draft, theme: { ...draft.theme, ...patch } })} />
             </CardContent>
           </Card>
 
@@ -208,7 +210,7 @@ function BuilderInner({ shop, initial, initialStatus, upcomingWorkshopCount }: P
             </CardHeader>
             <CardContent>
               <PublishPanel
-                status={status} prerequisites={prerequisites} invalidSections={invalidSections}
+                status={status} prerequisites={prerequisites} invalidSections={invalidSections} invalidTheme={invalidTheme}
                 onSubmitForReview={() => setStatus("PENDING_REVIEW")} onPublish={() => saveDraft(draft)}
               />
             </CardContent>
@@ -244,8 +246,9 @@ function BuilderInner({ shop, initial, initialStatus, upcomingWorkshopCount }: P
                       ) : null}
                       {selected ? (
                         <SectionEditorBody
-                          section={selected} lang={l} defaultLocale={shop.defaultLocale}
+                          section={selected} lang={l} defaultLocale={shop.defaultLocale} theme={draft.theme}
                           onChange={(props) => patchSection(selected.id, { props })}
+                          onPatch={(patch) => patchSection(selected.id, patch)}
                         />
                       ) : (
                         <FieldsEditor
@@ -268,8 +271,17 @@ function BuilderInner({ shop, initial, initialStatus, upcomingWorkshopCount }: P
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t("template.confirmTitle")}</DialogTitle>
-            <DialogDescription>{t("template.confirmText")}</DialogDescription>
+            <DialogDescription>
+              {pendingTemplate ? t("template.confirmFor", { name: t(`template.names.${pendingTemplate}`) }) : null}
+            </DialogDescription>
           </DialogHeader>
+          <div className="space-y-2 text-sm">
+            <p><strong>{t("template.keeps")}</strong> {t("template.keepsText")}</p>
+            <p><strong>{t("template.changes")}</strong> {t("template.changesText")}</p>
+            {switchPlan && switchPlan.added.length > 0 ? <p>{t("template.added", { names: names(switchPlan.added) })}</p> : null}
+            {switchPlan && switchPlan.hidden.length > 0 ? <p>{t("template.hidden", { names: names(switchPlan.hidden) })}</p> : null}
+            {switchPlan && switchPlan.removed.length > 0 ? <p>{t("template.removed", { names: names(switchPlan.removed) })}</p> : null}
+          </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setPendingTemplate(null)}>{t("template.cancel")}</Button>
             <Button type="button" onClick={confirmTemplate}>{t("template.apply")}</Button>
@@ -280,11 +292,13 @@ function BuilderInner({ shop, initial, initialStatus, upcomingWorkshopCount }: P
   );
 }
 
-function SectionEditorBody({ section, lang, defaultLocale, onChange }: {
-  section: SectionInstance; lang: Locale; defaultLocale: Locale; onChange: (props: Record<string, unknown>) => void;
+function SectionEditorBody({ section, lang, defaultLocale, theme, onChange, onPatch }: {
+  section: SectionInstance; lang: Locale; defaultLocale: Locale; theme: PageTheme;
+  onChange: (props: Record<string, unknown>) => void; onPatch: (patch: Partial<SectionInstance>) => void;
 }) {
   const t = useTranslations("builder");
   const def = SECTION_REGISTRY[section.type];
+  const variant = effectiveVariant(section);
   return (
     <div className="space-y-4">
       {def.autoContent ? (
@@ -295,7 +309,19 @@ function SectionEditorBody({ section, lang, defaultLocale, onChange }: {
           <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />{t("editor.authenticityNote")}
         </p>
       ) : null}
+      {def.variants.length > 1 ? (
+        <div className="space-y-1.5">
+          <Label htmlFor={`${section.id}-variant`}>{t("editor.layout")}</Label>
+          <select
+            id={`${section.id}-variant`} value={variant} onChange={(e) => onPatch({ variant: e.target.value })}
+            className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+          >
+            {def.variants.map((v) => <option key={v} value={v}>{t(`variants.${section.type}.${v}`)}</option>)}
+          </select>
+        </div>
+      ) : null}
       <FieldsEditor idPrefix={section.id} fields={def.fields} value={section.props} lang={lang} defaultLocale={defaultLocale} onChange={onChange} />
+      <SectionColorsGroup section={section} theme={theme} onChange={(style) => onPatch({ style })} />
     </div>
   );
 }

@@ -13,7 +13,7 @@ export default async function SitePreviewPage() {
         name: currentShop.name, defaultLocale: currentShop.defaultLocale, enabledLocales: currentShop.enabledLocales,
         timezone: currentShop.timezone, currency: currentShop.currency,
       }}
-      initial={{ content: sitePage.draft, theme: sitePage.theme }}
+      initial={{ content: sitePage.draft, theme: sitePage.theme, template: sitePage.template }}
       workshops={workshops.filter((w) => w.status === "ACTIVE")}
       siteMessages={Object.fromEntries(messages)}
     />

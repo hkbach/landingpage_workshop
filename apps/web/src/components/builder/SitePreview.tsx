@@ -11,6 +11,7 @@ import { PageRenderer } from "@/components/sections/PageRenderer";
 import type { RenderContext } from "@/components/sections/context";
 import type { PageContent, PageTheme, Shop, Workshop } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import type { TemplateKey } from "@/components/sections/templates";
 import { DRAFT_KEY, parseDraft } from "./draft-store";
 
 type PreviewShop = Pick<Shop, "name" | "defaultLocale" | "enabledLocales" | "timezone" | "currency">;
@@ -22,7 +23,7 @@ function subscribe(cb: () => void) {
 
 interface Props {
   shop: PreviewShop;
-  initial: { content: PageContent; theme: PageTheme };
+  initial: { content: PageContent; theme: PageTheme; template: TemplateKey };
   workshops: Workshop[];
   siteMessages: Record<string, Record<string, unknown>>;
 }
@@ -33,10 +34,10 @@ export function SitePreview({ shop, initial, workshops, siteMessages }: Props) {
   const [lang, setLang] = useState<Locale>(shop.defaultLocale);
   // Draft written by the builder's autosave (localStorage); falls back to the mock draft.
   const raw = useSyncExternalStore(subscribe, () => window.localStorage.getItem(DRAFT_KEY), () => null);
-  const draft = useMemo(() => parseDraft(raw) ?? { ...initial, template: "classic" as const }, [raw, initial]);
+  const draft = useMemo(() => parseDraft(raw) ?? { ...initial }, [raw, initial]);
 
   const ctx: RenderContext = {
-    locale: lang, shop, workshops, reportHref: "#", privacyHref: "#",
+    locale: lang, shop, workshops, reportHref: "#", privacyHref: "#", allowDataImages: true,
   };
 
   return (

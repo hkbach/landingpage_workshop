@@ -46,6 +46,7 @@ export const SECTION_TYPES = [
   "faq",
   "location",
   "contact",
+  "video",
   "footer",
 ] as const;
 export type SectionType = (typeof SECTION_TYPES)[number];

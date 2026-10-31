@@ -3,7 +3,7 @@
 > **Mục đích file:** Đây là tài liệu requirement dùng làm nguồn sự thật (source of truth) khi vibe code với Claude Code trong VS Code.
 > Claude phải đọc file này trước khi code, làm theo từng milestone ở **Mục 13**, và tuân thủ các quy tắc ở **Mục 14**.
 >
-> - Phiên bản: 1.1-MVP (draft)
+> - Phiên bản: 1.2-MVP (draft)
 > - Ngày: 31/10/2026
 > - Nguồn: WS-SaaS-BRS-SRS-001 v1.0 + định hướng sản phẩm mới (3 actor, shop tự đăng ký, landing page builder)
 > - Ngôn ngữ tài liệu: tiếng Việt. **Code, tên biến, enum, commit message: tiếng Anh.**
@@ -270,7 +270,7 @@ Browser ────────────────────────
 ### 5.2 Landing page builder
 
 **FR-SITE-01 – Chọn template (Must)**
-- MVP có **2 template** (`classic`, `minimal`). Mỗi template là một bộ section mặc định và theme mặc định.
+- MVP có **10 template** do nền tảng định nghĩa trong code (`packages/shared`). Mỗi template khác nhau về **bố cục từng section (layout variant), palette, font và thứ tự section mặc định**, nhưng dùng chung 11 section type và bộ renderer. *(v1.2: đổi từ 2 lên 10 template theo yêu cầu PO.)*
 - Đổi template giữ lại nội dung các section cùng type.
 
 **FR-SITE-02 – Chỉnh section (Must)**
@@ -288,11 +288,14 @@ Browser ────────────────────────
 | `faq` | heading, danh sách Q&A | Mặc định có câu hỏi về chính sách đến trễ |
 | `location` | heading, địa chỉ, giờ mở cửa, Google Maps URL | Chỉ cho phép link `google.com/maps` / `maps.app.goo.gl` |
 | `contact` | heading, phone, WhatsApp, email, mạng xã hội | |
+| `video` | heading, caption, **link YouTube** | Chỉ lưu **video ID** (trích từ link `youtube.com/watch?v=`, `youtu.be/`, `youtube.com/shorts/`, `youtube.com/embed/`); nhúng `youtube-nocookie.com`, tải khi khách bấm Play (facade). *(v1.2)* |
 | `footer` | text, link mạng xã hội | Luôn có, không xóa được |
 
 - Thao tác: thêm, xóa, bật/tắt, sắp xếp (dnd-kit), sửa props.
 - Theme: chọn palette có sẵn + 1 màu primary (hex, kiểm tra contrast tối thiểu 4.5:1 với text), font từ danh sách cho phép (tối đa 6 font, hỗ trợ đủ glyph VI/KO/JA hoặc có fallback), logo, favicon.
-- **Không** cho nhập HTML, CSS, JS, iframe tùy ý. Text render dạng text thuần (React tự escape). Không dùng `dangerouslySetInnerHTML` với dữ liệu của shop.
+- **Tùy chỉnh màu (v1.2):** ngoài theme token toàn trang (primary, nền, chữ, nút), mỗi section có thể ghi đè `style` gồm `background`, `text`, `accent` (hex). Chỉ nhận hex hợp lệ; builder cảnh báo khi contrast chữ/nền < 4.5:1 và chặn publish nếu không đạt. Màu render qua CSS variables, không nhận CSS tùy ý.
+- **Ảnh (v1.2):** shop upload ảnh theo FR-MEDIA-01 (jpeg/png/webp, tối đa 5 MB) cho logo, favicon, hero, about, gallery, team. Builder tạm dùng bộ upload mock cho tới khi có API (M2).
+- **Không** cho nhập HTML, CSS, JS, iframe tùy ý (ngoại lệ duy nhất: section `video`, trong đó hệ thống tự dựng iframe `youtube-nocookie.com` từ video ID đã kiểm tra; cần `frame-src https://www.youtube-nocookie.com` trong CSP của landing page). Text render dạng text thuần (React tự escape). Không dùng `dangerouslySetInnerHTML` với dữ liệu của shop.
 - Mọi field dạng text hiển thị cho khách đều là **localized**: `{ en: "...", vi: "...", ... }`. Builder có tab chọn ngôn ngữ, hiển thị cảnh báo khi ngôn ngữ đã bật còn thiếu bản dịch. Thiếu bản dịch: fallback về ngôn ngữ mặc định của shop.
 - Autosave bản nháp (debounce 2 giây) vào `site_pages.draft_content`.
 - AC: props sai schema bị backend từ chối (422); bản nháp không ảnh hưởng trang đang live.
@@ -837,8 +840,8 @@ Mỗi milestone: code → test → `pnpm lint && pnpm typecheck && pnpm test` pa
 - [ ] Quản lý session: thêm lẻ, đóng, sửa capacity, hủy session
 
 ### M3 – Landing page builder
-- [ ] Section registry trong `packages/shared` (10 section type, Zod schema, defaults)
-- [ ] 2 template, theme (palette, primary color, font, logo)
+- [ ] Section registry trong `packages/shared` (11 section type gồm `video`, Zod schema, defaults)
+- [ ] 10 template (layout variant), theme (palette, primary color, font, logo), ghi đè màu theo section
 - [ ] Builder UI: danh sách section, dnd-kit, form editor theo schema, tab ngôn ngữ, autosave
 - [ ] Preview desktop/mobile theo ngôn ngữ
 - [ ] Submit review / publish atomic / site_page_versions

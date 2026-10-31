@@ -12,15 +12,24 @@ interface Props {
   status: OrgStatus;
   prerequisites: Prerequisite[];
   invalidSections: number;
+  /** Theme colours fail the 4.5:1 contrast rule. */
+  invalidTheme: boolean;
   onSubmitForReview: () => void;
   onPublish: () => void;
 }
 
 /** FR-SITE-04: first time "Submit for review" (with prerequisites), afterwards "Publish". Mock only: nothing is sent. */
-export function PublishPanel({ status, prerequisites, invalidSections, onSubmitForReview, onPublish }: Props) {
+export function PublishPanel({ status, prerequisites, invalidSections, invalidTheme, onSubmitForReview, onPublish }: Props) {
   const t = useTranslations("builder");
   const [message, setMessage] = useState<"submitted" | "published" | null>(null);
   const allMet = prerequisites.every((p) => p.met);
+  const blocked = invalidSections > 0 || invalidTheme;
+  const issues = (
+    <>
+      {invalidSections > 0 ? <p className="text-xs text-amber-800">{t("publish.fixErrors", { count: invalidSections })}</p> : null}
+      {invalidTheme ? <p className="text-xs text-amber-800">{t("publish.fixTheme")}</p> : null}
+    </>
+  );
 
   if (status === "SUSPENDED") {
     return <p role="status" className="text-sm text-destructive">{t("publish.suspended")}</p>;
@@ -32,11 +41,11 @@ export function PublishPanel({ status, prerequisites, invalidSections, onSubmitF
   if (status === "ACTIVE") {
     return (
       <div className="space-y-2">
-        <Button type="button" disabled={invalidSections > 0} onClick={() => { onPublish(); setMessage("published"); }}>
+        <Button type="button" disabled={blocked} onClick={() => { onPublish(); setMessage("published"); }}>
           {t("publish.publish")}
         </Button>
         <p className="text-xs text-muted-foreground">{t("publish.publishHint")}</p>
-        {invalidSections > 0 ? <p className="text-xs text-amber-800">{t("publish.fixErrors", { count: invalidSections })}</p> : null}
+        {issues}
         {message === "published" ? <p role="status" className="text-sm text-green-800">{t("publish.publishedMock")}</p> : null}
       </div>
     );
@@ -59,11 +68,11 @@ export function PublishPanel({ status, prerequisites, invalidSections, onSubmitF
           ))}
         </ul>
       </div>
-      <Button type="button" disabled={!allMet || invalidSections > 0 || message === "submitted"} onClick={() => { onSubmitForReview(); setMessage("submitted"); }}>
+      <Button type="button" disabled={!allMet || blocked || message === "submitted"} onClick={() => { onSubmitForReview(); setMessage("submitted"); }}>
         {t("publish.submit")}
       </Button>
       {!allMet ? <p className="text-xs text-muted-foreground">{t("publish.submitDisabled")}</p> : null}
-      {invalidSections > 0 ? <p className="text-xs text-amber-800">{t("publish.fixErrors", { count: invalidSections })}</p> : null}
+      {issues}
       {message === "submitted" ? <p role="status" className="text-sm text-green-800">{t("publish.submittedMock")}</p> : null}
     </div>
   );

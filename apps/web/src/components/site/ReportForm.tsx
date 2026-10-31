@@ -19,7 +19,7 @@ const schema = z.object({
 type Values = z.infer<typeof schema>;
 
 const selectClass =
-  "h-11 w-full rounded-lg border border-input bg-white px-2.5 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
+  "h-11 w-full rounded-lg border border-input bg-white px-2.5 text-base text-zinc-900 outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
 
 export function ReportForm({ homeHref }: { homeHref: string }) {
   const t = useTranslations("site.report");

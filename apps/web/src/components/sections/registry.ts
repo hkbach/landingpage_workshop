@@ -1,13 +1,17 @@
 import { z } from "zod";
-import { LOCALES, type Localized, type SectionType } from "@workshop/shared";
-import { isAllowedMapsUrl, isHttpsUrl } from "./safe-url";
+import { isYoutubeId, LOCALES, type Localized, type SectionType } from "@workshop/shared";
+import type { SectionInstance } from "@/lib/types";
+import { isAllowedMapsUrl, isHttpsUrl, isImageUrl, MAX_DATA_IMAGE_LENGTH } from "./safe-url";
+import type { Tone } from "./theme";
 
-// Section registry (FR-SITE-02): per type -> schema, defaults, and a field descriptor that drives the generic editor.
+// Section registry (FR-SITE-02): per type -> schema, defaults, layout variants and a field descriptor that drives the
+// generic editor. All templates share these 11 types and one renderer per type (the variant is a renderer prop).
 
 export type FieldDef =
   | { kind: "localized"; key: string; max: number; multiline?: boolean }
   | { kind: "plain"; key: string; max: number; inputType?: "text" | "tel" | "email" }
   | { kind: "image"; key: string }
+  | { kind: "youtube"; key: string }
   | { kind: "link"; key: string }
   | { kind: "maps"; key: string }
   | { kind: "select"; key: string; options: readonly string[] }
@@ -17,7 +21,14 @@ export type FieldDef =
 export interface SectionDef {
   type: SectionType;
   schemaVersion: 1;
+  /** Strict schema (public site / backend): https image URLs only. */
   schema: z.ZodType<Record<string, unknown>>;
+  /** Builder/preview schema: additionally accepts uploaded data:image URLs. */
+  builderSchema: z.ZodType<Record<string, unknown>>;
+  /** Layout variants of the section renderer; the first one is the default. */
+  variants: readonly string[];
+  /** Background tone for a given variant (drives colour resolution and contrast checks). */
+  tone: (variant: string) => Tone;
   defaultProps: () => Record<string, unknown>;
   fields: FieldDef[];
   /** Shown in the builder with an authenticity reminder. */
@@ -30,7 +41,9 @@ export interface SectionDef {
 const optStr = (max: number) => z.string().max(max).optional();
 const localized = (max: number) =>
   z.object(Object.fromEntries(LOCALES.map((l) => [l, optStr(max)])) as Record<(typeof LOCALES)[number], z.ZodOptional<z.ZodString>>);
-const imageUrl = z.string().max(2000).refine((v) => v === "" || isHttpsUrl(v), { message: "https_url" });
+const makeImage = (allowDataImages: boolean) =>
+  z.string().max(allowDataImages ? MAX_DATA_IMAGE_LENGTH : 2000).refine((v) => v === "" || isImageUrl(v, { allowDataImages }), { message: "https_url" });
+const videoId = z.string().max(11).refine((v) => v === "" || isYoutubeId(v), { message: "youtube_id" });
 const linkUrl = z.string().max(2000).refine((v) => v === "" || isHttpsUrl(v), { message: "https_url" });
 const mapsUrl = z.string().max(2000).refine((v) => v === "" || isAllowedMapsUrl(v), { message: "maps_url" });
 const socials = z.array(z.object({ label: z.string().max(40), url: linkUrl })).max(6);
@@ -58,10 +71,16 @@ export const LATE_POLICY_FAQ: { q: Localized; a: Localized } = {
   },
 };
 
-export const SECTION_REGISTRY: Record<SectionType, SectionDef> = {
+type ImageSchema = z.ZodType<string>;
+type Define = Omit<SectionDef, "schema" | "builderSchema"> & { make: (image: ImageSchema) => z.ZodType<unknown> };
+
+const fixed = (tone: Tone) => () => tone;
+
+const DEFINITIONS: Record<SectionType, Define> = {
   hero: {
     type: "hero", schemaVersion: 1, removable: true,
-    schema: asSchema(z.object({ title: localized(120), subtitle: localized(240), imageUrl, ctaText: localized(40) })),
+    variants: ["centered", "split", "overlay-left"], tone: fixed("primary"),
+    make: (image) => z.object({ title: localized(120), subtitle: localized(240), imageUrl: image, ctaText: localized(40) }),
     defaultProps: () => ({ title: { en: "Make something with your hands" }, subtitle: { en: "Hands-on workshops, no experience needed" }, imageUrl: "", ctaText: { en: "Book a workshop" } }),
     fields: [
       { kind: "localized", key: "title", max: 120 }, { kind: "localized", key: "subtitle", max: 240 },
@@ -70,28 +89,32 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDef> = {
   },
   about: {
     type: "about", schemaVersion: 1, removable: true,
-    schema: asSchema(z.object({ heading: localized(80), body: localized(2000), imageUrl })),
+    variants: ["image-left", "image-right", "stacked"], tone: fixed("bg"),
+    make: (image) => z.object({ heading: localized(80), body: localized(2000), imageUrl: image }),
     defaultProps: () => ({ heading: { en: "About us" }, body: { en: "" }, imageUrl: "" }),
     fields: [{ kind: "localized", key: "heading", max: 80 }, { kind: "localized", key: "body", max: 2000, multiline: true }, { kind: "image", key: "imageUrl" }],
   },
   workshops: {
     type: "workshops", schemaVersion: 1, removable: true, autoContent: true,
-    schema: asSchema(z.object({ heading: localized(80), layout: z.enum(["grid", "list"]) })),
-    defaultProps: () => ({ heading: { en: "Our workshops" }, layout: "grid" }),
-    fields: [{ kind: "localized", key: "heading", max: 80 }, { kind: "select", key: "layout", options: ["grid", "list"] }],
+    variants: ["grid", "list", "featured"], tone: fixed("surface"),
+    make: () => z.object({ heading: localized(80) }),
+    defaultProps: () => ({ heading: { en: "Our workshops" } }),
+    fields: [{ kind: "localized", key: "heading", max: 80 }],
   },
   gallery: {
     type: "gallery", schemaVersion: 1, removable: true,
-    schema: asSchema(z.object({ heading: localized(80), imageUrls: z.array(imageUrl).max(12) })),
+    variants: ["grid", "masonry", "strip"], tone: fixed("bg"),
+    make: (image) => z.object({ heading: localized(80), imageUrls: z.array(image).max(12) }),
     defaultProps: () => ({ heading: { en: "Gallery" }, imageUrls: [] }),
     fields: [{ kind: "localized", key: "heading", max: 80 }, { kind: "imageList", key: "imageUrls", max: 12 }],
   },
   team: {
     type: "team", schemaVersion: 1, removable: true,
-    schema: asSchema(z.object({
+    variants: ["cards", "inline"], tone: fixed("surface"),
+    make: (image) => z.object({
       heading: localized(80),
-      members: z.array(z.object({ name: z.string().max(80), role: localized(80), bio: localized(300), imageUrl })).max(12),
-    })),
+      members: z.array(z.object({ name: z.string().max(80), role: localized(80), bio: localized(300), imageUrl: image })).max(12),
+    }),
     defaultProps: () => ({ heading: { en: "Meet the team" }, members: [] }),
     fields: [
       { kind: "localized", key: "heading", max: 80 },
@@ -104,10 +127,11 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDef> = {
   },
   testimonials: {
     type: "testimonials", schemaVersion: 1, removable: true, authenticityNote: true,
-    schema: asSchema(z.object({
+    variants: ["cards", "quote"], tone: fixed("bg"),
+    make: () => z.object({
       heading: localized(80),
       items: z.array(z.object({ name: z.string().max(80), country: z.string().max(60), text: localized(500) })).max(12),
-    })),
+    }),
     defaultProps: () => ({ heading: { en: "What guests say" }, items: [] }),
     fields: [
       { kind: "localized", key: "heading", max: 80 },
@@ -120,7 +144,8 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDef> = {
   },
   faq: {
     type: "faq", schemaVersion: 1, removable: true,
-    schema: asSchema(z.object({ heading: localized(80), items: z.array(z.object({ q: localized(200), a: localized(1000) })).max(20) })),
+    variants: ["accordion", "two-column"], tone: fixed("surface"),
+    make: () => z.object({ heading: localized(80), items: z.array(z.object({ q: localized(200), a: localized(1000) })).max(20) }),
     defaultProps: () => ({ heading: { en: "FAQ" }, items: [{ q: { ...LATE_POLICY_FAQ.q }, a: { ...LATE_POLICY_FAQ.a } }] }),
     fields: [
       { kind: "localized", key: "heading", max: 80 },
@@ -133,7 +158,8 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDef> = {
   },
   location: {
     type: "location", schemaVersion: 1, removable: true,
-    schema: asSchema(z.object({ heading: localized(80), address: localized(300), hours: localized(300), mapsUrl })),
+    variants: ["simple", "card"], tone: fixed("bg"),
+    make: () => z.object({ heading: localized(80), address: localized(300), hours: localized(300), mapsUrl }),
     defaultProps: () => ({ heading: { en: "Find us" }, address: { en: "" }, hours: { en: "" }, mapsUrl: "" }),
     fields: [
       { kind: "localized", key: "heading", max: 80 }, { kind: "localized", key: "address", max: 300 },
@@ -142,28 +168,60 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDef> = {
   },
   contact: {
     type: "contact", schemaVersion: 1, removable: true,
-    schema: asSchema(z.object({
+    variants: ["list", "cards"], tone: fixed("surface"),
+    make: () => z.object({
       heading: localized(80), phone: z.string().max(40), whatsapp: z.string().max(40),
       email: z.string().max(120).refine((v) => v === "" || z.email().safeParse(v).success, { message: "email" }), socials,
-    })),
+    }),
     defaultProps: () => ({ heading: { en: "Contact" }, phone: "", whatsapp: "", email: "", socials: [] }),
     fields: [
       { kind: "localized", key: "heading", max: 80 }, { kind: "plain", key: "phone", max: 40, inputType: "tel" },
       { kind: "plain", key: "whatsapp", max: 40, inputType: "tel" }, { kind: "plain", key: "email", max: 120, inputType: "email" }, SOCIAL_FIELDS,
     ],
   },
+  video: {
+    type: "video", schemaVersion: 1, removable: true,
+    variants: ["wide", "split"], tone: fixed("bg"),
+    // Only the validated 11-char video ID is stored; the raw link is never kept (see parseYoutubeId).
+    make: () => z.object({ heading: localized(80), caption: localized(300), videoId }),
+    defaultProps: () => ({ heading: { en: "See it in action" }, caption: { en: "" }, videoId: "" }),
+    fields: [{ kind: "localized", key: "heading", max: 80 }, { kind: "localized", key: "caption", max: 300, multiline: true }, { kind: "youtube", key: "videoId" }],
+  },
   footer: {
     type: "footer", schemaVersion: 1, removable: false,
-    schema: asSchema(z.object({ text: localized(200), socials })),
+    variants: ["dark", "light", "centered"], tone: (v) => (v === "light" ? "surface" : "inverse"),
+    make: () => z.object({ text: localized(200), socials }),
     defaultProps: () => ({ text: { en: "" }, socials: [] }),
     fields: [{ kind: "localized", key: "text", max: 200 }, SOCIAL_FIELDS],
   },
 };
 
-export const ADDABLE_TYPES: SectionType[] = ["hero", "about", "workshops", "gallery", "team", "testimonials", "faq", "location", "contact"];
+export const SECTION_REGISTRY = Object.fromEntries(
+  (Object.entries(DEFINITIONS) as [SectionType, Define][]).map(([type, { make, ...def }]) => [
+    type,
+    { ...def, schema: asSchema(make(makeImage(false))), builderSchema: asSchema(make(makeImage(true))) },
+  ]),
+) as Record<SectionType, SectionDef>;
 
-export function createSection(type: SectionType) {
-  return { id: crypto.randomUUID(), type, enabled: true, props: SECTION_REGISTRY[type].defaultProps() };
+export const ADDABLE_TYPES: SectionType[] = ["hero", "about", "workshops", "gallery", "team", "testimonials", "faq", "location", "contact", "video"];
+
+export function defaultVariant(type: SectionType): string {
+  return SECTION_REGISTRY[type].variants[0]!;
+}
+export function isValidVariant(type: SectionType, variant: unknown): variant is string {
+  return typeof variant === "string" && SECTION_REGISTRY[type].variants.includes(variant);
+}
+/** Variant to render: the section's own when valid, otherwise the registry default. */
+export function effectiveVariant(section: Pick<SectionInstance, "type" | "variant">): string {
+  return isValidVariant(section.type, section.variant) ? section.variant : defaultVariant(section.type);
+}
+
+export function createSection(type: SectionType, variant?: string): SectionInstance {
+  return {
+    id: crypto.randomUUID(), type, enabled: true,
+    variant: isValidVariant(type, variant) ? variant : defaultVariant(type),
+    props: SECTION_REGISTRY[type].defaultProps(),
+  };
 }
 
 /** Collect the non-empty localized values of a section's props (used for missing-translation warnings). */
@@ -182,7 +240,37 @@ export function collectLocalized(fields: FieldDef[], props: Record<string, unkno
   return out;
 }
 
-export function validateSection(type: SectionType, props: Record<string, unknown>): string[] {
-  const res = SECTION_REGISTRY[type].schema.safeParse(props);
+export interface ValidateOptions {
+  /** Builder/preview context: accept uploaded data:image URLs. Never set for the public site or the API. */
+  allowDataImages?: boolean;
+}
+
+export function validateSection(type: SectionType, props: Record<string, unknown>, opts?: ValidateOptions): string[] {
+  const def = SECTION_REGISTRY[type];
+  const res = (opts?.allowDataImages ? def.builderSchema : def.schema).safeParse(props);
   return res.success ? [] : res.error.issues.map((i) => `${i.path.join(".")}:${i.message}`);
+}
+
+// --- "has the shop edited this section?" (used when switching templates so no content is lost) ---------------------
+function prune(v: unknown): unknown {
+  if (typeof v === "string") return v.trim() === "" ? undefined : v;
+  if (Array.isArray(v)) {
+    const a = v.map(prune).filter((x) => x !== undefined);
+    return a.length ? a : undefined;
+  }
+  if (v && typeof v === "object") {
+    const entries = Object.entries(v as Record<string, unknown>)
+      .map(([k, x]) => [k, prune(x)] as const)
+      .filter(([, x]) => x !== undefined)
+      .sort(([a], [b]) => a.localeCompare(b));
+    return entries.length ? Object.fromEntries(entries) : undefined;
+  }
+  return v ?? undefined;
+}
+
+/** True when the props differ from the registry defaults (ignoring empty values). Auto-content sections never do. */
+export function hasContent(section: Pick<SectionInstance, "type" | "props">): boolean {
+  const def = SECTION_REGISTRY[section.type];
+  if (def.autoContent) return false;
+  return JSON.stringify(prune(section.props)) !== JSON.stringify(prune(def.defaultProps()));
 }

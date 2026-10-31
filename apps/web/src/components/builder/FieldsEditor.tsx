@@ -9,6 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { FieldDef } from "@/components/sections/registry";
 import { isAllowedMapsUrl, isHttpsUrl } from "@/components/sections/safe-url";
+import { ImageUploadField } from "./ImageUploadField";
+import { YoutubeField } from "./YoutubeField";
 
 type Values = Record<string, unknown>;
 
@@ -68,7 +70,14 @@ export function FieldsEditor({ fields, value, onChange, lang, defaultLocale, idP
               </div>
             );
           }
-          case "image":
+          case "image": {
+            const v = typeof value[f.key] === "string" ? (value[f.key] as string) : "";
+            return <ImageUploadField key={f.key} id={id} label={label} value={v} purpose="site" onChange={(url) => set(f.key, url)} />;
+          }
+          case "youtube": {
+            const v = typeof value[f.key] === "string" ? (value[f.key] as string) : "";
+            return <YoutubeField key={f.key} id={id} label={label} value={v} onChange={(vid) => set(f.key, vid)} />;
+          }
           case "link":
           case "maps": {
             const v = typeof value[f.key] === "string" ? (value[f.key] as string) : "";
@@ -81,7 +90,7 @@ export function FieldsEditor({ fields, value, onChange, lang, defaultLocale, idP
                   aria-describedby={`${id}-hint`} placeholder="https://" onChange={(e) => set(f.key, e.target.value.trim())}
                 />
                 <p id={`${id}-hint`} className={invalid ? "text-xs text-destructive" : "text-xs text-muted-foreground"}>
-                  {invalid ? t(f.kind === "maps" ? "editor.errors.mapsUrl" : "editor.errors.httpsUrl") : t(f.kind === "maps" ? "editor.hints.mapsUrl" : f.kind === "image" ? "editor.hints.imageUrl" : "editor.hints.linkUrl")}
+                  {invalid ? t(f.kind === "maps" ? "editor.errors.mapsUrl" : "editor.errors.httpsUrl") : t(f.kind === "maps" ? "editor.hints.mapsUrl" : "editor.hints.linkUrl")}
                 </p>
               </div>
             );
@@ -102,23 +111,19 @@ export function FieldsEditor({ fields, value, onChange, lang, defaultLocale, idP
             return (
               <fieldset key={f.key} className="space-y-2">
                 <legend className="text-sm font-medium">{label} <span className="text-muted-foreground">({urls.length}/{f.max})</span></legend>
-                {urls.map((u, i) => {
-                  const invalid = u !== "" && !isHttpsUrl(u);
-                  return (
-                    <div key={i} className="flex items-start gap-2">
-                      <div className="flex-1 space-y-1">
-                        <Input
-                          type="url" inputMode="url" placeholder="https://" value={u} aria-label={`${label} ${i + 1}`} aria-invalid={invalid}
-                          onChange={(e) => set(f.key, urls.map((x, j) => (j === i ? e.target.value.trim() : x)))}
-                        />
-                        {invalid ? <p className="text-xs text-destructive">{t("editor.errors.httpsUrl")}</p> : null}
-                      </div>
-                      <Button type="button" variant="ghost" size="icon" onClick={() => set(f.key, urls.filter((_, j) => j !== i))}>
-                        <Trash2 /><span className="sr-only">{t("editor.remove")}</span>
-                      </Button>
+                {urls.map((u, i) => (
+                  <div key={i} className="flex items-start gap-2 rounded-lg border p-3">
+                    <div className="min-w-0 flex-1">
+                      <ImageUploadField
+                        id={`${id}-${i}`} label={`${label} ${i + 1}`} value={typeof u === "string" ? u : ""} purpose="site"
+                        onChange={(url) => set(f.key, urls.map((x, j) => (j === i ? url : x)))}
+                      />
                     </div>
-                  );
-                })}
+                    <Button type="button" variant="ghost" size="icon" onClick={() => set(f.key, urls.filter((_, j) => j !== i))}>
+                      <Trash2 /><span className="sr-only">{t("editor.remove")} {i + 1}</span>
+                    </Button>
+                  </div>
+                ))}
                 <Button type="button" variant="outline" size="sm" disabled={urls.length >= f.max} onClick={() => set(f.key, [...urls, ""])}>
                   <Plus />{t("editor.addImage")}
                 </Button>

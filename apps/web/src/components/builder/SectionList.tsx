@@ -11,13 +11,15 @@ import type { SectionType } from "@workshop/shared";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { ADDABLE_TYPES, SECTION_REGISTRY, validateSection } from "@/components/sections/registry";
+import { ADDABLE_TYPES, SECTION_REGISTRY } from "@/components/sections/registry";
 import type { SectionInstance } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 
 interface Props {
   sections: SectionInstance[];
+  /** Ids of sections that fail validation or colour contrast ("Needs attention"). */
+  attention: ReadonlySet<string>;
   selectedId: string;
   onSelect: (id: string) => void;
   onReorder: (sections: SectionInstance[]) => void;
@@ -26,14 +28,13 @@ interface Props {
   onAdd: (type: SectionType) => void;
 }
 
-function Row({ section, selected, onSelect, onToggle, onRemove }: {
-  section: SectionInstance; selected: boolean; onSelect: () => void; onToggle: (enabled: boolean) => void; onRemove: () => void;
+function Row({ section, invalid, selected, onSelect, onToggle, onRemove }: {
+  section: SectionInstance; invalid: boolean; selected: boolean; onSelect: () => void; onToggle: (enabled: boolean) => void; onRemove: () => void;
 }) {
   const t = useTranslations("builder");
   const def = SECTION_REGISTRY[section.type];
   const fixed = !def.removable;
   const { setNodeRef, setActivatorNodeRef, attributes, listeners, transform, transition, isDragging } = useSortable({ id: section.id, disabled: fixed });
-  const invalid = validateSection(section.type, section.props).length > 0;
   const name = t(`sectionTypes.${section.type}`);
   return (
     <li
@@ -86,7 +87,7 @@ function Row({ section, selected, onSelect, onToggle, onRemove }: {
   );
 }
 
-export function SectionList({ sections, selectedId, onSelect, onReorder, onToggle, onRemove, onAdd }: Props) {
+export function SectionList({ sections, attention, selectedId, onSelect, onReorder, onToggle, onRemove, onAdd }: Props) {
   const t = useTranslations("builder");
   const [toAdd, setToAdd] = useState<SectionType | "">("");
   const sensors = useSensors(
@@ -128,7 +129,7 @@ export function SectionList({ sections, selectedId, onSelect, onReorder, onToggl
         <SortableContext items={movable.map((s) => s.id)} strategy={verticalListSortingStrategy}>
           <ul className="space-y-1.5">
             {movable.map((s) => (
-              <Row key={s.id} section={s} selected={selectedId === s.id} onSelect={() => onSelect(s.id)}
+              <Row key={s.id} section={s} invalid={attention.has(s.id)} selected={selectedId === s.id} onSelect={() => onSelect(s.id)}
                 onToggle={(en) => onToggle(s.id, en)} onRemove={() => onRemove(s.id)} />
             ))}
           </ul>
@@ -136,7 +137,7 @@ export function SectionList({ sections, selectedId, onSelect, onReorder, onToggl
       </DndContext>
       <ul className="space-y-1.5">
         {footer.map((s) => (
-          <Row key={s.id} section={s} selected={selectedId === s.id} onSelect={() => onSelect(s.id)} onToggle={() => {}} onRemove={() => {}} />
+          <Row key={s.id} section={s} invalid={attention.has(s.id)} selected={selectedId === s.id} onSelect={() => onSelect(s.id)} onToggle={() => {}} onRemove={() => {}} />
         ))}
       </ul>
 

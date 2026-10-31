@@ -20,9 +20,27 @@ export function isAllowedMapsUrl(value: string): boolean {
   return (host === "google.com" || host === "www.google.com") && (u.pathname === "/maps" || u.pathname.startsWith("/maps/"));
 }
 
-/** Returns the URL if it is a valid https image URL, otherwise undefined. */
-export function safeImage(value: unknown): string | undefined {
-  return typeof value === "string" && value && isHttpsUrl(value) ? value : undefined;
+/** data:image/(jpeg|png|webp);base64 - produced by the mock uploader; valid ONLY in the builder/preview context. */
+const DATA_IMAGE_RE = /^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/;
+export const MAX_DATA_IMAGE_LENGTH = 2_500_000;
+
+export function isDataImageUrl(value: string): boolean {
+  return value.length <= MAX_DATA_IMAGE_LENGTH && DATA_IMAGE_RE.test(value);
+}
+
+export interface ImageUrlOptions {
+  /** Accept uploaded data: URLs. Only the builder and its preview may set this; never the public site. */
+  allowDataImages?: boolean;
+}
+
+/** https image URL, or (builder/preview only) a data:image URL. */
+export function isImageUrl(value: string, opts?: ImageUrlOptions): boolean {
+  return isHttpsUrl(value) || (opts?.allowDataImages === true && isDataImageUrl(value));
+}
+
+/** Returns the URL if it is a valid image URL for this context, otherwise undefined. */
+export function safeImage(value: unknown, opts?: ImageUrlOptions): string | undefined {
+  return typeof value === "string" && value && isImageUrl(value, opts) ? value : undefined;
 }
 export function safeLink(value: unknown): string | undefined {
   return typeof value === "string" && value && isHttpsUrl(value) ? value : undefined;

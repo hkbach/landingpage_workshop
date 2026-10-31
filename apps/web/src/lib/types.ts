@@ -41,11 +41,25 @@ export interface Booking {
   specialRequest?: string; cancelReason?: string; createdAt: string; payments: PaymentEntry[];
 }
 
-export interface SectionInstance { id: string; type: SectionType; enabled: boolean; props: Record<string, unknown> }
+/** Per-section colour overrides (hex only, #RGB or #RRGGBB). Rendered only via CSS custom properties. */
+export interface SectionStyle { background?: string; text?: string; accent?: string }
+export interface SectionInstance {
+  id: string; type: SectionType; enabled: boolean;
+  /** Layout variant declared by the section registry; falls back to the registry default when missing/unknown. */
+  variant?: string;
+  props: Record<string, unknown>;
+  style?: SectionStyle;
+}
 export interface PageContent {
   schemaVersion: 1; sections: SectionInstance[]; seo: { title: Localized; description: Localized };
 }
-export interface PageTheme { palette: string; primary: string; font: string; logoUrl?: string; faviconUrl?: string }
+export type ThemeRadius = "none" | "sm" | "md" | "lg" | "xl";
+export type ThemeDensity = "compact" | "comfortable" | "spacious";
+/** Page-level theme tokens. Palettes are presets that fill the colour tokens; "custom" means edited by hand. */
+export interface PageTheme {
+  palette: string; primary: string; background: string; text: string; surface: string; font: string;
+  radius?: ThemeRadius; density?: ThemeDensity; logoUrl?: string; faviconUrl?: string;
+}
 
 export interface AuditEntry {
   id: string; organizationId?: string; actor: string; action: string; entityType: string; entityId: string; createdAt: string; ip?: string;

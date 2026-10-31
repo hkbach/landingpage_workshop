@@ -3,19 +3,52 @@
   "subtitle": "Build your landing page from sections. Changes are saved as a draft.",
   "preview": "Preview",
   "draftNote": "Edits only change your draft. The live website is not affected until you publish.",
-  "autosave": { "idle": "All changes saved", "saving": "Saving draft...", "saved": "Draft saved" },
+  "autosave": {
+    "idle": "All changes saved",
+    "saving": "Saving draft...",
+    "saved": "Draft saved",
+    "quota": "Browser storage is full. Remove or replace large images, otherwise your latest changes are not saved.",
+    "unavailable": "Could not save the draft in this browser."
+  },
   "template": {
     "title": "Template",
-    "names": { "classic": "Classic", "minimal": "Minimal" },
-    "descriptions": {
-      "classic": "Full story: about, gallery, team, testimonials, FAQ and contact.",
-      "minimal": "Short and focused: hero, workshops, FAQ and location."
+    "names": {
+      "classic": "Classic",
+      "minimal": "Minimal",
+      "bold": "Bold",
+      "elegant": "Elegant",
+      "rustic": "Rustic",
+      "modern": "Modern",
+      "vibrant": "Vibrant",
+      "serene": "Serene",
+      "artisan": "Artisan",
+      "noir": "Noir"
     },
-    "hint": "Switching template keeps the content of sections that exist in both.",
+    "descriptions": {
+      "classic": "Warm and familiar: full story with team, testimonials and FAQ.",
+      "minimal": "Short and monochrome: hero, workshops, FAQ and location.",
+      "bold": "Sharp corners, strong red and a big featured workshop with video.",
+      "elegant": "Refined serif look with pull quotes and generous spacing.",
+      "rustic": "Earthy green with a serif font, masonry gallery and map card.",
+      "modern": "Clean blue, rounded corners, split hero and side-by-side video.",
+      "vibrant": "Playful magenta with pill buttons, featured workshop and video.",
+      "serene": "Calm sage tones, airy spacing and a scrolling photo strip.",
+      "artisan": "Craft-focused: indigo on cream with your makers up front.",
+      "noir": "Dark mode with a gold accent, featured workshop and pull quotes."
+    },
+    "hint": "Switching template never deletes your content. Pick a template, then customise images, video and colours.",
     "confirmTitle": "Switch template?",
-    "confirmText": "Sections of the same type keep their content. Sections that are not part of the new template are removed from the draft, and the theme is reset to the template default.",
     "cancel": "Cancel",
-    "apply": "Switch template"
+    "apply": "Switch template",
+    "current": "Current",
+    "confirmFor": "You are about to switch to the {name} template.",
+    "keeps": "Kept:",
+    "keepsText": "all text, images, videos and your per-section colour overrides.",
+    "changes": "Changed:",
+    "changesText": "section layouts, section order, theme colours, font and spacing are reset to the template. Your logo and favicon stay.",
+    "added": "Added with default content: {names}.",
+    "hidden": "Not part of the new template but kept hidden (they have content): {names}.",
+    "removed": "Removed (still empty): {names}."
   },
   "sections": {
     "title": "Sections",
@@ -36,28 +69,59 @@
     "add": "Add"
   },
   "sectionTypes": {
-    "hero": "Hero", "about": "About", "workshops": "Workshops", "gallery": "Gallery", "team": "Team",
-    "testimonials": "Testimonials", "faq": "FAQ", "location": "Location", "contact": "Contact", "footer": "Footer"
+    "hero": "Hero",
+    "about": "About",
+    "workshops": "Workshops",
+    "gallery": "Gallery",
+    "team": "Team",
+    "testimonials": "Testimonials",
+    "faq": "FAQ",
+    "location": "Location",
+    "contact": "Contact",
+    "footer": "Footer",
+    "video": "Video"
   },
-  "seo": { "title": "Page title and description (SEO)" },
+  "seo": {
+    "title": "Page title and description (SEO)"
+  },
   "theme": {
     "title": "Theme",
     "palette": "Colour palette",
-    "palettes": { "warm": "Warm clay", "ocean": "Ocean", "forest": "Forest", "plum": "Plum", "mono": "Monochrome", "sunset": "Sunset" },
-    "primary": "Primary colour (hex)",
-    "primaryPicker": "Pick the primary colour",
-    "hexInvalid": "Use a 6-digit hex colour such as #9a3412.",
-    "contrastLow": "Contrast with white text is {ratio}:1. Buttons need at least {min}:1 to be readable. Choose a darker colour.",
-    "contrastOk": "Contrast with white text: {ratio}:1 (meets 4.5:1).",
+    "palettes": {
+      "warm": "Warm clay",
+      "ocean": "Ocean",
+      "forest": "Forest",
+      "plum": "Plum",
+      "mono": "Monochrome",
+      "sunset": "Sunset",
+      "noir": "Noir",
+      "sage": "Sage",
+      "indigo": "Indigo",
+      "magenta": "Magenta",
+      "custom": "Custom"
+    },
     "font": "Font",
     "fontHint": "All listed fonts fall back to system fonts that support Vietnamese, Korean and Japanese.",
-    "logo": "Logo image URL (https)",
-    "favicon": "Favicon image URL (https)",
-    "uploadPlaceholder": "Image upload is coming soon. For now, paste a secure (https) image link."
+    "logo": "Logo",
+    "favicon": "Favicon",
+    "paletteHint": "A palette fills the colours below. You can change any colour afterwards.",
+    "colors": "Page colours",
+    "tokens": {
+      "primary": "Primary (buttons, links)",
+      "background": "Background",
+      "text": "Text",
+      "surface": "Cards and alternate sections"
+    },
+    "buttonNote": "Button text colour is chosen automatically (white or dark) for the best contrast on the primary colour."
   },
   "publish": {
     "title": "Publish",
-    "status": { "DRAFT": "Not submitted", "PENDING_REVIEW": "Pending review", "ACTIVE": "Live", "SUSPENDED": "Suspended" },
+    "status": {
+      "DRAFT": "Not submitted",
+      "PENDING_REVIEW": "Pending review",
+      "ACTIVE": "Live",
+      "SUSPENDED": "Suspended"
+    },
     "suspended": "This website is suspended. Contact support to restore it.",
     "pending": "Your website was submitted and is waiting for review. You can keep editing the draft.",
     "publish": "Publish",
@@ -75,12 +139,16 @@
     "missing": "missing",
     "submit": "Submit for review",
     "submitDisabled": "Complete the checklist to submit your website for review.",
-    "submittedMock": "Submitted for review (demo only)."
+    "submittedMock": "Submitted for review (demo only).",
+    "fixTheme": "Fix the theme colours with low contrast first."
   },
   "editor": {
     "title": "Edit: {name}",
     "missingTranslation": "No translation for this language yet. Visitors will see the default language instead: {fallback}",
-    "errors": { "httpsUrl": "Use a secure link starting with https://", "mapsUrl": "Only Google Maps links are allowed (google.com/maps or maps.app.goo.gl)." },
+    "errors": {
+      "httpsUrl": "Use a secure link starting with https://",
+      "mapsUrl": "Only Google Maps links are allowed (google.com/maps or maps.app.goo.gl)."
+    },
     "hints": {
       "mapsUrl": "A google.com/maps or maps.app.goo.gl link.",
       "imageUrl": "A secure image link starting with https://",
@@ -93,19 +161,47 @@
     "moveDown": "Move down",
     "addItem": "Add item",
     "autoWorkshops": "Workshops are loaded automatically from your active workshops. Manage them on the Workshops page.",
-    "authenticityNote": "You are responsible for the authenticity of testimonials. Only publish real reviews from real guests."
+    "authenticityNote": "You are responsible for the authenticity of testimonials. Only publish real reviews from real guests.",
+    "layout": "Layout"
   },
   "fields": {
-    "title": "Title", "subtitle": "Subtitle", "imageUrl": "Image URL (https)", "ctaText": "Button text", "heading": "Heading",
-    "body": "Text", "layout": "Layout", "imageUrls": "Images", "members": "Team members", "name": "Name", "role": "Role",
-    "bio": "Short bio", "items": "Items", "country": "Country", "text": "Text", "q": "Question", "a": "Answer",
-    "address": "Address", "hours": "Opening hours", "mapsUrl": "Google Maps link", "phone": "Phone", "whatsapp": "WhatsApp",
-    "email": "Email", "socials": "Social links", "label": "Label", "url": "Link (https)", "description": "Description"
+    "title": "Title",
+    "subtitle": "Subtitle",
+    "imageUrl": "Image",
+    "ctaText": "Button text",
+    "heading": "Heading",
+    "body": "Text",
+    "imageUrls": "Images",
+    "members": "Team members",
+    "name": "Name",
+    "role": "Role",
+    "bio": "Short bio",
+    "items": "Items",
+    "country": "Country",
+    "text": "Text",
+    "q": "Question",
+    "a": "Answer",
+    "address": "Address",
+    "hours": "Opening hours",
+    "mapsUrl": "Google Maps link",
+    "phone": "Phone",
+    "whatsapp": "WhatsApp",
+    "email": "Email",
+    "socials": "Social links",
+    "label": "Label",
+    "url": "Link (https)",
+    "description": "Description",
+    "videoId": "YouTube link",
+    "caption": "Caption"
   },
-  "options": { "layout": { "grid": "Grid", "list": "List" } },
   "language": {
     "label": "Content language",
-    "names": { "en": "English", "vi": "Vietnamese", "ko": "Korean", "ja": "Japanese" },
+    "names": {
+      "en": "English",
+      "vi": "Vietnamese",
+      "ko": "Korean",
+      "ja": "Japanese"
+    },
     "default": "default",
     "missing": "{count, plural, one {# missing translation} other {# missing translations}}",
     "fallbackNote": "Empty fields fall back to {locale}, the default language of your shop."
@@ -118,5 +214,109 @@
     "desktop": "Desktop",
     "mobile": "Mobile",
     "note": "This preview shows your draft using the same components as the public website. The mobile view narrows the frame; fine layout details can differ on a real phone."
+  },
+  "colors": {
+    "title": "Colors",
+    "hint": "Optional. Leave a field empty to use the template colour. Use hex values such as #1f2937.",
+    "keys": {
+      "background": "Background",
+      "text": "Text",
+      "accent": "Accent (buttons, links)"
+    },
+    "picker": "Pick colour: {name}",
+    "auto": "Template",
+    "hexInvalid": "Use a hex colour such as #1f2937 or #fff.",
+    "contrastTitle": "Contrast checks",
+    "checks": {
+      "text": "Text on background",
+      "textCard": "Text on cards",
+      "textSurface": "Text on alternate background",
+      "accent": "Accent on background",
+      "accentCard": "Accent on cards",
+      "primary": "Primary on background",
+      "primarySurface": "Primary on alternate background",
+      "button": "Button text on accent"
+    },
+    "pass": "passes",
+    "fail": "fails",
+    "warning": "Some combinations are below {min}:1 contrast and are hard to read. Fix them before you publish or submit.",
+    "resetTemplate": "Reset to template colors"
+  },
+  "image": {
+    "upload": "Upload image",
+    "replace": "Replace",
+    "remove": "Remove",
+    "uploading": "Uploading...",
+    "orPaste": "or paste an image URL",
+    "hint": "JPEG, PNG or WebP, up to 5 MB.",
+    "uploadedNote": "An uploaded image is in use. Pasting a link replaces it.",
+    "previewAlt": "Preview: {name}",
+    "errors": {
+      "empty": "This file is empty.",
+      "tooLarge": "The image is larger than 5 MB.",
+      "unsupportedType": "Only JPEG, PNG and WebP images are allowed.",
+      "typeMismatch": "The file content does not match its type. Use a real JPEG, PNG or WebP image.",
+      "decodeFailed": "This image could not be read. Try another file.",
+      "storageFull": "Browser storage is full. Remove other images or use a smaller one, or paste an image URL.",
+      "failed": "Upload failed. Please try again."
+    }
+  },
+  "video": {
+    "hint": "Paste a YouTube link (youtube.com/watch, youtu.be, youtube.com/shorts or youtube.com/embed). Only the video ID is saved.",
+    "replaceHint": "Paste another YouTube link to replace the video.",
+    "invalid": "This is not a valid YouTube link.",
+    "current": "YouTube video: {id}",
+    "remove": "Remove"
+  },
+  "variants": {
+    "hero": {
+      "centered": "Centered",
+      "split": "Text and image side by side",
+      "overlay-left": "Left text over image"
+    },
+    "about": {
+      "image-left": "Image on the left",
+      "image-right": "Image on the right",
+      "stacked": "Stacked"
+    },
+    "workshops": {
+      "grid": "Grid",
+      "list": "List",
+      "featured": "First workshop featured"
+    },
+    "gallery": {
+      "grid": "Grid",
+      "masonry": "Masonry",
+      "strip": "Scrolling strip"
+    },
+    "team": {
+      "cards": "Cards",
+      "inline": "Inline"
+    },
+    "testimonials": {
+      "cards": "Cards",
+      "quote": "Large quotes"
+    },
+    "faq": {
+      "accordion": "Accordion",
+      "two-column": "Two columns"
+    },
+    "location": {
+      "simple": "Simple",
+      "card": "Card"
+    },
+    "contact": {
+      "list": "List",
+      "cards": "Cards"
+    },
+    "video": {
+      "wide": "Wide",
+      "split": "Text beside video"
+    },
+    "footer": {
+      "dark": "Dark",
+      "light": "Light",
+      "centered": "Centered"
+    }
   }
 }

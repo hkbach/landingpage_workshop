@@ -1,1 +1,84 @@
-{}
+{
+  "autosave": {
+    "quota": "Bộ nhớ trình duyệt đã đầy. Hãy xóa hoặc thay ảnh lớn, nếu không các thay đổi mới nhất sẽ không được lưu."
+  },
+  "template": {
+    "names": {
+      "classic": "Cổ điển",
+      "minimal": "Tối giản",
+      "bold": "Nổi bật",
+      "elegant": "Thanh lịch",
+      "rustic": "Mộc mạc",
+      "modern": "Hiện đại",
+      "vibrant": "Sống động",
+      "serene": "Thanh bình",
+      "artisan": "Thủ công",
+      "noir": "Noir (nền tối)"
+    },
+    "descriptions": {
+      "classic": "Ấm áp, quen thuộc: câu chuyện đầy đủ với đội ngũ, đánh giá và câu hỏi thường gặp.",
+      "minimal": "Ngắn gọn, đơn sắc: banner, workshop, câu hỏi thường gặp và địa điểm.",
+      "bold": "Góc vuông, đỏ đậm, workshop nổi bật cỡ lớn kèm video.",
+      "elegant": "Phong cách chữ có chân tinh tế, trích dẫn lớn và khoảng cách thoáng.",
+      "rustic": "Xanh lá đất, chữ có chân, thư viện ảnh xếp so le và thẻ bản đồ.",
+      "modern": "Xanh dương gọn gàng, bo góc, banner chia đôi và video bên cạnh nội dung.",
+      "vibrant": "Hồng tím vui tươi, nút bo tròn, workshop nổi bật và video.",
+      "serene": "Sắc xanh dịu, khoảng cách thoáng và dải ảnh cuộn ngang.",
+      "artisan": "Tập trung vào thủ công: chàm trên nền kem, giới thiệu nghệ nhân lên đầu.",
+      "noir": "Nền tối với điểm nhấn vàng, workshop nổi bật và trích dẫn lớn."
+    },
+    "current": "Đang dùng",
+    "confirmTitle": "Đổi mẫu giao diện?",
+    "confirmFor": "Bạn sắp chuyển sang mẫu {name}.",
+    "keeps": "Giữ nguyên:",
+    "keepsText": "toàn bộ văn bản, ảnh, video và màu riêng của từng phần.",
+    "changes": "Thay đổi:",
+    "changesText": "bố cục, thứ tự các phần, màu giao diện, phông chữ và khoảng cách được đặt lại theo mẫu. Logo và favicon được giữ.",
+    "cancel": "Hủy",
+    "apply": "Đổi mẫu"
+  },
+  "sectionTypes": {
+    "video": "Video"
+  },
+  "fields": {
+    "videoId": "Liên kết YouTube",
+    "caption": "Chú thích"
+  },
+  "video": {
+    "hint": "Dán liên kết YouTube (youtube.com/watch, youtu.be, youtube.com/shorts hoặc youtube.com/embed). Chỉ lưu mã video.",
+    "replaceHint": "Dán liên kết YouTube khác để thay video.",
+    "invalid": "Đây không phải liên kết YouTube hợp lệ.",
+    "current": "Video YouTube: {id}",
+    "remove": "Xóa"
+  },
+  "colors": {
+    "title": "Màu sắc",
+    "hint": "Tùy chọn. Để trống để dùng màu của mẫu. Dùng mã hex như #1f2937.",
+    "keys": {
+      "background": "Nền",
+      "text": "Chữ",
+      "accent": "Màu nhấn (nút, liên kết)"
+    },
+    "auto": "Theo mẫu",
+    "hexInvalid": "Dùng mã màu hex như #1f2937 hoặc #fff.",
+    "warning": "Một số cặp màu có độ tương phản dưới {min}:1 và khó đọc. Hãy sửa trước khi xuất bản hoặc gửi duyệt.",
+    "resetTemplate": "Đặt lại về màu của mẫu"
+  },
+  "image": {
+    "upload": "Tải ảnh lên",
+    "replace": "Thay ảnh",
+    "remove": "Xóa",
+    "uploading": "Đang tải lên...",
+    "orPaste": "hoặc dán URL ảnh",
+    "hint": "JPEG, PNG hoặc WebP, tối đa 5 MB.",
+    "errors": {
+      "empty": "Tệp trống.",
+      "tooLarge": "Ảnh lớn hơn 5 MB.",
+      "unsupportedType": "Chỉ cho phép ảnh JPEG, PNG và WebP.",
+      "typeMismatch": "Nội dung tệp không khớp với định dạng. Hãy dùng ảnh JPEG, PNG hoặc WebP thật.",
+      "decodeFailed": "Không đọc được ảnh này. Hãy thử tệp khác.",
+      "storageFull": "Bộ nhớ trình duyệt đã đầy. Hãy xóa ảnh khác, dùng ảnh nhỏ hơn hoặc dán URL ảnh.",
+      "failed": "Tải lên thất bại. Vui lòng thử lại."
+    }
+  }
+}
