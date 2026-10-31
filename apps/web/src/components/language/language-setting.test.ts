@@ -29,7 +29,7 @@ describe("language bar follows the shop's language setting", () => {
   });
   it("Manage languages is a visible link straight to the Languages card in Settings", () => {
     const html = bar(["en"]);
-    const link = html.match(/<a[^>]*href="/shopowner/settings#languages"[^>]*>[sS]*?</a>/)?.[0] ?? "";
+    const link = html.match(/<a[^>]*href="\/shopowner\/settings#languages"[^>]*>[\s\S]*?<\/a>/)?.[0] ?? "";
     expect(link).toContain("Manage languages");
     expect(link).toContain("<svg");
     expect(link).toMatch(/text-sm/);
