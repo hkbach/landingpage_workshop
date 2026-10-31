@@ -6,9 +6,7 @@ import { isBookButtonShown } from "../registry";
 import { WorkshopCard } from "../renderers";
 import { Img } from "../renderer-kit";
 import { sectionVarsFor } from "../SectionRenderer";
-import {
-  activeWorkshops, BookButton, Brand, Footer, FrameRoot, galleryImages, LanguageSwitch, Main, Sec, STICKY_TOP, type FrameProps,
-} from "./kit";
+import { activeWorkshops, BookButton, Brand, Footer, FrameRoot, galleryImages, LanguageSwitch, Main, Sec, STICKY_TOP, type FrameProps, HeaderMenu } from "./kit";
 import { planBento, type BentoSize, type BentoTile } from "./logic";
 
 const VARS = { "--sec-px": "1.25rem", "--sec-max": "100%", "--site-pad": "1.5rem", "--hero-min-h": "22rem" } as CSSProperties;
@@ -55,8 +53,11 @@ export function BentoFrame({ body, footer, theme, ctx }: FrameProps) {
       <header className={cn("sticky z-30 border-b border-[color:var(--site-border)] bg-[var(--site-bg)] text-[var(--site-text)]", STICKY_TOP)}>
         <div className="mx-auto flex w-full max-w-7xl items-center gap-3 px-3 py-2">
           <Brand theme={theme} ctx={ctx} className="flex-1" />
-          <LanguageSwitch ctx={ctx} />
-          <BookButton />
+          <div className="hidden items-center gap-2 @3xl:flex">
+            <LanguageSwitch ctx={ctx} />
+            <BookButton />
+          </div>
+          <HeaderMenu items={[]} ctx={ctx} />
         </div>
       </header>
       <Main className="mx-auto w-full max-w-7xl p-3">

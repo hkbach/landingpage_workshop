@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
-import { BookButton, Brand, Footer, FrameRoot, LanguageSwitch, Main, NavLinks, Sec, type FrameProps } from "./kit";
+import { BookButton, Brand, Footer, FrameRoot, LanguageSwitch, Main, NavLinks, Sec, type FrameProps, HeaderMenu } from "./kit";
 import { chapterNumber, navItems } from "./logic";
 
 const chapterLink = cn(
@@ -18,15 +18,18 @@ export function MagazineFrame({ body, footer, theme, ctx }: FrameProps) {
   const chapters = body.filter((s) => s !== hero && items.some((i) => i.id === s.id));
   return (
     <FrameRoot className="bg-[var(--site-bg)] text-[var(--site-text)]">
-      <header className="border-b-2 border-[var(--site-text)]">
+      <header className="relative z-30 border-b-2 border-[var(--site-text)]">
         <div className="mx-auto flex w-full max-w-6xl items-center gap-3 px-4 py-4 @xl:px-6">
           <Brand theme={theme} ctx={ctx} className="flex-1 font-serif text-lg uppercase tracking-[0.2em] @xl:text-2xl" />
-          <LanguageSwitch ctx={ctx} />
-          <BookButton />
+          <div className="hidden items-center gap-2 @3xl:flex">
+            <LanguageSwitch ctx={ctx} />
+            <BookButton />
+          </div>
+          <HeaderMenu items={items} ctx={ctx} />
         </div>
       </header>
       {items.length > 0 ? (
-        <nav aria-label={t("nav.primary")} className="border-b border-[color:var(--site-border)]">
+        <nav aria-label={t("nav.primary")} className="hidden border-b border-[color:var(--site-border)] @3xl:block">
           <NavLinks items={items} linkClassName={chapterLink} className="mx-auto flex w-full max-w-6xl justify-start gap-1 overflow-x-auto px-3 whitespace-nowrap @3xl:justify-center" />
         </nav>
       ) : null}

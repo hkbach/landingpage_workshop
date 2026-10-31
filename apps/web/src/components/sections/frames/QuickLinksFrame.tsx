@@ -4,7 +4,7 @@ import type { CSSProperties } from "react";
 import { useTranslations } from "next-intl";
 import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Brand, Footer, FrameRoot, LanguageSwitch, Main, Sec, type FrameProps } from "./kit";
+import { Brand, Footer, FrameRoot, HeaderMenu, Main, Sec, type FrameProps } from "./kit";
 import { navItems } from "./logic";
 
 const VARS = { "--sec-px": "1.25rem", "--sec-max": "100%", "--site-pad": "2rem" } as CSSProperties;
@@ -18,9 +18,9 @@ export function QuickLinksFrame({ body, footer, theme, ctx }: FrameProps) {
   return (
     <FrameRoot className="bg-[var(--site-surface)]" style={VARS}>
       <div className="mx-auto flex min-h-screen w-full max-w-[30rem] flex-col bg-[var(--site-bg)] text-[var(--site-text)] shadow-xl @container">
-        <div className="flex items-center justify-between gap-2 px-3 pt-3">
+        <div className="relative z-30 flex items-center justify-between gap-2 px-3 pt-3">
           {hero ? <span /> : <Brand theme={theme} ctx={ctx} />}
-          <LanguageSwitch ctx={ctx} />
+          <HeaderMenu items={[]} ctx={ctx} />
         </div>
         <Main className="flex-1">
           {hero ? <Sec section={hero} ctx={ctx} theme={theme} /> : null}

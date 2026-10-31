@@ -3,9 +3,7 @@
 import type { CSSProperties } from "react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
-import {
-  BookButton, Brand, Footer, FrameRoot, LanguageSwitch, Main, NavLinks, Sec, STICKY_TOP, useActiveSection, type FrameProps,
-} from "./kit";
+import { BookButton, Brand, Footer, FrameRoot, LanguageSwitch, Main, NavLinks, Sec, STICKY_TOP, useActiveSection, type FrameProps, HeaderMenu } from "./kit";
 import { navItems, isRenderable } from "./logic";
 
 const HERO_VARS = { "--hero-min-h": "100svh" } as CSSProperties;
@@ -31,8 +29,11 @@ export function CinematicFrame({ body, footer, theme, ctx }: FrameProps) {
               <NavLinks items={nav} className="flex flex-wrap justify-center gap-1" />
             </nav>
           ) : null}
-          <LanguageSwitch ctx={ctx} />
-          <BookButton />
+          <div className="hidden items-center gap-2 @3xl:flex">
+            <LanguageSwitch ctx={ctx} />
+            <BookButton />
+          </div>
+          <HeaderMenu items={nav} ctx={ctx} />
         </div>
       </header>
 

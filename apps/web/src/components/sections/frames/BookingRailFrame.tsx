@@ -8,9 +8,7 @@ import { cn } from "@/lib/utils";
 import { useBookingActions } from "../booking-context";
 import { localizer, primaryButton } from "../renderer-kit";
 import type { RenderContext } from "../context";
-import {
-  activeWorkshops, BookButton, Brand, Footer, FrameRoot, LanguageSwitch, Main, NavLinks, Sec, STICKY_TOP, type FrameProps,
-} from "./kit";
+import { activeWorkshops, BookButton, Brand, Footer, FrameRoot, LanguageSwitch, Main, NavLinks, Sec, STICKY_TOP, type FrameProps, HeaderMenu } from "./kit";
 import { navItems } from "./logic";
 
 const VARS = { "--sec-px": "1.25rem", "--sec-max": "100%" } as CSSProperties;
@@ -34,14 +32,16 @@ export function BookingRailFrame({ body, footer, theme, ctx }: FrameProps) {
   return (
     <FrameRoot style={VARS}>
       <header className={cn("sticky z-30 border-b border-[color:var(--site-border)] bg-[var(--site-bg)] text-[var(--site-text)]", STICKY_TOP)}>
-        <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2 @xl:px-6">
-          <Brand theme={theme} ctx={ctx} />
+        <div className="mx-auto flex w-full max-w-7xl items-center gap-x-4 px-4 py-2 @xl:px-6">
+          <Brand theme={theme} ctx={ctx} className="flex-1 @5xl:flex-none" />
           {items.length > 0 ? (
-            <nav aria-label={t("nav.primary")} className="order-last -mx-4 w-[calc(100%+2rem)] overflow-x-auto px-4 @5xl:order-none @5xl:mx-0 @5xl:w-auto @5xl:flex-1 @5xl:px-0">
+            <nav aria-label={t("nav.primary")} className="hidden @5xl:block @5xl:flex-1">
               <NavLinks items={items} className="flex gap-1 whitespace-nowrap" />
             </nav>
-          ) : <span className="flex-1" />}
-          <LanguageSwitch ctx={ctx} className="ms-auto @5xl:ms-0" />
+          ) : <span className="hidden flex-1 @5xl:block" />}
+          <LanguageSwitch ctx={ctx} className="hidden @5xl:block" />
+          {/* Booking stays in the sticky bottom bar on narrow widths, so the menu only holds the links and the languages. */}
+          <HeaderMenu items={items} ctx={ctx} until="5xl" showBook={false} />
         </div>
       </header>
 

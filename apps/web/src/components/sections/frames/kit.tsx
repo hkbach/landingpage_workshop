@@ -2,8 +2,9 @@
 
 import { hreflangOf, shortLocaleLabel } from "@workshop/shared";
 
-import { useContext, useEffect, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
+import { useContext, useEffect, useId, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
+import { Menu, X } from "lucide-react";
 import type { Workshop, PageTheme, SectionInstance } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { LOCALE_NAMES } from "@/components/site/locale-names";
@@ -75,7 +76,7 @@ export function Brand({ theme, ctx, className, logoClassName }: { theme: PageThe
   );
 }
 
-export function LanguageSwitch({ ctx, className }: { ctx: RenderContext; className?: string }) {
+export function LanguageSwitch({ ctx, className, onSelect }: { ctx: RenderContext; className?: string; onSelect?: () => void }) {
   const t = useTranslations("site");
   const chrome = useContext(SiteChromeContext);
   const langs = ctx.languages ?? [];
@@ -89,7 +90,10 @@ export function LanguageSwitch({ ctx, className }: { ctx: RenderContext; classNa
             <li key={l.locale}>
               <a
                 href={l.href} hrefLang={hreflangOf(l.locale)} lang={l.locale} aria-label={LOCALE_NAMES[l.locale]} aria-current={current ? "true" : undefined}
-                onClick={chrome.onSelectLocale ? (e) => { e.preventDefault(); chrome.onSelectLocale?.(l.locale); } : undefined}
+                onClick={(e) => {
+                  onSelect?.();
+                  if (chrome.onSelectLocale) { e.preventDefault(); chrome.onSelectLocale(l.locale); }
+                }}
                 className={cn(
                   "inline-flex min-h-9 min-w-9 items-center justify-center rounded-md px-2 text-xs font-semibold uppercase outline-none focus-visible:ring-2 focus-visible:ring-[var(--site-primary)]",
                   current ? "bg-[var(--site-primary)] text-[var(--site-primary-fg)]" : "text-[var(--site-text)] hover:bg-[var(--site-surface)]",
@@ -105,11 +109,11 @@ export function LanguageSwitch({ ctx, className }: { ctx: RenderContext; classNa
   );
 }
 
-export function BookButton({ className, workshopId }: { className?: string; workshopId?: string }) {
+export function BookButton({ className, workshopId, onBeforeOpen }: { className?: string; workshopId?: string; onBeforeOpen?: () => void }) {
   const t = useTranslations("site");
   const { open } = useBookingActions();
   return (
-    <button type="button" onClick={() => open(workshopId)} className={cn(primaryButton, "min-h-10 px-4", className)}>
+    <button type="button" onClick={() => { onBeforeOpen?.(); open(workshopId); }} className={cn(primaryButton, "min-h-10 px-4", className)}>
       {t("nav.book")}
     </button>
   );
@@ -119,6 +123,90 @@ export const navLinkClass = cn(
   "inline-flex min-h-10 items-center rounded-md px-3 text-sm font-medium text-[var(--site-text)] hover:bg-[var(--site-surface)]",
   "outline-none focus-visible:ring-2 focus-visible:ring-[var(--site-primary)]",
 );
+
+// Container-query breakpoints below which the menu replaces the inline header items (the frames show their inline
+// items from that width up). Full class names so Tailwind can see them.
+const MENU_HIDDEN_FROM = { "3xl": "@3xl:hidden", "4xl": "@4xl:hidden", "5xl": "@5xl:hidden" } as const;
+export type MenuUntil = keyof typeof MENU_HIDDEN_FROM;
+
+/**
+ * One menu for the narrow (mobile) view of the landing page: a three-bar button that expands a panel with the page links,
+ * the language switch and the Book button, so the header only keeps the logo and the button. It sits in the header of
+ * every template (the header must be a positioned element) and is hidden from `until` upwards, where the frame shows its
+ * normal inline items. Closes on a choice, Escape (focus returns to the button) and a click outside.
+ */
+export function HeaderMenu({ items, ctx, until = "3xl", showBook = true, className }: {
+  items: NavItem[]; ctx: RenderContext; until?: MenuUntil; showBook?: boolean; className?: string;
+}) {
+  const t = useTranslations("site");
+  const [open, setOpen] = useState(false);
+  const panelId = useId();
+  const root = useRef<HTMLDivElement>(null);
+  const button = useRef<HTMLButtonElement>(null);
+  const panel = useRef<HTMLDivElement>(null);
+  const hideFrom = MENU_HIDDEN_FROM[until];
+  const hasLanguages = (ctx.languages?.length ?? 0) > 1;
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointer = (e: PointerEvent) => { if (!root.current?.contains(e.target as Node)) setOpen(false); };
+    const onKey = (e: globalThis.KeyboardEvent) => { if (e.key === "Escape") { setOpen(false); button.current?.focus(); } };
+    document.addEventListener("pointerdown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => { document.removeEventListener("pointerdown", onPointer); document.removeEventListener("keydown", onKey); };
+  }, [open]);
+
+  // The panel never grows past the bottom of the screen: its height follows the space that is really left under the
+  // header (which is not at the top of the screen in the builder preview, or while the page has not scrolled yet).
+  useEffect(() => {
+    if (!open) return;
+    const fit = () => {
+      const el = panel.current;
+      if (!el) return;
+      el.style.maxHeight = `${Math.max(160, window.innerHeight - el.getBoundingClientRect().top - 12)}px`;
+    };
+    fit();
+    window.addEventListener("resize", fit);
+    window.addEventListener("scroll", fit, { passive: true });
+    return () => { window.removeEventListener("resize", fit); window.removeEventListener("scroll", fit); };
+  }, [open]);
+
+  // Nothing to put in the menu: no button either.
+  if (items.length === 0 && !hasLanguages && !showBook) return null;
+
+  return (
+    <div ref={root} className="contents">
+      <button
+        ref={button} type="button" aria-expanded={open} aria-controls={open ? panelId : undefined}
+        aria-label={open ? t("nav.closeMenu") : t("nav.openMenu")} onClick={() => setOpen((o) => !o)}
+        className={cn("inline-flex size-11 shrink-0 items-center justify-center rounded-md text-[var(--site-text)] hover:bg-[var(--site-surface)]", focusRing, hideFrom, className)}
+      >
+        {open ? <X className="size-6" aria-hidden /> : <Menu className="size-6" aria-hidden />}
+      </button>
+      {open ? (
+        <div
+          ref={panel} id={panelId}
+          className={cn(
+            "absolute inset-x-0 top-full z-40 max-h-[calc(100svh-4.5rem)] overflow-y-auto rounded-b-[var(--site-radius)] border border-t-0 border-[color:var(--site-border)] bg-[var(--site-bg)] px-3 pb-4 pt-2 text-[var(--site-text)] shadow-xl",
+            hideFrom,
+          )}
+        >
+          {items.length > 0 ? (
+            <nav aria-label={t("nav.primary")}>
+              <NavLinks items={items} className="grid gap-1" linkClassName={cn(navLinkClass, "min-h-12 w-full text-base")} onNavigate={() => setOpen(false)} />
+            </nav>
+          ) : null}
+          {hasLanguages ? (
+            <div className={cn("flex items-center gap-3", items.length > 0 && "mt-3 border-t border-[color:var(--site-border)] pt-3")}>
+              <LanguageSwitch ctx={ctx} onSelect={() => setOpen(false)} />
+            </div>
+          ) : null}
+          {showBook ? <BookButton className="mt-3 min-h-12 w-full text-base" onBeforeOpen={() => setOpen(false)} /> : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 /** Anchor links to the visible sections; labels come from i18n (`site.nav.<type>`), never from shop text. */
 export function NavLinks({ items, className, linkClassName, activeId, onNavigate }: {
