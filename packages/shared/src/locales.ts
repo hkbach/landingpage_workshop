@@ -30,3 +30,11 @@ export function isLocale(value: string | undefined | null): value is Locale {
 export function shortLocaleLabel(locale: Locale): string {
   return locale === "zh" ? "中" : locale.toUpperCase();
 }
+
+/**
+ * The language a shop screen shows or edits: the preferred one when the shop has enabled it, otherwise the shop's
+ * default language. A language the shop has turned off is never shown or edited, even if text for it is still stored.
+ */
+export function resolveShopLocale(preferred: string | null | undefined, enabled: readonly Locale[], defaultLocale: Locale): Locale {
+  return isLocale(preferred) && enabled.includes(preferred) ? preferred : defaultLocale;
+}

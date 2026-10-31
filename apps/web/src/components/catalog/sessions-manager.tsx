@@ -2,6 +2,7 @@
 
 import { useMemo, useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { useDisplayLocale } from "@/lib/use-shop-language";
 import { Ban, Lock, LockOpen, Pencil, Plus } from "lucide-react";
 import { pickLocalized, type Locale } from "@workshop/shared";
 import { Button } from "@/components/ui/button";
@@ -32,7 +33,8 @@ export function SessionsManager({
   const [to, setTo] = useState(addDays(today, 60));
   const [dialog, setDialog] = useState<{ kind: "add" } | { kind: "capacity" | "cancel"; id: string } | null>(null);
 
-  const title = (id: string) => pickLocalized(workshops.find((w) => w.id === id)?.title, locale, shop.defaultLocale);
+  const displayLocale = useDisplayLocale(shop);
+  const title = (id: string) => pickLocalized(workshops.find((w) => w.id === id)?.title, displayLocale, shop.defaultLocale);
   const filtered = useMemo(
     () =>
       ops.sessions

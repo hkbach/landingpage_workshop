@@ -18,7 +18,8 @@ import { Field } from "@/components/ops/field";
 import { NativeSelect } from "@/components/ops/native-select";
 import { issuesToErrors } from "@/components/ops/validation";
 import type { Workshop } from "@/lib/types";
-import { LanguageTabs } from "./language-tabs";
+import { LanguageBar } from "@/components/language/LanguageBar";
+import { useEditingLanguage } from "@/lib/use-shop-language";
 
 /** Upper bound for capacity until PLAN_LIMITS is wired to the plan (FR-WS-01: 1-50). */
 export const MAX_CAPACITY = 50;
@@ -60,7 +61,7 @@ export function WorkshopForm({
   const tops = useTranslations("ops");
   const locale = useLocale();
   const [d, setD] = useState<Draft>(() => toDraft(workshop, shop.currency));
-  const [lang, setLang] = useState<Locale>(shop.defaultLocale);
+  const [lang, setLang] = useEditingLanguage(shop.enabledLocales, shop.defaultLocale);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saved, setSaved] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
@@ -75,6 +76,7 @@ export function WorkshopForm({
 
   const missing = (l: Locale) => WARN_FIELDS.filter((f) => missingLocales(d[f], [l]).length > 0);
   const incomplete = shop.enabledLocales.filter((l) => missing(l).length > 0);
+  const missingCounts = Object.fromEntries(shop.enabledLocales.map((l) => [l, missing(l).length])) as Partial<Record<Locale, number>>;
 
   function submit(e: FormEvent) {
     e.preventDefault();
@@ -127,8 +129,8 @@ export function WorkshopForm({
           <p className="text-sm text-muted-foreground">{t("form.contentHint")}</p>
         </CardHeader>
         <CardContent className="grid gap-4">
-          <LanguageTabs value={lang} onValueChange={setLang} enabled={shop.enabledLocales} defaultLocale={shop.defaultLocale} incomplete={incomplete}>
-            {(l) => (
+          <LanguageBar value={lang} onChange={setLang} enabled={shop.enabledLocales} defaultLocale={shop.defaultLocale} missingByLocale={missingCounts} />
+          {((l) => (
               <>
                 <Field id={`title-${l}`} label={t("form.title")} required={l === shop.defaultLocale} error={err(`title.${l}`)}>
                   {(p) => <Input {...p} lang={l} maxLength={120} value={d.title[l] ?? ""} onChange={(e) => setLoc("title", l, e.target.value)} />}
@@ -146,8 +148,7 @@ export function WorkshopForm({
                   {(p) => <Textarea {...p} lang={l} rows={3} value={d.notes[l] ?? ""} onChange={(e) => setLoc("notes", l, e.target.value)} />}
                 </Field>
               </>
-            )}
-          </LanguageTabs>
+          ))(lang)}
           {incomplete.length > 0 ? (
             <div role="status" className="flex gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
               <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden="true" />

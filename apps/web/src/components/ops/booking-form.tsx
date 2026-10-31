@@ -4,7 +4,7 @@ import { useMemo, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { z } from "zod";
-import { BOOKING_SOURCES, formatMoney, pickLocalized, type Locale } from "@workshop/shared";
+import { BOOKING_SOURCES, formatMoney, pickLocalized, resolveShopLocale, type Locale } from "@workshop/shared";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -29,7 +29,7 @@ export function BookingForm({
   sessions, workshops, shop, initialSessionId, nowIso,
 }: {
   nowIso: string;
-  sessions: Session[]; workshops: Workshop[]; shop: { timezone: string; defaultLocale: Locale };
+  sessions: Session[]; workshops: Workshop[]; shop: { timezone: string; defaultLocale: Locale; enabledLocales: Locale[] };
   initialSessionId?: string;
 }) {
   const t = useTranslations("ops");
@@ -129,7 +129,7 @@ export function BookingForm({
                     { value: "", label: t("newBooking.chooseSession") },
                     ...options.map((s) => ({
                       value: s.id,
-                      label: `${formatDateTime(s.startsAt, shop.timezone, locale)} | ${pickLocalized(wsOf(s.workshopId)?.title, locale, shop.defaultLocale)} | ${t("reschedule.left", { count: s.capacity - s.reservedCount })}`,
+                      label: `${formatDateTime(s.startsAt, shop.timezone, locale)} | ${pickLocalized(wsOf(s.workshopId)?.title, resolveShopLocale(locale, shop.enabledLocales, shop.defaultLocale), shop.defaultLocale)} | ${t("reschedule.left", { count: s.capacity - s.reservedCount })}`,
                     })),
                   ]} />
               )}

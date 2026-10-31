@@ -1,1 +1,7 @@
-{}
+{
+  "settings": {
+    "fields": {
+      "enabledLocalesHint": "끄는 언어로 이미 작성한 내용은 보관되지만 표시되거나 편집되지 않습니다."
+    }
+  }
+}

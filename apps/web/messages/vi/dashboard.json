@@ -1,1 +1,7 @@
-{}
+{
+  "settings": {
+    "fields": {
+      "enabledLocalesHint": "Nội dung đã nhập bằng một ngôn ngữ bạn tắt vẫn được giữ lại, nhưng sẽ không được hiển thị hay chỉnh sửa."
+    }
+  }
+}

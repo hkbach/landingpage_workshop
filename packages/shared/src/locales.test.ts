@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { LOCALES } from "./enums";
-import { hreflangOf, isLocale, LOCALE_NATIVE_NAMES, shortLocaleLabel } from "./locales";
+import { hreflangOf, isLocale, LOCALE_NATIVE_NAMES, resolveShopLocale, shortLocaleLabel } from "./locales";
 
 describe("locales", () => {
   it("supports en, vi, ko, ja and a single Chinese language", () => {
@@ -25,5 +25,27 @@ describe("locales", () => {
   it("short chip labels: codes for most, one character for Chinese", () => {
     expect(shortLocaleLabel("en")).toBe("EN");
     expect(shortLocaleLabel("zh")).toBe("中");
+  });
+});
+
+describe("resolveShopLocale", () => {
+  const enabled = ["en", "vi", "zh"] as const;
+  it("returns the preferred language when the shop has enabled it", () => {
+    expect(resolveShopLocale("vi", enabled, "en")).toBe("vi");
+    expect(resolveShopLocale("zh", enabled, "en")).toBe("zh");
+  });
+  it("falls back to the default language when the preferred one is not enabled", () => {
+    expect(resolveShopLocale("ja", enabled, "en")).toBe("en");
+    expect(resolveShopLocale("ko", enabled, "vi")).toBe("vi");
+  });
+  it("falls back to the default for unknown, legacy or missing values", () => {
+    expect(resolveShopLocale("zh-TW", enabled, "en")).toBe("en");
+    expect(resolveShopLocale("xx", enabled, "en")).toBe("en");
+    expect(resolveShopLocale("", enabled, "en")).toBe("en");
+    expect(resolveShopLocale(null, enabled, "en")).toBe("en");
+    expect(resolveShopLocale(undefined, enabled, "vi")).toBe("vi");
+  });
+  it("a shop with a single language always gets that language", () => {
+    for (const l of ["en", "vi", "ko", "ja", "zh", "fr", null]) expect(resolveShopLocale(l, ["ko"], "ko")).toBe("ko");
   });
 });

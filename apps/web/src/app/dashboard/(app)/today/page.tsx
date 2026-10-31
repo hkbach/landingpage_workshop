@@ -5,7 +5,7 @@ export default function TodayPage() {
   return (
     <TodayView
       bookings={bookings} sessions={sessions} customers={customers} workshops={workshops} nowIso={new Date().toISOString()}
-      shop={{ timezone: currentShop.timezone, currency: currentShop.currency, defaultLocale: currentShop.defaultLocale, ownerName: currentShop.ownerName }}
+      shop={{ timezone: currentShop.timezone, currency: currentShop.currency, defaultLocale: currentShop.defaultLocale, enabledLocales: currentShop.enabledLocales, ownerName: currentShop.ownerName }}
     />
   );
 }

@@ -5,7 +5,7 @@ export default function BookingsPage() {
   return (
     <BookingsList
       bookings={bookings} sessions={sessions} customers={customers} workshops={workshops}
-      timezone={currentShop.timezone} defaultLocale={currentShop.defaultLocale} nowIso={new Date().toISOString()}
+      timezone={currentShop.timezone} defaultLocale={currentShop.defaultLocale} enabledLocales={currentShop.enabledLocales} nowIso={new Date().toISOString()}
     />
   );
 }

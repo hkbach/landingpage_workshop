@@ -83,7 +83,8 @@
       "currency": "Currency",
       "bookingCutoff": "Booking cut-off (minutes before start)",
       "defaultLocale": "Default language",
-      "enabledLocales": "Enabled languages"
+      "enabledLocales": "Enabled languages",
+      "enabledLocalesHint": "Text already written in a language you turn off is kept, but it is not shown or edited."
     },
     "hints": {
       "mapsUrl": "Must start with https://",

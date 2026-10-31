@@ -154,6 +154,7 @@ export function SettingsForm({ initial, hasBookings, readOnly }: { initial: Valu
           </Field>
           <fieldset className="grid gap-2" aria-describedby={describedBy("s-locales", { error: !!errors.enabledLocales })}>
             <legend className="mb-1 text-sm font-medium">{t("fields.enabledLocales")}</legend>
+            <p className="text-xs text-muted-foreground">{t("fields.enabledLocalesHint")}</p>
             {LOCALES.map((l) => (
               <div key={l} className="flex items-center gap-2">
                 <Checkbox

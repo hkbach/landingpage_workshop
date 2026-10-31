@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { Plus, Search } from "lucide-react";
-import { BOOKING_STATUSES, formatMoney, pickLocalized, type BookingStatus, type Locale } from "@workshop/shared";
+import { BOOKING_STATUSES, formatMoney, pickLocalized, resolveShopLocale, type BookingStatus, type Locale } from "@workshop/shared";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -17,10 +17,10 @@ import { BookingStatusBadge, PaymentStatusBadge } from "./status-badges";
 
 /** FR-OPS-01: filter by date / session / status, search by code, name, email. */
 export function BookingsList({
-  bookings, sessions, customers, workshops, timezone, defaultLocale, nowIso,
+  bookings, sessions, customers, workshops, timezone, defaultLocale, enabledLocales, nowIso,
 }: {
   bookings: Booking[]; sessions: Session[]; customers: Customer[]; workshops: Workshop[];
-  timezone: string; defaultLocale: Locale; nowIso: string;
+  timezone: string; defaultLocale: Locale; enabledLocales: Locale[]; nowIso: string;
 }) {
   const t = useTranslations("ops");
   const locale = useLocale() as Locale;
@@ -30,7 +30,8 @@ export function BookingsList({
   const [query, setQuery] = useState("");
 
   const customerOf = (id: string) => customers.find((c) => c.id === id);
-  const wsTitle = (id: string) => pickLocalized(workshops.find((w) => w.id === id)?.title, locale, defaultLocale);
+  const displayLocale = resolveShopLocale(locale, enabledLocales, defaultLocale);
+  const wsTitle = (id: string) => pickLocalized(workshops.find((w) => w.id === id)?.title, displayLocale, defaultLocale);
 
   const sessionOptions = useMemo(
     () =>

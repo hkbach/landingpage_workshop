@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { CheckCheck, Clock, Users } from "lucide-react";
-import { formatMoney, pickLocalized, type Locale } from "@workshop/shared";
+import { formatMoney, pickLocalized, resolveShopLocale, type Locale } from "@workshop/shared";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Booking, Customer, Session, Workshop } from "@/lib/types";
@@ -15,7 +15,7 @@ import { BookingStatusBadge, PaymentStatusBadge, SessionStatusBadge } from "./st
 import { formatDayKey } from "./time";
 import { useOpsState } from "./use-ops-state";
 
-export interface ShopCtx { timezone: string; currency: string; defaultLocale: Locale; ownerName: string }
+export interface ShopCtx { timezone: string; currency: string; defaultLocale: Locale; enabledLocales: Locale[]; ownerName: string }
 
 /** FR-OPS-01 "Today": sessions of the day with a tap-friendly guest list and quick actions. */
 export function TodayView({
@@ -60,7 +60,7 @@ export function TodayView({
         const w = workshopOf(s.workshopId);
         const list = ops.bookings.filter((b) => b.sessionId === s.id).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
         const checkedIn = list.filter((b) => b.status === "CHECKED_IN");
-        const title = w ? pickLocalized(w.title, locale, shop.defaultLocale) : "";
+        const title = w ? pickLocalized(w.title, resolveShopLocale(locale, shop.enabledLocales, shop.defaultLocale), shop.defaultLocale) : "";
         return (
           <Card key={s.id}>
             <CardHeader className="gap-2">

@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { ArrowLeft } from "lucide-react";
-import { pickLocalized, type Locale, type WorkshopStatus } from "@workshop/shared";
+import { pickLocalized, type WorkshopStatus } from "@workshop/shared";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useDisplayLocale } from "@/lib/use-shop-language";
 import type { Workshop } from "@/lib/types";
 import type { ScheduleRule } from "@/lib/mock/ops";
 import { ScheduleRulesEditor } from "./schedule-rules-editor";
@@ -17,7 +18,7 @@ export function WorkshopDetail({
   workshop, rules, shop, bookingCount,
 }: { workshop: Workshop; rules: ScheduleRule[]; shop: ShopForCatalog; bookingCount: number }) {
   const t = useTranslations("catalog");
-  const locale = useLocale() as Locale;
+  const displayLocale = useDisplayLocale(shop);
   const [status, setStatus] = useState<WorkshopStatus>(workshop.status);
   return (
     <div className="grid gap-4">
@@ -26,7 +27,7 @@ export function WorkshopDetail({
         {t("list.title")}
       </Link>
       <header className="flex flex-wrap items-center gap-2">
-        <h1 className="text-xl font-semibold sm:text-2xl">{pickLocalized(workshop.title, locale, shop.defaultLocale)}</h1>
+        <h1 className="text-xl font-semibold sm:text-2xl">{pickLocalized(workshop.title, displayLocale, shop.defaultLocale)}</h1>
         <WorkshopStatusBadge status={status} />
       </header>
       <Tabs defaultValue="details">

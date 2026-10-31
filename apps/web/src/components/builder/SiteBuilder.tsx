@@ -20,7 +20,8 @@ import { PublishPanel, type Prerequisite } from "./PublishPanel";
 import { normalizeOrder } from "@/components/sections/order";
 import { BookButtonToggle } from "./BookButtonToggle";
 import { BuilderHeader } from "./BuilderHeader";
-import { LanguageBar } from "./LanguageBar";
+import { LanguageBar } from "@/components/language/LanguageBar";
+import { useEditingLanguage } from "@/lib/use-shop-language";
 import { publishAction } from "./publish-state";
 import type { SaveState } from "./save-state";
 import { SectionColorsGroup } from "./SectionColorsGroup";
@@ -57,7 +58,7 @@ function BuilderInner({ shop, initial, initialStatus, upcomingWorkshopCount, app
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [status, setStatus] = useState<OrgStatus>(initialStatus);
   const [publishMessage, setPublishMessage] = useState<"published" | "submitted" | null>(null);
-  const [lang, setLang] = useState<Locale>(shop.defaultLocale);
+  const [activeLang, setLang] = useEditingLanguage(shop.enabledLocales, shop.defaultLocale);
   const [selectedId, setSelectedId] = useState<string>(() => draft.content.sections[0]?.id ?? SEO_ID);
   const [pendingTemplate, setPendingTemplate] = useState<TemplateKey | null>(() => (applyTemplate && applyTemplate !== draft.template ? applyTemplate : null));
   const enabledLocales = shop.enabledLocales;
@@ -147,7 +148,7 @@ function BuilderInner({ shop, initial, initialStatus, upcomingWorkshopCount, app
     const hasContact = !!(contact && (contact.props.phone || contact.props.email || contact.props.whatsapp)) || !!(shop.contactEmail || shop.contactPhone);
     return [
       { key: "identity", met: !!(draft.theme.logoUrl || shop.name) },
-      { key: "hero", met: !!hero && Object.values(heroTitle).some((v) => v?.trim()) },
+      { key: "hero", met: !!hero && !!heroTitle[shop.defaultLocale]?.trim() },
       { key: "contact", met: hasContact },
       { key: "workshop", met: upcomingWorkshopCount > 0 },
     ];
@@ -159,7 +160,6 @@ function BuilderInner({ shop, initial, initialStatus, upcomingWorkshopCount, app
   const submitNow = () => { setStatus("PENDING_REVIEW"); setPublishMessage("submitted"); };
 
   const names = (types: SectionType[]) => types.map((ty) => t(`sectionTypes.${ty}`)).join(", ");
-  const activeLang: Locale = enabledLocales.includes(lang) ? lang : shop.defaultLocale;
   const editorLabel = selected ? t(`sectionTypes.${selected.type}`) : t("seo.title");
 
   return (

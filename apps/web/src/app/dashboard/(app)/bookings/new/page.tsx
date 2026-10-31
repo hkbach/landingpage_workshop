@@ -7,7 +7,7 @@ export default async function NewBookingPage(props: PageProps<"/dashboard/bookin
   return (
     <BookingForm
       sessions={sessions} workshops={workshops} initialSessionId={session} nowIso={new Date().toISOString()}
-      shop={{ timezone: currentShop.timezone, defaultLocale: currentShop.defaultLocale }}
+      shop={{ timezone: currentShop.timezone, defaultLocale: currentShop.defaultLocale, enabledLocales: currentShop.enabledLocales }}
     />
   );
 }
