@@ -149,7 +149,10 @@
     "submit": "Submit for review",
     "submitDisabled": "Complete the checklist to submit your website for review.",
     "submittedMock": "Submitted for review (demo only).",
-    "fixTheme": "Fix the theme colours with low contrast first."
+    "fixTheme": "Fix the theme colours with low contrast first.",
+    "blockedHint": "Fix the sections or colours marked as needing attention first.",
+    "publishedShort": "Published (demo)",
+    "submittedShort": "Submitted for review (demo)"
   },
   "editor": {
     "title": "Edit: {name}",

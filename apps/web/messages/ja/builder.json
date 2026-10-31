@@ -127,5 +127,10 @@
     "moveDown": "{name}を下へ移動",
     "moved": "{name}を{total}件中{position}番目に移動しました。",
     "heroLocked": "ヒーローバナーは常に一番上に固定されます。"
+  },
+  "publish": {
+    "blockedHint": "先に「要確認」と表示されたセクションまたは色を修正してください。",
+    "publishedShort": "公開しました（デモ）",
+    "submittedShort": "審査に提出しました（デモ）"
   }
 }

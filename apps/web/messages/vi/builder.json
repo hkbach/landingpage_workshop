@@ -127,5 +127,10 @@
     "moveDown": "Chuyển {name} xuống",
     "moved": "{name} đã chuyển đến vị trí {position}/{total}.",
     "heroLocked": "Banner đầu trang luôn nằm ở trên cùng."
+  },
+  "publish": {
+    "blockedHint": "Hãy sửa các phần hoặc màu sắc được đánh dấu cần chú ý trước.",
+    "publishedShort": "Đã xuất bản (bản demo)",
+    "submittedShort": "Đã gửi duyệt (bản demo)"
   }
 }

@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
-import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { CircleCheck, Eye, Info, LoaderCircle, TriangleAlert } from "lucide-react";
+import { Info, TriangleAlert } from "lucide-react";
 import { LOCALES, missingLocales, type Locale, type Localized, type OrgStatus, type SectionType } from "@workshop/shared";
 import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -21,6 +20,9 @@ import { FieldsEditor } from "./FieldsEditor";
 import { PublishPanel, type Prerequisite } from "./PublishPanel";
 import { normalizeOrder } from "@/components/sections/order";
 import { BookButtonToggle } from "./BookButtonToggle";
+import { BuilderHeader } from "./BuilderHeader";
+import { publishAction } from "./publish-state";
+import type { SaveState } from "./save-state";
 import { SectionColorsGroup } from "./SectionColorsGroup";
 import { SectionList } from "./SectionList";
 import { TemplatePicker } from "./TemplatePicker";
@@ -46,7 +48,6 @@ export function SiteBuilder(props: Props) {
   return <BuilderInner {...props} />;
 }
 
-type SaveState = "idle" | "pending" | "saved" | "quota" | "unavailable";
 const SEO_ID = "__seo__";
 
 function BuilderInner({ shop, initial, initialStatus, upcomingWorkshopCount, applyTemplate }: Props) {
@@ -55,6 +56,7 @@ function BuilderInner({ shop, initial, initialStatus, upcomingWorkshopCount, app
   const [rev, setRev] = useState(0);
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [status, setStatus] = useState<OrgStatus>(initialStatus);
+  const [publishMessage, setPublishMessage] = useState<"published" | "submitted" | null>(null);
   const [lang, setLang] = useState<Locale>(shop.defaultLocale);
   const [selectedId, setSelectedId] = useState<string>(() => draft.content.sections[0]?.id ?? SEO_ID);
   const [pendingTemplate, setPendingTemplate] = useState<TemplateKey | null>(() => (applyTemplate && applyTemplate !== draft.template ? applyTemplate : null));
@@ -151,28 +153,20 @@ function BuilderInner({ shop, initial, initialStatus, upcomingWorkshopCount, app
     ];
   }, [sections, draft.theme.logoUrl, shop, upcomingWorkshopCount]);
 
+  // One source of truth for the publish control: the sticky header and the Publish card follow the same rules.
+  const headerAction = publishAction({ status, prerequisites, invalidSections, invalidTheme });
+  const publishNow = () => { saveDraft(draft); setPublishMessage("published"); };
+  const submitNow = () => { setStatus("PENDING_REVIEW"); setPublishMessage("submitted"); };
+
   const names = (types: SectionType[]) => types.map((ty) => t(`sectionTypes.${ty}`)).join(", ");
   const editorLabel = selected ? t(`sectionTypes.${selected.type}`) : t("seo.title");
 
   return (
     <div className="space-y-6 p-4 sm:p-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
-          <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <p role="status" aria-live="polite" className="flex items-center gap-1.5 text-sm text-muted-foreground">
-            {saveState === "pending" ? <><LoaderCircle className="size-4 animate-spin" aria-hidden />{t("autosave.saving")}</>
-              : saveState === "saved" ? <><CircleCheck className="size-4 text-green-700" aria-hidden />{t("autosave.saved")}</>
-              : saveState === "quota" || saveState === "unavailable" ? <><TriangleAlert className="size-4 text-amber-800" aria-hidden />{t(`autosave.${saveState}`)}</>
-              : t("autosave.idle")}
-          </p>
-          <Link href="/dashboard/site/preview" className={buttonVariants({ variant: "outline" })}>
-            <Eye />{t("preview")}
-          </Link>
-        </div>
-      </div>
+      <BuilderHeader
+        saveState={saveState} status={status} action={headerAction} message={publishMessage}
+        onPublish={publishNow} onSubmit={submitNow}
+      />
 
       <div className="flex items-start gap-2 rounded-lg border bg-muted/40 p-3 text-sm">
         <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
@@ -273,7 +267,7 @@ function BuilderInner({ shop, initial, initialStatus, upcomingWorkshopCount, app
           <CardContent>
             <PublishPanel
               status={status} prerequisites={prerequisites} invalidSections={invalidSections} invalidTheme={invalidTheme}
-              onSubmitForReview={() => setStatus("PENDING_REVIEW")} onPublish={() => saveDraft(draft)}
+              message={publishMessage} onSubmitForReview={submitNow} onPublish={publishNow}
             />
           </CardContent>
         </Card>
