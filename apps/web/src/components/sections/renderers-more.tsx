@@ -26,7 +26,7 @@ export function TestimonialsSection({ section, props, ctx, variant }: RenderProp
             <li key={i}>
               <figure className="text-center">
                 <span aria-hidden className="block text-5xl leading-none text-[var(--site-primary)]">&ldquo;</span>
-                <blockquote className="whitespace-pre-line text-xl italic leading-relaxed text-[var(--site-text)] sm:text-2xl">{L(it.text)}</blockquote>
+                <blockquote className="whitespace-pre-line text-xl italic leading-relaxed text-[var(--site-text)] @xl:text-2xl">{L(it.text)}</blockquote>
                 <figcaption className="mt-4 text-sm font-medium text-[var(--site-muted)]">
                   {str(it.name)}{it.country ? `, ${str(it.country)}` : ""}
                 </figcaption>
@@ -40,7 +40,7 @@ export function TestimonialsSection({ section, props, ctx, variant }: RenderProp
   return (
     <Section id={section.id}>
       <Heading>{L(props.heading)}</Heading>
-      <ul className="grid gap-6 md:grid-cols-2">
+      <ul className="grid gap-6 @3xl:grid-cols-2">
         {items.map((it, i) => (
           <li key={i}>
             <figure className={cn("h-full p-5", card)}>
@@ -64,7 +64,7 @@ export function FaqSection({ section, props, ctx, variant }: RenderProps<FaqProp
     return (
       <Section id={section.id}>
         <Heading>{L(props.heading)}</Heading>
-        <dl className="grid gap-x-10 gap-y-8 md:grid-cols-2">
+        <dl className="grid gap-x-10 gap-y-8 @3xl:grid-cols-2">
           {items.map((it, i) => (
             <div key={i}>
               <dt className="font-semibold text-[var(--site-text)]">{L(it.q)}</dt>
@@ -100,11 +100,11 @@ export function LocationSection({ section, props, ctx, variant }: RenderProps<Lo
     return (
       <Section id={section.id}>
         <Heading>{L(props.heading)}</Heading>
-        <div className={cn("grid gap-6 p-6 sm:grid-cols-2", card)}>
+        <div className={cn("grid gap-6 p-6 @xl:grid-cols-2", card)}>
           {address ? <p className="flex gap-3 whitespace-pre-line"><MapPin className="mt-0.5 size-5 shrink-0 text-[var(--site-primary)]" aria-hidden />{address}</p> : null}
           {hours ? <p className="flex gap-3 whitespace-pre-line"><Clock className="mt-0.5 size-5 shrink-0 text-[var(--site-primary)]" aria-hidden />{hours}</p> : null}
           {maps ? (
-            <a href={maps} target="_blank" rel="noopener noreferrer" className={cn(primaryButton, "w-fit sm:col-span-2")}>
+            <a href={maps} target="_blank" rel="noopener noreferrer" className={cn(primaryButton, "w-fit @xl:col-span-2")}>
               {t("sections.openMap")}<ExternalLink className="size-4" aria-hidden />
             </a>
           ) : null}
@@ -144,7 +144,7 @@ export function ContactSection({ section, props, ctx, variant }: RenderProps<Con
     return (
       <Section id={section.id}>
         <Heading>{L(props.heading)}</Heading>
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid gap-4 @xl:grid-cols-2 @5xl:grid-cols-3">
           {tiles.map((x) => (
             <li key={x.key} className={cn("flex items-center gap-3 p-4", card)}>
               <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[var(--site-primary)] text-[var(--site-primary-fg)]">{x.icon}</span>
@@ -238,9 +238,9 @@ export function VideoSection({ section, props, ctx, variant }: RenderProps<Video
   if (variant === "split") {
     return (
       <Section id={section.id}>
-        <div className="grid gap-8 md:grid-cols-5 md:items-center">
-          <div className="md:col-span-3"><YoutubeFacade videoId={id} title={title} /></div>
-          <div className="md:col-span-2">
+        <div className="grid gap-8 @3xl:grid-cols-5 @3xl:items-center">
+          <div className="@3xl:col-span-3"><YoutubeFacade videoId={id} title={title} /></div>
+          <div className="@3xl:col-span-2">
             <Heading className="mb-4">{L(props.heading)}</Heading>
             {caption ? <p className="whitespace-pre-line text-[var(--site-muted)]">{caption}</p> : null}
           </div>
@@ -267,9 +267,9 @@ export function FooterSection({ section, props, ctx, variant }: RenderProps<Foot
   return (
     <footer
       id={`s-${section.id}`}
-      className={cn("bg-[var(--site-bg)] px-4 py-10 text-[var(--site-text)] sm:px-6", variant === "light" && "border-t border-[color:var(--site-border)]")}
+      className={cn("bg-[var(--site-bg)] px-[var(--sec-px,1rem)] py-10 text-[var(--site-text)] @xl:px-[var(--sec-px,1.5rem)]", variant === "light" && "border-t border-[color:var(--site-border)]")}
     >
-      <div className={cn("mx-auto flex w-full max-w-5xl flex-col gap-4", centered && "items-center text-center")}>
+      <div className={cn("mx-auto flex w-full max-w-[var(--sec-max,64rem)] flex-col gap-4", centered && "items-center text-center")}>
         <p className="whitespace-pre-line text-sm">{L(props.text) || `© ${ctx.shop.name}`}</p>
         <Socials items={props.socials} className={cn("text-sm", centered && "justify-center")} linkClassName={footerLink} />
         <nav aria-label={t("footer.legal")} className={cn("flex flex-wrap gap-x-4 gap-y-2 text-sm", centered && "justify-center")}>

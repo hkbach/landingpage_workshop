@@ -13,42 +13,45 @@
   "template": {
     "title": "Template",
     "names": {
-      "classic": "Classic",
-      "minimal": "Minimal",
-      "bold": "Bold",
-      "elegant": "Elegant",
-      "rustic": "Rustic",
-      "modern": "Modern",
-      "vibrant": "Vibrant",
-      "serene": "Serene",
-      "artisan": "Artisan",
-      "noir": "Noir"
+      "classic": "Classic Story",
+      "quicklinks": "Quick Links",
+      "bookingrail": "Book Now Rail",
+      "floatingcards": "Floating Cards",
+      "sidebar": "Side Menu",
+      "journey": "Journey",
+      "magazine": "Magazine",
+      "bento": "Bento Grid",
+      "appstyle": "App Style",
+      "cinematic": "Cinematic"
     },
     "descriptions": {
-      "classic": "Warm and familiar: full story with team, testimonials and FAQ.",
-      "minimal": "Short and monochrome: hero, workshops, FAQ and location.",
-      "bold": "Sharp corners, strong red and a big featured workshop with video.",
-      "elegant": "Refined serif look with pull quotes and generous spacing.",
-      "rustic": "Earthy green with a serif font, masonry gallery and map card.",
-      "modern": "Clean blue, rounded corners, split hero and side-by-side video.",
-      "vibrant": "Playful magenta with pill buttons, featured workshop and video.",
-      "serene": "Calm sage tones, airy spacing and a scrolling photo strip.",
-      "artisan": "Craft-focused: indigo on cream with your makers up front.",
-      "noir": "Dark mode with a gold accent, featured workshop and pull quotes."
+      "classic": "Best for most shops: a familiar page with a menu bar at the top.",
+      "quicklinks": "Best for tiny studios and Instagram visitors: one narrow column of big buttons.",
+      "bookingrail": "Best for selling workshops: a booking card stays visible next to your story.",
+      "floatingcards": "Best for a soft, friendly look: every section floats as its own card.",
+      "sidebar": "Best for shops with a lot to show: a menu that stays on the left.",
+      "journey": "Best for first-time visitors: a step-by-step path from discover to book.",
+      "magazine": "Best for craft and design studios: big headlines and numbered chapters.",
+      "bento": "Best for visual shops: photos, workshops and info as a mosaic of tiles.",
+      "appstyle": "Best for visitors on phones: tabs that show one topic at a time.",
+      "cinematic": "Best for striking photos and video: dark, full-screen sections."
     },
-    "hint": "Switching template never deletes your content. Pick a template, then customise images, video and colours.",
+    "hint": "Pick the page layout you like at a glance. Switching never deletes your text, photos or colours.",
     "confirmTitle": "Switch template?",
     "cancel": "Cancel",
     "apply": "Switch template",
     "current": "Current",
     "confirmFor": "You are about to switch to the {name} template.",
     "keeps": "Kept:",
-    "keepsText": "all text, images, videos and your per-section colour overrides.",
+    "keepsText": "all your text, photos, videos and the colours you set for individual sections.",
     "changes": "Changed:",
-    "changesText": "section layouts, section order, theme colours, font and spacing are reset to the template. Your logo and favicon stay.",
+    "changesText": "the page layout (how the page is arranged), section order, section styles, theme colours, font and spacing follow the new template. Your logo and favicon stay.",
     "added": "Added with default content: {names}.",
     "hidden": "Not part of the new template but kept hidden (they have content): {names}.",
-    "removed": "Removed (still empty): {names}."
+    "removed": "Removed (still empty): {names}.",
+    "easy": "Easy start",
+    "preview": "Preview",
+    "previewLabel": "Preview {name} with your content"
   },
   "sections": {
     "title": "Sections",
@@ -213,7 +216,11 @@
     "device": "Device",
     "desktop": "Desktop",
     "mobile": "Mobile",
-    "note": "This preview shows your draft using the same components as the public website. The mobile view narrows the frame; fine layout details can differ on a real phone."
+    "note": "This preview shows your draft using the same components as the public website. The mobile view narrows the frame; fine layout details can differ on a real phone.",
+    "templateBanner": "Previewing {name}",
+    "templateBannerNote": "This is how your current content looks in this layout. Nothing is saved until you apply it.",
+    "templateBack": "Back",
+    "templateApply": "Apply this template"
   },
   "colors": {
     "title": "Colors",
@@ -277,7 +284,10 @@
     "hero": {
       "centered": "Centered",
       "split": "Text and image side by side",
-      "overlay-left": "Left text over image"
+      "overlay-left": "Left text over image",
+      "compact": "Compact header (round photo)",
+      "editorial": "Magazine cover",
+      "fullscreen": "Full-screen dark cover"
     },
     "about": {
       "image-left": "Image on the left",
@@ -287,7 +297,8 @@
     "workshops": {
       "grid": "Grid",
       "list": "List",
-      "featured": "First workshop featured"
+      "featured": "First workshop featured",
+      "compact": "Compact buttons"
     },
     "gallery": {
       "grid": "Grid",

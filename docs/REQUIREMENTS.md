@@ -270,7 +270,7 @@ Browser ────────────────────────
 ### 5.2 Landing page builder
 
 **FR-SITE-01 – Chọn template (Must)**
-- MVP có **10 template** do nền tảng định nghĩa trong code (`packages/shared`). Mỗi template khác nhau về **bố cục từng section (layout variant), palette, font và thứ tự section mặc định**, nhưng dùng chung 11 section type và bộ renderer. *(v1.2: đổi từ 2 lên 10 template theo yêu cầu PO.)*
+- MVP có **10 template** do nền tảng định nghĩa trong code. **Template = bố cục trang riêng biệt (frame/layout: cấu trúc trang, điều hướng, nhóm section) + palette + font + bo góc/mật độ + bộ section, thứ tự và variant mặc định**; dùng chung 11 section type và bộ renderer. Shop chọn bằng cách nhìn wireframe trong builder và có thể **Preview** nội dung hiện tại với template khác trước khi áp dụng. 10 layout: `classic` (Classic Story: thanh menu sticky + section xếp dọc), `quicklinks` (Quick Links: một cột hẹp, nút lớn), `bookingrail` (Book Now Rail: thẻ đặt chỗ sticky bên phải, thanh đặt chỗ dưới cùng trên mobile), `floatingcards` (Floating Cards: header dạng viên thuốc, mỗi section là một thẻ nổi), `sidebar` (Side Menu: menu cố định bên trái), `journey` (Journey: timeline Discover/Choose/Visit/Book), `magazine` (Magazine: tiêu đề serif lớn, chương đánh số), `bento` (Bento Grid: lưới ô nhiều kích thước), `appstyle` (App Style: thanh tab, mỗi lần một nhóm section), `cinematic` (Cinematic: nền tối, panel toàn màn hình, chỉ báo chấm). Layout lưu trong `PageContent.layout`; giá trị thiếu/không hợp lệ dùng layout đầu tiên (`classic`). *(v1.2: đổi từ 2 lên 10 template theo yêu cầu PO; v1.3: template khác nhau về cấu trúc trang, không chỉ màu/variant.)*
 - Đổi template giữ lại nội dung các section cùng type.
 
 **FR-SITE-02 – Chỉnh section (Must)**

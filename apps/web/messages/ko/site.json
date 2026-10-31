@@ -2,5 +2,47 @@
   "latePolicy": {
     "title": "지각 정책",
     "text": "워크숍에는 정시에 도착해 주세요. 30분 이상 늦게 도착하면 예약이 해제되어 예약하신 자리가 현장 방문 고객에게 제공될 수 있습니다. 도착했을 때 자리가 남아 있다면 참여하실 수 있습니다."
+  },
+  "nav": {
+    "skip": "본문으로 건너뛰기",
+    "primary": "페이지 섹션",
+    "book": "예약하기",
+    "openMenu": "메뉴 열기",
+    "closeMenu": "메뉴 닫기",
+    "progress": "페이지 진행",
+    "top": "맨 위",
+    "hero": "맨 위",
+    "about": "소개",
+    "workshops": "워크숍",
+    "gallery": "갤러리",
+    "team": "팀",
+    "testimonials": "후기",
+    "faq": "자주 묻는 질문",
+    "location": "위치",
+    "contact": "연락처",
+    "video": "동영상"
+  },
+  "tabs": {
+    "label": "페이지 섹션",
+    "overview": "개요",
+    "workshops": "워크숍",
+    "gallery": "갤러리",
+    "info": "정보"
+  },
+  "journey": {
+    "step": "{number}단계",
+    "steps": {
+      "discover": "발견",
+      "choose": "선택",
+      "visit": "방문",
+      "book": "예약"
+    },
+    "finish": "함께할 준비가 되셨나요?"
+  },
+  "rail": {
+    "title": "자리 예약",
+    "choose": "워크숍 선택",
+    "duration": "소요 시간",
+    "price": "가격"
   }
 }

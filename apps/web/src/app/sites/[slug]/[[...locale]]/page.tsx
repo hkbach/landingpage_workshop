@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { pickLocalized } from "@workshop/shared";
 import { SiteBody } from "@/components/site/SiteBody";
 import { SiteFrame } from "@/components/site/SiteFrame";
-import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteIntlProvider } from "@/components/site/SiteIntlProvider";
 import { getSiteBase } from "@/components/site/site-base";
 import { localePath, siteOrigin } from "@/components/site/site-url";
@@ -46,22 +45,20 @@ export default async function SitePage({ params }: PageProps<"/sites/[slug]/[[..
   const base = await getSiteBase(slug);
   const { shop, content, theme, workshops, sessions } = site;
 
+  const languages = shop.enabledLocales.map((l) => ({ locale: l, href: localePath(base, l, shop.defaultLocale) }));
   const ctx: RenderContext = {
     locale,
+    languages,
     shop: { name: shop.name, defaultLocale: shop.defaultLocale, enabledLocales: shop.enabledLocales, timezone: shop.timezone, currency: shop.currency },
     workshops,
     reportHref: `${base}/report`,
     privacyHref: "#privacy", // placeholder until the legal pages exist
   };
-  const languages = shop.enabledLocales.map((l) => ({ locale: l, href: localePath(base, l, shop.defaultLocale) }));
 
   return (
     <SiteIntlProvider locale={locale}>
       <SiteFrame theme={theme} locale={locale}>
-        <SiteHeader
-          shopName={shop.name} logoUrl={theme.logoUrl} locale={locale} languages={languages}
-          homeHref={localePath(base, locale, shop.defaultLocale)}
-        />
+        {/* Header, navigation and language switch are part of the page frame (PageRenderer). */}
         <SiteBody
           content={content} theme={theme} ctx={ctx} workshops={workshops} sessions={sessions} locale={locale} basePath={base}
           shop={{ name: shop.name, slug: shop.slug, timezone: shop.timezone, currency: shop.currency, defaultLocale: shop.defaultLocale, bookingCutoffMinutes: shop.bookingCutoffMinutes }}

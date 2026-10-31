@@ -2,5 +2,47 @@
   "latePolicy": {
     "title": "Chính sách đến trễ",
     "text": "Vui lòng đến đúng giờ cho buổi workshop. Nếu bạn đến trễ hơn 30 phút, đặt chỗ của bạn có thể bị hủy giữ chỗ và chỗ đã đặt có thể được nhường cho khách đến trực tiếp. Nếu khi bạn đến vẫn còn chỗ trống, bạn vẫn có thể tham gia."
+  },
+  "nav": {
+    "skip": "Chuyển đến nội dung chính",
+    "primary": "Các phần của trang",
+    "book": "Đặt chỗ",
+    "openMenu": "Mở menu",
+    "closeMenu": "Đóng menu",
+    "progress": "Tiến trình trang",
+    "top": "Đầu trang",
+    "hero": "Đầu trang",
+    "about": "Giới thiệu",
+    "workshops": "Workshop",
+    "gallery": "Thư viện ảnh",
+    "team": "Đội ngũ",
+    "testimonials": "Đánh giá",
+    "faq": "Hỏi đáp",
+    "location": "Địa điểm",
+    "contact": "Liên hệ",
+    "video": "Video"
+  },
+  "tabs": {
+    "label": "Các phần của trang",
+    "overview": "Tổng quan",
+    "workshops": "Workshop",
+    "gallery": "Thư viện",
+    "info": "Thông tin"
+  },
+  "journey": {
+    "step": "Bước {number}",
+    "steps": {
+      "discover": "Khám phá",
+      "choose": "Chọn",
+      "visit": "Ghé thăm",
+      "book": "Đặt chỗ"
+    },
+    "finish": "Sẵn sàng tham gia cùng chúng tôi?"
+  },
+  "rail": {
+    "title": "Đặt chỗ của bạn",
+    "choose": "Chọn workshop",
+    "duration": "Thời lượng",
+    "price": "Giá"
   }
 }

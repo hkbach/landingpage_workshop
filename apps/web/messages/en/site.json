@@ -115,5 +115,47 @@
       "tooLong": "This value is too long.",
       "email": "Enter a valid email address."
     }
+  },
+  "nav": {
+    "skip": "Skip to main content",
+    "primary": "Page sections",
+    "book": "Book now",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "progress": "Page progress",
+    "top": "Top",
+    "hero": "Top",
+    "about": "About",
+    "workshops": "Workshops",
+    "gallery": "Gallery",
+    "team": "Team",
+    "testimonials": "Reviews",
+    "faq": "FAQ",
+    "location": "Location",
+    "contact": "Contact",
+    "video": "Video"
+  },
+  "tabs": {
+    "label": "Page sections",
+    "overview": "Overview",
+    "workshops": "Workshops",
+    "gallery": "Gallery",
+    "info": "Info"
+  },
+  "journey": {
+    "step": "Step {number}",
+    "steps": {
+      "discover": "Discover",
+      "choose": "Choose",
+      "visit": "Visit",
+      "book": "Book"
+    },
+    "finish": "Ready to join us?"
+  },
+  "rail": {
+    "title": "Book your spot",
+    "choose": "Choose a workshop",
+    "duration": "Duration",
+    "price": "Price"
   }
 }

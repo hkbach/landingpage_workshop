@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import type { RenderContext, SocialLink } from "./context";
 import { safeImage, safeLink } from "./safe-url";
 
+// Frames tune the shell through CSS variables: --sec-px (side padding), --sec-max (content width), --site-pad (vertical).
 // Shared building blocks of the section renderers. Colours, radius and spacing come only from CSS variables set by the
 // page wrapper and (per section) by SectionRenderer; shop text is always rendered as plain text.
 
@@ -54,15 +55,15 @@ export function Section({ id, label, className, children, narrow }: {
   return (
     <section
       id={`s-${id}`} aria-label={label}
-      className={cn("bg-[var(--site-bg)] px-4 py-[var(--site-pad)] text-[var(--site-text)] sm:px-6", className)}
+      className={cn("bg-[var(--site-bg)] px-[var(--sec-px,1rem)] py-[var(--site-pad)] text-[var(--site-text)] @xl:px-[var(--sec-px,1.5rem)]", className)}
     >
-      <div className={cn("mx-auto w-full", narrow ? "max-w-3xl" : "max-w-5xl")}>{children}</div>
+      <div className={cn("mx-auto w-full", narrow ? "max-w-[min(var(--sec-max,48rem),48rem)]" : "max-w-[var(--sec-max,64rem)]")}>{children}</div>
     </section>
   );
 }
 
 export function Heading({ children, className }: { children: ReactNode; className?: string }) {
-  return children ? <h2 className={cn("mb-8 text-2xl font-semibold tracking-tight text-[var(--site-text)] sm:text-3xl", className)}>{children}</h2> : null;
+  return children ? <h2 className={cn("mb-8 text-2xl font-semibold tracking-tight text-[var(--site-text)] @xl:text-3xl", className)}>{children}</h2> : null;
 }
 
 export function Socials({ items, className, linkClassName }: { items: SocialLink[]; className?: string; linkClassName?: string }) {

@@ -1,4 +1,5 @@
 import { ORG_STATUSES, type OrgStatus } from "@workshop/shared";
+import { isTemplateKey } from "@/components/sections/templates";
 import { SiteBuilder } from "@/components/builder/SiteBuilder";
 import { countWorkshopsWithUpcomingSessions } from "@/components/builder/prereqs";
 import { currentShop, sessions, sitePage, workshops } from "@/lib/mock/data";
@@ -8,6 +9,8 @@ export default async function SiteBuilderPage({ searchParams }: PageProps<"/dash
   const sp = await searchParams;
   const requested = typeof sp.status === "string" ? sp.status : undefined;
   const status: OrgStatus = (ORG_STATUSES as readonly string[]).includes(requested ?? "") ? (requested as OrgStatus) : currentShop.status;
+  // ?apply=KEY (from the template preview banner) opens the "Switch template?" confirmation for that template.
+  const apply = typeof sp.apply === "string" && isTemplateKey(sp.apply) ? sp.apply : undefined;
   return (
     <SiteBuilder
       shop={{
@@ -16,6 +19,7 @@ export default async function SiteBuilderPage({ searchParams }: PageProps<"/dash
       }}
       initial={{ content: sitePage.draft, theme: sitePage.theme, template: sitePage.template }}
       initialStatus={status}
+      applyTemplate={apply}
       upcomingWorkshopCount={countWorkshopsWithUpcomingSessions(workshops, sessions)}
     />
   );

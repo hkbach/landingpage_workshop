@@ -1,26 +1,29 @@
 "use client";
 
+import { useMemo } from "react";
 import type { PageContent, PageTheme } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import type { RenderContext } from "./context";
-import { SectionRenderer } from "./SectionRenderer";
+import { FRAMES } from "./frames";
+import { splitSections } from "./frames/logic";
+import { resolveLayout } from "./layouts";
 import { siteFontClass } from "./site-fonts";
 import { themeStyle } from "./theme";
 
-/** Renders the enabled sections of a page. Same component for the builder preview and the public site. */
+/**
+ * Renders the page: picks the frame (page structure) of `content.layout` and hands it the enabled, ordered sections.
+ * The footer is mandatory and handled by every frame. Same component for the builder preview and the public site.
+ * The wrapper is a size container so every layout responds to the width it actually has (preview frame or window).
+ */
 export function PageRenderer({ content, theme, ctx }: { content: PageContent; theme: PageTheme; ctx: RenderContext }) {
-  const sections = content.sections.filter((s) => s.enabled);
-  // Footer is mandatory: render it last even if a draft is missing or has it disabled.
-  const footer = content.sections.find((s) => s.type === "footer");
-  const body = sections.filter((s) => s.type !== "footer");
+  const { body, footer } = useMemo(() => splitSections(content.sections), [content.sections]);
+  const Frame = FRAMES[resolveLayout(content.layout)];
   return (
-    <div style={themeStyle(theme)} lang={ctx.locale} className={cn("min-h-full", siteFontClass(theme.font))}>
-      <main>
-        {body.map((s) => (
-          <SectionRenderer key={s.id} section={s} ctx={ctx} theme={theme} />
-        ))}
-      </main>
-      {footer ? <SectionRenderer section={{ ...footer, enabled: true }} ctx={ctx} theme={theme} /> : null}
+    <div
+      style={themeStyle(theme)} lang={ctx.locale} data-layout={resolveLayout(content.layout)}
+      className={cn("min-h-full @container", siteFontClass(theme.font))}
+    >
+      <Frame body={body} footer={footer} theme={theme} ctx={ctx} />
     </div>
   );
 }

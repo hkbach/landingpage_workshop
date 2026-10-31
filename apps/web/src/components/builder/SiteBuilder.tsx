@@ -31,6 +31,8 @@ interface Props {
   initial: { content: PageContent; theme: PageTheme; template: TemplateKey };
   initialStatus: OrgStatus;
   upcomingWorkshopCount: number;
+  /** Template requested via ?apply=KEY (template preview banner): opens the confirmation dialog. */
+  applyTemplate?: TemplateKey;
 }
 
 const noop = () => () => {};
@@ -45,7 +47,7 @@ export function SiteBuilder(props: Props) {
 type SaveState = "idle" | "pending" | "saved" | "quota" | "unavailable";
 const SEO_ID = "__seo__";
 
-function BuilderInner({ shop, initial, initialStatus, upcomingWorkshopCount }: Props) {
+function BuilderInner({ shop, initial, initialStatus, upcomingWorkshopCount, applyTemplate }: Props) {
   const t = useTranslations("builder");
   const [draft, setDraft] = useState<Draft>(() => loadDraft() ?? { ...initial });
   const [rev, setRev] = useState(0);
@@ -53,7 +55,7 @@ function BuilderInner({ shop, initial, initialStatus, upcomingWorkshopCount }: P
   const [status, setStatus] = useState<OrgStatus>(initialStatus);
   const [lang, setLang] = useState<Locale>(shop.defaultLocale);
   const [selectedId, setSelectedId] = useState<string>(() => draft.content.sections[0]?.id ?? SEO_ID);
-  const [pendingTemplate, setPendingTemplate] = useState<TemplateKey | null>(null);
+  const [pendingTemplate, setPendingTemplate] = useState<TemplateKey | null>(() => (applyTemplate && applyTemplate !== draft.template ? applyTemplate : null));
   const enabledLocales = shop.enabledLocales;
 
   // Debounced autosave (2 s) into local state only.
@@ -94,14 +96,20 @@ function BuilderInner({ shop, initial, initialStatus, upcomingWorkshopCount }: P
     setSections(sections.filter((x) => x.id !== id));
     if (selectedId === id) setSelectedId(SEO_ID);
   }
+  function closeTemplateDialog() {
+    setPendingTemplate(null);
+    // Drop ?apply=KEY so a reload does not reopen the dialog.
+    if (applyTemplate) window.history.replaceState(null, "", "/dashboard/site");
+  }
   function confirmTemplate() {
     if (!pendingTemplate) return;
-    // Content (props + per-section colours) is kept; variants, theme and section order follow the template.
-    const content = { ...draft.content, sections: planTemplateSwitch(draft.content, pendingTemplate).sections };
+    // Content (props + per-section colours) is kept; layout, variants, theme and section order follow the template.
+    const plan = planTemplateSwitch(draft.content, pendingTemplate);
+    const content = { ...draft.content, layout: plan.layout, sections: plan.sections };
     const theme = themeForTemplate(pendingTemplate, draft.theme);
     change({ content, theme, template: pendingTemplate });
     setSelectedId(content.sections[0]?.id ?? SEO_ID);
-    setPendingTemplate(null);
+    closeTemplateDialog();
   }
 
   // Missing translations per enabled language (default locale fallback applies at render time).
@@ -267,7 +275,7 @@ function BuilderInner({ shop, initial, initialStatus, upcomingWorkshopCount }: P
         </Card>
       </div>
 
-      <Dialog open={pendingTemplate !== null} onOpenChange={(o) => { if (!o) setPendingTemplate(null); }}>
+      <Dialog open={pendingTemplate !== null} onOpenChange={(o) => { if (!o) closeTemplateDialog(); }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t("template.confirmTitle")}</DialogTitle>
@@ -283,7 +291,7 @@ function BuilderInner({ shop, initial, initialStatus, upcomingWorkshopCount }: P
             {switchPlan && switchPlan.removed.length > 0 ? <p>{t("template.removed", { names: names(switchPlan.removed) })}</p> : null}
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setPendingTemplate(null)}>{t("template.cancel")}</Button>
+            <Button type="button" variant="outline" onClick={closeTemplateDialog}>{t("template.cancel")}</Button>
             <Button type="button" onClick={confirmTemplate}>{t("template.apply")}</Button>
           </DialogFooter>
         </DialogContent>

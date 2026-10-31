@@ -1,18 +1,20 @@
 import { describe, expect, it } from "vitest";
 import { sitePage } from "@/lib/mock/data";
 import { DRAFT_KEY, parseDraft, sanitizeDraft } from "./draft-store";
+import { TEMPLATES } from "@/components/sections/templates";
 import { sectionInstanceSchema, needsAttention } from "@/components/sections/instance";
 
 const valid = () => ({ content: sitePage.draft, theme: sitePage.theme, template: sitePage.template });
 
 describe("draft store", () => {
   it("uses a bumped storage key", () => {
-    expect(DRAFT_KEY).toBe("builder:draft:v2");
+    expect(DRAFT_KEY).toBe("builder:draft:v3");
   });
 
   it("round-trips the mock draft", () => {
     const d = parseDraft(JSON.stringify(valid()));
-    expect(d?.template).toBe("artisan");
+    expect(d?.template).toBe(sitePage.template);
+    expect(d?.content.layout).toBe(sitePage.draft.layout);
     expect(d?.content.sections.length).toBe(sitePage.draft.sections.length);
   });
 
@@ -59,6 +61,22 @@ describe("draft store", () => {
   });
 
   it("falls back to classic for an unknown template key", () => {
-    expect(sanitizeDraft({ ...valid(), template: "nope" })?.template).toBe("classic");
+    const stale = { ...valid(), template: "nope", content: { ...sitePage.draft, layout: undefined } };
+    expect(sanitizeDraft(stale)?.template).toBe("classic");
+    expect(sanitizeDraft(stale)?.content.layout).toBe("classic");
+  });
+
+  it("maps legacy template keys and derives the layout from the template", () => {
+    const old = { ...valid(), template: "minimal", content: { ...sitePage.draft, layout: undefined } };
+    const d = sanitizeDraft(old)!;
+    expect(d.template).toBe("quicklinks");
+    expect(d.content.layout).toBe("quicklinks");
+  });
+
+  it("sanitises an invalid layout and keeps a valid one", () => {
+    const own = TEMPLATES[sitePage.template].layout;
+    expect(sanitizeDraft({ ...valid(), content: { ...sitePage.draft, layout: "<script>" } })?.content.layout).toBe(own);
+    expect(sanitizeDraft({ ...valid(), content: { ...sitePage.draft, layout: 42 } })?.content.layout).toBe(own);
+    expect(sanitizeDraft({ ...valid(), content: { ...sitePage.draft, layout: "magazine" } })?.content.layout).toBe("magazine");
   });
 });

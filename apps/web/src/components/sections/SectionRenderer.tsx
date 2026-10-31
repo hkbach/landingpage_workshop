@@ -14,6 +14,12 @@ import { resolveThemeColors, sectionStyleVars } from "./theme";
  * Renders one section by type. Props come from untrusted shop content and are rendered defensively as text.
  * Per-section colour overrides are applied only as CSS custom properties (validated hex) on a wrapper element.
  */
+/** Colour variables of a section (theme tone + per-section overrides); frames use them for tiles built from section props. */
+export function sectionVarsFor(section: SectionInstance, theme: PageTheme) {
+  const tone = SECTION_REGISTRY[section.type].tone(effectiveVariant(section));
+  return sectionStyleVars(resolveThemeColors(theme), tone, section.style);
+}
+
 export function SectionRenderer({ section, ctx, theme }: { section: SectionInstance; ctx: RenderContext; theme: PageTheme }) {
   const p = section.props;
   const variant = effectiveVariant(section);

@@ -79,7 +79,9 @@ const fixed = (tone: Tone) => () => tone;
 const DEFINITIONS: Record<SectionType, Define> = {
   hero: {
     type: "hero", schemaVersion: 1, removable: true,
-    variants: ["centered", "split", "overlay-left"], tone: fixed("primary"),
+    variants: ["centered", "split", "overlay-left", "compact", "editorial", "fullscreen"],
+    // compact (avatar header), editorial (headline) and fullscreen (dark cinematic cover) sit on the page background, the rest on primary.
+    tone: (v) => (v === "compact" || v === "editorial" || v === "fullscreen" ? "bg" : "primary"),
     make: (image) => z.object({ title: localized(120), subtitle: localized(240), imageUrl: image, ctaText: localized(40) }),
     defaultProps: () => ({ title: { en: "Make something with your hands" }, subtitle: { en: "Hands-on workshops, no experience needed" }, imageUrl: "", ctaText: { en: "Book a workshop" } }),
     fields: [
@@ -96,7 +98,7 @@ const DEFINITIONS: Record<SectionType, Define> = {
   },
   workshops: {
     type: "workshops", schemaVersion: 1, removable: true, autoContent: true,
-    variants: ["grid", "list", "featured"], tone: fixed("surface"),
+    variants: ["grid", "list", "featured", "compact"], tone: fixed("surface"),
     make: () => z.object({ heading: localized(80) }),
     defaultProps: () => ({ heading: { en: "Our workshops" } }),
     fields: [{ kind: "localized", key: "heading", max: 80 }],

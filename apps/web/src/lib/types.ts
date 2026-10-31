@@ -50,8 +50,14 @@ export interface SectionInstance {
   props: Record<string, unknown>;
   style?: SectionStyle;
 }
+/** Page structure ("frame") of a template: how sections are arranged and what chrome surrounds them. */
+export type LayoutKey =
+  | "classic" | "quicklinks" | "sidebar" | "bento" | "bookingrail"
+  | "magazine" | "cinematic" | "floatingcards" | "journey" | "appstyle";
 export interface PageContent {
   schemaVersion: 1; sections: SectionInstance[]; seo: { title: Localized; description: Localized };
+  /** Page layout; missing or unknown values fall back to the first layout ("classic"). */
+  layout?: LayoutKey;
 }
 export type ThemeRadius = "none" | "sm" | "md" | "lg" | "xl";
 export type ThemeDensity = "compact" | "comfortable" | "spacious";

@@ -2,14 +2,17 @@ import { SECTION_TYPES, type SectionType } from "@workshop/shared";
 import type { PageContent, PageTheme, SectionInstance, ThemeDensity, ThemeRadius } from "@/lib/types";
 import { createSection, isValidVariant } from "@/components/sections/registry";
 import { isImageUrl } from "@/components/sections/safe-url";
-import { isTemplateKey, TEMPLATES, type TemplateKey } from "@/components/sections/templates";
+import { isLayoutKey } from "@/components/sections/layouts";
+import { resolveTemplateKey, TEMPLATES, type TemplateKey } from "@/components/sections/templates";
 import { FONTS, resolveThemeColors, sanitizeSectionStyle } from "@/components/sections/theme";
 
 // Frontend-only "autosave": the draft lives in localStorage until the API exists (PUT draft_content).
 export interface Draft { content: PageContent; theme: PageTheme; template: TemplateKey }
 
-// v2: sections gained `variant`/`style`, the theme gained colour tokens. v1 drafts are ignored (and removed).
-export const DRAFT_KEY = "builder:draft:v2";
+// v3: page content gained `layout` (the page frame) and the templates were redesigned. v2 drafts are migrated on load
+// (stale template keys are mapped, the layout follows the template) and removed after the first v3 save; v1 is dropped.
+export const DRAFT_KEY = "builder:draft:v3";
+const MIGRATE_KEY = "builder:draft:v2";
 const LEGACY_KEYS = ["builder:draft:v1"];
 
 const RADII: readonly ThemeRadius[] = ["none", "sm", "md", "lg", "xl"];
@@ -50,17 +53,19 @@ function sanitizeSection(raw: unknown): SectionInstance | null {
 /** Rebuild a safe Draft from untrusted stored JSON; null when it cannot be recovered. */
 export function sanitizeDraft(raw: unknown): Draft | null {
   if (!isObj(raw) || !isObj(raw.content) || raw.content.schemaVersion !== 1 || !Array.isArray(raw.content.sections)) return null;
-  const template: TemplateKey = isTemplateKey(raw.template) ? raw.template : "classic";
+  const template: TemplateKey = resolveTemplateKey(raw.template) ?? "classic";
   const theme = sanitizeTheme(raw.theme, template);
   if (!theme) return null;
   const sections = raw.content.sections.map(sanitizeSection).filter((s): s is SectionInstance => s !== null);
   if (sections.length === 0) return null;
   if (!sections.some((s) => s.type === "footer")) sections.push(createSection("footer", "dark"));
   const seo = isObj(raw.content.seo) ? raw.content.seo : {};
+  // Layout: the stored one when valid, otherwise the layout of the (possibly migrated) template.
+  const layout = isLayoutKey(raw.content.layout) ? raw.content.layout : TEMPLATES[template].layout;
   return {
     template, theme,
     content: {
-      schemaVersion: 1, sections,
+      schemaVersion: 1, layout, sections,
       seo: { title: isObj(seo.title) ? seo.title : {}, description: isObj(seo.description) ? seo.description : {} },
     } as PageContent,
   };
@@ -78,7 +83,7 @@ export function parseDraft(raw: string | null): Draft | null {
 export function loadDraft(): Draft | null {
   try {
     for (const k of LEGACY_KEYS) window.localStorage.removeItem(k);
-    return parseDraft(window.localStorage.getItem(DRAFT_KEY));
+    return parseDraft(window.localStorage.getItem(DRAFT_KEY)) ?? parseDraft(window.localStorage.getItem(MIGRATE_KEY));
   } catch {
     return null;
   }
@@ -90,6 +95,7 @@ export type SaveResult = { ok: true } | { ok: false; reason: "quota" | "unavaila
 export function saveDraft(draft: Draft): SaveResult {
   try {
     window.localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    window.localStorage.removeItem(MIGRATE_KEY);
     return { ok: true };
   } catch (e) {
     const quota = e instanceof DOMException && (e.name === "QuotaExceededError" || e.name === "NS_ERROR_DOM_QUOTA_REACHED");

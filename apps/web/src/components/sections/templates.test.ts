@@ -6,17 +6,19 @@ import {
   ADDABLE_TYPES, createSection, effectiveVariant, hasContent, isValidVariant, SECTION_REGISTRY, validateSection,
 } from "./registry";
 import {
-  applyTemplate, planTemplateSwitch, TEMPLATE_KEYS, TEMPLATES, templateSections, themeForTemplate,
+  applyTemplate, LEGACY_TEMPLATE_KEYS, planTemplateSwitch, resolveTemplateKey, TEMPLATE_KEYS, TEMPLATES, templateSections,
+  themeForTemplate,
 } from "./templates";
+import { FRAMES } from "./frames";
+import { DEFAULT_LAYOUT, LAYOUT_KEYS, resolveLayout } from "./layouts";
 import { FONTS, themeChecks } from "./theme";
 
 describe("template registry integrity", () => {
-  it("has exactly 10 templates with unique keys, including classic and minimal", () => {
+  it("has exactly 10 templates with unique keys, including classic", () => {
     expect(TEMPLATE_KEYS).toHaveLength(10);
     expect(new Set(TEMPLATE_KEYS).size).toBe(10);
     expect(Object.keys(TEMPLATES).sort()).toEqual([...TEMPLATE_KEYS].sort());
     expect(TEMPLATE_KEYS).toContain("classic");
-    expect(TEMPLATE_KEYS).toContain("minimal");
     for (const k of TEMPLATE_KEYS) expect(TEMPLATES[k].key).toBe(k);
   });
 
@@ -51,6 +53,25 @@ describe("template registry integrity", () => {
     const failing = themeChecks(theme).filter((c) => !c.ok);
     expect(failing, failing.map((c) => `${c.id} ${c.ratio.toFixed(2)}`).join(", ")).toEqual([]);
     expect(FONTS.some((f) => f.key === theme.font)).toBe(true);
+  });
+
+  it("has 10 distinct layouts and every layout has a frame", () => {
+    const layouts = TEMPLATE_KEYS.map((k) => TEMPLATES[k].layout);
+    expect(new Set(layouts).size).toBe(10);
+    expect([...layouts].sort()).toEqual([...LAYOUT_KEYS].sort());
+    for (const l of LAYOUT_KEYS) expect(FRAMES[l], l).toBeTypeOf("function");
+    expect(Object.keys(FRAMES).sort()).toEqual([...LAYOUT_KEYS].sort());
+    expect(TEMPLATES[TEMPLATE_KEYS[0]].layout).toBe(DEFAULT_LAYOUT);
+  });
+
+  it("resolveLayout / resolveTemplateKey sanitise stale values", () => {
+    expect(resolveLayout("nope")).toBe(DEFAULT_LAYOUT);
+    expect(resolveLayout(undefined)).toBe(DEFAULT_LAYOUT);
+    expect(resolveLayout("bento")).toBe("bento");
+    expect(resolveTemplateKey("minimal")).toBe("quicklinks");
+    expect(resolveTemplateKey("__proto__")).toBeUndefined();
+    expect(resolveTemplateKey("nope")).toBeUndefined();
+    for (const target of Object.values(LEGACY_TEMPLATE_KEYS)) expect(TEMPLATE_KEYS).toContain(target);
   });
 
   it("templates are distinct (layout + palette + font + order)", () => {
@@ -107,33 +128,50 @@ describe("template switch preserves content", () => {
     const hero = make("hero", { title: { en: "My title" }, imageUrl: "https://example.com/h.jpg" }, { variant: "split", style: { background: "#112233" } });
     const faq = make("faq", { heading: { en: "Questions" } }, { style: { text: "#000000" } });
     const content = pageWith([hero, faq, createSection("footer")]);
-    const out = applyTemplate(content, "bold");
+    const out = applyTemplate(content, "cinematic");
     const find = (t: SectionType) => out.sections.find((s) => s.type === t)!;
     expect(find("hero").id).toBe(hero.id);
     expect(find("hero").props).toEqual(hero.props);
     expect(find("hero").style).toEqual({ background: "#112233" });
-    expect(find("hero").variant).toBe("overlay-left");
+    expect(find("hero").variant).toBe("fullscreen");
+    expect(out.layout).toBe("cinematic");
     expect(find("faq").props).toEqual(faq.props);
     expect(find("faq").style).toEqual({ text: "#000000" });
     expect(find("faq").variant).toBe("two-column");
-    expect(out.sections.map((s) => s.type)).toEqual(TEMPLATES.bold.sections.map((s) => s.type));
+    expect(out.sections.map((s) => s.type)).toEqual(TEMPLATES.cinematic.sections.map((s) => s.type));
     expect(out.sections[out.sections.length - 1]!.type).toBe("footer");
   });
 
-  it("keeps unlisted sections that have content as disabled, drops untouched ones", () => {
-    const team = make("team", { members: [{ name: "Linh", role: {}, bio: {}, imageUrl: "" }] });
-    const gallery = createSection("gallery"); // untouched defaults
-    const video = make("video", { videoId: "dQw4w9WgXcQ" });
-    const content = pageWith([createSection("hero"), team, gallery, video, createSection("footer")]);
-    const plan = planTemplateSwitch(content, "minimal"); // minimal lists neither team, gallery nor video
-    expect(plan.hidden.sort()).toEqual(["team", "video"]);
+  it("keeps extra sections of a type with content as disabled, drops untouched ones", () => {
+    // Every template lists each section type once, so a second section of the same type is unlisted.
+    const team2 = make("team", { members: [{ name: "Linh", role: {}, bio: {}, imageUrl: "" }] });
+    const gallery2 = createSection("gallery"); // untouched defaults
+    const content = pageWith([createSection("hero"), createSection("team"), team2, createSection("gallery"), gallery2, createSection("footer")]);
+    const plan = planTemplateSwitch(content, "quicklinks");
+    expect(plan.hidden).toEqual(["team"]);
     expect(plan.removed).toEqual(["gallery"]);
-    const keptTeam = plan.sections.find((s) => s.id === team.id)!;
-    expect(keptTeam.enabled).toBe(false);
-    expect(keptTeam.props).toEqual(team.props);
-    expect(plan.sections.find((s) => s.id === video.id)?.props.videoId).toBe("dQw4w9WgXcQ");
-    expect(plan.sections.find((s) => s.id === gallery.id)).toBeUndefined();
+    const kept = plan.sections.find((s) => s.id === team2.id)!;
+    expect(kept.enabled).toBe(false);
+    expect(kept.props).toEqual(team2.props);
+    expect(plan.sections.find((s) => s.id === gallery2.id)).toBeUndefined();
     expect(plan.sections[plan.sections.length - 1]!.type).toBe("footer");
+  });
+
+  it.each(TEMPLATE_KEYS)("%s: keeps every section's props and colour overrides and always has one enabled footer", (key) => {
+    const styled = (["hero", "about", "workshops", "faq"] as SectionType[]).map((t, i) =>
+      make(t, {}, { style: { background: "#112233", text: "#ffffff", accent: i % 2 ? "#ffcc00" : "#00aa88" } }));
+    const video = make("video", { videoId: "dQw4w9WgXcQ" });
+    const content = pageWith([...styled, video, createSection("footer")]);
+    const out = applyTemplate(content, key);
+    expect(out.layout).toBe(TEMPLATES[key].layout);
+    for (const original of [...styled, video]) {
+      const kept = out.sections.find((x) => x.id === original.id)!;
+      expect(kept.props).toEqual(original.props);
+      expect(kept.style).toEqual(original.style);
+    }
+    const footers = out.sections.filter((x) => x.type === "footer");
+    expect(footers).toHaveLength(1);
+    expect(footers[0]!.enabled).toBe(true);
   });
 
   it("never loses content across a round trip through every template", () => {
@@ -156,9 +194,9 @@ describe("template switch preserves content", () => {
   });
 
   it("adds a footer when the draft has none and keeps the logo and favicon in the theme", () => {
-    const out = applyTemplate(pageWith([createSection("hero")]), "noir");
+    const out = applyTemplate(pageWith([createSection("hero")]), "cinematic");
     expect(out.sections[out.sections.length - 1]!.type).toBe("footer");
-    const theme = themeForTemplate("noir", { logoUrl: "https://example.com/l.png", faviconUrl: "https://example.com/f.png" });
+    const theme = themeForTemplate("cinematic", { logoUrl: "https://example.com/l.png", faviconUrl: "https://example.com/f.png" });
     expect(theme.logoUrl).toBe("https://example.com/l.png");
     expect(theme.palette).toBe("noir");
   });

@@ -9,6 +9,8 @@ export interface RenderContext {
   workshops: Workshop[];
   reportHref: string;
   privacyHref: string;
+  /** Languages offered by the language switcher of the frame chrome (public site: real links; preview: in-place switch). */
+  languages?: { locale: Locale; href: string }[];
   /** Builder preview only: allow uploaded data:image URLs. Always false/absent on the public site. */
   allowDataImages?: boolean;
 }

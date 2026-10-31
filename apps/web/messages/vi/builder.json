@@ -5,37 +5,41 @@
   "template": {
     "names": {
       "classic": "Cổ điển",
-      "minimal": "Tối giản",
-      "bold": "Nổi bật",
-      "elegant": "Thanh lịch",
-      "rustic": "Mộc mạc",
-      "modern": "Hiện đại",
-      "vibrant": "Sống động",
-      "serene": "Thanh bình",
-      "artisan": "Thủ công",
-      "noir": "Noir (nền tối)"
+      "quicklinks": "Liên kết nhanh",
+      "bookingrail": "Thanh đặt chỗ",
+      "floatingcards": "Thẻ nổi",
+      "sidebar": "Menu bên trái",
+      "journey": "Hành trình",
+      "magazine": "Tạp chí",
+      "bento": "Lưới Bento",
+      "appstyle": "Kiểu ứng dụng",
+      "cinematic": "Điện ảnh"
     },
     "descriptions": {
-      "classic": "Ấm áp, quen thuộc: câu chuyện đầy đủ với đội ngũ, đánh giá và câu hỏi thường gặp.",
-      "minimal": "Ngắn gọn, đơn sắc: banner, workshop, câu hỏi thường gặp và địa điểm.",
-      "bold": "Góc vuông, đỏ đậm, workshop nổi bật cỡ lớn kèm video.",
-      "elegant": "Phong cách chữ có chân tinh tế, trích dẫn lớn và khoảng cách thoáng.",
-      "rustic": "Xanh lá đất, chữ có chân, thư viện ảnh xếp so le và thẻ bản đồ.",
-      "modern": "Xanh dương gọn gàng, bo góc, banner chia đôi và video bên cạnh nội dung.",
-      "vibrant": "Hồng tím vui tươi, nút bo tròn, workshop nổi bật và video.",
-      "serene": "Sắc xanh dịu, khoảng cách thoáng và dải ảnh cuộn ngang.",
-      "artisan": "Tập trung vào thủ công: chàm trên nền kem, giới thiệu nghệ nhân lên đầu.",
-      "noir": "Nền tối với điểm nhấn vàng, workshop nổi bật và trích dẫn lớn."
+      "classic": "Phù hợp với hầu hết cửa hàng: trang quen thuộc, thanh menu ở trên cùng.",
+      "quicklinks": "Phù hợp xưởng nhỏ và khách từ Instagram: một cột hẹp với các nút lớn.",
+      "bookingrail": "Phù hợp để bán workshop: thẻ đặt chỗ luôn hiện bên cạnh nội dung.",
+      "floatingcards": "Phù hợp với phong cách nhẹ nhàng, thân thiện: mỗi phần là một thẻ nổi.",
+      "sidebar": "Phù hợp cửa hàng có nhiều nội dung: menu luôn nằm bên trái.",
+      "journey": "Phù hợp khách lần đầu: lộ trình từng bước từ khám phá đến đặt chỗ.",
+      "magazine": "Phù hợp xưởng thủ công và thiết kế: tiêu đề lớn và các chương đánh số.",
+      "bento": "Phù hợp cửa hàng nhiều hình ảnh: ảnh, workshop và thông tin dạng ô ghép.",
+      "appstyle": "Phù hợp khách dùng điện thoại: các thẻ chuyển, mỗi lần một chủ đề.",
+      "cinematic": "Phù hợp với ảnh và video ấn tượng: các phần toàn màn hình, nền tối."
     },
     "current": "Đang dùng",
     "confirmTitle": "Đổi mẫu giao diện?",
     "confirmFor": "Bạn sắp chuyển sang mẫu {name}.",
     "keeps": "Giữ nguyên:",
-    "keepsText": "toàn bộ văn bản, ảnh, video và màu riêng của từng phần.",
+    "keepsText": "toàn bộ văn bản, ảnh, video và màu bạn đã đặt cho từng phần.",
     "changes": "Thay đổi:",
-    "changesText": "bố cục, thứ tự các phần, màu giao diện, phông chữ và khoảng cách được đặt lại theo mẫu. Logo và favicon được giữ.",
+    "changesText": "bố cục trang (cách sắp xếp trang), thứ tự phần, kiểu từng phần, màu giao diện, phông chữ và khoảng cách theo mẫu mới. Logo và favicon được giữ nguyên.",
     "cancel": "Hủy",
-    "apply": "Đổi mẫu"
+    "apply": "Đổi mẫu",
+    "hint": "Chọn bố cục trang bạn thích ngay khi nhìn. Đổi mẫu không bao giờ xóa văn bản, ảnh hay màu của bạn.",
+    "easy": "Dễ bắt đầu",
+    "preview": "Xem trước",
+    "previewLabel": "Xem trước {name} với nội dung của bạn"
   },
   "sectionTypes": {
     "video": "Video"
@@ -85,5 +89,21 @@
     "uploadingMany": "Đang tải {done}/{total}...",
     "uploadedMany": "Đã thêm {count} ảnh.",
     "skippedMany": "Đã bỏ qua {count} ảnh vì giới hạn là {max}."
+  },
+  "previewPage": {
+    "templateBanner": "Đang xem trước {name}",
+    "templateBannerNote": "Đây là nội dung hiện tại của bạn trong bố cục này. Chưa có gì được lưu cho đến khi bạn áp dụng.",
+    "templateBack": "Quay lại",
+    "templateApply": "Áp dụng mẫu này"
+  },
+  "variants": {
+    "hero": {
+      "compact": "Đầu trang gọn (ảnh tròn)",
+      "editorial": "Bìa tạp chí",
+      "fullscreen": "Bìa toàn màn hình (nền tối)"
+    },
+    "workshops": {
+      "compact": "Nút gọn"
+    }
   }
 }

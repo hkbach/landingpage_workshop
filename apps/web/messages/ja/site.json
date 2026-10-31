@@ -2,5 +2,47 @@
   "latePolicy": {
     "title": "遅刻に関するポリシー",
     "text": "ワークショップには時間通りにお越しください。30分以上遅れた場合、ご予約が解除され、確保されていた席が飛び込みのお客様に提供されることがあります。到着時に空席がある場合は、ご参加いただける場合があります。"
+  },
+  "nav": {
+    "skip": "メインコンテンツへスキップ",
+    "primary": "ページのセクション",
+    "book": "予約する",
+    "openMenu": "メニューを開く",
+    "closeMenu": "メニューを閉じる",
+    "progress": "ページの進行状況",
+    "top": "先頭",
+    "hero": "先頭",
+    "about": "紹介",
+    "workshops": "ワークショップ",
+    "gallery": "ギャラリー",
+    "team": "スタッフ",
+    "testimonials": "口コミ",
+    "faq": "よくある質問",
+    "location": "アクセス",
+    "contact": "お問い合わせ",
+    "video": "動画"
+  },
+  "tabs": {
+    "label": "ページのセクション",
+    "overview": "概要",
+    "workshops": "ワークショップ",
+    "gallery": "ギャラリー",
+    "info": "情報"
+  },
+  "journey": {
+    "step": "ステップ{number}",
+    "steps": {
+      "discover": "発見",
+      "choose": "選ぶ",
+      "visit": "訪れる",
+      "book": "予約"
+    },
+    "finish": "ご参加の準備はできましたか？"
+  },
+  "rail": {
+    "title": "席を予約",
+    "choose": "ワークショップを選択",
+    "duration": "所要時間",
+    "price": "料金"
   }
 }
