@@ -69,7 +69,9 @@
     "addLabel": "Add a section",
     "allAdded": "All sections are in use",
     "choose": "Choose a section type",
-    "add": "Add"
+    "add": "Add",
+    "show": "Show",
+    "showHint": "Tick to show this section on your website. Untick to hide it; your content is kept."
   },
   "sectionTypes": {
     "hero": "Hero",

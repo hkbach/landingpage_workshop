@@ -118,5 +118,9 @@
       "workshops": "Hiện nút Đặt chỗ ở từng workshop. Khi tắt, workshop chỉ hiển thị để xem thông tin.",
       "generic": "Thêm nút Đặt chỗ ở cuối phần này. Khách bấm vào sẽ mở cửa sổ đặt chỗ."
     }
+  },
+  "sections": {
+    "show": "Hiện",
+    "showHint": "Đánh dấu để hiện phần này trên website. Bỏ đánh dấu để ẩn; nội dung của bạn vẫn được giữ."
   }
 }

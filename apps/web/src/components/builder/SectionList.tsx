@@ -71,15 +71,18 @@ function Row({ section, invalid, selected, onSelect, onToggle, onRemove }: {
           </span>
         ) : null}
       </button>
-      <div className="flex items-center gap-1.5 px-1">
+      <div className="flex items-center gap-1.5 px-1" title={fixed ? t("sections.footerLocked") : t("sections.showHint")}>
         <Checkbox
           id={`en-${section.id}`} checked={section.enabled} disabled={fixed}
           onCheckedChange={(v) => onToggle(v === true)} aria-label={t("sections.enable", { name })}
         />
-        <Label htmlFor={`en-${section.id}`} className="sr-only">{t("sections.enable", { name })}</Label>
+        {/* Visible text so the switch is understandable at a glance; the accessible name above contains it ("Show ..."). */}
+        <Label htmlFor={`en-${section.id}`} aria-hidden className="cursor-pointer text-xs font-normal text-muted-foreground">
+          {t("sections.show")}
+        </Label>
       </div>
       {fixed ? null : (
-        <Button type="button" variant="ghost" size="icon-sm" onClick={onRemove}>
+        <Button type="button" variant="ghost" size="icon-sm" onClick={onRemove} title={t("sections.remove", { name })}>
           <Trash2 /><span className="sr-only">{t("sections.remove", { name })}</span>
         </Button>
       )}
