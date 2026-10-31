@@ -1,3 +1,3 @@
-import type { Locale } from "@workshop/shared";
+import { LOCALE_NATIVE_NAMES, type Locale } from "@workshop/shared";
 
-export const LOCALE_NAMES: Record<Locale, string> = { en: "English", vi: "Tiếng Việt", ko: "한국어", ja: "日本語" };
+export const LOCALE_NAMES: Record<Locale, string> = LOCALE_NATIVE_NAMES;

@@ -203,7 +203,9 @@
       "en": "English",
       "vi": "Vietnamese",
       "ko": "Korean",
-      "ja": "Japanese"
+      "ja": "Japanese",
+      "zh": "Chinese (Simplified)",
+      "zh-TW": "Chinese (Traditional)"
     },
     "default": "default",
     "missing": "{count, plural, one {# missing translation} other {# missing translations}}",

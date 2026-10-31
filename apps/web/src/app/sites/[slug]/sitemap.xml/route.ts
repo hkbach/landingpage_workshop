@@ -1,3 +1,4 @@
+import { hreflangOf } from "@workshop/shared";
 import { getPublicSite } from "@/lib/mock/site";
 import { localePath, siteOrigin } from "@/components/site/site-url";
 
@@ -12,7 +13,7 @@ export async function GET(_req: Request, ctx: RouteContext<"/sites/[slug]/sitema
   const origin = siteOrigin(slug);
   const alternates = (): string =>
     shop.enabledLocales
-      .map((l) => `<xhtml:link rel="alternate" hreflang="${l}" href="${esc(origin + localePath("", l, shop.defaultLocale))}"/>`)
+      .map((l) => `<xhtml:link rel="alternate" hreflang="${hreflangOf(l)}" href="${esc(origin + localePath("", l, shop.defaultLocale))}"/>`)
       .join("");
   const urls = shop.enabledLocales
     .map((l) => `<url><loc>${esc(origin + localePath("", l, shop.defaultLocale))}</loc>${alternates()}</url>`)

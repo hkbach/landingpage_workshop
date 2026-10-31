@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { contrastRatio, isHexColor, normalizeHex } from "@workshop/shared";
 import {
@@ -22,9 +24,19 @@ describe("palettes", () => {
       expect(failing, `${p.key}: ${failing.map((c) => `${c.id}=${c.ratio.toFixed(2)}`).join(", ")}`).toEqual([]);
     }
   });
-  it("at most 6 fonts and each has VI/KO/JA capable fallbacks", () => {
+  it("at most 6 fonts and each falls back to the language-dependent CJK stack", () => {
     expect(FONTS.length).toBeLessThanOrEqual(6);
-    for (const f of FONTS) expect(f.stack).toMatch(/Malgun Gothic|Noto Serif KR|Noto Serif CJK/);
+    for (const f of FONTS) expect(f.stack).toMatch(/var\(--site-cjk-(sans|serif)\)/);
+  });
+
+  it("globals.css orders CJK fonts by page language (ja, ko, zh, zh-TW) with the right regional fonts first", () => {
+    const css = readFileSync(join(process.cwd(), "src/app/globals.css"), "utf8");
+    const rule = (lang: string) => css.match(new RegExp(`\\[lang="${lang}"\\]\\s*\\{([^}]*)\\}`))?.[1] ?? "";
+    const firstSans = (lang: string) => rule(lang).match(/--site-cjk-sans:\s*var\((--[a-z]+-sans)\)/)?.[1];
+    expect(firstSans("ja")).toBe("--jp-sans");
+    expect(firstSans("ko")).toBe("--kr-sans");
+    expect(firstSans("zh")).toBe("--sc-sans");
+    expect(firstSans("zh-TW")).toBe("--tc-sans");
   });
 });
 

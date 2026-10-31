@@ -17,7 +17,7 @@ function at(daysFromNow: number, hourLocal: number): string {
 export const shops: Shop[] = [
   {
     id: "org-1", name: "Clay & Co Studio", slug: "clayco", status: "ACTIVE", country: "VN", timezone: TZ, currency: "VND",
-    defaultLocale: "en", enabledLocales: ["en", "vi", "ko"], contactEmail: "hello@clayco.example", contactPhone: "+84 90 000 0000",
+    defaultLocale: "en", enabledLocales: ["en", "vi", "ko", "ja", "zh", "zh-TW"], contactEmail: "hello@clayco.example", contactPhone: "+84 90 000 0000",
     whatsapp: "+84 90 000 0000", address: "12 Nguyen Hue, District 1, Ho Chi Minh City", mapsUrl: "https://maps.app.goo.gl/example",
     bookingCutoffMinutes: 120, plan: "FREE", ownerName: "Linh Tran", ownerEmail: "linh@clayco.example", createdAt: at(-60, 9),
   },
@@ -40,7 +40,7 @@ export const currentShop = shops[0]!;
 
 export const workshops: Workshop[] = [
   {
-    id: "ws-1", title: { en: "Pottery Wheel Basics", vi: "Làm gốm cơ bản", ko: "도자기 물레 기초" },
+    id: "ws-1", title: { en: "Pottery Wheel Basics", vi: "Làm gốm cơ bản", ko: "도자기 물레 기초", ja: "ろくろ体験の基本", zh: "陶艺转盘入门", "zh-TW": "陶藝轉盤入門" },
     shortDescription: { en: "Throw your first bowl on the wheel.", vi: "Tự tay làm chiếc bát đầu tiên." },
     description: { en: "A relaxed 2-hour class: centering, pulling and shaping clay with a local artisan." },
     includes: { en: ["All materials", "Apron", "Tea and snacks"] }, notes: { en: "Wear clothes you do not mind getting dirty." },
@@ -117,14 +117,14 @@ const photo = (seed: string, w: number, h: number) => `https://picsum.photos/see
 
 const mockContent: PageContent = {
   schemaVersion: 1,
-  seo: { title: { en: "Clay & Co Studio – Pottery workshops in Saigon" }, description: { en: "Hands-on pottery classes for travellers." } },
+  seo: { title: { en: "Clay & Co Studio – Pottery workshops in Saigon", ja: "Clay & Co Studio – サイゴンの陶芸ワークショップ", zh: "Clay & Co Studio – 西贡陶艺工作坊", "zh-TW": "Clay & Co Studio – 西貢陶藝工作坊" }, description: { en: "Hands-on pottery classes for travellers.", ja: "旅行者向けの陶芸体験クラス。", zh: "面向游客的陶艺体验课程。", "zh-TW": "專為旅客設計的陶藝體驗課程。" } },
   sections: [
     { id: "s-hero", type: "hero", enabled: true, props: {
-      title: { en: "Make something with your hands", vi: "Tự tay tạo nên điều đặc biệt", ko: "손으로 직접 만들어 보세요" },
-      subtitle: { en: "Pottery workshops in the heart of Saigon", vi: "Workshop làm gốm giữa lòng Sài Gòn" },
-      imageUrl: photo("hero", 1600, 1000), ctaText: { en: "Book a workshop", vi: "Đặt chỗ", ko: "예약하기" } } },
+      title: { en: "Make something with your hands", vi: "Tự tay tạo nên điều đặc biệt", ko: "손으로 직접 만들어 보세요", ja: "自分の手で作ってみましょう", zh: "亲手创作属于你的作品", "zh-TW": "親手創作屬於你的作品" },
+      subtitle: { en: "Pottery workshops in the heart of Saigon", vi: "Workshop làm gốm giữa lòng Sài Gòn", ja: "サイゴンの中心で陶芸体験", zh: "西贡市中心的陶艺工作坊", "zh-TW": "西貢市中心的陶藝工作坊" },
+      imageUrl: photo("hero", 1600, 1000), ctaText: { en: "Book a workshop", vi: "Đặt chỗ", ko: "예약하기", ja: "予約する", zh: "立即预订", "zh-TW": "立即預訂" } } },
     { id: "s-about", type: "about", enabled: true, props: {
-      heading: { en: "About us", vi: "Về chúng tôi" },
+      heading: { en: "About us", vi: "Về chúng tôi", ja: "私たちについて", zh: "关于我们", "zh-TW": "關於我們" },
       body: { en: "We are a small family studio. Every class is led by a local artisan, in small groups, with everything included.", vi: "Chúng tôi là xưởng gốm gia đình nhỏ. Mỗi lớp do một nghệ nhân địa phương hướng dẫn." },
       imageUrl: photo("about", 900, 700) } },
     { id: "s-team", type: "team", enabled: true, props: { heading: { en: "Meet the artisans" }, members: [
@@ -132,7 +132,7 @@ const mockContent: PageContent = {
       { name: "Minh", role: { en: "Glaze specialist" }, bio: { en: "Loves bold colours and speckled glazes." }, imageUrl: photo("t2", 400, 400) },
       { name: "An", role: { en: "Host" }, bio: { en: "Makes sure every guest leaves with a smile." }, imageUrl: photo("t3", 400, 400) },
     ] } },
-    { id: "s-ws", type: "workshops", enabled: true, props: { heading: { en: "Our workshops", vi: "Các workshop" } } },
+    { id: "s-ws", type: "workshops", enabled: true, props: { heading: { en: "Our workshops", vi: "Các workshop", ja: "ワークショップ", zh: "我们的工作坊", "zh-TW": "我們的工作坊" } } },
     { id: "s-gal", type: "gallery", enabled: true, props: { heading: { en: "Gallery", vi: "Thư viện ảnh" }, imageUrls: [
       photo("g1", 700, 700), photo("g2", 700, 900), photo("g3", 800, 600), photo("g4", 700, 700),
       photo("g5", 900, 700), photo("g6", 700, 900), photo("g7", 700, 700), photo("g8", 800, 600),

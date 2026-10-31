@@ -62,12 +62,16 @@ export const LATE_POLICY_FAQ: { q: Localized; a: Localized } = {
     vi: "Nếu tôi đến trễ thì sao?",
     ko: "늦게 도착하면 어떻게 되나요?",
     ja: "遅刻した場合はどうなりますか？",
+    zh: "如果我迟到了怎么办？",
+    "zh-TW": "如果我遲到了怎麼辦？",
   },
   a: {
     en: "Please arrive on time. If you arrive more than 30 minutes late, your booking may be released and your spot may be offered to walk-in guests. If spots are still available when you arrive, you may still be able to join.",
     vi: "Vui lòng đến đúng giờ. Nếu bạn đến trễ hơn 30 phút, đặt chỗ có thể bị hủy giữ chỗ và chỗ của bạn có thể được nhường cho khách đến trực tiếp. Nếu khi bạn đến vẫn còn chỗ, bạn vẫn có thể tham gia.",
     ko: "정시에 도착해 주세요. 30분 이상 늦으면 예약이 해제되어 자리가 현장 방문 고객에게 제공될 수 있습니다. 도착했을 때 자리가 남아 있다면 참여하실 수 있습니다.",
     ja: "時間通りにお越しください。30分以上遅れた場合、予約が解除され、席が飛び込みのお客様に提供されることがあります。到着時に空席があればご参加いただける場合があります。",
+    zh: "请准时到达。如果您迟到超过30分钟，您的预订可能会被释放，名额可能会提供给现场散客。如果您到达时仍有空位，您仍有可能参加。",
+    "zh-TW": "請準時抵達。如果您遲到超過30分鐘，您的預訂可能會被釋出，名額可能會提供給現場散客。如果您抵達時仍有空位，您仍有機會參加。",
   },
 };
 

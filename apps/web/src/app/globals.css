@@ -82,3 +82,42 @@
     @apply bg-background text-foreground;
   }
 }
+
+/*
+ * CJK fallback order follows the page language so Han characters use the right regional glyphs
+ * (Japanese-first would draw Chinese text with Japanese forms). Used by the site font stacks in sections/theme.ts.
+ */
+:root {
+  --jp-sans: "Hiragino Sans", "Yu Gothic", "Meiryo", "Noto Sans CJK JP", "Noto Sans JP";
+  --kr-sans: "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans CJK KR", "Noto Sans KR";
+  --sc-sans: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Noto Sans SC";
+  --tc-sans: "PingFang TC", "Microsoft JhengHei", "Noto Sans CJK TC", "Noto Sans TC";
+  --jp-serif: "Yu Mincho", "Hiragino Mincho ProN", "Noto Serif CJK JP", "Noto Serif JP";
+  --kr-serif: "Noto Serif CJK KR", "Noto Serif KR", "Batang";
+  --sc-serif: "Songti SC", "SimSun", "Noto Serif CJK SC", "Noto Serif SC";
+  --tc-serif: "Songti TC", "PMingLiU", "Noto Serif CJK TC", "Noto Serif TC";
+
+  --site-cjk-sans: var(--jp-sans), var(--kr-sans), var(--sc-sans), var(--tc-sans);
+  --site-cjk-serif: var(--jp-serif), var(--kr-serif), var(--sc-serif), var(--tc-serif);
+}
+[lang="ja"] {
+  --site-cjk-sans: var(--jp-sans), var(--kr-sans), var(--sc-sans), var(--tc-sans);
+  --site-cjk-serif: var(--jp-serif), var(--kr-serif), var(--sc-serif), var(--tc-serif);
+}
+[lang="ko"] {
+  --site-cjk-sans: var(--kr-sans), var(--jp-sans), var(--sc-sans), var(--tc-sans);
+  --site-cjk-serif: var(--kr-serif), var(--jp-serif), var(--sc-serif), var(--tc-serif);
+}
+[lang="zh"] {
+  --site-cjk-sans: var(--sc-sans), var(--tc-sans), var(--jp-sans), var(--kr-sans);
+  --site-cjk-serif: var(--sc-serif), var(--tc-serif), var(--jp-serif), var(--kr-serif);
+}
+[lang="zh-TW"] {
+  --site-cjk-sans: var(--tc-sans), var(--sc-sans), var(--jp-sans), var(--kr-sans);
+  --site-cjk-serif: var(--tc-serif), var(--sc-serif), var(--jp-serif), var(--kr-serif);
+}
+
+/* Balanced headings avoid a single orphan character on its own line (common with CJK text). */
+[data-layout] :is(h1, h2, h3) {
+  text-wrap: balance;
+}

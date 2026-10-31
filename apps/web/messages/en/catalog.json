@@ -7,7 +7,9 @@
     "ja": "日本語",
     "default": "default",
     "disabled": "not enabled",
-    "missingSr": "Missing translations"
+    "missingSr": "Missing translations",
+    "zh": "简体中文",
+    "zh-TW": "繁體中文"
   },
   "status": {
     "DRAFT": "Draft",
@@ -96,7 +98,10 @@
     "add": "Add rule",
     "hint": "Rules generate sessions for the next 60 days. Start times are in {tz}.",
     "empty": "No schedule rules yet. Add a rule or create one-off sessions.",
-    "status": { "ACTIVE": "Active", "PAUSED": "Paused" },
+    "status": {
+      "ACTIVE": "Active",
+      "PAUSED": "Paused"
+    },
     "effective": "Effective from {from} to {to}",
     "noEnd": "no end date",
     "capacityOverrideValue": "Capacity {n}",

@@ -52,8 +52,10 @@ export function paletteTokens(key: string): Pick<PageTheme, "palette" | "primary
 // ---------------------------------------------------------------------------------------------
 export interface FontOption { key: string; label: string; stack: string; cssVar?: string }
 
-const CJK_SANS = `"Hiragino Sans", "Yu Gothic", "Noto Sans CJK JP", "Noto Sans JP", "Malgun Gothic", "Noto Sans KR", "Noto Sans CJK KR"`;
-const CJK_SERIF = `"Yu Mincho", "Hiragino Mincho ProN", "Noto Serif CJK JP", "Noto Serif JP", "Noto Serif KR", "Noto Serif CJK KR"`;
+// CJK fallbacks come from CSS variables so the glyph set follows the page language (globals.css sets
+// --site-cjk-sans / --site-cjk-serif per [lang]); a fixed Japanese-first stack would draw Chinese with Japanese glyphs.
+const CJK_SANS = "var(--site-cjk-sans)";
+const CJK_SERIF = "var(--site-cjk-serif)";
 const sans = (cssVar: string, name: string) => `var(${cssVar}, "${name}"), ${CJK_SANS}, system-ui, sans-serif`;
 const serif = (cssVar: string, name: string) => `var(${cssVar}, "${name}"), ${CJK_SERIF}, Georgia, serif`;
 

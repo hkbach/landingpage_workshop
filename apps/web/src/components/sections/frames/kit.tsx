@@ -1,5 +1,7 @@
 "use client";
 
+import { hreflangOf, shortLocaleLabel } from "@workshop/shared";
+
 import { useContext, useEffect, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import type { Workshop, PageTheme, SectionInstance } from "@/lib/types";
@@ -86,14 +88,14 @@ export function LanguageSwitch({ ctx, className }: { ctx: RenderContext; classNa
           return (
             <li key={l.locale}>
               <a
-                href={l.href} hrefLang={l.locale} lang={l.locale} aria-label={LOCALE_NAMES[l.locale]} aria-current={current ? "true" : undefined}
+                href={l.href} hrefLang={hreflangOf(l.locale)} lang={l.locale} aria-label={LOCALE_NAMES[l.locale]} aria-current={current ? "true" : undefined}
                 onClick={chrome.onSelectLocale ? (e) => { e.preventDefault(); chrome.onSelectLocale?.(l.locale); } : undefined}
                 className={cn(
                   "inline-flex min-h-9 min-w-9 items-center justify-center rounded-md px-2 text-xs font-semibold uppercase outline-none focus-visible:ring-2 focus-visible:ring-[var(--site-primary)]",
                   current ? "bg-[var(--site-primary)] text-[var(--site-primary-fg)]" : "text-[var(--site-text)] hover:bg-[var(--site-surface)]",
                 )}
               >
-                {l.locale}
+                {shortLocaleLabel(l.locale)}
               </a>
             </li>
           );

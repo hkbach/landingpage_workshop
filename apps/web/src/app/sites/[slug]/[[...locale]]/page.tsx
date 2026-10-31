@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { pickLocalized } from "@workshop/shared";
+import { hreflangOf, pickLocalized } from "@workshop/shared";
 import { SiteBody } from "@/components/site/SiteBody";
 import { SiteFrame } from "@/components/site/SiteFrame";
 import { SiteIntlProvider } from "@/components/site/SiteIntlProvider";
@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: PageProps<"/sites/[slug]/[[..
   const description = pickLocalized(content.seo.description, locale, shop.defaultLocale);
   const image = heroImage(content);
   const languages: Record<string, string> = Object.fromEntries(
-    shop.enabledLocales.map((l) => [l, origin + localePath("", l, shop.defaultLocale)]),
+    shop.enabledLocales.map((l) => [hreflangOf(l), origin + localePath("", l, shop.defaultLocale)]),
   );
   languages["x-default"] = origin + "/";
   return {

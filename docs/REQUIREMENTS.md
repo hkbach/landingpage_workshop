@@ -21,7 +21,7 @@ Các mục dưới đây là **giả định** để có thể bắt đầu code
 | A3 | Shop tự đăng ký; **lần publish đầu tiên cần admin duyệt** | Thấp |
 | A4 | Tính phí shop **chưa làm**, chỉ có cột `plan` và giới hạn theo gói trong code | Thấp |
 | A5 | Chỉ có lịch **cố định** (fixed schedule) và **instant booking**. Request booking và lịch linh hoạt để phase sau | Trung bình |
-| A6 | Ngôn ngữ hỗ trợ: EN (mặc định), VI, KO, JA. Shop tự chọn bật ngôn ngữ nào | Thấp |
+| A6 | Ngôn ngữ hỗ trợ: EN (mặc định), VI, KO, JA, **ZH (Trung giản thể), ZH-TW (Trung phồn thể)** *(v1.2: thêm 2 ngôn ngữ Trung)*. Shop tự chọn bật ngôn ngữ nào. Mã locale trong URL: `/ja`, `/zh`, `/zh-TW` (phân biệt hoa thường). `hreflang`: `zh` → `zh-Hans`, `zh-TW` → `zh-Hant`. Giao diện nền tảng (dashboard, modal đặt chỗ…) mới dịch EN và một phần VI/KO/JA; ZH/ZH-TW tạm fallback EN, riêng chính sách đến trễ (BR-09) có đủ bản dịch | Thấp |
 | A7 | Shop chỉ có 1 role là `OWNER` trong MVP. Schema vẫn hỗ trợ nhiều member/role | Thấp |
 | A8 | Domain: `{shop}.{PLATFORM_DOMAIN}`. Custom domain để phase sau | Trung bình |
 | A9 | Sinh session trước **60 ngày**, job chạy hằng ngày | Thấp |
@@ -292,7 +292,7 @@ Browser ────────────────────────
 | `footer` | text, link mạng xã hội | Luôn có, không xóa được |
 
 - Thao tác: thêm, xóa, bật/tắt, sắp xếp (dnd-kit), sửa props.
-- Theme: chọn palette có sẵn + 1 màu primary (hex, kiểm tra contrast tối thiểu 4.5:1 với text), font từ danh sách cho phép (tối đa 6 font, hỗ trợ đủ glyph VI/KO/JA hoặc có fallback), logo, favicon.
+- Theme: chọn palette có sẵn + 1 màu primary (hex, kiểm tra contrast tối thiểu 4.5:1 với text), font từ danh sách cho phép (tối đa 6 font, hỗ trợ đủ glyph VI/KO/JA/ZH/ZH-TW hoặc có fallback; thứ tự font CJK dự phòng phải theo ngôn ngữ của trang để chữ Hán dùng đúng dạng chữ vùng miền), logo, favicon.
 - **Tùy chỉnh màu (v1.2):** ngoài theme token toàn trang (primary, nền, chữ, nút), mỗi section có thể ghi đè `style` gồm `background`, `text`, `accent` (hex). Chỉ nhận hex hợp lệ; builder cảnh báo khi contrast chữ/nền < 4.5:1 và chặn publish nếu không đạt. Màu render qua CSS variables, không nhận CSS tùy ý.
 - **Ảnh (v1.2):** shop upload ảnh theo FR-MEDIA-01 (jpeg/png/webp, tối đa 5 MB) cho logo, favicon, hero, about, gallery, team. Builder tạm dùng bộ upload mock cho tới khi có API (M2).
 - **Không** cho nhập HTML, CSS, JS, iframe tùy ý (ngoại lệ duy nhất: section `video`, trong đó hệ thống tự dựng iframe `youtube-nocookie.com` từ video ID đã kiểm tra; cần `frame-src https://www.youtube-nocookie.com` trong CSP của landing page). Text render dạng text thuần (React tự escape). Không dùng `dangerouslySetInnerHTML` với dữ liệu của shop.
@@ -468,7 +468,7 @@ Browser ────────────────────────
 | BR-06 | `booking.status` và `payment_status` độc lập; `CONFIRMED` không có nghĩa là đã trả tiền. |
 | BR-07 | Các status chiếm chỗ: `CONFIRMED`, `CHECKED_IN`, `COMPLETED`. Chuyển sang `CANCELLED` hoặc `LATE_RELEASED` thì giải phóng chỗ. `NO_SHOW` không thay đổi `reserved_count`. |
 | BR-08 | Late release chỉ làm thủ công, sau 30 phút kể từ giờ bắt đầu; luôn có audit. |
-| BR-09 | Thông báo chính sách đến trễ (hiển thị ở booking modal, trang xác nhận, email): *"Please arrive on time for your workshop. If you arrive more than 30 minutes late, your booking may be released and your reserved spot may be offered to walk-in guests. If there are still available spots when you arrive, you may still be able to join."* Cần bản dịch VI/KO/JA trong `messages/*.json`. |
+| BR-09 | Thông báo chính sách đến trễ (hiển thị ở booking modal, trang xác nhận, email): *"Please arrive on time for your workshop. If you arrive more than 30 minutes late, your booking may be released and your reserved spot may be offered to walk-in guests. If there are still available spots when you arrive, you may still be able to join."* Cần bản dịch VI/KO/JA/ZH/ZH-TW trong `messages/*.json`. |
 | BR-10 | Customer nhận diện bằng `email_normalized` (trim + lowercase) trong một organization; không tự gộp theo tên/phone. |
 | BR-11 | Khách không tự hủy; mọi thao tác hủy/đổi do shop thực hiện và ghi lý do. |
 | BR-12 | Token (verify, reset) dùng một lần, lưu hash (SHA-256), có hạn. |
@@ -559,7 +559,7 @@ COMMIT;
 // packages/shared/src/plans.ts
 export const PLAN_LIMITS = {
   FREE: { maxWorkshops: 3, maxSessionCapacity: 20, storageMb: 200, enabledLocales: 2 },
-  PRO:  { maxWorkshops: 50, maxSessionCapacity: 50, storageMb: 5000, enabledLocales: 4 },
+  PRO:  { maxWorkshops: 50, maxSessionCapacity: 50, storageMb: 5000, enabledLocales: 6 },
 } as const;
 ```
 
@@ -613,7 +613,7 @@ type PageContent = {
   }>;
   seo: { title: Localized; description: Localized };
 };
-type Localized = Partial<Record<'en' | 'vi' | 'ko' | 'ja', string>>;
+type Localized = Partial<Record<'en' | 'vi' | 'ko' | 'ja' | 'zh' | 'zh-TW', string>>;
 ```
 
 Khi `schemaVersion` của một section type thay đổi, viết hàm migrate trong registry; không sửa trực tiếp JSON trong DB bằng tay.
