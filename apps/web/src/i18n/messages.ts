@@ -2,7 +2,7 @@ import type { Locale } from "@workshop/shared";
 
 // Messages are split per area (messages/<locale>/<area>.json) so areas can be built independently.
 // Missing keys in vi/ko/ja fall back to English.
-const AREAS = ["common", "marketing", "auth", "dashboard", "admin", "site"] as const;
+const AREAS = ["common", "marketing", "auth", "dashboard", "ops", "catalog", "builder", "site", "admin"] as const;
 
 async function loadArea(locale: string, area: string): Promise<Record<string, unknown>> {
   try {

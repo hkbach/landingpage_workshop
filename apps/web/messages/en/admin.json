@@ -1,1 +1,196 @@
-{}
+{
+  "meta": {
+    "title": "Platform Admin"
+  },
+  "shell": {
+    "identity": "Platform Admin",
+    "role": "Super admin",
+    "logout": "Log out",
+    "skip": "Skip to content",
+    "navLabel": "Admin navigation",
+    "brand": "Workshop Platform"
+  },
+  "nav": {
+    "organizations": "Organizations",
+    "reviews": "Review queue",
+    "reports": "Abuse reports",
+    "auditLogs": "Audit logs"
+  },
+  "guard": {
+    "mockNotice": "Prototype: the role check is simulated. Real authentication is added later.",
+    "deniedTitle": "Access denied",
+    "deniedBody": "This area is only available to platform super admins.",
+    "toLogin": "Go to log in"
+  },
+  "status": {
+    "DRAFT": "Draft",
+    "PENDING_REVIEW": "Pending review",
+    "ACTIVE": "Active",
+    "SUSPENDED": "Suspended"
+  },
+  "common": {
+    "all": "All",
+    "details": "Details",
+    "back": "Back",
+    "cancel": "Cancel",
+    "notPublic": "Not public",
+    "opensNewTab": "(opens in a new tab)",
+    "none": "None",
+    "utcNote": "All times are shown in UTC.",
+    "reasonLabel": "Reason",
+    "reasonPlaceholder": "Explain the decision. This is recorded in the audit log.",
+    "reasonRequired": "A reason is required.",
+    "noteLabel": "Note (optional)"
+  },
+  "orgs": {
+    "title": "Organizations",
+    "description": "All shops on the platform. Filter by status and open a shop to manage it.",
+    "filterLabel": "Filter by status",
+    "empty": "No organizations match this filter.",
+    "col": {
+      "name": "Shop",
+      "status": "Status",
+      "owner": "Owner",
+      "created": "Created",
+      "workshops": "Workshops",
+      "bookings": "Bookings (30 days)",
+      "landing": "Landing page",
+      "actions": "Actions"
+    },
+    "viewLanding": "Open {name} landing page"
+  },
+  "orgDetail": {
+    "notFoundTitle": "Organization not found",
+    "backToList": "Back to organizations",
+    "overview": "Overview",
+    "owner": "Owner",
+    "email": "Email",
+    "created": "Created",
+    "country": "Country",
+    "timezone": "Timezone",
+    "currency": "Currency",
+    "plan": "Plan",
+    "workshops": "Workshops",
+    "bookings": "Bookings (last 30 days)",
+    "landing": "Landing page",
+    "statusReason": "Status reason",
+    "actionsTitle": "Shop access",
+    "actionsActive": "Suspending a shop makes its landing page return 404, switches its dashboard to read-only with a banner and stops new bookings. Existing bookings are kept.",
+    "actionsSuspended": "This shop is suspended. Reactivating restores its landing page, dashboard access and online bookings.",
+    "actionsOther": "Suspend and reactivate are only available for shops in the Active or Suspended state.",
+    "suspend": "Suspend shop",
+    "reactivate": "Reactivate shop",
+    "suspendTitle": "Suspend {name}?",
+    "suspendBody": "The landing page will return 404 and new bookings will be blocked. Provide a reason for the audit log.",
+    "reactivateTitle": "Reactivate {name}?",
+    "reactivateBody": "The landing page and bookings become available again. Provide a reason for the audit log.",
+    "suspendDone": "{name} was suspended.",
+    "reactivateDone": "{name} was reactivated.",
+    "recentAudit": "Recent audit entries",
+    "noAudit": "No audit entries yet.",
+    "actor": "Actor",
+    "action": "Action",
+    "when": "When",
+    "viewReview": "Open review screen"
+  },
+  "reviews": {
+    "title": "Review queue",
+    "description": "Shops waiting for approval before they go live.",
+    "empty": "The review queue is empty.",
+    "submitted": "Created {date}",
+    "preview": "Preview draft",
+    "review": "Review",
+    "approve": "Approve",
+    "reject": "Reject",
+    "approveTitle": "Approve {name}?",
+    "approveBody": "The shop becomes Active and its landing page goes live.",
+    "approveConfirm": "Approve shop",
+    "rejectTitle": "Reject {name}?",
+    "rejectBody": "The shop returns to Draft and the owner is told why. A reason is required.",
+    "rejectConfirm": "Reject shop",
+    "approved": "{name} was approved.",
+    "rejected": "{name} was rejected and returned to Draft."
+  },
+  "reviewDetail": {
+    "notFoundTitle": "Shop not found",
+    "notPendingTitle": "This shop is not waiting for review",
+    "notPendingBody": "Current status: {status}. Only shops in Pending review can be approved or rejected.",
+    "backToQueue": "Back to review queue",
+    "summary": "Shop summary",
+    "name": "Name",
+    "slug": "Slug",
+    "owner": "Owner",
+    "contact": "Contact",
+    "address": "Address",
+    "languages": "Languages",
+    "defaultLanguage": "default",
+    "workshops": "Workshops",
+    "created": "Created",
+    "checklistTitle": "Review checklist",
+    "checklistHint": "Advisory only. Tick items as you verify them.",
+    "checklist": {
+      "identity": "Shop name and slug are appropriate and not misleading",
+      "contact": "Contact details and address look genuine",
+      "content": "No prohibited, scam or phishing content",
+      "workshops": "At least one workshop has clear pricing and description",
+      "languages": "Content is complete for every enabled language"
+    },
+    "previewTitle": "Draft preview",
+    "previewBody": "A read-only render of the draft landing page will appear here once the page builder is connected.",
+    "previewLink": "Open draft preview",
+    "decisionTitle": "Decision"
+  },
+  "reports": {
+    "title": "Abuse reports",
+    "description": "Reports submitted through the public \"Report this site\" form.",
+    "filterLabel": "Filter by status",
+    "empty": "No reports match this filter.",
+    "shop": "Shop",
+    "reason": {
+      "SCAM": "Scam",
+      "PHISHING": "Phishing",
+      "INAPPROPRIATE": "Inappropriate content",
+      "OTHER": "Other"
+    },
+    "status": {
+      "OPEN": "Open",
+      "RESOLVED": "Resolved",
+      "DISMISSED": "Dismissed"
+    },
+    "reporter": "Reporter: {email}",
+    "anonymous": "Reporter: anonymous",
+    "received": "Received {date}",
+    "viewShop": "View shop",
+    "resolve": "Resolve",
+    "dismiss": "Dismiss",
+    "resolveTitle": "Resolve this report?",
+    "resolveBody": "Mark the report as handled. Add an optional note for the audit log.",
+    "dismissTitle": "Dismiss this report?",
+    "dismissBody": "Mark the report as not actionable. Add an optional note for the audit log.",
+    "resolved": "Report marked as resolved.",
+    "dismissed": "Report dismissed."
+  },
+  "audit": {
+    "title": "Audit logs",
+    "description": "Platform-wide record of administrative and shop activity.",
+    "filters": "Filters",
+    "action": "Action",
+    "entity": "Entity type",
+    "from": "From date",
+    "to": "To date",
+    "any": "Any",
+    "reset": "Reset filters",
+    "col": {
+      "when": "When",
+      "actor": "Actor",
+      "action": "Action",
+      "entity": "Entity",
+      "org": "Organization"
+    },
+    "empty": "No audit entries match these filters.",
+    "loadMore": "Load more",
+    "loading": "Loading...",
+    "end": "End of log.",
+    "platform": "Platform"
+  }
+}

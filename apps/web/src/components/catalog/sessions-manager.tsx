@@ -1,0 +1,268 @@
+"use client";
+
+import { useMemo, useState, type FormEvent } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { Ban, Lock, LockOpen, Pencil, Plus } from "lucide-react";
+import { pickLocalized, type Locale } from "@workshop/shared";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { ReasonDialog } from "@/components/ops/booking-dialogs";
+import { CapacityBar } from "@/components/ops/capacity-bar";
+import { Field } from "@/components/ops/field";
+import { NativeSelect } from "@/components/ops/native-select";
+import { SessionStatusBadge } from "@/components/ops/status-badges";
+import { addDays, formatDayKey, zonedToUtcIso } from "@/components/ops/time";
+import { useOpsState } from "@/components/ops/use-ops-state";
+import type { Booking, Session, Workshop } from "@/lib/types";
+import { dayKey, formatTime } from "@/lib/format";
+import { MAX_CAPACITY, type ShopForCatalog } from "./workshop-form";
+
+/** FR-SCHED-02/03: sessions agenda by date range + workshop; add one-off, close/open, edit capacity, cancel. */
+export function SessionsManager({
+  sessions, bookings, workshops, shop, nowIso, actor,
+}: { sessions: Session[]; bookings: Booking[]; workshops: Workshop[]; shop: ShopForCatalog; nowIso: string; actor: string }) {
+  const t = useTranslations("catalog");
+  const locale = useLocale() as Locale;
+  const ops = useOpsState({ bookings, sessions, nowIso, actor });
+  const today = dayKey(nowIso, shop.timezone);
+  const [workshopId, setWorkshopId] = useState("");
+  const [from, setFrom] = useState(today);
+  const [to, setTo] = useState(addDays(today, 60));
+  const [dialog, setDialog] = useState<{ kind: "add" } | { kind: "capacity" | "cancel"; id: string } | null>(null);
+
+  const title = (id: string) => pickLocalized(workshops.find((w) => w.id === id)?.title, locale, shop.defaultLocale);
+  const filtered = useMemo(
+    () =>
+      ops.sessions
+        .filter((s) => !workshopId || s.workshopId === workshopId)
+        .filter((s) => {
+          const k = dayKey(s.startsAt, shop.timezone);
+          return (!from || k >= from) && (!to || k <= to);
+        })
+        .sort((a, b) => a.startsAt.localeCompare(b.startsAt)),
+    [ops.sessions, workshopId, from, to, shop.timezone],
+  );
+  const groups = useMemo(() => {
+    const m = new Map<string, Session[]>();
+    for (const s of filtered) {
+      const k = dayKey(s.startsAt, shop.timezone);
+      m.set(k, [...(m.get(k) ?? []), s]);
+    }
+    return [...m.entries()];
+  }, [filtered, shop.timezone]);
+
+  const target = dialog && dialog.kind !== "add" ? ops.sessions.find((s) => s.id === dialog.id) : undefined;
+  const toCancel = target ? ops.bookings.filter((b) => b.sessionId === target.id && b.status === "CONFIRMED") : [];
+
+  return (
+    <div className="grid gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-xl font-semibold sm:text-2xl">{t("sessions.title")}</h1>
+        <Button onClick={() => setDialog({ kind: "add" })}><Plus aria-hidden="true" />{t("sessions.add")}</Button>
+      </div>
+      <p className="text-sm text-muted-foreground">{t("sessions.tzNote", { tz: shop.timezone })}</p>
+
+      <Card>
+        <CardContent>
+          <form role="search" className="grid gap-3 sm:grid-cols-3" onSubmit={(e) => e.preventDefault()}>
+            <Field id="s-ws" label={t("sessions.workshop")}>
+              {(p) => (
+                <NativeSelect {...p} value={workshopId} onChange={(e) => setWorkshopId(e.target.value)}
+                  options={[{ value: "", label: t("sessions.allWorkshops") }, ...workshops.map((w) => ({ value: w.id, label: title(w.id) }))]} />
+              )}
+            </Field>
+            <Field id="s-from" label={t("sessions.from")}>{(p) => <Input {...p} type="date" value={from} onChange={(e) => setFrom(e.target.value)} />}</Field>
+            <Field id="s-to" label={t("sessions.to")}>{(p) => <Input {...p} type="date" value={to} onChange={(e) => setTo(e.target.value)} />}</Field>
+          </form>
+        </CardContent>
+      </Card>
+
+      <p role="status" className="text-sm text-muted-foreground">{t("sessions.count", { count: filtered.length })}</p>
+      {groups.length === 0 ? <Card><CardContent className="py-8 text-center text-muted-foreground">{t("sessions.empty")}</CardContent></Card> : null}
+
+      {groups.map(([day, list]) => (
+        <section key={day} aria-labelledby={`day-${day}`} className="grid gap-2">
+          <h2 id={`day-${day}`} className="text-sm font-semibold">{formatDayKey(day, locale)}{day === today ? ` (${t("sessions.today")})` : ""}</h2>
+          <ul className="grid gap-2 md:grid-cols-2">
+            {list.map((s) => {
+              const cancelled = s.status === "CANCELLED";
+              return (
+                <li key={s.id}>
+                  <Card size="sm" className={cancelled ? "opacity-80" : ""}>
+                    <CardContent className="grid gap-2">
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <div>
+                          <p className="font-medium">{title(s.workshopId)}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {formatTime(s.startsAt, shop.timezone, locale)} - {formatTime(s.endsAt, shop.timezone, locale)}
+                          </p>
+                        </div>
+                        <SessionStatusBadge status={s.status} />
+                      </div>
+                      <CapacityBar reserved={s.reservedCount} capacity={s.capacity} />
+                      {cancelled && s.cancelReason ? <p className="text-xs text-muted-foreground">{t("sessions.cancelReasonLabel")}: {s.cancelReason}</p> : null}
+                      {!cancelled ? (
+                        <div className="flex flex-wrap gap-1.5">
+                          <Button size="sm" variant="outline" onClick={() => ops.setSessionStatus(s.id, s.status === "OPEN" ? "CLOSED" : "OPEN")}>
+                            {s.status === "OPEN" ? <Lock aria-hidden="true" /> : <LockOpen aria-hidden="true" />}
+                            {s.status === "OPEN" ? t("sessions.close") : t("sessions.open")}
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => setDialog({ kind: "capacity", id: s.id })}>
+                            <Pencil aria-hidden="true" />{t("sessions.editCapacity")}
+                          </Button>
+                          <Button size="sm" variant="destructive" onClick={() => setDialog({ kind: "cancel", id: s.id })}>
+                            <Ban aria-hidden="true" />{t("sessions.cancel")}
+                          </Button>
+                        </div>
+                      ) : null}
+                    </CardContent>
+                  </Card>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      ))}
+
+      <AddSessionDialog
+        open={dialog?.kind === "add"} onOpenChange={(o) => !o && setDialog(null)} workshops={workshops} shop={shop} sessions={ops.sessions} title={title}
+        onAdd={(s) => { ops.addSession(s); setDialog(null); }}
+      />
+      <CapacityDialog
+        key={target?.id ?? "none"} open={dialog?.kind === "capacity" && !!target} onOpenChange={(o) => !o && setDialog(null)} session={target}
+        onSave={(n) => { if (target && ops.setSessionCapacity(target.id, n)) { setDialog(null); return true; } return false; }}
+      />
+      <ReasonDialog
+        open={dialog?.kind === "cancel" && !!target} onOpenChange={(o) => !o && setDialog(null)}
+        title={t("sessions.cancelTitle")} description={t("sessions.cancelHint")} label={t("sessions.cancelReason")} confirmLabel={t("sessions.cancelConfirm")}
+        onConfirm={(reason) => { if (target && ops.cancelSession(target.id, reason)) setDialog(null); }}
+      >
+        <p role="alert" className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
+          {t("sessions.cancelImpact", { count: toCancel.length, guests: toCancel.reduce((n, b) => n + b.quantity, 0) })}
+        </p>
+      </ReasonDialog>
+    </div>
+  );
+}
+
+function CapacityDialog({
+  open, onOpenChange, session, onSave,
+}: { open: boolean; onOpenChange: (o: boolean) => void; session?: Session; onSave: (n: number) => boolean }) {
+  const t = useTranslations("catalog");
+  const tops = useTranslations("ops");
+  const [value, setValue] = useState(session ? String(session.capacity) : "");
+  const [error, setError] = useState<string>();
+  function submit(e: FormEvent) {
+    e.preventDefault();
+    if (!session) return;
+    const n = Number(value);
+    if (!Number.isInteger(n) || n < 1 || n > MAX_CAPACITY) return setError(t("errors.capacityRange"));
+    if (n < session.reservedCount) return setError(t("errors.capacityBelowReserved", { reserved: session.reservedCount }));
+    if (!onSave(n)) setError(t("errors.capacityRange"));
+  }
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        {session ? (
+          <form onSubmit={submit} noValidate className="grid gap-4">
+            <DialogHeader>
+              <DialogTitle>{t("sessions.capacityTitle")}</DialogTitle>
+              <DialogDescription>{t("sessions.capacityHint", { reserved: session.reservedCount })}</DialogDescription>
+            </DialogHeader>
+            <Field id="cap-value" label={t("sessions.capacity")} required error={error}>
+              {(p) => <Input {...p} type="number" inputMode="numeric" min={session.reservedCount} max={MAX_CAPACITY} value={value} onChange={(e) => { setValue(e.target.value); setError(undefined); }} />}
+            </Field>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{tops("common.back")}</Button>
+              <Button type="submit">{t("sessions.save")}</Button>
+            </DialogFooter>
+          </form>
+        ) : null}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function AddSessionDialog({
+  open, onOpenChange, workshops, shop, sessions, title, onAdd,
+}: {
+  open: boolean; onOpenChange: (o: boolean) => void; workshops: Workshop[]; shop: ShopForCatalog; sessions: Session[];
+  title: (id: string) => string; onAdd: (s: Omit<Session, "id" | "reservedCount" | "status">) => void;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        {open ? <AddSessionForm workshops={workshops} shop={shop} sessions={sessions} title={title} onAdd={onAdd} onCancel={() => onOpenChange(false)} /> : null}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function AddSessionForm({
+  workshops, shop, sessions, title, onAdd, onCancel,
+}: {
+  workshops: Workshop[]; shop: ShopForCatalog; sessions: Session[]; title: (id: string) => string;
+  onAdd: (s: Omit<Session, "id" | "reservedCount" | "status">) => void; onCancel: () => void;
+}) {
+  const t = useTranslations("catalog");
+  const tops = useTranslations("ops");
+  const choices = workshops.filter((w) => w.status !== "ARCHIVED");
+  const [wsId, setWsId] = useState(choices[0]?.id ?? "");
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
+  const [cap, setCap] = useState(String(choices[0]?.defaultCapacity ?? 8));
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  function submit(e: FormEvent) {
+    e.preventDefault();
+    const w = workshops.find((x) => x.id === wsId);
+    const errs: Record<string, string> = {};
+    if (!w) errs.ws = "errors.required";
+    if (!date) errs.date = "errors.required";
+    if (!time) errs.time = "errors.required";
+    const n = Number(cap);
+    if (!Number.isInteger(n) || n < 1 || n > MAX_CAPACITY) errs.cap = "errors.capacityRange";
+    let startsAt = "";
+    if (w && date && time) {
+      startsAt = zonedToUtcIso(date, time, shop.timezone);
+      if (sessions.some((s) => s.workshopId === w.id && s.startsAt === startsAt)) errs.time = "errors.duplicateSession";
+    }
+    setErrors(errs);
+    if (Object.keys(errs).length > 0 || !w) return;
+    onAdd({ workshopId: w.id, startsAt, endsAt: new Date(new Date(startsAt).getTime() + w.durationMinutes * 60_000).toISOString(), capacity: n });
+  }
+  const err = (k: string) => (errors[k] ? t(errors[k]) : undefined);
+
+  return (
+    <form onSubmit={submit} noValidate className="grid gap-4">
+      <DialogHeader>
+        <DialogTitle>{t("sessions.addTitle")}</DialogTitle>
+        <DialogDescription>{t("sessions.addHint", { tz: shop.timezone })}</DialogDescription>
+      </DialogHeader>
+      <Field id="add-ws" label={t("sessions.workshop")} required error={err("ws")}>
+        {(p) => (
+          <NativeSelect {...p} value={wsId}
+            onChange={(e) => { setWsId(e.target.value); const w = workshops.find((x) => x.id === e.target.value); if (w) setCap(String(w.defaultCapacity)); }}
+            options={choices.map((w) => ({ value: w.id, label: title(w.id) }))} />
+        )}
+      </Field>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field id="add-date" label={t("sessions.date")} required error={err("date")}>
+          {(p) => <Input {...p} type="date" value={date} onChange={(e) => setDate(e.target.value)} />}
+        </Field>
+        <Field id="add-time" label={t("sessions.startTime")} required error={err("time")}>
+          {(p) => <Input {...p} type="time" value={time} onChange={(e) => setTime(e.target.value)} />}
+        </Field>
+      </div>
+      <Field id="add-cap" label={t("sessions.capacity")} required error={err("cap")}>
+        {(p) => <Input {...p} type="number" inputMode="numeric" min={1} max={MAX_CAPACITY} value={cap} onChange={(e) => setCap(e.target.value)} />}
+      </Field>
+      <DialogFooter>
+        <Button type="button" variant="outline" onClick={onCancel}>{tops("common.back")}</Button>
+        <Button type="submit">{t("sessions.addConfirm")}</Button>
+      </DialogFooter>
+    </form>
+  );
+}

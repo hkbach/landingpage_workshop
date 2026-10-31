@@ -1,0 +1,194 @@
+{
+  "common": {
+    "back": "Cancel",
+    "tzNote": "Times shown in {tz}",
+    "guests": "{count, plural, one {# guest} other {# guests}}",
+    "guestsLabel": "Guests",
+    "request": "Special request",
+    "noEmail": "No email"
+  },
+  "bookingStatus": {
+    "CONFIRMED": "Confirmed",
+    "CHECKED_IN": "Checked in",
+    "COMPLETED": "Completed",
+    "LATE_RELEASED": "Late released",
+    "NO_SHOW": "No-show",
+    "CANCELLED": "Cancelled"
+  },
+  "paymentStatus": {
+    "UNPAID": "Unpaid",
+    "PARTIALLY_PAID": "Partially paid",
+    "PAID": "Paid",
+    "REFUNDED": "Refunded",
+    "PARTIALLY_REFUNDED": "Partially refunded"
+  },
+  "sessionStatus": {
+    "OPEN": "Open",
+    "CLOSED": "Closed",
+    "CANCELLED": "Cancelled"
+  },
+  "paymentMethod": {
+    "CASH": "Cash",
+    "CARD": "Card",
+    "BANK_TRANSFER": "Bank transfer",
+    "E_WALLET": "E-wallet",
+    "OTHER": "Other"
+  },
+  "source": {
+    "ONLINE": "Online",
+    "WALK_IN": "Walk-in",
+    "PHONE": "Phone / WhatsApp",
+    "OTHER": "Other"
+  },
+  "action": {
+    "CHECK_IN": "Check in",
+    "LATE_RELEASE": "Late release",
+    "NO_SHOW": "No-show",
+    "CANCEL": "Cancel booking",
+    "COMPLETE": "Complete",
+    "RESCHEDULE": "Change session",
+    "RECORD_PAYMENT": "Record payment"
+  },
+  "blocked": {
+    "INVALID_STATE": "This action is not available for the current booking status.",
+    "SESSION_CANCELLED": "The session has been cancelled.",
+    "TOO_EARLY_LATE_RELEASE": "Late release is only available 30 minutes after the session starts.",
+    "SESSION_NOT_ENDED": "No-show can only be marked after the session has ended.",
+    "SESSION_FULL": "The session does not have enough free seats for this guest.",
+    "REASON_REQUIRED": "A reason is required.",
+    "NOT_FOUND": "Booking or session not found.",
+    "INVALID_AMOUNT": "The amount is not valid.",
+    "NO_CAPACITY": "The selected session does not have enough free seats."
+  },
+  "errors": {
+    "reasonRequired": "Please enter a reason.",
+    "amountInvalid": "Enter an amount greater than zero.",
+    "refundTooHigh": "A refund cannot exceed the net amount paid ({max}).",
+    "pickSession": "Choose a session.",
+    "noCapacity": "The selected session does not have enough free seats.",
+    "sessionRequired": "Choose a session.",
+    "quantityInvalid": "Enter a whole number of guests (at least 1).",
+    "quantityMax": "This exceeds the maximum allowed for this booking.",
+    "required": "This field is required.",
+    "emailRequired": "Email is required unless the booking is a walk-in.",
+    "emailInvalid": "Enter a valid email address.",
+    "tooLong": "This text is too long."
+  },
+  "capacity": {
+    "seats": "{reserved}/{capacity} seats",
+    "full": "Full",
+    "left": "{count, plural, one {# seat left} other {# seats left}}"
+  },
+  "today": {
+    "title": "Today",
+    "sessions": "Sessions",
+    "guestsExpected": "Guests expected",
+    "arrived": "Arrived",
+    "empty": "There are no sessions scheduled for today.",
+    "noGuests": "No bookings for this session yet.",
+    "completeAll": "Complete all checked-in ({count})",
+    "addWalkIn": "Add walk-in"
+  },
+  "bookings": {
+    "title": "Bookings",
+    "new": "New booking",
+    "count": "{count, plural, one {# booking} other {# bookings}}",
+    "empty": "No bookings match these filters.",
+    "code": "Code",
+    "guest": "Guest",
+    "session": "Session",
+    "workshop": "Workshop",
+    "status": "Status",
+    "payment": "Payment"
+  },
+  "filters": {
+    "date": "Date",
+    "allDates": "All dates",
+    "session": "Session",
+    "allSessions": "All sessions",
+    "status": "Status",
+    "allStatuses": "All statuses",
+    "search": "Search",
+    "searchPlaceholder": "Code, name or email"
+  },
+  "payment": {
+    "dialogTitle": "Record payment",
+    "dialogHint": "Entries cannot be edited or deleted. To correct a mistake, add a refund entry.",
+    "total": "Total",
+    "netPaid": "Net paid",
+    "balance": "Balance",
+    "type": "Type",
+    "typePAYMENT": "Payment",
+    "typeREFUND": "Refund",
+    "method": "Method",
+    "amount": "Amount ({currency})",
+    "note": "Note",
+    "resultingStatus": "Payment status after saving:",
+    "immutable": "Payment entries are append-only. Payment status is recalculated from all entries and is independent of the booking status.",
+    "save": "Save entry",
+    "entries": "Payments",
+    "none": "No payments recorded.",
+    "when": "Recorded",
+    "by": "By",
+    "amountCol": "Amount"
+  },
+  "cancelBooking": {
+    "title": "Cancel booking",
+    "hint": "Booking {code} will be cancelled, its seats released and the guest notified by email if an address is on file.",
+    "reason": "Reason for cancellation",
+    "confirm": "Cancel booking"
+  },
+  "reschedule": {
+    "title": "Change session",
+    "hint": "Move this booking to another session of the same workshop. The price snapshot is kept. Times shown in {tz}.",
+    "newSession": "New session",
+    "choose": "Choose a session",
+    "left": "{count, plural, one {# seat left} other {# seats left}}",
+    "confirm": "Move booking"
+  },
+  "detail": {
+    "independentNote": "Booking status and payment status are independent: a confirmed booking is not necessarily paid.",
+    "actions": "Actions",
+    "summary": "Booking",
+    "unitPrice": "Price per guest",
+    "source": "Source",
+    "created": "Created",
+    "cancelReason": "Cancellation reason",
+    "snapshotNote": "Price, workshop name and time are a snapshot taken when the booking was created.",
+    "customer": "Customer",
+    "timeline": "Status timeline",
+    "timeUnknown": "Time not recorded"
+  },
+  "customers": {
+    "title": "Customers",
+    "perShop": "Customers belong to this shop only and are identified by email.",
+    "searchPlaceholder": "Name or email",
+    "count": "{count, plural, one {# customer} other {# customers}}",
+    "empty": "No customers found.",
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "country": "Country",
+    "bookings": "Bookings",
+    "lastBooking": "Last booking",
+    "paid": "Net paid",
+    "details": "Details",
+    "locale": "Preferred language",
+    "history": "Booking history",
+    "noHistory": "This customer has no bookings."
+  },
+  "newBooking": {
+    "title": "New booking",
+    "created": "Booking created.",
+    "code": "Booking code",
+    "simulated": "Demo mode: this booking is simulated and not saved.",
+    "another": "Create another",
+    "chooseSession": "Choose a session",
+    "startedNote": "This session has already started. Walk-ins are allowed while seats remain.",
+    "maxHint": "Up to {max} guests for this booking.",
+    "estimate": "Estimated total: {total}",
+    "estimateNote": "The final price is calculated by the server.",
+    "emailOptional": "Optional for walk-ins. Without an email, no confirmation is sent.",
+    "submit": "Create booking"
+  }
+}

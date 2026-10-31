@@ -1,1 +1,40 @@
-{}
+{
+  "legal": {
+    "back": "Back to home",
+    "pendingNotice": "This page is a placeholder. The final text will be provided by the legal team before launch.",
+    "terms": { "title": "Terms of Service" },
+    "privacy": { "title": "Privacy Policy" }
+  },
+  "nav": { "label": "Main", "login": "Log in", "signup": "Get started" },
+  "hero": {
+    "title": "A booking-ready landing page for your workshop studio",
+    "subtitle": "Publish a multilingual page in minutes, take bookings for your sessions, and keep seats, customers and payments in one place.",
+    "cta": "Create your shop",
+    "secondary": "Log in"
+  },
+  "how": {
+    "title": "How it works",
+    "steps": {
+      "create": { "title": "Create your shop", "body": "Sign up, pick your address and languages, and add your contact details." },
+      "design": { "title": "Build your page", "body": "Choose a template, edit sections, add your workshops and schedule sessions." },
+      "share": { "title": "Share and take bookings", "body": "Publish your page. Guests book a seat and you manage everything from the dashboard." }
+    }
+  },
+  "features": {
+    "title": "Everything a small studio needs",
+    "items": {
+      "builder": { "title": "Landing page builder", "body": "Ready-made templates with sections you can reorder, edit and preview." },
+      "booking": { "title": "Seat-safe bookings", "body": "Session capacity is enforced so a session can never be overbooked." },
+      "multilingual": { "title": "Multilingual pages", "body": "Offer your page in English, Vietnamese, Korean and Japanese." },
+      "payments": { "title": "Payment tracking", "body": "Record cash, card and transfer payments and refunds for each booking." },
+      "customers": { "title": "Customer list", "body": "Keep guests and their booking history together." },
+      "subdomain": { "title": "Your own address", "body": "Each shop gets its own subdomain for its public page." }
+    }
+  },
+  "cta": {
+    "title": "Ready to fill your next session?",
+    "body": "Set up your shop in a few minutes.",
+    "button": "Create your shop"
+  },
+  "footer": "© {year} {name}"
+}

@@ -1,0 +1,122 @@
+{
+  "title": "Website builder",
+  "subtitle": "Build your landing page from sections. Changes are saved as a draft.",
+  "preview": "Preview",
+  "draftNote": "Edits only change your draft. The live website is not affected until you publish.",
+  "autosave": { "idle": "All changes saved", "saving": "Saving draft...", "saved": "Draft saved" },
+  "template": {
+    "title": "Template",
+    "names": { "classic": "Classic", "minimal": "Minimal" },
+    "descriptions": {
+      "classic": "Full story: about, gallery, team, testimonials, FAQ and contact.",
+      "minimal": "Short and focused: hero, workshops, FAQ and location."
+    },
+    "hint": "Switching template keeps the content of sections that exist in both.",
+    "confirmTitle": "Switch template?",
+    "confirmText": "Sections of the same type keep their content. Sections that are not part of the new template are removed from the draft, and the theme is reset to the template default.",
+    "cancel": "Cancel",
+    "apply": "Switch template"
+  },
+  "sections": {
+    "title": "Sections",
+    "footerLocked": "The footer is required and always stays last.",
+    "dragHandle": "Reorder {name}",
+    "needsAttention": "Needs attention",
+    "enable": "Show {name} on the website",
+    "remove": "Remove {name}",
+    "dndInstructions": "Press space to pick up a section, use the arrow keys to move it, then press space to drop it. Press escape to cancel.",
+    "dndPickedUp": "Picked up {name}.",
+    "dndOver": "{name} is over {over}.",
+    "dndDropped": "{name} was dropped over {over}.",
+    "dndDroppedNone": "{name} was dropped.",
+    "dndCancelled": "Reordering {name} was cancelled.",
+    "addLabel": "Add a section",
+    "allAdded": "All sections are in use",
+    "choose": "Choose a section type",
+    "add": "Add"
+  },
+  "sectionTypes": {
+    "hero": "Hero", "about": "About", "workshops": "Workshops", "gallery": "Gallery", "team": "Team",
+    "testimonials": "Testimonials", "faq": "FAQ", "location": "Location", "contact": "Contact", "footer": "Footer"
+  },
+  "seo": { "title": "Page title and description (SEO)" },
+  "theme": {
+    "title": "Theme",
+    "palette": "Colour palette",
+    "palettes": { "warm": "Warm clay", "ocean": "Ocean", "forest": "Forest", "plum": "Plum", "mono": "Monochrome", "sunset": "Sunset" },
+    "primary": "Primary colour (hex)",
+    "primaryPicker": "Pick the primary colour",
+    "hexInvalid": "Use a 6-digit hex colour such as #9a3412.",
+    "contrastLow": "Contrast with white text is {ratio}:1. Buttons need at least {min}:1 to be readable. Choose a darker colour.",
+    "contrastOk": "Contrast with white text: {ratio}:1 (meets 4.5:1).",
+    "font": "Font",
+    "fontHint": "All listed fonts fall back to system fonts that support Vietnamese, Korean and Japanese.",
+    "logo": "Logo image URL (https)",
+    "favicon": "Favicon image URL (https)",
+    "uploadPlaceholder": "Image upload is coming soon. For now, paste a secure (https) image link."
+  },
+  "publish": {
+    "title": "Publish",
+    "status": { "DRAFT": "Not submitted", "PENDING_REVIEW": "Pending review", "ACTIVE": "Live", "SUSPENDED": "Suspended" },
+    "suspended": "This website is suspended. Contact support to restore it.",
+    "pending": "Your website was submitted and is waiting for review. You can keep editing the draft.",
+    "publish": "Publish",
+    "publishHint": "Publishing makes the current draft live immediately.",
+    "fixErrors": "Fix {count, plural, one {# section} other {# sections}} marked as needing attention first.",
+    "publishedMock": "Draft published (demo only, nothing was sent to a server).",
+    "checklistTitle": "Before you submit for review",
+    "prereq": {
+      "identity": "Shop name or logo",
+      "hero": "Hero section with a title",
+      "contact": "Contact information",
+      "workshop": "At least one active workshop with an upcoming session"
+    },
+    "done": "done",
+    "missing": "missing",
+    "submit": "Submit for review",
+    "submitDisabled": "Complete the checklist to submit your website for review.",
+    "submittedMock": "Submitted for review (demo only)."
+  },
+  "editor": {
+    "title": "Edit: {name}",
+    "missingTranslation": "No translation for this language yet. Visitors will see the default language instead: {fallback}",
+    "errors": { "httpsUrl": "Use a secure link starting with https://", "mapsUrl": "Only Google Maps links are allowed (google.com/maps or maps.app.goo.gl)." },
+    "hints": {
+      "mapsUrl": "A google.com/maps or maps.app.goo.gl link.",
+      "imageUrl": "A secure image link starting with https://",
+      "linkUrl": "A secure link starting with https://"
+    },
+    "remove": "Remove",
+    "addImage": "Add image",
+    "itemN": "Item {n}",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "addItem": "Add item",
+    "autoWorkshops": "Workshops are loaded automatically from your active workshops. Manage them on the Workshops page.",
+    "authenticityNote": "You are responsible for the authenticity of testimonials. Only publish real reviews from real guests."
+  },
+  "fields": {
+    "title": "Title", "subtitle": "Subtitle", "imageUrl": "Image URL (https)", "ctaText": "Button text", "heading": "Heading",
+    "body": "Text", "layout": "Layout", "imageUrls": "Images", "members": "Team members", "name": "Name", "role": "Role",
+    "bio": "Short bio", "items": "Items", "country": "Country", "text": "Text", "q": "Question", "a": "Answer",
+    "address": "Address", "hours": "Opening hours", "mapsUrl": "Google Maps link", "phone": "Phone", "whatsapp": "WhatsApp",
+    "email": "Email", "socials": "Social links", "label": "Label", "url": "Link (https)", "description": "Description"
+  },
+  "options": { "layout": { "grid": "Grid", "list": "List" } },
+  "language": {
+    "label": "Content language",
+    "names": { "en": "English", "vi": "Vietnamese", "ko": "Korean", "ja": "Japanese" },
+    "default": "default",
+    "missing": "{count, plural, one {# missing translation} other {# missing translations}}",
+    "fallbackNote": "Empty fields fall back to {locale}, the default language of your shop."
+  },
+  "previewPage": {
+    "back": "Back to builder",
+    "title": "Draft preview",
+    "language": "Language",
+    "device": "Device",
+    "desktop": "Desktop",
+    "mobile": "Mobile",
+    "note": "This preview shows your draft using the same components as the public website. The mobile view narrows the frame; fine layout details can differ on a real phone."
+  }
+}

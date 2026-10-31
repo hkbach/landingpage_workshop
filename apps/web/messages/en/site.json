@@ -1,1 +1,97 @@
-{}
+{
+  "sections": {
+    "bookCta": "Book a workshop",
+    "noWorkshops": "No workshops are available right now.",
+    "duration": "{minutes} min",
+    "perPerson": "per person",
+    "bookWorkshop": "Book {title}",
+    "book": "Book now",
+    "openMap": "Open in Google Maps",
+    "whatsapp": "WhatsApp"
+  },
+  "header": { "language": "Language" },
+  "footer": { "legal": "Legal", "report": "Report this site", "privacy": "Privacy Policy" },
+  "latePolicy": {
+    "title": "Late arrival policy",
+    "text": "Please arrive on time for your workshop. If you arrive more than 30 minutes late, your booking may be released and your reserved spot may be offered to walk-in guests. If there are still available spots when you arrive, you may still be able to join."
+  },
+  "booking": {
+    "title": "Book a workshop",
+    "subtitle": "Reserve your spot at {shop}.",
+    "stepOf": "Step {current} of {total}",
+    "steps": { "date": "Date", "time": "Time", "guests": "Guests", "contact": "Your details", "confirm": "Confirm" },
+    "timesShownIn": "Times shown in {tz}",
+    "workshop": "Workshop",
+    "noAvailability": "No upcoming sessions are available for this workshop.",
+    "chooseDate": "Choose a date",
+    "chooseTime": "Choose a time",
+    "soldOut": "Sold out",
+    "spotsLeft": "{count, plural, one {# spot left} other {# spots left}}",
+    "guests": "Number of guests",
+    "guestsHint": "Up to {max} guests for this session.",
+    "estimatedTotal": "Estimated total",
+    "fullName": "Full name",
+    "email": "Email",
+    "country": "Country",
+    "countryPlaceholder": "Select a country",
+    "phone": "Phone / WhatsApp (optional)",
+    "phoneHint": "Include the country code, for example +84.",
+    "specialRequest": "Special request (optional)",
+    "when": "Date and time",
+    "contactLabel": "Contact",
+    "totalNote": "This total is for display only; the studio confirms the final price.",
+    "payAtStudio": "Pay at the studio.",
+    "consent": "I agree to the booking terms, including the late arrival policy above.",
+    "turnstilePlaceholder": "Anti-spam verification (Turnstile) will appear here.",
+    "submitError": "We could not complete your booking. Please try again.",
+    "back": "Back",
+    "next": "Next",
+    "submitting": "Booking...",
+    "confirmBooking": "Confirm booking",
+    "errors": {
+      "required": "This field is required.",
+      "email": "Enter a valid email address.",
+      "tooLong": "This value is too long.",
+      "max500": "Maximum 500 characters.",
+      "consent": "You must agree to continue."
+    }
+  },
+  "confirmation": {
+    "title": "Booking confirmed",
+    "intro": "Thank you! Your spot at {shop} is reserved.",
+    "code": "Booking code",
+    "workshop": "Workshop",
+    "when": "Date and time",
+    "guests": "Guests",
+    "total": "Total",
+    "payAtStudio": "Pay at the studio",
+    "where": "Where to find us",
+    "contact": "Contact the studio",
+    "changeOrCancel": "To change or cancel, please contact the studio.",
+    "backToSite": "Back to the website",
+    "notFoundTitle": "Booking not found",
+    "notFoundText": "We could not find a booking with these details. Check the link in your confirmation email."
+  },
+  "report": {
+    "title": "Report this site",
+    "intro": "Tell us what is wrong with this site. Our team will review your report.",
+    "reason": "Reason",
+    "reasonPlaceholder": "Select a reason",
+    "reasons": { "SCAM": "Scam or fraud", "PHISHING": "Phishing", "INAPPROPRIATE": "Inappropriate content", "OTHER": "Other" },
+    "description": "Description",
+    "email": "Your email (optional)",
+    "emailHint": "Only used if we need to follow up with you.",
+    "turnstilePlaceholder": "Anti-spam verification (Turnstile) will appear here.",
+    "submit": "Send report",
+    "submitting": "Sending...",
+    "thanksTitle": "Thank you for your report",
+    "thanksText": "Our team will review it shortly.",
+    "back": "Back to the website",
+    "errors": {
+      "required": "This field is required.",
+      "descriptionShort": "Please describe the problem (at least 10 characters).",
+      "tooLong": "This value is too long.",
+      "email": "Enter a valid email address."
+    }
+  }
+}

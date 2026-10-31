@@ -1,1 +1,171 @@
-{}
+{
+  "shell": {
+    "nav": {
+      "overview": "Overview",
+      "today": "Today",
+      "bookings": "Bookings",
+      "customers": "Customers",
+      "workshops": "Workshops",
+      "sessions": "Sessions",
+      "site": "Landing page",
+      "settings": "Settings"
+    },
+    "mainNav": "Dashboard navigation",
+    "skipToContent": "Skip to main content",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "language": "Language",
+    "account": "Account menu",
+    "logout": "Log out",
+    "banner": {
+      "draft": {
+        "title": "Setup incomplete.",
+        "body": "Finish the checklist on the overview page and submit your shop for review to publish your landing page."
+      },
+      "pending": {
+        "title": "Awaiting review.",
+        "body": "Your shop was submitted and is being reviewed. You can keep editing your draft in the meantime."
+      },
+      "suspended": {
+        "title": "Shop suspended.",
+        "body": "Your dashboard is read-only and your public page is unavailable.",
+        "reason": "Reason: {reason}"
+      }
+    }
+  },
+  "overview": {
+    "title": "Overview",
+    "kpiLabel": "Key numbers",
+    "kpi": {
+      "today": "Today's bookings",
+      "upcoming": "Upcoming sessions",
+      "unpaid": "Unpaid bookings"
+    },
+    "checklist": {
+      "title": "Ready to publish?",
+      "progress": "{done} of {total} requirements complete",
+      "done": "Done",
+      "todo": "To do",
+      "fix": "Go",
+      "items": {
+        "identity": "Shop name or logo",
+        "hero": "Hero section on your landing page",
+        "contact": "Contact information (email, phone, address)",
+        "workshop": "At least one active workshop with an upcoming session"
+      },
+      "submit": "Submit for review",
+      "submitting": "Submitting...",
+      "submitted": "Submitted. We will review your shop and let you know by email.",
+      "readyNote": "All requirements are met.",
+      "notReadyNote": "Complete all requirements to submit."
+    }
+  },
+  "settings": {
+    "title": "Shop settings",
+    "subtitle": "Update your shop details, region and languages.",
+    "readOnly": "Your shop is suspended, so settings are read-only.",
+    "sections": {
+      "general": "Shop and contact",
+      "regional": "Region and booking rules",
+      "regionalDesc": "Used for session times, prices and cut-off rules.",
+      "languages": "Languages",
+      "languagesDesc": "Languages offered on your public landing page."
+    },
+    "fields": {
+      "name": "Shop name",
+      "contactEmail": "Contact email",
+      "contactPhone": "Phone",
+      "whatsapp": "WhatsApp (optional)",
+      "address": "Address",
+      "mapsUrl": "Google Maps URL (optional)",
+      "country": "Country",
+      "timezone": "Timezone",
+      "currency": "Currency",
+      "bookingCutoff": "Booking cut-off (minutes before start)",
+      "defaultLocale": "Default language",
+      "enabledLocales": "Enabled languages"
+    },
+    "hints": {
+      "mapsUrl": "Must start with https://",
+      "bookingCutoff": "Online bookings close this many minutes before a session starts."
+    },
+    "warning": {
+      "regional": "Changing the timezone or currency does not convert existing bookings, sessions or prices. Existing data keeps its original values."
+    },
+    "default": "default",
+    "saved": "Settings saved.",
+    "errors": {
+      "nameRequired": "Enter a shop name.",
+      "emailRequired": "Enter a contact email.",
+      "emailInvalid": "Enter a valid email address.",
+      "phoneRequired": "Enter a phone number.",
+      "addressRequired": "Enter an address.",
+      "urlInvalid": "Enter a URL starting with https://",
+      "required": "This field is required.",
+      "cutoffInvalid": "Enter a whole number between 0 and 10080.",
+      "defaultMustBeEnabled": "The default language must be enabled."
+    }
+  },
+  "onboarding": {
+    "title": "Set up your shop",
+    "subtitle": "A few details to get your landing page ready.",
+    "progress": "Setup progress",
+    "steps": {
+      "shop": "Shop",
+      "region": "Region",
+      "languages": "Languages",
+      "contact": "Contact",
+      "review": "Review"
+    },
+    "stepDesc": {
+      "shop": "Choose your shop name and its web address.",
+      "region": "Used for session times and prices.",
+      "languages": "Pick the default language and any extra languages for your page.",
+      "contact": "Guests will see these details on your page.",
+      "review": "Check everything, then create your shop."
+    },
+    "fields": {
+      "name": "Shop name",
+      "slug": "Web address",
+      "country": "Country",
+      "timezone": "Timezone",
+      "currency": "Currency",
+      "defaultLocale": "Default language",
+      "enabledLocales": "Enabled languages",
+      "contactEmail": "Contact email",
+      "contactPhone": "Phone",
+      "whatsapp": "WhatsApp (optional)",
+      "address": "Address",
+      "mapsUrl": "Google Maps URL (optional)"
+    },
+    "hints": {
+      "slug": "3 to 32 characters: lowercase letters, numbers and hyphens. It cannot start or end with a hyphen.",
+      "mapsUrl": "Must start with https://"
+    },
+    "slugPreview": "Your page will live at",
+    "slug": {
+      "checking": "Checking availability...",
+      "available": "This address is available.",
+      "taken": "This address is already taken. Try another one."
+    },
+    "default": "default",
+    "create": "Create shop",
+    "creating": "Creating...",
+    "done": {
+      "title": "Your shop is created",
+      "body": "Your page will be available at {host} once it is approved. Finish the setup checklist in your dashboard.",
+      "cta": "Go to dashboard"
+    },
+    "errors": {
+      "nameRequired": "Enter a shop name.",
+      "slugInvalid": "Use 3 to 32 lowercase letters, numbers or hyphens, not starting or ending with a hyphen.",
+      "slugReserved": "This address is reserved. Choose another one.",
+      "required": "This field is required.",
+      "emailRequired": "Enter a contact email.",
+      "emailInvalid": "Enter a valid email address.",
+      "phoneRequired": "Enter a phone number.",
+      "addressRequired": "Enter an address.",
+      "urlInvalid": "Enter a URL starting with https://"
+    }
+  }
+}

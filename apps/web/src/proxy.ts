@@ -17,5 +17,8 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|.*\..*).*)"],
+  // Skip API, Next internals and static assets; sitemap.xml / robots.txt must still be rewritten per host.
+  matcher: [
+    "/((?!api|_next/static|_next/image|.*\\.(?:ico|png|jpe?g|gif|svg|webp|avif|css|js|map|woff2?)$).*)",
+  ],
 };

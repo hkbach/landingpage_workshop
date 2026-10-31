@@ -1,1 +1,21 @@
-{}
+{
+  "appName": "Workshop Platform",
+  "save": "Save changes",
+  "saving": "Saving...",
+  "cancel": "Cancel",
+  "loading": "Loading...",
+  "back": "Back",
+  "next": "Next",
+  "languages": {
+    "en": "English",
+    "vi": "Tiếng Việt",
+    "ko": "한국어",
+    "ja": "日本語"
+  },
+  "orgStatus": {
+    "DRAFT": "Draft",
+    "PENDING_REVIEW": "Pending review",
+    "ACTIVE": "Active",
+    "SUSPENDED": "Suspended"
+  }
+}
