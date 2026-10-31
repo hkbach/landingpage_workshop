@@ -18,7 +18,8 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang={locale} className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
-        <NextIntlClientProvider>
+        {/* No messages here on purpose: each area (and the public site) sends only the texts it needs, see i18n/client-messages.ts. */}
+        <NextIntlClientProvider messages={{}}>
           <QueryProvider>{children}</QueryProvider>
         </NextIntlClientProvider>
       </body>
