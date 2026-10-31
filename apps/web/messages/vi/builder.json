@@ -79,6 +79,11 @@
       "decodeFailed": "Không đọc được ảnh này. Hãy thử tệp khác.",
       "storageFull": "Bộ nhớ trình duyệt đã đầy. Hãy xóa ảnh khác, dùng ảnh nhỏ hơn hoặc dán URL ảnh.",
       "failed": "Tải lên thất bại. Vui lòng thử lại."
-    }
+    },
+    "uploadMany": "Tải lên nhiều ảnh",
+    "uploadManyHint": "Bạn có thể chọn nhiều tệp cùng lúc. {remaining, plural, =0 {Đã hết chỗ trống.} other {Còn # chỗ trống.}}",
+    "uploadingMany": "Đang tải {done}/{total}...",
+    "uploadedMany": "Đã thêm {count} ảnh.",
+    "skippedMany": "Đã bỏ qua {count} ảnh vì giới hạn là {max}."
   }
 }

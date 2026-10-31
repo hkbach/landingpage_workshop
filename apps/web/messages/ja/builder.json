@@ -79,6 +79,11 @@
       "decodeFailed": "この画像を読み込めませんでした。別のファイルをお試しください。",
       "storageFull": "ブラウザの保存容量がいっぱいです。他の画像を削除するか、小さい画像を使うか、画像URLを貼り付けてください。",
       "failed": "アップロードに失敗しました。もう一度お試しください。"
-    }
+    },
+    "uploadMany": "複数の画像をアップロード",
+    "uploadManyHint": "複数のファイルを一度に選択できます。{remaining, plural, =0 {空きがありません。} other {残り#枠。}}",
+    "uploadingMany": "{total}枚中{done}枚をアップロード中...",
+    "uploadedMany": "画像を{count}枚追加しました。",
+    "skippedMany": "上限（{max}枚）のため{count}枚をスキップしました。"
   }
 }

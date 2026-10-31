@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type { FieldDef } from "@/components/sections/registry";
 import { isAllowedMapsUrl, isHttpsUrl } from "@/components/sections/safe-url";
 import { ImageUploadField } from "./ImageUploadField";
+import { MultiImageUpload } from "./MultiImageUpload";
 import { YoutubeField } from "./YoutubeField";
 
 type Values = Record<string, unknown>;
@@ -111,6 +112,7 @@ export function FieldsEditor({ fields, value, onChange, lang, defaultLocale, idP
             return (
               <fieldset key={f.key} className="space-y-2">
                 <legend className="text-sm font-medium">{label} <span className="text-muted-foreground">({urls.length}/{f.max})</span></legend>
+                <MultiImageUpload id={id} current={urls} max={f.max} onAdd={(next) => set(f.key, next)} />
                 {urls.map((u, i) => (
                   <div key={i} className="flex items-start gap-2 rounded-lg border p-3">
                     <div className="min-w-0 flex-1">
