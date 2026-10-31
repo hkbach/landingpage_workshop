@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Field, describedBy } from "@/components/dashboard/shell/field";
 import { NativeSelect } from "@/components/dashboard/shell/native-select";
 import { COUNTRIES, CURRENCIES, TIMEZONES } from "@/components/dashboard/shell/options";
+import { cn } from "@/lib/utils";
 import { zodResolver } from "@/lib/zod-resolver";
 
 const localeEnum = z.enum(LOCALES);
@@ -63,6 +64,25 @@ export function SettingsForm({ initial, hasBookings, readOnly }: { initial: Valu
     const next = on ? [...new Set([...enabled, l])] : enabled.filter((x) => x !== l);
     setValue("enabledLocales", next, { shouldValidate: true, shouldDirty: true });
   }
+
+  // Arriving through #languages: bring the Languages card into view below the sticky top bar, move focus to it and flash it.
+  const [flashLanguages, setFlashLanguages] = useState(false);
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const goToLanguages = () => {
+      if (window.location.hash !== "#languages") return;
+      const el = document.getElementById("languages");
+      if (!el) return;
+      el.scrollIntoView({ block: "start" });
+      el.focus({ preventScroll: true });
+      setFlashLanguages(true);
+      clearTimeout(timer);
+      timer = setTimeout(() => setFlashLanguages(false), 2500);
+    };
+    goToLanguages();
+    window.addEventListener("hashchange", goToLanguages);
+    return () => { window.removeEventListener("hashchange", goToLanguages); clearTimeout(timer); };
+  }, []);
 
   return (
     <form
@@ -139,9 +159,13 @@ export function SettingsForm({ initial, hasBookings, readOnly }: { initial: Valu
         </CardContent>
       </Card>
 
-      <Card>
+      {/* Landing spot of the "Manage languages" link (…/settings#languages). */}
+      <Card
+        id="languages" role="region" aria-labelledby="languages-title" tabIndex={-1}
+        className={cn("scroll-mt-20 outline-none transition-shadow duration-500", flashLanguages && "ring-2 ring-primary")}
+      >
         <CardHeader>
-          <CardTitle>{t("sections.languages")}</CardTitle>
+          <CardTitle id="languages-title">{t("sections.languages")}</CardTitle>
           <CardDescription>{t("sections.languagesDesc")}</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">

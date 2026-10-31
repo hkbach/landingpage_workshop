@@ -27,6 +27,14 @@ describe("language bar follows the shop's language setting", () => {
     expect(offered(bar(["en", "ko", "zh"]))).toEqual(["en", "ko", "zh"]);
     expect(offered(bar(["en", "vi", "ko", "ja", "zh"]))).toHaveLength(5);
   });
+  it("Manage languages is a visible link straight to the Languages card in Settings", () => {
+    const html = bar(["en"]);
+    const link = html.match(/<a[^>]*href="/shopowner/settings#languages"[^>]*>[sS]*?</a>/)?.[0] ?? "";
+    expect(link).toContain("Manage languages");
+    expect(link).toContain("<svg");
+    expect(link).toMatch(/text-sm/);
+    expect(link).not.toMatch(/text-xs/);
+  });
   it("a single-language shop gets a single chip", () => {
     expect(offered(bar(["ja"], "ja", "ja"))).toEqual(["ja"]);
   });

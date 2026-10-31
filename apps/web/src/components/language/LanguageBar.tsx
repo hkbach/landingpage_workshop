@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { Languages, TriangleAlert } from "lucide-react";
+import { Languages, Settings, TriangleAlert } from "lucide-react";
 import { LOCALES, type Locale } from "@workshop/shared";
+import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 /**
@@ -27,8 +28,8 @@ export function LanguageBar({ value, onChange, enabled, defaultLocale, missingBy
         <p id="language-bar-label" className="flex items-center gap-1.5 text-sm font-medium">
           <Languages className="size-4" aria-hidden />{t("language.barTitle")}
         </p>
-        <Link href="/shopowner/settings" className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground">
-          {t("language.manage")}
+        <Link href="/shopowner/settings#languages" className={cn(buttonVariants({ variant: "outline" }), "h-9 gap-2 px-3.5 text-sm font-medium")}>
+          <Settings className="size-4" aria-hidden />{t("language.manage")}
         </Link>
       </div>
       <div role="radiogroup" aria-labelledby="language-bar-label" className="mt-2 flex flex-wrap gap-2">
