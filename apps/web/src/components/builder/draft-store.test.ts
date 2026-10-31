@@ -130,3 +130,39 @@ describe("draft store: hero first, footer last", () => {
     expect(typesOf(reorder(["hero", "faq", "about", "footer"]))).toEqual(["hero", "faq", "about", "footer"]);
   });
 });
+
+describe("draft store: one Chinese language", () => {
+  const withProps = (heroTitle: Record<string, string>) => {
+    const d = valid();
+    return {
+      ...d,
+      content: {
+        ...d.content,
+        seo: { title: { en: "T", "zh-TW": "標題" }, description: { en: "D" } },
+        sections: d.content.sections.map((s) => (s.type === "hero" ? { ...s, props: { ...s.props, title: heroTitle } } : s)),
+      },
+    };
+  };
+  const parsed = (raw: unknown) => parseDraft(JSON.stringify(raw));
+
+  it("folds text stored under the old zh-TW key into zh, in sections and in the SEO fields", () => {
+    const d = parsed(withProps({ en: "Hello", "zh-TW": "你好" }));
+    const hero = d?.content.sections.find((s) => s.type === "hero");
+    expect(hero?.props.title).toEqual({ en: "Hello", zh: "你好" });
+    expect(d?.content.seo.title).toEqual({ en: "T", zh: "標題" });
+  });
+
+  it("keeps an existing zh and drops the old key", () => {
+    const d = parsed(withProps({ en: "Hello", zh: "你好", "zh-TW": "妳好" }));
+    expect(d?.content.sections.find((s) => s.type === "hero")?.props.title).toEqual({ en: "Hello", zh: "你好" });
+  });
+
+  it("the saved draft no longer contains any zh-TW key", () => {
+    const d = parsed(withProps({ en: "Hello", "zh-TW": "你好" }));
+    expect(JSON.stringify(d)).not.toContain("zh-TW");
+  });
+
+  it("the demo data contains no zh-TW key", () => {
+    expect(JSON.stringify(sitePage)).not.toContain("zh-TW");
+  });
+});

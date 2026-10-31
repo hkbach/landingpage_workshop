@@ -132,5 +132,13 @@
     "blockedHint": "先に「要確認」と表示されたセクションまたは色を修正してください。",
     "publishedShort": "公開しました（デモ）",
     "submittedShort": "審査に提出しました（デモ）"
+  },
+  "language": {
+    "barTitle": "編集中の言語",
+    "barHint": "以下の入力欄には選択した言語のみ表示されます。翻訳がない箇所では、訪問者には既定の言語が表示されます。",
+    "manage": "言語を管理"
+  },
+  "editor": {
+    "editingIn": "{language}で編集中"
   }
 }

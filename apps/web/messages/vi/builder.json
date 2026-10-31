@@ -132,5 +132,13 @@
     "blockedHint": "Hãy sửa các phần hoặc màu sắc được đánh dấu cần chú ý trước.",
     "publishedShort": "Đã xuất bản (bản demo)",
     "submittedShort": "Đã gửi duyệt (bản demo)"
+  },
+  "language": {
+    "barTitle": "Ngôn ngữ đang chỉnh sửa",
+    "barHint": "Các ô nhập bên dưới chỉ hiển thị ngôn ngữ đang chọn. Khách sẽ thấy ngôn ngữ mặc định ở những chỗ chưa có bản dịch.",
+    "manage": "Quản lý ngôn ngữ"
+  },
+  "editor": {
+    "editingIn": "Đang chỉnh sửa bằng {language}"
   }
 }

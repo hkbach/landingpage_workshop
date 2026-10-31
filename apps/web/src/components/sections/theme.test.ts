@@ -29,14 +29,15 @@ describe("palettes", () => {
     for (const f of FONTS) expect(f.stack).toMatch(/var\(--site-cjk-(sans|serif)\)/);
   });
 
-  it("globals.css orders CJK fonts by page language (ja, ko, zh, zh-TW) with the right regional fonts first", () => {
+  it("globals.css orders CJK fonts by page language (ja, ko, zh) with the right regional fonts first", () => {
     const css = readFileSync(join(process.cwd(), "src/app/globals.css"), "utf8");
     const rule = (lang: string) => css.match(new RegExp(`\\[lang="${lang}"\\]\\s*\\{([^}]*)\\}`))?.[1] ?? "";
     const firstSans = (lang: string) => rule(lang).match(/--site-cjk-sans:\s*var\((--[a-z]+-sans)\)/)?.[1];
     expect(firstSans("ja")).toBe("--jp-sans");
     expect(firstSans("ko")).toBe("--kr-sans");
     expect(firstSans("zh")).toBe("--sc-sans");
-    expect(firstSans("zh-TW")).toBe("--tc-sans");
+    // Chinese text may be Simplified or Traditional: the Traditional fonts must stay in the fallback list.
+    expect(rule("zh")).toContain("var(--tc-sans)");
   });
 });
 

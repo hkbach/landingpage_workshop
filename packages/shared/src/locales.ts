@@ -1,23 +1,21 @@
 import type { Locale } from "./enums";
 
-/** Native names shown in language switchers. */
+/** Native names shown in language switchers. Chinese is one language: the shop writes whichever script it prefers. */
 export const LOCALE_NATIVE_NAMES: Record<Locale, string> = {
   en: "English",
   vi: "Tiếng Việt",
   ko: "한국어",
   ja: "日本語",
-  zh: "简体中文",
-  "zh-TW": "繁體中文",
+  zh: "中文",
 };
 
-/** BCP 47 tag for the `hreflang` attribute. Bare "zh" is ambiguous, so state the script. */
+/** BCP 47 tag for the `hreflang` attribute. */
 const HREFLANG: Record<Locale, string> = {
   en: "en",
   vi: "vi",
   ko: "ko",
   ja: "ja",
-  zh: "zh-Hans",
-  "zh-TW": "zh-Hant",
+  zh: "zh",
 };
 
 export function hreflangOf(locale: Locale): string {
@@ -25,12 +23,10 @@ export function hreflangOf(locale: Locale): string {
 }
 
 export function isLocale(value: string | undefined | null): value is Locale {
-  return value === "en" || value === "vi" || value === "ko" || value === "ja" || value === "zh" || value === "zh-TW";
+  return value === "en" || value === "vi" || value === "ko" || value === "ja" || value === "zh";
 }
 
-/** Short label for compact language chips; Chinese scripts use one character so "ZH" is never ambiguous. */
+/** Short label for compact language chips. */
 export function shortLocaleLabel(locale: Locale): string {
-  if (locale === "zh") return "简";
-  if (locale === "zh-TW") return "繁";
-  return locale.toUpperCase();
+  return locale === "zh" ? "中" : locale.toUpperCase();
 }

@@ -1,4 +1,4 @@
-import { SECTION_TYPES, type SectionType } from "@workshop/shared";
+import { mergeLegacyChineseKeys, SECTION_TYPES, type SectionType } from "@workshop/shared";
 import type { PageContent, PageTheme, SectionInstance, ThemeDensity, ThemeRadius } from "@/lib/types";
 import { normalizeOrder } from "@/components/sections/order";
 import { createSection, isValidVariant, migrateSectionProps } from "@/components/sections/registry";
@@ -45,7 +45,7 @@ function sanitizeSection(raw: unknown): SectionInstance | null {
   const type = raw.type as SectionType;
   const style = sanitizeSectionStyle(raw.style);
   return {
-    id: raw.id, type, enabled: raw.enabled, props: migrateSectionProps(type, raw.props),
+    id: raw.id, type, enabled: raw.enabled, props: migrateSectionProps(type, mergeLegacyChineseKeys(raw.props)),
     ...(isValidVariant(type, raw.variant) ? { variant: raw.variant } : {}),
     ...(Object.keys(style).length ? { style } : {}),
     ...(typeof raw.showBook === "boolean" ? { showBook: raw.showBook } : {}),
@@ -68,7 +68,10 @@ export function sanitizeDraft(raw: unknown): Draft | null {
     template, theme,
     content: {
       schemaVersion: 1, layout, sections: normalizeOrder(sections),
-      seo: { title: isObj(seo.title) ? seo.title : {}, description: isObj(seo.description) ? seo.description : {} },
+      seo: {
+        title: mergeLegacyChineseKeys(isObj(seo.title) ? seo.title : {}),
+        description: mergeLegacyChineseKeys(isObj(seo.description) ? seo.description : {}),
+      },
     } as PageContent,
   };
 }

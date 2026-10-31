@@ -132,5 +132,13 @@
     "blockedHint": "먼저 주의가 필요하다고 표시된 섹션이나 색상을 수정하세요.",
     "publishedShort": "게시됨 (데모)",
     "submittedShort": "검토 요청됨 (데모)"
+  },
+  "language": {
+    "barTitle": "편집 중인 언어",
+    "barHint": "아래 입력란에는 선택한 언어만 표시됩니다. 번역이 없는 곳에서는 방문자에게 기본 언어가 표시됩니다.",
+    "manage": "언어 관리"
+  },
+  "editor": {
+    "editingIn": "{language}(으)로 편집 중"
   }
 }

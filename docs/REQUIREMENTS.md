@@ -21,7 +21,7 @@ Các mục dưới đây là **giả định** để có thể bắt đầu code
 | A3 | Shop tự đăng ký; **lần publish đầu tiên cần admin duyệt** | Thấp |
 | A4 | Tính phí shop **chưa làm**, chỉ có cột `plan` và giới hạn theo gói trong code | Thấp |
 | A5 | Chỉ có lịch **cố định** (fixed schedule) và **instant booking**. Request booking và lịch linh hoạt để phase sau | Trung bình |
-| A6 | Ngôn ngữ hỗ trợ: EN (mặc định), VI, KO, JA, **ZH (Trung giản thể), ZH-TW (Trung phồn thể)** *(v1.2: thêm 2 ngôn ngữ Trung)*. Shop tự chọn bật ngôn ngữ nào. Mã locale trong URL: `/ja`, `/zh`, `/zh-TW` (phân biệt hoa thường). `hreflang`: `zh` → `zh-Hans`, `zh-TW` → `zh-Hant`. Giao diện nền tảng (dashboard, modal đặt chỗ…) mới dịch EN và một phần VI/KO/JA; ZH/ZH-TW tạm fallback EN, riêng chính sách đến trễ (BR-09) có đủ bản dịch | Thấp |
+| A6 | Ngôn ngữ hỗ trợ: EN (mặc định), VI, KO, JA, **ZH (tiếng Trung, một ngôn ngữ duy nhất; shop tự điền chữ giản thể hoặc phồn thể tùy ý)** *(v1.2: thêm tiếng Trung)*. Shop tự chọn bật ngôn ngữ nào. Mã locale trong URL: `/ja`, `/zh`. `hreflang`: `zh`. Dữ liệu cũ lưu dưới khóa `zh-TW` được tự gộp vào `zh`. Giao diện nền tảng (dashboard, modal đặt chỗ…) mới dịch EN và một phần VI/KO/JA; ZH tạm fallback EN, riêng chính sách đến trễ (BR-09) có đủ bản dịch | Thấp |
 | A7 | Shop chỉ có 1 role là `OWNER` trong MVP. Schema vẫn hỗ trợ nhiều member/role | Thấp |
 | A8 | Domain: `{shop}.{PLATFORM_DOMAIN}`. Custom domain để phase sau | Trung bình |
 | A9 | Sinh session trước **60 ngày**, job chạy hằng ngày | Thấp |
@@ -614,7 +614,7 @@ type PageContent = {
   }>;
   seo: { title: Localized; description: Localized };
 };
-type Localized = Partial<Record<'en' | 'vi' | 'ko' | 'ja' | 'zh' | 'zh-TW', string>>;
+type Localized = Partial<Record<'en' | 'vi' | 'ko' | 'ja' | 'zh', string>>;
 ```
 
 Khi `schemaVersion` của một section type thay đổi, viết hàm migrate trong registry; không sửa trực tiếp JSON trong DB bằng tay.

@@ -85,7 +85,8 @@
 
 /*
  * CJK fallback order follows the page language so Han characters use the right regional glyphs
- * (Japanese-first would draw Chinese text with Japanese forms). Used by the site font stacks in sections/theme.ts.
+ * (Japanese-first would draw Chinese text with Japanese forms). Chinese is one language: Simplified fonts come first and
+ * Traditional-only characters fall through to the Traditional fonts. Used by the site font stacks in sections/theme.ts.
  */
 :root {
   --jp-sans: "Hiragino Sans", "Yu Gothic", "Meiryo", "Noto Sans CJK JP", "Noto Sans JP";
@@ -111,10 +112,6 @@
 [lang="zh"] {
   --site-cjk-sans: var(--sc-sans), var(--tc-sans), var(--jp-sans), var(--kr-sans);
   --site-cjk-serif: var(--sc-serif), var(--tc-serif), var(--jp-serif), var(--kr-serif);
-}
-[lang="zh-TW"] {
-  --site-cjk-sans: var(--tc-sans), var(--sc-sans), var(--jp-sans), var(--kr-sans);
-  --site-cjk-serif: var(--tc-serif), var(--sc-serif), var(--jp-serif), var(--kr-serif);
 }
 
 /* Balanced headings avoid a single orphan character on its own line (common with CJK text). */

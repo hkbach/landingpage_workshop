@@ -3,13 +3,12 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useTranslations } from "next-intl";
 import { Info, TriangleAlert } from "lucide-react";
-import { LOCALES, missingLocales, type Locale, type Localized, type OrgStatus, type SectionType } from "@workshop/shared";
+import { missingLocales, type Locale, type Localized, type OrgStatus, type SectionType } from "@workshop/shared";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { collectLocalized, createSection, effectiveVariant, SECTION_REGISTRY } from "@/components/sections/registry";
 import { failingThemeChecks, needsAttention } from "@/components/sections/instance";
 import { planTemplateSwitch, TEMPLATES, themeForTemplate, type TemplateKey } from "@/components/sections/templates";
@@ -21,6 +20,7 @@ import { PublishPanel, type Prerequisite } from "./PublishPanel";
 import { normalizeOrder } from "@/components/sections/order";
 import { BookButtonToggle } from "./BookButtonToggle";
 import { BuilderHeader } from "./BuilderHeader";
+import { LanguageBar } from "./LanguageBar";
 import { publishAction } from "./publish-state";
 import type { SaveState } from "./save-state";
 import { SectionColorsGroup } from "./SectionColorsGroup";
@@ -159,6 +159,7 @@ function BuilderInner({ shop, initial, initialStatus, upcomingWorkshopCount, app
   const submitNow = () => { setStatus("PENDING_REVIEW"); setPublishMessage("submitted"); };
 
   const names = (types: SectionType[]) => types.map((ty) => t(`sectionTypes.${ty}`)).join(", ");
+  const activeLang: Locale = enabledLocales.includes(lang) ? lang : shop.defaultLocale;
   const editorLabel = selected ? t(`sectionTypes.${selected.type}`) : t("seo.title");
 
   return (
@@ -181,6 +182,8 @@ function BuilderInner({ shop, initial, initialStatus, upcomingWorkshopCount, app
         </CardContent>
       </Card>
 
+      <LanguageBar value={activeLang} onChange={setLang} enabled={enabledLocales} defaultLocale={shop.defaultLocale} missingByLocale={missingByLocale} />
+
       <div className="grid gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:items-start">
         <Card>
           <CardHeader><CardTitle>{t("sections.title")}</CardTitle></CardHeader>
@@ -202,48 +205,25 @@ function BuilderInner({ shop, initial, initialStatus, upcomingWorkshopCount, app
           <CardHeader>
             <CardTitle>{t("editor.title", { name: editorLabel })}</CardTitle>
           </CardHeader>
-          <CardContent>
-            <Tabs value={lang} onValueChange={(v) => setLang(v as Locale)}>
-              <TabsList aria-label={t("language.label")} className="h-auto flex-wrap">
-                {LOCALES.filter((l) => enabledLocales.includes(l)).map((l) => (
-                  <TabsTrigger key={l} value={l} className="gap-1.5 px-3">
-                    {t(`language.names.${l}`)}
-                    {l === shop.defaultLocale ? <span className="text-xs text-muted-foreground">({t("language.default")})</span> : null}
-                    {missingByLocale[l] > 0 ? (
-                      <span className="inline-flex items-center gap-1 text-xs text-amber-800">
-                        <TriangleAlert className="size-3.5" aria-hidden />
-                        <span aria-label={t("language.missing", { count: missingByLocale[l] })}>{missingByLocale[l]}</span>
-                      </span>
-                    ) : null}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-              {enabledLocales.map((l) => (
-                <TabsContent key={l} value={l} className="mt-4 space-y-4">
-                  {l === lang ? (
-                    <>
-                      {l !== shop.defaultLocale ? (
-                        <p className="text-xs text-muted-foreground">{t("language.fallbackNote", { locale: t(`language.names.${shop.defaultLocale}`) })}</p>
-                      ) : null}
-                      {selected ? (
-                        <SectionEditorBody
-                          section={selected} lang={l} defaultLocale={shop.defaultLocale} theme={draft.theme}
-                          onChange={(props) => patchSection(selected.id, { props })}
-                          onPatch={(patch) => patchSection(selected.id, patch)}
-                        />
-                      ) : (
-                        <FieldsEditor
-                          idPrefix="seo" lang={l} defaultLocale={shop.defaultLocale}
-                          fields={[{ kind: "localized", key: "title", max: 70 }, { kind: "localized", key: "description", max: 160, multiline: true }]}
-                          value={draft.content.seo as unknown as Record<string, unknown>}
-                          onChange={(v) => setContent({ ...draft.content, seo: v as unknown as PageContent["seo"] })}
-                        />
-                      )}
-                    </>
-                  ) : null}
-                </TabsContent>
-              ))}
-            </Tabs>
+          <CardContent className="space-y-4">
+            <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              {t("editor.editingIn", { language: t(`language.names.${activeLang}`) })}
+              {activeLang !== shop.defaultLocale ? <> · {t("language.fallbackNote", { locale: t(`language.names.${shop.defaultLocale}`) })}</> : null}
+            </p>
+            {selected ? (
+              <SectionEditorBody
+                section={selected} lang={activeLang} defaultLocale={shop.defaultLocale} theme={draft.theme}
+                onChange={(props) => patchSection(selected.id, { props })}
+                onPatch={(patch) => patchSection(selected.id, patch)}
+              />
+            ) : (
+              <FieldsEditor
+                idPrefix="seo" lang={activeLang} defaultLocale={shop.defaultLocale}
+                fields={[{ kind: "localized", key: "title", max: 70 }, { kind: "localized", key: "description", max: 160, multiline: true }]}
+                value={draft.content.seo as unknown as Record<string, unknown>}
+                onChange={(v) => setContent({ ...draft.content, seo: v as unknown as PageContent["seo"] })}
+              />
+            )}
           </CardContent>
         </Card>
 

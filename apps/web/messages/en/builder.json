@@ -174,7 +174,8 @@
     "addItem": "Add item",
     "autoWorkshops": "Workshops are loaded automatically from your active workshops. Manage them on the Workshops page.",
     "authenticityNote": "You are responsible for the authenticity of testimonials. Only publish real reviews from real guests.",
-    "layout": "Layout"
+    "layout": "Layout",
+    "editingIn": "Editing in {language}"
   },
   "fields": {
     "title": "Title",
@@ -214,12 +215,14 @@
       "vi": "Vietnamese",
       "ko": "Korean",
       "ja": "Japanese",
-      "zh": "Chinese (Simplified)",
-      "zh-TW": "Chinese (Traditional)"
+      "zh": "Chinese"
     },
     "default": "default",
     "missing": "{count, plural, one {# missing translation} other {# missing translations}}",
-    "fallbackNote": "Empty fields fall back to {locale}, the default language of your shop."
+    "fallbackNote": "Empty fields fall back to {locale}, the default language of your shop.",
+    "barTitle": "Language you are editing",
+    "barHint": "The text fields below show only the selected language. Visitors see the default language wherever a translation is missing.",
+    "manage": "Manage languages"
   },
   "previewPage": {
     "back": "Back to builder",

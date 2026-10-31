@@ -8,8 +8,7 @@
     "default": "default",
     "disabled": "not enabled",
     "missingSr": "Missing translations",
-    "zh": "简体中文",
-    "zh-TW": "繁體中文"
+    "zh": "中文"
   },
   "status": {
     "DRAFT": "Draft",
