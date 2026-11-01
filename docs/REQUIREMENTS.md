@@ -17,7 +17,7 @@ Các mục dưới đây là **giả định** để có thể bắt đầu code
 | # | Giả định | Ảnh hưởng nếu đổi |
 |---|---|---|
 | A1 | Khách du lịch **thanh toán tại shop**. MVP không có thanh toán online. | Lớn: thanh toán online cần Stripe Connect (hoặc tương đương), KYC, refund, phí nền tảng |
-| A2 | Mỗi shop có **1 landing page** trong MVP | Trung bình: schema đã chuẩn bị cho nhiều page |
+| A2 | Mỗi shop có **tối đa 2 landing page** (FR-SITE-07); page đầu tiên (main) dùng địa chỉ của shop | Trung bình: schema đã chuẩn bị cho nhiều page |
 | A3 | Shop tự đăng ký; **lần publish đầu tiên cần admin duyệt** | Thấp |
 | A4 | Tính phí shop **chưa làm**, chỉ có cột `plan` và giới hạn theo gói trong code | Thấp |
 | A5 | Chỉ có lịch **cố định** (fixed schedule) và **instant booking**. Request booking và lịch linh hoạt để phase sau | Trung bình |
@@ -313,6 +313,13 @@ Browser ────────────────────────
 - Từ lần thứ hai (shop đã ACTIVE): bấm **"Publish"** thì có hiệu lực ngay. Publish là thao tác **atomic**: copy `draft_content` sang `published_content`, ghi một dòng `site_page_versions`, tăng `version`.
 - Admin từ chối: lưu lý do, gửi email cho shop, status về `DRAFT`.
 - Should: rollback về một version trước đó.
+
+**FR-SITE-07 – Danh sách landing page của shop (Should)**
+- `/shopowner/site` là danh sách landing page của shop: tên, template, địa chỉ, trạng thái Published / Not published, ngày sửa; hành động Edit, Preview, Delete. Builder mở tại `/shopowner/site/{pageId}`.
+- **Tối đa 2 landing page / shop** (backend phải kiểm tra, không chỉ UI). Đủ 2 thì nút Create bị khóa kèm thông báo; xóa một page thì tạo lại được.
+- Mỗi page có **địa chỉ (slug) riêng** `{slug}.PLATFORM_DOMAIN`, duy nhất trên toàn nền tảng, theo quy tắc slug và danh sách từ khóa dành riêng. Page đầu tiên (main) dùng slug của shop và không xóa được. Xóa page cần xác nhận, xóa cả bản nháp và bản đã publish.
+- Mỗi page có bản nháp / bản publish và template riêng; page mới bắt đầu từ template owner chọn.
+- MVP frontend: danh sách và nội dung lưu trong localStorage; public site chỉ phục vụ page main bằng dữ liệu mock. Việc phục vụ public cho page thứ 2 chờ backend.
 
 **FR-SITE-05 – Trang public (Must)**
 - URL: `{slug}.{PLATFORM_DOMAIN}/` cho ngôn ngữ mặc định của shop; `/{locale}` cho ngôn ngữ khác (ví dụ `/ko`).

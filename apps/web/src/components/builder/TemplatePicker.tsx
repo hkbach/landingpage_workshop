@@ -213,7 +213,7 @@ export function LayoutWireframe({ layout, template }: { layout: LayoutKey; templ
 }
 
 /** Grid of the 10 templates: a wireframe of the page structure, friendly name, "Best for" line, palette dots, Preview. */
-export function TemplatePicker({ current, onSelect }: { current: TemplateKey; onSelect: (key: TemplateKey) => void }) {
+export function TemplatePicker({ pageId, current, onSelect }: { pageId: string; current: TemplateKey; onSelect: (key: TemplateKey) => void }) {
   const t = useTranslations("builder");
   return (
     <div role="radiogroup" aria-label={t("template.title")} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
@@ -256,7 +256,7 @@ export function TemplatePicker({ current, onSelect }: { current: TemplateKey; on
                 ))}
               </span>
               <Link
-                href={`/shopowner/site/preview?template=${k}`} aria-label={t("template.previewLabel", { name })}
+                href={`/shopowner/site/preview?page=${pageId}&template=${k}`} aria-label={t("template.previewLabel", { name })}
                 className={buttonVariants({ variant: "outline", size: "sm" })}
               >
                 <Eye />{t("template.preview")}

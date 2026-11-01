@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useTranslations } from "next-intl";
+import Link from "next/link";
 import { Info, TriangleAlert } from "lucide-react";
 import { missingLocales, type Locale, type Localized, type OrgStatus, type SectionType } from "@workshop/shared";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -14,7 +15,8 @@ import { failingThemeChecks, needsAttention } from "@/components/sections/instan
 import { planTemplateSwitch, TEMPLATES, themeForTemplate, type TemplateKey } from "@/components/sections/templates";
 import type { PageContent, PageTheme, SectionInstance, Shop } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { loadDraft, saveDraft, type Draft, chooseInitialDraft, loadPublished, savePublished, type BuilderSource } from "./draft-store";
+import { loadDraft, saveDraft, type Draft, chooseInitialDraft, loadPublished, savePublished, MAIN_PAGE_ID, type BuilderSource } from "./draft-store";
+import { loadPages, savePages, starterFor, touchPage, type PageMeta } from "./pages-store";
 import { FieldsEditor } from "./FieldsEditor";
 import { PublishPanel, type Prerequisite } from "./PublishPanel";
 import { normalizeOrder } from "@/components/sections/order";
@@ -35,6 +37,10 @@ export type BuilderShop = Pick<Shop, "name" | "defaultLocale" | "enabledLocales"
 
 interface Props {
   shop: BuilderShop;
+  /** Which landing page is edited (the shop has up to 2). */
+  pageId?: string;
+  /** The shop's first page: it exists from the start and is the one published at the shop's own address. */
+  mainPage: { name: string; slug: string; template: TemplateKey };
   /** Content of the page as the server has it: the published version when `initialSource` is "published", else a template starter. */
   initial: { content: PageContent; theme: PageTheme; template: TemplateKey };
   initialSource?: "published" | "starter";
@@ -52,18 +58,37 @@ const noop = () => () => {};
 export function SiteBuilder(props: Props) {
   const hydrated = useSyncExternalStore(noop, () => true, () => false);
   if (!hydrated) return <div className="p-6 text-sm text-muted-foreground" aria-busy>…</div>;
-  return <BuilderInner {...props} />;
+  return <PageGate {...props} />;
+}
+
+/** The page list lives in the browser for now, so whether the page exists is only known after hydration. */
+function PageGate(props: Props) {
+  const t = useTranslations("builder.pages");
+  const pageId = props.pageId ?? MAIN_PAGE_ID;
+  const [page] = useState(() => loadPages(props.mainPage).find((p) => p.id === pageId));
+  if (!page) {
+    return (
+      <div className="grid justify-items-start gap-3 p-6">
+        <h1 className="text-xl font-semibold">{t("notFoundTitle")}</h1>
+        <p className="text-sm text-muted-foreground">{t("notFoundBody")}</p>
+        <Link href="/shopowner/site" className={buttonVariants()}>{t("backToList")}</Link>
+      </div>
+    );
+  }
+  return <BuilderInner {...props} page={page} />;
 }
 
 const SEO_ID = "__seo__";
 
-function BuilderInner({ shop, initial, initialSource = "starter", initialStatus, upcomingWorkshopCount, applyTemplate, support }: Props) {
+function BuilderInner({ shop, initial, initialSource = "starter", initialStatus, upcomingWorkshopCount, applyTemplate, support, page, mainPage }: Props & { page: PageMeta }) {
+  const pageId = page.id;
   const t = useTranslations("builder");
   // Opening rule: last saved draft > published version > template starter (see chooseInitialDraft).
   const [opened] = useState(() => chooseInitialDraft({
-    saved: loadDraft(),
-    published: loadPublished() ?? (initialSource === "published" ? initial : null),
-    starter: { ...initial },
+    saved: loadDraft(pageId),
+    // The server's published version is the main page's; another page only has one once it was published here.
+    published: loadPublished(pageId) ?? (pageId === MAIN_PAGE_ID && initialSource === "published" ? initial : null),
+    starter: pageId === MAIN_PAGE_ID ? { ...initial } : starterFor(initial, page.template),
   }));
   const [draft, setDraft] = useState<Draft>(opened.draft);
   const [view, setView] = useState<BuilderSource>(opened.source);
@@ -80,11 +105,12 @@ function BuilderInner({ shop, initial, initialSource = "starter", initialStatus,
   useEffect(() => {
     if (rev === 0) return;
     const id = setTimeout(() => {
-      const res = saveDraft(draft);
+      const res = saveDraft(draft, pageId);
+      if (res.ok) savePages(touchPage(loadPages(mainPage), pageId, { template: draft.template, now: new Date().toISOString() }));
       setSaveState(res.ok ? "saved" : res.reason);
     }, 2000);
     return () => clearTimeout(id);
-  }, [rev, draft]);
+  }, [rev, draft, pageId, mainPage]);
 
   function change(next: Draft) {
     setView("draft");
@@ -119,7 +145,7 @@ function BuilderInner({ shop, initial, initialSource = "starter", initialStatus,
   function closeTemplateDialog() {
     setPendingTemplate(null);
     // Drop ?apply=KEY so a reload does not reopen the dialog.
-    if (applyTemplate) window.history.replaceState(null, "", "/shopowner/site");
+    if (applyTemplate) window.history.replaceState(null, "", `/shopowner/site/${pageId}`);
   }
   function confirmTemplate() {
     if (!pendingTemplate) return;
@@ -174,8 +200,8 @@ function BuilderInner({ shop, initial, initialSource = "starter", initialStatus,
   // Also guarded here: a disabled button cannot be clicked, but a stale handler must never publish a half-saved draft.
   const publishNow = () => {
     if (saving) return;
-    saveDraft(draft);
-    savePublished(draft); // publishing copies the draft to the published version
+    saveDraft(draft, pageId);
+    savePublished(draft, pageId); // publishing copies the draft to the published version
     setView("published");
     setPublishMessage("published");
   };
@@ -187,6 +213,7 @@ function BuilderInner({ shop, initial, initialSource = "starter", initialStatus,
   return (
     <div className="space-y-6 p-4 sm:p-6">
       <BuilderHeader
+        pageId={pageId} pageName={page.name}
         saveState={saveState} status={status} action={headerAction} message={publishMessage}
         onPublish={publishNow} onSubmit={submitNow}
       />
@@ -202,7 +229,7 @@ function BuilderInner({ shop, initial, initialSource = "starter", initialStatus,
       <Card>
         <CardHeader><CardTitle>{t("template.title")}</CardTitle></CardHeader>
         <CardContent className="space-y-3">
-          <TemplatePicker current={draft.template} onSelect={setPendingTemplate} />
+          <TemplatePicker pageId={pageId} current={draft.template} onSelect={setPendingTemplate} />
           <p className="text-xs text-muted-foreground">{t("template.hint")}</p>
         </CardContent>
       </Card>

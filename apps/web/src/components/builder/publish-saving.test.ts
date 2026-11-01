@@ -46,7 +46,7 @@ const lastButton = (html: string) => [...html.matchAll(/<button\b[^>]*>[\s\S]*?<
 describe("the Publish button in the sticky header", () => {
   const header = (status: OrgStatus, saveState: SaveState) => {
     const action = publishAction({ ...base, status, saving: saveState === "pending" });
-    return render(createElement(BuilderHeader, { saveState, status, action, message: null, onPublish: () => {}, onSubmit: () => {} }));
+    return render(createElement(BuilderHeader, { pageId: "main", pageName: "Clay & Co Studio", saveState, status, action, message: null, onPublish: () => {}, onSubmit: () => {} }));
   };
 
   it("is disabled while the draft is saving, with the reason, and a spinner instead of the icon", () => {

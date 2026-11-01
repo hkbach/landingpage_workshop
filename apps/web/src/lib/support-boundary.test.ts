@@ -31,7 +31,7 @@ describe("platform support contact stays out of the public landing page", () => 
   it("only the shop owner builder (and its page) use it", () => {
     const users = all.filter((f) => SUPPORT_IDENTIFIERS.test(read(f))).map(rel).filter((f) => f !== "lib/support-contact.ts" && f !== "lib/mock/platform.ts");
     expect(users.sort()).toEqual([
-      "app/shopowner/(app)/site/page.tsx",
+      "app/shopowner/(app)/site/[pageId]/page.tsx",
       "components/builder/SiteBuilder.tsx",
       "components/builder/SupportContactBox.tsx",
     ]);

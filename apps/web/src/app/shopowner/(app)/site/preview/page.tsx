@@ -6,6 +6,7 @@ import { currentShop, sitePage, workshops } from "@/lib/mock/data";
 // Preview of the DRAFT with the same PageRenderer as the public site (FR-SITE-03). Dashboard-only route.
 export default async function SitePreviewPage({ searchParams }: PageProps<"/shopowner/site/preview">) {
   const sp = await searchParams;
+  const pageId = typeof sp.page === "string" && /^[a-z0-9-]{1,40}$/.test(sp.page) ? sp.page : undefined;
   const template = typeof sp.template === "string" && isTemplateKey(sp.template) ? sp.template : undefined;
   const messages = await Promise.all(
     currentShop.enabledLocales.map(async (l) => [l, (await loadMessages(l)).site as Record<string, unknown>] as const),
@@ -20,6 +21,7 @@ export default async function SitePreviewPage({ searchParams }: PageProps<"/shop
       workshops={workshops.filter((w) => w.status === "ACTIVE")}
       siteMessages={Object.fromEntries(messages)}
       previewTemplate={template}
+      pageId={pageId}
     />
   );
 }

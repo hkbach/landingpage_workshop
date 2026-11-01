@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { CircleCheck, Eye, LoaderCircle, Rocket, Send, TriangleAlert } from "lucide-react";
+import { ArrowLeft, CircleCheck, Eye, LoaderCircle, Rocket, Send, TriangleAlert } from "lucide-react";
 import type { OrgStatus } from "@workshop/shared";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -15,7 +15,9 @@ import type { PublishAction } from "./publish-state";
  * scrolls, so the shop always sees the autosave state and can preview or publish without scrolling back up.
  * On phones it collapses to a single row: the autosave state and Preview show only their icons.
  */
-export function BuilderHeader({ saveState, status, action, message, onPublish, onSubmit }: {
+export function BuilderHeader({ pageId, pageName, saveState, status, action, message, onPublish, onSubmit }: {
+  pageId: string;
+  pageName: string;
   saveState: SaveState;
   status: OrgStatus;
   action: PublishAction;
@@ -42,9 +44,14 @@ export function BuilderHeader({ saveState, status, action, message, onPublish, o
     // below the mobile menu backdrop (z-30), the drawer (z-40) and dialogs (z-50).
     <div className="sticky top-14 z-20 -mx-4 -mt-4 border-b bg-background px-4 py-2 shadow-sm sm:-mx-6 sm:-mt-6 sm:px-6 sm:py-2.5">
       <div className="flex items-center justify-between gap-2 sm:gap-4">
-        <div className="min-w-0">
-          <h1 className="truncate text-lg font-semibold tracking-tight sm:text-2xl">{t("title")}</h1>
-          <p className="hidden text-sm text-muted-foreground sm:block">{t("subtitle")}</p>
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+          <Link href="/shopowner/site" className={cn(buttonVariants({ variant: "outline", size: "icon" }), "shrink-0")} title={t("pages.backToList")}>
+            <ArrowLeft aria-hidden /><span className="sr-only">{t("pages.backToList")}</span>
+          </Link>
+          <div className="min-w-0">
+            <h1 className="truncate text-lg font-semibold tracking-tight sm:text-2xl">{t("title")}: {pageName}</h1>
+            <p className="hidden text-sm text-muted-foreground sm:block">{t("subtitle")}</p>
+          </div>
         </div>
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           <p role="status" aria-live="polite" title={save.text} className="flex items-center gap-1.5 text-sm text-muted-foreground">
@@ -52,7 +59,7 @@ export function BuilderHeader({ saveState, status, action, message, onPublish, o
             <span className={cn("sr-only sm:not-sr-only", saveState === "idle" && "hidden sm:inline")}>{save.text}</span>
           </p>
           <Badge variant="secondary" className="hidden sm:inline-flex">{t(`publish.status.${status}`)}</Badge>
-          <Link href="/shopowner/site/preview" className={cn(buttonVariants({ variant: "outline" }), "px-2.5 sm:px-3")} title={t("preview")}>
+          <Link href={`/shopowner/site/preview?page=${pageId}`} className={cn(buttonVariants({ variant: "outline" }), "px-2.5 sm:px-3")} title={t("preview")}>
             <Eye /><span className="sr-only sm:not-sr-only">{t("preview")}</span>
           </Link>
           {action.kind === "publish" || action.kind === "submit" ? (

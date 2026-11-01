@@ -16,6 +16,14 @@ export const DRAFT_KEY = "builder:draft:v3";
 const MIGRATE_KEY = "builder:draft:v2";
 const LEGACY_KEYS = ["builder:draft:v1"];
 
+/**
+ * A shop owner can have several landing pages. The first one ("main", the shop's own address) keeps the original storage
+ * keys, so nothing saved before pages existed has to be moved; every other page stores under its own id.
+ */
+export const MAIN_PAGE_ID = "main";
+export const draftKeyFor = (pageId: string = MAIN_PAGE_ID) => (pageId === MAIN_PAGE_ID ? DRAFT_KEY : `${DRAFT_KEY}:${pageId}`);
+export const publishedKeyFor = (pageId: string = MAIN_PAGE_ID) => (pageId === MAIN_PAGE_ID ? PUBLISHED_KEY : `${PUBLISHED_KEY}:${pageId}`);
+
 const RADII: readonly ThemeRadius[] = ["none", "sm", "md", "lg", "xl"];
 const DENSITIES: readonly ThemeDensity[] = ["compact", "comfortable", "spacious"];
 
@@ -85,10 +93,11 @@ export function parseDraft(raw: string | null): Draft | null {
   }
 }
 
-export function loadDraft(): Draft | null {
+export function loadDraft(pageId: string = MAIN_PAGE_ID): Draft | null {
   try {
     for (const k of LEGACY_KEYS) window.localStorage.removeItem(k);
-    return parseDraft(window.localStorage.getItem(DRAFT_KEY)) ?? parseDraft(window.localStorage.getItem(MIGRATE_KEY));
+    const saved = parseDraft(window.localStorage.getItem(draftKeyFor(pageId)));
+    return saved ?? (pageId === MAIN_PAGE_ID ? parseDraft(window.localStorage.getItem(MIGRATE_KEY)) : null);
   } catch {
     return null;
   }
@@ -111,9 +120,9 @@ export function chooseInitialDraft(c: { saved: Draft | null; published: Draft | 
 /** Published version (frontend-only stand-in for site_pages.published_content): written when the shop publishes. */
 export const PUBLISHED_KEY = "builder:published:v1";
 
-export function loadPublished(): Draft | null {
+export function loadPublished(pageId: string = MAIN_PAGE_ID): Draft | null {
   try {
-    return parseDraft(window.localStorage.getItem(PUBLISHED_KEY));
+    return parseDraft(window.localStorage.getItem(publishedKeyFor(pageId)));
   } catch {
     return null;
   }
@@ -122,9 +131,9 @@ export function loadPublished(): Draft | null {
 export type SaveResult = { ok: true } | { ok: false; reason: "quota" | "unavailable" };
 
 /** Publishing copies the draft to the published version. Never throws, like saveDraft. */
-export function savePublished(draft: Draft): SaveResult {
+export function savePublished(draft: Draft, pageId: string = MAIN_PAGE_ID): SaveResult {
   try {
-    window.localStorage.setItem(PUBLISHED_KEY, JSON.stringify(draft));
+    window.localStorage.setItem(publishedKeyFor(pageId), JSON.stringify(draft));
     return { ok: true };
   } catch (e) {
     const quota = e instanceof DOMException && (e.name === "QuotaExceededError" || e.name === "NS_ERROR_DOM_QUOTA_REACHED");
@@ -133,10 +142,10 @@ export function savePublished(draft: Draft): SaveResult {
 }
 
 /** Never throws: a full or blocked localStorage is reported to the UI instead of crashing it. */
-export function saveDraft(draft: Draft): SaveResult {
+export function saveDraft(draft: Draft, pageId: string = MAIN_PAGE_ID): SaveResult {
   try {
-    window.localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
-    window.localStorage.removeItem(MIGRATE_KEY);
+    window.localStorage.setItem(draftKeyFor(pageId), JSON.stringify(draft));
+    if (pageId === MAIN_PAGE_ID) window.localStorage.removeItem(MIGRATE_KEY);
     return { ok: true };
   } catch (e) {
     const quota = e instanceof DOMException && (e.name === "QuotaExceededError" || e.name === "NS_ERROR_DOM_QUOTA_REACHED");

@@ -14,7 +14,8 @@ import type { PageContent, PageTheme, Shop, Workshop } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { SiteChromeContext } from "@/components/sections/chrome-context";
 import { applyTemplate, themeForTemplate, type TemplateKey } from "@/components/sections/templates";
-import { DRAFT_KEY, parseDraft } from "./draft-store";
+import { draftKeyFor, MAIN_PAGE_ID, parseDraft } from "./draft-store";
+import { PAGES_KEY, parsePages, starterFor } from "./pages-store";
 
 type PreviewShop = Pick<Shop, "name" | "defaultLocale" | "enabledLocales" | "timezone" | "currency">;
 
@@ -30,15 +31,27 @@ interface Props {
   siteMessages: Record<string, Record<string, unknown>>;
   /** Template to preview with the current content (in memory only; nothing is saved). */
   previewTemplate?: TemplateKey;
+  /** Which landing page is previewed (default: the main page). */
+  pageId?: string;
 }
 
-export function SitePreview({ shop, initial, workshops, siteMessages, previewTemplate }: Props) {
+export function SitePreview({ shop, initial, workshops, siteMessages, previewTemplate, pageId = MAIN_PAGE_ID }: Props) {
   const t = useTranslations("builder");
   const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
   const [lang, setLang] = useState<Locale>(shop.defaultLocale);
   // Draft written by the builder's autosave (localStorage); falls back to the mock draft.
-  const raw = useSyncExternalStore(subscribe, () => window.localStorage.getItem(DRAFT_KEY), () => null);
-  const stored = useMemo(() => parseDraft(raw) ?? { ...initial }, [raw, initial]);
+  const raw = useSyncExternalStore(subscribe, () => window.localStorage.getItem(draftKeyFor(pageId)), () => null);
+  // A page that was never edited shows the sample content laid out with its own template.
+  // The page list is read the same way (null while hydrating), so the first client render matches the server HTML.
+  const rawPages = useSyncExternalStore(subscribe, () => window.localStorage.getItem(PAGES_KEY), () => null);
+  const stored = useMemo(() => {
+    const saved = parseDraft(raw);
+    if (saved) return saved;
+    if (pageId === MAIN_PAGE_ID) return { ...initial };
+    const page = parsePages(rawPages)?.find((p) => p.id === pageId);
+    return page ? starterFor(initial, page.template) : { ...initial };
+  }, [raw, rawPages, initial, pageId]);
+  const editHref = `/shopowner/site/${pageId}`;
   // "Preview template": the same content, laid out with another template. Never written anywhere.
   const draft = useMemo(
     () => previewTemplate
@@ -57,7 +70,7 @@ export function SitePreview({ shop, initial, workshops, siteMessages, previewTem
     <div className="space-y-4 p-4 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <Link href="/shopowner/site" className={buttonVariants({ variant: "outline" })}><ArrowLeft />{t("previewPage.back")}</Link>
+          <Link href={editHref} className={buttonVariants({ variant: "outline" })}><ArrowLeft />{t("previewPage.back")}</Link>
           <h1 className="text-xl font-semibold tracking-tight">{t("previewPage.title")}</h1>
         </div>
         <div className="flex flex-wrap items-center gap-4">
@@ -96,8 +109,8 @@ export function SitePreview({ shop, initial, workshops, siteMessages, previewTem
             </span>
           </p>
           <div className="flex gap-2">
-            <Link href="/shopowner/site" className={buttonVariants({ variant: "outline" })}>{t("previewPage.templateBack")}</Link>
-            <Link href={`/shopowner/site?apply=${previewTemplate}`} className={buttonVariants()}>{t("previewPage.templateApply")}</Link>
+            <Link href={editHref} className={buttonVariants({ variant: "outline" })}>{t("previewPage.templateBack")}</Link>
+            <Link href={`${editHref}?apply=${previewTemplate}`} className={buttonVariants()}>{t("previewPage.templateApply")}</Link>
           </div>
         </div>
       ) : null}
