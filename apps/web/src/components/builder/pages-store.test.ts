@@ -1,13 +1,19 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MAX_LANDING_PAGES_PER_SHOP } from "@workshop/shared";
 import { sitePage } from "@/lib/mock/data";
 import { DRAFT_KEY, draftKeyFor, MAIN_PAGE_ID, PUBLISHED_KEY, publishedKeyFor } from "./draft-store";
-import { addPage, parsePages, removePage, starterFor, touchPage, type PageMeta } from "./pages-store";
+import { addPage, clearPageContent, DEFAULT_TEMPLATE, LIVE_KEY, loadLivePageId, loadPages, parsePages, removePage, setLivePage, starterFor, touchPage, type PageMeta } from "./pages-store";
 
 const NOW = "2026-11-01T00:00:00.000Z";
-const main: PageMeta = { id: MAIN_PAGE_ID, name: "Clay & Co", slug: "clayco", template: "classic", createdAt: NOW, updatedAt: NOW };
-const ctx = { takenSlugs: ["waxwick"], id: "p-1", now: NOW };
-const input = { name: "Summer promo", slug: "clayco-summer", template: "quicklinks" } as const;
+const main: PageMeta = { id: MAIN_PAGE_ID, name: "Clay & Co", template: "classic", createdAt: NOW, updatedAt: NOW };
+const ctx = { id: "p-1", now: NOW };
+
+function fakeStorage() {
+  const m = new Map<string, string>();
+  return { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => void m.set(k, v), removeItem: (k: string) => void m.delete(k), keys: () => [...m.keys()] };
+}
+let store = fakeStorage();
+beforeEach(() => { store = fakeStorage(); vi.stubGlobal("window", { localStorage: store }); });
 
 describe("storage keys", () => {
   it("the main page keeps the keys used before pages existed", () => {
@@ -22,38 +28,32 @@ describe("storage keys", () => {
   });
 });
 
-describe("addPage", () => {
-  it("adds the second page with a trimmed name and a normalized address", () => {
-    const res = addPage([main], { ...input, name: "  Summer promo ", slug: " Clayco-Summer " }, ctx);
+describe("addPage: only a name is needed", () => {
+  it("adds the second page with a trimmed name and the default template", () => {
+    const res = addPage([main], { name: "  Summer promo " }, ctx);
     expect(res.ok).toBe(true);
     if (!res.ok) return;
     expect(res.pages).toHaveLength(2);
-    expect(res.page).toMatchObject({ id: "p-1", name: "Summer promo", slug: "clayco-summer", template: "quicklinks" });
+    expect(res.page).toMatchObject({ id: "p-1", name: "Summer promo", template: DEFAULT_TEMPLATE });
   });
   it(`never allows more than ${MAX_LANDING_PAGES_PER_SHOP} pages`, () => {
-    const two = addPage([main], input, ctx);
+    const two = addPage([main], { name: "Promo" }, ctx);
     if (!two.ok) throw new Error("second page should be allowed");
-    expect(addPage(two.pages, { ...input, slug: "clayco-other" }, { ...ctx, id: "p-2" })).toEqual({ ok: false, reason: "LIMIT" });
+    expect(addPage(two.pages, { name: "Third" }, { ...ctx, id: "p-2" })).toEqual({ ok: false, reason: "LIMIT" });
   });
-  it("refuses an address used by another shop or by one of this shop's pages", () => {
-    expect(addPage([main], { ...input, slug: "waxwick" }, ctx)).toEqual({ ok: false, reason: "SLUG_TAKEN" });
-    expect(addPage([main], { ...input, slug: "clayco" }, ctx)).toEqual({ ok: false, reason: "SLUG_TAKEN" });
-  });
-  it("refuses a bad name or address and does not change the list", () => {
+  it("refuses an empty or too long name and does not change the list", () => {
     const pages = [main];
-    expect(addPage(pages, { ...input, name: " " }, ctx)).toEqual({ ok: false, reason: "NAME_REQUIRED" });
-    expect(addPage(pages, { ...input, slug: "Bad Slug!" }, ctx)).toEqual({ ok: false, reason: "SLUG_INVALID" });
-    expect(addPage(pages, { ...input, slug: "admin" }, ctx)).toEqual({ ok: false, reason: "SLUG_RESERVED" });
+    expect(addPage(pages, { name: " " }, ctx)).toEqual({ ok: false, reason: "NAME_REQUIRED" });
+    expect(addPage(pages, { name: "x".repeat(61) }, ctx)).toEqual({ ok: false, reason: "NAME_TOO_LONG" });
     expect(pages).toEqual([main]);
   });
 });
 
 describe("removePage", () => {
-  const second: PageMeta = { ...main, id: "p-1", name: "Promo", slug: "clayco-promo" };
+  const second: PageMeta = { ...main, id: "p-1", name: "Promo" };
   it("removes a page that is not the main one, which frees a place", () => {
-    const res = removePage([main, second], "p-1");
-    expect(res).toEqual({ ok: true, pages: [main] });
-    expect(addPage([main], input, ctx).ok).toBe(true);
+    expect(removePage([main, second], "p-1")).toEqual({ ok: true, pages: [main] });
+    expect(addPage([main], { name: "Again" }, ctx).ok).toBe(true);
   });
   it("keeps the main page and ignores unknown ids", () => {
     expect(removePage([main, second], MAIN_PAGE_ID)).toEqual({ ok: false, reason: "main" });
@@ -63,8 +63,9 @@ describe("removePage", () => {
 
 describe("parsePages", () => {
   const raw = (v: unknown) => JSON.stringify(v);
-  it("round-trips a saved list", () => {
+  it("round-trips a saved list and ignores the address that earlier versions stored", () => {
     expect(parsePages(raw([main]))).toEqual([main]);
+    expect(parsePages(raw([{ ...main, slug: "old" }]))).toEqual([main]);
   });
   it("is null for nothing, corrupt JSON or something that is not a list", () => {
     expect(parsePages(null)).toBeNull();
@@ -73,9 +74,52 @@ describe("parsePages", () => {
     expect(parsePages(raw([]))).toBeNull();
   });
   it("drops broken rows and repeated ids, and repairs an unknown template", () => {
-    const pages = parsePages(raw([main, { ...main }, { id: "BAD ID", name: "x", slug: "x" }, { id: "p-2", name: "", slug: "s" }, 5, { id: "p-3", name: "Ok", slug: "ok-page", template: "gone" }]));
+    const pages = parsePages(raw([main, { ...main }, { id: "BAD ID", name: "x" }, { id: "p-2", name: "" }, 5, { id: "p-3", name: "Ok", template: "gone" }]));
     expect(pages?.map((p) => p.id)).toEqual(["main", "p-3"]);
     expect(pages?.[1]?.template).toBe("classic");
+  });
+});
+
+describe("loadPages", () => {
+  it("always has the main page, first", () => {
+    expect(loadPages({ name: "Clay & Co", template: "classic" }, NOW).map((p) => p.id)).toEqual([MAIN_PAGE_ID]);
+    store.setItem("builder:pages:v1", JSON.stringify([{ ...main, id: "p-1", name: "Promo" }]));
+    expect(loadPages({ name: "Clay & Co", template: "classic" }, NOW).map((p) => p.id)).toEqual([MAIN_PAGE_ID, "p-1"]);
+  });
+});
+
+describe("the public page: only one at a time", () => {
+  it("is the main page for a shop that is live, and nothing for a shop that is not", () => {
+    expect(loadLivePageId(true)).toBe(MAIN_PAGE_ID);
+    expect(loadLivePageId(false)).toBeNull();
+  });
+  it("publishing a page makes it the only public one and reports the page it replaced", () => {
+    expect(setLivePage("p-1", true)).toEqual({ ok: true, replaced: [MAIN_PAGE_ID] });
+    expect(loadLivePageId(true)).toBe("p-1");
+    expect(setLivePage(MAIN_PAGE_ID, true)).toEqual({ ok: true, replaced: ["p-1"] });
+    expect(store.getItem(LIVE_KEY)).toBe(MAIN_PAGE_ID);
+  });
+  it("replaces nothing when the page is already public or no page is", () => {
+    setLivePage("p-1", false);
+    expect(setLivePage("p-1", false)).toEqual({ ok: true, replaced: [] });
+    expect(setLivePage("p-1", false).replaced).toEqual([]);
+  });
+  it("reports a failure when storage is blocked", () => {
+    vi.stubGlobal("window", { localStorage: { getItem: () => null, setItem: () => { throw new Error("blocked"); }, removeItem: () => {} } });
+    expect(setLivePage("p-1", false)).toEqual({ ok: false, replaced: [] });
+  });
+  it("deleting the public page leaves no public page, and removes its content", () => {
+    store.setItem(draftKeyFor("p-1"), "d");
+    store.setItem(publishedKeyFor("p-1"), "p");
+    setLivePage("p-1", false);
+    clearPageContent("p-1");
+    expect(store.keys()).toEqual([]);
+    expect(loadLivePageId(false)).toBeNull();
+  });
+  it("deleting another page keeps the public page", () => {
+    setLivePage(MAIN_PAGE_ID, true);
+    clearPageContent("p-1");
+    expect(loadLivePageId(false)).toBe(MAIN_PAGE_ID);
   });
 });
 

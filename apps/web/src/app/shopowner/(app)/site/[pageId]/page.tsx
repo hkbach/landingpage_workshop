@@ -16,7 +16,7 @@ export default async function SiteBuilderPage({ params, searchParams }: PageProp
   return (
     <SiteBuilder
       pageId={pageId}
-      mainPage={{ name: currentShop.name, slug: currentShop.slug, template: sitePage.template }}
+      mainPage={{ name: currentShop.name, template: sitePage.template }}
       shop={{
         name: currentShop.name, defaultLocale: currentShop.defaultLocale, enabledLocales: currentShop.enabledLocales,
         contactEmail: currentShop.contactEmail, contactPhone: currentShop.contactPhone,

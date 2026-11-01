@@ -16,7 +16,8 @@ import { planTemplateSwitch, TEMPLATES, themeForTemplate, type TemplateKey } fro
 import type { PageContent, PageTheme, SectionInstance, Shop } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { loadDraft, saveDraft, type Draft, chooseInitialDraft, loadPublished, savePublished, MAIN_PAGE_ID, type BuilderSource } from "./draft-store";
-import { loadPages, savePages, starterFor, touchPage, type PageMeta } from "./pages-store";
+import { loadLivePageId, loadPages, savePages, setLivePage, starterFor, touchPage, type PageMeta } from "./pages-store";
+import { pagePrerequisites } from "./readiness";
 import { FieldsEditor } from "./FieldsEditor";
 import { PublishPanel, type Prerequisite } from "./PublishPanel";
 import { normalizeOrder } from "@/components/sections/order";
@@ -40,7 +41,7 @@ interface Props {
   /** Which landing page is edited (the shop has up to 2). */
   pageId?: string;
   /** The shop's first page: it exists from the start and is the one published at the shop's own address. */
-  mainPage: { name: string; slug: string; template: TemplateKey };
+  mainPage: { name: string; template: TemplateKey };
   /** Content of the page as the server has it: the published version when `initialSource` is "published", else a template starter. */
   initial: { content: PageContent; theme: PageTheme; template: TemplateKey };
   initialSource?: "published" | "starter";
@@ -95,6 +96,8 @@ function BuilderInner({ shop, initial, initialSource = "starter", initialStatus,
   const [rev, setRev] = useState(0);
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [status, setStatus] = useState<OrgStatus>(initialStatus);
+  // Only one landing page is public at a time: publishing this one takes the current public page offline.
+  const [liveId, setLiveId] = useState<string | null>(() => loadLivePageId(initialSource === "published"));
   const [publishMessage, setPublishMessage] = useState<"published" | "submitted" | null>(null);
   const [activeLang, setLang] = useEditingLanguage(shop.enabledLocales, shop.defaultLocale);
   const [selectedId, setSelectedId] = useState<string>(() => draft.content.sections[0]?.id ?? SEO_ID);
@@ -181,18 +184,10 @@ function BuilderInner({ shop, initial, initialSource = "starter", initialStatus,
     [pendingTemplate, draft.content],
   );
 
-  const prerequisites: Prerequisite[] = useMemo(() => {
-    const hero = sections.find((s) => s.type === "hero" && s.enabled);
-    const heroTitle = (hero?.props.title ?? {}) as Localized;
-    const contact = sections.find((s) => s.type === "contact" && s.enabled);
-    const hasContact = !!(contact && (contact.props.phone || contact.props.email || contact.props.whatsapp)) || !!(shop.contactEmail || shop.contactPhone);
-    return [
-      { key: "identity", met: !!(draft.theme.logoUrl || shop.name) },
-      { key: "hero", met: !!hero && !!heroTitle[shop.defaultLocale]?.trim() },
-      { key: "contact", met: hasContact },
-      { key: "workshop", met: upcomingWorkshopCount > 0 },
-    ];
-  }, [sections, draft.theme.logoUrl, shop, upcomingWorkshopCount]);
+  const prerequisites: Prerequisite[] = useMemo(
+    () => pagePrerequisites(sections, draft.theme, shop, upcomingWorkshopCount),
+    [sections, draft.theme, shop, upcomingWorkshopCount],
+  );
 
   // One source of truth for the publish control: the sticky header and the Publish card follow the same rules.
   const saving = saveState === "pending";
@@ -202,6 +197,8 @@ function BuilderInner({ shop, initial, initialSource = "starter", initialStatus,
     if (saving) return;
     saveDraft(draft, pageId);
     savePublished(draft, pageId); // publishing copies the draft to the published version
+    setLivePage(pageId, initialSource === "published"); // and makes this the one public page
+    setLiveId(pageId);
     setView("published");
     setPublishMessage("published");
   };
@@ -223,6 +220,7 @@ function BuilderInner({ shop, initial, initialSource = "starter", initialStatus,
         <div>
           <p>{t("draftNote")}</p>
           <p data-testid="builder-source" className="mt-1 font-medium">{t(`source.${view}`)}</p>
+          {liveId && liveId !== pageId ? <p data-testid="builder-replaces-live" className="mt-1">{t("pages.replacesLive")}</p> : null}
         </div>
       </div>
 

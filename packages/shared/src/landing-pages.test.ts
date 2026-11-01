@@ -1,34 +1,30 @@
 import { describe, expect, it } from "vitest";
-import { checkNewPage, MAX_LANDING_PAGES_PER_SHOP, normalizeSlug } from "./landing-pages";
+import { checkNewPage, MAX_LANDING_PAGES_PER_SHOP, MAX_LIVE_LANDING_PAGES, replacedByPublish } from "./landing-pages";
 
-const ok = { name: "Summer promo", slug: "clayco-summer", pageCount: 1, takenSlugs: ["clayco", "waxwick"] };
-
-describe("landing page limit", () => {
-  it("is 2 per shop", () => expect(MAX_LANDING_PAGES_PER_SHOP).toBe(2));
-  it("allows a page while below the limit", () => {
-    expect(checkNewPage({ ...ok, pageCount: 0 })).toBe("OK");
-    expect(checkNewPage(ok)).toBe("OK");
+describe("landing page limits", () => {
+  it("is 2 pages per shop and 1 public page at a time", () => {
+    expect(MAX_LANDING_PAGES_PER_SHOP).toBe(2);
+    expect(MAX_LIVE_LANDING_PAGES).toBe(1);
   });
-  it("refuses the third page, whatever else is valid", () => {
-    expect(checkNewPage({ ...ok, pageCount: 2 })).toBe("LIMIT");
-    expect(checkNewPage({ ...ok, pageCount: 5 })).toBe("LIMIT");
+  it("allows a page while below the limit and refuses the third", () => {
+    expect(checkNewPage({ name: "Summer promo", pageCount: 0 })).toBe("OK");
+    expect(checkNewPage({ name: "Summer promo", pageCount: 1 })).toBe("OK");
+    expect(checkNewPage({ name: "Summer promo", pageCount: 2 })).toBe("LIMIT");
+    expect(checkNewPage({ name: "", pageCount: 5 })).toBe("LIMIT");
+  });
+  it("needs a name of at most 60 characters", () => {
+    expect(checkNewPage({ name: "   ", pageCount: 1 })).toBe("NAME_REQUIRED");
+    expect(checkNewPage({ name: "x".repeat(61), pageCount: 1 })).toBe("NAME_TOO_LONG");
+    expect(checkNewPage({ name: " " + "x".repeat(60) + " ", pageCount: 1 })).toBe("OK");
   });
 });
 
-describe("new page fields", () => {
-  it("needs a name of at most 60 characters", () => {
-    expect(checkNewPage({ ...ok, name: "   " })).toBe("NAME_REQUIRED");
-    expect(checkNewPage({ ...ok, name: "x".repeat(61) })).toBe("NAME_TOO_LONG");
-    expect(checkNewPage({ ...ok, name: "x".repeat(60) })).toBe("OK");
+describe("replacedByPublish", () => {
+  it("lists the public pages that go offline when another page is published", () => {
+    expect(replacedByPublish(["main"], "p-1")).toEqual(["main"]);
+    expect(replacedByPublish([], "p-1")).toEqual([]);
   });
-  it("checks the slug format and reserved words", () => {
-    expect(checkNewPage({ ...ok, slug: "a" })).toBe("SLUG_INVALID");
-    expect(checkNewPage({ ...ok, slug: "has space" })).toBe("SLUG_INVALID");
-    expect(checkNewPage({ ...ok, slug: "admin" })).toBe("SLUG_RESERVED");
+  it("is empty when the page is already the public one", () => {
+    expect(replacedByPublish(["p-1"], "p-1")).toEqual([]);
   });
-  it("refuses an address that is already used, ignoring case and spaces", () => {
-    expect(checkNewPage({ ...ok, slug: "waxwick" })).toBe("SLUG_TAKEN");
-    expect(checkNewPage({ ...ok, slug: "  WaxWick " })).toBe("SLUG_TAKEN");
-  });
-  it("normalizes a slug to lower case", () => expect(normalizeSlug("  Clay-Summer ")).toBe("clay-summer"));
 });

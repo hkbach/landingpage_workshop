@@ -17,7 +17,7 @@ Các mục dưới đây là **giả định** để có thể bắt đầu code
 | # | Giả định | Ảnh hưởng nếu đổi |
 |---|---|---|
 | A1 | Khách du lịch **thanh toán tại shop**. MVP không có thanh toán online. | Lớn: thanh toán online cần Stripe Connect (hoặc tương đương), KYC, refund, phí nền tảng |
-| A2 | Mỗi shop có **tối đa 2 landing page** (FR-SITE-07); page đầu tiên (main) dùng địa chỉ của shop | Trung bình: schema đã chuẩn bị cho nhiều page |
+| A2 | Mỗi shop có **tối đa 2 landing page, 1 page public tại một thời điểm** (FR-SITE-07), page public dùng địa chỉ của shop | Trung bình: schema đã chuẩn bị cho nhiều page |
 | A3 | Shop tự đăng ký; **lần publish đầu tiên cần admin duyệt** | Thấp |
 | A4 | Tính phí shop **chưa làm**, chỉ có cột `plan` và giới hạn theo gói trong code | Thấp |
 | A5 | Chỉ có lịch **cố định** (fixed schedule) và **instant booking**. Request booking và lịch linh hoạt để phase sau | Trung bình |
@@ -315,11 +315,13 @@ Browser ────────────────────────
 - Should: rollback về một version trước đó.
 
 **FR-SITE-07 – Danh sách landing page của shop (Should)**
-- `/shopowner/site` là danh sách landing page của shop: tên, template, địa chỉ, trạng thái Published / Not published, ngày sửa; hành động Edit, Preview, Delete. Builder mở tại `/shopowner/site/{pageId}`.
-- **Tối đa 2 landing page / shop** (backend phải kiểm tra, không chỉ UI). Đủ 2 thì nút Create bị khóa kèm thông báo; xóa một page thì tạo lại được.
-- Mỗi page có **địa chỉ (slug) riêng** `{slug}.PLATFORM_DOMAIN`, duy nhất trên toàn nền tảng, theo quy tắc slug và danh sách từ khóa dành riêng. Page đầu tiên (main) dùng slug của shop và không xóa được. Xóa page cần xác nhận, xóa cả bản nháp và bản đã publish.
-- Mỗi page có bản nháp / bản publish và template riêng; page mới bắt đầu từ template owner chọn.
-- MVP frontend: danh sách và nội dung lưu trong localStorage; public site chỉ phục vụ page main bằng dữ liệu mock. Việc phục vụ public cho page thứ 2 chờ backend.
+- `/shopowner/site` là danh sách landing page của shop. Mỗi thẻ có **thumbnail của template đang áp dụng**, tên, trạng thái Published / Not published, template, ngày sửa; hành động Edit, Preview, **Publish**, Delete. Builder mở tại `/shopowner/site/{pageId}`.
+- **Tối đa 2 landing page / shop** và **chỉ 1 landing page public tại một thời điểm** (backend phải kiểm tra, không chỉ UI). Đủ 2 page thì nút Create bị khóa kèm thông báo; xóa một page thì tạo lại được.
+- Tạo mới chỉ cần nhập **Page Name** (1–60 ký tự). Page mới bắt đầu từ template Classic Story, đổi template trong editor.
+- Page đang public được phục vụ ở **địa chỉ của shop** (`{shop-slug}.PLATFORM_DOMAIN`), nên page không có slug riêng.
+- Nút **Publish** ngay trên danh sách, không cần vào editor; áp dụng cùng điều kiện như nút Publish trong editor (FR-SITE-04): shop phải `ACTIVE`, checklist đủ, không có section / màu cần sửa. Publish một page khi đã có page khác đang public thì hiện hộp xác nhận: page kia ngừng public (nội dung được giữ). Editor cũng cảnh báo điều này.
+- Page main (tạo cùng shop) không xóa được. Xóa page cần xác nhận, xóa cả bản nháp và bản đã publish; xóa page đang public thì shop không còn page public cho tới khi publish page khác.
+- MVP frontend: danh sách, nội dung và page đang public lưu trong localStorage; public site chỉ phục vụ dữ liệu mock. Việc phục vụ đúng page đang public chờ backend.
 
 **FR-SITE-05 – Trang public (Must)**
 - URL: `{slug}.{PLATFORM_DOMAIN}/` cho ngôn ngữ mặc định của shop; `/{locale}` cho ngôn ngữ khác (ví dụ `/ko`).
