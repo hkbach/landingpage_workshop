@@ -7,3 +7,4 @@ export * from "./color";
 export * from "./locales";
 export * from "./reports";
 export * from "./landing-pages";
+export * from "./finance";

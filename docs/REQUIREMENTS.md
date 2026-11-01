@@ -424,6 +424,12 @@ Browser ────────────────────────
 - `bookings.payment_status` được **tính lại** từ tổng các payment entry trong cùng transaction: `UNPAID` (0), `PARTIALLY_PAID` (0 < net < total), `PAID` (net ≥ total), `REFUNDED` (có refund và net ≤ 0), `PARTIALLY_REFUNDED` (có refund và 0 < net < tổng đã trả).
 - Không sửa/xóa payment entry; sai thì tạo entry điều chỉnh (refund). Ghi audit.
 
+**FR-PAY-02 – Quản lý thu chi của shop (Could)**
+- Menu `/shopowner/finance` "Income & expenses". Thu = các payment entry của booking (tự động, chỉ đọc); chi hoàn tiền = refund entry (tự động, chỉ đọc). Shop owner tự thêm / sửa / xóa các khoản thu chi khác (type `INCOME | EXPENSE`, category, số tiền bigint minor units > 0, ngày, ghi chú ≤ 200 ký tự). Danh mục thu: Sales, Other income; danh mục chi: Rent, Materials, Salaries, Marketing, Utilities, Equipment, Other expenses.
+- Báo cáo theo kỳ (3 / 6 / 12 tháng gần nhất, tháng tính theo timezone của shop): tổng thu, tổng chi, lãi / lỗ; **biểu đồ cột thu - chi theo tháng kèm đường kết quả ròng** (có bảng số liệu thay thế cho trình đọc màn hình); tỷ trọng chi / thu theo danh mục; bảng các khoản có lọc theo loại và danh mục.
+- Ngày nhập là ngày nghiệp vụ, lưu `occurred_at` lúc 12:00 UTC của ngày đó. Biểu đồ vẽ bằng SVG, không thêm thư viện.
+- MVP frontend: khoản nhập tay lưu trong localStorage; backend cần bảng `finance_entries` (`organization_id`, `type`, `category`, `amount bigint`, `currency`, `occurred_at timestamptz`, `note`, `created_by`), lọc theo `organization_id` và ghi audit khi thêm / sửa / xóa. Chưa phân quyền theo vai trò (nên giới hạn cho OWNER).
+
 **FR-CUST-01 – Khách hàng (Must)**
 - Danh sách customer của shop, chi tiết và lịch sử booking. Tìm theo tên/email.
 - Customer thuộc riêng từng shop; không gộp giữa các shop.
