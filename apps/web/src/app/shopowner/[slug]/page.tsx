@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { getLocale, getTranslations } from "next-intl/server";
 import { CalendarClock, CalendarDays, CheckCircle2, Circle, ClipboardList, Sparkles, Users, Wallet } from "lucide-react";
 import { bookingSeries, entriesFromPayments, TREND_PERIODS, type TrendBucket, type TrendPeriod } from "@workshop/shared";
@@ -7,6 +6,7 @@ import { SubmitForReview } from "@/components/dashboard/shell/submit-for-review"
 import { BookingTrend } from "@/components/dashboard/booking-trend";
 import { LiveSummary } from "@/components/dashboard/live-summary";
 import { SummaryCard } from "@/components/dashboard/summary-card";
+import { ShopLink } from "@/components/dashboard/shell/shop-link";
 import { dayKey } from "@/lib/format";
 import { liveBookings } from "@/lib/mock/booking-store";
 import { bookingHistory, currentShop, customers, mockFinanceEntries, mockLandingPages, sessions, sitePage, workshops } from "@/lib/mock/data";
@@ -77,14 +77,14 @@ export default async function OverviewPage() {
 
       <section aria-label={t("kpiLabel")} className="grid gap-4 sm:grid-cols-3">
         {kpis.map(({ key, value, href, icon: Icon }) => (
-          <Link key={key} href={href} className="rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
+          <ShopLink key={key} href={href} className="rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
             <Card className="h-full transition-colors hover:bg-muted/50">
               <CardHeader>
                 <CardDescription className="flex items-center gap-2"><Icon className="size-4" aria-hidden />{t(`kpi.${key}`)}</CardDescription>
                 <CardTitle className="text-3xl">{value}</CardTitle>
               </CardHeader>
             </Card>
-          </Link>
+          </ShopLink>
         ))}
       </section>
 
@@ -133,7 +133,7 @@ export default async function OverviewPage() {
                   {done ? <CheckCircle2 className="size-4 text-emerald-600" aria-hidden /> : <Circle className="size-4 text-muted-foreground" aria-hidden />}
                   <span className="sr-only">{done ? t("checklist.done") : t("checklist.todo")}:</span>
                   <span className={done ? "text-muted-foreground line-through" : ""}>{t(`checklist.items.${key}`)}</span>
-                  {done ? null : <Link href={CHECKLIST_LINKS[key]} className="ml-auto text-xs underline underline-offset-4">{t("checklist.fix")}</Link>}
+                  {done ? null : <ShopLink href={CHECKLIST_LINKS[key]} className="ml-auto text-xs underline underline-offset-4">{t("checklist.fix")}</ShopLink>}
                 </li>
               ))}
             </ul>

@@ -6,7 +6,7 @@ import { currentShop, mockLandingPages, sessions, sitePage, workshops } from "@/
 import { platformSupport } from "@/lib/mock/platform";
 
 // Frontend-only: mock draft + shop. `?status=DRAFT|PENDING_REVIEW|ACTIVE|SUSPENDED` previews the submit/publish states.
-export default async function SiteBuilderPage({ params, searchParams }: PageProps<"/shopowner/site/[pageId]">) {
+export default async function SiteBuilderPage({ params, searchParams }: PageProps<"/shopowner/[slug]/site/[pageId]">) {
   const { pageId } = await params;
   const sp = await searchParams;
   const requested = typeof sp.status === "string" ? sp.status : undefined;

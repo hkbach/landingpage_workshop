@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState, useSyncExternalStore, type CSSProperties } from "react";
-import Link from "next/link";
 import { NextIntlClientProvider, useTranslations } from "next-intl";
 import { ArrowLeft, Eye, Monitor, Smartphone } from "lucide-react";
 import type { Locale, PromotionRecord } from "@workshop/shared";
@@ -17,6 +16,7 @@ import { SiteChromeContext } from "@/components/sections/chrome-context";
 import { applyTemplate, themeForTemplate, type TemplateKey } from "@/components/sections/templates";
 import { draftKeyFor, MAIN_PAGE_ID, parseDraft } from "./draft-store";
 import { PAGES_KEY, parsePages, starterFor } from "./pages-store";
+import { ShopLink } from "@/components/dashboard/shell/shop-link";
 
 type PreviewShop = Pick<Shop, "name" | "slug" | "defaultLocale" | "enabledLocales" | "timezone" | "currency" | "bookingCutoffMinutes">;
 
@@ -75,7 +75,7 @@ export function SitePreview({ shop, initial, workshops, sessions = [], promotion
     <div className="space-y-4 p-4 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <Link href={editHref} className={buttonVariants({ variant: "outline" })}><ArrowLeft />{t("previewPage.back")}</Link>
+          <ShopLink href={editHref} className={buttonVariants({ variant: "outline" })}><ArrowLeft />{t("previewPage.back")}</ShopLink>
           <h1 className="text-xl font-semibold tracking-tight">{t("previewPage.title")}</h1>
         </div>
         <div className="flex flex-wrap items-center gap-4">
@@ -114,8 +114,8 @@ export function SitePreview({ shop, initial, workshops, sessions = [], promotion
             </span>
           </p>
           <div className="flex gap-2">
-            <Link href={editHref} className={buttonVariants({ variant: "outline" })}>{t("previewPage.templateBack")}</Link>
-            <Link href={`${editHref}?apply=${previewTemplate}`} className={buttonVariants()}>{t("previewPage.templateApply")}</Link>
+            <ShopLink href={editHref} className={buttonVariants({ variant: "outline" })}>{t("previewPage.templateBack")}</ShopLink>
+            <ShopLink href={`${editHref}?apply=${previewTemplate}`} className={buttonVariants()}>{t("previewPage.templateApply")}</ShopLink>
           </div>
         </div>
       ) : null}

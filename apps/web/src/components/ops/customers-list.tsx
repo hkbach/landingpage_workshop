@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { Search } from "lucide-react";
 import { formatMoney } from "@workshop/shared";
@@ -11,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import type { Booking, Customer } from "@/lib/types";
 import { formatDate } from "@/lib/format";
 import { Field } from "./field";
+import { ShopLink } from "@/components/dashboard/shell/shop-link";
 
 /** FR-CUST-01: per-shop customers, search by name / email. */
 export function CustomersList({ customers, bookings, timezone }: { customers: Customer[]; bookings: Booking[]; timezone: string }) {
@@ -63,7 +63,7 @@ export function CustomersList({ customers, bookings, timezone }: { customers: Cu
             <TableBody>
               {rows.map(({ c, count, last, spent, currency }) => (
                 <TableRow key={c.id}>
-                  <TableCell><Link href={`/shopowner/customers/${c.id}`} className="font-medium underline-offset-4 hover:underline">{c.fullName}</Link></TableCell>
+                  <TableCell><ShopLink href={`/shopowner/customers/${c.id}`} className="font-medium underline-offset-4 hover:underline">{c.fullName}</ShopLink></TableCell>
                   <TableCell>{c.email ?? t("common.noEmail")}</TableCell>
                   <TableCell>{c.country}</TableCell>
                   <TableCell>{count}</TableCell>

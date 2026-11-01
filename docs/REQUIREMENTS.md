@@ -154,7 +154,7 @@ Browser ────────────────────────
 
 | Host | Xử lý |
 |---|---|
-| `app.{PLATFORM_DOMAIN}` | Khu vực quản lý của shop owner (`/shopowner/*`; đường dẫn cũ `/dashboard/*` được chuyển hướng sang `/shopowner/*`), system admin (`/systemadmin/*`; đường dẫn cũ `/admin/*` được chuyển hướng sang `/systemadmin/*`), auth (`/login`, `/signup`…) |
+| `app.{PLATFORM_DOMAIN}` | Khu vực quản lý của shop owner (`/shopowner/{slug}/*`, ví dụ `/shopowner/clayco/bookings`; `/shopowner` chuyển hướng tới `/shopowner/{slug}` của shop trong phiên; địa chỉ cũ `/shopowner/bookings` và `/dashboard/*` được chuyển hướng sang địa chỉ có slug; slug khác slug của shop trả 404; `/shopowner/onboarding` là wizard tạo shop nên chưa có slug), system admin (`/systemadmin/*`; đường dẫn cũ `/admin/*` được chuyển hướng sang `/systemadmin/*`), auth (`/login`, `/signup`…) |
 | `{PLATFORM_DOMAIN}` | Trang marketing của nền tảng (đơn giản, tĩnh) |
 | `{slug}.{PLATFORM_DOMAIN}` | Landing page của shop. Next.js middleware/proxy (tùy phiên bản Next.js) rewrite sang `/sites/[slug]/[[...locale]]` |
 | `media.{PLATFORM_DOMAIN}` | R2 public bucket (custom domain của R2) |
@@ -257,15 +257,16 @@ Browser ────────────────────────
 - Rate limit login: 5 lần sai / 15 phút / IP+email.
 
 **FR-ORG-01 – Tạo shop / onboarding (Must)**
-- Sau khi xác minh email, user đi qua wizard: tên shop, **slug** (dùng làm subdomain), quốc gia, timezone (IANA), currency (ISO 4217), ngôn ngữ mặc định, các ngôn ngữ bật thêm, thông tin liên hệ (địa chỉ, phone/WhatsApp, email, Google Maps URL).
-- Slug: `^[a-z0-9](?:[a-z0-9-]{1,30}[a-z0-9])$`, unique toàn hệ thống, chặn danh sách reserved (`app, admin, api, www, mail, media, static, help, support, status, blog, docs, cdn, assets, dashboard, login, signup`).
+- Sau khi xác minh email, user đi qua wizard: tên shop (**slug do hệ thống tự sinh từ tên shop, owner không nhập**; dùng làm subdomain và nằm trong địa chỉ quản lý `/shopowner/{slug}`), quốc gia, timezone (IANA), currency (ISO 4217), ngôn ngữ mặc định, các ngôn ngữ bật thêm, thông tin liên hệ (địa chỉ, phone/WhatsApp, email, Google Maps URL).
+- Slug: `^[a-z0-9](?:[a-z0-9-]{1,30}[a-z0-9])$`, unique toàn hệ thống, chặn danh sách reserved (`app, admin, api, www, mail, media, static, help, support, status, blog, docs, cdn, assets, dashboard, login, signup, shopowner, systemadmin, onboarding`).
+- **Quy tắc sinh slug** (`generateShopSlug`): từ tên shop, chữ thường, bỏ dấu (`đ` thành `d`), mỗi cụm ký tự không phải chữ hoặc số thành một dấu `-`, bỏ `-` ở hai đầu, tối đa 32 ký tự. Tên không còn ký tự dùng được (ví dụ chỉ có chữ Hàn / Nhật / Trung) thành `shop`; tên quá ngắn (dưới 3 ký tự) thêm `-shop` (ví dụ `a-shop`). Slug reserved hoặc đã có shop khác dùng thì thêm `-2`, `-3`… cho tới khi còn trống (vẫn tối đa 32 ký tự). Wizard hiển thị slug đã sinh (địa chỉ landing page và địa chỉ quản lý) ở chế độ chỉ đọc kèm lưu ý không đổi được.
 - Tạo `organizations` (status `DRAFT`) và `organization_members` (role `OWNER`).
 - AC: slug trùng hoặc reserved bị từ chối kèm thông báo rõ ràng.
 
 **FR-ORG-02 – Cài đặt shop (Must)**
 - Sửa thông tin shop, timezone, currency, ngôn ngữ.
 - **Đổi currency hoặc timezone** khi đã có booking: hiển thị cảnh báo; không chuyển đổi dữ liệu cũ.
-- Đổi slug: Should; nếu làm thì lưu slug cũ để redirect 301.
+- **Slug không bao giờ đổi:** sau khi shop được tạo, slug **không thể thay đổi trong suốt quá trình sử dụng hệ thống, kể cả admin** (không có màn hình hay API đổi slug; backend từ chối mọi cập nhật `organizations.slug`, nên cũng không cần redirect slug cũ).
 
 ### 5.2 Landing page builder
 
@@ -386,7 +387,7 @@ Browser ────────────────────────
 - Lỗi hết chỗ: HTTP 409, code `SESSION_FULL`, UI yêu cầu chọn giờ khác.
 - AC: 2 khách tranh chỗ cuối cùng thì chỉ 1 người thành công (có test concurrency).
 
-- **Nút Book trong trang xem trước của builder** (`/shopowner/site/preview`): mở đúng popup đặt chỗ như khách thấy (cùng workshop, session, khuyến mãi); khi gửi chỉ hiện thông báo "Preview … No booking was made" và **không tạo booking** hay chuyển trang.
+- **Nút Book trong trang xem trước của builder** (`/shopowner/{slug}/site/preview`): mở đúng popup đặt chỗ như khách thấy (cùng workshop, session, khuyến mãi); khi gửi chỉ hiện thông báo "Preview … No booking was made" và **không tạo booking** hay chuyển trang.
 
 **FR-BOOK-03 – Trang xác nhận (Must)**
 - Sau khi đặt: hiển thị booking code, workshop, ngày giờ (timezone của shop), số khách, tổng tiền ("Pay at the studio"), địa chỉ + link bản đồ, chính sách đến trễ, thông tin liên hệ shop.
@@ -520,7 +521,7 @@ Browser ────────────────────────
 | ID | Quy tắc |
 |---|---|
 | BR-01 | Dữ liệu nghiệp vụ thuộc đúng một organization; không truy cập chéo tenant. |
-| BR-02 | Slug shop unique toàn hệ thống và không thuộc danh sách reserved. |
+| BR-02 | Slug shop unique toàn hệ thống, không thuộc danh sách reserved và không bao giờ đổi (BR-21). |
 | BR-03 | Không được vượt capacity, kể cả khi có request đồng thời; kiểm tra bằng transaction + row lock. |
 | BR-04 | Backend tính giá; không tin giá/discount/status từ client. |
 | BR-05 | Booking lưu snapshot: `unit_price_amount`, `quantity`, `total_amount`, `currency`, tên workshop, `starts_at`, timezone. Lịch sử không bị tính lại khi workshop đổi giá. |
@@ -539,6 +540,7 @@ Browser ────────────────────────
 | BR-18 | **Đa ngôn ngữ cho text tĩnh:** mọi text và label tĩnh của hệ thống (dashboard, landing page, form đặt chỗ, email, thông báo lỗi...) phải có đủ 5 ngôn ngữ: **tiếng Anh, tiếng Việt, tiếng Hàn, tiếng Nhật và tiếng Trung (giản thể)** trong `messages/<locale>/*.json` (trừ khu vực system admin, xem BR-20), cùng key và cùng tham số ICU. Khi làm form mới hoặc đổi text phải thêm / sửa đủ 5 ngôn ngữ trong cùng một thay đổi; test `messages-parity.test.ts` kiểm tra. **Không áp dụng** cho nội dung động do shop owner tạo (tên workshop, tiêu đề / mô tả khuyến mãi, nội dung trang...). |
 | BR-19 | **Căn hàng field:** các field cùng một hàng (bộ lọc, form) phải ngang hàng: nhãn cùng một dòng và ô nhập cùng một dòng, kể cả khi một field có chú thích bên dưới (ví dụ "Giờ hiển thị theo …"). Component field dùng `content-start` để chú thích không làm giãn các field còn lại. |
 | BR-20 | **Khu vực system admin (`/systemadmin`) chỉ có 2 ngôn ngữ: tiếng Anh và tiếng Việt.** Có nút chọn ngôn ngữ (English / Tiếng Việt) trong thanh bên; cookie ngôn ngữ giao diện là ko / ja / zh thì khu vực này dùng tiếng Anh. Khu vực shop owner và landing page vẫn đủ 5 ngôn ngữ; `messages/{ko,ja,zh}/admin.json` không tồn tại và `messages-parity.test.ts` chỉ yêu cầu `admin.json` cho en và vi. API vẫn là `/api/v1/admin/*`. |
+| BR-21 | **Slug shop:** do hệ thống tự sinh từ tên shop khi đăng ký (FR-ORG-01), unique toàn hệ thống, **không đổi được trong suốt vòng đời shop, kể cả SUPER_ADMIN**. Địa chỉ khu vực quản lý của shop là `/shopowner/{slug}/*`. |
 
 ### 6.1 State machine booking
 
@@ -656,7 +658,7 @@ Quy ước: PK `uuid` (UUIDv7 sinh ở app nếu có, không thì `gen_random_uu
 
 **user_tokens**: `id`, `user_id`, `type` (`EMAIL_VERIFY|PASSWORD_RESET`), `token_hash` (unique), `expires_at`, `used_at`.
 
-**organizations**: `id`, `name`, `slug` (unique), `status` (`DRAFT|PENDING_REVIEW|ACTIVE|SUSPENDED`), `status_reason`, `country`, `timezone`, `currency`, `default_locale`, `enabled_locales text[]`, `plan` (`FREE` mặc định), `contact_email`, `contact_phone`, `whatsapp`, `address`, `maps_url`, `booking_cutoff_minutes` (mặc định 120), `approved_at`, `approved_by`.
+**organizations**: `id`, `name`, `slug` (unique, **bất biến**: trigger / API từ chối mọi cập nhật, kể cả admin), `status` (`DRAFT|PENDING_REVIEW|ACTIVE|SUSPENDED`), `status_reason`, `country`, `timezone`, `currency`, `default_locale`, `enabled_locales text[]`, `plan` (`FREE` mặc định), `contact_email`, `contact_phone`, `whatsapp`, `address`, `maps_url`, `booking_cutoff_minutes` (mặc định 120), `approved_at`, `approved_by`.
 
 **organization_members**: `organization_id`, `user_id`, `role` (`OWNER`), `status`. PK `(organization_id, user_id)`.
 
@@ -975,7 +977,7 @@ Mỗi milestone: code → test → `pnpm lint && pnpm typecheck && pnpm test` pa
 | Q7 | RPO/RTO chính thức? | Backup daily, giữ 14 bản |
 | Q8 | Có cần request booking / lịch linh hoạt ở phase 2 không? | Phase 2 |
 | Q9 | Email nhắc lịch 24h có bắt buộc ở MVP? | Should |
-| Q10 | Shop có được đổi slug sau khi publish? | Should, kèm redirect 301 |
+| Q10 | Shop có được đổi slug sau khi publish? | **Không** (đã chốt): slug do hệ thống sinh và không đổi, kể cả admin |
 
 ---
 

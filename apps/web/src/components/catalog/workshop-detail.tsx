@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { ArrowLeft } from "lucide-react";
 import { pickLocalized, type WorkshopStatus } from "@workshop/shared";
@@ -12,6 +11,7 @@ import type { ScheduleRule } from "@/lib/mock/ops";
 import { ScheduleRulesEditor } from "./schedule-rules-editor";
 import { WorkshopForm, type ShopForCatalog } from "./workshop-form";
 import { WorkshopStatusBadge } from "./workshop-status-badge";
+import { ShopLink } from "@/components/dashboard/shell/shop-link";
 
 /** Workshop detail: details form (FR-WS-01) + schedule rules (FR-SCHED-01). */
 export function WorkshopDetail({
@@ -22,10 +22,10 @@ export function WorkshopDetail({
   const [status, setStatus] = useState<WorkshopStatus>(workshop.status);
   return (
     <div className="grid gap-4">
-      <Link href="/shopowner/workshops" className="inline-flex items-center gap-1 text-sm text-muted-foreground underline-offset-4 hover:underline">
+      <ShopLink href="/shopowner/workshops" className="inline-flex items-center gap-1 text-sm text-muted-foreground underline-offset-4 hover:underline">
         <ArrowLeft className="size-4" aria-hidden="true" />
         {t("list.title")}
-      </Link>
+      </ShopLink>
       <header className="flex flex-wrap items-center gap-2">
         <h1 className="text-xl font-semibold sm:text-2xl">{pickLocalized(workshop.title, displayLocale, shop.defaultLocale)}</h1>
         <WorkshopStatusBadge status={status} />

@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { CheckCheck, Clock, Users } from "lucide-react";
 import { formatMoney, pickLocalized, resolveShopLocale, type Locale } from "@workshop/shared";
@@ -14,6 +13,7 @@ import { CapacityBar } from "./capacity-bar";
 import { BookingStatusBadge, PaymentStatusBadge, SessionStatusBadge } from "./status-badges";
 import { formatDayKey } from "./time";
 import { useOpsState } from "./use-ops-state";
+import { ShopLink } from "@/components/dashboard/shell/shop-link";
 
 export interface ShopCtx { timezone: string; currency: string; defaultLocale: Locale; enabledLocales: Locale[]; ownerName: string }
 
@@ -83,12 +83,12 @@ export function TodayView({
                   <CheckCheck aria-hidden="true" />
                   {t("today.completeAll", { count: checkedIn.length })}
                 </Button>
-                <Link
+                <ShopLink
                   href={`/shopowner/bookings/new?session=${s.id}`}
                   className="inline-flex h-7 items-center rounded-lg border border-border px-2.5 text-[0.8rem] font-medium hover:bg-muted"
                 >
                   {t("today.addWalkIn")}
-                </Link>
+                </ShopLink>
               </div>
             </CardHeader>
             <CardContent className="grid gap-3">
@@ -102,9 +102,9 @@ export function TodayView({
                     <li key={b.id} className={`grid gap-2 rounded-lg border p-3 ${inactive ? "bg-muted/40" : ""}`}>
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <div className="min-w-0">
-                          <Link href={`/shopowner/bookings/${b.id}`} className="font-medium underline-offset-4 hover:underline">
+                          <ShopLink href={`/shopowner/bookings/${b.id}`} className="font-medium underline-offset-4 hover:underline">
                             {c?.fullName ?? "-"}
-                          </Link>
+                          </ShopLink>
                           <p className="flex flex-wrap items-center gap-x-3 text-xs text-muted-foreground">
                             <span className="font-mono">{b.bookingCode}</span>
                             <span className="inline-flex items-center gap-1"><Users className="size-3" aria-hidden="true" />{t("common.guests", { count: b.quantity })}</span>

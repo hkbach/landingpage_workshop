@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { z } from "zod";
 import { Archive, ImageOff, Plus, Trash2, TriangleAlert } from "lucide-react";
@@ -21,6 +20,7 @@ import type { Workshop } from "@/lib/types";
 import { LanguageBar } from "@/components/language/LanguageBar";
 import { useEditingLanguage } from "@/lib/use-shop-language";
 import { useDirty } from "@/lib/use-dirty";
+import { ShopLink } from "@/components/dashboard/shell/shop-link";
 
 /** Upper bound for capacity until PLAN_LIMITS is wired to the plan (FR-WS-01: 1-50). */
 export const MAX_CAPACITY = 50;
@@ -254,7 +254,7 @@ export function WorkshopForm({
 
       <div className="flex flex-wrap items-center gap-2">
         <Button type="submit" disabled={!dirty}>{t("form.save")}</Button>
-        <Link href="/shopowner/workshops" className={buttonVariants({ variant: "outline" })}>{t("form.back")}</Link>
+        <ShopLink href="/shopowner/workshops" className={buttonVariants({ variant: "outline" })}>{t("form.back")}</ShopLink>
         {workshop && d.status !== "ARCHIVED" ? (
           <Button type="button" variant="destructive" onClick={() => setArchiveOpen(true)}>
             <Archive aria-hidden="true" />

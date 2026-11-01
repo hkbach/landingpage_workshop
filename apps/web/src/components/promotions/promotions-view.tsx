@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useDirty } from "@/lib/use-dirty";
-import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
 import { ImageIcon, OctagonX, Pause, Pencil, Play, Plus, RefreshCw, Trash2, TriangleAlert } from "lucide-react";
@@ -28,6 +27,7 @@ import { parseAmount } from "@/components/finance/finance-store";
 import { useEditingLanguage } from "@/lib/use-shop-language";
 import { PromotionApiError, deletePromotionRequest, fetchPromotions, savePromotionRequest, setPromotionEnabledRequest } from "@/lib/promotions-api";
 import { cn } from "@/lib/utils";
+import { ShopLink } from "@/components/dashboard/shell/shop-link";
 
 export interface PromotionShop { defaultLocale: Locale; enabledLocales: Locale[]; currency: string }
 export interface PromotionWorkshop { id: string; title: Localized; priceAmount: number }
@@ -166,7 +166,7 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
           <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
           <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
           <p className="text-sm text-muted-foreground">
-            {t("landingNote")} <Link href="/shopowner/site" className="underline underline-offset-4">{t("landingLink")}</Link>
+            {t("landingNote")} <ShopLink href="/shopowner/site" className="underline underline-offset-4">{t("landingLink")}</ShopLink>
           </p>
         </div>
         <div className="grid justify-items-end gap-1">

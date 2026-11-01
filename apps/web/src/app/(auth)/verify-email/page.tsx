@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { CheckCircle2, XCircle } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
+import { ShopLink } from "@/components/dashboard/shell/shop-link";
 
 // Mock: the real page will verify the one-time token server-side. `?state=expired` simulates an expired/used link.
 export default async function VerifyEmailPage({ searchParams }: PageProps<"/verify-email">) {
@@ -17,7 +18,7 @@ export default async function VerifyEmailPage({ searchParams }: PageProps<"/veri
       {expired ? (
         <Link href="/signup" className={buttonVariants({ size: "lg" })}>{t("signupAgain")}</Link>
       ) : (
-        <Link href="/shopowner/onboarding" className={buttonVariants({ size: "lg" })}>{t("continue")}</Link>
+        <ShopLink href="/shopowner/onboarding" className={buttonVariants({ size: "lg" })}>{t("continue")}</ShopLink>
       )}
     </div>
   );

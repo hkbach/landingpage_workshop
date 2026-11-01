@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState, useSyncExternalStore, type FormEvent } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { ExternalLink, Globe, Pencil, Plus, Trash2 } from "lucide-react";
@@ -21,6 +20,7 @@ import { publishAction, type PublishAction } from "./publish-state";
 import { invalidSectionCount, pagePrerequisites, themeIsInvalid, type ReadinessShop } from "./readiness";
 import { LayoutWireframe } from "./TemplatePicker";
 import { useDirty } from "@/lib/use-dirty";
+import { ShopLink, useShopHref } from "@/components/dashboard/shell/shop-link";
 
 interface Props {
   mainPage: { name: string; template: TemplateKey; seed?: { id: string; name: string; template: TemplateKey }[] };
@@ -50,6 +50,7 @@ function ListInner({ mainPage, shopHost, shop, shopStatus, upcomingWorkshopCount
   const tn = useTranslations("builder");
   const locale = useLocale();
   const router = useRouter();
+  const toShop = useShopHref();
   const mainLive = shopStatus === "ACTIVE";
   const [pages, setPages] = useState<PageMeta[]>(() => loadPages(mainPage));
   const [liveId, setLiveId] = useState<string | null>(() => loadLivePageId(mainLive));
@@ -150,12 +151,12 @@ function ListInner({ mainPage, shopHost, shop, shopStatus, upcomingWorkshopCount
                   </div>
                   <div className="grid gap-2">
                     <div className="flex flex-wrap gap-2">
-                      <Link href={`/shopowner/site/${p.id}`} className={buttonVariants({ variant: "outline" })}>
+                      <ShopLink href={`/shopowner/site/${p.id}`} className={buttonVariants({ variant: "outline" })}>
                         <Pencil aria-hidden />{t("edit")}<span className="sr-only">: {p.name}</span>
-                      </Link>
-                      <Link href={`/shopowner/site/preview?page=${p.id}`} className={buttonVariants({ variant: "outline" })}>
+                      </ShopLink>
+                      <ShopLink href={`/shopowner/site/preview?page=${p.id}`} className={buttonVariants({ variant: "outline" })}>
                         <ExternalLink aria-hidden />{t("preview")}<span className="sr-only">: {p.name}</span>
-                      </Link>
+                      </ShopLink>
                       {live ? (
                         <Button disabled><Globe aria-hidden />{t("isPublic")}<span className="sr-only">: {p.name}</span></Button>
                       ) : (
@@ -187,7 +188,7 @@ function ListInner({ mainPage, shopHost, shop, shopStatus, upcomingWorkshopCount
           const res = addPage(pages, { name }, { id: newPageId(), now: new Date().toISOString() });
           if (!res.ok) return res.reason;
           if (!commit(res.pages)) return "SAVE";
-          router.push(`/shopowner/site/${res.page.id}`);
+          router.push(toShop(`/shopowner/site/${res.page.id}`));
           return "OK";
         }}
       />

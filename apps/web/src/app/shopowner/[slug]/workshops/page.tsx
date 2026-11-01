@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Plus, Tag } from "lucide-react";
 import { formatMoney, pickLocalized, resolveShopLocale, workshopPromotions, type Locale } from "@workshop/shared";
@@ -8,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { WorkshopStatusBadge } from "@/components/catalog/workshop-status-badge";
 import { currentShop, workshops } from "@/lib/mock/data";
 import { allPromotions, shopToday } from "@/lib/mock/promotion-store";
+import { ShopLink } from "@/components/dashboard/shell/shop-link";
 
 export default async function WorkshopsPage() {
   const t = await getTranslations("catalog");
@@ -26,14 +26,14 @@ export default async function WorkshopsPage() {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-xl font-semibold sm:text-2xl">{t("list.title")}</h1>
         <div className="flex flex-wrap items-center gap-2">
-          <Link href="/shopowner/promotions" className={buttonVariants({ variant: "outline" })}>
+          <ShopLink href="/shopowner/promotions" className={buttonVariants({ variant: "outline" })}>
             <Tag aria-hidden="true" />
             {t("list.managePromotions")}
-          </Link>
-          <Link href="/shopowner/workshops/new" className={buttonVariants()}>
+          </ShopLink>
+          <ShopLink href="/shopowner/workshops/new" className={buttonVariants()}>
             <Plus aria-hidden="true" />
             {t("list.new")}
-          </Link>
+          </ShopLink>
         </div>
       </div>
       {rows.length === 0 ? (
@@ -59,9 +59,9 @@ export default async function WorkshopsPage() {
                 return (
                   <TableRow key={w.id}>
                     <TableCell>
-                      <Link href={`/shopowner/workshops/${w.id}`} className="font-medium underline-offset-4 hover:underline">
+                      <ShopLink href={`/shopowner/workshops/${w.id}`} className="font-medium underline-offset-4 hover:underline">
                         {pickLocalized(w.title, displayLocale, currentShop.defaultLocale)}
-                      </Link>
+                      </ShopLink>
                     </TableCell>
                     <TableCell><WorkshopStatusBadge status={w.status} /></TableCell>
                     <TableCell>{formatMoney(w.priceAmount, w.currency, locale)}</TableCell>

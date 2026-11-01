@@ -1,9 +1,13 @@
-import type { ReactNode } from "react";
+
+import { notFound } from "next/navigation";
 import { currentShop } from "@/lib/mock/data";
 import { DashboardShell } from "@/components/dashboard/shell/dashboard-shell";
 import { ShopStatusBanner } from "@/components/dashboard/shell/shop-status-banner";
 
-export default function DashboardLayout({ children }: { children: ReactNode }) {
+// The slug in /shopowner/{slug}/... is the slug of the shop and never changes. TODO(api): the shop of the session's organization.
+export default async function DashboardLayout({ children, params }: LayoutProps<"/shopowner/[slug]">) {
+  const { slug } = await params;
+  if (slug !== currentShop.slug) notFound();
   const shop = currentShop;
   return (
     <DashboardShell

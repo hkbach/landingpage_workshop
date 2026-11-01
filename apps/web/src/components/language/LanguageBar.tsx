@@ -1,11 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Languages, Settings, TriangleAlert } from "lucide-react";
 import { LOCALES, type Locale } from "@workshop/shared";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { ShopLink } from "@/components/dashboard/shell/shop-link";
 
 /**
  * Language selector above the Sections list. It chooses the language of every text field in the editor: only the
@@ -28,9 +28,9 @@ export function LanguageBar({ value, onChange, enabled, defaultLocale, missingBy
         <p id="language-bar-label" className="flex items-center gap-1.5 text-sm font-medium">
           <Languages className="size-4" aria-hidden />{t("language.barTitle")}
         </p>
-        <Link href="/shopowner/settings#languages" className={cn(buttonVariants({ variant: "outline" }), "h-9 gap-2 px-3.5 text-sm font-medium")}>
+        <ShopLink href="/shopowner/settings#languages" className={cn(buttonVariants({ variant: "outline" }), "h-9 gap-2 px-3.5 text-sm font-medium")}>
           <Settings className="size-4" aria-hidden />{t("language.manage")}
-        </Link>
+        </ShopLink>
       </div>
       <div role="radiogroup" aria-labelledby="language-bar-label" className="mt-2 flex flex-wrap gap-2">
         {offered.map((l) => {

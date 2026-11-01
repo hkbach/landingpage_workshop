@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Menu, X } from "lucide-react";
@@ -13,6 +12,7 @@ import { LocaleSwitcher } from "./locale-switcher";
 import { NAV_ITEMS } from "./nav";
 import { statusBadgeVariant } from "./options";
 import { UserMenu } from "./user-menu";
+import { ShopLink, useShopHref } from "@/components/dashboard/shell/shop-link";
 
 export interface ShellShop {
   name: string; slug: string; status: OrgStatus; ownerName: string; ownerEmail: string;
@@ -30,7 +30,11 @@ export function DashboardShell({ shop, banner, children }: { shop: ShellShop; ba
     return () => document.removeEventListener("keydown", onKey);
   }, [open]);
 
-  const isActive = (href: string) => (href === "/shopowner" ? pathname === href : pathname.startsWith(href));
+  const toShop = useShopHref();
+  const isActive = (href: string) => {
+    const full = toShop(href);
+    return href === "/shopowner" ? pathname === full : pathname.startsWith(full);
+  };
 
   return (
     <div className="flex min-h-screen bg-muted/30">
@@ -48,9 +52,9 @@ export function DashboardShell({ shop, banner, children }: { shop: ShellShop; ba
         )}
       >
         <div className="flex h-14 items-center justify-between border-b px-4">
-          <Link href="/shopowner" className="truncate font-semibold" onClick={() => setOpen(false)}>
+          <ShopLink href="/shopowner" className="truncate font-semibold" onClick={() => setOpen(false)}>
             {t("common.appName")}
-          </Link>
+          </ShopLink>
           <Button variant="ghost" size="icon" className="md:hidden" aria-label={t("dashboard.shell.closeMenu")} onClick={() => setOpen(false)}>
             <X aria-hidden />
           </Button>
@@ -61,7 +65,7 @@ export function DashboardShell({ shop, banner, children }: { shop: ShellShop; ba
               const active = isActive(href);
               return (
                 <li key={href}>
-                  <Link
+                  <ShopLink
                     href={href}
                     aria-current={active ? "page" : undefined}
                     onClick={() => setOpen(false)}
@@ -72,7 +76,7 @@ export function DashboardShell({ shop, banner, children }: { shop: ShellShop; ba
                   >
                     <Icon className="size-4 shrink-0" aria-hidden />
                     {t(`dashboard.shell.nav.${key}`)}
-                  </Link>
+                  </ShopLink>
                 </li>
               );
             })}

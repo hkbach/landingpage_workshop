@@ -48,7 +48,7 @@ export function ReviewQueue({ initial }: { initial: Shop[] }) {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <Link
-                      href={previewHref()}
+                      href={previewHref(shop.slug)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className={buttonVariants({ variant: "outline", size: "sm" })}

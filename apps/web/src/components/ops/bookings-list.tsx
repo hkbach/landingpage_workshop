@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { Plus, Search } from "lucide-react";
 import { BOOKING_STATUSES, formatMoney, pickLocalized, resolveShopLocale, type BookingStatus, type Locale } from "@workshop/shared";
@@ -14,6 +13,7 @@ import { dayKey, formatDateTime } from "@/lib/format";
 import { Field } from "./field";
 import { NativeSelect } from "./native-select";
 import { BookingStatusBadge, PaymentStatusBadge } from "./status-badges";
+import { ShopLink } from "@/components/dashboard/shell/shop-link";
 
 /** FR-OPS-01: filter by date / session / status, search by code, name, email. */
 export function BookingsList({
@@ -57,10 +57,10 @@ export function BookingsList({
     <div className="grid gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-xl font-semibold sm:text-2xl">{t("bookings.title")}</h1>
-        <Link href="/shopowner/bookings/new" className={buttonVariants()}>
+        <ShopLink href="/shopowner/bookings/new" className={buttonVariants()}>
           <Plus aria-hidden="true" />
           {t("bookings.new")}
-        </Link>
+        </ShopLink>
       </div>
 
       <Card>
@@ -127,7 +127,7 @@ export function BookingsList({
                 return (
                   <TableRow key={b.id}>
                     <TableCell>
-                      <Link href={`/shopowner/bookings/${b.id}`} className="font-mono font-medium underline-offset-4 hover:underline">{b.bookingCode}</Link>
+                      <ShopLink href={`/shopowner/bookings/${b.id}`} className="font-mono font-medium underline-offset-4 hover:underline">{b.bookingCode}</ShopLink>
                     </TableCell>
                     <TableCell>
                       <div className="font-medium">{c?.fullName ?? "-"}</div>

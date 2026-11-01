@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { ShopLink } from "@/components/dashboard/shell/shop-link";
 import type { LucideIcon } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 
@@ -8,7 +8,7 @@ export interface SummaryRow { label: string; value: string; /** Tone of the valu
 export function SummaryCard({ href, icon: Icon, title, rows, linkLabel }: { href: string; icon: LucideIcon; title: string; rows: SummaryRow[]; linkLabel: string }) {
   return (
     <li>
-      <Link href={href} aria-label={`${title}: ${linkLabel}`} className="block h-full rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
+      <ShopLink href={href} aria-label={`${title}: ${linkLabel}`} className="block h-full rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
         <Card className="h-full transition-colors hover:bg-muted/50">
           <CardHeader>
             <CardDescription className="flex items-center gap-2 font-medium text-foreground"><Icon className="size-4" aria-hidden />{title}</CardDescription>
@@ -24,7 +24,7 @@ export function SummaryCard({ href, icon: Icon, title, rows, linkLabel }: { href
             </dl>
           </CardContent>
         </Card>
-      </Link>
+      </ShopLink>
     </li>
   );
 }

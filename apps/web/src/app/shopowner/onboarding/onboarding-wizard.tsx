@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
-import { CheckCircle2, Loader2, XCircle } from "lucide-react";
-import { LOCALES, checkSlugFormat, type Locale } from "@workshop/shared";
+import { CheckCircle2 } from "lucide-react";
+import { LOCALES, checkSlugFormat, generateShopSlug, type Locale } from "@workshop/shared";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -56,15 +56,9 @@ const COUNTRY_DEFAULTS: Record<string, { timezone: string; currency: string }> =
   US: { timezone: "America/New_York", currency: "USD" },
 };
 
-// Mock "already taken" slugs for the fake availability check.
+// Mock "already taken" slugs: the real check is the uniqueness of the slug in the whole system (FR-ORG-01).
 const TAKEN_SLUGS = ["clayco", "waxwick", "silverthread", "demo", "studio"];
-
-type SlugState = { slug: string; taken: boolean } | null;
-
-function slugify(name: string): string {
-  return name.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d")
-    .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 32).replace(/-+$/g, "");
-}
+const isTaken = (slug: string) => TAKEN_SLUGS.includes(slug);
 
 export function OnboardingWizard({ platformDomain }: { platformDomain: string }) {
   const t = useTranslations("dashboard.onboarding");
@@ -72,9 +66,6 @@ export function OnboardingWizard({ platformDomain }: { platformDomain: string })
   const uiLocale = useLocale();
   const [step, setStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
-  const [slugState, setSlugState] = useState<SlugState>(null);
-  const [slugTouched, setSlugTouched] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
 
   const form = useForm<Values>({
@@ -86,16 +77,13 @@ export function OnboardingWizard({ platformDomain }: { platformDomain: string })
     },
   });
   const { register, handleSubmit, control, setValue, trigger, getValues, formState: { errors, isSubmitting } } = form;
-  // What is typed may have spaces at either end; everything below works on the trimmed slug.
-  const slug = useWatch({ control, name: "slug" }).trim();
+  const slug = useWatch({ control, name: "slug" });
   const defaultLocale = useWatch({ control, name: "defaultLocale" });
   const enabled = useWatch({ control, name: "enabledLocales" });
 
-  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
   useEffect(() => { headingRef.current?.focus(); }, [step]);
 
   const nameReg = register("name");
-  const slugReg = register("slug");
   const countryName = new Intl.DisplayNames([uiLocale], { type: "region" });
   const err = (k: keyof Values) => {
     const m = errors[k]?.message;
@@ -105,18 +93,9 @@ export function OnboardingWizard({ platformDomain }: { platformDomain: string })
     id, "aria-invalid": !!errors[k], "aria-describedby": describedBy(id, { error: !!errors[k], hint }),
   });
 
-  // Slug availability: derived. "checking" until the fake lookup for the current slug has resolved.
-  const slugFormat = checkSlugFormat(slug);
-  const slugStatus: "idle" | "checking" | "available" | "taken" =
-    slug === "" || slugFormat !== "OK" ? "idle" : slugState?.slug === slug ? (slugState.taken ? "taken" : "available") : "checking";
-
-  function applySlug(next: string) {
-    setValue("slug", next, { shouldValidate: true, shouldDirty: true });
-    if (timer.current) clearTimeout(timer.current);
-    const clean = next.trim();
-    if (checkSlugFormat(clean) === "OK") {
-      timer.current = setTimeout(() => setSlugState({ slug: clean, taken: TAKEN_SLUGS.includes(clean) }), 600);
-    }
+  // The slug is made by the system from the shop name: the owner cannot type or change it (not even an admin later).
+  function applyName(name: string) {
+    setValue("slug", name.trim() === "" ? "" : generateShopSlug(name, isTaken), { shouldValidate: true, shouldDirty: true });
   }
 
   function toggleLocale(l: Locale, on: boolean) {
@@ -127,7 +106,6 @@ export function OnboardingWizard({ platformDomain }: { platformDomain: string })
   async function next() {
     const ok = await trigger(STEP_FIELDS[step]);
     if (!ok) return;
-    if (step === 0 && slugStatus !== "available") return;
     setStep((s) => Math.min(s + 1, STEPS.length - 1));
   }
 
@@ -139,7 +117,7 @@ export function OnboardingWizard({ platformDomain }: { platformDomain: string })
           <CardDescription>{t("done.body", { host: `${getValues("slug").trim()}.${platformDomain}` })}</CardDescription>
         </CardHeader>
         <CardContent>
-          <Link href="/shopowner" className={buttonVariants()}>{t("done.cta")}</Link>
+          <Link href={`/shopowner/${getValues("slug")}`} className={buttonVariants()}>{t("done.cta")}</Link>
         </CardContent>
       </Card>
     );
@@ -196,25 +174,19 @@ export function OnboardingWizard({ platformDomain }: { platformDomain: string })
             <>
               <Field htmlFor="o-name" label={t("fields.name")} error={err("name")}>
                 <Input autoComplete="organization" {...common("o-name", "name")} {...nameReg}
-                  onChange={(e) => { void nameReg.onChange(e); if (!slugTouched) applySlug(slugify(e.target.value)); }} />
-              </Field>
-              <Field htmlFor="o-slug" label={t("fields.slug")} hint={t("hints.slug")} error={err("slug")}>
-                <Input
-                  autoComplete="off" autoCapitalize="none" spellCheck={false}
-                  {...common("o-slug", "slug", true)}
-                  {...slugReg}
-                  onChange={(e) => { void slugReg.onChange(e); setSlugTouched(true); applySlug(e.target.value.toLowerCase()); }}
-                />
+                  onChange={(e) => { void nameReg.onChange(e); applyName(e.target.value); }} />
               </Field>
               {slug ? (
-                <div className="grid gap-1 text-sm" aria-live="polite">
+                <div className="grid gap-1 rounded-lg bg-muted/50 p-3 text-sm" data-testid="slug-box" aria-live="polite">
                   <p>
                     <span className="text-muted-foreground">{t("slugPreview")}</span>{" "}
                     <span className="font-mono">{slug}.{platformDomain}</span>
                   </p>
-                  {slugStatus === "checking" ? <p className="flex items-center gap-1.5 text-muted-foreground"><Loader2 className="size-4 animate-spin" aria-hidden />{t("slug.checking")}</p> : null}
-                  {slugStatus === "available" ? <p className="flex items-center gap-1.5 text-emerald-700"><CheckCircle2 className="size-4" aria-hidden />{t("slug.available")}</p> : null}
-                  {slugStatus === "taken" ? <p role="alert" className="flex items-center gap-1.5 text-destructive"><XCircle className="size-4" aria-hidden />{t("slug.taken")}</p> : null}
+                  <p>
+                    <span className="text-muted-foreground">{t("slug.dashboard")}</span>{" "}
+                    <span className="font-mono">/shopowner/{slug}</span>
+                  </p>
+                  <p className="text-xs text-muted-foreground">{t("slug.fixed")}</p>
                 </div>
               ) : null}
             </>
@@ -311,7 +283,7 @@ export function OnboardingWizard({ platformDomain }: { platformDomain: string })
           {tc("back")}
         </Button>
         {step < STEPS.length - 1 ? (
-          <Button type="button" onClick={next} disabled={step === 0 && (slugStatus === "checking" || slugStatus === "taken")}>{tc("next")}</Button>
+          <Button type="button" onClick={next} disabled={step === 0 && slug === ""}>{tc("next")}</Button>
         ) : (
           <Button type="submit" disabled={isSubmitting}>{isSubmitting ? t("creating") : t("create")}</Button>
         )}

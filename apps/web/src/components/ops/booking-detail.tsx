@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowLeft } from "lucide-react";
 import { formatMoney, type BookingStatus, type Locale } from "@workshop/shared";
@@ -13,6 +12,7 @@ import { netPaid } from "@/lib/booking-state";
 import { BookingActions } from "./booking-actions";
 import { BookingStatusBadge, PaymentStatusBadge } from "./status-badges";
 import { useOpsState, type BookingEvent } from "./use-ops-state";
+import { ShopLink } from "@/components/dashboard/shell/shop-link";
 
 /** Statuses already passed when the booking was loaded (mock data has no history; times unknown). */
 function initialTrail(status: BookingStatus, createdAt: string): BookingEvent[] {
@@ -40,10 +40,10 @@ export function BookingDetail({
   return (
     <div className="grid gap-4">
       <div>
-        <Link href="/shopowner/bookings" className="inline-flex items-center gap-1 text-sm text-muted-foreground underline-offset-4 hover:underline">
+        <ShopLink href="/shopowner/bookings" className="inline-flex items-center gap-1 text-sm text-muted-foreground underline-offset-4 hover:underline">
           <ArrowLeft className="size-4" aria-hidden="true" />
           {t("bookings.title")}
-        </Link>
+        </ShopLink>
       </div>
       <header className="flex flex-wrap items-center gap-2">
         <h1 className="font-mono text-xl font-semibold sm:text-2xl">{b.bookingCode}</h1>
@@ -88,7 +88,7 @@ export function BookingDetail({
             {customer ? (
               <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
                 <Row label={t("customers.name")}>
-                  <Link href={`/shopowner/customers/${customer.id}`} className="font-medium underline-offset-4 hover:underline">{customer.fullName}</Link>
+                  <ShopLink href={`/shopowner/customers/${customer.id}`} className="font-medium underline-offset-4 hover:underline">{customer.fullName}</ShopLink>
                 </Row>
                 <Row label={t("customers.email")}>{customer.email ?? t("common.noEmail")}</Row>
                 <Row label={t("customers.phone")}>{customer.phone ?? "-"}</Row>

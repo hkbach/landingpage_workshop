@@ -1,7 +1,6 @@
 "use client";
 
 import type { CSSProperties, ReactNode } from "react";
-import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Check, Eye } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
@@ -9,6 +8,7 @@ import type { LayoutKey } from "@/lib/types";
 import { TEMPLATE_KEYS, TEMPLATES, type TemplateDef, type TemplateKey } from "@/components/sections/templates";
 import { findFont, findPalette, type Palette } from "@/components/sections/theme";
 import { cn } from "@/lib/utils";
+import { ShopLink } from "@/components/dashboard/shell/shop-link";
 
 /** Layouts shown with an "easy start" tag (the most beginner-friendly, listed first). */
 const EASY: ReadonlySet<TemplateKey> = new Set(["classic", "quicklinks", "bookingrail"]);
@@ -255,12 +255,12 @@ export function TemplatePicker({ pageId, current, onSelect }: { pageId: string; 
                   <span key={i} className="size-3.5 rounded-full border border-black/15" style={{ backgroundColor: c }} />
                 ))}
               </span>
-              <Link
+              <ShopLink
                 href={`/shopowner/site/preview?page=${pageId}&template=${k}`} aria-label={t("template.previewLabel", { name })}
                 className={buttonVariants({ variant: "outline", size: "sm" })}
               >
                 <Eye />{t("template.preview")}
-              </Link>
+              </ShopLink>
             </div>
           </div>
         );

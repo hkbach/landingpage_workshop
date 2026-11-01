@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useTranslations } from "next-intl";
-import Link from "next/link";
 import { Info, Tag, TriangleAlert } from "lucide-react";
 import { missingLocales, trimDeep, type Locale, type Localized, type OrgStatus, type SectionType } from "@workshop/shared";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +32,7 @@ import { SectionColorsGroup } from "./SectionColorsGroup";
 import { SectionList } from "./SectionList";
 import { TemplatePicker } from "./TemplatePicker";
 import { ThemePanel } from "./ThemePanel";
+import { ShopLink, useShopHref } from "@/components/dashboard/shell/shop-link";
 
 export type BuilderShop = Pick<Shop, "name" | "defaultLocale" | "enabledLocales" | "contactEmail" | "contactPhone">;
 
@@ -72,7 +72,7 @@ function PageGate(props: Props) {
       <div className="grid justify-items-start gap-3 p-6">
         <h1 className="text-xl font-semibold">{t("notFoundTitle")}</h1>
         <p className="text-sm text-muted-foreground">{t("notFoundBody")}</p>
-        <Link href="/shopowner/site" className={buttonVariants()}>{t("backToList")}</Link>
+        <ShopLink href="/shopowner/site" className={buttonVariants()}>{t("backToList")}</ShopLink>
       </div>
     );
   }
@@ -82,6 +82,7 @@ function PageGate(props: Props) {
 const SEO_ID = "__seo__";
 
 function BuilderInner({ shop, initial, initialSource = "starter", initialStatus, upcomingWorkshopCount, applyTemplate, support, page, mainPage }: Props & { page: PageMeta }) {
+  const toShop = useShopHref();
   const pageId = page.id;
   const t = useTranslations("builder");
   // Opening rule: last saved draft > published version > template starter (see chooseInitialDraft).
@@ -148,7 +149,7 @@ function BuilderInner({ shop, initial, initialSource = "starter", initialStatus,
   function closeTemplateDialog() {
     setPendingTemplate(null);
     // Drop ?apply=KEY so a reload does not reopen the dialog.
-    if (applyTemplate) window.history.replaceState(null, "", `/shopowner/site/${pageId}`);
+    if (applyTemplate) window.history.replaceState(null, "", toShop(`/shopowner/site/${pageId}`));
   }
   function confirmTemplate() {
     if (!pendingTemplate) return;
@@ -353,9 +354,9 @@ function SectionEditorBody({ section, lang, defaultLocale, theme, onChange, onPa
         // The offers themselves are not edited here: they are managed (and each one's rules are set) on the Promotion management page.
         <div role="note" data-testid="promotions-editor-note" className="grid gap-3 rounded-lg border bg-muted/50 p-3 text-sm">
           <p className="flex items-start gap-2"><Info className="mt-0.5 size-4 shrink-0" aria-hidden />{t("editor.promotionsNote")}</p>
-          <Link href="/shopowner/promotions" onClick={onBeforeLeave} className={cn(buttonVariants(), "w-fit")}>
+          <ShopLink href="/shopowner/promotions" onClick={onBeforeLeave} className={cn(buttonVariants(), "w-fit")}>
             <Tag aria-hidden />{t("editor.promotionsGo")}
-          </Link>
+          </ShopLink>
         </div>
       ) : def.autoContent ? (
         <p className="flex items-start gap-2 rounded-lg bg-muted/50 p-3 text-sm"><Info className="mt-0.5 size-4 shrink-0" aria-hidden />{t("editor.autoWorkshops")}</p>

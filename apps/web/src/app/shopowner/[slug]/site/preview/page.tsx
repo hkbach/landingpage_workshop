@@ -6,7 +6,7 @@ import { publicPromotions } from "@/lib/mock/promotion-store";
 import { bookingCutoffMinutes } from "@/lib/mock/shop-settings-store";
 
 // Preview of the DRAFT with the same PageRenderer as the public site (FR-SITE-03). Dashboard-only route.
-export default async function SitePreviewPage({ searchParams }: PageProps<"/shopowner/site/preview">) {
+export default async function SitePreviewPage({ searchParams }: PageProps<"/shopowner/[slug]/site/preview">) {
   const sp = await searchParams;
   const pageId = typeof sp.page === "string" && /^[a-z0-9-]{1,40}$/.test(sp.page) ? sp.page : undefined;
   const template = typeof sp.template === "string" && isTemplateKey(sp.template) ? sp.template : undefined;

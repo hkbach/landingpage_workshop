@@ -203,14 +203,12 @@
       "mapsUrl": "URL Google Maps (không bắt buộc)"
     },
     "hints": {
-      "slug": "Từ 3 đến 32 ký tự: chữ cái thường, số và dấu gạch ngang. Không được bắt đầu hoặc kết thúc bằng dấu gạch ngang.",
       "mapsUrl": "Phải bắt đầu bằng https://"
     },
     "slugPreview": "Trang của bạn sẽ có địa chỉ",
     "slug": {
-      "checking": "Đang kiểm tra khả dụng...",
-      "available": "Địa chỉ này có thể sử dụng.",
-      "taken": "Địa chỉ này đã được sử dụng. Hãy thử địa chỉ khác."
+      "fixed": "Địa chỉ được tạo tự động từ tên shop. Không thể thay đổi sau này, kể cả quản trị viên.",
+      "dashboard": "Địa chỉ trang quản lý của bạn"
     },
     "default": "mặc định",
     "create": "Tạo cửa hàng",

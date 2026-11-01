@@ -4,7 +4,7 @@ import { liveBookings } from "@/lib/mock/booking-store";
 import { currentShop, workshops } from "@/lib/mock/data";
 import { scheduleRules } from "@/lib/mock/ops";
 
-export default async function WorkshopDetailPage(props: PageProps<"/shopowner/workshops/[id]">) {
+export default async function WorkshopDetailPage(props: PageProps<"/shopowner/[slug]/workshops/[id]">) {
   const { id } = await props.params;
   const workshop = workshops.find((w) => w.id === id);
   if (!workshop) notFound();

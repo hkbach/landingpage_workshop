@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { ArrowLeft, CircleCheck, Eye, LoaderCircle, Rocket, Send, TriangleAlert } from "lucide-react";
 import type { OrgStatus } from "@workshop/shared";
@@ -9,6 +8,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { SaveState } from "./save-state";
 import type { PublishAction } from "./publish-state";
+import { ShopLink } from "@/components/dashboard/shell/shop-link";
 
 /**
  * Sticky bar of the builder: it stays in view (just below the dashboard top bar, which is 3.5rem high) while the page
@@ -45,9 +45,9 @@ export function BuilderHeader({ pageId, pageName, saveState, status, action, mes
     <div className="sticky top-14 z-20 -mx-4 -mt-4 border-b bg-background px-4 py-2 shadow-sm sm:-mx-6 sm:-mt-6 sm:px-6 sm:py-2.5">
       <div className="flex items-center justify-between gap-2 sm:gap-4">
         <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-          <Link href="/shopowner/site" className={cn(buttonVariants({ variant: "outline", size: "icon" }), "shrink-0")} title={t("pages.backToList")}>
+          <ShopLink href="/shopowner/site" className={cn(buttonVariants({ variant: "outline", size: "icon" }), "shrink-0")} title={t("pages.backToList")}>
             <ArrowLeft aria-hidden /><span className="sr-only">{t("pages.backToList")}</span>
-          </Link>
+          </ShopLink>
           <div className="min-w-0">
             <h1 className="truncate text-lg font-semibold tracking-tight sm:text-2xl">{t("title")}: {pageName}</h1>
             <p className="hidden text-sm text-muted-foreground sm:block">{t("subtitle")}</p>
@@ -59,9 +59,9 @@ export function BuilderHeader({ pageId, pageName, saveState, status, action, mes
             <span className={cn("sr-only sm:not-sr-only", saveState === "idle" && "hidden sm:inline")}>{save.text}</span>
           </p>
           <Badge variant="secondary" className="hidden sm:inline-flex">{t(`publish.status.${status}`)}</Badge>
-          <Link href={`/shopowner/site/preview?page=${pageId}`} className={cn(buttonVariants({ variant: "outline" }), "px-2.5 sm:px-3")} title={t("preview")}>
+          <ShopLink href={`/shopowner/site/preview?page=${pageId}`} className={cn(buttonVariants({ variant: "outline" }), "px-2.5 sm:px-3")} title={t("preview")}>
             <Eye /><span className="sr-only sm:not-sr-only">{t("preview")}</span>
-          </Link>
+          </ShopLink>
           {action.kind === "publish" || action.kind === "submit" ? (
             <Button
               type="button" disabled={action.disabled} title={action.disabled ? disabledHint : undefined}

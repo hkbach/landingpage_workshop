@@ -203,14 +203,12 @@
       "mapsUrl": "Google Maps URL (optional)"
     },
     "hints": {
-      "slug": "3 to 32 characters: lowercase letters, numbers and hyphens. It cannot start or end with a hyphen.",
       "mapsUrl": "Must start with https://"
     },
     "slugPreview": "Your page will live at",
     "slug": {
-      "checking": "Checking availability...",
-      "available": "This address is available.",
-      "taken": "This address is already taken. Try another one."
+      "fixed": "The address is made from your shop name. It cannot be changed later, not even by an administrator.",
+      "dashboard": "Your dashboard address"
     },
     "default": "default",
     "create": "Create shop",

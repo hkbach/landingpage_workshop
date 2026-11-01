@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useRef, useState, type FormEvent } from "react";
-import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { z } from "zod";
 import { BOOKING_SOURCES, formatMoney, pickLocalized, resolveShopLocale, type Locale } from "@workshop/shared";
@@ -16,6 +15,7 @@ import { Field } from "./field";
 import { NativeSelect } from "./native-select";
 import { issuesToErrors } from "./validation";
 import { useDirty } from "@/lib/use-dirty";
+import { ShopLink } from "@/components/dashboard/shell/shop-link";
 
 const CROCKFORD = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 function demoCode(): string {
@@ -109,7 +109,7 @@ export function BookingForm({
               <Button onClick={() => { setCreated(null); setV((p) => ({ ...p, fullName: "", email: "", phone: "", specialRequest: "", quantity: "1" })); }}>
                 {t("newBooking.another")}
               </Button>
-              <Link href="/shopowner/bookings" className={buttonVariants({ variant: "outline" })}>{t("bookings.title")}</Link>
+              <ShopLink href="/shopowner/bookings" className={buttonVariants({ variant: "outline" })}>{t("bookings.title")}</ShopLink>
             </div>
           </CardContent>
         </Card>
@@ -183,7 +183,7 @@ export function BookingForm({
         </Card>
         <div className="flex gap-2">
           <Button type="submit" disabled={!dirty}>{t("newBooking.submit")}</Button>
-          <Link href="/shopowner/bookings" className={buttonVariants({ variant: "outline" })}>{t("common.back")}</Link>
+          <ShopLink href="/shopowner/bookings" className={buttonVariants({ variant: "outline" })}>{t("common.back")}</ShopLink>
         </div>
       </form>
     </div>

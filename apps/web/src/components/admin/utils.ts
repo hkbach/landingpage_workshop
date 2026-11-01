@@ -17,9 +17,9 @@ export function fmt(iso: string, locale: string): string {
 }
 
 /**
- * Draft preview of a shop. Mock only: points at the builder preview (own draft).
+ * Draft preview of a shop. Mock only: points at the builder preview of the shop (own draft).
  * TODO(api): per-shop admin preview via GET /admin/organizations/{id}/preview (FR-ADM-02).
  */
-export function previewHref(): string {
-  return "/shopowner/site/preview";
+export function previewHref(slug: string): string {
+  return `/shopowner/${slug}/site/preview`;
 }

@@ -102,7 +102,7 @@ export function ReviewDetail({ shop, workshops }: { shop: Shop; workshops: numbe
               {t("previewBody")}
             </div>
             <Link
-              href={previewHref()}
+              href={previewHref(shop.slug)}
               target="_blank"
               rel="noopener noreferrer"
               className={buttonVariants({ variant: "outline", className: "w-fit" })}

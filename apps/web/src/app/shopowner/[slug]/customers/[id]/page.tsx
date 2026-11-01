@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import { ArrowLeft } from "lucide-react";
@@ -9,8 +8,9 @@ import { BookingStatusBadge, PaymentStatusBadge } from "@/components/ops/status-
 import { formatDateTime } from "@/lib/format";
 import { liveBookings } from "@/lib/mock/booking-store";
 import { currentShop, customers } from "@/lib/mock/data";
+import { ShopLink } from "@/components/dashboard/shell/shop-link";
 
-export default async function CustomerDetailPage(props: PageProps<"/shopowner/customers/[id]">) {
+export default async function CustomerDetailPage(props: PageProps<"/shopowner/[slug]/customers/[id]">) {
   const { id } = await props.params;
   const customer = customers.find((c) => c.id === id);
   if (!customer) notFound();
@@ -21,10 +21,10 @@ export default async function CustomerDetailPage(props: PageProps<"/shopowner/cu
 
   return (
     <div className="grid gap-4">
-      <Link href="/shopowner/customers" className="inline-flex items-center gap-1 text-sm text-muted-foreground underline-offset-4 hover:underline">
+      <ShopLink href="/shopowner/customers" className="inline-flex items-center gap-1 text-sm text-muted-foreground underline-offset-4 hover:underline">
         <ArrowLeft className="size-4" aria-hidden="true" />
         {t("customers.title")}
-      </Link>
+      </ShopLink>
       <h1 className="text-xl font-semibold sm:text-2xl">{customer.fullName}</h1>
       <Card>
         <CardHeader><CardTitle>{t("customers.details")}</CardTitle></CardHeader>
@@ -61,7 +61,7 @@ export default async function CustomerDetailPage(props: PageProps<"/shopowner/cu
               <TableBody>
                 {history.map((b) => (
                   <TableRow key={b.id}>
-                    <TableCell><Link href={`/shopowner/bookings/${b.id}`} className="font-mono font-medium underline-offset-4 hover:underline">{b.bookingCode}</Link></TableCell>
+                    <TableCell><ShopLink href={`/shopowner/bookings/${b.id}`} className="font-mono font-medium underline-offset-4 hover:underline">{b.bookingCode}</ShopLink></TableCell>
                     <TableCell>{b.workshopTitle}</TableCell>
                     <TableCell>{formatDateTime(b.startsAt, tz, locale)}</TableCell>
                     <TableCell><BookingStatusBadge status={b.status} /></TableCell>
