@@ -15,7 +15,7 @@ export function Field({
   htmlFor: string; label: ReactNode; error?: string; hint?: ReactNode; className?: string; children: ReactNode;
 }) {
   return (
-    <div className={cn("grid gap-1.5", className)}>
+    <div className={cn("grid content-start gap-1.5", className)}>
       <Label htmlFor={htmlFor}>{label}</Label>
       {children}
       {hint ? <p id={`${htmlFor}-hint`} className="text-xs text-muted-foreground">{hint}</p> : null}

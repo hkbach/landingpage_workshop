@@ -50,7 +50,7 @@ export function BookingActions({
   const size = compact ? "sm" : "default";
 
   return (
-    <div className="grid gap-1.5">
+    <div className="grid content-start gap-1.5">
       <div className="flex flex-wrap gap-1.5">
         {actions.map((a) => {
           const Icon = ICONS[a];

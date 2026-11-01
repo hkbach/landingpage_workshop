@@ -11,7 +11,7 @@ export function Field({
 }) {
   const describedBy = [hint ? `${id}-hint` : null, error ? `${id}-err` : null].filter(Boolean).join(" ") || undefined;
   return (
-    <div className={cn("grid gap-1.5", className)}>
+    <div className={cn("grid content-start gap-1.5", className)}>
       <Label htmlFor={id}>
         {label}
         {required ? <span aria-hidden="true" className="text-destructive">*</span> : null}

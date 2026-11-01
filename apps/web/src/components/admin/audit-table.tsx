@@ -65,9 +65,9 @@ export function AuditTable({ entries, orgNames }: { entries: AuditEntry[]; orgNa
 
   return (
     <div className="grid gap-4">
-      <fieldset className="grid gap-3 rounded-xl border bg-card p-4 sm:grid-cols-2 lg:grid-cols-5 lg:items-end">
+      <fieldset className="grid gap-3 rounded-xl border bg-card p-4 sm:grid-cols-2 lg:grid-cols-5 lg:items-start">
         <legend className="px-1 text-sm font-medium">{t("filters")}</legend>
-        <div className="grid gap-1.5">
+        <div className="grid content-start gap-1.5">
           <Label htmlFor="audit-action">{t("action")}</Label>
           <Select items={actionItems} value={action} onValueChange={(v) => change(() => setAction(v ?? ANY))}>
             <SelectTrigger id="audit-action" className="w-full">
@@ -82,7 +82,7 @@ export function AuditTable({ entries, orgNames }: { entries: AuditEntry[]; orgNa
             </SelectContent>
           </Select>
         </div>
-        <div className="grid gap-1.5">
+        <div className="grid content-start gap-1.5">
           <Label htmlFor="audit-entity">{t("entity")}</Label>
           <Select items={entityItems} value={entity} onValueChange={(v) => change(() => setEntity(v ?? ANY))}>
             <SelectTrigger id="audit-entity" className="w-full">
@@ -97,11 +97,11 @@ export function AuditTable({ entries, orgNames }: { entries: AuditEntry[]; orgNa
             </SelectContent>
           </Select>
         </div>
-        <div className="grid gap-1.5">
+        <div className="grid content-start gap-1.5">
           <Label htmlFor="audit-from">{t("from")}</Label>
           <Input id="audit-from" type="date" value={from} max={to || undefined} onChange={(e) => change(() => setFrom(e.target.value))} />
         </div>
-        <div className="grid gap-1.5">
+        <div className="grid content-start gap-1.5">
           <Label htmlFor="audit-to">{t("to")}</Label>
           <Input id="audit-to" type="date" value={to} min={from || undefined} onChange={(e) => change(() => setTo(e.target.value))} />
         </div>

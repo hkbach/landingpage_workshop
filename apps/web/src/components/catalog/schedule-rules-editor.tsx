@@ -140,7 +140,7 @@ function RuleForm({
         <DialogDescription>{t("rules.timesHint", { tz: timezone })}</DialogDescription>
       </DialogHeader>
 
-      <fieldset className="grid gap-1.5" aria-describedby={errors.weekdays ? "wd-err" : undefined}>
+      <fieldset className="grid content-start gap-1.5" aria-describedby={errors.weekdays ? "wd-err" : undefined}>
         <legend className="mb-1 text-sm font-medium">{t("rules.weekdays")}<span aria-hidden="true" className="text-destructive">*</span></legend>
         <div className="flex flex-wrap gap-1.5">
           {days.map((label, d) => {
@@ -162,7 +162,7 @@ function RuleForm({
         {err("weekdays") ? <p id="wd-err" role="alert" className="text-xs text-destructive">{err("weekdays")}</p> : null}
       </fieldset>
 
-      <fieldset className="grid gap-1.5">
+      <fieldset className="grid content-start gap-1.5">
         <legend className="mb-1 text-sm font-medium">{t("rules.startTimes")}<span aria-hidden="true" className="text-destructive">*</span></legend>
         <div className="flex flex-wrap gap-1.5" aria-live="polite">
           {times.map((tm) => (

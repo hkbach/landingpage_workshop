@@ -71,7 +71,7 @@ export default async function WorkshopsPage() {
                       {promo.applicable.length === 0 ? (
                         <span className="text-sm text-muted-foreground">{t("list.noPromotions")}</span>
                       ) : (
-                        <ul className="grid gap-1.5">
+                        <ul className="grid content-start gap-1.5">
                           {promo.applicable.map((p) => (
                             <li key={p.id} className="text-sm">
                               <span className="font-medium">{title(p)}</span>{" "}
@@ -106,7 +106,7 @@ export default async function WorkshopsPage() {
                           {promo.alone.length > 0 ? (
                             <div className="grid gap-1" data-testid="workshop-alone-discounts">
                               <span className="text-xs text-muted-foreground">{t("list.aloneLabel")}</span>
-                              <ul className="grid gap-1.5">
+                              <ul className="grid content-start gap-1.5">
                                 {promo.alone.map((a) => (
                                   <li key={a.promotion.id} className="grid gap-0">
                                     <span className="text-xs">{title(a.promotion)}</span>

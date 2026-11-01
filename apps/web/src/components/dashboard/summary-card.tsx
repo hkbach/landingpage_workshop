@@ -14,7 +14,7 @@ export function SummaryCard({ href, icon: Icon, title, rows, linkLabel }: { href
             <CardDescription className="flex items-center gap-2 font-medium text-foreground"><Icon className="size-4" aria-hidden />{title}</CardDescription>
           </CardHeader>
           <CardContent>
-            <dl className="grid gap-1.5">
+            <dl className="grid content-start gap-1.5">
               {rows.map((r) => (
                 <div key={r.label} className="flex items-baseline justify-between gap-3 text-sm">
                   <dt className="text-muted-foreground">{r.label}</dt>

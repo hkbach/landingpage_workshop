@@ -44,7 +44,7 @@ export function BookingTrend({ series }: { series: Record<TrendPeriod, TrendBuck
             <CardTitle>{t("title")}</CardTitle>
             <CardDescription>{t("subtitle")}</CardDescription>
           </div>
-          <div className="grid gap-1.5">
+          <div className="grid content-start gap-1.5">
             <Label htmlFor="trend-period">{t("periodLabel")}</Label>
             <NativeSelect id="trend-period" value={period} onChange={(e) => setPeriod(e.target.value as TrendPeriod)}>
               {TREND_PERIODS.map((p) => <option key={p} value={p}>{t(`period.${p}`)}</option>)}

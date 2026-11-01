@@ -120,7 +120,7 @@ export function ReportManagement({ shopIds }: { shopIds: Record<string, string> 
 
       <Card>
         <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr]">
-          <div className="grid gap-1.5">
+          <div className="grid content-start gap-1.5">
             <Label htmlFor="rp-search">{t("searchLabel")}</Label>
             <div className="relative">
               <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
@@ -130,21 +130,21 @@ export function ReportManagement({ shopIds }: { shopIds: Record<string, string> 
               />
             </div>
           </div>
-          <div className="grid gap-1.5">
+          <div className="grid content-start gap-1.5">
             <Label htmlFor="rp-reason">{t("reasonFilter")}</Label>
             <NativeSelect id="rp-reason" value={filters.reason} onChange={(e) => set("reason", e.target.value as Filters["reason"])}>
               <option value="ALL">{t("allReasons")}</option>
               {REPORT_REASONS.map((r) => <option key={r} value={r}>{t(`reason.${r}`)}</option>)}
             </NativeSelect>
           </div>
-          <div className="grid gap-1.5">
+          <div className="grid content-start gap-1.5">
             <Label htmlFor="rp-shop">{t("shopFilter")}</Label>
             <NativeSelect id="rp-shop" value={filters.shop} onChange={(e) => set("shop", e.target.value)}>
               <option value="ALL">{t("allShops")}</option>
               {(query.data?.shops ?? []).map((s) => <option key={s} value={s}>{s}</option>)}
             </NativeSelect>
           </div>
-          <div className="grid gap-1.5">
+          <div className="grid content-start gap-1.5">
             <Label htmlFor="rp-sort">{t("sortLabel")}</Label>
             <NativeSelect id="rp-sort" value={filters.sort} onChange={(e) => set("sort", e.target.value as Filters["sort"])}>
               <option value="newest">{t("sort.newest")}</option>

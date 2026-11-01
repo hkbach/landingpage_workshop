@@ -60,7 +60,7 @@ function ReasonForm({
       </DialogHeader>
 
       {mode !== "none" && (
-        <div className="grid gap-1.5">
+        <div className="grid content-start gap-1.5">
           <Label htmlFor={id}>{mode === "required" ? t("reasonLabel") : t("noteLabel")}</Label>
           <Textarea
             id={id}

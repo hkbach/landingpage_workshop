@@ -251,7 +251,7 @@ function CreateDialog({ open, onOpenChange, pageCount, onCreate }: {
             <DialogTitle>{t("createTitle")}</DialogTitle>
             <DialogDescription>{t("createDescription")}</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-1.5">
+          <div className="grid content-start gap-1.5">
             <Label htmlFor="lp-name">{t("fieldName")}</Label>
             <Input
               id="lp-name" value={name} maxLength={LANDING_PAGE_NAME_MAX + 20} required aria-required="true" autoComplete="off"

@@ -202,19 +202,19 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
       <Card>
         <CardContent className="grid gap-3">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr]" role="search" aria-label={t("searchLabel")}>
-            <div className="grid gap-1.5">
+            <div className="grid content-start gap-1.5">
               <Label htmlFor="fl-q">{t("searchTitle")}</Label>
               <Input id="fl-q" type="search" value={filters.q} maxLength={80} placeholder={t("searchPlaceholder")} onChange={(e) => setFilter("q", e.target.value)} autoComplete="off" />
             </div>
-            <div className="grid gap-1.5">
+            <div className="grid content-start gap-1.5">
               <Label htmlFor="fl-from">{t("periodFrom")}</Label>
               <Input id="fl-from" type="date" value={filters.from} onChange={(e) => setFilter("from", e.target.value)} />
             </div>
-            <div className="grid gap-1.5">
+            <div className="grid content-start gap-1.5">
               <Label htmlFor="fl-to">{t("periodTo")}</Label>
               <Input id="fl-to" type="date" value={filters.to} onChange={(e) => setFilter("to", e.target.value)} />
             </div>
-            <div className="grid gap-1.5">
+            <div className="grid content-start gap-1.5">
               <Label htmlFor="fl-workshop">{t("workshopFilter")}</Label>
               <NativeSelect id="fl-workshop" value={filters.workshopId} onChange={(e) => setFilter("workshopId", e.target.value)}>
                 <option value="">{t("allWorkshopsOption")}</option>
@@ -475,7 +475,7 @@ function PromotionDialog({ form, setForm, today, shop, workshops, others, money,
               <Field id="pr-description" label={t("fieldDescription")} error={errors.description}>
                 {(p) => <Textarea {...p} rows={3} value={form.description[lang] ?? ""} maxLength={PROMOTION_DESCRIPTION_MAX + 50} onChange={(e) => setLoc("description", e.target.value)} />}
               </Field>
-              <div className="grid gap-1.5">
+              <div className="grid content-start gap-1.5">
                 <ImageUploadField id="pr-image" label={t("fieldImage")} value={form.imageUrl} onChange={(url) => set({ imageUrl: url })} uploader={promotionImageUploader} />
                 <p className="text-xs text-muted-foreground">{t("imageHint")}</p>
                 {errors.imageUrl ? <p role="alert" className="text-xs text-destructive">{errors.imageUrl}</p> : null}

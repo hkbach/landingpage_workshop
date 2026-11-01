@@ -101,7 +101,7 @@ function FinanceInner({ derived, seed, currency, timezone }: Props) {
       </header>
 
       <div className="flex flex-wrap items-end gap-3">
-        <div className="grid gap-1.5">
+        <div className="grid content-start gap-1.5">
           <Label htmlFor="fin-period">{t("period")}</Label>
           <NativeSelect id="fin-period" value={period} onChange={(e) => setPeriod(Number(e.target.value) as Period)}>
             {PERIODS.map((p) => <option key={p} value={p}>{t("lastMonths", { count: p })}</option>)}
@@ -151,14 +151,14 @@ function FinanceInner({ derived, seed, currency, timezone }: Props) {
         <CardHeader><CardTitle>{t("entries")}</CardTitle></CardHeader>
         <CardContent className="grid gap-3">
           <div className="flex flex-wrap items-end gap-3">
-            <div className="grid gap-1.5">
+            <div className="grid content-start gap-1.5">
               <Label htmlFor="fin-type">{t("typeFilter")}</Label>
               <NativeSelect id="fin-type" value={typeFilter} onChange={(e) => { setTypeFilter(e.target.value as "" | FinanceType); setCategoryFilter(""); }}>
                 <option value="">{t("allTypes")}</option>
                 {FINANCE_TYPES.map((x) => <option key={x} value={x}>{t(`type.${x}`)}</option>)}
               </NativeSelect>
             </div>
-            <div className="grid gap-1.5">
+            <div className="grid content-start gap-1.5">
               <Label htmlFor="fin-cat">{t("categoryFilter")}</Label>
               <NativeSelect id="fin-cat" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value as "" | FinanceCategory)}>
                 <option value="">{t("allCategories")}</option>

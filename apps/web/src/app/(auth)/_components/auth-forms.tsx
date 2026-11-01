@@ -112,7 +112,7 @@ export function SignupForm() {
           aria-describedby={describedBy("signup-password", { error: !!errors.password, hint: true })} {...register("password")} />
       </Field>
 
-      <div className="grid gap-1.5">
+      <div className="grid content-start gap-1.5">
         <div className="flex items-start gap-2">
           <Checkbox
             id="signup-terms"
