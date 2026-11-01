@@ -7,7 +7,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
 import { ImageIcon, OctagonX, Pause, Pencil, Play, Plus, RefreshCw, Trash2, TriangleAlert } from "lucide-react";
 import {
-  canEditPromotion, countByStatus, discountedPrice, DISCOUNT_TYPES, filterPromotions, formatMoney, fullDiscountWorkshops, isPromotionCodeTaken, isPromotionDeletable, minorDigits, OVER_BUDGET_PERCENT, overBudgetWorkshops, pickLocalized, promotionAppliesTo,
+  countByStatus, discountedPrice, DISCOUNT_TYPES, filterPromotions, formatMoney, fullDiscountWorkshops, isPromotionCodeTaken, isPromotionDeletable, minorDigits, OVER_BUDGET_PERCENT, overBudgetWorkshops, pickLocalized, promotionAppliesTo,
   promotionInputSchema, promotionStatus, PROMOTION_DESCRIPTION_MAX, PROMOTION_TITLE_MAX, STACKING_MODES,
   type DiscountType, type Locale, type Localized, type OverBudgetWorkshop, type PromotionInput, type PromotionRecord, type PromotionStatus, type StackingMode,
 } from "@workshop/shared";
@@ -298,16 +298,15 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
                     <TableCell><Badge className={STATUS_STYLES[status]}>{t(`status.${status}`)}</Badge></TableCell>
                     <TableCell className="min-w-28 whitespace-normal text-sm">{t(`stackingOption.${p.stacking}.label`)}</TableCell>
                     <TableCell className="whitespace-nowrap text-right">
-                      {status !== "EXPIRED" ? (
-                        <Button
-                          size="icon-sm" variant="ghost" disabled={!canEditPromotion(status)} onClick={() => openEdit(p)}
-                          title={canEditPromotion(status) ? t("edit") : t("editOnlyPaused")}
-                        >
+                      {/* Active and scheduled promotions have no Edit and Delete: pause them first. */}
+                      {status === "PAUSED" ? (
+                        <Button size="icon-sm" variant="ghost" title={t("edit")} onClick={() => openEdit(p)}>
                           <Pencil aria-hidden /><span className="sr-only">{t("edit")}: {title}</span>
                         </Button>
-                      ) : (
+                      ) : null}
+                      {status === "EXPIRED" ? (
                         <Button size="icon-sm" variant="ghost" title={t("renew")} onClick={() => openEdit(p, true)}><RefreshCw aria-hidden /><span className="sr-only">{t("renew")}: {title}</span></Button>
-                      )}
+                      ) : null}
                       {status === "ACTIVE" || status === "SCHEDULED" ? (
                         <Button size="icon-sm" variant="ghost" title={t("pause")} disabled={toggle.isPending} onClick={() => toggle.mutate({ id: p.id, enabled: false })}>
                           <Pause aria-hidden /><span className="sr-only">{t("pause")}: {title}</span>
@@ -321,12 +320,11 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
                           <Play aria-hidden /><span className="sr-only">{t("start")}: {title}</span>
                         </Button>
                       ) : null}
-                      <Button
-                        size="icon-sm" variant="ghost" disabled={!isPromotionDeletable(p, today)} onClick={() => setDeleting(p)}
-                        title={isPromotionDeletable(p, today) ? t("delete") : t("deleteOnlyPaused")}
-                      >
-                        <Trash2 aria-hidden /><span className="sr-only">{t("delete")}: {title}</span>
-                      </Button>
+                      {isPromotionDeletable(p, today) ? (
+                        <Button size="icon-sm" variant="ghost" title={t("delete")} onClick={() => setDeleting(p)}>
+                          <Trash2 aria-hidden /><span className="sr-only">{t("delete")}: {title}</span>
+                        </Button>
+                      ) : null}
                     </TableCell>
                   </TableRow>
                 );
