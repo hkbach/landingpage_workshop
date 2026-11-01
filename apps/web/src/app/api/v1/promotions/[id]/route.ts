@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { promotionInputSchema } from "@workshop/shared";
-import { apiError } from "@/lib/api-error";
+import { apiError, fieldCodes } from "@/lib/api-error";
 import { saveFailure } from "@/lib/promotion-http";
 import { deletePromotion, setPromotionEnabled, updatePromotion } from "@/lib/mock/promotion-store";
 
@@ -16,7 +16,7 @@ async function readJson(request: Request): Promise<{ ok: true; body: unknown } |
   }
 }
 const validation = (issues: { path: PropertyKey[]; message: string }[]) =>
-  apiError(422, "VALIDATION", "Please check the highlighted fields.", { fields: Object.fromEntries(issues.map((i) => [String(i.path[0] ?? "body"), i.message])) });
+  apiError(422, "VALIDATION", "Please check the highlighted fields.", { fields: fieldCodes(issues) });
 
 /** PUT: replace the promotion with the full body. */
 export async function PUT(request: Request, ctx: RouteContext<"/api/v1/promotions/[id]">) {

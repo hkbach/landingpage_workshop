@@ -1,5 +1,5 @@
 import { MAX_CONCURRENT_PROMOTIONS, MAX_PROMOTIONS_PER_SHOP, promotionInputSchema } from "@workshop/shared";
-import { apiError } from "@/lib/api-error";
+import { apiError, fieldCodes } from "@/lib/api-error";
 import { saveFailure } from "@/lib/promotion-http";
 import { allPromotions, createPromotion, shopToday } from "@/lib/mock/promotion-store";
 
@@ -22,8 +22,7 @@ export async function POST(request: Request) {
   }
   const parsed = promotionInputSchema.safeParse(body);
   if (!parsed.success) {
-    const fields = Object.fromEntries(parsed.error.issues.map((i) => [String(i.path[0] ?? "body"), i.message]));
-    return apiError(422, "VALIDATION", "Please check the highlighted fields.", { fields });
+    return apiError(422, "VALIDATION", "Please check the highlighted fields.", { fields: fieldCodes(parsed.error.issues) });
   }
   const res = createPromotion(parsed.data);
   if (!res.ok) return saveFailure(res);

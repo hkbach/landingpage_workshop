@@ -19,7 +19,7 @@ const addDays = (day: string, n: number) => new Date(Date.parse(`${day}T12:00:00
 function body(over: Record<string, unknown> = {}) {
   const today = shopToday();
   return {
-    title: { en: "Flash" }, description: {}, discountType: "PERCENT", discountValue: 10, stacking: "SINGLE", appliesTo: "ALL", workshopIds: [],
+    title: { en: "Flash" }, description: {}, code: "FLASH10", discountType: "PERCENT", discountValue: 10, stacking: "SINGLE", appliesTo: "ALL", workshopIds: [],
     startDate: addDays(today, 300), endDate: addDays(today, 305), enabled: true, ...over,
   };
 }

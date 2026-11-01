@@ -36,7 +36,8 @@ describe("GET /promotions", () => {
     const { items, today } = await list();
     expect(firstOverloadedDay(items, today)).toBeNull();
     expect(items.some((p) => p.imageUrl) && items.some((p) => !p.imageUrl)).toBe(true);
-    expect(items.some((p) => p.code) && items.some((p) => !p.code)).toBe(true);
+    expect(items.every((p) => /^[A-Z0-9]{3,20}$/.test(p.code))).toBe(true); // every promotion has a valid code
+    expect(items.some((p) => p.imageUrl) && items.some((p) => p.description.en)).toBe(true);
     expect(items.some((p) => p.discountType === "PERCENT") && items.some((p) => p.discountType === "FIXED_AMOUNT")).toBe(true);
     expect(items.some((p) => p.appliesTo === "SELECTED") && items.some((p) => p.appliesTo === "ALL")).toBe(true);
     expect(items.some((p) => p.title.vi)).toBe(true);
@@ -128,5 +129,43 @@ describe("what guests see", () => {
     const expired = allPromotions().find((p) => p.id === "pr-4")!;
     expect(publicPromotions(expired.startDate).map((p) => p.id)).toContain("pr-4");
     expect(publicPromotions().map((p) => p.id)).not.toContain("pr-4");
+  });
+});
+
+describe("the promo code is required", () => {
+  const fieldsOf = async (res: Response) => ((await res.json()) as { error: { details: { fields: Record<string, string> } } }).error.details.fields;
+  const withoutCode = Object.fromEntries(Object.entries(good).filter(([k]) => k !== "code"));
+
+  it("POST refuses a promotion without a code, an empty one or a blank one", async () => {
+    for (const body of [withoutCode, { ...good, code: "" }, { ...good, code: null }]) {
+      const res = await POST(json("POST", body));
+      expect(res.status).toBe(422);
+      expect(await fieldsOf(res)).toMatchObject({ code: "codeRequired" });
+    }
+    const blank = await POST(json("POST", { ...good, code: "   " }));
+    expect(blank.status).toBe(422);
+    expect(await fieldsOf(blank)).toMatchObject({ code: "codeInvalid" });
+    expect(allPromotions()).toHaveLength(14);
+  });
+  it("POST refuses spaces, special characters, accents and a wrong length", async () => {
+    for (const code of ["SUMMER 20", " SUMMER20", "SUMMER20 ", "SUMMER-20", "SUMMER_20", "SUMMER#", "<b>HI</b>", "Đặt1234", "AB", "X".repeat(21)]) {
+      const res = await POST(json("POST", { ...good, code }));
+      expect(res.status, code).toBe(422);
+      expect(await fieldsOf(res), code).toMatchObject({ code: "codeInvalid" });
+    }
+    expect(allPromotions()).toHaveLength(14);
+  });
+  it("POST accepts letters and digits and stores the code in capitals", async () => {
+    const res = await POST(json("POST", { ...good, code: "Summer2030" }));
+    expect(res.status).toBe(201);
+    expect(((await res.json()) as PromotionRecord).code).toBe("SUMMER2030");
+  });
+  it("PUT cannot remove the code or break the rules either", async () => {
+    expect((await PUT(json("PUT", withoutCode), ctx("pr-1"))).status).toBe(422);
+    expect((await PUT(json("PUT", { ...good, code: "BAD CODE" }), ctx("pr-1"))).status).toBe(422);
+    expect(allPromotions().find((p) => p.id === "pr-1")?.code).toBe("EARLY20");
+    const ok = await PUT(json("PUT", { ...good, code: "newcode1" }), ctx("pr-1"));
+    expect(ok.status).toBe(200);
+    expect(((await ok.json()) as PromotionRecord).code).toBe("NEWCODE1");
   });
 });

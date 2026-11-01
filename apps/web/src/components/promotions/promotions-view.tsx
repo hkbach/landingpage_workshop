@@ -116,7 +116,7 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
     setForm({
       id: p.id, title: { ...p.title }, description: { ...p.description }, discountType: p.discountType,
       value: p.discountType === "PERCENT" ? String(p.discountValue) : String(p.discountValue / 10 ** minorDigits(shop.currency)),
-      code: p.code ?? "", imageUrl: p.imageUrl ?? "", stacking: p.stacking, appliesTo: p.appliesTo, workshopIds: [...p.workshopIds], startDate: p.startDate, endDate: p.endDate, enabled: p.enabled,
+      code: p.code, imageUrl: p.imageUrl ?? "", stacking: p.stacking, appliesTo: p.appliesTo, workshopIds: [...p.workshopIds], startDate: p.startDate, endDate: p.endDate, enabled: p.enabled,
     });
   }
 
@@ -305,7 +305,7 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
 function readForm(form: FormState, currency: string) {
   const value = form.discountType === "PERCENT" ? (/^\d+$/.test(form.value.trim()) ? Number(form.value.trim()) : 0) : (parseAmount(form.value, minorDigits(currency)) ?? 0);
   return promotionInputSchema.safeParse({
-    title: form.title, description: form.description, discountType: form.discountType, discountValue: value, code: form.code || undefined, imageUrl: form.imageUrl, stacking: form.stacking,
+    title: form.title, description: form.description, discountType: form.discountType, discountValue: value, code: form.code, imageUrl: form.imageUrl, stacking: form.stacking,
     appliesTo: form.appliesTo, workshopIds: form.appliesTo === "ALL" ? [] : form.workshopIds, startDate: form.startDate, endDate: form.endDate, enabled: form.enabled,
   });
 }
@@ -408,8 +408,8 @@ function PromotionDialog({ form, setForm, shop, workshops, others, money, day, o
                   {(p) => <Input {...p} inputMode="decimal" value={form.value} onChange={(e) => set({ value: e.target.value })} autoComplete="off" />}
                 </Field>
               </div>
-              <Field id="pr-code" label={t("fieldCode")} hint={t("codeHint")} error={errors.code}>
-                {(p) => <Input {...p} className="font-mono uppercase" value={form.code} maxLength={20} onChange={(e) => set({ code: e.target.value })} autoComplete="off" spellCheck={false} />}
+              <Field id="pr-code" label={t("fieldCode")} hint={t("codeHint")} required error={errors.code}>
+                {(p) => <Input {...p} className="font-mono uppercase" value={form.code} maxLength={20} onChange={(e) => set({ code: e.target.value })} autoComplete="off" autoCapitalize="characters" spellCheck={false} />}
               </Field>
               <fieldset className="grid gap-2">
                 <legend className="mb-1 text-sm font-medium">{t("fieldStacking")}</legend>

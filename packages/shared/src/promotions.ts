@@ -26,7 +26,7 @@ export type StackingMode = (typeof STACKING_MODES)[number];
 export const DEFAULT_STACKING: StackingMode = "SINGLE";
 export const PROMOTION_TITLE_MAX = 80;
 export const PROMOTION_DESCRIPTION_MAX = 300;
-export const PROMOTION_CODE_RE = /^[A-Z0-9]{3,20}$/;
+export const PROMOTION_CODE_RE = /^[A-Za-z0-9]{3,20}$/;
 const FIXED_AMOUNT_MAX = 1_000_000_000_000; // minor units
 
 export interface PromotionRecord {
@@ -36,8 +36,8 @@ export interface PromotionRecord {
   discountType: DiscountType;
   /** PERCENT: 1..100. FIXED_AMOUNT: minor units of the shop currency. */
   discountValue: number;
-  /** Optional code the guest mentions at the shop (bookings are paid on site). */
-  code?: string;
+  /** Required code the guest mentions at the shop (bookings are paid on site): 3 to 20 capital letters and digits. */
+  code: string;
   /** One optional image: an https URL or a platform media path (see media.ts). */
   imageUrl?: string;
   /** Whether a guest can combine this promotion with others on one booking. */
@@ -68,7 +68,8 @@ export const promotionInputSchema = z
     discountType: z.enum(DISCOUNT_TYPES, { error: "required" }),
     discountValue: z.number({ error: "valueInvalid" }).int("valueInvalid").positive("valueInvalid").max(FIXED_AMOUNT_MAX, "valueInvalid"),
     imageUrl: z.string().max(500, "imageInvalid").refine((v) => v === "" || isHttpsUrl(v) || isPlatformMediaPath(v), "imageInvalid").optional(),
-    code: z.string().trim().toUpperCase().refine((c) => c === "" || PROMOTION_CODE_RE.test(c), "codeInvalid").optional(),
+    // Required. Checked as typed (no trimming): a space anywhere, an accent or any special character is refused; the code is kept in capitals.
+    code: z.string({ error: "codeRequired" }).min(1, "codeRequired").regex(PROMOTION_CODE_RE, "codeInvalid").transform((c) => c.toUpperCase()),
     stacking: z.enum(STACKING_MODES, { error: "required" }),
     appliesTo: z.enum(["ALL", "SELECTED"], { error: "required" }),
     workshopIds: z.array(z.string().min(1)).max(100),

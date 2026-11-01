@@ -38,10 +38,7 @@ describe("promotionInputSchema", () => {
     expect(codes({ ...ok, startDate: "2026-12-01", endDate: "2026-11-30" })).toContain("endBeforeStart");
     expect(promotionInputSchema.safeParse({ ...ok, startDate: "2026-11-05", endDate: "2026-11-05" }).success).toBe(true);
   });
-  it("accepts an empty code but not a malformed one, and limits the text", () => {
-    expect(promotionInputSchema.safeParse({ ...ok, code: "" }).success).toBe(true);
-    expect(codes({ ...ok, code: "a b" })).toContain("codeInvalid");
-    expect(codes({ ...ok, code: "AB" })).toContain("codeInvalid");
+  it("limits the text", () => {
     expect(codes({ ...ok, title: { en: "x".repeat(81) } })).toContain("tooLong");
   });
 });
@@ -219,5 +216,40 @@ describe("combining promotions", () => {
       chosen = togglePromotion(chosen, pick);
       expect(canCombine(chosen)).toBe(true);
     }
+  });
+});
+
+describe("the promo code is required", () => {
+  const withCode = (code: unknown) => ({ ...ok, code });
+  const problems = (code: unknown) => codes(withCode(code)) ?? [];
+
+  it("must be entered: missing, empty and blank are all refused as required", () => {
+    const { code: _omitted, ...without } = ok;
+    expect(codes(without)).toContain("codeRequired");
+    expect(problems("")).toContain("codeRequired");
+    expect(problems(undefined)).toContain("codeRequired");
+    expect(problems(null)).toContain("codeRequired");
+    expect(problems("   ")).toContain("codeInvalid"); // blanks are not a code
+  });
+  it("accepts letters and digits, 3 to 20 of them, and keeps the code in capitals", () => {
+    for (const good of ["ABC", "abc", "Summer20", "2026", "A1B2C3", "X".repeat(20)]) {
+      const r = promotionInputSchema.safeParse(withCode(good));
+      expect(r.success, good).toBe(true);
+      expect(r.data?.code).toBe(good.toUpperCase());
+    }
+  });
+  it("refuses any space, also at the start or the end", () => {
+    for (const bad of ["SUMMER 20", " SUMMER20", "SUMMER20 ", "SUM MER", "\tSUMMER", "SUMMER\n20"]) expect(problems(bad), JSON.stringify(bad)).toContain("codeInvalid");
+  });
+  it("refuses special characters, punctuation, accents and other alphabets", () => {
+    for (const bad of ["SUMMER-20", "SUMMER_20", "SUMMER.20", "SUMMER#20", "SUMMER%", "SUMMER!", "A@B", "<b>BOLD</b>", "SUMMER/20", "SUMMER+", "Đặt1234", "CAFÉ20", "ÇA123", "日本語123", "ＡＢＣ123", "😀ABC", "SUM\u200bMER"]) {
+      expect(problems(bad), bad).toContain("codeInvalid");
+    }
+  });
+  it("is 3 to 20 characters", () => {
+    for (const bad of ["A", "AB", "X".repeat(21), "X".repeat(100)]) expect(problems(bad), bad).toContain("codeInvalid");
+  });
+  it("a code that is not a text is refused", () => {
+    for (const bad of [123, true, {}, []]) expect(problems(bad).length, String(bad)).toBeGreaterThan(0);
   });
 });

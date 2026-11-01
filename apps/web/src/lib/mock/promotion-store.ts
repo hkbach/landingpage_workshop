@@ -14,7 +14,7 @@ import { deleteImage, hasImage, resetMediaStore } from "./media-store";
 const g = globalThis as unknown as { __promotionStore?: PromotionRecord[]; __promotionSeedVersion?: number };
 
 /** Bump when the seed or the shape of a promotion changes: a dev server that kept the old data across hot reloads starts again from the new seed. */
-const SEED_VERSION = 3;
+const SEED_VERSION = 4;
 
 const DAY = 86_400_000;
 /** "YYYY-MM-DD" of today +/- `days` in the shop timezone. */
@@ -22,7 +22,7 @@ function day(days: number): string {
   return dayKey(new Date(Date.now() + days * DAY).toISOString(), currentShop.timezone);
 }
 
-type SeedRow = Pick<PromotionRecord, "id" | "title" | "discountType" | "discountValue" | "stacking" | "startDate" | "endDate"> & Partial<Pick<PromotionRecord, "description" | "code" | "imageUrl" | "appliesTo" | "workshopIds" | "enabled">>;
+type SeedRow = Pick<PromotionRecord, "id" | "title" | "code" | "discountType" | "discountValue" | "stacking" | "startDate" | "endDate"> & Partial<Pick<PromotionRecord, "description" | "imageUrl" | "appliesTo" | "workshopIds" | "enabled">>;
 
 /**
  * Demo data: 14 promotions that show every state on the management page and the landing page: 5 running (the most allowed at once),
@@ -47,7 +47,7 @@ function seed(): PromotionRecord[] {
       description: { en: "Bring a partner to the pottery wheel class and take 150,000 off the booking." }, appliesTo: "SELECTED", workshopIds: ["ws-1"], startDate: day(-5), endDate: day(12),
     },
     {
-      id: "pr-6", title: { en: "Groups save 15%", vi: "Đi nhóm giảm 15%" }, discountType: "PERCENT", discountValue: 15, stacking: "MULTIPLE",
+      id: "pr-6", code: "GROUP15", title: { en: "Groups save 15%", vi: "Đi nhóm giảm 15%" }, discountType: "PERCENT", discountValue: 15, stacking: "MULTIPLE",
       description: { en: "Friends, teams and families: 15% off every workshop." }, startDate: day(-2), endDate: day(25),
     },
     {
@@ -55,7 +55,7 @@ function seed(): PromotionRecord[] {
     },
     // Scheduled (3)
     {
-      id: "pr-3", title: { en: "Autumn festival" }, discountType: "PERCENT", discountValue: 15, stacking: "SINGLE",
+      id: "pr-3", code: "AUTUMN15", title: { en: "Autumn festival" }, discountType: "PERCENT", discountValue: 15, stacking: "SINGLE",
       description: { en: "15% off every workshop during the festival." }, startDate: day(14), endDate: day(30),
     },
     {
@@ -68,19 +68,19 @@ function seed(): PromotionRecord[] {
     },
     // Scheduled, far away
     {
-      id: "pr-10", title: { en: "New year, new hobby", vi: "Năm mới, sở thích mới" }, discountType: "PERCENT", discountValue: 12, stacking: "MULTIPLE", imageUrl: img("newyear"),
+      id: "pr-10", code: "NEWYEAR12", title: { en: "New year, new hobby", vi: "Năm mới, sở thích mới" }, discountType: "PERCENT", discountValue: 12, stacking: "MULTIPLE", imageUrl: img("newyear"),
       description: { en: "Start the year with a first class." }, startDate: day(62), endDate: day(75),
     },
     // Over (2)
     {
-      id: "pr-4", title: { en: "Spring sale" }, discountType: "PERCENT", discountValue: 10, stacking: "SINGLE", description: { en: "10% off." }, startDate: day(-60), endDate: day(-30),
+      id: "pr-4", code: "SPRING10", title: { en: "Spring sale" }, discountType: "PERCENT", discountValue: 10, stacking: "SINGLE", description: { en: "10% off." }, startDate: day(-60), endDate: day(-30),
     },
     {
       id: "pr-11", title: { en: "Summer splash: 25% off" }, discountType: "PERCENT", discountValue: 25, stacking: "SINGLE", code: "SPLASH25", imageUrl: img("summersplash"),
       description: { en: "Cool down with clay." }, startDate: day(-120), endDate: day(-90),
     },
     {
-      id: "pr-12", title: { en: "Mid-autumn: 80,000 off" }, discountType: "FIXED_AMOUNT", discountValue: 80_000, stacking: "MULTIPLE", startDate: day(-50), endDate: day(-35),
+      id: "pr-12", code: "MIDAUTUMN80", title: { en: "Mid-autumn: 80,000 off" }, discountType: "FIXED_AMOUNT", discountValue: 80_000, stacking: "MULTIPLE", startDate: day(-50), endDate: day(-35),
     },
     // Paused (2): they would run today, but resuming one would be a 6th running promotion
     {
@@ -88,7 +88,7 @@ function seed(): PromotionRecord[] {
       description: { en: "Show a student card at the studio." }, enabled: false, startDate: day(-10), endDate: day(40),
     },
     {
-      id: "pr-14", title: { en: "Rainy day special" }, discountType: "FIXED_AMOUNT", discountValue: 60_000, stacking: "SINGLE", imageUrl: img("rainyday"),
+      id: "pr-14", code: "RAINY60", title: { en: "Rainy day special" }, discountType: "FIXED_AMOUNT", discountValue: 60_000, stacking: "SINGLE", imageUrl: img("rainyday"),
       description: { en: "A cosy class for a grey afternoon." }, appliesTo: "SELECTED", workshopIds: ["ws-2"], enabled: false, startDate: day(-1), endDate: day(14),
     },
   ];
@@ -136,7 +136,7 @@ function imageProblem(url: string | undefined): boolean {
 
 const fromInput = (input: PromotionInput): Omit<PromotionRecord, "id" | "createdAt" | "updatedAt"> => ({
   title: input.title, description: input.description, discountType: input.discountType, discountValue: input.discountValue,
-  ...(input.code ? { code: input.code } : {}),
+  code: input.code,
   ...(input.imageUrl ? { imageUrl: input.imageUrl } : {}),
   stacking: input.stacking, appliesTo: input.appliesTo, workshopIds: input.appliesTo === "ALL" ? [] : [...new Set(input.workshopIds)],
   startDate: input.startDate, endDate: input.endDate, enabled: input.enabled,
