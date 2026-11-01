@@ -2,7 +2,7 @@ import { ORG_STATUSES, type OrgStatus } from "@workshop/shared";
 import { isTemplateKey } from "@/components/sections/templates";
 import { SiteBuilder } from "@/components/builder/SiteBuilder";
 import { countWorkshopsWithUpcomingSessions } from "@/components/builder/prereqs";
-import { currentShop, sessions, sitePage, workshops } from "@/lib/mock/data";
+import { currentShop, mockLandingPages, sessions, sitePage, workshops } from "@/lib/mock/data";
 import { platformSupport } from "@/lib/mock/platform";
 
 // Frontend-only: mock draft + shop. `?status=DRAFT|PENDING_REVIEW|ACTIVE|SUSPENDED` previews the submit/publish states.
@@ -16,7 +16,7 @@ export default async function SiteBuilderPage({ params, searchParams }: PageProp
   return (
     <SiteBuilder
       pageId={pageId}
-      mainPage={{ name: currentShop.name, template: sitePage.template }}
+      mainPage={{ name: currentShop.name, template: sitePage.template, seed: mockLandingPages }}
       shop={{
         name: currentShop.name, defaultLocale: currentShop.defaultLocale, enabledLocales: currentShop.enabledLocales,
         contactEmail: currentShop.contactEmail, contactPhone: currentShop.contactPhone,

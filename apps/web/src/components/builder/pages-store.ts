@@ -42,12 +42,13 @@ export function parsePages(raw: string | null): PageMeta[] | null {
 }
 
 /** The shop always has its main page; it is created on first use. */
-export function loadPages(main: { name: string; template: TemplateKey }, now = new Date().toISOString()): PageMeta[] {
+export function loadPages(main: { name: string; template: TemplateKey; /** Pages the shop starts with besides the main one (mock data). */ seed?: { id: string; name: string; template: TemplateKey }[] }, now = new Date().toISOString()): PageMeta[] {
   let stored: PageMeta[] | null = null;
   try { stored = parsePages(window.localStorage.getItem(PAGES_KEY)); } catch { /* blocked storage: fall back to the main page */ }
-  const base = stored ?? [];
+  const seeded = (main.seed ?? []).map((s) => ({ ...s, createdAt: now, updatedAt: now }));
+  const base = stored ?? seeded; // a shop that has never saved its list starts with the seed pages
   if (base.some((p) => p.id === MAIN_PAGE_ID)) return base;
-  return [{ id: MAIN_PAGE_ID, ...main, createdAt: now, updatedAt: now }, ...base];
+  return [{ id: MAIN_PAGE_ID, name: main.name, template: main.template, createdAt: now, updatedAt: now }, ...base];
 }
 
 export function savePages(pages: PageMeta[]): boolean {

@@ -88,6 +88,17 @@ describe("loadPages", () => {
   });
 });
 
+describe("seed pages (mock data)", () => {
+  const seed = [{ id: "p-summer", name: "Summer", template: "magazine" as const }];
+  it("a shop that never saved its list starts with the main page and the seed pages", () => {
+    expect(loadPages({ name: "Clay", template: "classic", seed }, NOW).map((p) => [p.id, p.template])).toEqual([[MAIN_PAGE_ID, "classic"], ["p-summer", "magazine"]]);
+  });
+  it("a saved list wins: pages the shop deleted do not come back", () => {
+    store.setItem("builder:pages:v1", JSON.stringify([main]));
+    expect(loadPages({ name: "Clay", template: "classic", seed }, NOW).map((p) => p.id)).toEqual([MAIN_PAGE_ID]);
+  });
+});
+
 describe("the public page: only one at a time", () => {
   it("is the main page for a shop that is live, and nothing for a shop that is not", () => {
     expect(loadLivePageId(true)).toBe(MAIN_PAGE_ID);

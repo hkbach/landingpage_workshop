@@ -157,6 +157,14 @@ const mockContent: PageContent = {
   ],
 };
 
+/**
+ * Landing pages the mock shop already has besides its main page (a second page with another template). They are only the
+ * starting list: the shop owner can delete or add pages, and the list is then kept in the browser.
+ */
+export const mockLandingPages: { id: string; name: string; template: TemplateKey }[] = [
+  { id: "p-summer", name: "Summer Pottery Promo", template: "magazine" },
+];
+
 export const defaultTheme: PageTheme = themeForTemplate(MOCK_TEMPLATE);
 
 export const sitePage: { draft: PageContent; theme: PageTheme; template: TemplateKey } = {

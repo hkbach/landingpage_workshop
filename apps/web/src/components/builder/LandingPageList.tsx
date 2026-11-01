@@ -22,7 +22,7 @@ import { invalidSectionCount, pagePrerequisites, themeIsInvalid, type ReadinessS
 import { LayoutWireframe } from "./TemplatePicker";
 
 interface Props {
-  mainPage: { name: string; template: TemplateKey };
+  mainPage: { name: string; template: TemplateKey; seed?: { id: string; name: string; template: TemplateKey }[] };
   /** Address of the shop; the one public landing page is shown there. */
   shopHost: string;
   shop: ReadinessShop;

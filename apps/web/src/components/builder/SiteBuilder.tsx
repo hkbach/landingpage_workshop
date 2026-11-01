@@ -41,7 +41,7 @@ interface Props {
   /** Which landing page is edited (the shop has up to 2). */
   pageId?: string;
   /** The shop's first page: it exists from the start and is the one published at the shop's own address. */
-  mainPage: { name: string; template: TemplateKey };
+  mainPage: { name: string; template: TemplateKey; seed?: { id: string; name: string; template: TemplateKey }[] };
   /** Content of the page as the server has it: the published version when `initialSource` is "published", else a template starter. */
   initial: { content: PageContent; theme: PageTheme; template: TemplateKey };
   initialSource?: "published" | "starter";
