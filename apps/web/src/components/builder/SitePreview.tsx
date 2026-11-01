@@ -4,7 +4,7 @@ import { useMemo, useState, useSyncExternalStore, type CSSProperties } from "rea
 import Link from "next/link";
 import { NextIntlClientProvider, useTranslations } from "next-intl";
 import { ArrowLeft, Eye, Monitor, Smartphone } from "lucide-react";
-import type { Locale, PromotionRecord } from "@workshop/shared";
+import type { Locale, PromotionRecord, StackingMode } from "@workshop/shared";
 import { buttonVariants } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { PageRenderer } from "@/components/sections/PageRenderer";
@@ -30,6 +30,7 @@ interface Props {
   workshops: Workshop[];
   /** Promotions that are active today: the promotions section shows them as guests will see them. */
   promotions?: PromotionRecord[];
+  stacking?: StackingMode;
   siteMessages: Record<string, Record<string, unknown>>;
   /** Template to preview with the current content (in memory only; nothing is saved). */
   previewTemplate?: TemplateKey;
@@ -37,7 +38,7 @@ interface Props {
   pageId?: string;
 }
 
-export function SitePreview({ shop, initial, workshops, promotions = [], siteMessages, previewTemplate, pageId = MAIN_PAGE_ID }: Props) {
+export function SitePreview({ shop, initial, workshops, promotions = [], stacking, siteMessages, previewTemplate, pageId = MAIN_PAGE_ID }: Props) {
   const t = useTranslations("builder");
   const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
   const [lang, setLang] = useState<Locale>(shop.defaultLocale);
@@ -63,7 +64,7 @@ export function SitePreview({ shop, initial, workshops, promotions = [], siteMes
   );
 
   const ctx: RenderContext = {
-    locale: lang, shop, workshops, promotions, reportHref: "#", privacyHref: "#", allowDataImages: true,
+    locale: lang, shop, workshops, promotions, promotionStacking: stacking, reportHref: "#", privacyHref: "#", allowDataImages: true,
     languages: shop.enabledLocales.map((l) => ({ locale: l, href: "#" })),
   };
   const chrome = useMemo(() => ({ onSelectLocale: setLang }), []);

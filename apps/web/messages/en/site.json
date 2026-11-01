@@ -19,7 +19,9 @@
     "promotionAllWorkshops": "All workshops",
     "promotionAppliesTo": "Applies to: {names}",
     "promotionValidUntil": "Valid until {date}",
-    "promotionCode": "Code"
+    "promotionCode": "Code",
+    "promotionSingleNote": "Only one promotion can be used per booking.",
+    "promotionMultipleNote": "You can combine promotions on one booking."
   },
   "header": {
     "language": "Language"
@@ -78,7 +80,17 @@
       "tooLong": "This value is too long.",
       "max500": "Maximum 500 characters.",
       "consent": "You must agree to continue."
-    }
+    },
+    "promotions": "Promotions",
+    "promotionsSingle": "Choose one promotion (optional).",
+    "promotionsMultiple": "Choose the promotions you want to use (optional).",
+    "noPromotion": "No promotion",
+    "promotionOffPercent": "{value}% off",
+    "promotionOffAmount": "{amount} off",
+    "subtotal": "Subtotal",
+    "promotionsApplied": "Promotions used",
+    "discountLine": "Discount: {title}",
+    "totalAfterDiscount": "Total"
   },
   "confirmation": {
     "title": "Booking confirmed",
@@ -94,7 +106,9 @@
     "changeOrCancel": "To change or cancel, please contact the studio.",
     "backToSite": "Back to the website",
     "notFoundTitle": "Booking not found",
-    "notFoundText": "We could not find a booking with these details. Check the link in your confirmation email."
+    "notFoundText": "We could not find a booking with these details. Check the link in your confirmation email.",
+    "promotions": "Promotions used",
+    "saved": "you save {amount}"
   },
   "report": {
     "title": "Report this site",

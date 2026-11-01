@@ -1,4 +1,4 @@
-import type { Locale, Localized, PromotionRecord } from "@workshop/shared";
+import type { Locale, Localized, PromotionRecord, StackingMode } from "@workshop/shared";
 import type { Shop, Workshop } from "@/lib/types";
 
 /** Serializable render context shared by the builder preview and the public site. */
@@ -9,6 +9,8 @@ export interface RenderContext {
   workshops: Workshop[];
   /** Promotions that are active today (Promotion management); the promotions section never takes manual content. Default: none. */
   promotions?: PromotionRecord[];
+  /** Whether a guest can use one or several promotions on a booking (shown as a note in the promotions section). */
+  promotionStacking?: StackingMode;
   reportHref: string;
   privacyHref: string;
   /** Languages offered by the language switcher of the frame chrome (public site: real links; preview: in-place switch). */

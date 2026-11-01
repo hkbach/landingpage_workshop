@@ -65,6 +65,25 @@ describe("promotions section", () => {
   });
 });
 
+describe("promotion image and booking rule note", () => {
+  it("shows the promotion image: an https image or one the platform serves", () => {
+    for (const url of ["https://cdn.example.com/p.webp", "/api/v1/media/promotions/3f2c9a10-aaaa-bbbb-cccc-000000000000"]) {
+      for (const v of ["cards", "banner"]) expect(html([promo({ imageUrl: url })], v), `${v} ${url}`).toContain(`src="${url}"`);
+    }
+  });
+  it("shows no image when there is none or the address is not safe to show", () => {
+    expect(html([promo()])).not.toContain("<img");
+    for (const bad of ["http://cdn.example.com/p.png", "javascript:alert(1)", "data:image/png;base64,AAAA", "/etc/passwd"]) expect(html([promo({ imageUrl: bad })]), bad).not.toContain("<img");
+  });
+  it("tells guests whether they can use one promotion or combine several", () => {
+    const withRule = (mode: "SINGLE" | "MULTIPLE") =>
+      render(createElement(SectionRenderer, { section, ctx: { ...ctx([promo()]), promotionStacking: mode }, theme: sitePage.theme }));
+    expect(withRule("SINGLE")).toContain("Only one promotion can be used per booking.");
+    expect(withRule("MULTIPLE")).toContain("You can combine promotions on one booking.");
+    expect(html([promo()])).not.toContain("per booking.");
+  });
+});
+
 describe("promotions section in the page", () => {
   const page = (promotions: PromotionRecord[]) =>
     render(createElement(PageRenderer, { content: sitePage.draft, theme: sitePage.theme, ctx: ctx(promotions) }));

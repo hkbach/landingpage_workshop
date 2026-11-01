@@ -10,3 +10,4 @@ export * from "./landing-pages";
 export * from "./finance";
 export * from "./booking-stats";
 export * from "./promotions";
+export * from "./media";

@@ -7,7 +7,7 @@ import { formatMoney, isYoutubeId, MAX_SECTION_VIDEOS, youtubeEmbedUrl, youtubeT
 import { cn } from "@/lib/utils";
 import type { ContactProps, FaqProps, FooterProps, LocationProps, PromotionsProps, RenderContext, TestimonialsProps, VideoProps } from "./context";
 import {
-  arr, box, card, Heading, Img, linkClass, localizer, primaryButton, Section, Socials, str, type RenderProps,
+  arr, box, card, Heading, imageOf, Img, linkClass, localizer, primaryButton, Section, Socials, str, type RenderProps,
 } from "./renderer-kit";
 import { useReportActions } from "./report-context";
 import { safeMaps, telHref, whatsappHref } from "./safe-url";
@@ -31,12 +31,19 @@ export function PromotionsSection({ section, props, ctx, variant }: RenderProps<
   const names = (p: PromotionRecord) =>
     p.appliesTo === "ALL" ? t("sections.promotionAllWorkshops") : p.workshopIds.map((id) => ctx.workshops.find((w) => w.id === id)).filter((w) => !!w).map((w) => L(w.title)).join(", ");
   const banner = variant === "banner";
+  const imgOf = imageOf(ctx);
   return (
     <Section id={section.id}>
       <Heading>{L(props.heading)}</Heading>
+      {ctx.promotionStacking ? (
+        <p className="-mt-2 mb-5 text-sm text-[var(--site-muted)]">{t(ctx.promotionStacking === "SINGLE" ? "sections.promotionSingleNote" : "sections.promotionMultipleNote")}</p>
+      ) : null}
       <ul className={cn("grid gap-4", banner ? "grid-cols-1" : "@xl:grid-cols-2 @5xl:grid-cols-3")}>
-        {list.map((p) => (
-          <li key={p.id} className={cn("flex gap-4 p-4", card, banner ? "items-center" : "flex-col")}>
+        {list.map((p) => {
+          const image = imgOf(p.imageUrl);
+          return (
+          <li key={p.id} className={cn("flex gap-4 overflow-hidden p-4", card, banner ? "items-center" : "flex-col")}>
+            {image ? <Img src={image} className={cn("object-cover", box, banner ? "size-24 shrink-0 @xl:size-28" : "aspect-[16/9] w-full")} /> : null}
             <span className={cn("inline-flex w-fit shrink-0 items-center gap-1.5 px-3 py-1.5 text-sm font-semibold", box, "bg-[var(--site-primary)] text-[var(--site-primary-fg)]")}>
               <Tag className="size-4" aria-hidden />{discountLabel(p, ctx, t)}
             </span>
@@ -52,7 +59,8 @@ export function PromotionsSection({ section, props, ctx, variant }: RenderProps<
               ) : null}
             </div>
           </li>
-        ))}
+          );
+        })}
       </ul>
     </Section>
   );

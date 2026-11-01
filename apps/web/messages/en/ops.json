@@ -322,7 +322,7 @@
       "FIXED_AMOUNT": "Fixed amount"
     },
     "fieldPercent": "Percentage off (1 to 100)",
-    "fieldAmount": "Amount off ({currency})",
+    "fieldAmount": "Amount off the booking ({currency})",
     "fieldCode": "Promo code (optional)",
     "codeHint": "3 to 20 letters or numbers. Guests mention it at your studio.",
     "fieldAppliesTo": "Applies to",
@@ -341,7 +341,27 @@
       "workshopRequired": "Choose at least one workshop.",
       "workshopUnknown": "One of the workshops does not exist.",
       "dateInvalid": "Enter a valid date.",
-      "endBeforeStart": "The last day cannot be before the first day."
-    }
+      "endBeforeStart": "The last day cannot be before the first day.",
+      "imageInvalid": "Use a JPEG, PNG or WebP image, or a secure link starting with https://"
+    },
+    "stackingTitle": "Using promotions on a booking",
+    "stackingHint": "Choose how guests can apply promotions when they book. It applies to bookings made after you change it.",
+    "stacking": {
+      "SINGLE": {
+        "label": "One promotion per booking",
+        "hint": "Guests pick one promotion."
+      },
+      "MULTIPLE": {
+        "label": "Several promotions per booking",
+        "hint": "Guests can combine every promotion that applies. Fixed amounts come off first, then each percentage."
+      }
+    },
+    "stackingSavedSingle": "Guests can now use one promotion per booking.",
+    "stackingSavedMultiple": "Guests can now combine several promotions on one booking.",
+    "running": "Running now: {count} of {max}.",
+    "runningHint": "At most {max} promotions can run at the same time, counting the ones planned for the same days.",
+    "concurrentLimit": "At most {max} promotions can run at the same time, and on {date} there would be more. Pause or end another promotion, or change the dates.",
+    "fieldImage": "Image",
+    "imageHint": "One image for this promotion. Guests see it on your landing page."
   }
 }

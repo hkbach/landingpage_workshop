@@ -60,8 +60,13 @@ describe("POST /promotions", () => {
     expect((await POST(json("POST", null, "{nope"))).status).toBe(400);
   });
   it(`answers 409 once the shop has ${MAX_PROMOTIONS_PER_SHOP} promotions`, async () => {
-    for (let i = allPromotions().length; i < MAX_PROMOTIONS_PER_SHOP; i++) expect((await POST(json("POST", good))).status).toBe(201);
-    const res = await POST(json("POST", good));
+    // Each one runs in its own week, so the limit on promotions running at once does not get in the way.
+    const week = (i: number) => {
+      const start = new Date(Date.parse("2028-01-01T12:00:00Z") + i * 7 * 86_400_000);
+      return { startDate: start.toISOString().slice(0, 10), endDate: new Date(start.getTime() + 3 * 86_400_000).toISOString().slice(0, 10) };
+    };
+    for (let i = allPromotions().length; i < MAX_PROMOTIONS_PER_SHOP; i++) expect((await POST(json("POST", { ...good, ...week(i) }))).status).toBe(201);
+    const res = await POST(json("POST", { ...good, ...week(99) }));
     expect(res.status).toBe(409);
     expect((await errorOf(res)).error.code).toBe("LIMIT_REACHED");
   });

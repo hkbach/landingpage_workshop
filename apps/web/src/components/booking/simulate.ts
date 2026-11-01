@@ -8,8 +8,12 @@ export interface ConfirmationData {
   endsAt: string;
   timezone: string;
   quantity: number;
+  /** Price after the promotions the guest used. */
   totalAmount: number;
   currency: string;
+  /** Titles of the promotions used and what they took off (display only; the backend recomputes). */
+  promotions?: string[];
+  discountAmount?: number;
 }
 
 const CROCKFORD = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";

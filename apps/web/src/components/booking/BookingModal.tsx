@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Controller, useForm, useWatch } from "react-hook-form";
-import { formatMoney, pickLocalized, type Locale } from "@workshop/shared";
+import { eligiblePromotions, formatMoney, pickLocalized, priceBooking, type Locale, type PromotionRecord, type StackingMode } from "@workshop/shared";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -31,6 +31,9 @@ interface Props {
   sessions: Session[];
   theme: PageTheme;
   locale: Locale;
+  /** Promotions active today (the guest may pick the ones that cover the workshop) and how many may be used on one booking. */
+  promotions?: PromotionRecord[];
+  stacking?: StackingMode;
   /** Base path of the site ("" on the subdomain host). */
   basePath: string;
 }
@@ -92,7 +95,25 @@ function Choice({ name, checked, disabled, onSelect, children }: {
   );
 }
 
-function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, sessions, locale, basePath }: Props) {
+function PromoOption({ type, checked, onChange, label, detail }: {
+  type: "radio" | "checkbox"; checked: boolean; onChange: () => void; label: string; detail?: string;
+}) {
+  return (
+    <label
+      className={cn(
+        "relative flex min-h-11 cursor-pointer items-center justify-between gap-2 rounded-lg border border-black/20 bg-white px-3 py-2 text-sm",
+        "has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-[var(--site-primary)]/40",
+        checked && "border-[var(--site-primary)] bg-[var(--site-surface)] ring-2 ring-[var(--site-primary)]",
+      )}
+    >
+      <input type={type} name="bk-promo" className="sr-only" checked={checked} onChange={onChange} />
+      <span className="font-medium">{label}</span>
+      {detail ? <span className="text-xs text-[var(--site-muted)]">{detail}</span> : null}
+    </label>
+  );
+}
+
+function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, sessions, locale, basePath, promotions = [], stacking = "SINGLE" }: Props) {
   const t = useTranslations("site.booking");
   const tp = useTranslations("site");
   const router = useRouter();
@@ -122,8 +143,16 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
   const session = sessions.find((s) => s.id === sessionId);
   const remaining = session ? session.capacity - session.reservedCount : 0;
   const maxGuests = workshop ? Math.max(1, Math.min(workshop.maxPerBooking, remaining)) : 1;
-  // Display-only total. The server recomputes price = unit price x quantity (BR-04).
-  const total = workshop ? workshop.priceAmount * quantity : 0;
+  // Promotions the guest may use for this workshop today. Prices here are display-only: the server recomputes the price (BR-04) and
+  // refuses a second promotion when the shop allows only one.
+  const today = dayKey(new Date(now).toISOString(), shop.timezone);
+  const eligible = useMemo(() => (workshop ? eligiblePromotions(promotions, workshop.id, today) : []), [promotions, workshop, today]);
+  const [picked, setPicked] = useState<string[]>([]);
+  const chosen = eligible.filter((p) => picked.includes(p.id)).slice(0, stacking === "SINGLE" ? 1 : undefined);
+  const price = workshop ? priceBooking({ unitPrice: workshop.priceAmount, quantity, stacking, promotions: chosen }) : null;
+  const subtotal = workshop ? workshop.priceAmount * quantity : 0;
+  const total = price?.ok ? price.total : subtotal;
+  const discountOf = (id: string) => (price?.ok ? (price.discounts.find((d) => d.id === id)?.amount ?? 0) : 0);
 
   const dateLabel = (iso: string) =>
     new Intl.DateTimeFormat(locale, { weekday: "short", day: "numeric", month: "short", year: "numeric", timeZone: shop.timezone }).format(new Date(iso));
@@ -164,6 +193,7 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
         {
           email: values.email.trim().toLowerCase(), workshopTitle: L(workshop.title), startsAt: session.startsAt, endsAt: session.endsAt,
           timezone: shop.timezone, quantity, totalAmount: total, currency: workshop.currency,
+          promotions: chosen.map((p) => L(p.title)), discountAmount: price?.ok ? price.discount : 0,
         },
         idempotencyKey,
       );
@@ -195,7 +225,7 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
             <label htmlFor="bk-workshop" className="text-sm font-medium">{t("workshop")}</label>
             <select
               id="bk-workshop" className={selectClass} value={workshopId}
-              onChange={(e) => { setWorkshopId(e.target.value); setDate(""); setSessionId(""); setQuantity(1); }}
+              onChange={(e) => { setWorkshopId(e.target.value); setDate(""); setSessionId(""); setQuantity(1); setPicked([]); }}
             >
               {workshops.map((w) => <option key={w.id} value={w.id}>{L(w.title)}</option>)}
             </select>
@@ -240,9 +270,36 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
             </select>
             <p className="text-xs text-[var(--site-muted)]">{t("guestsHint", { max: maxGuests })}</p>
           </div>
-          <p className="text-sm">
-            {t("estimatedTotal")}: <strong>{formatMoney(total, workshop.currency, locale)}</strong>
-          </p>
+          {eligible.length > 0 ? (
+            <fieldset className="space-y-2">
+              <legend className="text-sm font-medium">{t("promotions")}</legend>
+              <p className="text-xs text-[var(--site-muted)]">{t(stacking === "SINGLE" ? "promotionsSingle" : "promotionsMultiple")}</p>
+              <div className="grid gap-2">
+                {stacking === "SINGLE" ? (
+                  <PromoOption type="radio" checked={chosen.length === 0} onChange={() => setPicked([])} label={t("noPromotion")} />
+                ) : null}
+                {eligible.map((p) => (
+                  <PromoOption
+                    key={p.id} type={stacking === "SINGLE" ? "radio" : "checkbox"} checked={chosen.some((c) => c.id === p.id)}
+                    onChange={() => setPicked(stacking === "SINGLE" ? [p.id] : picked.includes(p.id) ? picked.filter((x) => x !== p.id) : [...picked, p.id])}
+                    label={L(p.title)}
+                    detail={`${p.discountType === "PERCENT" ? t("promotionOffPercent", { value: p.discountValue }) : t("promotionOffAmount", { amount: formatMoney(p.discountValue, workshop.currency, locale) })}${p.code ? ` · ${p.code}` : ""}`}
+                  />
+                ))}
+              </div>
+            </fieldset>
+          ) : null}
+          <dl className="space-y-1 text-sm" data-testid="booking-price">
+            {chosen.length > 0 ? (
+              <div className="flex justify-between gap-3"><dt>{t("subtotal")}</dt><dd className="tabular-nums">{formatMoney(subtotal, workshop.currency, locale)}</dd></div>
+            ) : null}
+            {chosen.map((p) => (
+              <div key={p.id} className="flex justify-between gap-3 text-emerald-800">
+                <dt>{t("discountLine", { title: L(p.title) })}</dt><dd className="tabular-nums">−{formatMoney(discountOf(p.id), workshop.currency, locale)}</dd>
+              </div>
+            ))}
+            <div className="flex justify-between gap-3 font-semibold"><dt>{t("estimatedTotal")}</dt><dd className="tabular-nums">{formatMoney(total, workshop.currency, locale)}</dd></div>
+          </dl>
         </div>
       )}
 
@@ -292,6 +349,12 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
             <dd className="font-medium">{dateLabel(session.startsAt)}, {formatTime(session.startsAt, shop.timezone, locale)}</dd>
             <dt className="text-[var(--site-muted)]">{t("guests")}</dt><dd className="font-medium">{quantity}</dd>
             <dt className="text-[var(--site-muted)]">{t("contactLabel")}</dt><dd className="font-medium break-all">{watchedName} · {watchedEmail}</dd>
+            {chosen.length > 0 ? (
+              <>
+                <dt className="text-[var(--site-muted)]">{t("promotionsApplied")}</dt>
+                <dd className="font-medium">{chosen.map((p) => L(p.title)).join(", ")}</dd>
+              </>
+            ) : null}
             <dt className="text-[var(--site-muted)]">{t("estimatedTotal")}</dt>
             <dd className="font-semibold">{formatMoney(total, workshop.currency, locale)}</dd>
           </dl>

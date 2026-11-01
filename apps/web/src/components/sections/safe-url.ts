@@ -1,3 +1,5 @@
+import { isPlatformMediaPath } from "@workshop/shared";
+
 // URL validators for shop-provided links (REQUIREMENTS FR-SITE-02). Used both in schemas and at render time.
 function parse(value: string): URL | null {
   try {
@@ -33,9 +35,9 @@ export interface ImageUrlOptions {
   allowDataImages?: boolean;
 }
 
-/** https image URL, or (builder/preview only) a data:image URL. */
+/** https image URL, an image the platform serves itself (/api/v1/media/...), or (builder/preview only) a data:image URL. */
 export function isImageUrl(value: string, opts?: ImageUrlOptions): boolean {
-  return isHttpsUrl(value) || (opts?.allowDataImages === true && isDataImageUrl(value));
+  return isHttpsUrl(value) || isPlatformMediaPath(value) || (opts?.allowDataImages === true && isDataImageUrl(value));
 }
 
 /** Returns the URL if it is a valid image URL for this context, otherwise undefined. */

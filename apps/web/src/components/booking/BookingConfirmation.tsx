@@ -31,6 +31,12 @@ export function BookingConfirmation({ data, shop, locale, homeHref }: { data: Co
         <dt className="text-[var(--site-muted)]">{t("confirmation.when")}</dt>
         <dd className="font-medium">{formatDateTime(data.startsAt, data.timezone, locale)} <span className="text-[var(--site-muted)]">({data.timezone})</span></dd>
         <dt className="text-[var(--site-muted)]">{t("confirmation.guests")}</dt><dd className="font-medium">{data.quantity}</dd>
+        {data.promotions && data.promotions.length > 0 ? (
+          <>
+            <dt className="text-[var(--site-muted)]">{t("confirmation.promotions")}</dt>
+            <dd className="font-medium">{data.promotions.join(", ")} <span className="text-[var(--site-muted)]">({t("confirmation.saved", { amount: formatMoney(data.discountAmount ?? 0, data.currency, locale) })})</span></dd>
+          </>
+        ) : null}
         <dt className="text-[var(--site-muted)]">{t("confirmation.total")}</dt>
         <dd className="font-medium">{formatMoney(data.totalAmount, data.currency, locale)} · {t("confirmation.payAtStudio")}</dd>
       </dl>

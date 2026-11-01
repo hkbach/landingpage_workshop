@@ -6,8 +6,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
 import { Pause, Pencil, Play, Plus, Trash2 } from "lucide-react";
 import {
-  countByStatus, discountedPrice, DISCOUNT_TYPES, formatMoney, minorDigits, pickLocalized, promotionAppliesTo, promotionInputSchema, promotionStatus,
-  PROMOTION_DESCRIPTION_MAX, PROMOTION_TITLE_MAX, type DiscountType, type Locale, type Localized, type PromotionRecord, type PromotionStatus,
+  countByStatus, discountedPrice, DISCOUNT_TYPES, formatMoney, minorDigits, pickLocalized, STACKING_MODES, promotionAppliesTo, promotionInputSchema, promotionStatus,
+  PROMOTION_DESCRIPTION_MAX, PROMOTION_TITLE_MAX, type DiscountType, type Locale, type Localized, type PromotionRecord, type PromotionStatus, type StackingMode,
 } from "@workshop/shared";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,9 +19,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { NativeSelect } from "@/components/dashboard/shell/native-select";
 import { Field } from "@/components/ops/field";
 import { LanguageBar } from "@/components/language/LanguageBar";
+import { ImageUploadField } from "@/components/builder/ImageUploadField";
+import { promotionImageUploader } from "@/lib/media/promotion-uploader";
 import { parseAmount } from "@/components/finance/finance-store";
 import { useEditingLanguage } from "@/lib/use-shop-language";
-import { PromotionApiError, deletePromotionRequest, fetchPromotions, savePromotionRequest, setPromotionEnabledRequest } from "@/lib/promotions-api";
+import { PromotionApiError, deletePromotionRequest, fetchPromotions, saveStackingRequest, savePromotionRequest, setPromotionEnabledRequest } from "@/lib/promotions-api";
 import { cn } from "@/lib/utils";
 
 export interface PromotionShop { defaultLocale: Locale; enabledLocales: Locale[]; currency: string }
@@ -35,8 +37,17 @@ const STATUS_STYLES: Record<PromotionStatus, string> = {
 };
 
 interface FormState {
-  id: string | null; title: Localized; description: Localized; discountType: DiscountType; value: string; code: string;
+  id: string | null; title: Localized; description: Localized; discountType: DiscountType; value: string; code: string; imageUrl: string;
   appliesTo: "ALL" | "SELECTED"; workshopIds: string[]; startDate: string; endDate: string; enabled: boolean;
+}
+
+/** Text for a failed save: the limits get their own explanation, everything else a general one. */
+function failureText(e: unknown, t: (key: string, values?: Record<string, string | number>) => string, day: (d: string) => string): string {
+  if (e instanceof PromotionApiError && e.status === 409) {
+    if (e.code === "CONCURRENT_LIMIT") return t("concurrentLimit", { max: Number(e.details.max ?? 5), date: day(String(e.details.date ?? "")) });
+    return t("limitReached", { max: 20 });
+  }
+  return t("saveFailed");
 }
 
 const addDays = (day: string, n: number) => new Date(Date.parse(`${day}T12:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10);
@@ -55,6 +66,8 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
   const items = query.data?.items ?? [];
   const limit = query.data?.limit ?? 0;
   const counts = countByStatus(items, today);
+  const maxConcurrent = query.data?.maxConcurrent ?? 5;
+  const stacking: StackingMode = query.data?.stacking ?? "SINGLE";
   const rows = items.filter((p) => filter === "ALL" || promotionStatus(p, today) === filter);
   const atLimit = limit > 0 && items.length >= limit;
   const money = (n: number) => formatMoney(n, shop.currency, locale);
@@ -67,7 +80,12 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
   const toggle = useMutation({
     mutationFn: (v: { id: string; enabled: boolean }) => setPromotionEnabledRequest(v.id, v.enabled),
     onSuccess: (_p, v) => { setMessage({ text: t(v.enabled ? "resumed" : "paused"), tone: "ok" }); void refresh(); },
-    onError: () => { setMessage({ text: t("saveFailed"), tone: "error" }); void refresh(); },
+    onError: (e) => { setMessage({ text: failureText(e, t, day), tone: "error" }); void refresh(); },
+  });
+  const changeStacking = useMutation({
+    mutationFn: (mode: StackingMode) => saveStackingRequest(mode),
+    onSuccess: (_r, mode) => { setMessage({ text: t(mode === "SINGLE" ? "stackingSavedSingle" : "stackingSavedMultiple"), tone: "ok" }); void refresh(); },
+    onError: () => setMessage({ text: t("saveFailed"), tone: "error" }),
   });
   const remove = useMutation({
     mutationFn: (id: string) => deletePromotionRequest(id),
@@ -77,14 +95,14 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
 
   function openNew() {
     setMessage(null);
-    setForm({ id: null, title: {}, description: {}, discountType: "PERCENT", value: "", code: "", appliesTo: "ALL", workshopIds: [], startDate: today, endDate: addDays(today, 30), enabled: true });
+    setForm({ id: null, title: {}, description: {}, discountType: "PERCENT", value: "", code: "", imageUrl: "", appliesTo: "ALL", workshopIds: [], startDate: today, endDate: addDays(today, 30), enabled: true });
   }
   function openEdit(p: PromotionRecord) {
     setMessage(null);
     setForm({
       id: p.id, title: { ...p.title }, description: { ...p.description }, discountType: p.discountType,
       value: p.discountType === "PERCENT" ? String(p.discountValue) : String(p.discountValue / 10 ** minorDigits(shop.currency)),
-      code: p.code ?? "", appliesTo: p.appliesTo, workshopIds: [...p.workshopIds], startDate: p.startDate, endDate: p.endDate, enabled: p.enabled,
+      code: p.code ?? "", imageUrl: p.imageUrl ?? "", appliesTo: p.appliesTo, workshopIds: [...p.workshopIds], startDate: p.startDate, endDate: p.endDate, enabled: p.enabled,
     });
   }
 
@@ -109,6 +127,27 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
           {query.data ? <p className="text-xs text-muted-foreground">{atLimit ? t("limitReached", { max: limit }) : t("count", { count: items.length, max: limit })}</p> : null}
         </div>
       </header>
+
+      <Card>
+        <CardContent className="grid gap-3">
+          <fieldset className="grid gap-2" disabled={!query.data || changeStacking.isPending}>
+            <legend className="mb-1 text-sm font-medium">{t("stackingTitle")}</legend>
+            <p className="text-sm text-muted-foreground">{t("stackingHint")}</p>
+            {STACKING_MODES.map((mode) => (
+              <label key={mode} className="flex items-start gap-2 text-sm">
+                <input
+                  type="radio" name="stacking" value={mode} className="mt-1" checked={stacking === mode}
+                  onChange={() => { if (stacking !== mode) changeStacking.mutate(mode); }}
+                />
+                <span><span className="font-medium">{t(`stacking.${mode}.label`)}</span> <span className="text-muted-foreground">{t(`stacking.${mode}.hint`)}</span></span>
+              </label>
+            ))}
+          </fieldset>
+          {query.data ? (
+            <p className="text-sm" data-testid="running-count">{t("running", { count: counts.ACTIVE, max: maxConcurrent })} <span className="text-muted-foreground">{t("runningHint", { max: maxConcurrent })}</span></p>
+          ) : null}
+        </CardContent>
+      </Card>
 
       <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5" aria-label={t("filterLabel")}>
         {SUMMARY.map((s) => (
@@ -145,6 +184,10 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
                 <Card className="h-full">
                   <CardContent className="grid h-full content-between gap-4">
                     <div className="grid gap-2">
+                      {p.imageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={p.imageUrl} alt="" className="aspect-[16/9] w-full rounded-lg object-cover" referrerPolicy="no-referrer" />
+                      ) : null}
                       <div className="flex flex-wrap items-center gap-2">
                         <h2 className="text-lg font-semibold">{title}</h2>
                         <Badge className={STATUS_STYLES[status]}>{t(`status.${status}`)}</Badge>
@@ -175,7 +218,7 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
       )}
 
       <PromotionDialog
-        form={form} setForm={setForm} shop={shop} workshops={workshops} money={money}
+        form={form} setForm={setForm} shop={shop} workshops={workshops} money={money} day={day}
         onSaved={(editing) => { setForm(null); setMessage({ text: t(editing ? "updated" : "created"), tone: "ok" }); void refresh(); }}
       />
 
@@ -195,8 +238,8 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
   );
 }
 
-function PromotionDialog({ form, setForm, shop, workshops, money, onSaved }: {
-  form: FormState | null; setForm: (f: FormState | null) => void; shop: PromotionShop; workshops: PromotionWorkshop[]; money: (n: number) => string;
+function PromotionDialog({ form, setForm, shop, workshops, money, day, onSaved }: {
+  form: FormState | null; setForm: (f: FormState | null) => void; shop: PromotionShop; workshops: PromotionWorkshop[]; money: (n: number) => string; day: (d: string) => string;
   onSaved: (editing: boolean) => void;
 }) {
   const t = useTranslations("ops.promotions");
@@ -208,7 +251,7 @@ function PromotionDialog({ form, setForm, shop, workshops, money, onSaved }: {
     onSuccess: (_p, v) => onSaved(v.id !== null),
     onError: (e) => {
       if (e instanceof PromotionApiError && e.status === 422) setErrors(Object.fromEntries(Object.entries(e.fields).map(([k, code]) => [k, t(`errors.${code}` as never)])));
-      else setFailed(e instanceof PromotionApiError && e.status === 409 ? t("limitReached", { max: 20 }) : t("saveFailed"));
+      else setFailed(failureText(e, t, day));
     },
   });
   const set = (patch: Partial<FormState>) => { if (form) { setForm({ ...form, ...patch }); setErrors({}); setFailed(null); } };
@@ -219,7 +262,7 @@ function PromotionDialog({ form, setForm, shop, workshops, money, onSaved }: {
     if (!form) return;
     const value = form.discountType === "PERCENT" ? (/^\d+$/.test(form.value.trim()) ? Number(form.value.trim()) : 0) : (parseAmount(form.value, minorDigits(shop.currency)) ?? 0);
     const parsed = promotionInputSchema.safeParse({
-      title: form.title, description: form.description, discountType: form.discountType, discountValue: value, code: form.code || undefined,
+      title: form.title, description: form.description, discountType: form.discountType, discountValue: value, code: form.code || undefined, imageUrl: form.imageUrl,
       appliesTo: form.appliesTo, workshopIds: form.appliesTo === "ALL" ? [] : form.workshopIds, startDate: form.startDate, endDate: form.endDate, enabled: form.enabled,
     });
     if (!parsed.success) {
@@ -257,6 +300,11 @@ function PromotionDialog({ form, setForm, shop, workshops, money, onSaved }: {
             <Field id="pr-description" label={t("fieldDescription")} error={errors.description}>
               {(p) => <Textarea {...p} rows={3} value={form.description[lang] ?? ""} maxLength={PROMOTION_DESCRIPTION_MAX + 50} onChange={(e) => setLoc("description", e.target.value)} />}
             </Field>
+            <div className="grid gap-1.5">
+              <ImageUploadField id="pr-image" label={t("fieldImage")} value={form.imageUrl} onChange={(url) => set({ imageUrl: url })} uploader={promotionImageUploader} />
+              <p className="text-xs text-muted-foreground">{t("imageHint")}</p>
+              {errors.imageUrl ? <p role="alert" className="text-xs text-destructive">{errors.imageUrl}</p> : null}
+            </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field id="pr-type" label={t("fieldType")} required>
                 {(p) => (
