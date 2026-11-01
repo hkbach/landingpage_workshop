@@ -239,10 +239,10 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
       <Card data-testid="buttons-help">
         <CardContent className="grid gap-1.5 text-sm">
           <p className="font-medium">{t("noteTitle")}</p>
-          <ul className="grid list-disc gap-1 pl-5 text-muted-foreground">
-            <li>{t("noteEdit")}</li>
-            <li>{t("noteDelete")}</li>
-            <li>{t("noteStart")}</li>
+          <ul className="grid gap-1.5 text-muted-foreground">
+            {([[Pencil, "noteEdit"], [Trash2, "noteDelete"], [RefreshCw, "noteStart"]] as const).map(([Icon, key]) => (
+              <li key={key} className="flex items-start gap-2"><Icon className="mt-0.5 size-4 shrink-0 text-foreground" aria-hidden />{t(key)}</li>
+            ))}
           </ul>
         </CardContent>
       </Card>

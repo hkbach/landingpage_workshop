@@ -338,7 +338,7 @@
     "noteTitle": "Note",
     "noteEdit": "Edit: change a promotion. An active promotion cannot be edited, so pause it first; an expired one is renewed with the Renew button.",
     "noteDelete": "Delete: remove a promotion for good. Only a paused or expired promotion can be deleted.",
-    "noteStart": "Start now: runs an expired promotion again, please edit the period of the promotion",
+    "noteStart": "Refresh button: runs an expired promotion again, please edit the period of the promotion",
     "renewHint": "Please choose the period in which this promotion applies.",
     "fieldEnd": "Last day",
     "fieldEnabled": "Active (shown on the landing page between the dates)",
