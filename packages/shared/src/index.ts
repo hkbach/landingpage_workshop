@@ -11,3 +11,4 @@ export * from "./finance";
 export * from "./booking-stats";
 export * from "./promotions";
 export * from "./media";
+export * from "./promotion-insights";

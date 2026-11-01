@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
-import { Pause, Pencil, Play, Plus, Trash2 } from "lucide-react";
+import { ImageIcon, Pause, Pencil, Play, Plus, Trash2, TriangleAlert } from "lucide-react";
 import {
-  countByStatus, discountedPrice, DISCOUNT_TYPES, formatMoney, minorDigits, pickLocalized, STACKING_MODES, promotionAppliesTo, promotionInputSchema, promotionStatus,
-  PROMOTION_DESCRIPTION_MAX, PROMOTION_TITLE_MAX, type DiscountType, type Locale, type Localized, type PromotionRecord, type PromotionStatus, type StackingMode,
+  countByStatus, discountedPrice, DISCOUNT_TYPES, filterPromotions, formatMoney, minorDigits, OVER_BUDGET_PERCENT, overBudgetWorkshops, pickLocalized, promotionAppliesTo,
+  promotionInputSchema, promotionStatus, PROMOTION_DESCRIPTION_MAX, PROMOTION_TITLE_MAX, STACKING_MODES,
+  type DiscountType, type Locale, type Localized, type PromotionInput, type PromotionRecord, type PromotionStatus, type StackingMode,
 } from "@workshop/shared";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { NativeSelect } from "@/components/dashboard/shell/native-select";
 import { Field } from "@/components/ops/field";
@@ -41,45 +43,63 @@ interface FormState {
   appliesTo: "ALL" | "SELECTED"; workshopIds: string[]; startDate: string; endDate: string; enabled: boolean;
 }
 
-/** Text for a failed save: the limits get their own explanation, everything else a general one. */
-function failureText(e: unknown, t: (key: string, values?: Record<string, string | number>) => string, day: (d: string) => string): string {
-  if (e instanceof PromotionApiError && e.status === 409) {
-    if (e.code === "CONCURRENT_LIMIT") return t("concurrentLimit", { max: Number(e.details.max ?? 5), date: day(String(e.details.date ?? "")) });
-    return t("limitReached", { max: 20 });
+/** A message that needs the shop owner's attention is shown in a pop-up, not on the top of the page. */
+interface Notice { title: string; body: string }
+
+type T = (key: string, values?: Record<string, string | number>) => string;
+
+/** The pop-up for a refused save: the limits get their own explanation. Null for any other failure. */
+function limitNotice(e: unknown, t: T, day: (d: string) => string): Notice | null {
+  if (!(e instanceof PromotionApiError) || e.status !== 409) return null;
+  if (e.code === "CONCURRENT_LIMIT") {
+    return { title: t("concurrentTitle"), body: t("concurrentLimit", { max: Number(e.details.max ?? 5), date: day(String(e.details.date ?? "")) }) };
   }
-  return t("saveFailed");
+  return { title: t("limitTitle"), body: t("limitReached", { max: 20 }) };
 }
 
 const addDays = (day: string, n: number) => new Date(Date.parse(`${day}T12:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10);
+
+interface Filters { q: string; status: "" | PromotionStatus; workshopId: string; from: string; to: string }
+const NO_FILTERS: Filters = { q: "", status: "", workshopId: "", from: "", to: "" };
 
 export function PromotionsView({ shop, workshops }: { shop: PromotionShop; workshops: PromotionWorkshop[] }) {
   const t = useTranslations("ops.promotions");
   const locale = useLocale();
   const queryClient = useQueryClient();
   const query = useQuery({ queryKey: ["promotions"], queryFn: fetchPromotions });
-  const [filter, setFilter] = useState<"ALL" | PromotionStatus>("ALL");
+  const [filters, setFilters] = useState<Filters>(NO_FILTERS);
   const [form, setForm] = useState<FormState | null>(null);
   const [deleting, setDeleting] = useState<PromotionRecord | null>(null);
+  const [notice, setNotice] = useState<Notice | null>(null);
   const [message, setMessage] = useState<{ text: string; tone: "ok" | "error" } | null>(null);
 
   const today = query.data?.today ?? "";
-  const items = query.data?.items ?? [];
+  const items = useMemo(() => query.data?.items ?? [], [query.data]);
   const limit = query.data?.limit ?? 0;
   const counts = countByStatus(items, today);
   const maxConcurrent = query.data?.maxConcurrent ?? 5;
-  const rows = items.filter((p) => filter === "ALL" || promotionStatus(p, today) === filter);
+  const rows = useMemo(
+    () => filterPromotions(items, { q: filters.q, status: filters.status || undefined, workshopId: filters.workshopId || undefined, from: filters.from || undefined, to: filters.to || undefined }, today),
+    [items, filters, today],
+  );
+  const filtered = JSON.stringify(filters) !== JSON.stringify(NO_FILTERS);
   const atLimit = limit > 0 && items.length >= limit;
   const money = (n: number) => formatMoney(n, shop.currency, locale);
   const nameOf = (id: string) => pickLocalized(workshops.find((w) => w.id === id)?.title ?? {}, locale as Locale, shop.defaultLocale);
   const day = (d: string) => new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${d}T12:00:00Z`));
   const discountText = (p: Pick<PromotionRecord, "discountType" | "discountValue">) =>
     p.discountType === "PERCENT" ? t("offPercent", { value: p.discountValue }) : t("offAmount", { amount: money(p.discountValue) });
+  const setFilter = <K extends keyof Filters>(key: K, value: Filters[K]) => setFilters((f) => ({ ...f, [key]: value }));
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ["promotions"] });
   const toggle = useMutation({
     mutationFn: (v: { id: string; enabled: boolean }) => setPromotionEnabledRequest(v.id, v.enabled),
     onSuccess: (_p, v) => { setMessage({ text: t(v.enabled ? "resumed" : "paused"), tone: "ok" }); void refresh(); },
-    onError: (e) => { setMessage({ text: failureText(e, t, day), tone: "error" }); void refresh(); },
+    onError: (e) => {
+      const n = limitNotice(e, t, day);
+      if (n) setNotice(n); else setMessage({ text: t("saveFailed"), tone: "error" });
+      void refresh();
+    },
   });
   const remove = useMutation({
     mutationFn: (id: string) => deletePromotionRequest(id),
@@ -100,10 +120,10 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
     });
   }
 
-  const SUMMARY: { key: "ALL" | PromotionStatus; label: string; value: number }[] = [
+  const SUMMARY: { key: "" | PromotionStatus; label: string; value: number }[] = [
     { key: "ACTIVE", label: t("status.ACTIVE"), value: counts.ACTIVE }, { key: "SCHEDULED", label: t("status.SCHEDULED"), value: counts.SCHEDULED },
     { key: "PAUSED", label: t("status.PAUSED"), value: counts.PAUSED }, { key: "EXPIRED", label: t("status.EXPIRED"), value: counts.EXPIRED },
-    { key: "ALL", label: t("all"), value: counts.total },
+    { key: "", label: t("all"), value: counts.total },
   ];
 
   return (
@@ -134,10 +154,10 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
 
       <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5" aria-label={t("filterLabel")}>
         {SUMMARY.map((s) => (
-          <li key={s.key}>
+          <li key={s.key || "all"}>
             <button
-              type="button" aria-pressed={filter === s.key} onClick={() => setFilter(s.key)}
-              className={cn("w-full rounded-xl border bg-card p-3 text-left outline-none transition hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50", filter === s.key && "border-primary ring-2 ring-primary/30")}
+              type="button" aria-pressed={filters.status === s.key} onClick={() => setFilter("status", s.key)}
+              className={cn("w-full rounded-xl border bg-card p-3 text-left outline-none transition hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50", filters.status === s.key && "border-primary ring-2 ring-primary/30")}
             >
               <span className="block text-xs text-muted-foreground">{s.label}</span>
               <span className="block text-2xl font-semibold tabular-nums">{query.data ? s.value : "–"}</span>
@@ -145,6 +165,43 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
           </li>
         ))}
       </ul>
+
+      <Card>
+        <CardContent className="grid gap-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr_1fr]" role="search" aria-label={t("searchLabel")}>
+            <div className="grid gap-1.5">
+              <Label htmlFor="fl-q">{t("searchTitle")}</Label>
+              <Input id="fl-q" type="search" value={filters.q} maxLength={80} placeholder={t("searchPlaceholder")} onChange={(e) => setFilter("q", e.target.value)} autoComplete="off" />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="fl-from">{t("periodFrom")}</Label>
+              <Input id="fl-from" type="date" value={filters.from} onChange={(e) => setFilter("from", e.target.value)} />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="fl-to">{t("periodTo")}</Label>
+              <Input id="fl-to" type="date" value={filters.to} onChange={(e) => setFilter("to", e.target.value)} />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="fl-status">{t("statusFilter")}</Label>
+              <NativeSelect id="fl-status" value={filters.status} onChange={(e) => setFilter("status", e.target.value as Filters["status"])}>
+                <option value="">{t("allStatuses")}</option>
+                {(["ACTIVE", "SCHEDULED", "PAUSED", "EXPIRED"] as const).map((s) => <option key={s} value={s}>{t(`status.${s}`)}</option>)}
+              </NativeSelect>
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="fl-workshop">{t("workshopFilter")}</Label>
+              <NativeSelect id="fl-workshop" value={filters.workshopId} onChange={(e) => setFilter("workshopId", e.target.value)}>
+                <option value="">{t("allWorkshopsOption")}</option>
+                {workshops.map((w) => <option key={w.id} value={w.id}>{nameOf(w.id)}</option>)}
+              </NativeSelect>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+            <p aria-live="polite" data-testid="result-count" className="text-muted-foreground">{query.data ? t("showing", { shown: rows.length, total: items.length }) : null}</p>
+            {filtered ? <Button size="sm" variant="ghost" onClick={() => setFilters(NO_FILTERS)}>{t("clearFilters")}</Button> : null}
+          </div>
+        </CardContent>
+      </Card>
 
       <p role="status" className={cn("min-h-5 text-sm font-medium", message?.tone === "error" ? "text-destructive" : "text-emerald-800")}>{message?.text}</p>
 
@@ -158,53 +215,75 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
       ) : rows.length === 0 ? (
         <p className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">{items.length === 0 ? t("noPromotions") : t("empty")}</p>
       ) : (
-        <ul className="grid gap-3 md:grid-cols-2">
-          {rows.map((p) => {
-            const status = promotionStatus(p, today);
-            const title = pickLocalized(p.title, locale as Locale, shop.defaultLocale);
-            return (
-              <li key={p.id}>
-                <Card className="h-full">
-                  <CardContent className="grid h-full content-between gap-4">
-                    <div className="grid gap-2">
-                      {p.imageUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={p.imageUrl} alt="" className="aspect-[16/9] w-full rounded-lg object-cover" referrerPolicy="no-referrer" />
-                      ) : null}
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h2 className="text-lg font-semibold">{title}</h2>
-                        <Badge className={STATUS_STYLES[status]}>{t(`status.${status}`)}</Badge>
+        <div className="overflow-x-auto rounded-xl border bg-card">
+          <Table data-testid="promotions-table">
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t("colPromotion")}</TableHead>
+                <TableHead>{t("colDiscount")}</TableHead>
+                <TableHead>{t("period")}</TableHead>
+                <TableHead>{t("appliesTo")}</TableHead>
+                <TableHead>{t("colStatus")}</TableHead>
+                <TableHead>{t("usage")}</TableHead>
+                <TableHead><span className="sr-only">{t("colActions")}</span></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((p) => {
+                const status = promotionStatus(p, today);
+                const title = pickLocalized(p.title, locale as Locale, shop.defaultLocale);
+                return (
+                  <TableRow key={p.id}>
+                    <TableCell className="min-w-52">
+                      <div className="flex items-center gap-3">
+                        {p.imageUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={p.imageUrl} alt="" className="h-10 w-14 shrink-0 rounded-md object-cover" referrerPolicy="no-referrer" />
+                        ) : (
+                          <span className="grid h-10 w-14 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground" aria-hidden><ImageIcon className="size-4" /></span>
+                        )}
+                        <div className="min-w-0">
+                          <p className="truncate font-medium">{title}</p>
+                          {p.code ? <p className="font-mono text-xs text-muted-foreground">{p.code}</p> : null}
+                        </div>
                       </div>
-                      <p className="text-sm font-medium">{discountText(p)}</p>
-                      {pickLocalized(p.description, locale as Locale, shop.defaultLocale) ? <p className="line-clamp-2 text-sm text-muted-foreground">{pickLocalized(p.description, locale as Locale, shop.defaultLocale)}</p> : null}
-                      <dl className="grid gap-0.5 text-sm">
-                        <div className="flex gap-1"><dt className="text-muted-foreground">{t("period")}:</dt><dd>{t("range", { from: day(p.startDate), to: day(p.endDate) })}</dd></div>
-                        <div className="flex gap-1"><dt className="text-muted-foreground">{t("appliesTo")}:</dt><dd>{p.appliesTo === "ALL" ? t("allWorkshops") : p.workshopIds.map(nameOf).join(", ")}</dd></div>
-                        {p.code ? <div className="flex gap-1"><dt className="text-muted-foreground">{t("code")}:</dt><dd className="font-mono">{p.code}</dd></div> : null}
-                        <div className="flex gap-1"><dt className="text-muted-foreground">{t("usage")}:</dt><dd>{t(`stackingTag.${p.stacking}`)}</dd></div>
-                      </dl>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <Button size="sm" variant="outline" onClick={() => openEdit(p)}><Pencil aria-hidden />{t("edit")}<span className="sr-only">: {title}</span></Button>
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap font-medium">{discountText(p)}</TableCell>
+                    <TableCell className="min-w-36 whitespace-normal text-sm">{t("range", { from: day(p.startDate), to: day(p.endDate) })}</TableCell>
+                    <TableCell className="min-w-32 max-w-56 whitespace-normal text-sm">{p.appliesTo === "ALL" ? t("allWorkshops") : p.workshopIds.map(nameOf).join(", ")}</TableCell>
+                    <TableCell><Badge className={STATUS_STYLES[status]}>{t(`status.${status}`)}</Badge></TableCell>
+                    <TableCell className="min-w-28 whitespace-normal text-sm">{t(`stackingOption.${p.stacking}.label`)}</TableCell>
+                    <TableCell className="whitespace-nowrap text-right">
+                      <Button size="icon-sm" variant="ghost" title={t("edit")} onClick={() => openEdit(p)}><Pencil aria-hidden /><span className="sr-only">{t("edit")}: {title}</span></Button>
                       {status !== "EXPIRED" ? (
-                        <Button size="sm" variant="outline" disabled={toggle.isPending} onClick={() => toggle.mutate({ id: p.id, enabled: !p.enabled })}>
-                          {p.enabled ? <Pause aria-hidden /> : <Play aria-hidden />}{p.enabled ? t("pause") : t("resume")}<span className="sr-only">: {title}</span>
+                        <Button size="icon-sm" variant="ghost" title={p.enabled ? t("pause") : t("resume")} disabled={toggle.isPending} onClick={() => toggle.mutate({ id: p.id, enabled: !p.enabled })}>
+                          {p.enabled ? <Pause aria-hidden /> : <Play aria-hidden />}<span className="sr-only">{p.enabled ? t("pause") : t("resume")}: {title}</span>
                         </Button>
                       ) : null}
-                      <Button size="sm" variant="outline" onClick={() => setDeleting(p)}><Trash2 aria-hidden />{t("delete")}<span className="sr-only">: {title}</span></Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </li>
-            );
-          })}
-        </ul>
+                      <Button size="icon-sm" variant="ghost" title={t("delete")} onClick={() => setDeleting(p)}><Trash2 aria-hidden /><span className="sr-only">{t("delete")}: {title}</span></Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
       )}
 
       <PromotionDialog
-        form={form} setForm={setForm} shop={shop} workshops={workshops} money={money} day={day}
+        form={form} setForm={setForm} shop={shop} workshops={workshops} others={items} money={money} day={day} onNotice={setNotice}
         onSaved={(editing) => { setForm(null); setMessage({ text: t(editing ? "updated" : "created"), tone: "ok" }); void refresh(); }}
       />
+
+      <Dialog open={notice !== null} onOpenChange={(o) => { if (!o) setNotice(null); }}>
+        <DialogContent role="alertdialog" data-testid="notice-popup">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><TriangleAlert className="size-5 text-amber-700" aria-hidden />{notice?.title}</DialogTitle>
+            <DialogDescription>{notice?.body}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter><Button onClick={() => setNotice(null)}>{t("ok")}</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={deleting !== null} onOpenChange={(o) => { if (!o) setDeleting(null); }}>
         <DialogContent>
@@ -222,39 +301,60 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
   );
 }
 
-function PromotionDialog({ form, setForm, shop, workshops, money, day, onSaved }: {
-  form: FormState | null; setForm: (f: FormState | null) => void; shop: PromotionShop; workshops: PromotionWorkshop[]; money: (n: number) => string; day: (d: string) => string;
-  onSaved: (editing: boolean) => void;
+/** What the form holds, as far as it is valid (null while something is missing): used to check the budget while the owner types. */
+function readForm(form: FormState, currency: string) {
+  const value = form.discountType === "PERCENT" ? (/^\d+$/.test(form.value.trim()) ? Number(form.value.trim()) : 0) : (parseAmount(form.value, minorDigits(currency)) ?? 0);
+  return promotionInputSchema.safeParse({
+    title: form.title, description: form.description, discountType: form.discountType, discountValue: value, code: form.code || undefined, imageUrl: form.imageUrl, stacking: form.stacking,
+    appliesTo: form.appliesTo, workshopIds: form.appliesTo === "ALL" ? [] : form.workshopIds, startDate: form.startDate, endDate: form.endDate, enabled: form.enabled,
+  });
+}
+
+function PromotionDialog({ form, setForm, shop, workshops, others, money, day, onNotice, onSaved }: {
+  form: FormState | null; setForm: (f: FormState | null) => void; shop: PromotionShop; workshops: PromotionWorkshop[]; others: PromotionRecord[];
+  money: (n: number) => string; day: (d: string) => string; onNotice: (n: Notice) => void; onSaved: (editing: boolean) => void;
 }) {
   const t = useTranslations("ops.promotions");
   const [lang, setLang] = useEditingLanguage(shop.enabledLocales, shop.defaultLocale);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [failed, setFailed] = useState<string | null>(null);
+  /** The valid form waiting for the owner to confirm that a very deep discount is intended. */
+  const [confirming, setConfirming] = useState<{ id: string | null; input: PromotionInput } | null>(null);
   const save = useMutation({
-    mutationFn: (v: { id: string | null; input: Parameters<typeof savePromotionRequest>[1] }) => savePromotionRequest(v.id, v.input),
+    mutationFn: (v: { id: string | null; input: PromotionInput }) => savePromotionRequest(v.id, v.input),
     onSuccess: (_p, v) => onSaved(v.id !== null),
     onError: (e) => {
       if (e instanceof PromotionApiError && e.status === 422) setErrors(Object.fromEntries(Object.entries(e.fields).map(([k, code]) => [k, t(`errors.${code}` as never)])));
-      else setFailed(failureText(e, t, day));
+      else {
+        const n = limitNotice(e, t, day);
+        if (n) onNotice(n); else setFailed(t("saveFailed"));
+      }
     },
   });
   const set = (patch: Partial<FormState>) => { if (form) { setForm({ ...form, ...patch }); setErrors({}); setFailed(null); } };
   const setLoc = (key: "title" | "description", text: string) => form && set({ [key]: { ...form[key], [lang]: text } });
+  const workshopName = (id: string) => pickLocalized(workshops.find((w) => w.id === id)?.title ?? {}, lang, shop.defaultLocale);
+
+  /** Workshops this promotion could take to OVER_BUDGET_PERCENT off or more, next to the promotions already running on the same days. */
+  const risks = useMemo(() => {
+    if (!form) return [];
+    const parsed = readForm(form, shop.currency);
+    if (!parsed.success) return [];
+    const candidate = { id: form.id ?? "new", ...parsed.data, workshopIds: parsed.data.appliesTo === "ALL" ? [] : parsed.data.workshopIds };
+    return overBudgetWorkshops(candidate, others, workshops);
+  }, [form, shop.currency, others, workshops]);
 
   function submit(e: FormEvent) {
     e.preventDefault();
     if (!form) return;
-    const value = form.discountType === "PERCENT" ? (/^\d+$/.test(form.value.trim()) ? Number(form.value.trim()) : 0) : (parseAmount(form.value, minorDigits(shop.currency)) ?? 0);
-    const parsed = promotionInputSchema.safeParse({
-      title: form.title, description: form.description, discountType: form.discountType, discountValue: value, code: form.code || undefined, imageUrl: form.imageUrl, stacking: form.stacking,
-      appliesTo: form.appliesTo, workshopIds: form.appliesTo === "ALL" ? [] : form.workshopIds, startDate: form.startDate, endDate: form.endDate, enabled: form.enabled,
-    });
+    const parsed = readForm(form, shop.currency);
     if (!parsed.success) {
       const next: Record<string, string> = {};
       for (const i of parsed.error.issues) next[String(i.path[0])] ??= t(`errors.${i.message}` as never);
       setErrors(next);
       return;
     }
+    if (risks.length > 0) { setConfirming({ id: form.id, input: parsed.data }); return; }
     save.mutate({ id: form.id, input: parsed.data });
   }
 
@@ -268,97 +368,127 @@ function PromotionDialog({ form, setForm, shop, workshops, money, day, onSaved }
     return w ? { name: pickLocalized(w.title, lang, shop.defaultLocale), before: money(w.priceAmount), after: money(discountedPrice(w.priceAmount, draft)) } : null;
   })();
 
+  const riskLines = (
+    <ul className="grid gap-1">
+      {risks.map((r) => <li key={r.workshopId}>{t("overBudgetLine", { workshop: workshopName(r.workshopId), percent: r.percent })}</li>)}
+    </ul>
+  );
+
   return (
-    <Dialog open={form !== null} onOpenChange={(o) => { if (!o) { setForm(null); setErrors({}); setFailed(null); } }}>
-      <DialogContent className="max-h-[92dvh] overflow-y-auto sm:max-w-xl">
-        {form ? (
-          <form onSubmit={submit} className="grid gap-4" noValidate>
-            <DialogHeader>
-              <DialogTitle>{form.id ? t("editTitle") : t("createTitle")}</DialogTitle>
-              <DialogDescription>{t("formHint")}</DialogDescription>
-            </DialogHeader>
-            <LanguageBar value={lang} onChange={setLang} enabled={shop.enabledLocales} defaultLocale={shop.defaultLocale} missingByLocale={{}} />
-            <Field id="pr-title" label={t("fieldTitle")} required error={errors.title}>
-              {(p) => <Input {...p} value={form.title[lang] ?? ""} maxLength={PROMOTION_TITLE_MAX + 20} onChange={(e) => setLoc("title", e.target.value)} autoComplete="off" />}
-            </Field>
-            <Field id="pr-description" label={t("fieldDescription")} error={errors.description}>
-              {(p) => <Textarea {...p} rows={3} value={form.description[lang] ?? ""} maxLength={PROMOTION_DESCRIPTION_MAX + 50} onChange={(e) => setLoc("description", e.target.value)} />}
-            </Field>
-            <div className="grid gap-1.5">
-              <ImageUploadField id="pr-image" label={t("fieldImage")} value={form.imageUrl} onChange={(url) => set({ imageUrl: url })} uploader={promotionImageUploader} />
-              <p className="text-xs text-muted-foreground">{t("imageHint")}</p>
-              {errors.imageUrl ? <p role="alert" className="text-xs text-destructive">{errors.imageUrl}</p> : null}
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field id="pr-type" label={t("fieldType")} required>
-                {(p) => (
-                  <NativeSelect {...p} value={form.discountType} onChange={(e) => set({ discountType: e.target.value as DiscountType, value: "" })}>
-                    {DISCOUNT_TYPES.map((x) => <option key={x} value={x}>{t(`type.${x}`)}</option>)}
-                  </NativeSelect>
-                )}
+    <>
+      <Dialog open={form !== null} onOpenChange={(o) => { if (!o) { setForm(null); setErrors({}); setFailed(null); setConfirming(null); } }}>
+        <DialogContent className="max-h-[92dvh] overflow-y-auto sm:max-w-xl">
+          {form ? (
+            <form onSubmit={submit} className="grid gap-4" noValidate>
+              <DialogHeader>
+                <DialogTitle>{form.id ? t("editTitle") : t("createTitle")}</DialogTitle>
+                <DialogDescription>{t("formHint")}</DialogDescription>
+              </DialogHeader>
+              <LanguageBar value={lang} onChange={setLang} enabled={shop.enabledLocales} defaultLocale={shop.defaultLocale} missingByLocale={{}} />
+              <Field id="pr-title" label={t("fieldTitle")} required error={errors.title}>
+                {(p) => <Input {...p} value={form.title[lang] ?? ""} maxLength={PROMOTION_TITLE_MAX + 20} onChange={(e) => setLoc("title", e.target.value)} autoComplete="off" />}
               </Field>
-              <Field id="pr-value" label={form.discountType === "PERCENT" ? t("fieldPercent") : t("fieldAmount", { currency: shop.currency })} required error={errors.discountValue}>
-                {(p) => <Input {...p} inputMode="decimal" value={form.value} onChange={(e) => set({ value: e.target.value })} autoComplete="off" />}
+              <Field id="pr-description" label={t("fieldDescription")} error={errors.description}>
+                {(p) => <Textarea {...p} rows={3} value={form.description[lang] ?? ""} maxLength={PROMOTION_DESCRIPTION_MAX + 50} onChange={(e) => setLoc("description", e.target.value)} />}
               </Field>
-            </div>
-            <Field id="pr-code" label={t("fieldCode")} hint={t("codeHint")} error={errors.code}>
-              {(p) => <Input {...p} className="font-mono uppercase" value={form.code} maxLength={20} onChange={(e) => set({ code: e.target.value })} autoComplete="off" spellCheck={false} />}
-            </Field>
-            <fieldset className="grid gap-2">
-              <legend className="mb-1 text-sm font-medium">{t("fieldStacking")}</legend>
-              {STACKING_MODES.map((mode) => (
-                <label key={mode} className="flex items-start gap-2 text-sm">
-                  <input type="radio" name="pr-stacking" value={mode} className="mt-1" checked={form.stacking === mode} onChange={() => set({ stacking: mode })} />
-                  <span><span className="font-medium">{t(`stackingOption.${mode}.label`)}</span> <span className="text-muted-foreground">{t(`stackingOption.${mode}.hint`)}</span></span>
-                </label>
-              ))}
-            </fieldset>
-            <fieldset className="grid gap-2">
-              <legend className="mb-1 text-sm font-medium">{t("fieldAppliesTo")}</legend>
-              {(["ALL", "SELECTED"] as const).map((v) => (
-                <label key={v} className="flex items-center gap-2 text-sm">
-                  <input type="radio" name="pr-applies" value={v} checked={form.appliesTo === v} onChange={() => set({ appliesTo: v })} />
-                  {t(v === "ALL" ? "allWorkshops" : "selectedWorkshops")}
-                </label>
-              ))}
-              {form.appliesTo === "SELECTED" ? (
-                <ul className="grid gap-1.5 rounded-lg border p-3" aria-label={t("fieldWorkshops")}>
-                  {workshops.map((w) => (
-                    <li key={w.id}>
-                      <label className="flex items-center gap-2 text-sm">
-                        <input
-                          type="checkbox" checked={form.workshopIds.includes(w.id)}
-                          onChange={(e) => set({ workshopIds: e.target.checked ? [...form.workshopIds, w.id] : form.workshopIds.filter((x) => x !== w.id) })}
-                        />
-                        {pickLocalized(w.title, lang, shop.defaultLocale)} <span className="text-muted-foreground">· {money(w.priceAmount)}</span>
-                      </label>
-                    </li>
-                  ))}
-                </ul>
+              <div className="grid gap-1.5">
+                <ImageUploadField id="pr-image" label={t("fieldImage")} value={form.imageUrl} onChange={(url) => set({ imageUrl: url })} uploader={promotionImageUploader} />
+                <p className="text-xs text-muted-foreground">{t("imageHint")}</p>
+                {errors.imageUrl ? <p role="alert" className="text-xs text-destructive">{errors.imageUrl}</p> : null}
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field id="pr-type" label={t("fieldType")} required>
+                  {(p) => (
+                    <NativeSelect {...p} value={form.discountType} onChange={(e) => set({ discountType: e.target.value as DiscountType, value: "" })}>
+                      {DISCOUNT_TYPES.map((x) => <option key={x} value={x}>{t(`type.${x}`)}</option>)}
+                    </NativeSelect>
+                  )}
+                </Field>
+                <Field id="pr-value" label={form.discountType === "PERCENT" ? t("fieldPercent") : t("fieldAmount", { currency: shop.currency })} required error={errors.discountValue}>
+                  {(p) => <Input {...p} inputMode="decimal" value={form.value} onChange={(e) => set({ value: e.target.value })} autoComplete="off" />}
+                </Field>
+              </div>
+              <Field id="pr-code" label={t("fieldCode")} hint={t("codeHint")} error={errors.code}>
+                {(p) => <Input {...p} className="font-mono uppercase" value={form.code} maxLength={20} onChange={(e) => set({ code: e.target.value })} autoComplete="off" spellCheck={false} />}
+              </Field>
+              <fieldset className="grid gap-2">
+                <legend className="mb-1 text-sm font-medium">{t("fieldStacking")}</legend>
+                {STACKING_MODES.map((mode) => (
+                  <label key={mode} className="flex items-start gap-2 text-sm">
+                    <input type="radio" name="pr-stacking" value={mode} className="mt-1" checked={form.stacking === mode} onChange={() => set({ stacking: mode })} />
+                    <span><span className="font-medium">{t(`stackingOption.${mode}.label`)}</span> <span className="text-muted-foreground">{t(`stackingOption.${mode}.hint`)}</span></span>
+                  </label>
+                ))}
+              </fieldset>
+              <fieldset className="grid gap-2">
+                <legend className="mb-1 text-sm font-medium">{t("fieldAppliesTo")}</legend>
+                {(["ALL", "SELECTED"] as const).map((v) => (
+                  <label key={v} className="flex items-center gap-2 text-sm">
+                    <input type="radio" name="pr-applies" value={v} checked={form.appliesTo === v} onChange={() => set({ appliesTo: v })} />
+                    {t(v === "ALL" ? "allWorkshops" : "selectedWorkshops")}
+                  </label>
+                ))}
+                {form.appliesTo === "SELECTED" ? (
+                  <ul className="grid gap-1.5 rounded-lg border p-3" aria-label={t("fieldWorkshops")}>
+                    {workshops.map((w) => (
+                      <li key={w.id}>
+                        <label className="flex items-center gap-2 text-sm">
+                          <input
+                            type="checkbox" checked={form.workshopIds.includes(w.id)}
+                            onChange={(e) => set({ workshopIds: e.target.checked ? [...form.workshopIds, w.id] : form.workshopIds.filter((x) => x !== w.id) })}
+                          />
+                          {pickLocalized(w.title, lang, shop.defaultLocale)} <span className="text-muted-foreground">· {money(w.priceAmount)}</span>
+                        </label>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                {errors.workshopIds ? <p role="alert" className="text-xs text-destructive">{errors.workshopIds}</p> : null}
+              </fieldset>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field id="pr-start" label={t("fieldStart")} required error={errors.startDate}>
+                  {(p) => <Input {...p} type="date" value={form.startDate} onChange={(e) => set({ startDate: e.target.value })} />}
+                </Field>
+                <Field id="pr-end" label={t("fieldEnd")} required error={errors.endDate}>
+                  {(p) => <Input {...p} type="date" value={form.endDate} onChange={(e) => set({ endDate: e.target.value })} />}
+                </Field>
+              </div>
+              <div className="flex items-center gap-2">
+                <input id="pr-enabled" type="checkbox" checked={form.enabled} onChange={(e) => set({ enabled: e.target.checked })} />
+                <Label htmlFor="pr-enabled">{t("fieldEnabled")}</Label>
+              </div>
+              {example ? <p className="rounded-lg bg-muted/50 p-3 text-sm">{t("example", example)}</p> : null}
+              {risks.length > 0 ? (
+                <div role="alert" data-testid="over-budget-inline" className="grid gap-1 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
+                  <p className="flex items-center gap-2 font-medium"><TriangleAlert className="size-4 shrink-0" aria-hidden />{t("overBudgetTitle")}</p>
+                  <p>{t("overBudgetBody", { limit: OVER_BUDGET_PERCENT })}</p>
+                  {riskLines}
+                </div>
               ) : null}
-              {errors.workshopIds ? <p role="alert" className="text-xs text-destructive">{errors.workshopIds}</p> : null}
-            </fieldset>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field id="pr-start" label={t("fieldStart")} required error={errors.startDate}>
-                {(p) => <Input {...p} type="date" value={form.startDate} onChange={(e) => set({ startDate: e.target.value })} />}
-              </Field>
-              <Field id="pr-end" label={t("fieldEnd")} required error={errors.endDate}>
-                {(p) => <Input {...p} type="date" value={form.endDate} onChange={(e) => set({ endDate: e.target.value })} />}
-              </Field>
-            </div>
-            <div className="flex items-center gap-2">
-              <input id="pr-enabled" type="checkbox" checked={form.enabled} onChange={(e) => set({ enabled: e.target.checked })} />
-              <Label htmlFor="pr-enabled">{t("fieldEnabled")}</Label>
-            </div>
-            {example ? <p className="rounded-lg bg-muted/50 p-3 text-sm">{t("example", example)}</p> : null}
-            <p role="alert" className="min-h-5 text-sm text-destructive">{failed}</p>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setForm(null)}>{t("cancel")}</Button>
-              <Button type="submit" disabled={save.isPending}>{t("save")}</Button>
-            </DialogFooter>
-          </form>
-        ) : null}
-      </DialogContent>
-    </Dialog>
+              <p role="alert" className="min-h-5 text-sm text-destructive">{failed}</p>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setForm(null)}>{t("cancel")}</Button>
+                <Button type="submit" disabled={save.isPending}>{t("save")}</Button>
+              </DialogFooter>
+            </form>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={confirming !== null} onOpenChange={(o) => { if (!o) setConfirming(null); }}>
+        <DialogContent role="alertdialog" data-testid="over-budget-popup">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><TriangleAlert className="size-5 text-amber-700" aria-hidden />{t("overBudgetTitle")}</DialogTitle>
+            <DialogDescription>{t("overBudgetBody", { limit: OVER_BUDGET_PERCENT })}</DialogDescription>
+          </DialogHeader>
+          <div className="text-sm">{riskLines}</div>
+          <p className="text-sm text-muted-foreground">{t("overBudgetAdvice")}</p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirming(null)}>{t("overBudgetBack")}</Button>
+            <Button onClick={() => { if (confirming) save.mutate(confirming); setConfirming(null); }}>{t("overBudgetSave")}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
