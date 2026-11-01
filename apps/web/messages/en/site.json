@@ -90,6 +90,7 @@
     "submitError": "We could not complete your booking. Please try again.",
     "previewDone": "Preview: your guests would now see their booking confirmation. No booking was made.",
     "close": "Close",
+    "accuracyNotice": "Please note: when you book, choose the correct workshop and enter the correct number of guests. We are not responsible if the booking details are wrong or the number of guests does not match.",
     "back": "Back",
     "next": "Next",
     "submitting": "Booking...",

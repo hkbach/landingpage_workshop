@@ -489,6 +489,10 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
         </div>
       )}
 
+      {step !== "confirm" && step !== "otp" ? (
+        <p role="note" data-testid="booking-notice" className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-950">{t("accuracyNotice")}</p>
+      ) : null}
+
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
         {stepIndex > 0 ? (
           <button type="button" className={secondaryBtn} onClick={() => setStep(STEPS[stepIndex - 1]!)} disabled={submitting}>{t("back")}</button>
