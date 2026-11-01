@@ -93,11 +93,41 @@ export function parseDraft(raw: string | null): Draft | null {
   }
 }
 
+/** The page without a promotions section gets one, right after the workshops (before the footer when there are none). Pure. */
+export function addPromotionsSection(d: Draft): Draft {
+  if (d.content.sections.some((s) => s.type === "promotions")) return d;
+  const sections = [...d.content.sections];
+  const after = sections.findIndex((s) => s.type === "workshops");
+  const footer = sections.findIndex((s) => s.type === "footer");
+  sections.splice(after >= 0 ? after + 1 : footer >= 0 ? footer : sections.length, 0, createSection("promotions"));
+  return { ...d, content: { ...d.content, sections: normalizeOrder(sections) } };
+}
+
+const PROMOTIONS_MIGRATED = "builder:promotions-section:";
+
+/**
+ * Content saved before the Promotions section existed would never show it in the builder, so it gets the section once (and is
+ * saved with it). Afterwards the shop owner decides: removing the section is respected on every later load.
+ */
+function withPromotionsOnce(d: Draft | null, kind: "draft" | "published", pageId: string): Draft | null {
+  if (!d) return d;
+  const marker = `${PROMOTIONS_MIGRATED}${kind}:${pageId}`;
+  try {
+    if (window.localStorage.getItem(marker)) return d;
+    window.localStorage.setItem(marker, "1");
+  } catch {
+    return d;
+  }
+  const next = addPromotionsSection(d);
+  if (next !== d) (kind === "draft" ? saveDraft : savePublished)(next, pageId);
+  return next;
+}
+
 export function loadDraft(pageId: string = MAIN_PAGE_ID): Draft | null {
   try {
     for (const k of LEGACY_KEYS) window.localStorage.removeItem(k);
     const saved = parseDraft(window.localStorage.getItem(draftKeyFor(pageId)));
-    return saved ?? (pageId === MAIN_PAGE_ID ? parseDraft(window.localStorage.getItem(MIGRATE_KEY)) : null);
+    return withPromotionsOnce(saved, "draft", pageId) ?? (pageId === MAIN_PAGE_ID ? parseDraft(window.localStorage.getItem(MIGRATE_KEY)) : null);
   } catch {
     return null;
   }
@@ -122,7 +152,7 @@ export const PUBLISHED_KEY = "builder:published:v1";
 
 export function loadPublished(pageId: string = MAIN_PAGE_ID): Draft | null {
   try {
-    return parseDraft(window.localStorage.getItem(publishedKeyFor(pageId)));
+    return withPromotionsOnce(parseDraft(window.localStorage.getItem(publishedKeyFor(pageId))), "published", pageId);
   } catch {
     return null;
   }

@@ -35,9 +35,6 @@ export function PromotionsSection({ section, props, ctx, variant }: RenderProps<
   return (
     <Section id={section.id}>
       <Heading>{L(props.heading)}</Heading>
-      {ctx.promotionStacking ? (
-        <p className="-mt-2 mb-5 text-sm text-[var(--site-muted)]">{t(ctx.promotionStacking === "SINGLE" ? "sections.promotionSingleNote" : "sections.promotionMultipleNote")}</p>
-      ) : null}
       <ul className={cn("grid gap-4", banner ? "grid-cols-1" : "@xl:grid-cols-2 @5xl:grid-cols-3")}>
         {list.map((p) => {
           const image = imgOf(p.imageUrl);
@@ -52,6 +49,7 @@ export function PromotionsSection({ section, props, ctx, variant }: RenderProps<
               {L(p.description) ? <p className="mt-1 whitespace-pre-line text-sm text-[var(--site-muted)]">{L(p.description)}</p> : null}
               <p className="mt-2 text-sm text-[var(--site-muted)]">{t("sections.promotionAppliesTo", { names: names(p) })}</p>
               <p className="text-sm text-[var(--site-muted)]">{t("sections.promotionValidUntil", { date: until(p.endDate) })}</p>
+              <p className="text-sm text-[var(--site-muted)]">{t(p.stacking === "SINGLE" ? "sections.promotionAlone" : "sections.promotionCombinable")}</p>
               {p.code ? (
                 <p className="mt-2 text-sm text-[var(--site-text)]">
                   {t("sections.promotionCode")}: <code className={cn("px-2 py-0.5 font-mono font-semibold", box, "bg-[var(--site-surface)] border border-[color:var(--site-border)]")}>{p.code}</code>

@@ -2,7 +2,7 @@ import { loadMessages } from "@/i18n/messages";
 import { isTemplateKey } from "@/components/sections/templates";
 import { SitePreview } from "@/components/builder/SitePreview";
 import { currentShop, sitePage, workshops } from "@/lib/mock/data";
-import { getStacking, publicPromotions } from "@/lib/mock/promotion-store";
+import { publicPromotions } from "@/lib/mock/promotion-store";
 
 // Preview of the DRAFT with the same PageRenderer as the public site (FR-SITE-03). Dashboard-only route.
 export default async function SitePreviewPage({ searchParams }: PageProps<"/shopowner/site/preview">) {
@@ -21,7 +21,6 @@ export default async function SitePreviewPage({ searchParams }: PageProps<"/shop
       initial={{ content: sitePage.draft, theme: sitePage.theme, template: sitePage.template }}
       workshops={workshops.filter((w) => w.status === "ACTIVE")}
       promotions={publicPromotions()}
-      stacking={getStacking()}
       siteMessages={Object.fromEntries(messages)}
       previewTemplate={template}
       pageId={pageId}

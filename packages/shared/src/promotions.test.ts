@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
-  activePromotions, countByStatus, discountAmount, discountedPrice, eligiblePromotions, firstOverloadedDay, MAX_CONCURRENT_PROMOTIONS, priceBooking,
+  activePromotions, canCombine, countByStatus, discountAmount, discountedPrice, eligiblePromotions, firstOverloadedDay, MAX_CONCURRENT_PROMOTIONS, priceBooking, togglePromotion,
   promotionAppliesTo, promotionInputSchema, promotionStatus, STACKING_MODES, type PromotionRecord,
 } from "./promotions";
 import { isPlatformMediaPath, platformMediaId } from "./media";
 
 const ok = {
   title: { en: "Summer sale" }, description: { en: "20% off" }, discountType: "PERCENT" as const, discountValue: 20, code: "summer20",
-  appliesTo: "ALL" as const, workshopIds: [] as string[], startDate: "2026-11-01", endDate: "2026-11-30", enabled: true,
+  stacking: "SINGLE" as const, appliesTo: "ALL" as const, workshopIds: [] as string[], startDate: "2026-11-01", endDate: "2026-11-30", enabled: true,
 };
 const codes = (v: unknown) => promotionInputSchema.safeParse(v).error?.issues.map((i) => i.message) ?? [];
 
@@ -149,23 +149,25 @@ describe("what a guest can pick", () => {
 });
 
 describe("priceBooking", () => {
-  const pct = (id: string, v: number) => ({ id, discountType: "PERCENT" as const, discountValue: v });
-  const fix = (id: string, v: number) => ({ id, discountType: "FIXED_AMOUNT" as const, discountValue: v });
+  type Mode = "SINGLE" | "MULTIPLE";
+  const pct = (id: string, v: number, stacking: Mode = "MULTIPLE") => ({ id, discountType: "PERCENT" as const, discountValue: v, stacking });
+  const fix = (id: string, v: number, stacking: Mode = "MULTIPLE") => ({ id, discountType: "FIXED_AMOUNT" as const, discountValue: v, stacking });
   const base = { unitPrice: 650_000, quantity: 2 };
   it("is unit price x quantity without a promotion", () => {
-    expect(priceBooking({ ...base, stacking: "SINGLE", promotions: [] })).toEqual({ ok: true, subtotal: 1_300_000, discounts: [], discount: 0, total: 1_300_000 });
+    expect(priceBooking({ ...base, promotions: [] })).toEqual({ ok: true, subtotal: 1_300_000, discounts: [], discount: 0, total: 1_300_000 });
   });
   it("takes a percentage off the whole booking", () => {
-    expect(priceBooking({ ...base, stacking: "SINGLE", promotions: [pct("a", 20)] })).toMatchObject({ ok: true, discount: 260_000, total: 1_040_000 });
+    expect(priceBooking({ ...base, promotions: [pct("a", 20, "SINGLE")] })).toMatchObject({ ok: true, discount: 260_000, total: 1_040_000 });
   });
   it("takes a fixed amount off the booking, once, not per guest", () => {
-    expect(priceBooking({ ...base, stacking: "SINGLE", promotions: [fix("a", 100_000)] })).toMatchObject({ ok: true, discount: 100_000, total: 1_200_000 });
+    expect(priceBooking({ ...base, promotions: [fix("a", 100_000, "SINGLE")] })).toMatchObject({ ok: true, discount: 100_000, total: 1_200_000 });
   });
-  it("refuses more than one promotion when only one is allowed", () => {
-    expect(priceBooking({ ...base, stacking: "SINGLE", promotions: [pct("a", 10), pct("b", 10)] })).toEqual({ ok: false, error: "SINGLE_ONLY" });
+  it("refuses several promotions when one of them must be used alone", () => {
+    expect(priceBooking({ ...base, promotions: [pct("a", 10, "SINGLE"), pct("b", 10)] })).toEqual({ ok: false, error: "NOT_COMBINABLE" });
+    expect(priceBooking({ ...base, promotions: [pct("a", 10, "SINGLE"), pct("b", 10, "SINGLE")] })).toEqual({ ok: false, error: "NOT_COMBINABLE" });
   });
-  it("combines promotions when several are allowed: fixed amounts first, then each percentage on what is left", () => {
-    const r = priceBooking({ ...base, stacking: "MULTIPLE", promotions: [pct("p20", 20), fix("f", 100_000), pct("p10", 10)] });
+  it("combines promotions that all allow it: fixed amounts first, then each percentage on what is left", () => {
+    const r = priceBooking({ ...base, promotions: [pct("p20", 20), fix("f", 100_000), pct("p10", 10)] });
     expect(r).toMatchObject({ ok: true, subtotal: 1_300_000 });
     if (!r.ok) return;
     expect(r.discounts).toEqual([{ id: "f", amount: 100_000 }, { id: "p20", amount: 240_000 }, { id: "p10", amount: 96_000 }]);
@@ -173,13 +175,49 @@ describe("priceBooking", () => {
     expect(r.discount + r.total).toBe(r.subtotal);
   });
   it("gives the same total whatever order the promotions were chosen in", () => {
-    const a = priceBooking({ ...base, stacking: "MULTIPLE", promotions: [pct("x", 20), fix("y", 50_000), pct("z", 15)] });
-    const b = priceBooking({ ...base, stacking: "MULTIPLE", promotions: [pct("z", 15), pct("x", 20), fix("y", 50_000)] });
+    const a = priceBooking({ ...base, promotions: [pct("x", 20), fix("y", 50_000), pct("z", 15)] });
+    const b = priceBooking({ ...base, promotions: [pct("z", 15), pct("x", 20), fix("y", 50_000)] });
     expect(a.ok && b.ok && a.total === b.total).toBe(true);
   });
   it("never goes below 0", () => {
-    const r = priceBooking({ unitPrice: 50_000, quantity: 1, stacking: "MULTIPLE", promotions: [fix("a", 80_000), pct("b", 50), fix("c", 10_000)] });
+    const r = priceBooking({ unitPrice: 50_000, quantity: 1, promotions: [fix("a", 80_000), pct("b", 50), fix("c", 10_000)] });
     expect(r).toMatchObject({ ok: true, total: 0, discount: 50_000 });
   });
   it("knows both stacking modes", () => expect([...STACKING_MODES]).toEqual(["SINGLE", "MULTIPLE"]));
+});
+
+describe("combining promotions", () => {
+  type P = { id: string; stacking: "SINGLE" | "MULTIPLE" };
+  const s = (id: string): P => ({ id, stacking: "SINGLE" });
+  const m = (id: string): P => ({ id, stacking: "MULTIPLE" });
+  it("allows any one promotion, and several only when every one allows it", () => {
+    expect(canCombine([])).toBe(true);
+    expect(canCombine([s("a")])).toBe(true);
+    expect(canCombine([m("a"), m("b"), m("c")])).toBe(true);
+    expect(canCombine([m("a"), s("b")])).toBe(false);
+    expect(canCombine([s("a"), s("b")])).toBe(false);
+  });
+  const ids = (l: { id: string }[]) => l.map((x) => x.id);
+  it("adds promotions that can be combined next to each other", () => {
+    expect(ids(togglePromotion([m("a")], m("b")))).toEqual(["a", "b"]);
+    expect(ids(togglePromotion([], m("a")))).toEqual(["a"]);
+  });
+  it("lets a promotion that must be used alone replace everything else", () => {
+    expect(ids(togglePromotion([m("a"), m("b")], s("x")))).toEqual(["x"]);
+    expect(ids(togglePromotion([s("x")], s("y")))).toEqual(["y"]);
+  });
+  it("lets a combinable promotion replace one that must be used alone", () => {
+    expect(ids(togglePromotion([s("x")], m("a")))).toEqual(["a"]);
+  });
+  it("removes a promotion that is picked again", () => {
+    expect(ids(togglePromotion([m("a"), m("b")], m("a")))).toEqual(["b"]);
+    expect(ids(togglePromotion([s("x")], s("x")))).toEqual([]);
+  });
+  it("always leaves a set that can be priced", () => {
+    let chosen: P[] = [];
+    for (const pick of [m("a"), s("x"), m("b"), m("c"), s("y"), m("d")]) {
+      chosen = togglePromotion(chosen, pick);
+      expect(canCombine(chosen)).toBe(true);
+    }
+  });
 });

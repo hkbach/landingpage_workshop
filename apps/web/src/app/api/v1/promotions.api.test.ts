@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { MAX_PROMOTIONS_PER_SHOP, promotionStatus, type PromotionRecord } from "@workshop/shared";
+import { firstOverloadedDay, MAX_PROMOTIONS_PER_SHOP, promotionStatus, type PromotionRecord } from "@workshop/shared";
 import { allPromotions, publicPromotions, resetPromotionStore, shopToday } from "@/lib/mock/promotion-store";
 import { GET, POST } from "./promotions/route";
 import { DELETE, PATCH, PUT } from "./promotions/[id]/route";
@@ -11,7 +11,7 @@ const json = (method: string, body: unknown, raw?: string) => new Request("http:
 const list = async () => (await GET()).json() as Promise<{ items: PromotionRecord[]; today: string; limit: number }>;
 const good = {
   title: { en: "Lantern night" }, description: { en: "10% off" }, discountType: "PERCENT", discountValue: 10, code: "lantern",
-  appliesTo: "ALL", workshopIds: [], startDate: "2026-11-01", endDate: "2026-11-30", enabled: true,
+  stacking: "SINGLE", appliesTo: "ALL", workshopIds: [], startDate: "2030-01-01", endDate: "2030-01-31", enabled: true,
 };
 const errorOf = async (res: Response) => (await res.json()) as { error: { code: string; details: { fields?: Record<string, string> } } };
 
@@ -20,15 +20,30 @@ beforeEach(() => resetPromotionStore());
 describe("GET /promotions", () => {
   it("lists every promotion newest first with today's date and the limit", async () => {
     const res = await list();
-    expect(res.items).toHaveLength(4);
+    expect(res.items).toHaveLength(14);
     expect(res.today).toBe(shopToday());
     expect(res.limit).toBe(MAX_PROMOTIONS_PER_SHOP);
     const created = res.items.map((p) => p.createdAt);
     expect([...created].sort().reverse()).toEqual(created);
   });
-  it("seed data covers every status", async () => {
+  it("seed data covers every status and both ways of combining", async () => {
     const { items, today } = await list();
-    expect(new Set(items.map((p) => promotionStatus(p, today)))).toEqual(new Set(["ACTIVE", "SCHEDULED", "EXPIRED"]));
+    const count = (s: string) => items.filter((p) => promotionStatus(p, today) === s).length;
+    expect([count("ACTIVE"), count("SCHEDULED"), count("PAUSED"), count("EXPIRED")]).toEqual([5, 4, 2, 3]);
+    expect(new Set(items.map((p) => p.stacking))).toEqual(new Set(["SINGLE", "MULTIPLE"]));
+  });
+  it("seed data never has more than the allowed number running at once, and is varied", async () => {
+    const { items, today } = await list();
+    expect(firstOverloadedDay(items, today)).toBeNull();
+    expect(items.some((p) => p.imageUrl) && items.some((p) => !p.imageUrl)).toBe(true);
+    expect(items.some((p) => p.code) && items.some((p) => !p.code)).toBe(true);
+    expect(items.some((p) => p.discountType === "PERCENT") && items.some((p) => p.discountType === "FIXED_AMOUNT")).toBe(true);
+    expect(items.some((p) => p.appliesTo === "SELECTED") && items.some((p) => p.appliesTo === "ALL")).toBe(true);
+    expect(items.some((p) => p.title.vi)).toBe(true);
+    expect(new Set(items.map((p) => p.id)).size).toBe(items.length);
+  });
+  it("a paused seed promotion cannot be resumed while 5 are running", async () => {
+    expect((await PATCH(json("PATCH", { enabled: true }), ctx("pr-13"))).status).toBe(409);
   });
 });
 
@@ -49,7 +64,7 @@ describe("POST /promotions", () => {
     expect(res.status).toBe(422);
     const fields = (await errorOf(res)).error.details.fields!;
     expect(fields).toMatchObject({ title: "titleRequired", discountValue: "percentTooHigh", endDate: "endBeforeStart", workshopIds: "workshopRequired" });
-    expect(allPromotions()).toHaveLength(4);
+    expect(allPromotions()).toHaveLength(14);
   });
   it("refuses a workshop that does not exist", async () => {
     const res = await POST(json("POST", { ...good, appliesTo: "SELECTED", workshopIds: ["nope"] }));
@@ -104,7 +119,7 @@ describe("PUT, PATCH and DELETE /promotions/{id}", () => {
 
 describe("what guests see", () => {
   it("only the promotions that are active today", () => {
-    expect(publicPromotions().map((p) => p.id).sort()).toEqual(["pr-1", "pr-2"]);
+    expect(publicPromotions().map((p) => p.id).sort()).toEqual(["pr-1", "pr-2", "pr-5", "pr-6", "pr-7"]);
   });
   it("follows the dates: a scheduled promotion is shown on its first day, an expired one never", () => {
     const scheduled = allPromotions().find((p) => p.id === "pr-3")!;

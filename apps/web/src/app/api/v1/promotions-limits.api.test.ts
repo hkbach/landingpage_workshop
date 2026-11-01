@@ -1,14 +1,13 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { MAX_CONCURRENT_PROMOTIONS, type PromotionRecord } from "@workshop/shared";
-import { allPromotions, getStacking, resetPromotionStore, shopToday } from "@/lib/mock/promotion-store";
+import { allPromotions, resetPromotionStore, shopToday } from "@/lib/mock/promotion-store";
 import { MAX_IMAGE_BYTES } from "@/lib/mock/media-store";
 import { GET as listPromotions, POST as createRoute } from "./promotions/route";
 import { DELETE, PATCH, PUT } from "./promotions/[id]/route";
-import { GET as getSettings, PUT as putSettings } from "./promotions/settings/route";
 import { POST as uploadImage } from "./media/promotions/route";
 import { GET as serveImage } from "./media/promotions/[id]/route";
 
-// The three rules added to promotions: one image each, at most 5 running at once, and one or several promotions per booking.
+// The rules added to promotions: one image each, at most 5 running at once, and a combine setting for each promotion.
 
 const PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
 const JPEG = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAMCAgICAgMCAgIDAwMDBAYEBAQEBAgGBgUGCQgKCgkICQkKDA8MCgsOCwkJDRENDg8QEBEQCgwSExIQEw8QEBD/yQALCAABAAEBAREA/8wABgAQEAX/2gAIAQEAAD8A0s8g/9k=";
@@ -20,8 +19,8 @@ const addDays = (day: string, n: number) => new Date(Date.parse(`${day}T12:00:00
 function body(over: Record<string, unknown> = {}) {
   const today = shopToday();
   return {
-    title: { en: "Flash" }, description: {}, discountType: "PERCENT", discountValue: 10, appliesTo: "ALL", workshopIds: [],
-    startDate: today, endDate: addDays(today, 5), enabled: true, ...over,
+    title: { en: "Flash" }, description: {}, discountType: "PERCENT", discountValue: 10, stacking: "SINGLE", appliesTo: "ALL", workshopIds: [],
+    startDate: addDays(today, 300), endDate: addDays(today, 305), enabled: true, ...over,
   };
 }
 const create = (over: Record<string, unknown> = {}) => createRoute(req("POST", body(over)));
@@ -89,22 +88,34 @@ describe("one image per promotion", () => {
 });
 
 describe(`at most ${MAX_CONCURRENT_PROMOTIONS} promotions run at the same time`, () => {
+  const NOW = { startDate: shopToday(), endDate: addDays(shopToday(), 5) };
   const running = () => allPromotions().filter((p) => p.enabled && p.startDate <= shopToday() && shopToday() <= p.endDate).length;
+  // The seed already has the maximum running; pause three of them so these tests start from 2 running.
+  beforeEach(async () => {
+    for (const id of ["pr-5", "pr-6", "pr-7"]) await PATCH(req("PATCH", { enabled: false }), ctxId(id));
+  });
 
-  it("allows up to 5 and refuses the 6th with the day it would happen", async () => {
-    expect(running()).toBe(2); // seed: two are running today
-    for (let i = 0; i < 3; i++) expect((await create()).status).toBe(201);
+  it("the seed has exactly 5 running, so one more is refused until another is paused", async () => {
+    resetPromotionStore();
     expect(running()).toBe(5);
-    const res = await create();
+    expect((await create(NOW)).status).toBe(409);
+    await PATCH(req("PATCH", { enabled: false }), ctxId("pr-7"));
+    expect((await create(NOW)).status).toBe(201);
+  });
+  it("allows up to 5 and refuses the 6th with the day it would happen", async () => {
+    expect(running()).toBe(2);
+    for (let i = 0; i < 3; i++) expect((await create(NOW)).status).toBe(201);
+    expect(running()).toBe(5);
+    const res = await create(NOW);
     expect(res.status).toBe(409);
     const { error } = await errorOf(res);
     expect(error.code).toBe("CONCURRENT_LIMIT");
     expect(error.details).toMatchObject({ date: shopToday(), max: 5 });
-    expect(allPromotions()).toHaveLength(7);
+    expect(allPromotions()).toHaveLength(17);
   });
   it("counts scheduled promotions that overlap, not only the ones running today", async () => {
     const today = shopToday();
-    // pr-3 (starts in 14 days) overlaps the seed's pr-1 until day +20: three more on those days make 5 together
+    // pr-3 (starts in 14 days) overlaps pr-1 until day +20: three more on those days make 5 together
     for (let i = 0; i < 3; i++) expect((await create({ startDate: addDays(today, 15), endDate: addDays(today, 18) })).status).toBe(201);
     const res = await create({ startDate: addDays(today, 16), endDate: addDays(today, 17) });
     expect(res.status).toBe(409);
@@ -112,11 +123,11 @@ describe(`at most ${MAX_CONCURRENT_PROMOTIONS} promotions run at the same time`,
   });
   it("allows many promotions that follow each other", async () => {
     const today = shopToday();
-    for (let i = 0; i < 8; i++) expect((await create({ startDate: addDays(today, 60 + i * 10), endDate: addDays(today, 64 + i * 10) })).status).toBe(201);
+    for (let i = 0; i < 5; i++) expect((await create({ startDate: addDays(today, 100 + i * 10), endDate: addDays(today, 104 + i * 10) })).status).toBe(201);
   });
   it("does not count paused promotions, and refuses to resume one that would be the 6th", async () => {
-    for (let i = 0; i < 3; i++) await create();
-    const paused = (await (await create({ enabled: false })).json()) as PromotionRecord;
+    for (let i = 0; i < 3; i++) await create(NOW);
+    const paused = (await (await create({ ...NOW, enabled: false })).json()) as PromotionRecord;
     expect(paused.enabled).toBe(false);
     const res = await PATCH(req("PATCH", { enabled: true }), ctxId(paused.id));
     expect(res.status).toBe(409);
@@ -127,7 +138,7 @@ describe(`at most ${MAX_CONCURRENT_PROMOTIONS} promotions run at the same time`,
   });
   it("refuses an edit that stretches a promotion over a full period", async () => {
     const today = shopToday();
-    for (let i = 0; i < 3; i++) await create();
+    for (let i = 0; i < 3; i++) await create(NOW);
     const later = (await (await create({ startDate: addDays(today, 40), endDate: addDays(today, 42) })).json()) as PromotionRecord;
     const res = await PUT(req("PUT", body({ startDate: today, endDate: addDays(today, 42) })), ctxId(later.id));
     expect(res.status).toBe(409);
@@ -139,28 +150,26 @@ describe(`at most ${MAX_CONCURRENT_PROMOTIONS} promotions run at the same time`,
   });
 });
 
-describe("one promotion or several on a booking", () => {
-  it("is one promotion per booking until the owner changes it", async () => {
-    expect(getStacking()).toBe("SINGLE");
-    expect(await (await getSettings()).json()).toEqual({ stacking: "SINGLE" });
-    expect((await (await listPromotions()).json()).stacking).toBe("SINGLE");
+describe("how each promotion can be combined", () => {
+  it("is part of every promotion, and is required when creating one", async () => {
+    const { items } = (await (await listPromotions()).json()) as { items: PromotionRecord[] };
+    expect(items.every((p) => p.stacking === "SINGLE" || p.stacking === "MULTIPLE")).toBe(true);
+    const res = await create({ stacking: undefined, startDate: addDays(shopToday(), 200), endDate: addDays(shopToday(), 201) });
+    expect(res.status).toBe(422);
+    expect((await errorOf(res)).error.details.fields).toMatchObject({ stacking: "required" });
+    expect((await create({ stacking: "ALL", startDate: addDays(shopToday(), 200), endDate: addDays(shopToday(), 201) })).status).toBe(422);
   });
-  it("can be set to several promotions and back, and the list says so", async () => {
-    expect((await putSettings(req("PUT", { stacking: "MULTIPLE" }))).status).toBe(200);
-    expect(getStacking()).toBe("MULTIPLE");
-    expect((await (await listPromotions()).json()).stacking).toBe("MULTIPLE");
-    await putSettings(req("PUT", { stacking: "SINGLE" }));
-    expect(getStacking()).toBe("SINGLE");
+  it("is saved with the promotion and can be changed later", async () => {
+    const far = { startDate: addDays(shopToday(), 200), endDate: addDays(shopToday(), 201) };
+    const p = (await (await create({ stacking: "MULTIPLE", ...far })).json()) as PromotionRecord;
+    expect(p.stacking).toBe("MULTIPLE");
+    const q = (await (await PUT(req("PUT", body({ stacking: "SINGLE", ...far })), ctxId(p.id))).json()) as PromotionRecord;
+    expect(q.stacking).toBe("SINGLE");
+    expect(allPromotions().find((x) => x.id === p.id)?.stacking).toBe("SINGLE");
   });
-  it("refuses an unknown setting and a body that is not JSON", async () => {
-    expect((await putSettings(req("PUT", { stacking: "ALL" }))).status).toBe(422);
-    expect((await putSettings(req("PUT", {}))).status).toBe(422);
-    expect((await putSettings(req("PUT", null, "{nope"))).status).toBe(400);
-    expect(getStacking()).toBe("SINGLE");
-  });
-  it("the list also tells the limits", async () => {
-    const res = (await (await listPromotions()).json()) as { maxConcurrent: number; limit: number };
-    expect(res.maxConcurrent).toBe(5);
-    expect(res.limit).toBe(20);
+  it("there is no shop-wide setting any more, and the list only tells the limits", async () => {
+    const res = (await (await listPromotions()).json()) as Record<string, unknown>;
+    expect(res).toMatchObject({ maxConcurrent: 5, limit: 20 });
+    expect(res.stacking).toBeUndefined();
   });
 });

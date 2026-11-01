@@ -177,7 +177,9 @@
     "autoWorkshops": "Workshops are loaded automatically from your active workshops. Manage them on the Workshops page.",
     "authenticityNote": "You are responsible for the authenticity of testimonials. Only publish real reviews from real guests.",
     "layout": "Layout",
-    "editingIn": "Editing in {language}"
+    "editingIn": "Editing in {language}",
+    "promotionsNote": "The offers in this section come from Promotion management. Only the promotions that are active today are shown on your page, and each one says whether it can be combined with others. To create, edit, pause or delete promotions and to set how each one is used, go to Promotion management.",
+    "promotionsGo": "Go to Promotion management"
   },
   "fields": {
     "title": "Title",

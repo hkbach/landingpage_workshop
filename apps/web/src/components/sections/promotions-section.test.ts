@@ -23,7 +23,7 @@ const render = (node: ReactNode) => renderToStaticMarkup(createElement(Provider,
 
 const promo = (over: Partial<PromotionRecord> = {}): PromotionRecord => ({
   id: "pr-x", title: { en: "Early bird" }, description: { en: "Book early and save." }, discountType: "PERCENT", discountValue: 20, code: "EARLY20",
-  appliesTo: "ALL", workshopIds: [], startDate: "2026-11-01", endDate: "2026-11-30", enabled: true, createdAt: "", updatedAt: "", ...over,
+  stacking: "SINGLE", appliesTo: "ALL", workshopIds: [], startDate: "2026-11-01", endDate: "2026-11-30", enabled: true, createdAt: "", updatedAt: "", ...over,
 });
 const ctx = (promotions: PromotionRecord[]): RenderContext => ({
   locale: "en", shop: { name: "Shop", defaultLocale: "en", enabledLocales: ["en"], timezone: "UTC", currency: "VND" },
@@ -75,12 +75,12 @@ describe("promotion image and booking rule note", () => {
     expect(html([promo()])).not.toContain("<img");
     for (const bad of ["http://cdn.example.com/p.png", "javascript:alert(1)", "data:image/png;base64,AAAA", "/etc/passwd"]) expect(html([promo({ imageUrl: bad })]), bad).not.toContain("<img");
   });
-  it("tells guests whether they can use one promotion or combine several", () => {
-    const withRule = (mode: "SINGLE" | "MULTIPLE") =>
-      render(createElement(SectionRenderer, { section, ctx: { ...ctx([promo()]), promotionStacking: mode }, theme: sitePage.theme }));
-    expect(withRule("SINGLE")).toContain("Only one promotion can be used per booking.");
-    expect(withRule("MULTIPLE")).toContain("You can combine promotions on one booking.");
-    expect(html([promo()])).not.toContain("per booking.");
+  it("tells guests, for each promotion, whether it can be combined with others", () => {
+    const out = html([promo({ id: "a", title: { en: "Alone" }, stacking: "SINGLE" }), promo({ id: "b", title: { en: "Together" }, stacking: "MULTIPLE" })]);
+    expect(out.match(/Cannot be combined with other promotions/g)).toHaveLength(1);
+    expect(out.match(/Can be combined with other promotions/g)).toHaveLength(1);
+    expect(out.indexOf("Alone")).toBeLessThan(out.indexOf("Cannot be combined"));
+    expect(out.indexOf("Together")).toBeLessThan(out.indexOf("Can be combined with"));
   });
 });
 

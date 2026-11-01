@@ -10,7 +10,7 @@ import { safeImage } from "@/components/sections/safe-url";
 import type { PageContent } from "@/lib/types";
 import type { RenderContext } from "@/components/sections/context";
 import { currentShop } from "@/lib/mock/data";
-import { getStacking, publicPromotions } from "@/lib/mock/promotion-store";
+import { publicPromotions } from "@/lib/mock/promotion-store";
 
 function heroImage(content: PageContent): string | undefined {
   const hero = content.sections.find((s) => s.type === "hero" && s.enabled);
@@ -45,9 +45,8 @@ export default async function SitePage({ params }: PageProps<"/sites/[slug]/[[..
   const site = requireSite(slug);
   const locale = resolveLocale(site, segs);
   const base = await getSiteBase(slug);
-  // TODO(api): the promotions and the stacking setting of this shop (organization_id); the mock store only holds the demo shop's.
+  // TODO(api): the promotions of this shop (organization_id); the mock store only holds the demo shop's.
   const promotions = slug === currentShop.slug ? publicPromotions() : [];
-  const stacking = getStacking();
   const { shop, content, theme, workshops, sessions } = site;
 
   const languages = shop.enabledLocales.map((l) => ({ locale: l, href: localePath(base, l, shop.defaultLocale) }));
@@ -57,7 +56,6 @@ export default async function SitePage({ params }: PageProps<"/sites/[slug]/[[..
     shop: { name: shop.name, defaultLocale: shop.defaultLocale, enabledLocales: shop.enabledLocales, timezone: shop.timezone, currency: shop.currency },
     workshops,
     promotions,
-    promotionStacking: stacking,
     reportHref: `${base}/report`,
     privacyHref: "#privacy", // placeholder until the legal pages exist
   };
@@ -67,7 +65,7 @@ export default async function SitePage({ params }: PageProps<"/sites/[slug]/[[..
       <SiteFrame theme={theme} locale={locale}>
         {/* Header, navigation and language switch are part of the page frame (PageRenderer). */}
         <SiteBody
-          content={content} theme={theme} ctx={ctx} workshops={workshops} sessions={sessions} locale={locale} basePath={base} promotions={promotions} stacking={stacking}
+          content={content} theme={theme} ctx={ctx} workshops={workshops} sessions={sessions} locale={locale} basePath={base} promotions={promotions}
           shop={{ name: shop.name, slug: shop.slug, timezone: shop.timezone, currency: shop.currency, defaultLocale: shop.defaultLocale, bookingCutoffMinutes: shop.bookingCutoffMinutes }}
         />
       </SiteFrame>

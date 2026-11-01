@@ -23,7 +23,7 @@ import { ImageUploadField } from "@/components/builder/ImageUploadField";
 import { promotionImageUploader } from "@/lib/media/promotion-uploader";
 import { parseAmount } from "@/components/finance/finance-store";
 import { useEditingLanguage } from "@/lib/use-shop-language";
-import { PromotionApiError, deletePromotionRequest, fetchPromotions, saveStackingRequest, savePromotionRequest, setPromotionEnabledRequest } from "@/lib/promotions-api";
+import { PromotionApiError, deletePromotionRequest, fetchPromotions, savePromotionRequest, setPromotionEnabledRequest } from "@/lib/promotions-api";
 import { cn } from "@/lib/utils";
 
 export interface PromotionShop { defaultLocale: Locale; enabledLocales: Locale[]; currency: string }
@@ -37,7 +37,7 @@ const STATUS_STYLES: Record<PromotionStatus, string> = {
 };
 
 interface FormState {
-  id: string | null; title: Localized; description: Localized; discountType: DiscountType; value: string; code: string; imageUrl: string;
+  id: string | null; title: Localized; description: Localized; discountType: DiscountType; value: string; code: string; imageUrl: string; stacking: StackingMode;
   appliesTo: "ALL" | "SELECTED"; workshopIds: string[]; startDate: string; endDate: string; enabled: boolean;
 }
 
@@ -67,7 +67,6 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
   const limit = query.data?.limit ?? 0;
   const counts = countByStatus(items, today);
   const maxConcurrent = query.data?.maxConcurrent ?? 5;
-  const stacking: StackingMode = query.data?.stacking ?? "SINGLE";
   const rows = items.filter((p) => filter === "ALL" || promotionStatus(p, today) === filter);
   const atLimit = limit > 0 && items.length >= limit;
   const money = (n: number) => formatMoney(n, shop.currency, locale);
@@ -82,11 +81,6 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
     onSuccess: (_p, v) => { setMessage({ text: t(v.enabled ? "resumed" : "paused"), tone: "ok" }); void refresh(); },
     onError: (e) => { setMessage({ text: failureText(e, t, day), tone: "error" }); void refresh(); },
   });
-  const changeStacking = useMutation({
-    mutationFn: (mode: StackingMode) => saveStackingRequest(mode),
-    onSuccess: (_r, mode) => { setMessage({ text: t(mode === "SINGLE" ? "stackingSavedSingle" : "stackingSavedMultiple"), tone: "ok" }); void refresh(); },
-    onError: () => setMessage({ text: t("saveFailed"), tone: "error" }),
-  });
   const remove = useMutation({
     mutationFn: (id: string) => deletePromotionRequest(id),
     onSuccess: () => { setMessage({ text: t("deleted"), tone: "ok" }); void refresh(); },
@@ -95,14 +89,14 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
 
   function openNew() {
     setMessage(null);
-    setForm({ id: null, title: {}, description: {}, discountType: "PERCENT", value: "", code: "", imageUrl: "", appliesTo: "ALL", workshopIds: [], startDate: today, endDate: addDays(today, 30), enabled: true });
+    setForm({ id: null, title: {}, description: {}, discountType: "PERCENT", value: "", code: "", imageUrl: "", stacking: "SINGLE", appliesTo: "ALL", workshopIds: [], startDate: today, endDate: addDays(today, 30), enabled: true });
   }
   function openEdit(p: PromotionRecord) {
     setMessage(null);
     setForm({
       id: p.id, title: { ...p.title }, description: { ...p.description }, discountType: p.discountType,
       value: p.discountType === "PERCENT" ? String(p.discountValue) : String(p.discountValue / 10 ** minorDigits(shop.currency)),
-      code: p.code ?? "", imageUrl: p.imageUrl ?? "", appliesTo: p.appliesTo, workshopIds: [...p.workshopIds], startDate: p.startDate, endDate: p.endDate, enabled: p.enabled,
+      code: p.code ?? "", imageUrl: p.imageUrl ?? "", stacking: p.stacking, appliesTo: p.appliesTo, workshopIds: [...p.workshopIds], startDate: p.startDate, endDate: p.endDate, enabled: p.enabled,
     });
   }
 
@@ -129,23 +123,12 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
       </header>
 
       <Card>
-        <CardContent className="grid gap-3">
-          <fieldset className="grid gap-2" disabled={!query.data || changeStacking.isPending}>
-            <legend className="mb-1 text-sm font-medium">{t("stackingTitle")}</legend>
-            <p className="text-sm text-muted-foreground">{t("stackingHint")}</p>
-            {STACKING_MODES.map((mode) => (
-              <label key={mode} className="flex items-start gap-2 text-sm">
-                <input
-                  type="radio" name="stacking" value={mode} className="mt-1" checked={stacking === mode}
-                  onChange={() => { if (stacking !== mode) changeStacking.mutate(mode); }}
-                />
-                <span><span className="font-medium">{t(`stacking.${mode}.label`)}</span> <span className="text-muted-foreground">{t(`stacking.${mode}.hint`)}</span></span>
-              </label>
-            ))}
-          </fieldset>
+        <CardContent>
           {query.data ? (
             <p className="text-sm" data-testid="running-count">{t("running", { count: counts.ACTIVE, max: maxConcurrent })} <span className="text-muted-foreground">{t("runningHint", { max: maxConcurrent })}</span></p>
-          ) : null}
+          ) : (
+            <p className="text-sm text-muted-foreground">{t("loading")}</p>
+          )}
         </CardContent>
       </Card>
 
@@ -198,6 +181,7 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
                         <div className="flex gap-1"><dt className="text-muted-foreground">{t("period")}:</dt><dd>{t("range", { from: day(p.startDate), to: day(p.endDate) })}</dd></div>
                         <div className="flex gap-1"><dt className="text-muted-foreground">{t("appliesTo")}:</dt><dd>{p.appliesTo === "ALL" ? t("allWorkshops") : p.workshopIds.map(nameOf).join(", ")}</dd></div>
                         {p.code ? <div className="flex gap-1"><dt className="text-muted-foreground">{t("code")}:</dt><dd className="font-mono">{p.code}</dd></div> : null}
+                        <div className="flex gap-1"><dt className="text-muted-foreground">{t("usage")}:</dt><dd>{t(`stackingTag.${p.stacking}`)}</dd></div>
                       </dl>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -262,7 +246,7 @@ function PromotionDialog({ form, setForm, shop, workshops, money, day, onSaved }
     if (!form) return;
     const value = form.discountType === "PERCENT" ? (/^\d+$/.test(form.value.trim()) ? Number(form.value.trim()) : 0) : (parseAmount(form.value, minorDigits(shop.currency)) ?? 0);
     const parsed = promotionInputSchema.safeParse({
-      title: form.title, description: form.description, discountType: form.discountType, discountValue: value, code: form.code || undefined, imageUrl: form.imageUrl,
+      title: form.title, description: form.description, discountType: form.discountType, discountValue: value, code: form.code || undefined, imageUrl: form.imageUrl, stacking: form.stacking,
       appliesTo: form.appliesTo, workshopIds: form.appliesTo === "ALL" ? [] : form.workshopIds, startDate: form.startDate, endDate: form.endDate, enabled: form.enabled,
     });
     if (!parsed.success) {
@@ -320,6 +304,15 @@ function PromotionDialog({ form, setForm, shop, workshops, money, day, onSaved }
             <Field id="pr-code" label={t("fieldCode")} hint={t("codeHint")} error={errors.code}>
               {(p) => <Input {...p} className="font-mono uppercase" value={form.code} maxLength={20} onChange={(e) => set({ code: e.target.value })} autoComplete="off" spellCheck={false} />}
             </Field>
+            <fieldset className="grid gap-2">
+              <legend className="mb-1 text-sm font-medium">{t("fieldStacking")}</legend>
+              {STACKING_MODES.map((mode) => (
+                <label key={mode} className="flex items-start gap-2 text-sm">
+                  <input type="radio" name="pr-stacking" value={mode} className="mt-1" checked={form.stacking === mode} onChange={() => set({ stacking: mode })} />
+                  <span><span className="font-medium">{t(`stackingOption.${mode}.label`)}</span> <span className="text-muted-foreground">{t(`stackingOption.${mode}.hint`)}</span></span>
+                </label>
+              ))}
+            </fieldset>
             <fieldset className="grid gap-2">
               <legend className="mb-1 text-sm font-medium">{t("fieldAppliesTo")}</legend>
               {(["ALL", "SELECTED"] as const).map((v) => (

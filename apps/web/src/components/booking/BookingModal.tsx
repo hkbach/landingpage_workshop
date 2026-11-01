@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Controller, useForm, useWatch } from "react-hook-form";
-import { eligiblePromotions, formatMoney, pickLocalized, priceBooking, type Locale, type PromotionRecord, type StackingMode } from "@workshop/shared";
+import { canCombine, eligiblePromotions, formatMoney, pickLocalized, priceBooking, togglePromotion, type Locale, type PromotionRecord } from "@workshop/shared";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -31,9 +31,8 @@ interface Props {
   sessions: Session[];
   theme: PageTheme;
   locale: Locale;
-  /** Promotions active today (the guest may pick the ones that cover the workshop) and how many may be used on one booking. */
+  /** Promotions active today; the guest may pick the ones that cover the workshop (each one says whether it can be combined). */
   promotions?: PromotionRecord[];
-  stacking?: StackingMode;
   /** Base path of the site ("" on the subdomain host). */
   basePath: string;
 }
@@ -95,8 +94,8 @@ function Choice({ name, checked, disabled, onSelect, children }: {
   );
 }
 
-function PromoOption({ type, checked, onChange, label, detail }: {
-  type: "radio" | "checkbox"; checked: boolean; onChange: () => void; label: string; detail?: string;
+function PromoOption({ checked, onChange, label, detail, note }: {
+  checked: boolean; onChange: () => void; label: string; detail?: string; note?: string;
 }) {
   return (
     <label
@@ -106,14 +105,17 @@ function PromoOption({ type, checked, onChange, label, detail }: {
         checked && "border-[var(--site-primary)] bg-[var(--site-surface)] ring-2 ring-[var(--site-primary)]",
       )}
     >
-      <input type={type} name="bk-promo" className="sr-only" checked={checked} onChange={onChange} />
-      <span className="font-medium">{label}</span>
+      <input type="checkbox" name="bk-promo" className="sr-only" checked={checked} onChange={onChange} />
+      <span className="grid gap-0.5">
+        <span className="font-medium">{label}</span>
+        {note ? <span className="text-xs text-[var(--site-muted)]">{note}</span> : null}
+      </span>
       {detail ? <span className="text-xs text-[var(--site-muted)]">{detail}</span> : null}
     </label>
   );
 }
 
-function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, sessions, locale, basePath, promotions = [], stacking = "SINGLE" }: Props) {
+function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, sessions, locale, basePath, promotions = [] }: Props) {
   const t = useTranslations("site.booking");
   const tp = useTranslations("site");
   const router = useRouter();
@@ -144,12 +146,13 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
   const remaining = session ? session.capacity - session.reservedCount : 0;
   const maxGuests = workshop ? Math.max(1, Math.min(workshop.maxPerBooking, remaining)) : 1;
   // Promotions the guest may use for this workshop today. Prices here are display-only: the server recomputes the price (BR-04) and
-  // refuses a second promotion when the shop allows only one.
+  // refuses promotions that cannot be combined.
   const today = dayKey(new Date(now).toISOString(), shop.timezone);
   const eligible = useMemo(() => (workshop ? eligiblePromotions(promotions, workshop.id, today) : []), [promotions, workshop, today]);
   const [picked, setPicked] = useState<string[]>([]);
-  const chosen = eligible.filter((p) => picked.includes(p.id)).slice(0, stacking === "SINGLE" ? 1 : undefined);
-  const price = workshop ? priceBooking({ unitPrice: workshop.priceAmount, quantity, stacking, promotions: chosen }) : null;
+  const marked = eligible.filter((p) => picked.includes(p.id));
+  const chosen = canCombine(marked) ? marked : marked.slice(0, 1);
+  const price = workshop ? priceBooking({ unitPrice: workshop.priceAmount, quantity, promotions: chosen }) : null;
   const subtotal = workshop ? workshop.priceAmount * quantity : 0;
   const total = price?.ok ? price.total : subtotal;
   const discountOf = (id: string) => (price?.ok ? (price.discounts.find((d) => d.id === id)?.amount ?? 0) : 0);
@@ -273,17 +276,15 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
           {eligible.length > 0 ? (
             <fieldset className="space-y-2">
               <legend className="text-sm font-medium">{t("promotions")}</legend>
-              <p className="text-xs text-[var(--site-muted)]">{t(stacking === "SINGLE" ? "promotionsSingle" : "promotionsMultiple")}</p>
+              <p className="text-xs text-[var(--site-muted)]">{t("promotionsHint")}</p>
               <div className="grid gap-2">
-                {stacking === "SINGLE" ? (
-                  <PromoOption type="radio" checked={chosen.length === 0} onChange={() => setPicked([])} label={t("noPromotion")} />
-                ) : null}
                 {eligible.map((p) => (
                   <PromoOption
-                    key={p.id} type={stacking === "SINGLE" ? "radio" : "checkbox"} checked={chosen.some((c) => c.id === p.id)}
-                    onChange={() => setPicked(stacking === "SINGLE" ? [p.id] : picked.includes(p.id) ? picked.filter((x) => x !== p.id) : [...picked, p.id])}
+                    key={p.id} checked={chosen.some((c) => c.id === p.id)}
+                    onChange={() => setPicked(togglePromotion(chosen, p).map((x) => x.id))}
                     label={L(p.title)}
                     detail={`${p.discountType === "PERCENT" ? t("promotionOffPercent", { value: p.discountValue }) : t("promotionOffAmount", { amount: formatMoney(p.discountValue, workshop.currency, locale) })}${p.code ? ` · ${p.code}` : ""}`}
+                    note={t(p.stacking === "SINGLE" ? "promotionAlone" : "promotionCombinable")}
                   />
                 ))}
               </div>

@@ -20,8 +20,8 @@
     "promotionAppliesTo": "Applies to: {names}",
     "promotionValidUntil": "Valid until {date}",
     "promotionCode": "Code",
-    "promotionSingleNote": "Only one promotion can be used per booking.",
-    "promotionMultipleNote": "You can combine promotions on one booking."
+    "promotionAlone": "Cannot be combined with other promotions",
+    "promotionCombinable": "Can be combined with other promotions"
   },
   "header": {
     "language": "Language"
@@ -82,15 +82,15 @@
       "consent": "You must agree to continue."
     },
     "promotions": "Promotions",
-    "promotionsSingle": "Choose one promotion (optional).",
-    "promotionsMultiple": "Choose the promotions you want to use (optional).",
-    "noPromotion": "No promotion",
     "promotionOffPercent": "{value}% off",
     "promotionOffAmount": "{amount} off",
     "subtotal": "Subtotal",
     "promotionsApplied": "Promotions used",
     "discountLine": "Discount: {title}",
-    "totalAfterDiscount": "Total"
+    "totalAfterDiscount": "Total",
+    "promotionsHint": "Choose the promotions you want to use (optional). Some promotions cannot be combined with others: choosing one of them replaces the rest.",
+    "promotionAlone": "Cannot be combined",
+    "promotionCombinable": "Can be combined"
   },
   "confirmation": {
     "title": "Booking confirmed",

@@ -1,4 +1,4 @@
-import type { PromotionInput, PromotionRecord, StackingMode } from "@workshop/shared";
+import type { PromotionInput, PromotionRecord } from "@workshop/shared";
 
 // Browser side of the shop owner promotion endpoints (/api/v1/promotions).
 
@@ -24,8 +24,6 @@ export interface PromotionsResponse {
   limit: number;
   /** Most promotions that may run at the same time. */
   maxConcurrent: number;
-  /** How a guest may use promotions on one booking. */
-  stacking: StackingMode;
 }
 
 const JSON_HEADERS = { "content-type": "application/json" };
@@ -40,6 +38,3 @@ export const setPromotionEnabledRequest = async (id: string, enabled: boolean): 
 
 export const deletePromotionRequest = async (id: string): Promise<void> =>
   parse(await fetch(`/api/v1/promotions/${encodeURIComponent(id)}`, { method: "DELETE" }));
-
-export const saveStackingRequest = async (stacking: StackingMode): Promise<{ stacking: StackingMode }> =>
-  parse(await fetch("/api/v1/promotions/settings", { method: "PUT", headers: JSON_HEADERS, body: JSON.stringify({ stacking }) }));

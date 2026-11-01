@@ -18,8 +18,8 @@ export const MAX_PROMOTIONS_PER_SHOP = 20;
 export const MAX_CONCURRENT_PROMOTIONS = 5;
 
 /**
- * How a guest may use promotions on one booking, chosen by the shop owner:
- * SINGLE = at most one promotion per booking; MULTIPLE = any number of eligible promotions on one booking.
+ * How one promotion may be used on a booking, chosen by the shop owner for each promotion:
+ * SINGLE = it must be the only promotion on the booking; MULTIPLE = it can be combined with other promotions that are MULTIPLE too.
  */
 export const STACKING_MODES = ["SINGLE", "MULTIPLE"] as const;
 export type StackingMode = (typeof STACKING_MODES)[number];
@@ -40,6 +40,8 @@ export interface PromotionRecord {
   code?: string;
   /** One optional image: an https URL or a platform media path (see media.ts). */
   imageUrl?: string;
+  /** Whether a guest can combine this promotion with others on one booking. */
+  stacking: StackingMode;
   /** "ALL" = every workshop, otherwise only the listed ones. */
   appliesTo: "ALL" | "SELECTED";
   workshopIds: string[];
@@ -67,6 +69,7 @@ export const promotionInputSchema = z
     discountValue: z.number({ error: "valueInvalid" }).int("valueInvalid").positive("valueInvalid").max(FIXED_AMOUNT_MAX, "valueInvalid"),
     imageUrl: z.string().max(500, "imageInvalid").refine((v) => v === "" || isHttpsUrl(v) || isPlatformMediaPath(v), "imageInvalid").optional(),
     code: z.string().trim().toUpperCase().refine((c) => c === "" || PROMOTION_CODE_RE.test(c), "codeInvalid").optional(),
+    stacking: z.enum(STACKING_MODES, { error: "required" }),
     appliesTo: z.enum(["ALL", "SELECTED"], { error: "required" }),
     workshopIds: z.array(z.string().min(1)).max(100),
     startDate: z.string({ error: "dateInvalid" }).refine(isRealDate, "dateInvalid"),
@@ -135,19 +138,32 @@ export function firstOverloadedDay(
 export interface PriceLine { id: string; amount: number }
 export type BookingPrice =
   | { ok: true; subtotal: number; discounts: PriceLine[]; discount: number; total: number }
-  | { ok: false; error: "SINGLE_ONLY" };
+  | { ok: false; error: "NOT_COMBINABLE" };
+
+/** Whether these promotions may be used together on one booking: one alone always, several only when every one of them allows it. */
+export const canCombine = (list: readonly Pick<PromotionRecord, "stacking">[]): boolean => list.length <= 1 || list.every((p) => p.stacking === "MULTIPLE");
+
+/**
+ * The promotions that stay chosen after the guest picks `id`: a SINGLE promotion replaces everything else, and a MULTIPLE one
+ * replaces a SINGLE one but is added next to other MULTIPLE ones. Picking a promotion that is already chosen removes it.
+ */
+export function togglePromotion<T extends Pick<PromotionRecord, "id" | "stacking">>(chosen: readonly T[], pick: T): T[] {
+  if (chosen.some((p) => p.id === pick.id)) return chosen.filter((p) => p.id !== pick.id);
+  if (pick.stacking === "SINGLE") return [pick];
+  return [...chosen.filter((p) => p.stacking === "MULTIPLE"), pick];
+}
 
 /**
  * Price of one booking with the promotions a guest chose (the backend runs this too and never trusts the client's total).
  * The subtotal is unit price x quantity. Fixed amounts come off the booking first, then each percentage is taken off what is
  * left, so the result does not depend on the order the guest clicked. No discount is larger than what is left, so the total
- * is never below 0. With SINGLE stacking, more than one promotion is refused.
+ * is never below 0. Several promotions are refused unless every one of them can be combined (see canCombine).
  */
 export function priceBooking(input: {
-  unitPrice: number; quantity: number; stacking: StackingMode;
-  promotions: readonly Pick<PromotionRecord, "id" | "discountType" | "discountValue">[];
+  unitPrice: number; quantity: number;
+  promotions: readonly Pick<PromotionRecord, "id" | "discountType" | "discountValue" | "stacking">[];
 }): BookingPrice {
-  if (input.stacking === "SINGLE" && input.promotions.length > 1) return { ok: false, error: "SINGLE_ONLY" };
+  if (!canCombine(input.promotions)) return { ok: false, error: "NOT_COMBINABLE" };
   const subtotal = Math.max(0, input.unitPrice) * Math.max(0, input.quantity);
   const ordered = [...input.promotions].sort((a, b) => (a.discountType === b.discountType ? 0 : a.discountType === "FIXED_AMOUNT" ? -1 : 1));
   let left = subtotal;

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { Info, TriangleAlert } from "lucide-react";
+import { Info, Tag, TriangleAlert } from "lucide-react";
 import { missingLocales, type Locale, type Localized, type OrgStatus, type SectionType } from "@workshop/shared";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -265,6 +265,7 @@ function BuilderInner({ shop, initial, initialSource = "starter", initialStatus,
                 section={selected} lang={activeLang} defaultLocale={shop.defaultLocale} theme={draft.theme}
                 onChange={(props) => patchSection(selected.id, { props })}
                 onPatch={(patch) => patchSection(selected.id, patch)}
+                onBeforeLeave={() => { if (saveState === "pending") saveDraft(draft, pageId); }}
               />
             ) : (
               <FieldsEditor
@@ -330,16 +331,26 @@ function BuilderInner({ shop, initial, initialSource = "starter", initialStatus,
   );
 }
 
-function SectionEditorBody({ section, lang, defaultLocale, theme, onChange, onPatch }: {
+function SectionEditorBody({ section, lang, defaultLocale, theme, onChange, onPatch, onBeforeLeave }: {
   section: SectionInstance; lang: Locale; defaultLocale: Locale; theme: PageTheme;
   onChange: (props: Record<string, unknown>) => void; onPatch: (patch: Partial<SectionInstance>) => void;
+  /** Called just before the shop owner leaves for another page, so edits waiting for the autosave are not lost. */
+  onBeforeLeave: () => void;
 }) {
   const t = useTranslations("builder");
   const def = SECTION_REGISTRY[section.type];
   const variant = effectiveVariant(section);
   return (
     <div className="space-y-4">
-      {def.autoContent ? (
+      {section.type === "promotions" ? (
+        // The offers themselves are not edited here: they are managed (and each one's rules are set) on the Promotion management page.
+        <div role="note" data-testid="promotions-editor-note" className="grid gap-3 rounded-lg border bg-muted/50 p-3 text-sm">
+          <p className="flex items-start gap-2"><Info className="mt-0.5 size-4 shrink-0" aria-hidden />{t("editor.promotionsNote")}</p>
+          <Link href="/shopowner/promotions" onClick={onBeforeLeave} className={cn(buttonVariants(), "w-fit")}>
+            <Tag aria-hidden />{t("editor.promotionsGo")}
+          </Link>
+        </div>
+      ) : def.autoContent ? (
         <p className="flex items-start gap-2 rounded-lg bg-muted/50 p-3 text-sm"><Info className="mt-0.5 size-4 shrink-0" aria-hidden />{t("editor.autoWorkshops")}</p>
       ) : null}
       {def.authenticityNote ? (
