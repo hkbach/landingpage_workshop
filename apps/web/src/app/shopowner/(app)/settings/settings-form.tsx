@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Field, describedBy } from "@/components/dashboard/shell/field";
 import { NativeSelect } from "@/components/dashboard/shell/native-select";
 import { COUNTRIES, CURRENCIES, TIMEZONES } from "@/components/dashboard/shell/options";
+import { saveBookingCutoffRequest } from "@/lib/settings-api";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@/lib/zod-resolver";
 
@@ -43,6 +44,7 @@ export function SettingsForm({ initial, hasBookings, readOnly }: { initial: Valu
   const tc = useTranslations("common");
   const uiLocale = useLocale();
   const [saved, setSaved] = useState(false);
+  const [saveFailed, setSaveFailed] = useState(false);
   const form = useForm<Values>({ resolver: zodResolver(schema), defaultValues: initial });
   const { register, handleSubmit, control, setValue, reset, formState: { errors, isSubmitting, isDirty } } = form;
 
@@ -90,7 +92,15 @@ export function SettingsForm({ initial, hasBookings, readOnly }: { initial: Valu
       className="grid gap-6"
       onSubmit={handleSubmit(async (values) => {
         setSaved(false);
+        setSaveFailed(false);
         await new Promise((r) => setTimeout(r, 700));
+        try {
+          // The booking cut-off is the setting the public booking form depends on, so it is the one the mock backend keeps.
+          await saveBookingCutoffRequest(values.bookingCutoffMinutes);
+        } catch {
+          setSaveFailed(true);
+          return;
+        }
         reset(values);
         setSaved(true);
       })}
@@ -200,6 +210,7 @@ export function SettingsForm({ initial, hasBookings, readOnly }: { initial: Valu
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={isSubmitting || readOnly || !isDirty}>{isSubmitting ? tc("saving") : tc("save")}</Button>
         {saved ? <p role="status" className="text-sm text-emerald-700">{t("saved")}</p> : null}
+        {saveFailed ? <p role="alert" className="text-sm text-destructive">{t("saveFailed")}</p> : null}
       </div>
     </form>
   );

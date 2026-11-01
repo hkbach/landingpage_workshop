@@ -1,6 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import { liveBookings } from "@/lib/mock/booking-store";
 import { currentShop } from "@/lib/mock/data";
+import { bookingCutoffMinutes } from "@/lib/mock/shop-settings-store";
 import { SettingsForm } from "./settings-form";
 
 export default async function SettingsPage() {
@@ -27,7 +28,7 @@ export default async function SettingsPage() {
           currency: shop.currency,
           defaultLocale: shop.defaultLocale,
           enabledLocales: shop.enabledLocales,
-          bookingCutoffMinutes: shop.bookingCutoffMinutes,
+          bookingCutoffMinutes: bookingCutoffMinutes(),
         }}
       />
     </div>

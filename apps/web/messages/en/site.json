@@ -52,6 +52,8 @@
     "chooseDate": "Choose a date",
     "chooseTime": "Choose a time",
     "dateUnavailable": "Not available",
+    "cutoffNote": "Online booking closes {minutes, plural, one {# minute} other {# minutes}} before a session starts.",
+    "slotGone": "That session can no longer be booked: online booking closes {minutes, plural, one {# minute} other {# minutes}} before it starts. Please choose another time.",
     "noneSelectable": "Every session of this workshop is full or has already passed.",
     "slot": {
       "PAST": "Already started",

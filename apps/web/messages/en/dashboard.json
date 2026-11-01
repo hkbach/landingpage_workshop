@@ -157,6 +157,7 @@
     },
     "default": "default",
     "saved": "Settings saved.",
+    "saveFailed": "The settings could not be saved. Please try again.",
     "errors": {
       "nameRequired": "Enter a shop name.",
       "emailRequired": "Enter a contact email.",

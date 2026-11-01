@@ -3,6 +3,7 @@ import { isTemplateKey } from "@/components/sections/templates";
 import { SitePreview } from "@/components/builder/SitePreview";
 import { currentShop, sessions, sitePage, workshops } from "@/lib/mock/data";
 import { publicPromotions } from "@/lib/mock/promotion-store";
+import { bookingCutoffMinutes } from "@/lib/mock/shop-settings-store";
 
 // Preview of the DRAFT with the same PageRenderer as the public site (FR-SITE-03). Dashboard-only route.
 export default async function SitePreviewPage({ searchParams }: PageProps<"/shopowner/site/preview">) {
@@ -15,7 +16,7 @@ export default async function SitePreviewPage({ searchParams }: PageProps<"/shop
   return (
     <SitePreview
       shop={{
-        name: currentShop.name, slug: currentShop.slug, bookingCutoffMinutes: currentShop.bookingCutoffMinutes, defaultLocale: currentShop.defaultLocale, enabledLocales: currentShop.enabledLocales,
+        name: currentShop.name, slug: currentShop.slug, bookingCutoffMinutes: bookingCutoffMinutes(), defaultLocale: currentShop.defaultLocale, enabledLocales: currentShop.enabledLocales,
         timezone: currentShop.timezone, currency: currentShop.currency,
       }}
       initial={{ content: sitePage.draft, theme: sitePage.theme, template: sitePage.template }}

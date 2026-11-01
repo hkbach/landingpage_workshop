@@ -41,6 +41,9 @@ interface Props {
   preview?: boolean;
 }
 
+/** The current time, read when an event happens (not while rendering). */
+const clock = () => Date.now();
+
 const STEPS = ["datetime", "guests", "contact", "confirm", "otp"] as const;
 type Step = (typeof STEPS)[number];
 
@@ -143,6 +146,8 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(false);
   const [previewDone, setPreviewDone] = useState(false);
+  /** The chosen session stopped being bookable while the form was open (the booking cut-off passed). */
+  const [slotGone, setSlotGone] = useState(false);
 
   const workshop = workshops.find((w) => w.id === workshopId);
   const wsSessions = listed.filter((x) => x.workshopId === workshopId);
@@ -259,6 +264,11 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
         setSubmitting(false);
         return;
       }
+      // Time passed while the guest filled in the form: check the booking cut-off again (the real API checks it too, FR-BOOK-02).
+      if (slotState(session, clock(), shop.bookingCutoffMinutes) !== "OK") {
+        setSlotGone(true); setSessionId(""); setDate(""); setStep("datetime"); setSubmitting(false);
+        return;
+      }
       if (preview) { setPreviewDone(true); setSubmitting(false); return; } // nothing is created from the builder
       // Simulated POST with the Idempotency-Key; the real API verifies Turnstile and the OTP, and recomputes the price.
       const result = await simulateBooking(
@@ -315,10 +325,11 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
             <p role="status" className="rounded-lg bg-[var(--site-surface)] p-3 text-sm">{t("noAvailability")}</p>
           ) : (
             <>
+              {slotGone ? <p role="alert" data-testid="slot-gone" className="rounded-lg bg-red-50 p-3 text-sm text-red-800">{t("slotGone", { minutes: shop.bookingCutoffMinutes })}</p> : null}
               {!dates.some(dateOpen) ? <p role="status" className="rounded-lg bg-[var(--site-surface)] p-3 text-sm">{t("noneSelectable")}</p> : null}
               <ChoiceGroup legend={t("chooseDate")} className="sm:grid-cols-2">
                 {dates.map((d) => (
-                  <Choice key={d} name="bk-date" checked={date === d} disabled={!dateOpen(d)} onSelect={() => { setDate(d); setSessionId(""); }}>
+                  <Choice key={d} name="bk-date" checked={date === d} disabled={!dateOpen(d)} onSelect={() => { setDate(d); setSessionId(""); setSlotGone(false); }}>
                     <span>{dateLabel(wsSessions.find((x) => dayKey(x.startsAt, shop.timezone) === d)!.startsAt)}</span>
                     {!dateOpen(d) ? <span className="text-xs text-[var(--site-muted)]">{t("dateUnavailable")}</span> : null}
                   </Choice>
@@ -326,6 +337,7 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
               </ChoiceGroup>
               {date ? (
                 <ChoiceGroup legend={t("chooseTime")}>
+                  <p className="text-xs text-[var(--site-muted)]" data-testid="cutoff-note">{t("cutoffNote", { minutes: shop.bookingCutoffMinutes })}</p>
                   {daySessions.map((x) => {
                     const left = x.capacity - x.reservedCount;
                     const state = stateOf(x);
