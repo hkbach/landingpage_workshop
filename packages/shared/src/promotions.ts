@@ -155,6 +155,17 @@ export function togglePromotion<T extends Pick<PromotionRecord, "id" | "stacking
 }
 
 /**
+ * The promotions that get unchecked because of the pick itself (not the pick, nor one that was already unchecked), so the guest can be
+ * told why: choosing a promotion that must be used alone unchecks all the others, and choosing a combinable one unchecks the one
+ * that was used alone. Picking a promotion that is already chosen (to uncheck it) takes nothing else away.
+ */
+export function droppedByToggle<T extends Pick<PromotionRecord, "id" | "stacking">>(chosen: readonly T[], pick: T): T[] {
+  if (chosen.some((p) => p.id === pick.id)) return [];
+  const kept = new Set(togglePromotion(chosen, pick).map((p) => p.id));
+  return chosen.filter((p) => !kept.has(p.id));
+}
+
+/**
  * Price of one booking with the promotions a guest chose (the backend runs this too and never trusts the client's total).
  * The subtotal is unit price x quantity, and EVERY discount is worked out on that original subtotal: a percentage is a share of
  * the original price (20% and 15% together take 35% off, not 20% and then 15% of what is left) and a fixed amount is taken off

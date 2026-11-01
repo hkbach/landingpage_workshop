@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  activePromotions, canCombine, countByStatus, discountAmount, discountedPrice, eligiblePromotions, firstOverloadedDay, MAX_CONCURRENT_PROMOTIONS, priceBooking, togglePromotion,
+  activePromotions, canCombine, countByStatus, droppedByToggle, discountAmount, discountedPrice, eligiblePromotions, firstOverloadedDay, MAX_CONCURRENT_PROMOTIONS, priceBooking, togglePromotion,
   promotionAppliesTo, promotionInputSchema, promotionStatus, STACKING_MODES, type PromotionRecord,
 } from "./promotions";
 import { isPlatformMediaPath, platformMediaId } from "./media";
@@ -267,5 +267,35 @@ describe("the promo code is required", () => {
   });
   it("a code that is not a text is refused", () => {
     for (const bad of [123, true, {}, []]) expect(problems(bad).length, String(bad)).toBeGreaterThan(0);
+  });
+});
+
+describe("droppedByToggle", () => {
+  type P = { id: string; stacking: "SINGLE" | "MULTIPLE" };
+  const s = (id: string): P => ({ id, stacking: "SINGLE" });
+  const m = (id: string): P => ({ id, stacking: "MULTIPLE" });
+  const ids = (l: P[]) => l.map((x) => x.id);
+
+  it("lists the others that are unchecked when a promotion used alone is chosen", () => {
+    expect(ids(droppedByToggle([m("a"), m("b")], s("x")))).toEqual(["a", "b"]);
+    expect(ids(droppedByToggle([s("x")], s("y")))).toEqual(["x"]);
+  });
+  it("lists the promotion used alone that is unchecked when a combinable one is chosen", () => {
+    expect(ids(droppedByToggle([s("x")], m("a")))).toEqual(["x"]);
+  });
+  it("takes nothing away when combinable promotions are added to each other, or the first one is chosen", () => {
+    expect(droppedByToggle([m("a")], m("b"))).toEqual([]);
+    expect(droppedByToggle([], s("x"))).toEqual([]);
+    expect(droppedByToggle([], m("a"))).toEqual([]);
+  });
+  it("takes nothing away when a chosen promotion is unchecked by the guest", () => {
+    expect(droppedByToggle([m("a"), m("b")], m("a"))).toEqual([]);
+    expect(droppedByToggle([s("x")], s("x"))).toEqual([]);
+  });
+  it("agrees with togglePromotion: what is dropped is exactly what is no longer chosen", () => {
+    for (const [chosen, pick] of [[[m("a"), m("b")], s("x")], [[s("x")], m("a")], [[m("a")], m("b")], [[s("x")], s("y")]] as [P[], P][]) {
+      const after = new Set(ids(togglePromotion(chosen, pick)));
+      expect(ids(droppedByToggle(chosen, pick)).sort()).toEqual(ids(chosen).filter((c) => !after.has(c)).sort());
+    }
   });
 });

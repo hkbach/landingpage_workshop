@@ -90,7 +90,10 @@
     "totalAfterDiscount": "Total",
     "promotionsHint": "Choose the promotions you want to use (optional). Some promotions cannot be combined with others: choosing one of them replaces the rest.",
     "promotionAlone": "Cannot be combined",
-    "promotionCombinable": "Can be combined"
+    "promotionCombinable": "Can be combined",
+    "promotionDroppedByAlone": "“{pick}” can only be used on its own, so these promotions were unchecked: {names}.",
+    "promotionDroppedAlone": "“{names}” cannot be combined with other promotions, so it was unchecked when you chose “{pick}”.",
+    "promotionAloneActive": "“{pick}” is used on its own and cannot be combined with other promotions. Choose another promotion to switch."
   },
   "confirmation": {
     "title": "Booking confirmed",

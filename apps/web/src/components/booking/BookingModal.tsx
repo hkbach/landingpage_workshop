@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Controller, useForm, useWatch } from "react-hook-form";
-import { canCombine, eligiblePromotions, formatMoney, pickLocalized, priceBooking, togglePromotion, type Locale, type PromotionRecord } from "@workshop/shared";
+import { canCombine, droppedByToggle, eligiblePromotions, formatMoney, pickLocalized, priceBooking, togglePromotion, type Locale, type PromotionRecord } from "@workshop/shared";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -150,6 +150,8 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
   const today = dayKey(new Date(now).toISOString(), shop.timezone);
   const eligible = useMemo(() => (workshop ? eligiblePromotions(promotions, workshop.id, today) : []), [promotions, workshop, today]);
   const [picked, setPicked] = useState<string[]>([]);
+  /** Why the last pick unchecked other promotions, so the guest understands what happened. Cleared by the next pick. */
+  const [dropNote, setDropNote] = useState<{ pick: PromotionRecord; dropped: PromotionRecord[] } | null>(null);
   const marked = eligible.filter((p) => picked.includes(p.id));
   const chosen = canCombine(marked) ? marked : marked.slice(0, 1);
   const price = workshop ? priceBooking({ unitPrice: workshop.priceAmount, quantity, promotions: chosen }) : null;
@@ -228,7 +230,7 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
             <label htmlFor="bk-workshop" className="text-sm font-medium">{t("workshop")}</label>
             <select
               id="bk-workshop" className={selectClass} value={workshopId}
-              onChange={(e) => { setWorkshopId(e.target.value); setDate(""); setSessionId(""); setQuantity(1); setPicked([]); }}
+              onChange={(e) => { setWorkshopId(e.target.value); setDate(""); setSessionId(""); setQuantity(1); setPicked([]); setDropNote(null); }}
             >
               {workshops.map((w) => <option key={w.id} value={w.id}>{L(w.title)}</option>)}
             </select>
@@ -281,13 +283,25 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
                 {eligible.map((p) => (
                   <PromoOption
                     key={p.id} checked={chosen.some((c) => c.id === p.id)}
-                    onChange={() => setPicked(togglePromotion(chosen, p).map((x) => x.id))}
+                    onChange={() => {
+                      const dropped = droppedByToggle(chosen, p);
+                      setPicked(togglePromotion(chosen, p).map((x) => x.id));
+                      setDropNote(dropped.length > 0 ? { pick: p, dropped } : null);
+                    }}
                     label={L(p.title)}
                     detail={`${p.discountType === "PERCENT" ? t("promotionOffPercent", { value: p.discountValue }) : t("promotionOffAmount", { amount: formatMoney(p.discountValue, workshop.currency, locale) })}${p.code ? ` · ${p.code}` : ""}`}
                     note={t(p.stacking === "SINGLE" ? "promotionAlone" : "promotionCombinable")}
                   />
                 ))}
               </div>
+              {/* Under the list: what the last choice did, or the rule for the promotion that is used alone. */}
+              {(() => {
+                const alone = chosen.find((c) => c.stacking === "SINGLE");
+                const text = dropNote
+                  ? t(dropNote.pick.stacking === "SINGLE" ? "promotionDroppedByAlone" : "promotionDroppedAlone", { pick: L(dropNote.pick.title), names: dropNote.dropped.map((d) => L(d.title)).join(", ") })
+                  : alone ? t("promotionAloneActive", { pick: L(alone.title) }) : null;
+                return text ? <p role="status" data-testid="promo-note" className="rounded-lg bg-[var(--site-surface)] p-2.5 text-xs text-[var(--site-text)]">{text}</p> : null;
+              })()}
             </fieldset>
           ) : null}
           <dl className="space-y-1 text-sm" data-testid="booking-price">
