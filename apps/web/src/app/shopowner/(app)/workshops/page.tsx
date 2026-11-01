@@ -19,6 +19,8 @@ export default async function WorkshopsPage() {
   const today = shopToday();
   const title = (p: { title: Parameters<typeof pickLocalized>[0] }) => pickLocalized(p.title, displayLocale, currentShop.defaultLocale);
   const percent = new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 1 });
+  // Business dates of a promotion: shown as plain calendar days, whatever the timezone.
+  const day = (d: string) => new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${d}T12:00:00Z`));
   return (
     <div className="grid gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -77,6 +79,9 @@ export default async function WorkshopsPage() {
                               <span className="text-muted-foreground">
                                 · {p.discountType === "PERCENT" ? t("list.offPercent", { value: p.discountValue }) : t("list.offAmount", { amount: money(p.discountValue) })}
                                 {" · "}{t(p.stacking === "SINGLE" ? "list.alone" : "list.combinable")}
+                              </span>
+                              <span className="block text-xs text-muted-foreground" data-testid="promotion-period">
+                                {t("list.validRange", { from: day(p.startDate), to: day(p.endDate) })}
                               </span>
                             </li>
                           ))}

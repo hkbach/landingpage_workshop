@@ -36,7 +36,8 @@
     "priceAfter": "Price after: {amount}",
     "managePromotions": "Manage promotions",
     "allTogether": "All {count} promotions together",
-    "combinableMax": "Most one guest can combine"
+    "combinableMax": "Most one guest can combine",
+    "validRange": "Applies {from} to {to}"
   },
   "detail": {
     "tabDetails": "Details",
