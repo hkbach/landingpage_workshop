@@ -77,8 +77,8 @@ describe("one image per promotion", () => {
   it("drops the image when it is replaced or the promotion is deleted", async () => {
     const first = (await (await upload(PNG)).json()) as { id: string; url: string };
     const second = (await (await upload(JPEG)).json()) as { id: string; url: string };
-    const p = (await (await create({ imageUrl: first.url })).json()) as PromotionRecord;
-    expect((await PUT(req("PUT", body({ imageUrl: second.url })), ctxId(p.id))).status).toBe(200);
+    const p = (await (await create({ imageUrl: first.url, enabled: false })).json()) as PromotionRecord;
+    expect((await PUT(req("PUT", body({ imageUrl: second.url, enabled: false })), ctxId(p.id))).status).toBe(200);
     expect((await serveImage(new Request("http://x"), ctxId(first.id))).status).toBe(404);
     expect((await serveImage(new Request("http://x"), ctxId(second.id))).status).toBe(200);
     await PATCH(req("PATCH", { enabled: false }), ctxId(p.id)); // only a paused or expired promotion can be deleted
@@ -143,8 +143,8 @@ describe(`at most ${MAX_CONCURRENT_PROMOTIONS} promotions run at the same time`,
   it("refuses an edit that stretches a promotion over a full period", async () => {
     const today = shopToday();
     for (let i = 0; i < 3; i++) await create(NOW);
-    const later = (await (await create({ startDate: addDays(today, 40), endDate: addDays(today, 42) })).json()) as PromotionRecord;
-    const res = await PUT(req("PUT", body({ startDate: today, endDate: addDays(today, 42) })), ctxId(later.id));
+    const later = (await (await create({ startDate: addDays(today, 40), endDate: addDays(today, 42), enabled: false })).json()) as PromotionRecord;
+    const res = await PUT(req("PUT", body({ startDate: today, endDate: addDays(today, 42) })), ctxId(later.id)); // a paused promotion is edited, and switched on
     expect(res.status).toBe(409);
     expect(allPromotions().find((p) => p.id === later.id)?.startDate).toBe(addDays(today, 40));
   });
@@ -168,9 +168,9 @@ describe("how each promotion can be combined", () => {
   });
   it("is saved with the promotion and can be changed later", async () => {
     const far = { startDate: addDays(shopToday(), 200), endDate: addDays(shopToday(), 201) };
-    const p = (await (await create({ stacking: "MULTIPLE", ...far })).json()) as PromotionRecord;
+    const p = (await (await create({ stacking: "MULTIPLE", enabled: false, ...far })).json()) as PromotionRecord;
     expect(p.stacking).toBe("MULTIPLE");
-    const q = (await (await PUT(req("PUT", body({ stacking: "SINGLE", ...far })), ctxId(p.id))).json()) as PromotionRecord;
+    const q = (await (await PUT(req("PUT", body({ stacking: "SINGLE", enabled: false, ...far })), ctxId(p.id))).json()) as PromotionRecord;
     expect(q.stacking).toBe("SINGLE");
     expect(allPromotions().find((x) => x.id === p.id)?.stacking).toBe("SINGLE");
   });

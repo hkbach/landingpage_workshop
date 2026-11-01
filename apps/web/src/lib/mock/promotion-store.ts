@@ -214,6 +214,7 @@ export function setPromotionEnabled(id: string, enabled: boolean): SaveResult {
     const used = pauseBlockers(id);
     if (used.length > 0) return { ok: false, code: "IN_USE", bookingCodes: used };
   }
+  if (enabled && !p.enabled && p.endDate < shopToday()) return { ok: false, code: "END_IN_PAST" };
   // Resuming is like adding it again: it can make a workshop free, or push the number running at once over the limit.
   if (enabled) {
     const free = freeWorkshops({ ...p, enabled }, store().filter((x) => x.id !== id));

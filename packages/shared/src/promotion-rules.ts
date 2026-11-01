@@ -33,8 +33,8 @@ export function bookingsBlockingPause(promotionId: string, bookings: readonly Bo
 /** A promotion can only be deleted while it is paused or over: never while it is active or still to start. */
 export const canDeletePromotion = (status: PromotionStatus): boolean => status === "PAUSED" || status === "EXPIRED";
 
-/** An active promotion cannot be edited: the owner pauses it first (so guests never see it change while they book). */
-export const canEditPromotion = (status: PromotionStatus): boolean => status !== "ACTIVE";
+/** Only a paused promotion is edited (an expired one is renewed): active and scheduled ones are paused first, so guests never see them change. */
+export const canEditPromotion = (status: PromotionStatus): boolean => status === "PAUSED" || status === "EXPIRED";
 
 export function isPromotionDeletable(p: Pick<PromotionRecord, "enabled" | "startDate" | "endDate">, today: string): boolean {
   return canDeletePromotion(promotionStatus(p, today));

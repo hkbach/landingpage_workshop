@@ -118,25 +118,13 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
   const refresh = () => queryClient.invalidateQueries({ queryKey: ["promotions"] });
   const toggle = useMutation({
     mutationFn: (v: { id: string; enabled: boolean }) => setPromotionEnabledRequest(v.id, v.enabled),
-    onSuccess: (_p, v) => { setMessage({ text: t(v.enabled ? "resumed" : "paused"), tone: "ok" }); void refresh(); },
-    onError: (e) => {
-      const n = inUseNotice(e, t) ?? fullDiscountNotice(e, t, nameOf, "fullDiscountResumeTitle") ?? limitNotice(e, t, day);
-      if (n) setNotice(n); else setMessage({ text: t("saveFailed"), tone: "error" });
+    onSuccess: (p, v) => {
+      const started = promotionStatus(p, today) === "ACTIVE" ? t("startedActive") : t("startedScheduled", { date: day(p.startDate) });
+      setMessage({ text: v.enabled ? started : t("paused"), tone: "ok" });
       void refresh();
     },
-  });
-  // Runs an expired promotion again from today, for as many days as it ran before.
-  const start = useMutation({
-    mutationFn: (p: PromotionRecord) => {
-      const days = Math.round((Date.parse(p.endDate) - Date.parse(p.startDate)) / 86_400_000);
-      return savePromotionRequest(p.id, {
-        title: p.title, description: p.description, discountType: p.discountType, discountValue: p.discountValue, code: p.code, imageUrl: p.imageUrl ?? "",
-        stacking: p.stacking, appliesTo: p.appliesTo, workshopIds: p.workshopIds, startDate: today, endDate: addDays(today, days), enabled: true,
-      });
-    },
-    onSuccess: (p) => { setMessage({ text: t("started", { date: day(p.endDate) }), tone: "ok" }); void refresh(); },
     onError: (e) => {
-      const n = fullDiscountNotice(e, t, nameOf, "fullDiscountResumeTitle") ?? limitNotice(e, t, day);
+      const n = inUseNotice(e, t) ?? fullDiscountNotice(e, t, nameOf, "fullDiscountResumeTitle") ?? limitNotice(e, t, day);
       if (n) setNotice(n); else setMessage({ text: t("saveFailed"), tone: "error" });
       void refresh();
     },
@@ -153,7 +141,7 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
 
   function openNew() {
     setMessage(null);
-    setForm({ id: null, title: {}, description: {}, discountType: "PERCENT", value: "", code: "", imageUrl: "", stacking: "SINGLE", appliesTo: "ALL", workshopIds: [], startDate: today, endDate: addDays(today, 30), enabled: true });
+    setForm({ id: null, title: {}, description: {}, discountType: "PERCENT", value: "", code: "", imageUrl: "", stacking: "SINGLE", appliesTo: "ALL", workshopIds: [], startDate: today, endDate: addDays(today, 30), enabled: false });
   }
   function openEdit(p: PromotionRecord, renew = false) {
     setMessage(null);
@@ -161,7 +149,7 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
       ...(renew ? { renewFrom: p.startDate } : {}),
       id: p.id, title: { ...p.title }, description: { ...p.description }, discountType: p.discountType,
       value: p.discountType === "PERCENT" ? String(p.discountValue) : String(p.discountValue / 10 ** minorDigits(shop.currency)),
-      code: p.code, imageUrl: p.imageUrl ?? "", stacking: p.stacking, appliesTo: p.appliesTo, workshopIds: [...p.workshopIds], startDate: p.startDate, endDate: p.endDate, enabled: p.enabled,
+      code: p.code, imageUrl: p.imageUrl ?? "", stacking: p.stacking, appliesTo: p.appliesTo, workshopIds: [...p.workshopIds], startDate: p.startDate, endDate: p.endDate, enabled: false, // a saved promotion is Paused: the Start button runs it
     });
   }
 
@@ -308,14 +296,19 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
                           <Pencil aria-hidden /><span className="sr-only">{t("edit")}: {title}</span>
                         </Button>
                       ) : (
-                        <>
-                          <Button size="icon-sm" variant="ghost" title={t("renew")} onClick={() => openEdit(p, true)}><RefreshCw aria-hidden /><span className="sr-only">{t("renew")}: {title}</span></Button>
-                          <Button size="icon-sm" variant="ghost" title={t("start")} disabled={start.isPending} onClick={() => start.mutate(p)}><Play aria-hidden /><span className="sr-only">{t("start")}: {title}</span></Button>
-                        </>
+                        <Button size="icon-sm" variant="ghost" title={t("renew")} onClick={() => openEdit(p, true)}><RefreshCw aria-hidden /><span className="sr-only">{t("renew")}: {title}</span></Button>
                       )}
-                      {status !== "EXPIRED" ? (
-                        <Button size="icon-sm" variant="ghost" title={p.enabled ? t("pause") : t("resume")} disabled={toggle.isPending} onClick={() => toggle.mutate({ id: p.id, enabled: !p.enabled })}>
-                          {p.enabled ? <Pause aria-hidden /> : <Play aria-hidden />}<span className="sr-only">{p.enabled ? t("pause") : t("resume")}: {title}</span>
+                      {status === "ACTIVE" || status === "SCHEDULED" ? (
+                        <Button size="icon-sm" variant="ghost" title={t("pause")} disabled={toggle.isPending} onClick={() => toggle.mutate({ id: p.id, enabled: false })}>
+                          <Pause aria-hidden /><span className="sr-only">{t("pause")}: {title}</span>
+                        </Button>
+                      ) : null}
+                      {status === "PAUSED" ? (
+                        <Button
+                          size="icon-sm" variant="ghost" disabled={toggle.isPending || p.endDate < today} title={p.endDate < today ? t("startExpired") : t("start")}
+                          onClick={() => toggle.mutate({ id: p.id, enabled: true })}
+                        >
+                          <Play aria-hidden /><span className="sr-only">{t("start")}: {title}</span>
                         </Button>
                       ) : null}
                       <Button
@@ -416,7 +409,8 @@ function PromotionDialog({ form, setForm, today, shop, workshops, others, money,
     if (!form) return none;
     const parsed = readForm(form, shop.currency);
     if (!parsed.success) return none;
-    const candidate = { id: form.id ?? "new", ...parsed.data, workshopIds: parsed.data.appliesTo === "ALL" ? [] : parsed.data.workshopIds };
+    // Checked as if it ran: the Start button is what makes it run, and by then it must already be safe.
+    const candidate = { id: form.id ?? "new", ...parsed.data, enabled: true, workshopIds: parsed.data.appliesTo === "ALL" ? [] : parsed.data.workshopIds };
     const blocked = fullDiscountWorkshops(candidate, others, workshops);
     return { full: blocked, risks: blocked.length > 0 ? [] : overBudgetWorkshops(candidate, others, workshops) };
   }, [form, shop.currency, others, workshops]);
@@ -551,10 +545,6 @@ function PromotionDialog({ form, setForm, today, shop, workshops, others, money,
                 <Field id="pr-end" label={t("fieldEnd")} required error={errors.endDate}>
                   {(p) => <Input {...p} type="date" value={form.endDate} onChange={(e) => set({ endDate: e.target.value })} />}
                 </Field>
-              </div>
-              <div className="flex items-center gap-2">
-                <input id="pr-enabled" type="checkbox" checked={form.enabled} onChange={(e) => set({ enabled: e.target.checked })} />
-                <Label htmlFor="pr-enabled">{t("fieldEnabled")}</Label>
               </div>
               {example ? <p className="rounded-lg bg-muted/50 p-3 text-sm">{t("example", example)}</p> : null}
               {full.length > 0 ? (

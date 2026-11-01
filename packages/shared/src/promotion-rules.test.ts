@@ -74,8 +74,8 @@ describe("a promotion code is unique inside a shop", () => {
 });
 
 describe("canEditPromotion", () => {
-  it("is false only for an active promotion", () => {
-    expect(canEditPromotion("ACTIVE")).toBe(false);
-    for (const st of ["SCHEDULED", "PAUSED", "EXPIRED"] as const) expect(canEditPromotion(st)).toBe(true);
+  it("is false for an active or a scheduled promotion", () => {
+    for (const st of ["ACTIVE", "SCHEDULED"] as const) expect(canEditPromotion(st)).toBe(false);
+    for (const st of ["PAUSED", "EXPIRED"] as const) expect(canEditPromotion(st)).toBe(true);
   });
 });

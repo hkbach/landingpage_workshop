@@ -83,6 +83,23 @@ describe("deleting a promotion", () => {
   });
 });
 
+describe("starting a promotion", () => {
+  const day = (n: number) => new Date(Date.parse(`${shopToday()}T12:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10);
+  const start = (id: string) => PATCH(req("PATCH", { enabled: true }), ctxId(id));
+  it("a saved promotion is Paused and Start turns it on", async () => {
+    const created = (await (await createRoute(req("POST", body({ code: "STARTME", startDate: day(300), endDate: day(305) })))).json()) as { id: string; enabled: boolean };
+    expect(created.enabled).toBe(false);
+    expect((await start(created.id)).status).toBe(200);
+    expect(allPromotions().find((p) => p.id === created.id)?.enabled).toBe(true);
+  });
+  it("is refused when the last day has already passed", async () => {
+    expect((await pause("pr-4")).status).toBe(200); // expired but still switched on: pause it, then it cannot start again
+    const res = await start("pr-4");
+    expect(res.status).toBe(422);
+    expect((await errorOf(res)).error.details.fields?.endDate).toBe("endInPast");
+  });
+});
+
 describe("promotion code", () => {
   it("is unique inside the shop, whatever the letter case", async () => {
     const taken = allPromotions()[0]!.code;
@@ -118,6 +135,11 @@ describe("editing a promotion", () => {
     await cancel("bk-6");
     expect((await pause("pr-1")).status).toBe(200);
     expect((await edited("pr-1", { discountValue: 7 })).status).toBe(200);
+  });
+  it("is refused while the promotion is scheduled too", async () => {
+    const res = await edited("pr-3", { discountValue: 7 }); // pr-3 starts in the future
+    expect(res.status).toBe(409);
+    expect((await errorOf(res)).error.code).toBe("EDIT_NOT_ALLOWED");
   });
   it("cannot set a last day before today, on create or on edit", async () => {
     const yesterday = new Date(Date.parse(`${shopToday()}T12:00:00Z`) - 86_400_000).toISOString().slice(0, 10);
