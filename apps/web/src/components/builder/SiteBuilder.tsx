@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { Info, Tag, TriangleAlert } from "lucide-react";
-import { missingLocales, type Locale, type Localized, type OrgStatus, type SectionType } from "@workshop/shared";
+import { missingLocales, trimDeep, type Locale, type Localized, type OrgStatus, type SectionType } from "@workshop/shared";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -193,16 +193,23 @@ function BuilderInner({ shop, initial, initialSource = "starter", initialStatus,
   const saving = saveState === "pending";
   const headerAction = publishAction({ status, prerequisites, invalidSections, invalidTheme, saving });
   // Also guarded here: a disabled button cannot be clicked, but a stale handler must never publish a half-saved draft.
+  // Publishing and submitting for review are the "submit" of the builder: every text of the page is trimmed then.
+  const trimmed = () => {
+    const clean = trimDeep(draft);
+    if (JSON.stringify(clean) !== JSON.stringify(draft)) setDraft(clean);
+    return clean;
+  };
   const publishNow = () => {
     if (saving) return;
-    saveDraft(draft, pageId);
-    savePublished(draft, pageId); // publishing copies the draft to the published version
+    const clean = trimmed();
+    saveDraft(clean, pageId);
+    savePublished(clean, pageId); // publishing copies the draft to the published version
     setLivePage(pageId, initialSource === "published"); // and makes this the one public page
     setLiveId(pageId);
     setView("published");
     setPublishMessage("published");
   };
-  const submitNow = () => { if (saving) return; setStatus("PENDING_REVIEW"); setPublishMessage("submitted"); };
+  const submitNow = () => { if (saving) return; saveDraft(trimmed(), pageId); setStatus("PENDING_REVIEW"); setPublishMessage("submitted"); };
 
   const names = (types: SectionType[]) => types.map((ty) => t(`sectionTypes.${ty}`)).join(", ");
   const editorLabel = selected ? t(`sectionTypes.${selected.type}`) : t("seo.title");

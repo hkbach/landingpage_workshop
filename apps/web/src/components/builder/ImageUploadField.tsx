@@ -84,8 +84,8 @@ export function ImageUploadField({ id, label, value, onChange, purpose = "site",
       <div className="space-y-1">
         <Label htmlFor={id} className="text-xs font-normal text-muted-foreground">{t("image.orPaste")}</Label>
         <Input
-          id={id} type="url" inputMode="url" placeholder="https://" value={isData ? "" : value} maxLength={2000} aria-invalid={!valid}
-          aria-describedby={!valid ? `${id}-err` : undefined} onChange={(e) => onChange(e.target.value.trim())}
+          id={id} type="text" inputMode="url" placeholder="https://" value={isData ? "" : value} maxLength={2000} aria-invalid={!valid}
+          aria-describedby={!valid ? `${id}-err` : undefined} onChange={(e) => onChange(e.target.value)}
         />
         {isData ? <p className="text-xs text-muted-foreground">{t("image.uploadedNote")}</p> : null}
         {!valid ? <p id={`${id}-err`} className="text-xs text-destructive">{t("editor.errors.httpsUrl")}</p> : null}

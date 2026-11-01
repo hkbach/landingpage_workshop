@@ -104,7 +104,7 @@ function PaymentForm({ booking, onSubmit, onCancel }: { booking: Booking; onSubm
     e.preventDefault();
     if (!Number.isFinite(minor) || minor <= 0) return setError(t("errors.amountInvalid"));
     if (type === "REFUND" && minor > net) return setError(t("errors.refundTooHigh", { max: formatMoney(net, booking.currency, locale) }));
-    if (!onSubmit({ type, amount: minor, method, note })) setError(t("errors.amountInvalid"));
+    if (!onSubmit({ type, amount: minor, method, note: note.trim() })) setError(t("errors.amountInvalid"));
   }
 
   return (

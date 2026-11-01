@@ -66,7 +66,7 @@ export function BookingForm({
       email: z.string().trim().max(254, "errors.tooLong"),
       phone: z.string().trim().max(40, "errors.tooLong"),
       country: z.string().min(1, "errors.required"),
-      specialRequest: z.string().max(500, "errors.tooLong"),
+      specialRequest: z.string().trim().max(500, "errors.tooLong"),
     }).superRefine((d, ctx) => {
       const email = d.email.trim();
       if (!email && d.source !== "WALK_IN") ctx.addIssue({ code: "custom", path: ["email"], message: "errors.emailRequired" });
@@ -163,7 +163,7 @@ export function BookingForm({
             </Field>
             <Field id="nb-email" label={t("customers.email")} required={v.source !== "WALK_IN"} error={err("email")}
               hint={v.source === "WALK_IN" ? t("newBooking.emailOptional") : undefined}>
-              {(p) => <Input {...p} type="email" autoComplete="off" value={v.email} onChange={(e) => set("email", e.target.value)} />}
+              {(p) => <Input {...p} type="text" inputMode="email" autoComplete="off" value={v.email} onChange={(e) => set("email", e.target.value)} />}
             </Field>
             <Field id="nb-phone" label={t("customers.phone")}>
               {(p) => <Input {...p} type="tel" autoComplete="off" value={v.phone} onChange={(e) => set("phone", e.target.value)} />}

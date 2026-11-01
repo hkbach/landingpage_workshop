@@ -6,7 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { z } from "zod";
 import { Archive, ImageOff, Plus, Trash2, TriangleAlert } from "lucide-react";
 import {
-  LOCALES, WORKSHOP_STATUSES, formatMoney, minorDigits, missingLocales,
+  LOCALES, WORKSHOP_STATUSES, formatMoney, minorDigits, missingLocales, trimDeep,
   type Locale, type Localized, type WorkshopStatus,
 } from "@workshop/shared";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -105,6 +105,8 @@ export function WorkshopForm({
       return;
     }
     setErrors({});
+    // Every text is trimmed when the form is submitted (the form then shows what was saved).
+    setD((p) => trimDeep(p));
     setSaved(true);
     onStatusChange?.(d.status);
   }
@@ -204,14 +206,14 @@ export function WorkshopForm({
             <Button type="button" variant="outline" disabled>{t("form.upload")}</Button>
           </div>
           <Field id="ws-cover" label={t("form.coverUrl")} error={err("coverUrl")}>
-            {(p) => <Input {...p} type="url" placeholder="https://" value={d.coverUrl} onChange={(e) => setField("coverUrl", e.target.value)} />}
+            {(p) => <Input {...p} type="text" inputMode="url" placeholder="https://" value={d.coverUrl} onChange={(e) => setField("coverUrl", e.target.value)} />}
           </Field>
           <fieldset className="grid gap-2">
             <legend className="mb-1 text-sm font-medium">{t("form.gallery")}</legend>
             {d.galleryUrls.map((g, i) => (
               <div key={i} className="flex items-start gap-2">
                 <Input
-                  type="url" placeholder="https://" value={g} aria-label={t("form.galleryItem", { n: i + 1 })}
+                  type="text" inputMode="url" placeholder="https://" value={g} aria-label={t("form.galleryItem", { n: i + 1 })}
                   onChange={(e) => setField("galleryUrls", d.galleryUrls.map((x, j) => (j === i ? e.target.value : x)))}
                 />
                 <Button type="button" variant="outline" size="icon" aria-label={t("form.removeImage", { n: i + 1 })}

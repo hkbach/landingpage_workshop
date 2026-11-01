@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { ExternalLink, Globe, Pencil, Plus, Trash2 } from "lucide-react";
-import { checkNewPage, LANDING_PAGE_NAME_MAX, MAX_LANDING_PAGES_PER_SHOP, type NewPageCheck, type OrgStatus } from "@workshop/shared";
+import { checkNewPage, LANDING_PAGE_NAME_MAX, MAX_LANDING_PAGES_PER_SHOP, trimDeep, type NewPageCheck, type OrgStatus } from "@workshop/shared";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -87,7 +87,8 @@ function ListInner({ mainPage, shopHost, shop, shopStatus, upcomingWorkshopCount
   }
   function publish(page: PageMeta) {
     setPublishing(null);
-    if (!savePublished(contentOf(page), page.id).ok || !setLivePage(page.id, mainLive).ok) { setMessage({ text: t("saveFailed"), tone: "error" }); return; }
+    // Publishing is a submit: every text of the page is trimmed.
+    if (!savePublished(trimDeep(contentOf(page)), page.id).ok || !setLivePage(page.id, mainLive).ok) { setMessage({ text: t("saveFailed"), tone: "error" }); return; }
     setLiveId(page.id);
     setMessage({ text: t("publishedDone", { name: page.name }), tone: "ok" });
   }

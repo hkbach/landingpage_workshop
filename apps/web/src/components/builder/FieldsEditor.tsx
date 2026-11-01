@@ -67,7 +67,7 @@ export function FieldsEditor({ fields, value, onChange, lang, defaultLocale, idP
             return (
               <div key={f.key} className="space-y-1.5">
                 <Label htmlFor={id}>{label}</Label>
-                <Input id={id} type={f.inputType ?? "text"} value={v} maxLength={f.max} onChange={(e) => set(f.key, e.target.value)} />
+                <Input id={id} type={f.inputType === "email" ? "text" : (f.inputType ?? "text")} inputMode={f.inputType === "email" ? "email" : undefined} value={v} maxLength={f.max} onChange={(e) => set(f.key, e.target.value)} />
               </div>
             );
           }
@@ -108,8 +108,8 @@ export function FieldsEditor({ fields, value, onChange, lang, defaultLocale, idP
               <div key={f.key} className="space-y-1.5">
                 <Label htmlFor={id}>{label}</Label>
                 <Input
-                  id={id} type="url" inputMode="url" value={v} maxLength={2000} aria-invalid={invalid}
-                  aria-describedby={`${id}-hint`} placeholder="https://" onChange={(e) => set(f.key, e.target.value.trim())}
+                  id={id} type="text" inputMode="url" value={v} maxLength={2000} aria-invalid={invalid}
+                  aria-describedby={`${id}-hint`} placeholder="https://" onChange={(e) => set(f.key, e.target.value)}
                 />
                 <p id={`${id}-hint`} className={invalid ? "text-xs text-destructive" : "text-xs text-muted-foreground"}>
                   {invalid ? t(f.kind === "maps" ? "editor.errors.mapsUrl" : "editor.errors.httpsUrl") : t(f.kind === "maps" ? "editor.hints.mapsUrl" : "editor.hints.linkUrl")}

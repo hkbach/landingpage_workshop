@@ -58,7 +58,7 @@ const isHttpsUrl = (v: string) => { try { return new URL(v).protocol === "https:
 const isRealDate = (d: string) => /^\d{4}-\d{2}-\d{2}$/.test(d) && new Date(`${d}T12:00:00Z`).toISOString().startsWith(d);
 
 const localizedText = (max: number) =>
-  z.object(Object.fromEntries(LOCALES.map((l) => [l, z.string().max(max, "tooLong").optional()])) as Record<Locale, z.ZodOptional<z.ZodString>>);
+  z.object(Object.fromEntries(LOCALES.map((l) => [l, z.string().trim().max(max, "tooLong").optional()])) as Record<Locale, z.ZodOptional<z.ZodString>>);
 
 /** Body of POST / PUT /promotions. Messages are codes the UI turns into text. */
 export const promotionInputSchema = z
@@ -68,8 +68,8 @@ export const promotionInputSchema = z
     discountType: z.enum(DISCOUNT_TYPES, { error: "required" }),
     discountValue: z.number({ error: "valueInvalid" }).int("valueInvalid").positive("valueInvalid").max(FIXED_AMOUNT_MAX, "valueInvalid"),
     imageUrl: z.string().max(500, "imageInvalid").refine((v) => v === "" || isHttpsUrl(v) || isPlatformMediaPath(v), "imageInvalid").optional(),
-    // Required. Checked as typed (no trimming): a space anywhere, an accent or any special character is refused; the code is kept in capitals.
-    code: z.string({ error: "codeRequired" }).min(1, "codeRequired").regex(PROMOTION_CODE_RE, "codeInvalid").transform((c) => c.toUpperCase()),
+    // Required. Spaces at either end are allowed when typing and trimmed; a space inside, an accent or any special character is refused. Kept in capitals.
+    code: z.string({ error: "codeRequired" }).trim().min(1, "codeRequired").regex(PROMOTION_CODE_RE, "codeInvalid").transform((c) => c.toUpperCase()),
     stacking: z.enum(STACKING_MODES, { error: "required" }),
     appliesTo: z.enum(["ALL", "SELECTED"], { error: "required" }),
     workshopIds: z.array(z.string().min(1)).max(100),

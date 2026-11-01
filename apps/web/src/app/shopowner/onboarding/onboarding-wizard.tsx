@@ -23,6 +23,7 @@ const schema = z.object({
   name: z.string().trim().min(1, "errors.nameRequired").max(120),
   slug: z
     .string()
+    .trim()
     .refine((v) => checkSlugFormat(v) !== "INVALID_FORMAT", "errors.slugInvalid")
     .refine((v) => checkSlugFormat(v) !== "RESERVED", "errors.slugReserved"),
   country: z.string().min(1, "errors.required"),
@@ -85,7 +86,8 @@ export function OnboardingWizard({ platformDomain }: { platformDomain: string })
     },
   });
   const { register, handleSubmit, control, setValue, trigger, getValues, formState: { errors, isSubmitting } } = form;
-  const slug = useWatch({ control, name: "slug" });
+  // What is typed may have spaces at either end; everything below works on the trimmed slug.
+  const slug = useWatch({ control, name: "slug" }).trim();
   const defaultLocale = useWatch({ control, name: "defaultLocale" });
   const enabled = useWatch({ control, name: "enabledLocales" });
 
@@ -111,8 +113,9 @@ export function OnboardingWizard({ platformDomain }: { platformDomain: string })
   function applySlug(next: string) {
     setValue("slug", next, { shouldValidate: true, shouldDirty: true });
     if (timer.current) clearTimeout(timer.current);
-    if (checkSlugFormat(next) === "OK") {
-      timer.current = setTimeout(() => setSlugState({ slug: next, taken: TAKEN_SLUGS.includes(next) }), 600);
+    const clean = next.trim();
+    if (checkSlugFormat(clean) === "OK") {
+      timer.current = setTimeout(() => setSlugState({ slug: clean, taken: TAKEN_SLUGS.includes(clean) }), 600);
     }
   }
 
@@ -133,7 +136,7 @@ export function OnboardingWizard({ platformDomain }: { platformDomain: string })
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2"><CheckCircle2 className="size-5 text-emerald-600" aria-hidden />{t("done.title")}</CardTitle>
-          <CardDescription>{t("done.body", { host: `${getValues("slug")}.${platformDomain}` })}</CardDescription>
+          <CardDescription>{t("done.body", { host: `${getValues("slug").trim()}.${platformDomain}` })}</CardDescription>
         </CardHeader>
         <CardContent>
           <Link href="/shopowner" className={buttonVariants()}>{t("done.cta")}</Link>

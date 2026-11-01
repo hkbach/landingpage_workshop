@@ -144,16 +144,30 @@ describe("the promo code is required", () => {
     }
     const blank = await POST(json("POST", { ...good, code: "   " }));
     expect(blank.status).toBe(422);
-    expect(await fieldsOf(blank)).toMatchObject({ code: "codeInvalid" });
+    expect(await fieldsOf(blank)).toMatchObject({ code: "codeRequired" }); // trimmed, nothing is left
     expect(allPromotions()).toHaveLength(14);
   });
   it("POST refuses spaces, special characters, accents and a wrong length", async () => {
-    for (const code of ["SUMMER 20", " SUMMER20", "SUMMER20 ", "SUMMER-20", "SUMMER_20", "SUMMER#", "<b>HI</b>", "Đặt1234", "AB", "X".repeat(21)]) {
+    for (const code of ["SUMMER 20", " SUM MER ", "SUMMER-20", "SUMMER_20", "SUMMER#", "<b>HI</b>", "Đặt1234", "AB", "X".repeat(21)]) {
       const res = await POST(json("POST", { ...good, code }));
       expect(res.status, code).toBe(422);
       expect(await fieldsOf(res), code).toMatchObject({ code: "codeInvalid" });
     }
     expect(allPromotions()).toHaveLength(14);
+  });
+  it("POST trims the texts and the code (BR-16)", async () => {
+    const res = await POST(json("POST", { ...good, code: "  summer30  ", title: { en: "  Padded title  " }, description: { en: "\n padded text \t" } }));
+    expect(res.status).toBe(201);
+    const p = (await res.json()) as PromotionRecord;
+    expect(p.code).toBe("SUMMER30");
+    expect(p.title).toEqual({ en: "Padded title" });
+    expect(p.description).toEqual({ en: "padded text" });
+  });
+  it("PUT trims them too", async () => {
+    const res = await PUT(json("PUT", { ...good, code: " newcode2 ", title: { en: " Early again " } }), ctx("pr-1"));
+    expect(res.status).toBe(200);
+    const p = (await res.json()) as PromotionRecord;
+    expect([p.code, p.title.en]).toEqual(["NEWCODE2", "Early again"]);
   });
   it("POST accepts letters and digits and stores the code in capitals", async () => {
     const res = await POST(json("POST", { ...good, code: "Summer2030" }));

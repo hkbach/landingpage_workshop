@@ -47,7 +47,7 @@ export function YoutubeField({ id, label, value, onChange, onRemove }: {
         </div>
       ) : null}
       <Input
-        id={id} type="url" inputMode="url" placeholder="https://www.youtube.com/watch?v=" value={text} maxLength={2048}
+        id={id} type="text" inputMode="url" placeholder="https://www.youtube.com/watch?v=" value={text} maxLength={2048}
         aria-invalid={invalid} aria-describedby={`${id}-hint`} onChange={(e) => commit(e.target.value)}
       />
       <p id={`${id}-hint`} className={invalid ? "text-xs text-destructive" : "text-xs text-muted-foreground"}>

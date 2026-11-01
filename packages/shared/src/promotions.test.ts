@@ -245,7 +245,7 @@ describe("the promo code is required", () => {
     expect(problems("")).toContain("codeRequired");
     expect(problems(undefined)).toContain("codeRequired");
     expect(problems(null)).toContain("codeRequired");
-    expect(problems("   ")).toContain("codeInvalid"); // blanks are not a code
+    expect(problems("   ")).toContain("codeRequired"); // blanks are trimmed: nothing is left
   });
   it("accepts letters and digits, 3 to 20 of them, and keeps the code in capitals", () => {
     for (const good of ["ABC", "abc", "Summer20", "2026", "A1B2C3", "X".repeat(20)]) {
@@ -254,8 +254,15 @@ describe("the promo code is required", () => {
       expect(r.data?.code).toBe(good.toUpperCase());
     }
   });
-  it("refuses any space, also at the start or the end", () => {
-    for (const bad of ["SUMMER 20", " SUMMER20", "SUMMER20 ", "SUM MER", "\tSUMMER", "SUMMER\n20"]) expect(problems(bad), JSON.stringify(bad)).toContain("codeInvalid");
+  it("allows spaces at either end while typing and trims them (BR-16)", () => {
+    for (const padded of [" SUMMER20", "SUMMER20 ", "  summer20  ", "\tSUMMER20\n", "\u00a0SUMMER20"]) {
+      const r = promotionInputSchema.safeParse(withCode(padded));
+      expect(r.success, JSON.stringify(padded)).toBe(true);
+      expect(r.data?.code).toBe("SUMMER20");
+    }
+  });
+  it("refuses a space inside the code", () => {
+    for (const bad of ["SUMMER 20", " SUMMER 20 ", "SUM MER", "SUMMER\t20", "SUMMER\n20"]) expect(problems(bad), JSON.stringify(bad)).toContain("codeInvalid");
   });
   it("refuses special characters, punctuation, accents and other alphabets", () => {
     for (const bad of ["SUMMER-20", "SUMMER_20", "SUMMER.20", "SUMMER#20", "SUMMER%", "SUMMER!", "A@B", "<b>BOLD</b>", "SUMMER/20", "SUMMER+", "Đặt1234", "CAFÉ20", "ÇA123", "日本語123", "ＡＢＣ123", "😀ABC", "SUM\u200bMER"]) {
@@ -297,5 +304,21 @@ describe("droppedByToggle", () => {
       const after = new Set(ids(togglePromotion(chosen, pick)));
       expect(ids(droppedByToggle(chosen, pick)).sort()).toEqual(ids(chosen).filter((c) => !after.has(c)).sort());
     }
+  });
+});
+
+describe("texts are trimmed when a promotion is submitted (BR-16)", () => {
+  it("trims the title and the description in every language", () => {
+    const r = promotionInputSchema.safeParse({ ...ok, title: { en: "  Summer sale  ", vi: " Hè \n" }, description: { en: "\n 20% off \t" } });
+    expect(r.success).toBe(true);
+    expect(r.data?.title).toEqual({ en: "Summer sale", vi: "Hè" });
+    expect(r.data?.description).toEqual({ en: "20% off" });
+  });
+  it("a title of only spaces counts as empty", () => {
+    expect(codes({ ...ok, title: { en: "    " } })).toContain("titleRequired");
+  });
+  it("measures the length without the spaces at the ends", () => {
+    expect(promotionInputSchema.safeParse({ ...ok, title: { en: ` ${"x".repeat(80)} ` } }).success).toBe(true);
+    expect(codes({ ...ok, title: { en: "x".repeat(81) } })).toContain("tooLong");
   });
 });
