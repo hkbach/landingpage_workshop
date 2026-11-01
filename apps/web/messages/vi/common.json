@@ -1,1 +1,22 @@
-{}
+{
+  "appName": "Workshop Platform",
+  "save": "Lưu thay đổi",
+  "saving": "Đang lưu...",
+  "cancel": "Hủy",
+  "loading": "Đang tải...",
+  "back": "Quay lại",
+  "next": "Tiếp theo",
+  "languages": {
+    "en": "English",
+    "vi": "Tiếng Việt",
+    "ko": "한국어",
+    "ja": "日本語",
+    "zh": "中文"
+  },
+  "orgStatus": {
+    "DRAFT": "Bản nháp",
+    "PENDING_REVIEW": "Chờ duyệt",
+    "ACTIVE": "Đang hoạt động",
+    "SUSPENDED": "Bị tạm ngưng"
+  }
+}

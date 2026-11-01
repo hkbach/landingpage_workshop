@@ -16,7 +16,7 @@ TypeScript strict · pnpm + Turborepo · Next.js (App Router) · NestJS (Fastify
 - Backend computes prices; never trust client price/status/org id.
 - Money = bigint minor units; time = timestamptz UTC.
 - No new dependencies without asking. Never edit merged migrations.
-- All user-facing text through i18n messages.
+- All user-facing text through i18n messages, and every static text/label exists in en, vi, ko, ja and zh (add or change it in all five locales together; `messages-parity.test.ts` enforces it). Shop-owner dynamic content is not translated by us.
 - Never log secrets, tokens, passwords, cookies, presigned URLs. No real secrets in repo.
 - Never run destructive commands (drop db, delete volumes, force push) or deploy to production without human approval.
 - Run lint + typecheck + test before declaring a task done.

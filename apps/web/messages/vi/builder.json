@@ -1,8 +1,17 @@
 {
+  "title": "Trình tạo website",
+  "subtitle": "Xây dựng landing page từ các phần. Thay đổi được lưu dưới dạng bản nháp.",
+  "preview": "Xem trước",
+  "draftNote": "Chỉnh sửa chỉ thay đổi bản nháp. Website đang chạy không bị ảnh hưởng cho đến khi bạn xuất bản.",
   "autosave": {
-    "quota": "Bộ nhớ trình duyệt đã đầy. Hãy xóa hoặc thay ảnh lớn, nếu không các thay đổi mới nhất sẽ không được lưu."
+    "idle": "Đã lưu mọi thay đổi",
+    "saving": "Đang lưu bản nháp...",
+    "saved": "Đã lưu bản nháp",
+    "quota": "Bộ nhớ trình duyệt đã đầy. Hãy xóa hoặc thay ảnh lớn, nếu không các thay đổi mới nhất sẽ không được lưu.",
+    "unavailable": "Không thể lưu bản nháp trong trình duyệt này."
   },
   "template": {
+    "title": "Mẫu giao diện",
     "names": {
       "classic": "Cổ điển",
       "quicklinks": "Liên kết nhanh",
@@ -27,27 +36,261 @@
       "appstyle": "Phù hợp khách dùng điện thoại: các thẻ chuyển, mỗi lần một chủ đề.",
       "cinematic": "Phù hợp với ảnh và video ấn tượng: các phần toàn màn hình, nền tối."
     },
-    "current": "Đang dùng",
+    "hint": "Chọn bố cục trang bạn thích ngay khi nhìn. Đổi mẫu không bao giờ xóa văn bản, ảnh hay màu của bạn.",
     "confirmTitle": "Đổi mẫu giao diện?",
+    "cancel": "Hủy",
+    "apply": "Đổi mẫu",
+    "current": "Đang dùng",
     "confirmFor": "Bạn sắp chuyển sang mẫu {name}.",
     "keeps": "Giữ nguyên:",
     "keepsText": "toàn bộ văn bản, ảnh, video và màu bạn đã đặt cho từng phần.",
     "changes": "Thay đổi:",
     "changesText": "bố cục trang (cách sắp xếp trang), thứ tự phần, kiểu từng phần, màu giao diện, phông chữ và khoảng cách theo mẫu mới. Logo và favicon được giữ nguyên.",
-    "cancel": "Hủy",
-    "apply": "Đổi mẫu",
-    "hint": "Chọn bố cục trang bạn thích ngay khi nhìn. Đổi mẫu không bao giờ xóa văn bản, ảnh hay màu của bạn.",
+    "added": "Được thêm với nội dung mặc định: {names}.",
+    "hidden": "Không thuộc mẫu mới nhưng được giữ ở trạng thái ẩn (vì có nội dung): {names}.",
+    "removed": "Đã xóa (vì vẫn trống): {names}.",
     "easy": "Dễ bắt đầu",
     "preview": "Xem trước",
     "previewLabel": "Xem trước {name} với nội dung của bạn"
   },
+  "sections": {
+    "title": "Các phần",
+    "footerLocked": "Chân trang là bắt buộc và luôn nằm cuối cùng.",
+    "dragHandle": "Sắp xếp lại {name}",
+    "needsAttention": "Cần chú ý",
+    "enable": "Hiện trên trang: {name}",
+    "remove": "Xóa {name}",
+    "dndInstructions": "Nhấn phím cách để nhấc một phần, dùng phím mũi tên để di chuyển, rồi nhấn phím cách để thả. Nhấn Esc để hủy.",
+    "dndPickedUp": "Đã nhấc {name}.",
+    "dndOver": "{name} đang ở trên {over}.",
+    "dndDropped": "{name} đã được thả lên {over}.",
+    "dndDroppedNone": "{name} đã được thả.",
+    "dndCancelled": "Đã hủy sắp xếp lại {name}.",
+    "addLabel": "Thêm một phần",
+    "allAdded": "Tất cả các phần đều đang được dùng",
+    "choose": "Chọn loại phần",
+    "add": "Thêm",
+    "show": "Hiện trên trang",
+    "showHint": "Đánh dấu để hiện phần này trên website. Bỏ đánh dấu để ẩn; nội dung của bạn vẫn được giữ.",
+    "moveUp": "Chuyển {name} lên",
+    "moveDown": "Chuyển {name} xuống",
+    "moved": "{name} đã chuyển đến vị trí {position}/{total}.",
+    "heroLocked": "Banner đầu trang luôn nằm ở trên cùng."
+  },
   "sectionTypes": {
+    "hero": "Banner đầu trang",
+    "about": "Giới thiệu",
+    "workshops": "Workshop",
+    "promotions": "Khuyến mãi",
+    "gallery": "Thư viện ảnh",
+    "team": "Đội ngũ",
+    "testimonials": "Đánh giá",
+    "faq": "Câu hỏi thường gặp",
+    "location": "Địa điểm",
+    "contact": "Liên hệ",
+    "footer": "Chân trang",
     "video": "Video"
   },
+  "seo": {
+    "title": "Tiêu đề và mô tả trang (SEO)"
+  },
+  "theme": {
+    "title": "Giao diện",
+    "palette": "Bảng màu",
+    "palettes": {
+      "warm": "Đất nung ấm",
+      "ocean": "Đại dương",
+      "forest": "Rừng xanh",
+      "plum": "Mận tím",
+      "mono": "Đơn sắc",
+      "sunset": "Hoàng hôn",
+      "noir": "Đen huyền bí",
+      "sage": "Xanh xô thơm",
+      "indigo": "Chàm",
+      "magenta": "Hồng sẫm",
+      "custom": "Tùy chỉnh"
+    },
+    "font": "Phông chữ",
+    "fontHint": "Mọi phông chữ trong danh sách đều dự phòng bằng phông hệ thống hỗ trợ tiếng Việt, tiếng Hàn và tiếng Nhật.",
+    "logo": "Logo",
+    "favicon": "Favicon",
+    "paletteHint": "Bảng màu sẽ điền các màu bên dưới. Sau đó bạn có thể đổi bất kỳ màu nào.",
+    "colors": "Màu của trang",
+    "tokens": {
+      "primary": "Màu chính (nút, liên kết)",
+      "background": "Nền",
+      "text": "Chữ",
+      "surface": "Thẻ và các phần nền xen kẽ"
+    },
+    "buttonNote": "Màu chữ của nút được chọn tự động (trắng hoặc tối) để tương phản tốt nhất với màu chính."
+  },
+  "publish": {
+    "title": "Xuất bản",
+    "status": {
+      "DRAFT": "Chưa gửi",
+      "PENDING_REVIEW": "Chờ duyệt",
+      "ACTIVE": "Đang hoạt động",
+      "SUSPENDED": "Bị tạm ngưng"
+    },
+    "suspended": "Website này đang bị tạm ngưng. Hãy liên hệ bộ phận hỗ trợ để khôi phục.",
+    "pending": "Website của bạn đã được gửi và đang chờ duyệt. Bạn vẫn có thể tiếp tục chỉnh sửa bản nháp.",
+    "publish": "Xuất bản",
+    "publishHint": "Xuất bản sẽ đưa bản nháp hiện tại lên website ngay lập tức.",
+    "fixErrors": "Hãy sửa {count, plural, other {# phần}} được đánh dấu cần chú ý trước.",
+    "publishedMock": "Đã xuất bản bản nháp (chỉ là bản demo, chưa gửi gì lên máy chủ).",
+    "checklistTitle": "Trước khi gửi duyệt",
+    "prereq": {
+      "identity": "Tên cửa hàng hoặc logo",
+      "hero": "Banner đầu trang có tiêu đề",
+      "contact": "Thông tin liên hệ",
+      "workshop": "Ít nhất một workshop đang hoạt động có session sắp tới"
+    },
+    "done": "xong",
+    "missing": "còn thiếu",
+    "submit": "Gửi duyệt",
+    "submitDisabled": "Hãy hoàn thành danh sách kiểm tra để gửi website của bạn đi duyệt.",
+    "submittedMock": "Đã gửi duyệt (chỉ là bản demo).",
+    "fixTheme": "Hãy sửa các màu giao diện có độ tương phản thấp trước.",
+    "blockedHint": "Hãy sửa các phần hoặc màu sắc được đánh dấu cần chú ý trước.",
+    "publishedShort": "Đã xuất bản (bản demo)",
+    "submittedShort": "Đã gửi duyệt (bản demo)",
+    "savingHint": "Đang lưu thay đổi của bạn. Bạn có thể xuất bản trong giây lát."
+  },
+  "editor": {
+    "title": "Chỉnh sửa: {name}",
+    "missingTranslation": "Chưa có bản dịch cho ngôn ngữ này. Khách sẽ thấy ngôn ngữ mặc định: {fallback}",
+    "errors": {
+      "httpsUrl": "Hãy dùng liên kết bảo mật bắt đầu bằng https://",
+      "mapsUrl": "Chỉ cho phép liên kết Google Maps (google.com/maps hoặc maps.app.goo.gl)."
+    },
+    "hints": {
+      "mapsUrl": "Liên kết google.com/maps hoặc maps.app.goo.gl.",
+      "imageUrl": "Liên kết ảnh bảo mật bắt đầu bằng https://",
+      "linkUrl": "Liên kết bảo mật bắt đầu bằng https://"
+    },
+    "remove": "Xóa",
+    "addImage": "Thêm ảnh",
+    "itemN": "Mục {n}",
+    "moveUp": "Chuyển lên",
+    "moveDown": "Chuyển xuống",
+    "addItem": "Thêm mục",
+    "autoWorkshops": "Workshop được tải tự động từ các workshop đang hoạt động của bạn. Quản lý chúng ở trang Workshop.",
+    "authenticityNote": "Bạn chịu trách nhiệm về tính xác thực của các đánh giá. Chỉ đăng đánh giá thật từ khách thật.",
+    "layout": "Bố cục",
+    "editingIn": "Đang chỉnh sửa bằng {language}",
+    "promotionsNote": "Các ưu đãi trong phần này lấy từ trang Quản lý khuyến mãi. Chỉ những khuyến mãi đang hiệu lực hôm nay mới hiển thị trên trang của bạn, và mỗi khuyến mãi cho biết có thể dùng kết hợp với khuyến mãi khác hay không. Để tạo, sửa, tạm dừng hoặc xóa khuyến mãi và thiết lập cách áp dụng từng khuyến mãi, hãy vào Quản lý khuyến mãi.",
+    "promotionsGo": "Đến Quản lý khuyến mãi"
+  },
   "fields": {
+    "title": "Tiêu đề",
+    "subtitle": "Tiêu đề phụ",
+    "imageUrl": "Ảnh",
+    "ctaText": "Chữ trên nút",
+    "heading": "Tiêu đề mục",
+    "body": "Nội dung",
+    "imageUrls": "Ảnh",
+    "members": "Thành viên",
+    "name": "Tên",
+    "role": "Vai trò",
+    "bio": "Giới thiệu ngắn",
+    "items": "Các mục",
+    "country": "Quốc gia",
+    "text": "Nội dung",
+    "q": "Câu hỏi",
+    "a": "Câu trả lời",
+    "address": "Địa chỉ",
+    "hours": "Giờ mở cửa",
+    "mapsUrl": "Liên kết Google Maps",
+    "phone": "Điện thoại",
+    "whatsapp": "WhatsApp",
+    "email": "Email",
+    "socials": "Liên kết mạng xã hội",
+    "label": "Nhãn",
+    "url": "Liên kết (https)",
+    "description": "Mô tả",
     "videoId": "Liên kết YouTube",
     "caption": "Chú thích",
     "videos": "Video YouTube"
+  },
+  "language": {
+    "label": "Ngôn ngữ nội dung",
+    "names": {
+      "en": "Tiếng Anh",
+      "vi": "Tiếng Việt",
+      "ko": "Tiếng Hàn",
+      "ja": "Tiếng Nhật",
+      "zh": "Tiếng Trung"
+    },
+    "default": "mặc định",
+    "missing": "{count, plural, other {# bản dịch còn thiếu}}",
+    "fallbackNote": "Các ô trống sẽ dùng {locale}, ngôn ngữ mặc định của cửa hàng bạn.",
+    "barTitle": "Ngôn ngữ đang chỉnh sửa",
+    "barHint": "Các ô nhập bên dưới chỉ hiển thị ngôn ngữ đang chọn. Khách sẽ thấy ngôn ngữ mặc định ở những chỗ chưa có bản dịch.",
+    "manage": "Quản lý ngôn ngữ"
+  },
+  "previewPage": {
+    "back": "Quay lại trình tạo",
+    "title": "Xem trước bản nháp",
+    "language": "Ngôn ngữ",
+    "device": "Thiết bị",
+    "desktop": "Máy tính",
+    "mobile": "Điện thoại",
+    "note": "Bản xem trước hiển thị bản nháp của bạn bằng cùng các thành phần với website công khai. Chế độ điện thoại thu hẹp khung; các chi tiết bố cục nhỏ có thể khác trên điện thoại thật.",
+    "templateBanner": "Đang xem trước {name}",
+    "templateBannerNote": "Đây là nội dung hiện tại của bạn trong bố cục này. Chưa có gì được lưu cho đến khi bạn áp dụng.",
+    "templateBack": "Quay lại",
+    "templateApply": "Áp dụng mẫu này"
+  },
+  "colors": {
+    "title": "Màu sắc",
+    "hint": "Tùy chọn. Để trống để dùng màu của mẫu. Dùng mã hex như #1f2937.",
+    "keys": {
+      "background": "Nền",
+      "text": "Chữ",
+      "accent": "Màu nhấn (nút, liên kết)"
+    },
+    "picker": "Chọn màu: {name}",
+    "auto": "Theo mẫu",
+    "hexInvalid": "Dùng mã màu hex như #1f2937 hoặc #fff.",
+    "contrastTitle": "Kiểm tra độ tương phản",
+    "checks": {
+      "text": "Chữ trên nền",
+      "textCard": "Chữ trên thẻ",
+      "textSurface": "Chữ trên nền xen kẽ",
+      "accent": "Màu nhấn trên nền",
+      "accentCard": "Màu nhấn trên thẻ",
+      "primary": "Màu chính trên nền",
+      "primarySurface": "Màu chính trên nền xen kẽ",
+      "button": "Chữ nút trên màu nhấn"
+    },
+    "pass": "đạt",
+    "fail": "không đạt",
+    "warning": "Một số cặp màu có độ tương phản dưới {min}:1 và khó đọc. Hãy sửa trước khi xuất bản hoặc gửi duyệt.",
+    "resetTemplate": "Đặt lại về màu của mẫu"
+  },
+  "image": {
+    "upload": "Tải ảnh lên",
+    "replace": "Thay ảnh",
+    "remove": "Xóa",
+    "uploading": "Đang tải lên...",
+    "uploadMany": "Tải lên nhiều ảnh",
+    "uploadManyHint": "Bạn có thể chọn nhiều tệp cùng lúc. {remaining, plural, =0 {Đã hết chỗ trống.} other {Còn # chỗ trống.}}",
+    "uploadingMany": "Đang tải {done}/{total}...",
+    "uploadedMany": "{count, plural, other {Đã thêm # ảnh.}}",
+    "skippedMany": "{count, plural, other {Đã bỏ qua # ảnh}} vì giới hạn là {max}.",
+    "orPaste": "hoặc dán URL ảnh",
+    "hint": "JPEG, PNG hoặc WebP, tối đa 5 MB.",
+    "uploadedNote": "Một ảnh đã tải lên đang được dùng. Dán liên kết sẽ thay thế ảnh đó.",
+    "previewAlt": "Xem trước: {name}",
+    "errors": {
+      "empty": "Tệp trống.",
+      "tooLarge": "Ảnh lớn hơn 5 MB.",
+      "unsupportedType": "Chỉ cho phép ảnh JPEG, PNG và WebP.",
+      "typeMismatch": "Nội dung tệp không khớp với định dạng. Hãy dùng ảnh JPEG, PNG hoặc WebP thật.",
+      "decodeFailed": "Không đọc được ảnh này. Hãy thử tệp khác.",
+      "storageFull": "Bộ nhớ trình duyệt đã đầy. Hãy xóa ảnh khác, dùng ảnh nhỏ hơn hoặc dán URL ảnh.",
+      "failed": "Tải lên thất bại. Vui lòng thử lại."
+    }
   },
   "video": {
     "hint": "Dán liên kết YouTube (youtube.com/watch, youtu.be, youtube.com/shorts hoặc youtube.com/embed). Chỉ lưu mã video.",
@@ -60,55 +303,63 @@
     "limit": "Bạn có thể thêm tối đa {max} video.",
     "maxReached": "Bạn đã đạt giới hạn {max} video."
   },
-  "colors": {
-    "title": "Màu sắc",
-    "hint": "Tùy chọn. Để trống để dùng màu của mẫu. Dùng mã hex như #1f2937.",
-    "keys": {
-      "background": "Nền",
-      "text": "Chữ",
-      "accent": "Màu nhấn (nút, liên kết)"
-    },
-    "auto": "Theo mẫu",
-    "hexInvalid": "Dùng mã màu hex như #1f2937 hoặc #fff.",
-    "warning": "Một số cặp màu có độ tương phản dưới {min}:1 và khó đọc. Hãy sửa trước khi xuất bản hoặc gửi duyệt.",
-    "resetTemplate": "Đặt lại về màu của mẫu"
-  },
-  "image": {
-    "upload": "Tải ảnh lên",
-    "replace": "Thay ảnh",
-    "remove": "Xóa",
-    "uploading": "Đang tải lên...",
-    "orPaste": "hoặc dán URL ảnh",
-    "hint": "JPEG, PNG hoặc WebP, tối đa 5 MB.",
-    "errors": {
-      "empty": "Tệp trống.",
-      "tooLarge": "Ảnh lớn hơn 5 MB.",
-      "unsupportedType": "Chỉ cho phép ảnh JPEG, PNG và WebP.",
-      "typeMismatch": "Nội dung tệp không khớp với định dạng. Hãy dùng ảnh JPEG, PNG hoặc WebP thật.",
-      "decodeFailed": "Không đọc được ảnh này. Hãy thử tệp khác.",
-      "storageFull": "Bộ nhớ trình duyệt đã đầy. Hãy xóa ảnh khác, dùng ảnh nhỏ hơn hoặc dán URL ảnh.",
-      "failed": "Tải lên thất bại. Vui lòng thử lại."
-    },
-    "uploadMany": "Tải lên nhiều ảnh",
-    "uploadManyHint": "Bạn có thể chọn nhiều tệp cùng lúc. {remaining, plural, =0 {Đã hết chỗ trống.} other {Còn # chỗ trống.}}",
-    "uploadingMany": "Đang tải {done}/{total}...",
-    "uploadedMany": "Đã thêm {count} ảnh.",
-    "skippedMany": "Đã bỏ qua {count} ảnh vì giới hạn là {max}."
-  },
-  "previewPage": {
-    "templateBanner": "Đang xem trước {name}",
-    "templateBannerNote": "Đây là nội dung hiện tại của bạn trong bố cục này. Chưa có gì được lưu cho đến khi bạn áp dụng.",
-    "templateBack": "Quay lại",
-    "templateApply": "Áp dụng mẫu này"
-  },
   "variants": {
     "hero": {
+      "centered": "Căn giữa",
+      "split": "Chữ và ảnh cạnh nhau",
+      "overlay-left": "Chữ bên trái trên ảnh",
       "compact": "Đầu trang gọn (ảnh tròn)",
       "editorial": "Bìa tạp chí",
       "fullscreen": "Bìa toàn màn hình (nền tối)"
     },
+    "about": {
+      "image-left": "Ảnh bên trái",
+      "image-right": "Ảnh bên phải",
+      "stacked": "Xếp chồng"
+    },
     "workshops": {
+      "grid": "Lưới",
+      "list": "Danh sách",
+      "featured": "Nổi bật workshop đầu tiên",
       "compact": "Nút gọn"
+    },
+    "promotions": {
+      "cards": "Thẻ",
+      "banner": "Banner"
+    },
+    "gallery": {
+      "grid": "Lưới",
+      "masonry": "Xếp gạch",
+      "strip": "Dải cuộn"
+    },
+    "team": {
+      "cards": "Thẻ",
+      "inline": "Cùng hàng"
+    },
+    "testimonials": {
+      "cards": "Thẻ",
+      "quote": "Trích dẫn lớn"
+    },
+    "faq": {
+      "accordion": "Thu gọn/mở rộng",
+      "two-column": "Hai cột"
+    },
+    "location": {
+      "simple": "Đơn giản",
+      "card": "Thẻ"
+    },
+    "contact": {
+      "list": "Danh sách",
+      "cards": "Thẻ"
+    },
+    "video": {
+      "wide": "Rộng",
+      "split": "Chữ bên cạnh video"
+    },
+    "footer": {
+      "dark": "Tối",
+      "light": "Sáng",
+      "centered": "Căn giữa"
     }
   },
   "bookButton": {
@@ -118,29 +369,6 @@
       "workshops": "Hiện nút Đặt chỗ ở từng workshop. Khi tắt, workshop chỉ hiển thị để xem thông tin.",
       "generic": "Thêm nút Đặt chỗ ở cuối phần này. Khách bấm vào sẽ mở cửa sổ đặt chỗ."
     }
-  },
-  "sections": {
-    "show": "Hiện trên trang",
-    "showHint": "Đánh dấu để hiện phần này trên website. Bỏ đánh dấu để ẩn; nội dung của bạn vẫn được giữ.",
-    "enable": "Hiện trên trang: {name}",
-    "moveUp": "Chuyển {name} lên",
-    "moveDown": "Chuyển {name} xuống",
-    "moved": "{name} đã chuyển đến vị trí {position}/{total}.",
-    "heroLocked": "Banner đầu trang luôn nằm ở trên cùng."
-  },
-  "publish": {
-    "blockedHint": "Hãy sửa các phần hoặc màu sắc được đánh dấu cần chú ý trước.",
-    "publishedShort": "Đã xuất bản (bản demo)",
-    "submittedShort": "Đã gửi duyệt (bản demo)",
-    "savingHint": "Đang lưu thay đổi của bạn. Bạn có thể xuất bản trong giây lát."
-  },
-  "language": {
-    "barTitle": "Ngôn ngữ đang chỉnh sửa",
-    "barHint": "Các ô nhập bên dưới chỉ hiển thị ngôn ngữ đang chọn. Khách sẽ thấy ngôn ngữ mặc định ở những chỗ chưa có bản dịch.",
-    "manage": "Quản lý ngôn ngữ"
-  },
-  "editor": {
-    "editingIn": "Đang chỉnh sửa bằng {language}"
   },
   "support": {
     "title": "Cần hỗ trợ?",
@@ -157,5 +385,59 @@
     "draft": "Đang hiển thị bản nháp bạn đã lưu gần nhất.",
     "published": "Đang hiển thị website đã xuất bản. Chỉnh sửa của bạn được lưu thành bản nháp cho đến khi bạn xuất bản.",
     "starter": "Đang bắt đầu từ một mẫu. Chưa có gì được xuất bản."
+  },
+  "pages": {
+    "title": "Landing page",
+    "subtitle": "Tạo tối đa {max} landing page. Mỗi lần chỉ có một trang được công khai.",
+    "count": "{count}/{max} landing page",
+    "create": "Tạo landing page",
+    "limitReached": "Bạn đã đạt giới hạn {max} landing page. Hãy xóa một trang để tạo trang khác.",
+    "liveRule": "Trang công khai được hiển thị tại địa chỉ cửa hàng của bạn: {host}",
+    "listLabel": "Các landing page của bạn",
+    "thumbnail": "Mẫu: {name}",
+    "mainBadge": "Trang chính",
+    "published": "Đã xuất bản",
+    "notPublished": "Chưa xuất bản",
+    "liveAt": "Công khai tại {host}",
+    "notLive": "Không công khai",
+    "template": "Mẫu: {name}",
+    "edited": "Chỉnh sửa {date}",
+    "edit": "Chỉnh sửa",
+    "preview": "Xem trước",
+    "publish": "Xuất bản",
+    "publishing": "Đang xuất bản...",
+    "isPublic": "Đang công khai",
+    "publishedDone": "\"{name}\" hiện đã công khai.",
+    "publishConfirmTitle": "Xuất bản \"{name}\"?",
+    "publishConfirmBody": "\"{other}\" sẽ không còn công khai. Mỗi lần chỉ có một landing page được công khai. Nội dung của trang đó vẫn được giữ.",
+    "publishConfirm": "Xuất bản trang",
+    "publishHint": {
+      "errors": "Hãy sửa trước các phần hoặc màu sắc được đánh dấu cần chú ý trong trình chỉnh sửa.",
+      "checklist": "Hãy hoàn thành danh sách kiểm tra trong trình chỉnh sửa để gửi website đi duyệt trước.",
+      "approval": "Cửa hàng của bạn phải được duyệt trước khi một trang có thể công khai."
+    },
+    "replacesLive": "Một landing page khác đang công khai. Xuất bản trang này sẽ gỡ trang kia khỏi website.",
+    "delete": "Xóa",
+    "createTitle": "Tạo landing page",
+    "createDescription": "Hãy đặt tên cho trang. Trang bắt đầu từ mẫu Cổ điển và bạn có thể đổi mẫu trong trình chỉnh sửa.",
+    "fieldName": "Tên trang",
+    "fieldNameHint": "Chỉ bạn nhìn thấy tên này.",
+    "submit": "Tạo và chỉnh sửa",
+    "cancel": "Hủy",
+    "errors": {
+      "LIMIT": "Bạn đã có {max} landing page.",
+      "NAME_REQUIRED": "Hãy nhập tên cho trang.",
+      "NAME_TOO_LONG": "Tên chỉ được tối đa {max} ký tự."
+    },
+    "deleteTitle": "Xóa \"{name}\"?",
+    "deleteBody": "Bản nháp và toàn bộ nội dung sẽ bị xóa. Không thể hoàn tác.",
+    "deleteLive": "Trang này đang công khai. Cửa hàng của bạn sẽ không có landing page công khai cho đến khi bạn xuất bản một trang khác.",
+    "deleteConfirm": "Xóa trang",
+    "deleted": "Đã xóa landing page.",
+    "saveFailed": "Không thể lưu thay đổi của bạn. Bộ nhớ trình duyệt có thể đã đầy hoặc bị chặn.",
+    "loading": "Đang tải...",
+    "notFoundTitle": "Không tìm thấy landing page",
+    "notFoundBody": "Landing page này không tồn tại hoặc đã bị xóa.",
+    "backToList": "Quay lại danh sách landing page"
   }
 }

@@ -1,8 +1,17 @@
 {
+  "title": "ウェブサイトビルダー",
+  "subtitle": "セクションを組み合わせてランディングページを作成します。変更は下書きとして保存されます。",
+  "preview": "プレビュー",
+  "draftNote": "編集は下書きにのみ反映されます。公開するまでライブのウェブサイトには影響しません。",
   "autosave": {
-    "quota": "ブラウザの保存容量がいっぱいです。大きな画像を削除または置き換えないと、最新の変更が保存されません。"
+    "idle": "すべての変更を保存しました",
+    "saving": "下書きを保存中...",
+    "saved": "下書きを保存しました",
+    "quota": "ブラウザの保存容量がいっぱいです。大きな画像を削除または置き換えないと、最新の変更が保存されません。",
+    "unavailable": "このブラウザでは下書きを保存できませんでした。"
   },
   "template": {
+    "title": "テンプレート",
     "names": {
       "classic": "クラシック",
       "quicklinks": "クイックリンク",
@@ -27,27 +36,261 @@
       "appstyle": "スマートフォンの訪問者向け：一度に1つのテーマを表示するタブ。",
       "cinematic": "印象的な写真や動画向け：暗い全画面セクション。"
     },
-    "current": "使用中",
+    "hint": "ひと目で気に入ったページレイアウトを選んでください。テンプレートを変えても文章・写真・色は削除されません。",
     "confirmTitle": "テンプレートを切り替えますか？",
+    "cancel": "キャンセル",
+    "apply": "テンプレートを切り替える",
+    "current": "使用中",
     "confirmFor": "{name} テンプレートに切り替えます。",
     "keeps": "保持されるもの：",
     "keepsText": "すべての文章、写真、動画、セクションごとに設定した色。",
     "changes": "変更されるもの：",
     "changesText": "ページレイアウト（ページの構成）、セクションの順序、セクションのスタイル、テーマカラー、フォント、余白が新しいテンプレートに従います。ロゴとファビコンはそのままです。",
-    "cancel": "キャンセル",
-    "apply": "テンプレートを切り替える",
-    "hint": "ひと目で気に入ったページレイアウトを選んでください。テンプレートを変えても文章・写真・色は削除されません。",
+    "added": "初期コンテンツ付きで追加されるもの：{names}。",
+    "hidden": "新しいテンプレートには含まれませんが、内容があるため非表示で保持されるもの：{names}。",
+    "removed": "削除されるもの（まだ空）：{names}。",
     "easy": "始めやすい",
     "preview": "プレビュー",
     "previewLabel": "あなたの内容で{name}をプレビュー"
   },
+  "sections": {
+    "title": "セクション",
+    "footerLocked": "フッターは必須で、常に最後に配置されます。",
+    "dragHandle": "{name}を並べ替え",
+    "needsAttention": "要確認",
+    "enable": "ページに表示: {name}",
+    "remove": "{name}を削除",
+    "dndInstructions": "スペースキーでセクションを持ち上げ、矢印キーで移動し、もう一度スペースキーで置きます。Escキーでキャンセルします。",
+    "dndPickedUp": "{name}を持ち上げました。",
+    "dndOver": "{name}は{over}の上にあります。",
+    "dndDropped": "{name}を{over}の上に置きました。",
+    "dndDroppedNone": "{name}を置きました。",
+    "dndCancelled": "{name}の並べ替えをキャンセルしました。",
+    "addLabel": "セクションを追加",
+    "allAdded": "すべてのセクションが使用中です",
+    "choose": "セクションの種類を選択",
+    "add": "追加",
+    "show": "ページに表示",
+    "showHint": "チェックするとこのセクションがウェブサイトに表示されます。外すと非表示になり、内容は保持されます。",
+    "moveUp": "{name}を上へ移動",
+    "moveDown": "{name}を下へ移動",
+    "moved": "{name}を{total}件中{position}番目に移動しました。",
+    "heroLocked": "ヒーローバナーは常に一番上に固定されます。"
+  },
   "sectionTypes": {
+    "hero": "ヒーロー",
+    "about": "紹介",
+    "workshops": "ワークショップ",
+    "promotions": "プロモーション",
+    "gallery": "ギャラリー",
+    "team": "チーム",
+    "testimonials": "お客様の声",
+    "faq": "よくある質問",
+    "location": "所在地",
+    "contact": "お問い合わせ",
+    "footer": "フッター",
     "video": "動画"
   },
+  "seo": {
+    "title": "ページタイトルと説明（SEO）"
+  },
+  "theme": {
+    "title": "テーマ",
+    "palette": "カラーパレット",
+    "palettes": {
+      "warm": "ウォームクレイ",
+      "ocean": "オーシャン",
+      "forest": "フォレスト",
+      "plum": "プラム",
+      "mono": "モノクロ",
+      "sunset": "サンセット",
+      "noir": "ノワール",
+      "sage": "セージ",
+      "indigo": "インディゴ",
+      "magenta": "マゼンタ",
+      "custom": "カスタム"
+    },
+    "font": "フォント",
+    "fontHint": "表示されるフォントはすべて、ベトナム語・韓国語・日本語に対応したシステムフォントにフォールバックします。",
+    "logo": "ロゴ",
+    "favicon": "ファビコン",
+    "paletteHint": "パレットを選ぶと下の色が設定されます。その後、各色を自由に変更できます。",
+    "colors": "ページの色",
+    "tokens": {
+      "primary": "プライマリ（ボタン、リンク）",
+      "background": "背景",
+      "text": "テキスト",
+      "surface": "カードと交互の背景セクション"
+    },
+    "buttonNote": "ボタンの文字色は、プライマリカラーに対して最適なコントラストになるよう自動で選ばれます（白または暗色）。"
+  },
+  "publish": {
+    "title": "公開",
+    "status": {
+      "DRAFT": "未提出",
+      "PENDING_REVIEW": "審査待ち",
+      "ACTIVE": "公開中",
+      "SUSPENDED": "停止中"
+    },
+    "suspended": "このウェブサイトは停止されています。復旧するにはサポートにお問い合わせください。",
+    "pending": "ウェブサイトを提出しました。審査をお待ちください。下書きの編集は続けられます。",
+    "publish": "公開",
+    "publishHint": "公開すると、現在の下書きがすぐにライブになります。",
+    "fixErrors": "先に「要確認」と表示された{count, plural, other {#件のセクション}}を修正してください。",
+    "publishedMock": "下書きを公開しました（デモのみ。サーバーには何も送信されていません）。",
+    "checklistTitle": "審査に提出する前に",
+    "prereq": {
+      "identity": "ショップ名またはロゴ",
+      "hero": "タイトル付きのヒーローセクション",
+      "contact": "お問い合わせ情報",
+      "workshop": "開催予定のセッションがある有効なワークショップが1件以上"
+    },
+    "done": "完了",
+    "missing": "未完了",
+    "submit": "審査に提出",
+    "submitDisabled": "チェックリストをすべて完了すると、ウェブサイトを審査に提出できます。",
+    "submittedMock": "審査に提出しました（デモのみ）。",
+    "fixTheme": "先にコントラストの低いテーマカラーを修正してください。",
+    "blockedHint": "先に「要確認」と表示されたセクションまたは色を修正してください。",
+    "publishedShort": "公開しました（デモ）",
+    "submittedShort": "審査に提出しました（デモ）",
+    "savingHint": "変更を保存しています。まもなく公開できます。"
+  },
+  "editor": {
+    "title": "編集：{name}",
+    "missingTranslation": "この言語の翻訳はまだありません。訪問者には既定の言語が表示されます：{fallback}",
+    "errors": {
+      "httpsUrl": "https:// で始まる安全なリンクを使用してください",
+      "mapsUrl": "Googleマップのリンクのみ使用できます（google.com/maps または maps.app.goo.gl）。"
+    },
+    "hints": {
+      "mapsUrl": "google.com/maps または maps.app.goo.gl のリンク。",
+      "imageUrl": "https:// で始まる安全な画像リンク",
+      "linkUrl": "https:// で始まる安全なリンク"
+    },
+    "remove": "削除",
+    "addImage": "画像を追加",
+    "itemN": "項目 {n}",
+    "moveUp": "上へ移動",
+    "moveDown": "下へ移動",
+    "addItem": "項目を追加",
+    "autoWorkshops": "ワークショップは有効なワークショップから自動的に読み込まれます。管理はワークショップのページで行ってください。",
+    "authenticityNote": "お客様の声の真正性については、お店が責任を負います。実際のお客様からの本物のレビューのみ掲載してください。",
+    "layout": "レイアウト",
+    "editingIn": "{language}で編集中",
+    "promotionsNote": "このセクションのオファーはプロモーション管理から取得されます。ページには本日有効なプロモーションのみが表示され、それぞれ他と併用できるかどうかも表示されます。プロモーションの作成・編集・一時停止・削除や利用方法の設定は、プロモーション管理で行ってください。",
+    "promotionsGo": "プロモーション管理へ"
+  },
   "fields": {
+    "title": "タイトル",
+    "subtitle": "サブタイトル",
+    "imageUrl": "画像",
+    "ctaText": "ボタンのテキスト",
+    "heading": "見出し",
+    "body": "テキスト",
+    "imageUrls": "画像",
+    "members": "チームメンバー",
+    "name": "名前",
+    "role": "役職",
+    "bio": "短い紹介文",
+    "items": "項目",
+    "country": "国",
+    "text": "テキスト",
+    "q": "質問",
+    "a": "回答",
+    "address": "住所",
+    "hours": "営業時間",
+    "mapsUrl": "Googleマップのリンク",
+    "phone": "電話",
+    "whatsapp": "WhatsApp",
+    "email": "メール",
+    "socials": "SNSリンク",
+    "label": "ラベル",
+    "url": "リンク（https）",
+    "description": "説明",
     "videoId": "YouTubeリンク",
     "caption": "キャプション",
     "videos": "YouTube動画"
+  },
+  "language": {
+    "label": "コンテンツの言語",
+    "names": {
+      "en": "英語",
+      "vi": "ベトナム語",
+      "ko": "韓国語",
+      "ja": "日本語",
+      "zh": "中国語"
+    },
+    "default": "既定",
+    "missing": "{count, plural, other {翻訳が#件不足しています}}",
+    "fallbackNote": "空欄は、お店の既定の言語である{locale}で表示されます。",
+    "barTitle": "編集中の言語",
+    "barHint": "以下の入力欄には選択した言語のみ表示されます。翻訳がない箇所では、訪問者には既定の言語が表示されます。",
+    "manage": "言語を管理"
+  },
+  "previewPage": {
+    "back": "ビルダーに戻る",
+    "title": "下書きのプレビュー",
+    "language": "言語",
+    "device": "デバイス",
+    "desktop": "デスクトップ",
+    "mobile": "モバイル",
+    "note": "このプレビューは、公開ウェブサイトと同じコンポーネントで下書きを表示します。モバイル表示ではフレームが狭くなります。細かなレイアウトは実際のスマートフォンと異なる場合があります。",
+    "templateBanner": "{name}をプレビュー中",
+    "templateBannerNote": "現在の内容がこのレイアウトでどう見えるかを表示しています。適用するまで何も保存されません。",
+    "templateBack": "戻る",
+    "templateApply": "このテンプレートを適用"
+  },
+  "colors": {
+    "title": "色",
+    "hint": "任意です。空欄の場合はテンプレートの色を使います。#1f2937 のような16進数で入力してください。",
+    "keys": {
+      "background": "背景",
+      "text": "テキスト",
+      "accent": "アクセント（ボタン、リンク）"
+    },
+    "picker": "色を選択：{name}",
+    "auto": "テンプレート",
+    "hexInvalid": "#1f2937 や #fff のような16進数の色を入力してください。",
+    "contrastTitle": "コントラストチェック",
+    "checks": {
+      "text": "背景上のテキスト",
+      "textCard": "カード上のテキスト",
+      "textSurface": "交互の背景上のテキスト",
+      "accent": "背景上のアクセント",
+      "accentCard": "カード上のアクセント",
+      "primary": "背景上のプライマリ",
+      "primarySurface": "交互の背景上のプライマリ",
+      "button": "アクセント上のボタンテキスト"
+    },
+    "pass": "合格",
+    "fail": "不合格",
+    "warning": "コントラストが {min}:1 未満の組み合わせがあり、読みにくくなります。公開または提出の前に修正してください。",
+    "resetTemplate": "テンプレートの色に戻す"
+  },
+  "image": {
+    "upload": "画像をアップロード",
+    "replace": "置き換え",
+    "remove": "削除",
+    "uploading": "アップロード中...",
+    "uploadMany": "複数の画像をアップロード",
+    "uploadManyHint": "複数のファイルを一度に選択できます。{remaining, plural, =0 {空きがありません。} other {残り#枠。}}",
+    "uploadingMany": "{total}枚中{done}枚をアップロード中...",
+    "uploadedMany": "画像を{count}枚追加しました。",
+    "skippedMany": "上限（{max}枚）のため{count}枚をスキップしました。",
+    "orPaste": "または画像URLを貼り付け",
+    "hint": "JPEG、PNG、WebP。最大5MB。",
+    "uploadedNote": "アップロードした画像を使用中です。リンクを貼り付けると置き換わります。",
+    "previewAlt": "プレビュー：{name}",
+    "errors": {
+      "empty": "ファイルが空です。",
+      "tooLarge": "画像が5MBを超えています。",
+      "unsupportedType": "JPEG、PNG、WebPの画像のみ使用できます。",
+      "typeMismatch": "ファイルの内容が形式と一致しません。本物のJPEG、PNG、WebP画像を使用してください。",
+      "decodeFailed": "この画像を読み込めませんでした。別のファイルをお試しください。",
+      "storageFull": "ブラウザの保存容量がいっぱいです。他の画像を削除するか、小さい画像を使うか、画像URLを貼り付けてください。",
+      "failed": "アップロードに失敗しました。もう一度お試しください。"
+    }
   },
   "video": {
     "hint": "YouTubeのリンクを貼り付けてください（youtube.com/watch、youtu.be、youtube.com/shorts、youtube.com/embed）。保存されるのは動画IDのみです。",
@@ -60,55 +303,63 @@
     "limit": "動画は最大{max}件まで追加できます。",
     "maxReached": "動画の上限（{max}件）に達しました。"
   },
-  "colors": {
-    "title": "色",
-    "hint": "任意です。空欄の場合はテンプレートの色を使います。#1f2937 のような16進数で入力してください。",
-    "keys": {
-      "background": "背景",
-      "text": "テキスト",
-      "accent": "アクセント（ボタン、リンク）"
-    },
-    "auto": "テンプレート",
-    "hexInvalid": "#1f2937 や #fff のような16進数の色を入力してください。",
-    "warning": "コントラストが {min}:1 未満の組み合わせがあり、読みにくくなります。公開または提出の前に修正してください。",
-    "resetTemplate": "テンプレートの色に戻す"
-  },
-  "image": {
-    "upload": "画像をアップロード",
-    "replace": "置き換え",
-    "remove": "削除",
-    "uploading": "アップロード中...",
-    "orPaste": "または画像URLを貼り付け",
-    "hint": "JPEG、PNG、WebP。最大5MB。",
-    "errors": {
-      "empty": "ファイルが空です。",
-      "tooLarge": "画像が5MBを超えています。",
-      "unsupportedType": "JPEG、PNG、WebPの画像のみ使用できます。",
-      "typeMismatch": "ファイルの内容が形式と一致しません。本物のJPEG、PNG、WebP画像を使用してください。",
-      "decodeFailed": "この画像を読み込めませんでした。別のファイルをお試しください。",
-      "storageFull": "ブラウザの保存容量がいっぱいです。他の画像を削除するか、小さい画像を使うか、画像URLを貼り付けてください。",
-      "failed": "アップロードに失敗しました。もう一度お試しください。"
-    },
-    "uploadMany": "複数の画像をアップロード",
-    "uploadManyHint": "複数のファイルを一度に選択できます。{remaining, plural, =0 {空きがありません。} other {残り#枠。}}",
-    "uploadingMany": "{total}枚中{done}枚をアップロード中...",
-    "uploadedMany": "画像を{count}枚追加しました。",
-    "skippedMany": "上限（{max}枚）のため{count}枚をスキップしました。"
-  },
-  "previewPage": {
-    "templateBanner": "{name}をプレビュー中",
-    "templateBannerNote": "現在の内容がこのレイアウトでどう見えるかを表示しています。適用するまで何も保存されません。",
-    "templateBack": "戻る",
-    "templateApply": "このテンプレートを適用"
-  },
   "variants": {
     "hero": {
+      "centered": "中央揃え",
+      "split": "テキストと画像を横並び",
+      "overlay-left": "画像の上に左寄せテキスト",
       "compact": "コンパクトなヘッダー（丸い写真）",
       "editorial": "マガジンの表紙",
       "fullscreen": "全画面のダークカバー"
     },
+    "about": {
+      "image-left": "画像を左に配置",
+      "image-right": "画像を右に配置",
+      "stacked": "縦並び"
+    },
     "workshops": {
+      "grid": "グリッド",
+      "list": "リスト",
+      "featured": "最初のワークショップを強調",
       "compact": "コンパクトなボタン"
+    },
+    "promotions": {
+      "cards": "カード",
+      "banner": "バナー"
+    },
+    "gallery": {
+      "grid": "グリッド",
+      "masonry": "マソンリー",
+      "strip": "スクロールストリップ"
+    },
+    "team": {
+      "cards": "カード",
+      "inline": "インライン"
+    },
+    "testimonials": {
+      "cards": "カード",
+      "quote": "大きな引用"
+    },
+    "faq": {
+      "accordion": "アコーディオン",
+      "two-column": "2列"
+    },
+    "location": {
+      "simple": "シンプル",
+      "card": "カード"
+    },
+    "contact": {
+      "list": "リスト",
+      "cards": "カード"
+    },
+    "video": {
+      "wide": "ワイド",
+      "split": "動画の横にテキスト"
+    },
+    "footer": {
+      "dark": "ダーク",
+      "light": "ライト",
+      "centered": "中央揃え"
     }
   },
   "bookButton": {
@@ -118,29 +369,6 @@
       "workshops": "各ワークショップに予約ボタンを表示します。オフの場合、ワークショップは情報表示のみになります。",
       "generic": "このセクションの最後に予約ボタンを追加します。訪問者が押すと予約ウィンドウが開きます。"
     }
-  },
-  "sections": {
-    "show": "ページに表示",
-    "showHint": "チェックするとこのセクションがウェブサイトに表示されます。外すと非表示になり、内容は保持されます。",
-    "enable": "ページに表示: {name}",
-    "moveUp": "{name}を上へ移動",
-    "moveDown": "{name}を下へ移動",
-    "moved": "{name}を{total}件中{position}番目に移動しました。",
-    "heroLocked": "ヒーローバナーは常に一番上に固定されます。"
-  },
-  "publish": {
-    "blockedHint": "先に「要確認」と表示されたセクションまたは色を修正してください。",
-    "publishedShort": "公開しました（デモ）",
-    "submittedShort": "審査に提出しました（デモ）",
-    "savingHint": "変更を保存しています。まもなく公開できます。"
-  },
-  "language": {
-    "barTitle": "編集中の言語",
-    "barHint": "以下の入力欄には選択した言語のみ表示されます。翻訳がない箇所では、訪問者には既定の言語が表示されます。",
-    "manage": "言語を管理"
-  },
-  "editor": {
-    "editingIn": "{language}で編集中"
   },
   "support": {
     "title": "お困りですか？",
@@ -157,5 +385,59 @@
     "draft": "最後に保存した下書きを表示しています。",
     "published": "公開中のウェブサイトを表示しています。編集内容は公開するまで下書きとして保存されます。",
     "starter": "テンプレートから開始します。まだ何も公開されていません。"
+  },
+  "pages": {
+    "title": "ランディングページ",
+    "subtitle": "ランディングページは最大{max}件まで作成できます。同時に公開できるのは1件のみです。",
+    "count": "ランディングページ {count}/{max}件",
+    "create": "ランディングページを作成",
+    "limitReached": "ランディングページの上限（{max}件）に達しました。新しく作成するには1件削除してください。",
+    "liveRule": "公開ページはお店のアドレスで表示されます：{host}",
+    "listLabel": "あなたのランディングページ",
+    "thumbnail": "テンプレート：{name}",
+    "mainBadge": "メインページ",
+    "published": "公開済み",
+    "notPublished": "未公開",
+    "liveAt": "{host}で公開中",
+    "notLive": "非公開",
+    "template": "テンプレート：{name}",
+    "edited": "{date}に編集",
+    "edit": "編集",
+    "preview": "プレビュー",
+    "publish": "公開",
+    "publishing": "公開中...",
+    "isPublic": "現在公開中",
+    "publishedDone": "「{name}」を公開しました。",
+    "publishConfirmTitle": "「{name}」を公開しますか？",
+    "publishConfirmBody": "「{other}」は非公開になります。同時に公開できるランディングページは1件のみです。内容は保持されます。",
+    "publishConfirm": "ページを公開",
+    "publishHint": {
+      "errors": "先にエディターで「要確認」と表示されたセクションまたは色を修正してください。",
+      "checklist": "先にエディターでチェックリストを完了し、ウェブサイトを審査に提出してください。",
+      "approval": "ページを公開するには、お店が承認されている必要があります。"
+    },
+    "replacesLive": "現在、別のランディングページが公開中です。このページを公開すると、そのページは非公開になります。",
+    "delete": "削除",
+    "createTitle": "ランディングページを作成",
+    "createDescription": "ページに名前を付けてください。クラシックテンプレートから開始し、テンプレートはエディターで変更できます。",
+    "fieldName": "ページ名",
+    "fieldNameHint": "この名前はあなたにのみ表示されます。",
+    "submit": "作成して編集",
+    "cancel": "キャンセル",
+    "errors": {
+      "LIMIT": "すでにランディングページが{max}件あります。",
+      "NAME_REQUIRED": "ページ名を入力してください。",
+      "NAME_TOO_LONG": "名前は最大{max}文字までです。"
+    },
+    "deleteTitle": "「{name}」を削除しますか？",
+    "deleteBody": "下書きとすべての内容が削除されます。この操作は元に戻せません。",
+    "deleteLive": "このページは公開中です。別のページを公開するまで、お店の公開ランディングページはなくなります。",
+    "deleteConfirm": "ページを削除",
+    "deleted": "ランディングページを削除しました。",
+    "saveFailed": "変更を保存できませんでした。ブラウザの保存容量がいっぱいか、ブロックされている可能性があります。",
+    "loading": "読み込み中...",
+    "notFoundTitle": "ランディングページが見つかりません",
+    "notFoundBody": "このランディングページは存在しないか、削除されました。",
+    "backToList": "ランディングページ一覧に戻る"
   }
 }

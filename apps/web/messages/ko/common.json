@@ -1,1 +1,22 @@
-{}
+{
+  "appName": "Workshop Platform",
+  "save": "변경 사항 저장",
+  "saving": "저장 중...",
+  "cancel": "취소",
+  "loading": "불러오는 중...",
+  "back": "뒤로",
+  "next": "다음",
+  "languages": {
+    "en": "English",
+    "vi": "Tiếng Việt",
+    "ko": "한국어",
+    "ja": "日本語",
+    "zh": "中文"
+  },
+  "orgStatus": {
+    "DRAFT": "초안",
+    "PENDING_REVIEW": "검토 대기 중",
+    "ACTIVE": "활성",
+    "SUSPENDED": "정지됨"
+  }
+}

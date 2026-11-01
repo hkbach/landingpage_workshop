@@ -1,0 +1,235 @@
+{
+  "shell": {
+    "nav": {
+      "overview": "概览",
+      "today": "今日",
+      "bookings": "预订",
+      "customers": "客户",
+      "workshops": "工作坊",
+      "sessions": "场次",
+      "finance": "收入与支出",
+      "promotions": "优惠",
+      "site": "落地页",
+      "settings": "设置"
+    },
+    "mainNav": "管理后台导航",
+    "skipToContent": "跳到主要内容",
+    "openMenu": "打开菜单",
+    "closeMenu": "关闭菜单",
+    "language": "语言",
+    "account": "账号菜单",
+    "logout": "退出登录",
+    "banner": {
+      "draft": {
+        "title": "设置未完成。",
+        "body": "请完成概览页面上的清单，并提交店铺审核，以发布您的落地页。"
+      },
+      "pending": {
+        "title": "等待审核。",
+        "body": "您的店铺已提交，正在审核中。在此期间您可以继续编辑草稿。"
+      },
+      "suspended": {
+        "title": "店铺已暂停。",
+        "body": "您的管理后台为只读状态，公开页面不可访问。",
+        "reason": "原因：{reason}"
+      }
+    }
+  },
+  "overview": {
+    "title": "概览",
+    "kpiLabel": "关键数据",
+    "kpi": {
+      "today": "今日预订",
+      "upcoming": "即将开始的场次",
+      "unpaid": "未付款预订"
+    },
+    "checklist": {
+      "title": "准备好发布了吗？",
+      "progress": "已完成 {done}/{total} 项要求",
+      "done": "已完成",
+      "todo": "待办",
+      "fix": "前往",
+      "items": {
+        "identity": "店铺名称或标志",
+        "hero": "落地页上的首屏版块",
+        "contact": "联系信息（邮箱、电话、地址）",
+        "workshop": "至少一个有后续场次的已启用工作坊"
+      },
+      "submit": "提交审核",
+      "submitting": "正在提交...",
+      "submitted": "已提交。我们将审核您的店铺，并通过邮件通知您。",
+      "readyNote": "所有要求均已满足。",
+      "notReadyNote": "请完成所有要求后再提交。"
+    },
+    "summary": {
+      "title": "摘要",
+      "open": "打开",
+      "bookings": {
+        "title": "预订",
+        "month": "本月预订",
+        "guests": "本月客人",
+        "lostRate": "已取消或未到场"
+      },
+      "workshops": {
+        "title": "工作坊",
+        "active": "已启用",
+        "draft": "草稿"
+      },
+      "sessions": {
+        "title": "场次",
+        "upcoming": "即将开始",
+        "fill": "已预订名额"
+      },
+      "customers": {
+        "title": "客户",
+        "total": "总数",
+        "repeat": "回头客"
+      },
+      "finance": {
+        "title": "收入与支出（本月）",
+        "income": "收入",
+        "expense": "支出",
+        "profit": "利润",
+        "loss": "亏损"
+      },
+      "pages": {
+        "title": "落地页",
+        "count": "页面",
+        "public": "公开页面",
+        "none": "无"
+      }
+    },
+    "trend": {
+      "title": "预订趋势",
+      "subtitle": "按场次日期统计的预订。",
+      "periodLabel": "时间段",
+      "period": {
+        "1m": "上个月（按天）",
+        "3m": "最近3个月",
+        "6m": "最近6个月",
+        "12m": "去年"
+      },
+      "totalsLabel": "该时间段合计",
+      "total": "预订",
+      "guests": "客人",
+      "attended": "已到场",
+      "upcoming": "即将开始",
+      "lost": "已取消或未到场",
+      "lostRate": "取消或未到场率",
+      "chartSummary": "{period}的预订：共 {total} 个，{attended} 个已到场，{upcoming} 个尚未开始，{lost} 个已取消或未到场。",
+      "showTable": "以表格显示数据",
+      "day": "日",
+      "month": "月"
+    }
+  },
+  "settings": {
+    "title": "店铺设置",
+    "subtitle": "更新您的店铺信息、地区和语言。",
+    "readOnly": "您的店铺已被暂停，因此设置为只读。",
+    "sections": {
+      "general": "店铺与联系方式",
+      "regional": "地区与预订规则",
+      "regionalDesc": "用于场次时间、价格和截止规则。",
+      "languages": "语言",
+      "languagesDesc": "您的公开落地页提供的语言。"
+    },
+    "fields": {
+      "name": "店铺名称",
+      "contactEmail": "联系邮箱",
+      "contactPhone": "电话",
+      "whatsapp": "WhatsApp（选填）",
+      "address": "地址",
+      "mapsUrl": "Google 地图网址（选填）",
+      "country": "国家/地区",
+      "timezone": "时区",
+      "currency": "货币",
+      "bookingCutoff": "预订截止（开始前多少分钟）",
+      "defaultLocale": "默认语言",
+      "enabledLocales": "已启用的语言",
+      "enabledLocalesHint": "已用被关闭语言写好的文字会保留，但不会显示或编辑。"
+    },
+    "hints": {
+      "mapsUrl": "必须以 https:// 开头",
+      "bookingCutoff": "在线预订将在场次开始前这么多分钟截止。"
+    },
+    "warning": {
+      "regional": "更改时区或货币不会转换现有的预订、场次或价格。现有数据保持其原始值。"
+    },
+    "default": "默认",
+    "saved": "设置已保存。",
+    "saveFailed": "无法保存设置。请重试。",
+    "errors": {
+      "nameRequired": "请输入店铺名称。",
+      "emailRequired": "请输入联系邮箱。",
+      "emailInvalid": "请输入有效的邮箱地址。",
+      "phoneRequired": "请输入电话号码。",
+      "addressRequired": "请输入地址。",
+      "urlInvalid": "请输入以 https:// 开头的网址",
+      "required": "此项为必填项。",
+      "cutoffInvalid": "请输入0到10080之间的整数。",
+      "defaultMustBeEnabled": "默认语言必须处于启用状态。"
+    }
+  },
+  "onboarding": {
+    "title": "设置您的店铺",
+    "subtitle": "填写几项信息，准备好您的落地页。",
+    "progress": "设置进度",
+    "steps": {
+      "shop": "店铺",
+      "region": "地区",
+      "languages": "语言",
+      "contact": "联系方式",
+      "review": "核对"
+    },
+    "stepDesc": {
+      "shop": "选择您的店铺名称及其网址。",
+      "region": "用于场次时间和价格。",
+      "languages": "选择页面的默认语言和其他语言。",
+      "contact": "客人将在您的页面上看到这些信息。",
+      "review": "检查所有内容，然后创建您的店铺。"
+    },
+    "fields": {
+      "name": "店铺名称",
+      "slug": "网址",
+      "country": "国家/地区",
+      "timezone": "时区",
+      "currency": "货币",
+      "defaultLocale": "默认语言",
+      "enabledLocales": "已启用的语言",
+      "contactEmail": "联系邮箱",
+      "contactPhone": "电话",
+      "whatsapp": "WhatsApp（选填）",
+      "address": "地址",
+      "mapsUrl": "Google 地图网址（选填）"
+    },
+    "hints": {
+      "slug": "3到32个字符：小写字母、数字和连字符。不能以连字符开头或结尾。",
+      "mapsUrl": "必须以 https:// 开头"
+    },
+    "slugPreview": "您的页面网址为",
+    "slug": {
+      "checking": "正在检查是否可用...",
+      "available": "此网址可用。",
+      "taken": "此网址已被占用。请尝试其他网址。"
+    },
+    "default": "默认",
+    "create": "创建店铺",
+    "creating": "正在创建...",
+    "done": {
+      "title": "您的店铺已创建",
+      "body": "审核通过后，您的页面将可通过 {host} 访问。请在管理后台完成设置清单。",
+      "cta": "前往管理后台"
+    },
+    "errors": {
+      "nameRequired": "请输入店铺名称。",
+      "slugInvalid": "请使用3到32个小写字母、数字或连字符，且不能以连字符开头或结尾。",
+      "slugReserved": "此网址为保留网址。请选择其他网址。",
+      "required": "此项为必填项。",
+      "emailRequired": "请输入联系邮箱。",
+      "emailInvalid": "请输入有效的邮箱地址。",
+      "phoneRequired": "请输入电话号码。",
+      "addressRequired": "请输入地址。",
+      "urlInvalid": "请输入以 https:// 开头的网址"
+    }
+  }
+}

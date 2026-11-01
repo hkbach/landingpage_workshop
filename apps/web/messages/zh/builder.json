@@ -1,0 +1,443 @@
+{
+  "title": "网站构建器",
+  "subtitle": "通过各个版块搭建您的落地页。更改会保存为草稿。",
+  "preview": "预览",
+  "draftNote": "编辑只会修改草稿。发布之前，线上网站不会受到影响。",
+  "autosave": {
+    "idle": "所有更改已保存",
+    "saving": "正在保存草稿...",
+    "saved": "草稿已保存",
+    "quota": "浏览器存储空间已满。请删除或替换较大的图片，否则最新的更改将无法保存。",
+    "unavailable": "无法在此浏览器中保存草稿。"
+  },
+  "template": {
+    "title": "模板",
+    "names": {
+      "classic": "经典故事",
+      "quicklinks": "快捷链接",
+      "bookingrail": "立即预订侧栏",
+      "floatingcards": "悬浮卡片",
+      "sidebar": "侧边菜单",
+      "journey": "旅程",
+      "magazine": "杂志",
+      "bento": "便当网格",
+      "appstyle": "应用风格",
+      "cinematic": "电影感"
+    },
+    "descriptions": {
+      "classic": "适合大多数店铺：顶部带菜单栏的常见页面。",
+      "quicklinks": "适合小型工作室和 Instagram 访客：单列大按钮。",
+      "bookingrail": "适合销售 Workshop：预订卡片始终显示在您的介绍旁边。",
+      "floatingcards": "适合柔和亲切的风格：每个版块都是独立悬浮的卡片。",
+      "sidebar": "适合内容丰富的店铺：菜单固定在左侧。",
+      "journey": "适合首次访问的访客：从发现到预订的分步路径。",
+      "magazine": "适合手工和设计工作室：大标题和带编号的章节。",
+      "bento": "适合注重视觉的店铺：照片、Workshop 和信息以马赛克方块呈现。",
+      "appstyle": "适合手机访客：标签页每次只显示一个主题。",
+      "cinematic": "适合醒目的照片和视频：深色全屏版块。"
+    },
+    "hint": "一眼选出您喜欢的页面布局。切换不会删除您的文字、照片或颜色。",
+    "confirmTitle": "切换模板？",
+    "cancel": "取消",
+    "apply": "切换模板",
+    "current": "当前",
+    "confirmFor": "您即将切换到 {name} 模板。",
+    "keeps": "保留：",
+    "keepsText": "您的所有文字、照片、视频，以及为各个版块单独设置的颜色。",
+    "changes": "变更：",
+    "changesText": "页面布局（页面的排列方式）、版块顺序、版块样式、主题颜色、字体和间距将跟随新模板。您的徽标和网站图标保持不变。",
+    "added": "已添加默认内容：{names}。",
+    "hidden": "不属于新模板但已保留并隐藏（因有内容）：{names}。",
+    "removed": "已移除（仍为空）：{names}。",
+    "easy": "轻松上手",
+    "preview": "预览",
+    "previewLabel": "用您的内容预览 {name}"
+  },
+  "sections": {
+    "title": "版块",
+    "footerLocked": "页脚为必需项，始终位于最后。",
+    "dragHandle": "重新排序 {name}",
+    "needsAttention": "需要处理",
+    "enable": "在页面上显示：{name}",
+    "remove": "移除 {name}",
+    "dndInstructions": "按空格键拾取版块，使用方向键移动，再按空格键放下。按 Esc 键取消。",
+    "dndPickedUp": "已拾取 {name}。",
+    "dndOver": "{name} 位于 {over} 上方。",
+    "dndDropped": "{name} 已放在 {over} 上方。",
+    "dndDroppedNone": "{name} 已放下。",
+    "dndCancelled": "已取消重新排序 {name}。",
+    "addLabel": "添加版块",
+    "allAdded": "所有版块均已使用",
+    "choose": "选择版块类型",
+    "add": "添加",
+    "show": "在页面上显示",
+    "showHint": "勾选后在网站上显示此版块；取消勾选则隐藏，内容会保留。",
+    "moveUp": "上移 {name}",
+    "moveDown": "下移 {name}",
+    "moved": "{name} 已移至第 {position} 位（共 {total} 个）。",
+    "heroLocked": "主横幅必须保持在顶部。"
+  },
+  "sectionTypes": {
+    "hero": "主横幅",
+    "about": "关于",
+    "workshops": "Workshop",
+    "promotions": "优惠活动",
+    "gallery": "图库",
+    "team": "团队",
+    "testimonials": "用户评价",
+    "faq": "常见问题",
+    "location": "位置",
+    "contact": "联系方式",
+    "footer": "页脚",
+    "video": "视频"
+  },
+  "seo": {
+    "title": "页面标题和描述（SEO）"
+  },
+  "theme": {
+    "title": "主题",
+    "palette": "配色方案",
+    "palettes": {
+      "warm": "暖陶色",
+      "ocean": "海洋",
+      "forest": "森林",
+      "plum": "梅子",
+      "mono": "单色",
+      "sunset": "日落",
+      "noir": "黑色",
+      "sage": "鼠尾草绿",
+      "indigo": "靛蓝",
+      "magenta": "洋红",
+      "custom": "自定义"
+    },
+    "font": "字体",
+    "fontHint": "所有列出的字体都会回退到支持越南语、韩语和日语的系统字体。",
+    "logo": "徽标",
+    "favicon": "网站图标",
+    "paletteHint": "配色方案会填充下方的颜色，之后您可以修改任意颜色。",
+    "colors": "页面颜色",
+    "tokens": {
+      "primary": "主色（按钮、链接）",
+      "background": "背景",
+      "text": "文字",
+      "surface": "卡片和交替版块"
+    },
+    "buttonNote": "按钮文字颜色会自动选择（白色或深色），以便在主色上获得最佳对比度。"
+  },
+  "publish": {
+    "title": "发布",
+    "status": {
+      "DRAFT": "未提交",
+      "PENDING_REVIEW": "待审核",
+      "ACTIVE": "已上线",
+      "SUSPENDED": "已停用"
+    },
+    "suspended": "此网站已被停用。请联系客服以恢复。",
+    "pending": "您的网站已提交，正在等待审核。您可以继续编辑草稿。",
+    "publish": "发布",
+    "publishHint": "发布后，当前草稿将立即上线。",
+    "fixErrors": "请先修复标记为需要处理的 {count, plural, other {# 个版块}}。",
+    "publishedMock": "草稿已发布（仅为演示，未向服务器发送任何内容）。",
+    "checklistTitle": "提交审核之前",
+    "prereq": {
+      "identity": "店铺名称或徽标",
+      "hero": "带标题的主横幅版块",
+      "contact": "联系信息",
+      "workshop": "至少一个已启用且有即将举行场次的 Workshop"
+    },
+    "done": "已完成",
+    "missing": "缺失",
+    "submit": "提交审核",
+    "submitDisabled": "请先完成清单，才能提交网站审核。",
+    "submittedMock": "已提交审核（仅为演示）。",
+    "fixTheme": "请先修复对比度过低的主题颜色。",
+    "blockedHint": "请先修复标记为需要处理的版块或颜色。",
+    "publishedShort": "已发布（演示）",
+    "submittedShort": "已提交审核（演示）",
+    "savingHint": "正在保存您的更改，稍后即可发布。"
+  },
+  "editor": {
+    "title": "编辑：{name}",
+    "missingTranslation": "此语言暂无翻译。访客将看到默认语言：{fallback}",
+    "errors": {
+      "httpsUrl": "请使用以 https:// 开头的安全链接",
+      "mapsUrl": "仅允许 Google 地图链接（google.com/maps 或 maps.app.goo.gl）。"
+    },
+    "hints": {
+      "mapsUrl": "google.com/maps 或 maps.app.goo.gl 链接。",
+      "imageUrl": "以 https:// 开头的安全图片链接",
+      "linkUrl": "以 https:// 开头的安全链接"
+    },
+    "remove": "移除",
+    "addImage": "添加图片",
+    "itemN": "第 {n} 项",
+    "moveUp": "上移",
+    "moveDown": "下移",
+    "addItem": "添加项目",
+    "autoWorkshops": "Workshop 会根据您已启用的 Workshop 自动加载。请在 Workshop 页面中管理。",
+    "authenticityNote": "您须对用户评价的真实性负责。请只发布真实访客的真实评价。",
+    "layout": "布局",
+    "editingIn": "正在编辑：{language}",
+    "promotionsNote": "此版块中的优惠来自优惠活动管理。您的页面只显示今天有效的优惠，并且每个优惠都会注明能否与其他优惠叠加使用。如需创建、编辑、暂停或删除优惠，以及设置每个优惠的使用方式，请前往优惠活动管理。",
+    "promotionsGo": "前往优惠活动管理"
+  },
+  "fields": {
+    "title": "标题",
+    "subtitle": "副标题",
+    "imageUrl": "图片",
+    "ctaText": "按钮文字",
+    "heading": "标题",
+    "body": "文字",
+    "imageUrls": "图片",
+    "members": "团队成员",
+    "name": "姓名",
+    "role": "职位",
+    "bio": "简短介绍",
+    "items": "项目",
+    "country": "国家/地区",
+    "text": "文字",
+    "q": "问题",
+    "a": "答案",
+    "address": "地址",
+    "hours": "营业时间",
+    "mapsUrl": "Google 地图链接",
+    "phone": "电话",
+    "whatsapp": "WhatsApp",
+    "email": "电子邮箱",
+    "socials": "社交媒体链接",
+    "label": "标签",
+    "url": "链接（https）",
+    "description": "描述",
+    "videoId": "YouTube 链接",
+    "caption": "说明文字",
+    "videos": "YouTube 视频"
+  },
+  "language": {
+    "label": "内容语言",
+    "names": {
+      "en": "英语",
+      "vi": "越南语",
+      "ko": "韩语",
+      "ja": "日语",
+      "zh": "中文"
+    },
+    "default": "默认",
+    "missing": "{count, plural, other {# 项缺失的翻译}}",
+    "fallbackNote": "空字段将回退到 {locale}，即您店铺的默认语言。",
+    "barTitle": "您正在编辑的语言",
+    "barHint": "下方的文字字段只显示所选语言。缺少翻译的地方，访客将看到默认语言。",
+    "manage": "管理语言"
+  },
+  "previewPage": {
+    "back": "返回构建器",
+    "title": "草稿预览",
+    "language": "语言",
+    "device": "设备",
+    "desktop": "桌面端",
+    "mobile": "移动端",
+    "note": "此预览使用与公开网站相同的组件显示您的草稿。移动端视图会缩窄显示框，细微的布局细节在真实手机上可能有所不同。",
+    "templateBanner": "正在预览 {name}",
+    "templateBannerNote": "这是您当前内容在此布局下的效果。应用之前不会保存任何内容。",
+    "templateBack": "返回",
+    "templateApply": "应用此模板"
+  },
+  "colors": {
+    "title": "颜色",
+    "hint": "选填。留空则使用模板颜色。请使用十六进制值，例如 #1f2937。",
+    "keys": {
+      "background": "背景",
+      "text": "文字",
+      "accent": "强调色（按钮、链接）"
+    },
+    "picker": "选择颜色：{name}",
+    "auto": "模板",
+    "hexInvalid": "请使用十六进制颜色，例如 #1f2937 或 #fff。",
+    "contrastTitle": "对比度检查",
+    "checks": {
+      "text": "背景上的文字",
+      "textCard": "卡片上的文字",
+      "textSurface": "交替背景上的文字",
+      "accent": "背景上的强调色",
+      "accentCard": "卡片上的强调色",
+      "primary": "背景上的主色",
+      "primarySurface": "交替背景上的主色",
+      "button": "强调色上的按钮文字"
+    },
+    "pass": "通过",
+    "fail": "未通过",
+    "warning": "部分组合的对比度低于 {min}:1，难以阅读。请在发布或提交之前修复。",
+    "resetTemplate": "重置为模板颜色"
+  },
+  "image": {
+    "upload": "上传图片",
+    "replace": "替换",
+    "remove": "移除",
+    "uploading": "上传中...",
+    "uploadMany": "上传多张图片",
+    "uploadManyHint": "可以一次选择多个文件。{remaining, plural, =0 {没有剩余名额。} other {还剩 # 个名额。}}",
+    "uploadingMany": "正在上传 {done}/{total}...",
+    "uploadedMany": "{count, plural, other {已添加 # 张图片。}}",
+    "skippedMany": "{count, plural, other {# 张图片已被跳过}}，因为上限为 {max} 张。",
+    "orPaste": "或粘贴图片网址",
+    "hint": "JPEG、PNG 或 WebP，最大 5 MB。",
+    "uploadedNote": "正在使用已上传的图片。粘贴链接将替换它。",
+    "previewAlt": "预览：{name}",
+    "errors": {
+      "empty": "此文件为空。",
+      "tooLarge": "图片超过 5 MB。",
+      "unsupportedType": "仅允许 JPEG、PNG 和 WebP 图片。",
+      "typeMismatch": "文件内容与其类型不符。请使用真实的 JPEG、PNG 或 WebP 图片。",
+      "decodeFailed": "无法读取此图片。请尝试其他文件。",
+      "storageFull": "浏览器存储空间已满。请删除其他图片或使用更小的图片，或粘贴图片网址。",
+      "failed": "上传失败，请重试。"
+    }
+  },
+  "video": {
+    "hint": "粘贴 YouTube 链接（youtube.com/watch、youtu.be、youtube.com/shorts 或 youtube.com/embed）。仅保存视频 ID。",
+    "replaceHint": "粘贴另一个 YouTube 链接以替换视频。",
+    "invalid": "这不是有效的 YouTube 链接。",
+    "current": "YouTube 视频：{id}",
+    "remove": "移除",
+    "item": "视频 {n}",
+    "add": "添加视频",
+    "limit": "最多可添加 {max} 个视频。",
+    "maxReached": "您已达到 {max} 个视频的上限。"
+  },
+  "variants": {
+    "hero": {
+      "centered": "居中",
+      "split": "文字与图片并排",
+      "overlay-left": "图片上方左侧文字",
+      "compact": "紧凑页眉（圆形照片）",
+      "editorial": "杂志封面",
+      "fullscreen": "全屏深色封面"
+    },
+    "about": {
+      "image-left": "图片在左",
+      "image-right": "图片在右",
+      "stacked": "上下堆叠"
+    },
+    "workshops": {
+      "grid": "网格",
+      "list": "列表",
+      "featured": "突出显示第一个 Workshop",
+      "compact": "紧凑按钮"
+    },
+    "promotions": {
+      "cards": "卡片",
+      "banner": "横幅"
+    },
+    "gallery": {
+      "grid": "网格",
+      "masonry": "瀑布流",
+      "strip": "滚动条带"
+    },
+    "team": {
+      "cards": "卡片",
+      "inline": "行内"
+    },
+    "testimonials": {
+      "cards": "卡片",
+      "quote": "大引言"
+    },
+    "faq": {
+      "accordion": "折叠面板",
+      "two-column": "两栏"
+    },
+    "location": {
+      "simple": "简洁",
+      "card": "卡片"
+    },
+    "contact": {
+      "list": "列表",
+      "cards": "卡片"
+    },
+    "video": {
+      "wide": "宽幅",
+      "split": "文字在视频旁"
+    },
+    "footer": {
+      "dark": "深色",
+      "light": "浅色",
+      "centered": "居中"
+    }
+  },
+  "bookButton": {
+    "label": "显示预订按钮",
+    "hint": {
+      "hero": "在顶部横幅中显示主要的行动号召按钮。",
+      "workshops": "在每个 Workshop 上显示预订按钮。关闭后，Workshop 仅供信息展示。",
+      "generic": "在此版块末尾添加预订按钮。访客点击后会打开预订窗口。"
+    }
+  },
+  "support": {
+    "title": "需要帮助？",
+    "hint": "有关发布、网站审核或您的账户问题，请联系平台客服团队。只有您能看到此内容，它不会显示在您的落地页上。",
+    "opensNewTab": "在新标签页打开",
+    "channels": {
+      "whatsapp": "WhatsApp",
+      "phone": "电话",
+      "zalo": "Zalo",
+      "email": "电子邮箱"
+    }
+  },
+  "source": {
+    "draft": "显示您最近保存的草稿。",
+    "published": "显示已发布的网站。在您发布之前，您的编辑会保存为草稿。",
+    "starter": "从模板开始。尚未发布任何内容。"
+  },
+  "pages": {
+    "title": "落地页",
+    "subtitle": "最多可创建 {max} 个落地页。同一时间只有一个对外公开。",
+    "count": "{count}/{max} 个落地页",
+    "create": "创建落地页",
+    "limitReached": "您已达到 {max} 个落地页的上限。请先删除一个再创建新的。",
+    "liveRule": "公开页面显示在您的店铺地址：{host}",
+    "listLabel": "您的落地页",
+    "thumbnail": "模板：{name}",
+    "mainBadge": "主页面",
+    "published": "已发布",
+    "notPublished": "未发布",
+    "liveAt": "公开地址：{host}",
+    "notLive": "未公开",
+    "template": "模板：{name}",
+    "edited": "编辑于 {date}",
+    "edit": "编辑",
+    "preview": "预览",
+    "publish": "发布",
+    "publishing": "发布中...",
+    "isPublic": "当前公开",
+    "publishedDone": "“{name}”现已公开。",
+    "publishConfirmTitle": "发布“{name}”？",
+    "publishConfirmBody": "“{other}”将不再公开。同一时间只能公开一个落地页。其内容会保留。",
+    "publishConfirm": "发布页面",
+    "publishHint": {
+      "errors": "请先在编辑器中修复标记为需要处理的版块或颜色。",
+      "checklist": "请先在编辑器中完成清单，才能提交网站审核。",
+      "approval": "您的店铺获得批准后，页面才能公开。"
+    },
+    "replacesLive": "另一个落地页当前处于公开状态。发布此页面会使该页面下线。",
+    "delete": "删除",
+    "createTitle": "创建落地页",
+    "createDescription": "为页面起个名字。它将从“经典故事”模板开始，您可以在编辑器中更换模板。",
+    "fieldName": "页面名称",
+    "fieldNameHint": "只有您能看到此名称。",
+    "submit": "创建并编辑",
+    "cancel": "取消",
+    "errors": {
+      "LIMIT": "您已有 {max} 个落地页。",
+      "NAME_REQUIRED": "请输入页面名称。",
+      "NAME_TOO_LONG": "名称最多 {max} 个字符。"
+    },
+    "deleteTitle": "删除“{name}”？",
+    "deleteBody": "草稿及其所有内容将被删除，此操作无法撤销。",
+    "deleteLive": "此页面当前公开。在您发布另一个页面之前，您的店铺将没有公开的落地页。",
+    "deleteConfirm": "删除页面",
+    "deleted": "落地页已删除。",
+    "saveFailed": "无法保存您的更改。您的浏览器存储空间可能已满或被阻止。",
+    "loading": "加载中...",
+    "notFoundTitle": "未找到落地页",
+    "notFoundBody": "此落地页不存在或已被删除。",
+    "backToList": "返回落地页列表"
+  }
+}

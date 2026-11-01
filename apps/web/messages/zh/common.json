@@ -1,0 +1,22 @@
+{
+  "appName": "Workshop Platform",
+  "save": "保存更改",
+  "saving": "正在保存...",
+  "cancel": "取消",
+  "loading": "正在加载...",
+  "back": "返回",
+  "next": "下一步",
+  "languages": {
+    "en": "English",
+    "vi": "Tiếng Việt",
+    "ko": "한국어",
+    "ja": "日本語",
+    "zh": "中文"
+  },
+  "orgStatus": {
+    "DRAFT": "草稿",
+    "PENDING_REVIEW": "待审核",
+    "ACTIVE": "已启用",
+    "SUSPENDED": "已暂停"
+  }
+}

@@ -1,7 +1,235 @@
 {
+  "shell": {
+    "nav": {
+      "overview": "概要",
+      "today": "本日",
+      "bookings": "予約",
+      "customers": "顧客",
+      "workshops": "ワークショップ",
+      "sessions": "セッション",
+      "finance": "収支",
+      "promotions": "プロモーション",
+      "site": "ランディングページ",
+      "settings": "設定"
+    },
+    "mainNav": "ダッシュボードナビゲーション",
+    "skipToContent": "メインコンテンツへスキップ",
+    "openMenu": "メニューを開く",
+    "closeMenu": "メニューを閉じる",
+    "language": "言語",
+    "account": "アカウントメニュー",
+    "logout": "ログアウト",
+    "banner": {
+      "draft": {
+        "title": "設定が完了していません。",
+        "body": "ランディングページを公開するには、概要ページのチェックリストを完了し、ショップを審査に提出してください。"
+      },
+      "pending": {
+        "title": "審査待ちです。",
+        "body": "ショップを提出し、審査中です。その間も下書きの編集を続けられます。"
+      },
+      "suspended": {
+        "title": "ショップが停止されています。",
+        "body": "ダッシュボードは閲覧専用となり、公開ページは利用できません。",
+        "reason": "理由：{reason}"
+      }
+    }
+  },
+  "overview": {
+    "title": "概要",
+    "kpiLabel": "主要な数値",
+    "kpi": {
+      "today": "本日の予約",
+      "upcoming": "今後のセッション",
+      "unpaid": "未払いの予約"
+    },
+    "checklist": {
+      "title": "公開の準備はできましたか？",
+      "progress": "{total}件中{done}件の要件を完了",
+      "done": "完了",
+      "todo": "未対応",
+      "fix": "移動",
+      "items": {
+        "identity": "ショップ名またはロゴ",
+        "hero": "ランディングページのヒーローセクション",
+        "contact": "連絡先情報（メールアドレス、電話番号、住所）",
+        "workshop": "今後のセッションがある有効なワークショップが1件以上"
+      },
+      "submit": "審査に提出",
+      "submitting": "提出中...",
+      "submitted": "提出しました。ショップを審査し、メールでお知らせします。",
+      "readyNote": "すべての要件を満たしています。",
+      "notReadyNote": "提出するには、すべての要件を完了してください。"
+    },
+    "summary": {
+      "title": "サマリー",
+      "open": "開く",
+      "bookings": {
+        "title": "予約",
+        "month": "今月の予約",
+        "guests": "今月の参加者",
+        "lostRate": "キャンセルまたは無断欠席"
+      },
+      "workshops": {
+        "title": "ワークショップ",
+        "active": "有効",
+        "draft": "下書き"
+      },
+      "sessions": {
+        "title": "セッション",
+        "upcoming": "今後",
+        "fill": "予約済みの席"
+      },
+      "customers": {
+        "title": "顧客",
+        "total": "合計",
+        "repeat": "リピーター"
+      },
+      "finance": {
+        "title": "収支（今月）",
+        "income": "収入",
+        "expense": "支出",
+        "profit": "利益",
+        "loss": "損失"
+      },
+      "pages": {
+        "title": "ランディングページ",
+        "count": "ページ数",
+        "public": "公開ページ",
+        "none": "なし"
+      }
+    },
+    "trend": {
+      "title": "予約の推移",
+      "subtitle": "セッション日ごとの予約数。",
+      "periodLabel": "期間",
+      "period": {
+        "1m": "先月（日別）",
+        "3m": "過去3か月",
+        "6m": "過去6か月",
+        "12m": "過去1年"
+      },
+      "totalsLabel": "期間の合計",
+      "total": "予約",
+      "guests": "参加者",
+      "attended": "参加済み",
+      "upcoming": "今後",
+      "lost": "キャンセルまたは無断欠席",
+      "lostRate": "キャンセルまたは無断欠席の割合",
+      "chartSummary": "{period}の予約：合計{total}件、参加済み{attended}件、今後{upcoming}件、キャンセルまたは無断欠席{lost}件。",
+      "showTable": "数値を表で表示",
+      "day": "日",
+      "month": "月"
+    }
+  },
   "settings": {
+    "title": "ショップ設定",
+    "subtitle": "ショップの詳細、地域、言語を更新します。",
+    "readOnly": "ショップが停止されているため、設定は閲覧専用です。",
+    "sections": {
+      "general": "ショップと連絡先",
+      "regional": "地域と予約ルール",
+      "regionalDesc": "セッションの時刻、料金、締切ルールに使用されます。",
+      "languages": "言語",
+      "languagesDesc": "公開ランディングページで提供する言語です。"
+    },
     "fields": {
+      "name": "ショップ名",
+      "contactEmail": "連絡先メールアドレス",
+      "contactPhone": "電話番号",
+      "whatsapp": "WhatsApp（任意）",
+      "address": "住所",
+      "mapsUrl": "Google マップ URL（任意）",
+      "country": "国",
+      "timezone": "タイムゾーン",
+      "currency": "通貨",
+      "bookingCutoff": "予約締切（開始前の分数）",
+      "defaultLocale": "デフォルト言語",
+      "enabledLocales": "有効な言語",
       "enabledLocalesHint": "オフにした言語で入力済みのテキストは保持されますが、表示や編集はされません。"
+    },
+    "hints": {
+      "mapsUrl": "https:// で始まる必要があります",
+      "bookingCutoff": "オンライン予約は、セッション開始のこの分数前に締め切られます。"
+    },
+    "warning": {
+      "regional": "タイムゾーンや通貨を変更しても、既存の予約、セッション、料金は換算されません。既存のデータは元の値のままです。"
+    },
+    "default": "デフォルト",
+    "saved": "設定を保存しました。",
+    "saveFailed": "設定を保存できませんでした。もう一度お試しください。",
+    "errors": {
+      "nameRequired": "ショップ名を入力してください。",
+      "emailRequired": "連絡先メールアドレスを入力してください。",
+      "emailInvalid": "有効なメールアドレスを入力してください。",
+      "phoneRequired": "電話番号を入力してください。",
+      "addressRequired": "住所を入力してください。",
+      "urlInvalid": "https:// で始まる URL を入力してください",
+      "required": "この項目は必須です。",
+      "cutoffInvalid": "0〜10080の整数を入力してください。",
+      "defaultMustBeEnabled": "デフォルト言語は有効にする必要があります。"
+    }
+  },
+  "onboarding": {
+    "title": "ショップを設定",
+    "subtitle": "ランディングページを準備するための基本情報です。",
+    "progress": "設定の進行状況",
+    "steps": {
+      "shop": "ショップ",
+      "region": "地域",
+      "languages": "言語",
+      "contact": "連絡先",
+      "review": "確認"
+    },
+    "stepDesc": {
+      "shop": "ショップ名とウェブアドレスを選択してください。",
+      "region": "セッションの時刻と料金に使用されます。",
+      "languages": "ページのデフォルト言語と追加の言語を選択してください。",
+      "contact": "これらの情報はページ上でお客様に表示されます。",
+      "review": "内容をすべて確認して、ショップを作成してください。"
+    },
+    "fields": {
+      "name": "ショップ名",
+      "slug": "ウェブアドレス",
+      "country": "国",
+      "timezone": "タイムゾーン",
+      "currency": "通貨",
+      "defaultLocale": "デフォルト言語",
+      "enabledLocales": "有効な言語",
+      "contactEmail": "連絡先メールアドレス",
+      "contactPhone": "電話番号",
+      "whatsapp": "WhatsApp（任意）",
+      "address": "住所",
+      "mapsUrl": "Google マップ URL（任意）"
+    },
+    "hints": {
+      "slug": "3〜32文字：半角小文字、数字、ハイフン。先頭と末尾にハイフンは使えません。",
+      "mapsUrl": "https:// で始まる必要があります"
+    },
+    "slugPreview": "ページの公開先",
+    "slug": {
+      "checking": "利用可否を確認中...",
+      "available": "このアドレスは利用できます。",
+      "taken": "このアドレスはすでに使用されています。別のアドレスをお試しください。"
+    },
+    "default": "デフォルト",
+    "create": "ショップを作成",
+    "creating": "作成中...",
+    "done": {
+      "title": "ショップを作成しました",
+      "body": "承認されると、ページは{host}で公開されます。ダッシュボードでセットアップのチェックリストを完了してください。",
+      "cta": "ダッシュボードへ"
+    },
+    "errors": {
+      "nameRequired": "ショップ名を入力してください。",
+      "slugInvalid": "半角小文字、数字、ハイフンを3〜32文字で入力してください。先頭と末尾にハイフンは使えません。",
+      "slugReserved": "このアドレスは予約されています。別のアドレスを選択してください。",
+      "required": "この項目は必須です。",
+      "emailRequired": "連絡先メールアドレスを入力してください。",
+      "emailInvalid": "有効なメールアドレスを入力してください。",
+      "phoneRequired": "電話番号を入力してください。",
+      "addressRequired": "住所を入力してください。",
+      "urlInvalid": "https:// で始まる URL を入力してください"
     }
   }
 }

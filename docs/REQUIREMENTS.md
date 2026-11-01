@@ -536,6 +536,7 @@ Browser ────────────────────────
 | BR-15 | Mọi timestamp lưu `timestamptz` (UTC). Giờ hiển thị và giờ trong schedule rule hiểu theo timezone IANA của shop. |
 | BR-16 | **Nhập liệu:** mọi ô nhập văn bản trong hệ thống cho phép người dùng gõ khoảng trắng ở **hai đầu**; khi bấm nút submit, mọi chuỗi được `trim()` rồi mới kiểm tra và lưu (trong builder, "submit" là Publish / Submit for review). Backend cũng trim lại và không tin client. Ngoại lệ: **mật khẩu không bị trim** (khoảng trắng ở hai đầu là một phần của mật khẩu). Khoảng trắng ở giữa chuỗi được giữ nguyên, trừ các trường có quy tắc riêng (mã khuyến mãi, slug không cho khoảng trắng ở giữa). |
 | BR-17 | **Nút Save của form thêm / sửa:** nút Save (hoặc Add / Create) của các form thêm / sửa trong khu vực shop owner (khuyến mãi, workshop, session, quy tắc lịch, booking thủ công, trang landing, thu chi, cài đặt shop) bị vô hiệu (disabled) và **chỉ được bật khi dữ liệu trong form khác với lúc mở form**; đưa dữ liệu về giá trị ban đầu thì nút lại bị vô hiệu. Sau khi lưu thành công, dữ liệu vừa lưu là mốc so sánh mới. Các hộp thoại xác nhận (hủy, check-in, ghi nhận thanh toán, đổi lịch) không thuộc quy tắc này. |
+| BR-18 | **Đa ngôn ngữ cho text tĩnh:** mọi text và label tĩnh của hệ thống (dashboard, landing page, form đặt chỗ, email, thông báo lỗi...) phải có đủ 5 ngôn ngữ: **tiếng Anh, tiếng Việt, tiếng Hàn, tiếng Nhật và tiếng Trung (giản thể)** trong `messages/<locale>/*.json`, cùng key và cùng tham số ICU. Khi làm form mới hoặc đổi text phải thêm / sửa đủ 5 ngôn ngữ trong cùng một thay đổi; test `messages-parity.test.ts` kiểm tra. **Không áp dụng** cho nội dung động do shop owner tạo (tên workshop, tiêu đề / mô tả khuyến mãi, nội dung trang...). |
 
 ### 6.1 State machine booking
 
@@ -950,7 +951,7 @@ Mỗi milestone: code → test → `pnpm lint && pnpm typecheck && pnpm test` pa
 6. Không tin dữ liệu client về `organization_id`, giá, status, role.
 7. Tiền dùng `bigint` minor units; thời gian dùng `timestamptz` UTC; dùng helper format theo currency/timezone của shop.
 8. Schema thay đổi thì tạo migration mới bằng drizzle-kit; **không sửa migration đã merge**.
-9. Text hiển thị cho người dùng phải qua i18n (`messages/*.json`), có đủ key EN; VI/KO/JA có thể để TODO nhưng phải có key.
+9. Text hiển thị cho người dùng phải qua i18n (`messages/*.json`), có đủ key và bản dịch ở cả 5 ngôn ngữ EN / VI / KO / JA / ZH (BR-18).
 10. Không dùng `dangerouslySetInnerHTML` với dữ liệu do shop hoặc khách nhập.
 11. Không log secret, token, password, presigned URL, cookie.
 12. Mỗi task kết thúc phải pass `pnpm lint`, `pnpm typecheck`, `pnpm test`. Commit nhỏ, message theo Conventional Commits (tiếng Anh).

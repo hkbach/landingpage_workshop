@@ -1,7 +1,235 @@
 {
+  "shell": {
+    "nav": {
+      "overview": "Tổng quan",
+      "today": "Hôm nay",
+      "bookings": "Đặt chỗ",
+      "customers": "Khách hàng",
+      "workshops": "Workshop",
+      "sessions": "Buổi",
+      "finance": "Thu chi",
+      "promotions": "Khuyến mãi",
+      "site": "Trang giới thiệu",
+      "settings": "Cài đặt"
+    },
+    "mainNav": "Điều hướng bảng điều khiển",
+    "skipToContent": "Chuyển đến nội dung chính",
+    "openMenu": "Mở menu",
+    "closeMenu": "Đóng menu",
+    "language": "Ngôn ngữ",
+    "account": "Menu tài khoản",
+    "logout": "Đăng xuất",
+    "banner": {
+      "draft": {
+        "title": "Chưa hoàn tất thiết lập.",
+        "body": "Hoàn thành danh sách kiểm tra ở trang tổng quan và gửi cửa hàng để duyệt nhằm xuất bản trang giới thiệu."
+      },
+      "pending": {
+        "title": "Đang chờ duyệt.",
+        "body": "Cửa hàng của bạn đã được gửi và đang được xem xét. Bạn vẫn có thể tiếp tục chỉnh sửa bản nháp trong thời gian này."
+      },
+      "suspended": {
+        "title": "Cửa hàng bị tạm ngưng.",
+        "body": "Bảng điều khiển của bạn ở chế độ chỉ xem và trang công khai không khả dụng.",
+        "reason": "Lý do: {reason}"
+      }
+    }
+  },
+  "overview": {
+    "title": "Tổng quan",
+    "kpiLabel": "Số liệu chính",
+    "kpi": {
+      "today": "Đặt chỗ hôm nay",
+      "upcoming": "Các buổi sắp tới",
+      "unpaid": "Đặt chỗ chưa thanh toán"
+    },
+    "checklist": {
+      "title": "Sẵn sàng xuất bản?",
+      "progress": "Đã hoàn thành {done}/{total} yêu cầu",
+      "done": "Xong",
+      "todo": "Cần làm",
+      "fix": "Đi tới",
+      "items": {
+        "identity": "Tên hoặc logo cửa hàng",
+        "hero": "Phần đầu trang (hero) trên trang giới thiệu",
+        "contact": "Thông tin liên hệ (email, điện thoại, địa chỉ)",
+        "workshop": "Ít nhất một workshop đang hoạt động có buổi sắp tới"
+      },
+      "submit": "Gửi để duyệt",
+      "submitting": "Đang gửi...",
+      "submitted": "Đã gửi. Chúng tôi sẽ xem xét cửa hàng của bạn và thông báo qua email.",
+      "readyNote": "Đã đáp ứng tất cả yêu cầu.",
+      "notReadyNote": "Hoàn thành tất cả yêu cầu để gửi."
+    },
+    "summary": {
+      "title": "Tóm tắt",
+      "open": "Mở",
+      "bookings": {
+        "title": "Đặt chỗ",
+        "month": "Đặt chỗ tháng này",
+        "guests": "Khách tháng này",
+        "lostRate": "Đã hủy hoặc vắng mặt"
+      },
+      "workshops": {
+        "title": "Workshop",
+        "active": "Đang hoạt động",
+        "draft": "Bản nháp"
+      },
+      "sessions": {
+        "title": "Buổi",
+        "upcoming": "Sắp tới",
+        "fill": "Chỗ đã đặt"
+      },
+      "customers": {
+        "title": "Khách hàng",
+        "total": "Tổng",
+        "repeat": "Khách quay lại"
+      },
+      "finance": {
+        "title": "Thu chi (tháng này)",
+        "income": "Thu",
+        "expense": "Chi",
+        "profit": "Lãi",
+        "loss": "Lỗ"
+      },
+      "pages": {
+        "title": "Trang giới thiệu",
+        "count": "Số trang",
+        "public": "Trang công khai",
+        "none": "Không có"
+      }
+    },
+    "trend": {
+      "title": "Đặt chỗ theo thời gian",
+      "subtitle": "Đặt chỗ theo ngày diễn ra buổi.",
+      "periodLabel": "Khoảng thời gian",
+      "period": {
+        "1m": "Tháng trước (theo ngày)",
+        "3m": "3 tháng qua",
+        "6m": "6 tháng qua",
+        "12m": "Năm qua"
+      },
+      "totalsLabel": "Tổng trong khoảng thời gian",
+      "total": "Đặt chỗ",
+      "guests": "Khách",
+      "attended": "Đã tham dự",
+      "upcoming": "Sắp tới",
+      "lost": "Đã hủy hoặc vắng mặt",
+      "lostRate": "Tỷ lệ hủy hoặc vắng mặt",
+      "chartSummary": "Đặt chỗ cho {period}: tổng {total}, {attended} đã tham dự, {upcoming} sắp tới, {lost} đã hủy hoặc vắng mặt.",
+      "showTable": "Hiển thị số liệu dạng bảng",
+      "day": "Ngày",
+      "month": "Tháng"
+    }
+  },
   "settings": {
+    "title": "Cài đặt cửa hàng",
+    "subtitle": "Cập nhật thông tin cửa hàng, khu vực và ngôn ngữ.",
+    "readOnly": "Cửa hàng của bạn đang bị tạm ngưng nên cài đặt ở chế độ chỉ xem.",
+    "sections": {
+      "general": "Cửa hàng và liên hệ",
+      "regional": "Khu vực và quy tắc đặt chỗ",
+      "regionalDesc": "Dùng cho giờ của buổi, giá và quy tắc đóng đặt chỗ.",
+      "languages": "Ngôn ngữ",
+      "languagesDesc": "Các ngôn ngữ cung cấp trên trang giới thiệu công khai của bạn."
+    },
     "fields": {
+      "name": "Tên cửa hàng",
+      "contactEmail": "Email liên hệ",
+      "contactPhone": "Điện thoại",
+      "whatsapp": "WhatsApp (không bắt buộc)",
+      "address": "Địa chỉ",
+      "mapsUrl": "URL Google Maps (không bắt buộc)",
+      "country": "Quốc gia",
+      "timezone": "Múi giờ",
+      "currency": "Tiền tệ",
+      "bookingCutoff": "Thời hạn đóng đặt chỗ (số phút trước giờ bắt đầu)",
+      "defaultLocale": "Ngôn ngữ mặc định",
+      "enabledLocales": "Ngôn ngữ đã bật",
       "enabledLocalesHint": "Nội dung đã nhập bằng một ngôn ngữ bạn tắt vẫn được giữ lại, nhưng sẽ không được hiển thị hay chỉnh sửa."
+    },
+    "hints": {
+      "mapsUrl": "Phải bắt đầu bằng https://",
+      "bookingCutoff": "Đặt chỗ trực tuyến đóng trước giờ bắt đầu buổi chừng này phút."
+    },
+    "warning": {
+      "regional": "Thay đổi múi giờ hoặc tiền tệ không chuyển đổi các đặt chỗ, buổi hoặc giá hiện có. Dữ liệu hiện có giữ nguyên giá trị ban đầu."
+    },
+    "default": "mặc định",
+    "saved": "Đã lưu cài đặt.",
+    "saveFailed": "Không thể lưu cài đặt. Vui lòng thử lại.",
+    "errors": {
+      "nameRequired": "Vui lòng nhập tên cửa hàng.",
+      "emailRequired": "Vui lòng nhập email liên hệ.",
+      "emailInvalid": "Vui lòng nhập địa chỉ email hợp lệ.",
+      "phoneRequired": "Vui lòng nhập số điện thoại.",
+      "addressRequired": "Vui lòng nhập địa chỉ.",
+      "urlInvalid": "Vui lòng nhập URL bắt đầu bằng https://",
+      "required": "Trường này là bắt buộc.",
+      "cutoffInvalid": "Vui lòng nhập số nguyên từ 0 đến 10080.",
+      "defaultMustBeEnabled": "Ngôn ngữ mặc định phải được bật."
+    }
+  },
+  "onboarding": {
+    "title": "Thiết lập cửa hàng của bạn",
+    "subtitle": "Vài thông tin để chuẩn bị trang giới thiệu của bạn.",
+    "progress": "Tiến trình thiết lập",
+    "steps": {
+      "shop": "Cửa hàng",
+      "region": "Khu vực",
+      "languages": "Ngôn ngữ",
+      "contact": "Liên hệ",
+      "review": "Xem lại"
+    },
+    "stepDesc": {
+      "shop": "Chọn tên cửa hàng và địa chỉ web của cửa hàng.",
+      "region": "Dùng cho giờ của buổi và giá.",
+      "languages": "Chọn ngôn ngữ mặc định và các ngôn ngữ bổ sung cho trang của bạn.",
+      "contact": "Khách sẽ thấy các thông tin này trên trang của bạn.",
+      "review": "Kiểm tra mọi thứ, rồi tạo cửa hàng của bạn."
+    },
+    "fields": {
+      "name": "Tên cửa hàng",
+      "slug": "Địa chỉ web",
+      "country": "Quốc gia",
+      "timezone": "Múi giờ",
+      "currency": "Tiền tệ",
+      "defaultLocale": "Ngôn ngữ mặc định",
+      "enabledLocales": "Ngôn ngữ đã bật",
+      "contactEmail": "Email liên hệ",
+      "contactPhone": "Điện thoại",
+      "whatsapp": "WhatsApp (không bắt buộc)",
+      "address": "Địa chỉ",
+      "mapsUrl": "URL Google Maps (không bắt buộc)"
+    },
+    "hints": {
+      "slug": "Từ 3 đến 32 ký tự: chữ cái thường, số và dấu gạch ngang. Không được bắt đầu hoặc kết thúc bằng dấu gạch ngang.",
+      "mapsUrl": "Phải bắt đầu bằng https://"
+    },
+    "slugPreview": "Trang của bạn sẽ có địa chỉ",
+    "slug": {
+      "checking": "Đang kiểm tra khả dụng...",
+      "available": "Địa chỉ này có thể sử dụng.",
+      "taken": "Địa chỉ này đã được sử dụng. Hãy thử địa chỉ khác."
+    },
+    "default": "mặc định",
+    "create": "Tạo cửa hàng",
+    "creating": "Đang tạo...",
+    "done": {
+      "title": "Cửa hàng của bạn đã được tạo",
+      "body": "Trang của bạn sẽ có tại {host} sau khi được duyệt. Hãy hoàn thành danh sách thiết lập trong bảng điều khiển.",
+      "cta": "Đến bảng điều khiển"
+    },
+    "errors": {
+      "nameRequired": "Vui lòng nhập tên cửa hàng.",
+      "slugInvalid": "Dùng từ 3 đến 32 chữ cái thường, số hoặc dấu gạch ngang, không bắt đầu hoặc kết thúc bằng dấu gạch ngang.",
+      "slugReserved": "Địa chỉ này đã được dành riêng. Hãy chọn địa chỉ khác.",
+      "required": "Trường này là bắt buộc.",
+      "emailRequired": "Vui lòng nhập email liên hệ.",
+      "emailInvalid": "Vui lòng nhập địa chỉ email hợp lệ.",
+      "phoneRequired": "Vui lòng nhập số điện thoại.",
+      "addressRequired": "Vui lòng nhập địa chỉ.",
+      "urlInvalid": "Vui lòng nhập URL bắt đầu bằng https://"
     }
   }
 }

@@ -1,1 +1,40 @@
-{}
+{
+  "legal": {
+    "back": "Về trang chủ",
+    "pendingNotice": "Trang này chỉ là nội dung tạm. Nội dung chính thức sẽ do bộ phận pháp lý cung cấp trước khi ra mắt.",
+    "terms": { "title": "Điều khoản dịch vụ" },
+    "privacy": { "title": "Chính sách quyền riêng tư" }
+  },
+  "nav": { "label": "Chính", "login": "Đăng nhập", "signup": "Bắt đầu" },
+  "hero": {
+    "title": "Trang giới thiệu sẵn sàng nhận đặt chỗ cho studio workshop của bạn",
+    "subtitle": "Xuất bản trang đa ngôn ngữ trong vài phút, nhận đặt chỗ cho các buổi workshop và quản lý chỗ ngồi, khách hàng và thanh toán ở một nơi.",
+    "cta": "Tạo cửa hàng của bạn",
+    "secondary": "Đăng nhập"
+  },
+  "how": {
+    "title": "Cách hoạt động",
+    "steps": {
+      "create": { "title": "Tạo cửa hàng của bạn", "body": "Đăng ký, chọn địa chỉ và ngôn ngữ, rồi thêm thông tin liên hệ." },
+      "design": { "title": "Xây dựng trang của bạn", "body": "Chọn mẫu, chỉnh sửa các phần, thêm workshop và lên lịch các buổi." },
+      "share": { "title": "Chia sẻ và nhận đặt chỗ", "body": "Xuất bản trang. Khách đặt chỗ và bạn quản lý mọi thứ từ bảng điều khiển." }
+    }
+  },
+  "features": {
+    "title": "Mọi thứ một studio nhỏ cần",
+    "items": {
+      "builder": { "title": "Trình tạo trang giới thiệu", "body": "Các mẫu có sẵn với những phần bạn có thể sắp xếp lại, chỉnh sửa và xem trước." },
+      "booking": { "title": "Đặt chỗ an toàn", "body": "Sức chứa của buổi được kiểm soát nên một buổi không bao giờ bị đặt quá chỗ." },
+      "multilingual": { "title": "Trang đa ngôn ngữ", "body": "Cung cấp trang của bạn bằng tiếng Anh, tiếng Việt, tiếng Hàn và tiếng Nhật." },
+      "payments": { "title": "Theo dõi thanh toán", "body": "Ghi lại các khoản thanh toán tiền mặt, thẻ, chuyển khoản và hoàn tiền cho từng đặt chỗ." },
+      "customers": { "title": "Danh sách khách hàng", "body": "Lưu khách và lịch sử đặt chỗ của họ cùng một nơi." },
+      "subdomain": { "title": "Địa chỉ riêng của bạn", "body": "Mỗi cửa hàng có một tên miền phụ riêng cho trang công khai." }
+    }
+  },
+  "cta": {
+    "title": "Sẵn sàng lấp đầy buổi tiếp theo?",
+    "body": "Thiết lập cửa hàng của bạn trong vài phút.",
+    "button": "Tạo cửa hàng của bạn"
+  },
+  "footer": "© {year} {name}"
+}
