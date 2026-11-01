@@ -15,7 +15,7 @@ function files(dir: string): string[] {
 }
 
 describe("the guest booking form", () => {
-  const ok = { fullName: "Linh", email: "linh@example.com", country: "VN", phone: "", specialRequest: "", consent: true };
+  const ok = { fullName: "Linh", email: "linh@example.com", country: "VN", phone: "+84 90 000 0000", specialRequest: "", consent: true };
   it("trims the name, email, phone and request", () => {
     const r = bookingContactSchema.safeParse({ ...ok, fullName: "  Linh Tran  ", email: "  linh@example.com ", phone: " +84 90 000 0000 ", specialRequest: "\n Vegetarian snacks \t" });
     expect(r.success).toBe(true);
@@ -25,6 +25,7 @@ describe("the guest booking form", () => {
     expect(bookingContactSchema.safeParse({ ...ok, fullName: "    " }).error?.issues[0]?.message).toBe("required");
     expect(bookingContactSchema.safeParse({ ...ok, specialRequest: ` ${"x".repeat(500)} ` }).success).toBe(true);
     expect(bookingContactSchema.safeParse({ ...ok, specialRequest: "x".repeat(501) }).success).toBe(false);
+    expect(bookingContactSchema.safeParse({ ...ok, phone: "   " }).error?.issues[0]?.message).toBe("required"); // the phone number is required
   });
 });
 

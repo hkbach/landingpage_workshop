@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Controller, useForm, useWatch } from "react-hook-form";
@@ -17,6 +17,8 @@ import { siteFontClass } from "@/components/sections/site-fonts";
 import { modalThemeStyle } from "@/components/sections/theme";
 import { COUNTRY_CODES, countryName } from "./countries";
 import { bookingContactSchema, type BookingFormValues } from "./schema";
+import { slotState, type SlotState } from "./availability";
+import { cleanOtp, DEMO_OTP, isOtpComplete, OTP_LENGTH, OTP_MAX_ATTEMPTS, OTP_RESEND_SECONDS, sendOtp, verifyOtp } from "./otp";
 import { simulateBooking } from "./simulate";
 import { newUuid } from "@/lib/uuid";
 
@@ -39,7 +41,7 @@ interface Props {
   preview?: boolean;
 }
 
-const STEPS = ["date", "time", "guests", "contact", "confirm"] as const;
+const STEPS = ["datetime", "guests", "contact", "confirm", "otp"] as const;
 type Step = (typeof STEPS)[number];
 
 const primaryBtn =
@@ -125,14 +127,15 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
   const [idempotencyKey] = useState(() => newUuid());
   const L = (v: Parameters<typeof pickLocalized>[0]) => pickLocalized(v, locale, shop.defaultLocale);
 
-  // Bookable = OPEN and starts after now + cutoff (FR-BOOK-01). Full sessions stay visible as "Sold out".
-  const bookable = useMemo(() => {
-    const limit = now + shop.bookingCutoffMinutes * 60_000;
-    return sessions.filter((s) => s.status === "OPEN" && new Date(s.startsAt).getTime() > limit)
-      .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
-  }, [sessions, shop.bookingCutoffMinutes, now]);
+  // Every session of the workshop that was not cancelled is listed; the ones in the past, closed, inside the booking cut-off or full are
+  // shown but cannot be chosen (FR-BOOK-01).
+  const listed = useMemo(
+    () => sessions.filter((x) => x.status !== "CANCELLED").sort((p, q) => p.startsAt.localeCompare(q.startsAt)),
+    [sessions],
+  );
+  const stateOf = (x: Session): SlotState => slotState(x, now, shop.bookingCutoffMinutes);
 
-  const [step, setStep] = useState<Step>("date");
+  const [step, setStep] = useState<Step>("datetime");
   const [workshopId, setWorkshopId] = useState(initialWorkshopId ?? workshops[0]?.id ?? "");
   const [date, setDate] = useState("");
   const [sessionId, setSessionId] = useState("");
@@ -142,10 +145,12 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
   const [previewDone, setPreviewDone] = useState(false);
 
   const workshop = workshops.find((w) => w.id === workshopId);
-  const wsSessions = bookable.filter((s) => s.workshopId === workshopId);
-  const dates = [...new Set(wsSessions.map((s) => dayKey(s.startsAt, shop.timezone)))];
-  const daySessions = wsSessions.filter((s) => dayKey(s.startsAt, shop.timezone) === date);
-  const session = sessions.find((s) => s.id === sessionId);
+  const wsSessions = listed.filter((x) => x.workshopId === workshopId);
+  const dates = [...new Set(wsSessions.map((x) => dayKey(x.startsAt, shop.timezone)))];
+  const daySessions = wsSessions.filter((x) => dayKey(x.startsAt, shop.timezone) === date);
+  /** A date can be chosen when at least one session of that day can. */
+  const dateOpen = (d: string) => wsSessions.some((x) => dayKey(x.startsAt, shop.timezone) === d && stateOf(x) === "OK");
+  const session = sessions.find((x) => x.id === sessionId && stateOf(x) === "OK");
   const remaining = session ? session.capacity - session.reservedCount : 0;
   const maxGuests = workshop ? Math.max(1, Math.min(workshop.maxPerBooking, remaining)) : 1;
   // Promotions the guest may use for this workshop today. Prices here are display-only: the server recomputes the price (BR-04) and
@@ -161,6 +166,20 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
   const subtotal = workshop ? workshop.priceAmount * quantity : 0;
   const total = price?.ok ? price.total : subtotal;
   const discountOf = (id: string) => (price?.ok ? (price.discounts.find((d) => d.id === id)?.amount ?? 0) : 0);
+
+  const bill = workshop ? (
+  <dl className="space-y-1 text-sm" data-testid="booking-price">
+    {chosen.length > 0 ? (
+      <div className="flex justify-between gap-3"><dt>{t("subtotal")}</dt><dd className="tabular-nums">{formatMoney(subtotal, workshop.currency, locale)}</dd></div>
+    ) : null}
+    {chosen.map((p) => (
+      <div key={p.id} className="flex justify-between gap-3 text-emerald-800">
+        <dt>{t("discountLine", { title: L(p.title) })}</dt><dd className="tabular-nums">−{formatMoney(discountOf(p.id), workshop.currency, locale)}</dd>
+      </div>
+    ))}
+    <div className="flex justify-between gap-3 font-semibold"><dt>{t("estimatedTotal")}</dt><dd className="tabular-nums">{formatMoney(total, workshop.currency, locale)}</dd></div>
+  </dl>
+  ) : null;
 
   const dateLabel = (iso: string) =>
     new Intl.DateTimeFormat(locale, { weekday: "short", day: "numeric", month: "short", year: "numeric", timeZone: shop.timezone }).format(new Date(iso));
@@ -180,8 +199,7 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
   };
 
   const stepIndex = STEPS.indexOf(step);
-  const canNext =
-    (step === "date" && !!date) || (step === "time" && !!session && remaining > 0) || step === "guests" || step === "contact";
+  const canNext = (step === "datetime" && !!session && remaining > 0) || step === "guests" || step === "contact";
 
   async function next() {
     if (step === "contact") {
@@ -191,16 +209,61 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
     setStep(STEPS[stepIndex + 1]!);
   }
 
-  const onSubmit = handleSubmit(async (values) => {
+  // Email OTP (step 5): confirming sends a code to the guest's email; the booking is created once the code is right.
+  const [otpCode, setOtpCode] = useState("");
+  const [otpState, setOtpState] = useState<"idle" | "wrong" | "locked">("idle");
+  const [attempts, setAttempts] = useState(0);
+  const [cooldown, setCooldown] = useState(0);
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [cooldown]);
+
+  async function sendCode(email: string) {
+    await sendOtp(email);
+    setOtpCode(""); setOtpState("idle"); setAttempts(0); setCooldown(OTP_RESEND_SECONDS);
+  }
+
+  const onConfirm = handleSubmit(async (values) => {
     if (!workshop || !session) return;
-    if (preview) { setPreviewDone(true); return; } // nothing is created from the builder
     setSubmitting(true);
     setSubmitError(false);
     try {
-      // Simulated POST with the Idempotency-Key; the real API verifies Turnstile and recomputes the price.
+      await sendCode(values.email.trim().toLowerCase());
+      setStep("otp");
+    } catch {
+      setSubmitError(true);
+    } finally {
+      setSubmitting(false);
+    }
+  });
+
+  async function resend() {
+    setSubmitting(true);
+    try { await sendCode(form.getValues("email").trim().toLowerCase()); } catch { setSubmitError(true); } finally { setSubmitting(false); }
+  }
+
+  async function onVerify() {
+    if (!workshop || !session || !isOtpComplete(otpCode) || otpState === "locked") return;
+    const values = form.getValues();
+    const email = values.email.trim().toLowerCase();
+    setSubmitting(true);
+    setSubmitError(false);
+    try {
+      if (!(await verifyOtp(email, otpCode))) {
+        const used = attempts + 1;
+        setAttempts(used);
+        setOtpCode("");
+        setOtpState(used >= OTP_MAX_ATTEMPTS ? "locked" : "wrong");
+        setSubmitting(false);
+        return;
+      }
+      if (preview) { setPreviewDone(true); setSubmitting(false); return; } // nothing is created from the builder
+      // Simulated POST with the Idempotency-Key; the real API verifies Turnstile and the OTP, and recomputes the price.
       const result = await simulateBooking(
         {
-          email: values.email.trim().toLowerCase(), workshopTitle: L(workshop.title), startsAt: session.startsAt, endsAt: session.endsAt,
+          email, workshopTitle: L(workshop.title), startsAt: session.startsAt, endsAt: session.endsAt,
           timezone: shop.timezone, quantity, totalAmount: total, currency: workshop.currency,
           promotions: chosen.map((p) => L(p.title)), discountAmount: price?.ok ? price.discount : 0,
         },
@@ -212,7 +275,7 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
       setSubmitError(true);
       setSubmitting(false);
     }
-  });
+  }
 
   if (previewDone) {
     return (
@@ -224,7 +287,7 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
   }
 
   return (
-    <form onSubmit={onSubmit} noValidate className="space-y-5">
+    <form onSubmit={(e) => { e.preventDefault(); if (step === "otp") void onVerify(); else if (step === "confirm") void onConfirm(e); }} noValidate className="space-y-5">
       <div>
         <p className="text-xs font-medium text-[var(--site-muted)]" aria-live="polite">
           {t("stepOf", { current: stepIndex + 1, total: STEPS.length })} · {t(`steps.${step}`)}
@@ -237,7 +300,7 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
         <p className="mt-2 text-xs text-[var(--site-muted)]">{t("timesShownIn", { tz: shop.timezone })}</p>
       </div>
 
-      {step === "date" && (
+      {step === "datetime" && (
         <div className="space-y-4">
           <div className="space-y-1.5">
             <label htmlFor="bk-workshop" className="text-sm font-medium">{t("workshop")}</label>
@@ -251,32 +314,35 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
           {dates.length === 0 ? (
             <p role="status" className="rounded-lg bg-[var(--site-surface)] p-3 text-sm">{t("noAvailability")}</p>
           ) : (
-            <ChoiceGroup legend={t("chooseDate")} className="sm:grid-cols-2">
-              {dates.map((d) => (
-                <Choice key={d} name="bk-date" checked={date === d} onSelect={() => { setDate(d); setSessionId(""); }}>
-                  <span>{dateLabel(wsSessions.find((s) => dayKey(s.startsAt, shop.timezone) === d)!.startsAt)}</span>
-                </Choice>
-              ))}
-            </ChoiceGroup>
+            <>
+              {!dates.some(dateOpen) ? <p role="status" className="rounded-lg bg-[var(--site-surface)] p-3 text-sm">{t("noneSelectable")}</p> : null}
+              <ChoiceGroup legend={t("chooseDate")} className="sm:grid-cols-2">
+                {dates.map((d) => (
+                  <Choice key={d} name="bk-date" checked={date === d} disabled={!dateOpen(d)} onSelect={() => { setDate(d); setSessionId(""); }}>
+                    <span>{dateLabel(wsSessions.find((x) => dayKey(x.startsAt, shop.timezone) === d)!.startsAt)}</span>
+                    {!dateOpen(d) ? <span className="text-xs text-[var(--site-muted)]">{t("dateUnavailable")}</span> : null}
+                  </Choice>
+                ))}
+              </ChoiceGroup>
+              {date ? (
+                <ChoiceGroup legend={t("chooseTime")}>
+                  {daySessions.map((x) => {
+                    const left = x.capacity - x.reservedCount;
+                    const state = stateOf(x);
+                    return (
+                      <Choice key={x.id} name="bk-time" checked={sessionId === x.id} disabled={state !== "OK"} onSelect={() => { setSessionId(x.id); setQuantity(1); }}>
+                        <span className="font-medium">{formatTime(x.startsAt, shop.timezone, locale)} – {formatTime(x.endsAt, shop.timezone, locale)}</span>
+                        <span className={cn("text-xs", state === "FULL" ? "font-semibold text-red-700" : "text-[var(--site-muted)]")}>
+                          {state === "OK" ? t("spotsLeft", { count: left }) : t(`slot.${state}`)}
+                        </span>
+                      </Choice>
+                    );
+                  })}
+                </ChoiceGroup>
+              ) : null}
+            </>
           )}
         </div>
-      )}
-
-      {step === "time" && (
-        <ChoiceGroup legend={t("chooseTime")}>
-          {daySessions.map((s) => {
-            const left = s.capacity - s.reservedCount;
-            const soldOut = left <= 0;
-            return (
-              <Choice key={s.id} name="bk-time" checked={sessionId === s.id} disabled={soldOut} onSelect={() => { setSessionId(s.id); setQuantity(1); }}>
-                <span className="font-medium">{formatTime(s.startsAt, shop.timezone, locale)} – {formatTime(s.endsAt, shop.timezone, locale)}</span>
-                <span className={cn("text-xs", soldOut ? "font-semibold text-red-700" : "text-[var(--site-muted)]")}>
-                  {soldOut ? t("soldOut") : t("spotsLeft", { count: left })}
-                </span>
-              </Choice>
-            );
-          })}
-        </ChoiceGroup>
       )}
 
       {step === "guests" && workshop && (
@@ -317,17 +383,7 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
               })()}
             </fieldset>
           ) : null}
-          <dl className="space-y-1 text-sm" data-testid="booking-price">
-            {chosen.length > 0 ? (
-              <div className="flex justify-between gap-3"><dt>{t("subtotal")}</dt><dd className="tabular-nums">{formatMoney(subtotal, workshop.currency, locale)}</dd></div>
-            ) : null}
-            {chosen.map((p) => (
-              <div key={p.id} className="flex justify-between gap-3 text-emerald-800">
-                <dt>{t("discountLine", { title: L(p.title) })}</dt><dd className="tabular-nums">−{formatMoney(discountOf(p.id), workshop.currency, locale)}</dd>
-              </div>
-            ))}
-            <div className="flex justify-between gap-3 font-semibold"><dt>{t("estimatedTotal")}</dt><dd className="tabular-nums">{formatMoney(total, workshop.currency, locale)}</dd></div>
-          </dl>
+          {bill}
         </div>
       )}
 
@@ -356,9 +412,11 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
             {errors.country && <p id="bk-country-err" role="alert" className="text-xs text-red-700">{err("country")}</p>}
           </div>
           <div className="space-y-1.5">
-            <label htmlFor="bk-phone" className="text-sm font-medium">{t("phone")}</label>
-            <Input id="bk-phone" type="tel" autoComplete="tel" className={fieldClass} {...register("phone")} />
+            <label htmlFor="bk-phone" className="text-sm font-medium">{t("phone")} <span aria-hidden>*</span></label>
+            <Input id="bk-phone" type="tel" autoComplete="tel" className={fieldClass} aria-required aria-invalid={!!errors.phone}
+              aria-describedby={errors.phone ? "bk-phone-err" : undefined} {...register("phone")} />
             <p className="text-xs text-[var(--site-muted)]">{t("phoneHint")}</p>
+            {errors.phone && <p id="bk-phone-err" role="alert" className="text-xs text-red-700">{err("phone")}</p>}
           </div>
           <div className="space-y-1.5">
             <label htmlFor="bk-request" className="text-sm font-medium">{t("specialRequest")}</label>
@@ -377,15 +435,8 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
             <dd className="font-medium">{dateLabel(session.startsAt)}, {formatTime(session.startsAt, shop.timezone, locale)}</dd>
             <dt className="text-[var(--site-muted)]">{t("guests")}</dt><dd className="font-medium">{quantity}</dd>
             <dt className="text-[var(--site-muted)]">{t("contactLabel")}</dt><dd className="font-medium break-all">{watchedName} · {watchedEmail}</dd>
-            {chosen.length > 0 ? (
-              <>
-                <dt className="text-[var(--site-muted)]">{t("promotionsApplied")}</dt>
-                <dd className="font-medium">{chosen.map((p) => L(p.title)).join(", ")}</dd>
-              </>
-            ) : null}
-            <dt className="text-[var(--site-muted)]">{t("estimatedTotal")}</dt>
-            <dd className="font-semibold">{formatMoney(total, workshop.currency, locale)}</dd>
           </dl>
+          {bill}
           <p className="text-xs text-[var(--site-muted)]">{t("totalNote")} {t("payAtStudio")}</p>
 
           <div className="rounded-lg border border-black/15 p-3 text-sm">
@@ -416,12 +467,36 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
         </div>
       )}
 
+      {step === "otp" && (
+        <div className="space-y-3" data-testid="otp-step">
+          <p className="text-sm">{t("otpIntro", { email: watchedEmail.trim().toLowerCase() })}</p>
+          <div className="space-y-1.5">
+            <label htmlFor="bk-otp" className="text-sm font-medium">{t("otpLabel")} <span aria-hidden>*</span></label>
+            <Input
+              id="bk-otp" inputMode="numeric" autoComplete="one-time-code" maxLength={OTP_LENGTH + 4} className={cn(fieldClass, "tracking-[0.4em]")}
+              value={otpCode} disabled={otpState === "locked" || submitting} aria-required aria-invalid={otpState === "wrong"}
+              aria-describedby="bk-otp-hint" onChange={(e) => { setOtpCode(cleanOtp(e.target.value)); if (otpState === "wrong") setOtpState("idle"); }}
+            />
+            <p id="bk-otp-hint" className="text-xs text-[var(--site-muted)]">{t("otpHint", { length: OTP_LENGTH })}</p>
+            {process.env.NODE_ENV !== "production" ? <p className="text-xs text-[var(--site-muted)]" data-testid="otp-demo">{t("otpDemo", { code: DEMO_OTP })}</p> : null}
+          </div>
+          {otpState === "wrong" ? <p role="alert" className="text-sm text-red-700">{t("otpWrong", { left: OTP_MAX_ATTEMPTS - attempts })}</p> : null}
+          {otpState === "locked" ? <p role="alert" className="text-sm text-red-700">{t("otpLocked")}</p> : null}
+          {submitError && <p role="alert" className="text-sm text-red-700">{t("submitError")}</p>}
+          <button type="button" className={cn(secondaryBtn, "w-full sm:w-auto")} onClick={() => void resend()} disabled={cooldown > 0 || submitting}>
+            {cooldown > 0 ? t("otpResendIn", { seconds: cooldown }) : t("otpResend")}
+          </button>
+        </div>
+      )}
+
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
         {stepIndex > 0 ? (
           <button type="button" className={secondaryBtn} onClick={() => setStep(STEPS[stepIndex - 1]!)} disabled={submitting}>{t("back")}</button>
         ) : <span />}
         {step === "confirm" ? (
-          <button type="submit" className={primaryBtn} disabled={submitting}>{submitting ? t("submitting") : t("confirmBooking")}</button>
+          <button type="submit" className={primaryBtn} disabled={submitting}>{submitting ? t("sendingCode") : t("confirmBooking")}</button>
+        ) : step === "otp" ? (
+          <button type="submit" className={primaryBtn} disabled={submitting || !isOtpComplete(otpCode) || otpState === "locked"}>{submitting ? t("submitting") : t("verifyOtp")}</button>
         ) : (
           <button type="button" className={primaryBtn} onClick={next} disabled={!canNext}>{t("next")}</button>
         )}

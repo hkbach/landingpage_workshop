@@ -366,8 +366,10 @@ Browser ────────────────────────
 - Hiển thị giờ theo **timezone của shop**, ghi rõ tên timezone (ví dụ "Times shown in Asia/Ho_Chi_Minh"). Session hết chỗ hiển thị "Sold out".
 
 **FR-BOOK-02 – Đặt chỗ instant (Must)**
-- Booking modal gồm các bước: chọn ngày → chọn giờ → số khách → thông tin liên hệ → xác nhận.
-- Field: họ tên (bắt buộc), email (bắt buộc), quốc gia (bắt buộc, chọn từ danh sách ISO), phone/WhatsApp (tùy chọn), special request (tùy chọn, tối đa 500 ký tự), checkbox đồng ý chính sách (bao gồm chính sách đến trễ), Turnstile token.
+- Booking modal gồm 5 bước: (1) **ngày và giờ** (gộp trong một bước) → (2) số khách (kèm khuyến mãi và bill) → (3) thông tin liên hệ → (4) xác nhận (hiển thị lại **bill chi tiết** như bước 2: tạm tính, từng khuyến mãi, tổng) → (5) **xác minh email bằng OTP**.
+- **Bước 1:** chọn workshop; liệt kê **toàn bộ ngày có session** của workshop đó (không tính session đã hủy). Ngày mà mọi session đều không chọn được (đã qua, đã đóng, trong cutoff hoặc hết chỗ) hiển thị mờ, ghi "Not available" và **không chọn được**. Chọn ngày xong, **giờ của ngày đó hiện ngay bên dưới**; giờ đã bắt đầu / đã qua, trong cutoff, đã đóng hoặc hết chỗ vẫn hiển thị nhưng **không chọn được** (ghi lý do: Already started, Booking closed, Closed, Sold out).
+- **Bước 5 (OTP):** bấm Confirm booking thì hệ thống gửi mã **6 chữ số** tới email khách; khách nhập mã để hoàn tất (booking chỉ được tạo sau khi mã đúng). Sai tối đa **5 lần** (sau đó phải xác nhận lại để nhận mã mới); nút gửi lại mã có đếm ngược 30 giây. MVP frontend giả lập: chưa gửi email, mã demo `123456` hiển thị trong môi trường dev; backend thật gửi qua outbox + worker, chỉ lưu hash mã kèm hạn dùng, giới hạn số lần gửi và thử theo email và IP.
+- Field: họ tên (bắt buộc), email (bắt buộc), quốc gia (bắt buộc, chọn từ danh sách ISO), phone/WhatsApp (**bắt buộc**), special request (tùy chọn, tối đa 500 ký tự), checkbox đồng ý chính sách (bao gồm chính sách đến trễ), Turnstile token.
 - Request có header `Idempotency-Key` (UUID do client sinh khi mở form).
 - Backend:
   1. Xác minh Turnstile.
