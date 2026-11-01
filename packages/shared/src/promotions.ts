@@ -156,9 +156,10 @@ export function togglePromotion<T extends Pick<PromotionRecord, "id" | "stacking
 
 /**
  * Price of one booking with the promotions a guest chose (the backend runs this too and never trusts the client's total).
- * The subtotal is unit price x quantity. Fixed amounts come off the booking first, then each percentage is taken off what is
- * left, so the result does not depend on the order the guest clicked. No discount is larger than what is left, so the total
- * is never below 0. Several promotions are refused unless every one of them can be combined (see canCombine).
+ * The subtotal is unit price x quantity, and EVERY discount is worked out on that original subtotal: a percentage is a share of
+ * the original price (20% and 15% together take 35% off, not 20% and then 15% of what is left) and a fixed amount is taken off
+ * the whole booking. So the total does not depend on the order the guest clicked. The discounts together never go above the
+ * subtotal, so the total is never below 0. Several promotions are refused unless every one of them can be combined (see canCombine).
  */
 export function priceBooking(input: {
   unitPrice: number; quantity: number;
@@ -170,7 +171,8 @@ export function priceBooking(input: {
   let left = subtotal;
   const discounts: PriceLine[] = [];
   for (const p of ordered) {
-    const amount = discountAmount(left, p);
+    // Worked out on the original subtotal; `left` only caps it, so the discounts together stay within the price.
+    const amount = Math.min(left, discountAmount(subtotal, p));
     discounts.push({ id: p.id, amount });
     left -= amount;
   }

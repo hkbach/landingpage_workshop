@@ -359,7 +359,7 @@
       },
       "MULTIPLE": {
         "label": "Can be combined",
-        "hint": "A guest can use it together with other promotions that can be combined. Fixed amounts come off first, then each percentage."
+        "hint": "A guest can use it together with other promotions that can be combined. Percentages are added together and taken off the original price; fixed amounts are taken off too."
       }
     },
     "stackingTag": {

@@ -163,13 +163,29 @@ describe("priceBooking", () => {
     expect(priceBooking({ ...base, promotions: [pct("a", 10, "SINGLE"), pct("b", 10)] })).toEqual({ ok: false, error: "NOT_COMBINABLE" });
     expect(priceBooking({ ...base, promotions: [pct("a", 10, "SINGLE"), pct("b", 10, "SINGLE")] })).toEqual({ ok: false, error: "NOT_COMBINABLE" });
   });
-  it("combines promotions that all allow it: fixed amounts first, then each percentage on what is left", () => {
+  it("adds percentages up on the original price: 20% and 15% together take 35%, not 20% and then 15% of the rest", () => {
+    const r = priceBooking({ unitPrice: 650_000, quantity: 1, promotions: [pct("a", 20), pct("b", 15)] });
+    expect(r).toEqual({ ok: true, subtotal: 650_000, discounts: [{ id: "a", amount: 130_000 }, { id: "b", amount: 97_500 }], discount: 227_500, total: 422_500 });
+    expect(227_500 / 650_000).toBeCloseTo(0.35);
+  });
+  it("combines percentages and fixed amounts, all worked out on the original price", () => {
     const r = priceBooking({ ...base, promotions: [pct("p20", 20), fix("f", 100_000), pct("p10", 10)] });
     expect(r).toMatchObject({ ok: true, subtotal: 1_300_000 });
     if (!r.ok) return;
-    expect(r.discounts).toEqual([{ id: "f", amount: 100_000 }, { id: "p20", amount: 240_000 }, { id: "p10", amount: 96_000 }]);
-    expect(r.total).toBe(864_000);
+    expect(r.discounts).toEqual([{ id: "f", amount: 100_000 }, { id: "p20", amount: 260_000 }, { id: "p10", amount: 130_000 }]);
+    expect(r.discount).toBe(490_000);
+    expect(r.total).toBe(810_000);
     expect(r.discount + r.total).toBe(r.subtotal);
+  });
+  it("a percentage is not reduced by a fixed amount taken off first", () => {
+    const withFixed = priceBooking({ unitPrice: 1_000_000, quantity: 1, promotions: [fix("f", 400_000), pct("p", 10)] });
+    expect(withFixed).toMatchObject({ ok: true, discounts: [{ id: "f", amount: 400_000 }, { id: "p", amount: 100_000 }], total: 500_000 });
+  });
+  it("percentages that add up to 100% or more make the booking free, never negative", () => {
+    expect(priceBooking({ ...base, promotions: [pct("a", 60), pct("b", 40)] })).toMatchObject({ ok: true, discount: 1_300_000, total: 0 });
+    const over = priceBooking({ ...base, promotions: [pct("a", 70), pct("b", 60)] });
+    expect(over).toMatchObject({ ok: true, discount: 1_300_000, total: 0 });
+    if (over.ok) expect(over.discounts.reduce((n, d) => n + d.amount, 0)).toBe(1_300_000);
   });
   it("gives the same total whatever order the promotions were chosen in", () => {
     const a = priceBooking({ ...base, promotions: [pct("x", 20), fix("y", 50_000), pct("z", 15)] });

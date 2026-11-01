@@ -14,7 +14,7 @@ import { deleteImage, hasImage, resetMediaStore } from "./media-store";
 const g = globalThis as unknown as { __promotionStore?: PromotionRecord[]; __promotionSeedVersion?: number };
 
 /** Bump when the seed or the shape of a promotion changes: a dev server that kept the old data across hot reloads starts again from the new seed. */
-const SEED_VERSION = 4;
+const SEED_VERSION = 5;
 
 const DAY = 86_400_000;
 /** "YYYY-MM-DD" of today +/- `days` in the shop timezone. */
