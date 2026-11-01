@@ -45,7 +45,7 @@ Giá trị cốt lõi:
 
 | Actor | Mô tả | Khu vực |
 |---|---|---|
-| **Platform Admin** | Đội vận hành nền tảng | `app.{PLATFORM_DOMAIN}/admin` |
+| **Platform Admin** | Đội vận hành nền tảng | `app.{PLATFORM_DOMAIN}/systemadmin` |
 | **Shop Owner** | Chủ shop; đăng ký, tạo landing page, quản lý workshop/lịch/booking | `app.{PLATFORM_DOMAIN}/shopowner` |
 | **Traveler (Guest)** | Khách du lịch; xem landing page và đặt chỗ, không có tài khoản | `{shop}.{PLATFORM_DOMAIN}` |
 
@@ -154,7 +154,7 @@ Browser ────────────────────────
 
 | Host | Xử lý |
 |---|---|
-| `app.{PLATFORM_DOMAIN}` | Khu vực quản lý của shop owner (`/shopowner/*`; đường dẫn cũ `/dashboard/*` được chuyển hướng sang `/shopowner/*`), admin (`/admin/*`), auth (`/login`, `/signup`…) |
+| `app.{PLATFORM_DOMAIN}` | Khu vực quản lý của shop owner (`/shopowner/*`; đường dẫn cũ `/dashboard/*` được chuyển hướng sang `/shopowner/*`), system admin (`/systemadmin/*`; đường dẫn cũ `/admin/*` được chuyển hướng sang `/systemadmin/*`), auth (`/login`, `/signup`…) |
 | `{PLATFORM_DOMAIN}` | Trang marketing của nền tảng (đơn giản, tĩnh) |
 | `{slug}.{PLATFORM_DOMAIN}` | Landing page của shop. Next.js middleware/proxy (tùy phiên bản Next.js) rewrite sang `/sites/[slug]/[[...locale]]` |
 | `media.{PLATFORM_DOMAIN}` | R2 public bucket (custom domain của R2) |
@@ -223,7 +223,7 @@ Browser ────────────────────────
 
 | Role | Phạm vi | Quyền |
 |---|---|---|
-| `SUPER_ADMIN` | Platform (`users.platform_role`) | Toàn quyền khu vực `/admin`; không dùng cho thao tác trong shop |
+| `SUPER_ADMIN` | Platform (`users.platform_role`) | Toàn quyền khu vực `/systemadmin`; không dùng cho thao tác trong shop |
 | `OWNER` | Organization | Toàn quyền trong shop của mình |
 
 - Phase sau sẽ thêm `MANAGER`, `STAFF`, `EDITOR`. Code permission dạng **action-based** ngay từ đầu (ví dụ `booking.check_in`, `site.publish`) và map `OWNER` sang tất cả quyền, để thêm role mới mà không phải sửa logic.
@@ -497,7 +497,7 @@ Browser ────────────────────────
 **FR-ADM-04 – Quản lý báo cáo vi phạm / Report management (Should)**
 - Form public "Report this site": lý do (scam, phishing, nội dung không phù hợp, khác), mô tả (10–2000 ký tự), email (tùy chọn), Turnstile. Link ở footer của **mọi template** mở form dạng **popup** (dialog) ngay trên landing page; không có JS thì link dẫn tới trang `/report` có cùng form. Trong preview của builder, popup mở được nhưng không gửi báo cáo.
 - Backend giới hạn 5 báo cáo được nhận / giờ / client (429 + `Retry-After`). Shop không tồn tại hoặc không `ACTIVE` trả 404.
-- Trang admin `/admin/reports` ("Report management"): thẻ tổng hợp theo trạng thái (cũng là bộ lọc), tìm kiếm (mô tả, email, shop), lọc theo lý do / shop, sắp xếp mới nhất / cũ nhất, xem chi tiết, **Resolve** hoặc **Dismiss** (ghi chú tùy chọn, ≤ 500 ký tự). Danh sách tự làm mới. Nội dung do khách nhập chỉ hiển thị dạng text thuần. Xử lý (`OPEN → RESOLVED | DISMISSED`) chỉ áp dụng cho báo cáo đang `OPEN`, báo cáo đã xử lý trả 409.
+- Trang admin `/systemadmin/reports` ("Report management"): thẻ tổng hợp theo trạng thái (cũng là bộ lọc), tìm kiếm (mô tả, email, shop), lọc theo lý do / shop, sắp xếp mới nhất / cũ nhất, xem chi tiết, **Resolve** hoặc **Dismiss** (ghi chú tùy chọn, ≤ 500 ký tự). Danh sách tự làm mới. Nội dung do khách nhập chỉ hiển thị dạng text thuần. Xử lý (`OPEN → RESOLVED | DISMISSED`) chỉ áp dụng cho báo cáo đang `OPEN`, báo cáo đã xử lý trả 409.
 - API (mock trong frontend, hợp đồng theo backend thật): `POST /public/sites/{slug}/reports`; `GET /admin/reports`, `PATCH /admin/reports/{id}` (chỉ `SUPER_ADMIN`; mock hiện chưa kiểm tra quyền).
 - Ngoài phạm vi hiện tại: shop owner xem báo cáo về shop của mình; thông báo email cho admin.
 
@@ -536,8 +536,9 @@ Browser ────────────────────────
 | BR-15 | Mọi timestamp lưu `timestamptz` (UTC). Giờ hiển thị và giờ trong schedule rule hiểu theo timezone IANA của shop. |
 | BR-16 | **Nhập liệu:** mọi ô nhập văn bản trong hệ thống cho phép người dùng gõ khoảng trắng ở **hai đầu**; khi bấm nút submit, mọi chuỗi được `trim()` rồi mới kiểm tra và lưu (trong builder, "submit" là Publish / Submit for review). Backend cũng trim lại và không tin client. Ngoại lệ: **mật khẩu không bị trim** (khoảng trắng ở hai đầu là một phần của mật khẩu). Khoảng trắng ở giữa chuỗi được giữ nguyên, trừ các trường có quy tắc riêng (mã khuyến mãi, slug không cho khoảng trắng ở giữa). |
 | BR-17 | **Nút Save của form thêm / sửa:** nút Save (hoặc Add / Create) của các form thêm / sửa trong khu vực shop owner (khuyến mãi, workshop, session, quy tắc lịch, booking thủ công, trang landing, thu chi, cài đặt shop) bị vô hiệu (disabled) và **chỉ được bật khi dữ liệu trong form khác với lúc mở form**; đưa dữ liệu về giá trị ban đầu thì nút lại bị vô hiệu. Sau khi lưu thành công, dữ liệu vừa lưu là mốc so sánh mới. Các hộp thoại xác nhận (hủy, check-in, ghi nhận thanh toán, đổi lịch) không thuộc quy tắc này. |
-| BR-18 | **Đa ngôn ngữ cho text tĩnh:** mọi text và label tĩnh của hệ thống (dashboard, landing page, form đặt chỗ, email, thông báo lỗi...) phải có đủ 5 ngôn ngữ: **tiếng Anh, tiếng Việt, tiếng Hàn, tiếng Nhật và tiếng Trung (giản thể)** trong `messages/<locale>/*.json`, cùng key và cùng tham số ICU. Khi làm form mới hoặc đổi text phải thêm / sửa đủ 5 ngôn ngữ trong cùng một thay đổi; test `messages-parity.test.ts` kiểm tra. **Không áp dụng** cho nội dung động do shop owner tạo (tên workshop, tiêu đề / mô tả khuyến mãi, nội dung trang...). |
+| BR-18 | **Đa ngôn ngữ cho text tĩnh:** mọi text và label tĩnh của hệ thống (dashboard, landing page, form đặt chỗ, email, thông báo lỗi...) phải có đủ 5 ngôn ngữ: **tiếng Anh, tiếng Việt, tiếng Hàn, tiếng Nhật và tiếng Trung (giản thể)** trong `messages/<locale>/*.json` (trừ khu vực system admin, xem BR-20), cùng key và cùng tham số ICU. Khi làm form mới hoặc đổi text phải thêm / sửa đủ 5 ngôn ngữ trong cùng một thay đổi; test `messages-parity.test.ts` kiểm tra. **Không áp dụng** cho nội dung động do shop owner tạo (tên workshop, tiêu đề / mô tả khuyến mãi, nội dung trang...). |
 | BR-19 | **Căn hàng field:** các field cùng một hàng (bộ lọc, form) phải ngang hàng: nhãn cùng một dòng và ô nhập cùng một dòng, kể cả khi một field có chú thích bên dưới (ví dụ "Giờ hiển thị theo …"). Component field dùng `content-start` để chú thích không làm giãn các field còn lại. |
+| BR-20 | **Khu vực system admin (`/systemadmin`) chỉ có 2 ngôn ngữ: tiếng Anh và tiếng Việt.** Có nút chọn ngôn ngữ (English / Tiếng Việt) trong thanh bên; cookie ngôn ngữ giao diện là ko / ja / zh thì khu vực này dùng tiếng Anh. Khu vực shop owner và landing page vẫn đủ 5 ngôn ngữ; `messages/{ko,ja,zh}/admin.json` không tồn tại và `messages-parity.test.ts` chỉ yêu cầu `admin.json` cho en và vi. API vẫn là `/api/v1/admin/*`. |
 
 ### 6.1 State machine booking
 

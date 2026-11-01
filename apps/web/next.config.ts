@@ -10,6 +10,9 @@ const nextConfig: NextConfig = {
     return [
       { source: "/dashboard", destination: "/shopowner", permanent: false },
       { source: "/dashboard/:path*", destination: "/shopowner/:path*", permanent: false },
+      // The system admin area moved from /admin to /systemadmin.
+      { source: "/admin", destination: "/systemadmin", permanent: false },
+      { source: "/admin/:path*", destination: "/systemadmin/:path*", permanent: false },
     ];
   },
   // Dev only: subdomains of PLATFORM_DOMAIN (e.g. app.localtest.me, clayco.localtest.me) load dev resources/HMR.

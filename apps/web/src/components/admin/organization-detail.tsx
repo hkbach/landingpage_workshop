@@ -125,7 +125,7 @@ export function OrganizationDetail({
               )}
               {status === "SUSPENDED" && <Button onClick={() => setDialog("reactivate")}>{t("reactivate")}</Button>}
               {status === "PENDING_REVIEW" && (
-                <Link href={`/admin/reviews/${shop.id}`} className={buttonVariants({ variant: "secondary" })}>
+                <Link href={`/systemadmin/reviews/${shop.id}`} className={buttonVariants({ variant: "secondary" })}>
                   {t("viewReview")}
                 </Link>
               )}

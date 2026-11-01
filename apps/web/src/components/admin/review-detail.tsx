@@ -142,7 +142,7 @@ export function ReviewDetail({ shop, workshops }: { shop: Shop; workshops: numbe
                     {t("notPendingBody", { status: ts(status) })}
                   </p>
                 )}
-                <Link href="/admin/reviews" className={buttonVariants({ variant: "secondary", className: "w-fit" })}>
+                <Link href="/systemadmin/reviews" className={buttonVariants({ variant: "secondary", className: "w-fit" })}>
                   {t("backToQueue")}
                 </Link>
               </>

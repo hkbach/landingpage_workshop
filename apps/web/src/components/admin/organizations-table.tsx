@@ -95,7 +95,7 @@ export function OrganizationsTable({ shops, stats }: { shops: Shop[]; stats: Sta
                       )}
                     </TableCell>
                     <TableCell>
-                      <Link href={`/admin/organizations/${s.id}`} className={buttonVariants({ variant: "outline", size: "sm" })}>
+                      <Link href={`/systemadmin/organizations/${s.id}`} className={buttonVariants({ variant: "outline", size: "sm" })}>
                         {tc("details")}
                         <span className="sr-only">: {s.name}</span>
                       </Link>

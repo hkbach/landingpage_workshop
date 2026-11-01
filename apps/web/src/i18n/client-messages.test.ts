@@ -54,7 +54,7 @@ describe("client components only use the namespaces their area sends", () => {
     ["app/(auth)", AREA_MESSAGES.auth],
     ["app/(marketing)", AREA_MESSAGES.marketing],
     ["app/shopowner", AREA_MESSAGES.shopowner],
-    ["app/admin", AREA_MESSAGES.admin],
+    ["app/systemadmin", AREA_MESSAGES.admin],
     ["app/sites", PUBLIC_SITE],
     ["components/admin", AREA_MESSAGES.admin],
     ["components/dashboard", AREA_MESSAGES.shopowner],

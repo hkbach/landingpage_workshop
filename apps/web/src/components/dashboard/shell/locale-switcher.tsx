@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { setUiLocale } from "./actions";
 
-export function LocaleSwitcher() {
+export function LocaleSwitcher({ locales = LOCALES, labelKey = "dashboard.shell.language" }: { locales?: readonly string[]; labelKey?: string }) {
   const t = useTranslations();
   const locale = useLocale();
   const router = useRouter();
@@ -30,7 +30,7 @@ export function LocaleSwitcher() {
     <DropdownMenu>
       <DropdownMenuTrigger
         className={buttonVariants({ variant: "outline", size: "default" })}
-        aria-label={t("dashboard.shell.language")}
+        aria-label={t(labelKey as never)}
         disabled={pending}
       >
         <Globe aria-hidden />
@@ -39,9 +39,9 @@ export function LocaleSwitcher() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-40">
         <DropdownMenuGroup>
-          <DropdownMenuLabel>{t("dashboard.shell.language")}</DropdownMenuLabel>
+          <DropdownMenuLabel>{t(labelKey as never)}</DropdownMenuLabel>
           <DropdownMenuRadioGroup value={locale} onValueChange={change}>
-            {LOCALES.map((l) => (
+            {locales.map((l) => (
               <DropdownMenuRadioItem key={l} value={l}>{t(`common.languages.${l}`)}</DropdownMenuRadioItem>
             ))}
           </DropdownMenuRadioGroup>

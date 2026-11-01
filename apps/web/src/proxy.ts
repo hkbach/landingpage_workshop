@@ -4,6 +4,12 @@ const PLATFORM_DOMAIN = process.env.PLATFORM_DOMAIN ?? "localtest.me";
 
 // Host routing (REQUIREMENTS 3.3): {slug}.PLATFORM_DOMAIN -> /sites/{slug}/...
 export function proxy(request: NextRequest) {
+  // The system admin area has its own set of languages: the i18n request config reads this header (see i18n/request.ts).
+  if (request.nextUrl.pathname === "/systemadmin" || request.nextUrl.pathname.startsWith("/systemadmin/")) {
+    const headers = new Headers(request.headers);
+    headers.set("x-ui-area", "systemadmin");
+    return NextResponse.next({ request: { headers } });
+  }
   const host = (request.headers.get("host") ?? "").split(":")[0]!.toLowerCase();
   if (host === PLATFORM_DOMAIN || host === `app.${PLATFORM_DOMAIN}` || !host.endsWith(`.${PLATFORM_DOMAIN}`)) {
     return NextResponse.next();

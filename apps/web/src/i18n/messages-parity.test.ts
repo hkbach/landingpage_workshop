@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { LOCALES } from "@workshop/shared";
+import { ADMIN_LOCALES, LOCALES } from "@workshop/shared";
 
 // Every static text exists in all five languages (en, vi, ko, ja, zh) with the same ICU arguments. Add or change a text in all of them.
 const DIR = path.join(process.cwd(), "messages");
@@ -17,7 +17,8 @@ describe("messages in every language", () => {
   it("English has every area", () => expect(AREAS.length).toBeGreaterThan(0));
   for (const locale of LOCALES.filter((l) => l !== "en")) {
     describe(locale, () => {
-      for (const file of AREAS) {
+      // The system admin area is only available in English and Vietnamese.
+      for (const file of AREAS.filter((f) => f !== "admin.json" || (ADMIN_LOCALES as readonly string[]).includes(locale))) {
         it(`${file}: same keys and ICU arguments as English, none empty`, () => {
           const en = read("en", file);
           const other = read(locale, file);

@@ -5,14 +5,16 @@ import { LogOut, ShieldCheck } from "lucide-react";
 import { AdminGuard } from "@/components/admin/admin-guard";
 import { AdminNav } from "@/components/admin/admin-nav";
 import { buttonVariants } from "@/components/ui/button";
+import { LocaleSwitcher } from "@/components/dashboard/shell/locale-switcher";
 import { AreaIntlProvider } from "@/i18n/AreaIntlProvider";
+import { ADMIN_LOCALES } from "@workshop/shared";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("admin.meta");
   return { title: t("title"), robots: { index: false, follow: false } };
 }
 
-export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
+export default async function AdminLayout({ children }: LayoutProps<"/systemadmin">) {
   const t = await getTranslations("admin.shell");
 
   return (
@@ -44,6 +46,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
                 <LogOut aria-hidden /> {t("logout")}
               </Link>
             </div>
+            <LocaleSwitcher locales={ADMIN_LOCALES} labelKey="admin.shell.language" />
             <AdminNav />
           </div>
         </aside>

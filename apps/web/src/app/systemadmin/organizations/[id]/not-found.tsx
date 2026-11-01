@@ -7,7 +7,7 @@ export default async function OrganizationNotFound() {
   return (
     <div className="grid justify-items-start gap-3">
       <h1 className="text-2xl font-semibold">{t("notFoundTitle")}</h1>
-      <Link href="/admin/organizations" className={buttonVariants({ variant: "outline" })}>
+      <Link href="/systemadmin/organizations" className={buttonVariants({ variant: "outline" })}>
         {t("backToList")}
       </Link>
     </div>

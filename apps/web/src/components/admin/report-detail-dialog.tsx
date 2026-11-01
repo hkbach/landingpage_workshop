@@ -84,7 +84,7 @@ function Body({ report: r, shopId, onClose, onDecide }: { report: ReportRecord; 
       <DialogFooter className="flex-wrap sm:justify-between">
         <div className="flex flex-wrap gap-2">
           {shopId ? (
-            <Link href={`/admin/organizations/${shopId}`} className={buttonVariants({ variant: "outline", size: "sm" })}>{t("viewShop")}</Link>
+            <Link href={`/systemadmin/organizations/${shopId}`} className={buttonVariants({ variant: "outline", size: "sm" })}>{t("viewShop")}</Link>
           ) : null}
           <a href={landingUrl(r.shopSlug)} target="_blank" rel="noopener noreferrer" className={buttonVariants({ variant: "outline", size: "sm" })}>
             {t("detail.openSite")}<span className="sr-only"> {tc("opensNewTab")}</span>

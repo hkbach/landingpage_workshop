@@ -7,10 +7,10 @@ import { Building2, ClipboardCheck, Flag, ScrollText } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ITEMS = [
-  { href: "/admin/organizations", key: "organizations", Icon: Building2 },
-  { href: "/admin/reviews", key: "reviews", Icon: ClipboardCheck },
-  { href: "/admin/reports", key: "reports", Icon: Flag },
-  { href: "/admin/audit-logs", key: "auditLogs", Icon: ScrollText },
+  { href: "/systemadmin/organizations", key: "organizations", Icon: Building2 },
+  { href: "/systemadmin/reviews", key: "reviews", Icon: ClipboardCheck },
+  { href: "/systemadmin/reports", key: "reports", Icon: Flag },
+  { href: "/systemadmin/audit-logs", key: "auditLogs", Icon: ScrollText },
 ] as const;
 
 export function AdminNav() {

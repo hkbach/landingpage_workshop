@@ -58,7 +58,7 @@ export function ReviewQueue({ initial }: { initial: Shop[] }) {
                         {shop.name} {tc("opensNewTab")}
                       </span>
                     </Link>
-                    <Link href={`/admin/reviews/${shop.id}`} className={buttonVariants({ variant: "secondary", size: "sm" })}>
+                    <Link href={`/systemadmin/reviews/${shop.id}`} className={buttonVariants({ variant: "secondary", size: "sm" })}>
                       {t("review")}
                       <span className="sr-only">: {shop.name}</span>
                     </Link>
