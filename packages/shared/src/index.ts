@@ -8,3 +8,4 @@ export * from "./locales";
 export * from "./reports";
 export * from "./landing-pages";
 export * from "./finance";
+export * from "./booking-stats";

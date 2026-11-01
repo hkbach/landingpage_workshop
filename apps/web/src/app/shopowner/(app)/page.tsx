@@ -1,10 +1,14 @@
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
-import { CalendarClock, CheckCircle2, Circle, ClipboardList, Wallet } from "lucide-react";
+import { getLocale, getTranslations } from "next-intl/server";
+import { CalendarClock, CalendarDays, CheckCircle2, Circle, ClipboardList, Sparkles, Users, Wallet } from "lucide-react";
+import { bookingSeries, entriesFromPayments, TREND_PERIODS, type TrendBucket, type TrendPeriod } from "@workshop/shared";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { SubmitForReview } from "@/components/dashboard/shell/submit-for-review";
+import { BookingTrend } from "@/components/dashboard/booking-trend";
+import { LiveSummary } from "@/components/dashboard/live-summary";
+import { SummaryCard } from "@/components/dashboard/summary-card";
 import { dayKey } from "@/lib/format";
-import { bookings, currentShop, sessions, sitePage, workshops } from "@/lib/mock/data";
+import { bookingHistory, bookings, currentShop, customers, mockFinanceEntries, mockLandingPages, sessions, sitePage, workshops } from "@/lib/mock/data";
 
 // Computed outside the component: depends on the current time.
 function computeOverview() {
@@ -14,7 +18,20 @@ function computeOverview() {
   const live = bookings.filter((b) => b.status !== "CANCELLED");
   const upcoming = sessions.filter((s) => s.status === "OPEN" && new Date(s.startsAt).getTime() > now);
   const activeWorkshopIds = new Set(workshops.filter((w) => w.status === "ACTIVE").map((w) => w.id));
+  // Every booking of the past year: the history plus the recent bookings of the mock shop.
+  const points = [...bookingHistory, ...bookings.map((b) => ({ startsAt: b.startsAt, status: b.status, guests: b.quantity }))];
+  const nowDate = new Date(now);
+  const trend = Object.fromEntries(TREND_PERIODS.map((p) => [p, bookingSeries(points, p, nowDate, tz)])) as Record<TrendPeriod, TrendBucket[]>;
+  const month = trend["3m"].at(-1)!;
+  const seatsOpen = upcoming.reduce((n, s) => n + s.capacity, 0);
+  const seatsTaken = upcoming.reduce((n, s) => n + s.reservedCount, 0);
+  const bookingCount = (id: string) => bookings.filter((b) => b.customerId === id && b.status !== "CANCELLED").length;
   return {
+    trend,
+    month: { total: month.total, guests: month.guests, lostRate: month.total ? month.lost / month.total : 0 },
+    workshops: { active: workshops.filter((w) => w.status === "ACTIVE").length, draft: workshops.filter((w) => w.status === "DRAFT").length },
+    sessions: { upcoming: upcoming.length, fill: seatsOpen ? seatsTaken / seatsOpen : 0 },
+    customers: { total: customers.length, repeat: customers.filter((c) => bookingCount(c.id) >= 2).length },
     todayBookings: live.filter((b) => dayKey(b.startsAt, tz) === today).length,
     upcomingSessions: upcoming.length,
     unpaid: live.filter((b) => b.paymentStatus === "UNPAID").length,
@@ -37,7 +54,11 @@ const CHECKLIST_LINKS = {
 
 export default async function OverviewPage() {
   const t = await getTranslations("dashboard.overview");
+  const ts = await getTranslations("dashboard.overview.summary");
+  const locale = await getLocale();
   const o = computeOverview();
+  const pct = (n: number) => new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 0 }).format(n);
+  const num = (n: number) => new Intl.NumberFormat(locale).format(n);
   const kpis = [
     { key: "today", value: o.todayBookings, href: "/shopowner/today", icon: CalendarClock },
     { key: "upcoming", value: o.upcomingSessions, href: "/shopowner/sessions", icon: ClipboardList },
@@ -63,6 +84,38 @@ export default async function OverviewPage() {
           </Link>
         ))}
       </section>
+
+      <section aria-labelledby="summary-heading" className="grid gap-3">
+        <h2 id="summary-heading" className="text-lg font-semibold">{ts("title")}</h2>
+        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <SummaryCard
+            href="/shopowner/bookings" icon={ClipboardList} title={ts("bookings.title")} linkLabel={ts("open")}
+            rows={[
+              { label: ts("bookings.month"), value: num(o.month.total) },
+              { label: ts("bookings.guests"), value: num(o.month.guests) },
+              { label: ts("bookings.lostRate"), value: pct(o.month.lostRate) },
+            ]}
+          />
+          <SummaryCard
+            href="/shopowner/workshops" icon={Sparkles} title={ts("workshops.title")} linkLabel={ts("open")}
+            rows={[{ label: ts("workshops.active"), value: num(o.workshops.active) }, { label: ts("workshops.draft"), value: num(o.workshops.draft) }]}
+          />
+          <SummaryCard
+            href="/shopowner/sessions" icon={CalendarDays} title={ts("sessions.title")} linkLabel={ts("open")}
+            rows={[{ label: ts("sessions.upcoming"), value: num(o.sessions.upcoming) }, { label: ts("sessions.fill"), value: pct(o.sessions.fill) }]}
+          />
+          <SummaryCard
+            href="/shopowner/customers" icon={Users} title={ts("customers.title")} linkLabel={ts("open")}
+            rows={[{ label: ts("customers.total"), value: num(o.customers.total) }, { label: ts("customers.repeat"), value: num(o.customers.repeat) }]}
+          />
+          <LiveSummary
+            derived={entriesFromPayments(bookings)} seed={mockFinanceEntries} currency={currentShop.currency} timezone={currentShop.timezone}
+            mainPage={{ name: currentShop.name, template: sitePage.template, seed: mockLandingPages }} shopStatus={currentShop.status}
+          />
+        </ul>
+      </section>
+
+      <BookingTrend series={o.trend} />
 
       {
         <Card>

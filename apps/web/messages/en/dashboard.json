@@ -59,6 +59,66 @@
       "submitted": "Submitted. We will review your shop and let you know by email.",
       "readyNote": "All requirements are met.",
       "notReadyNote": "Complete all requirements to submit."
+    },
+    "summary": {
+      "title": "Summary",
+      "open": "Open",
+      "bookings": {
+        "title": "Bookings",
+        "month": "Bookings this month",
+        "guests": "Guests this month",
+        "lostRate": "Cancelled or no-show"
+      },
+      "workshops": {
+        "title": "Workshops",
+        "active": "Active",
+        "draft": "Drafts"
+      },
+      "sessions": {
+        "title": "Sessions",
+        "upcoming": "Upcoming",
+        "fill": "Seats booked"
+      },
+      "customers": {
+        "title": "Customers",
+        "total": "Total",
+        "repeat": "Returning customers"
+      },
+      "finance": {
+        "title": "Income & expenses (this month)",
+        "income": "Income",
+        "expense": "Expenses",
+        "profit": "Profit",
+        "loss": "Loss"
+      },
+      "pages": {
+        "title": "Landing pages",
+        "count": "Pages",
+        "public": "Public page",
+        "none": "None"
+      }
+    },
+    "trend": {
+      "title": "Bookings over time",
+      "subtitle": "Bookings by the date of their session.",
+      "periodLabel": "Period",
+      "period": {
+        "1m": "Last month (by day)",
+        "3m": "Last 3 months",
+        "6m": "Last 6 months",
+        "12m": "Last year"
+      },
+      "totalsLabel": "Totals for the period",
+      "total": "Bookings",
+      "guests": "Guests",
+      "attended": "Attended",
+      "upcoming": "Upcoming",
+      "lost": "Cancelled or no-show",
+      "lostRate": "Cancelled or no-show rate",
+      "chartSummary": "Bookings for the {period}: {total} in total, {attended} attended, {upcoming} still to come, {lost} cancelled or no-show.",
+      "showTable": "Show the numbers as a table",
+      "day": "Day",
+      "month": "Month"
     }
   },
   "settings": {

@@ -206,3 +206,24 @@ export const mockFinanceEntries: FinanceEntry[] = (() => {
   equip.occurredAt = new Date(Date.UTC(Math.floor((base - 3) / 12), (base - 3) % 12, 9, 12)).toISOString();
   return out;
 })();
+
+/**
+ * Bookings of the past year (one point per booking: session start, outcome, guests) so the overview chart has history. The
+ * recent `bookings` above are added on top. Deterministic, never dated after yesterday; busier on weekends and slowly growing.
+ */
+export const bookingHistory: { startsAt: string; status: string; guests: number }[] = (() => {
+  let seed = 20260101;
+  const rand = () => { seed = (seed * 1_664_525 + 1_013_904_223) % 4_294_967_296; return seed / 4_294_967_296; };
+  const out: { startsAt: string; status: string; guests: number }[] = [];
+  for (let d = 364; d >= 1; d--) {
+    const startsAt = at(-d, 9);
+    const weekday = new Date(startsAt).getUTCDay(); // 0 = Sunday, 6 = Saturday
+    const growth = 1 + (364 - d) / 364 * 1.5;
+    const n = Math.floor(rand() * 2.2 + growth + (weekday === 0 || weekday === 6 ? 1.2 : 0));
+    for (let i = 0; i < n; i++) {
+      const r = rand();
+      out.push({ startsAt: at(-d, i % 2 ? 14 : 9), status: r < 0.76 ? "COMPLETED" : r < 0.9 ? "CANCELLED" : "NO_SHOW", guests: 1 + Math.floor(rand() * 4) });
+    }
+  }
+  return out;
+})();

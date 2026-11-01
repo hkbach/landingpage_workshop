@@ -430,6 +430,11 @@ Browser ────────────────────────
 - Ngày nhập là ngày nghiệp vụ, lưu `occurred_at` lúc 12:00 UTC của ngày đó. Biểu đồ vẽ bằng SVG, không thêm thư viện.
 - MVP frontend: khoản nhập tay lưu trong localStorage; backend cần bảng `finance_entries` (`organization_id`, `type`, `category`, `amount bigint`, `currency`, `occurred_at timestamptz`, `note`, `created_by`), lọc theo `organization_id` và ghi audit khi thêm / sửa / xóa. Chưa phân quyền theo vai trò (nên giới hạn cho OWNER).
 
+**FR-PAY-03 – Tổng quan của shop owner / Overview (Could)**
+- Trang `/shopowner` có: các số liệu chính (booking hôm nay, session sắp tới, booking chưa thanh toán); **thẻ summary cho từng phần** của shop, mỗi thẻ dẫn tới trang tương ứng: Bookings (tháng này: số booking, số khách, tỷ lệ hủy / no-show), Workshops (active / draft), Sessions (sắp tới, tỷ lệ ghế đã đặt), Customers (tổng, khách quay lại), Income & expenses (thu, chi, lãi / lỗ của tháng này), Landing pages (số page / 2, page đang public); **biểu đồ tình hình booking** theo 1 tháng (theo ngày), 3 tháng, 6 tháng và 1 năm (theo tháng); và checklist chuẩn bị publish.
+- Biểu đồ cột chồng theo kết quả: đã tham dự (`CHECKED_IN`, `COMPLETED`), sắp tới (`CONFIRMED`), hủy / no-show (`CANCELLED`, `NO_SHOW`, `LATE_RELEASED`); booking tính theo ngày của session, theo timezone của shop. Kèm tổng booking, số khách, số đã tham dự, tỷ lệ hủy / no-show của kỳ. Có bảng số liệu thay thế; vẽ bằng SVG, không thêm thư viện.
+- API dự kiến: `GET /dashboard/summary` và `GET /dashboard/booking-stats?period=1m|3m|6m|12m`, lọc theo `organization_id`, tổng hợp ở backend.
+
 **FR-CUST-01 – Khách hàng (Must)**
 - Danh sách customer của shop, chi tiết và lịch sử booking. Tìm theo tên/email.
 - Customer thuộc riêng từng shop; không gộp giữa các shop.
