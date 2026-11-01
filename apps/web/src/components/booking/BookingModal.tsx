@@ -35,6 +35,8 @@ interface Props {
   promotions?: PromotionRecord[];
   /** Base path of the site ("" on the subdomain host). */
   basePath: string;
+  /** Builder preview: submitting shows a note and makes no booking. */
+  preview?: boolean;
 }
 
 const STEPS = ["date", "time", "guests", "contact", "confirm"] as const;
@@ -115,7 +117,7 @@ function PromoOption({ checked, onChange, label, detail, note }: {
   );
 }
 
-function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, sessions, locale, basePath, promotions = [] }: Props) {
+function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, sessions, locale, basePath, promotions = [], preview = false }: Props) {
   const t = useTranslations("site.booking");
   const tp = useTranslations("site");
   const router = useRouter();
@@ -137,6 +139,7 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
   const [quantity, setQuantity] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(false);
+  const [previewDone, setPreviewDone] = useState(false);
 
   const workshop = workshops.find((w) => w.id === workshopId);
   const wsSessions = bookable.filter((s) => s.workshopId === workshopId);
@@ -190,6 +193,7 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
 
   const onSubmit = handleSubmit(async (values) => {
     if (!workshop || !session) return;
+    if (preview) { setPreviewDone(true); return; } // nothing is created from the builder
     setSubmitting(true);
     setSubmitError(false);
     try {
@@ -209,6 +213,15 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
       setSubmitting(false);
     }
   });
+
+  if (previewDone) {
+    return (
+      <div role="status" className="space-y-4">
+        <p className="rounded-lg border border-black/20 bg-[var(--site-surface)] p-4 text-sm">{t("previewDone")}</p>
+        <button type="button" className={primaryBtn} onClick={() => onOpenChange(false)}>{t("close")}</button>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={onSubmit} noValidate className="space-y-5">

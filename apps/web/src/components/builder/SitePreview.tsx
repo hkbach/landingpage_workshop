@@ -8,16 +8,17 @@ import type { Locale, PromotionRecord } from "@workshop/shared";
 import { buttonVariants } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { PageRenderer } from "@/components/sections/PageRenderer";
+import { BookingProvider } from "@/components/booking/BookingProvider";
 import { ReportProvider } from "@/components/site/ReportProvider";
 import type { RenderContext } from "@/components/sections/context";
-import type { PageContent, PageTheme, Shop, Workshop } from "@/lib/types";
+import type { PageContent, PageTheme, Session, Shop, Workshop } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { SiteChromeContext } from "@/components/sections/chrome-context";
 import { applyTemplate, themeForTemplate, type TemplateKey } from "@/components/sections/templates";
 import { draftKeyFor, MAIN_PAGE_ID, parseDraft } from "./draft-store";
 import { PAGES_KEY, parsePages, starterFor } from "./pages-store";
 
-type PreviewShop = Pick<Shop, "name" | "defaultLocale" | "enabledLocales" | "timezone" | "currency">;
+type PreviewShop = Pick<Shop, "name" | "slug" | "defaultLocale" | "enabledLocales" | "timezone" | "currency" | "bookingCutoffMinutes">;
 
 function subscribe(cb: () => void) {
   window.addEventListener("storage", cb);
@@ -28,6 +29,8 @@ interface Props {
   shop: PreviewShop;
   initial: { content: PageContent; theme: PageTheme; template: TemplateKey };
   workshops: Workshop[];
+  /** Sessions guests can book (the Book button opens the booking popup, which makes no booking from the preview). */
+  sessions?: Session[];
   /** Promotions that are active today: the promotions section shows them as guests will see them. */
   promotions?: PromotionRecord[];
   siteMessages: Record<string, Record<string, unknown>>;
@@ -37,7 +40,7 @@ interface Props {
   pageId?: string;
 }
 
-export function SitePreview({ shop, initial, workshops, promotions = [], siteMessages, previewTemplate, pageId = MAIN_PAGE_ID }: Props) {
+export function SitePreview({ shop, initial, workshops, sessions = [], promotions = [], siteMessages, previewTemplate, pageId = MAIN_PAGE_ID }: Props) {
   const t = useTranslations("builder");
   const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
   const [lang, setLang] = useState<Locale>(shop.defaultLocale);
@@ -128,9 +131,11 @@ export function SitePreview({ shop, initial, workshops, promotions = [], siteMes
           <NextIntlClientProvider locale={lang} messages={{ site: siteMessages[lang] ?? {} }}>
             <SiteChromeContext.Provider value={chrome}>
               {/* The report popup opens as on the public site, but nothing is ever sent from the preview. */}
-              <ReportProvider slug="preview" theme={draft.theme} preview>
-                <PageRenderer content={draft.content} theme={draft.theme} ctx={ctx} />
-              </ReportProvider>
+              <BookingProvider shop={shop} workshops={workshops} sessions={sessions} theme={draft.theme} locale={lang} basePath="" promotions={promotions} preview>
+                <ReportProvider slug="preview" theme={draft.theme} preview>
+                  <PageRenderer content={draft.content} theme={draft.theme} ctx={ctx} />
+                </ReportProvider>
+              </BookingProvider>
             </SiteChromeContext.Provider>
           </NextIntlClientProvider>
         </div>

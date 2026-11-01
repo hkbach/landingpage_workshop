@@ -1,7 +1,7 @@
 import { loadMessages } from "@/i18n/messages";
 import { isTemplateKey } from "@/components/sections/templates";
 import { SitePreview } from "@/components/builder/SitePreview";
-import { currentShop, sitePage, workshops } from "@/lib/mock/data";
+import { currentShop, sessions, sitePage, workshops } from "@/lib/mock/data";
 import { publicPromotions } from "@/lib/mock/promotion-store";
 
 // Preview of the DRAFT with the same PageRenderer as the public site (FR-SITE-03). Dashboard-only route.
@@ -15,11 +15,12 @@ export default async function SitePreviewPage({ searchParams }: PageProps<"/shop
   return (
     <SitePreview
       shop={{
-        name: currentShop.name, defaultLocale: currentShop.defaultLocale, enabledLocales: currentShop.enabledLocales,
+        name: currentShop.name, slug: currentShop.slug, bookingCutoffMinutes: currentShop.bookingCutoffMinutes, defaultLocale: currentShop.defaultLocale, enabledLocales: currentShop.enabledLocales,
         timezone: currentShop.timezone, currency: currentShop.currency,
       }}
       initial={{ content: sitePage.draft, theme: sitePage.theme, template: sitePage.template }}
       workshops={workshops.filter((w) => w.status === "ACTIVE")}
+      sessions={sessions.filter((s) => workshops.some((w) => w.id === s.workshopId && w.status === "ACTIVE"))}
       promotions={publicPromotions()}
       siteMessages={Object.fromEntries(messages)}
       previewTemplate={template}

@@ -70,6 +70,8 @@
     "consent": "I agree to the booking terms, including the late arrival policy above.",
     "turnstilePlaceholder": "Anti-spam verification (Turnstile) will appear here.",
     "submitError": "We could not complete your booking. Please try again.",
+    "previewDone": "Preview: your guests would now see their booking confirmation. No booking was made.",
+    "close": "Close",
     "back": "Back",
     "next": "Next",
     "submitting": "Booking...",

@@ -382,6 +382,8 @@ Browser ────────────────────────
 - Lỗi hết chỗ: HTTP 409, code `SESSION_FULL`, UI yêu cầu chọn giờ khác.
 - AC: 2 khách tranh chỗ cuối cùng thì chỉ 1 người thành công (có test concurrency).
 
+- **Nút Book trong trang xem trước của builder** (`/shopowner/site/preview`): mở đúng popup đặt chỗ như khách thấy (cùng workshop, session, khuyến mãi); khi gửi chỉ hiện thông báo "Preview … No booking was made" và **không tạo booking** hay chuyển trang.
+
 **FR-BOOK-03 – Trang xác nhận (Must)**
 - Sau khi đặt: hiển thị booking code, workshop, ngày giờ (timezone của shop), số khách, tổng tiền ("Pay at the studio"), địa chỉ + link bản đồ, chính sách đến trễ, thông tin liên hệ shop.
 - Không có nút hủy. Hướng dẫn: "To change or cancel, please contact the studio."
