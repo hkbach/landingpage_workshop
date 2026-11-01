@@ -83,16 +83,31 @@ export default async function WorkshopsPage() {
                         </ul>
                       )}
                     </TableCell>
-                    <TableCell className="min-w-44 whitespace-normal" data-testid="workshop-max-discount">
+                    <TableCell className="min-w-56 whitespace-normal" data-testid="workshop-max-discount">
                       {promo.max.amount === 0 ? (
                         <span className="text-muted-foreground">–</span>
                       ) : (
-                        <div className="grid gap-0.5 text-sm">
-                          <span className="font-semibold tabular-nums">
-                            {t("list.maxValue", { amount: `−${money(promo.max.amount)}`, percent: percent.format(promo.max.percent / 100) })}
-                          </span>
-                          <span className="text-xs text-muted-foreground">{t("list.priceAfter", { amount: money(promo.priceAfter) })}</span>
-                          {usedForMax.length > 0 ? <span className="text-xs text-muted-foreground">{t("list.using", { names: usedForMax.map(title).join(", ") })}</span> : null}
+                        <div className="grid gap-2 text-sm">
+                          {/* What the promotions are worth added up: every one, even those that cannot be combined. */}
+                          {promo.all.amount !== promo.max.amount ? (
+                            <div className="grid gap-0.5" data-testid="workshop-all-discount">
+                              <span className="text-xs text-muted-foreground">{t("list.allTogether", { count: promo.applicable.length })}</span>
+                              <span className="font-semibold tabular-nums">
+                                {t("list.maxValue", { amount: `−${money(promo.all.amount)}`, percent: percent.format(promo.all.percent / 100) })}
+                              </span>
+                            </div>
+                          ) : null}
+                          {/* What one guest can really get: promotions that must be used alone are not added to the others. */}
+                          <div className="grid gap-0.5" data-testid="workshop-combinable-discount">
+                            <span className="text-xs text-muted-foreground">
+                              {promo.all.amount !== promo.max.amount ? t("list.combinableMax") : t("list.allTogether", { count: promo.applicable.length })}
+                            </span>
+                            <span className="font-semibold tabular-nums">
+                              {t("list.maxValue", { amount: `−${money(promo.max.amount)}`, percent: percent.format(promo.max.percent / 100) })}
+                            </span>
+                            <span className="text-xs text-muted-foreground">{t("list.priceAfter", { amount: money(promo.priceAfter) })}</span>
+                            {usedForMax.length > 0 ? <span className="text-xs text-muted-foreground">{t("list.using", { names: usedForMax.map(title).join(", ") })}</span> : null}
+                          </div>
                         </div>
                       )}
                     </TableCell>

@@ -111,9 +111,14 @@ export function fullDiscountWorkshops(
 export interface WorkshopPromotions<T extends PromotionRecord = PromotionRecord> {
   /** The promotions a guest can use on this workshop today (active and covering it), newest start first. */
   applicable: T[];
-  /** The most they can take off one guest's price (see deepestDiscount), as an amount and as a share of the price. */
+  /**
+   * The total if EVERY applicable promotion were applied together, as an amount and as a share of the price (never above the
+   * price). It ignores "Only this promotion", so it is what the promotions are worth added up, not what one guest can get.
+   */
+  all: DeepestDiscount;
+  /** The most one guest can really take off the price: promotions that must be used alone are not added to others (see deepestDiscount). */
   max: DeepestDiscount;
-  /** The price after that discount. */
+  /** The price after `max`. */
   priceAfter: number;
 }
 
@@ -121,5 +126,10 @@ export interface WorkshopPromotions<T extends PromotionRecord = PromotionRecord>
 export function workshopPromotions<T extends PromotionRecord>(workshop: { id: string; priceAmount: number }, promotions: readonly T[], today: string): WorkshopPromotions<T> {
   const applicable = activePromotions(promotions, today).filter((p) => promotionAppliesTo(p, workshop.id));
   const max = deepestDiscount(workshop.priceAmount, applicable);
-  return { applicable, max, priceAfter: workshop.priceAmount - max.amount };
+  // Everything added up, as if every promotion could be combined.
+  const r = priceBooking({ unitPrice: workshop.priceAmount, quantity: 1, promotions: applicable.map((p) => ({ ...p, stacking: "MULTIPLE" as const })) });
+  const all: DeepestDiscount = r.ok && r.discount > 0
+    ? { amount: r.discount, percent: workshop.priceAmount > 0 ? (r.discount / workshop.priceAmount) * 100 : 0, promotionIds: applicable.map((p) => p.id) }
+    : { amount: 0, percent: 0, promotionIds: [] };
+  return { applicable, all, max, priceAfter: workshop.priceAmount - max.amount };
 }

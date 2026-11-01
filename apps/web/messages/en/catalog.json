@@ -25,7 +25,7 @@
     "minutes": "{n} min",
     "promotions": "Promotions you can apply",
     "maxDiscount": "Maximum discount",
-    "maxDiscountHint": "The most one guest can get off the price with the promotions that run today, following the rules for combining them.",
+    "maxDiscountHint": "The first figure adds up every promotion that applies. A guest cannot always get that much: a promotion marked \"Only this promotion\" cannot be added to the others, so the second figure is the most one guest can really get.",
     "noPromotions": "No promotion applies",
     "offPercent": "{value}% off",
     "offAmount": "{amount} off",
@@ -34,7 +34,9 @@
     "maxValue": "{amount} ({percent})",
     "using": "Using: {names}",
     "priceAfter": "Price after: {amount}",
-    "managePromotions": "Manage promotions"
+    "managePromotions": "Manage promotions",
+    "allTogether": "All {count} promotions together",
+    "combinableMax": "Most one guest can combine"
   },
   "detail": {
     "tabDetails": "Details",

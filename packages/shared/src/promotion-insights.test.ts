@@ -153,6 +153,23 @@ describe("workshopPromotions", () => {
     expect(workshopPromotions(w1, list, TODAY).applicable.map((x) => x.id).sort()).toEqual(["alone", "all", "fix"].sort());
     expect(workshopPromotions({ id: "ws-2", priceAmount: 400_000 }, list, TODAY).applicable.map((x) => x.id)).toContain("ws2");
   });
+  it("adds up every applicable promotion, as if they could all be combined", () => {
+    // 10% (65,000) + 40% (260,000) + 50,000 fixed = 375,000 (57.7%), although the 40% promotion cannot be combined with the others
+    const r = workshopPromotions(w1, list, TODAY);
+    expect(r.all.amount).toBe(375_000);
+    expect(r.all.percent).toBeCloseTo(57.69, 1);
+    expect(r.all.promotionIds.sort()).toEqual(["alone", "all", "fix"].sort());
+    expect(r.all.amount).toBeGreaterThan(r.max.amount);
+  });
+  it("is the same as the maximum when every promotion can be combined", () => {
+    const r = workshopPromotions(w1, list.filter((x) => x.id !== "alone"), TODAY);
+    expect(r.all).toEqual(r.max);
+  });
+  it("never adds up to more than the price", () => {
+    const many = [full({ id: "a", discountValue: 70 }), full({ id: "b", discountValue: 60 })];
+    const r = workshopPromotions(w1, many, TODAY);
+    expect(r.all).toMatchObject({ amount: 650_000, percent: 100 });
+  });
   it("gives the deepest discount a guest can reach, as an amount and a share, and the price after it", () => {
     // combinable: 10% of 650,000 = 65,000 plus 50,000 = 115,000 (17.7%); the 40% promotion alone takes 260,000 (40%)
     const r = workshopPromotions(w1, list, TODAY);
@@ -170,7 +187,7 @@ describe("workshopPromotions", () => {
   });
   it("is nothing when no promotion applies", () => {
     const r = workshopPromotions(w1, [list[1]!], TODAY);
-    expect(r).toEqual({ applicable: [], max: { amount: 0, percent: 0, promotionIds: [] }, priceAfter: 650_000 });
+    expect(r).toEqual({ applicable: [], all: { amount: 0, percent: 0, promotionIds: [] }, max: { amount: 0, percent: 0, promotionIds: [] }, priceAfter: 650_000 });
   });
   it("never goes above the price", () => {
     const r = workshopPromotions({ id: "ws-1", priceAmount: 40_000 }, [full({ id: "big", discountType: "FIXED_AMOUNT", discountValue: 90_000 })], TODAY);
