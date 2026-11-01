@@ -13,6 +13,7 @@ import { NativeSelect } from "@/components/ops/native-select";
 import type { ScheduleRule } from "@/lib/mock/ops";
 import { cn } from "@/lib/utils";
 import { MAX_CAPACITY } from "./workshop-form";
+import { useDirty } from "@/lib/use-dirty";
 
 const WEEKDAYS = [0, 1, 2, 3, 4, 5, 6] as const; // 0 = Sunday ... 6 = Saturday (FR-SCHED-01 weekdays 0-6)
 
@@ -105,6 +106,7 @@ function RuleForm({
   const [cap, setCap] = useState(rule?.capacityOverride ? String(rule.capacityOverride) : "");
   const [status, setStatus] = useState<ScheduleRule["status"]>(rule?.status ?? "ACTIVE");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const dirty = useDirty({ weekdays, times, from, to, cap, status }, rule?.id ?? "new");
 
   function addTime() {
     if (!TIME_RE.test(timeInput)) return setErrors((e) => ({ ...e, times: "errors.timeInvalid" }));
@@ -200,7 +202,7 @@ function RuleForm({
       </div>
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onCancel}>{tops("common.back")}</Button>
-        <Button type="submit">{t("rules.save")}</Button>
+        <Button type="submit" disabled={!dirty}>{t("rules.save")}</Button>
       </DialogFooter>
     </form>
   );

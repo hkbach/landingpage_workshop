@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useDirty } from "@/lib/use-dirty";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
-import { ImageIcon, OctagonX, Pause, Pencil, Play, Plus, Trash2, TriangleAlert } from "lucide-react";
+import { ImageIcon, OctagonX, Pause, Pencil, Play, Plus, RefreshCw, Trash2, TriangleAlert } from "lucide-react";
 import {
   countByStatus, discountedPrice, DISCOUNT_TYPES, filterPromotions, formatMoney, fullDiscountWorkshops, isPromotionCodeTaken, isPromotionDeletable, minorDigits, OVER_BUDGET_PERCENT, overBudgetWorkshops, pickLocalized, promotionAppliesTo,
   promotionInputSchema, promotionStatus, PROMOTION_DESCRIPTION_MAX, PROMOTION_TITLE_MAX, STACKING_MODES,
@@ -41,6 +42,8 @@ const STATUS_STYLES: Record<PromotionStatus, string> = {
 interface FormState {
   id: string | null; title: Localized; description: Localized; discountType: DiscountType; value: string; code: string; imageUrl: string; stacking: StackingMode;
   appliesTo: "ALL" | "SELECTED"; workshopIds: string[]; startDate: string; endDate: string; enabled: boolean;
+  /** Set when an expired promotion is renewed: the old first day, which the owner is asked to change. */
+  renewFrom?: string;
 }
 
 /** A message that needs the shop owner's attention is shown in a pop-up, not on the top of the page. */
@@ -136,9 +139,10 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
     setMessage(null);
     setForm({ id: null, title: {}, description: {}, discountType: "PERCENT", value: "", code: "", imageUrl: "", stacking: "SINGLE", appliesTo: "ALL", workshopIds: [], startDate: today, endDate: addDays(today, 30), enabled: true });
   }
-  function openEdit(p: PromotionRecord) {
+  function openEdit(p: PromotionRecord, renew = false) {
     setMessage(null);
     setForm({
+      ...(renew ? { renewFrom: p.startDate } : {}),
       id: p.id, title: { ...p.title }, description: { ...p.description }, discountType: p.discountType,
       value: p.discountType === "PERCENT" ? String(p.discountValue) : String(p.discountValue / 10 ** minorDigits(shop.currency)),
       code: p.code, imageUrl: p.imageUrl ?? "", stacking: p.stacking, appliesTo: p.appliesTo, workshopIds: [...p.workshopIds], startDate: p.startDate, endDate: p.endDate, enabled: p.enabled,
@@ -280,6 +284,9 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
                     <TableCell className="min-w-28 whitespace-normal text-sm">{t(`stackingOption.${p.stacking}.label`)}</TableCell>
                     <TableCell className="whitespace-nowrap text-right">
                       <Button size="icon-sm" variant="ghost" title={t("edit")} onClick={() => openEdit(p)}><Pencil aria-hidden /><span className="sr-only">{t("edit")}: {title}</span></Button>
+                      {status === "EXPIRED" ? (
+                        <Button size="icon-sm" variant="ghost" title={t("renew")} onClick={() => openEdit(p, true)}><RefreshCw aria-hidden /><span className="sr-only">{t("renew")}: {title}</span></Button>
+                      ) : null}
                       {status !== "EXPIRED" ? (
                         <Button size="icon-sm" variant="ghost" title={p.enabled ? t("pause") : t("resume")} disabled={toggle.isPending} onClick={() => toggle.mutate({ id: p.id, enabled: !p.enabled })}>
                           {p.enabled ? <Pause aria-hidden /> : <Play aria-hidden />}<span className="sr-only">{p.enabled ? t("pause") : t("resume")}: {title}</span>
@@ -363,6 +370,13 @@ function PromotionDialog({ form, setForm, shop, workshops, others, money, day, o
       }
     },
   });
+  const dirty = useDirty(form, form ? (form.id ?? "new") : null);
+  const renewing = form?.renewFrom !== undefined && form.startDate === form.renewFrom;
+  useEffect(() => {
+    if (!form?.renewFrom) return;
+    const timer = setTimeout(() => document.getElementById("pr-start")?.focus(), 80);
+    return () => clearTimeout(timer);
+  }, [form?.id, form?.renewFrom]);
   const set = (patch: Partial<FormState>) => { if (form) { setForm({ ...form, ...patch }); setErrors({}); setFailed(null); } };
   const setLoc = (key: "title" | "description", text: string) => form && set({ [key]: { ...form[key], [lang]: text } });
   const workshopName = (id: string) => pickLocalized(workshops.find((w) => w.id === id)?.title ?? {}, lang, shop.defaultLocale);
@@ -501,8 +515,8 @@ function PromotionDialog({ form, setForm, shop, workshops, others, money, day, o
                 {errors.workshopIds ? <p role="alert" className="text-xs text-destructive">{errors.workshopIds}</p> : null}
               </fieldset>
               <div className="grid gap-4 sm:grid-cols-2">
-                <Field id="pr-start" label={t("fieldStart")} required error={errors.startDate}>
-                  {(p) => <Input {...p} type="date" value={form.startDate} onChange={(e) => set({ startDate: e.target.value })} />}
+                <Field id="pr-start" label={t("fieldStart")} required error={errors.startDate} hint={renewing ? t("renewHint") : undefined}>
+                  {(p) => <Input {...p} type="date" className={renewing ? "border-amber-500 ring-2 ring-amber-400" : undefined} value={form.startDate} onChange={(e) => set({ startDate: e.target.value })} />}
                 </Field>
                 <Field id="pr-end" label={t("fieldEnd")} required error={errors.endDate}>
                   {(p) => <Input {...p} type="date" value={form.endDate} onChange={(e) => set({ endDate: e.target.value })} />}
@@ -530,7 +544,7 @@ function PromotionDialog({ form, setForm, shop, workshops, others, money, day, o
               <p role="alert" className="min-h-5 text-sm text-destructive">{failed}</p>
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setForm(null)}>{t("cancel")}</Button>
-                <Button type="submit" disabled={save.isPending}>{t("save")}</Button>
+                <Button type="submit" disabled={save.isPending || !dirty}>{t("save")}</Button>
               </DialogFooter>
             </form>
           ) : null}

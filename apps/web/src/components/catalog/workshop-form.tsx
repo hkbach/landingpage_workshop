@@ -20,6 +20,7 @@ import { issuesToErrors } from "@/components/ops/validation";
 import type { Workshop } from "@/lib/types";
 import { LanguageBar } from "@/components/language/LanguageBar";
 import { useEditingLanguage } from "@/lib/use-shop-language";
+import { useDirty } from "@/lib/use-dirty";
 
 /** Upper bound for capacity until PLAN_LIMITS is wired to the plan (FR-WS-01: 1-50). */
 export const MAX_CAPACITY = 50;
@@ -66,6 +67,8 @@ export function WorkshopForm({
   const [saved, setSaved] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [initialPrice] = useState(d.price);
+  const [version, setVersion] = useState(0); // bumped when the data is saved: what is saved is the new starting point
+  const dirty = useDirty(d, version);
 
   const touch = () => setSaved(false);
   const setField = <K extends keyof Draft>(k: K, v: Draft[K]) => { setD((p) => ({ ...p, [k]: v })); setErrors((e) => ({ ...e, [k]: "" })); touch(); };
@@ -107,13 +110,13 @@ export function WorkshopForm({
     setErrors({});
     // Every text is trimmed when the form is submitted (the form then shows what was saved).
     setD((p) => trimDeep(p));
-    setSaved(true);
+    setSaved(true); setVersion((v) => v + 1);
     onStatusChange?.(d.status);
   }
 
   function archive() {
     setD((p) => ({ ...p, status: "ARCHIVED" }));
-    setArchiveOpen(false); setSaved(true);
+    setArchiveOpen(false); setSaved(true); setVersion((v) => v + 1);
     onStatusChange?.("ARCHIVED");
   }
 
@@ -250,7 +253,7 @@ export function WorkshopForm({
       </Card>
 
       <div className="flex flex-wrap items-center gap-2">
-        <Button type="submit">{t("form.save")}</Button>
+        <Button type="submit" disabled={!dirty}>{t("form.save")}</Button>
         <Link href="/shopowner/workshops" className={buttonVariants({ variant: "outline" })}>{t("form.back")}</Link>
         {workshop && d.status !== "ARCHIVED" ? (
           <Button type="button" variant="destructive" onClick={() => setArchiveOpen(true)}>

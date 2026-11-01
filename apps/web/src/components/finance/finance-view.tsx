@@ -21,6 +21,7 @@ import { newUuid } from "@/lib/uuid";
 import { cn } from "@/lib/utils";
 import { CategoryBars, EXPENSE_COLOR, INCOME_COLOR, MonthlyChart } from "./charts";
 import { addEntry, loadManualEntries, parseAmount, removeEntry, saveManualEntries, updateEntry } from "./finance-store";
+import { useDirty } from "@/lib/use-dirty";
 
 const PERIODS = [3, 6, 12] as const;
 type Period = (typeof PERIODS)[number];
@@ -247,6 +248,7 @@ function EntryDialog({ form, setForm, digits, currency, onSave }: {
 }) {
   const t = useTranslations("ops.finance");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const dirty = useDirty(form, form ? (form.id ?? "new") : null);
   const set = (patch: Partial<FormState>) => { if (form) { setForm({ ...form, ...patch }); setErrors({}); } };
 
   function submit(e: FormEvent) {
@@ -297,7 +299,7 @@ function EntryDialog({ form, setForm, digits, currency, onSave }: {
             </Field>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setForm(null)}>{t("cancel")}</Button>
-              <Button type="submit">{t("save")}</Button>
+              <Button type="submit" disabled={!dirty}>{t("save")}</Button>
             </DialogFooter>
           </form>
         ) : null}

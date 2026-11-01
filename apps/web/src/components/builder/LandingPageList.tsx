@@ -20,6 +20,7 @@ import { addPage, clearPageContent, loadLivePageId, loadPages, newPageId, remove
 import { publishAction, type PublishAction } from "./publish-state";
 import { invalidSectionCount, pagePrerequisites, themeIsInvalid, type ReadinessShop } from "./readiness";
 import { LayoutWireframe } from "./TemplatePicker";
+import { useDirty } from "@/lib/use-dirty";
 
 interface Props {
   mainPage: { name: string; template: TemplateKey; seed?: { id: string; name: string; template: TemplateKey }[] };
@@ -229,6 +230,7 @@ function CreateDialog({ open, onOpenChange, pageCount, onCreate }: {
   const t = useTranslations("builder.pages");
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const dirty = useDirty(name, open);
   const errorText = (code: Exclude<NewPageCheck, "OK">) =>
     t(`errors.${code}`, { max: code === "NAME_TOO_LONG" ? LANDING_PAGE_NAME_MAX : MAX_LANDING_PAGES_PER_SHOP });
 
@@ -260,7 +262,7 @@ function CreateDialog({ open, onOpenChange, pageCount, onCreate }: {
           <p role="alert" className="min-h-5 text-sm text-destructive">{error}</p>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{t("cancel")}</Button>
-            <Button type="submit">{t("submit")}</Button>
+            <Button type="submit" disabled={!dirty}>{t("submit")}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

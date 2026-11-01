@@ -329,6 +329,8 @@
     "fieldAppliesTo": "Applies to",
     "fieldWorkshops": "Workshops",
     "fieldStart": "First day",
+    "renew": "Renew",
+    "renewHint": "Please choose the period in which this promotion applies.",
     "fieldEnd": "Last day",
     "fieldEnabled": "Active (shown on the landing page between the dates)",
     "example": "Example: {name} costs {before}, with this promotion {after}.",

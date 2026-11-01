@@ -19,6 +19,7 @@ import { useOpsState } from "@/components/ops/use-ops-state";
 import type { Booking, Session, Workshop } from "@/lib/types";
 import { dayKey, formatTime } from "@/lib/format";
 import { MAX_CAPACITY, type ShopForCatalog } from "./workshop-form";
+import { useDirty } from "@/lib/use-dirty";
 
 /** FR-SCHED-02/03: sessions agenda by date range + workshop; add one-off, close/open, edit capacity, cancel. */
 export function SessionsManager({
@@ -156,6 +157,7 @@ function CapacityDialog({
   const tops = useTranslations("ops");
   const [value, setValue] = useState(session ? String(session.capacity) : "");
   const [error, setError] = useState<string>();
+  const dirty = useDirty(value, session?.id ?? null);
   function submit(e: FormEvent) {
     e.preventDefault();
     if (!session) return;
@@ -178,7 +180,7 @@ function CapacityDialog({
             </Field>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{tops("common.back")}</Button>
-              <Button type="submit">{t("sessions.save")}</Button>
+              <Button type="submit" disabled={!dirty}>{t("sessions.save")}</Button>
             </DialogFooter>
           </form>
         ) : null}
@@ -216,6 +218,7 @@ function AddSessionForm({
   const [time, setTime] = useState("");
   const [cap, setCap] = useState(String(choices[0]?.defaultCapacity ?? 8));
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const dirty = useDirty({ wsId, date, time, cap }, "add");
 
   function submit(e: FormEvent) {
     e.preventDefault();
@@ -263,7 +266,7 @@ function AddSessionForm({
       </Field>
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onCancel}>{tops("common.back")}</Button>
-        <Button type="submit">{t("sessions.addConfirm")}</Button>
+        <Button type="submit" disabled={!dirty}>{t("sessions.addConfirm")}</Button>
       </DialogFooter>
     </form>
   );

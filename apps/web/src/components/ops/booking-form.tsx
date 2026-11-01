@@ -15,6 +15,7 @@ import { formatDateTime } from "@/lib/format";
 import { Field } from "./field";
 import { NativeSelect } from "./native-select";
 import { issuesToErrors } from "./validation";
+import { useDirty } from "@/lib/use-dirty";
 
 const CROCKFORD = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 function demoCode(): string {
@@ -47,6 +48,7 @@ export function BookingForm({
     quantity: "1", source: "WALK_IN" as ManualSource, fullName: "", email: "", phone: "", country: "VN", specialRequest: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const dirty = useDirty(v, "new");
   const [created, setCreated] = useState<{ code: string; booking: Booking; customer: Customer } | null>(null);
   const set = <K extends keyof typeof v>(k: K, val: (typeof v)[K]) => { setV((p) => ({ ...p, [k]: val })); setErrors((e) => ({ ...e, [k]: "" })); };
 
@@ -180,7 +182,7 @@ export function BookingForm({
           </CardContent>
         </Card>
         <div className="flex gap-2">
-          <Button type="submit">{t("newBooking.submit")}</Button>
+          <Button type="submit" disabled={!dirty}>{t("newBooking.submit")}</Button>
           <Link href="/shopowner/bookings" className={buttonVariants({ variant: "outline" })}>{t("common.back")}</Link>
         </div>
       </form>

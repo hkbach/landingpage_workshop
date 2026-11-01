@@ -44,7 +44,7 @@ export function SettingsForm({ initial, hasBookings, readOnly }: { initial: Valu
   const uiLocale = useLocale();
   const [saved, setSaved] = useState(false);
   const form = useForm<Values>({ resolver: zodResolver(schema), defaultValues: initial });
-  const { register, handleSubmit, control, setValue, reset, formState: { errors, isSubmitting } } = form;
+  const { register, handleSubmit, control, setValue, reset, formState: { errors, isSubmitting, isDirty } } = form;
 
   const timezone = useWatch({ control, name: "timezone" });
   const currency = useWatch({ control, name: "currency" });
@@ -198,7 +198,7 @@ export function SettingsForm({ initial, hasBookings, readOnly }: { initial: Valu
       </Card>
 
       <div className="flex items-center gap-3">
-        <Button type="submit" disabled={isSubmitting || readOnly}>{isSubmitting ? tc("saving") : tc("save")}</Button>
+        <Button type="submit" disabled={isSubmitting || readOnly || !isDirty}>{isSubmitting ? tc("saving") : tc("save")}</Button>
         {saved ? <p role="status" className="text-sm text-emerald-700">{t("saved")}</p> : null}
       </div>
     </form>
