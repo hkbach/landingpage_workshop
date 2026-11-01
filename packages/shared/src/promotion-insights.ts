@@ -112,24 +112,26 @@ export interface WorkshopPromotions<T extends PromotionRecord = PromotionRecord>
   /** The promotions a guest can use on this workshop today (active and covering it), newest start first. */
   applicable: T[];
   /**
-   * The total if EVERY applicable promotion were applied together, as an amount and as a share of the price (never above the
-   * price). It ignores "Only this promotion", so it is what the promotions are worth added up, not what one guest can get.
+   * The promotions that can be combined (MULTIPLE) and the most they take off one guest's price when ALL of them are applied together
+   * (percentages added on the original price, plus fixed amounts, never above the price). `discount.amount` is 0 when there are none.
    */
-  all: DeepestDiscount;
-  /** The most one guest can really take off the price: promotions that must be used alone are not added to others (see deepestDiscount). */
-  max: DeepestDiscount;
-  /** The price after `max`. */
-  priceAfter: number;
+  combined: { promotions: T[]; discount: DeepestDiscount; priceAfter: number };
+  /** The promotions that must be used alone (SINGLE), each with what it takes off the price on its own. */
+  alone: { promotion: T; amount: number; percent: number }[];
 }
 
-/** Shown on the shop owner's workshop list: which promotions apply to a workshop and how deep the discount can go. */
+/** Shown on the shop owner's workshop list: which promotions apply to a workshop and how deep each way of using them goes. */
 export function workshopPromotions<T extends PromotionRecord>(workshop: { id: string; priceAmount: number }, promotions: readonly T[], today: string): WorkshopPromotions<T> {
+  const price = workshop.priceAmount;
   const applicable = activePromotions(promotions, today).filter((p) => promotionAppliesTo(p, workshop.id));
-  const max = deepestDiscount(workshop.priceAmount, applicable);
-  // Everything added up, as if every promotion could be combined.
-  const r = priceBooking({ unitPrice: workshop.priceAmount, quantity: 1, promotions: applicable.map((p) => ({ ...p, stacking: "MULTIPLE" as const })) });
-  const all: DeepestDiscount = r.ok && r.discount > 0
-    ? { amount: r.discount, percent: workshop.priceAmount > 0 ? (r.discount / workshop.priceAmount) * 100 : 0, promotionIds: applicable.map((p) => p.id) }
-    : { amount: 0, percent: 0, promotionIds: [] };
-  return { applicable, all, max, priceAfter: workshop.priceAmount - max.amount };
+  const combinable = applicable.filter((p) => p.stacking === "MULTIPLE");
+  const discount = deepestDiscount(price, combinable);
+  const alone = applicable
+    .filter((p) => p.stacking === "SINGLE")
+    .map((promotion) => {
+      const r = priceBooking({ unitPrice: price, quantity: 1, promotions: [promotion] });
+      const amount = r.ok ? r.discount : 0;
+      return { promotion, amount, percent: price > 0 ? (amount / price) * 100 : 0 };
+    });
+  return { applicable, combined: { promotions: combinable, discount, priceAfter: price - discount.amount }, alone };
 }

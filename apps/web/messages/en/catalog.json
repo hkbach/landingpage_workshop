@@ -25,19 +25,18 @@
     "minutes": "{n} min",
     "promotions": "Promotions you can apply",
     "maxDiscount": "Maximum discount",
-    "maxDiscountHint": "The first figure adds up every promotion that applies. A guest cannot always get that much: a promotion marked \"Only this promotion\" cannot be added to the others, so the second figure is the most one guest can really get.",
+    "maxDiscountHint": "Promotions that can be combined add up when a guest uses all of them. A promotion marked \"Only this promotion\" cannot be added to the others, so each one is shown on its own.",
     "noPromotions": "No promotion applies",
     "offPercent": "{value}% off",
     "offAmount": "{amount} off",
     "combinable": "Can be combined",
     "alone": "Only this promotion",
     "maxValue": "{amount} ({percent})",
-    "using": "Using: {names}",
     "priceAfter": "Price after: {amount}",
     "managePromotions": "Manage promotions",
-    "allTogether": "All {count} promotions together",
-    "combinableMax": "Most one guest can combine",
-    "validRange": "Applies {from} to {to}"
+    "validRange": "Applies {from} to {to}",
+    "combinedLabel": "{count, plural, one {The promotion that can be combined} other {All # promotions can be combined}}",
+    "aloneLabel": "Promotions used on their own"
   },
   "detail": {
     "tabDetails": "Details",

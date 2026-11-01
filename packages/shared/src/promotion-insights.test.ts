@@ -144,113 +144,62 @@ describe("workshopPromotions", () => {
     full({ id: "ws2", appliesTo: "SELECTED", workshopIds: ["ws-2"], discountValue: 30 }),
     full({ id: "fix", discountType: "FIXED_AMOUNT", discountValue: 50_000, stacking: "MULTIPLE" }),
     full({ id: "alone", discountValue: 40, stacking: "SINGLE" }),
+    full({ id: "alone2", discountType: "FIXED_AMOUNT", discountValue: 100_000, stacking: "SINGLE" }),
     full({ id: "later", startDate: "2026-12-01", endDate: "2026-12-31", discountValue: 90 }),
     full({ id: "off", enabled: false, discountValue: 90 }),
     full({ id: "over", startDate: "2026-09-01", endDate: "2026-09-30", discountValue: 90 }),
   ];
+  const ids = (l: { id: string }[]) => l.map((x) => x.id).sort();
 
   it("lists the promotions that are active today and cover the workshop", () => {
-    expect(workshopPromotions(w1, list, TODAY).applicable.map((x) => x.id).sort()).toEqual(["alone", "all", "fix"].sort());
-    expect(workshopPromotions({ id: "ws-2", priceAmount: 400_000 }, list, TODAY).applicable.map((x) => x.id)).toContain("ws2");
+    expect(ids(workshopPromotions(w1, list, TODAY).applicable)).toEqual(["alone", "alone2", "all", "fix"].sort());
+    expect(ids(workshopPromotions({ id: "ws-2", priceAmount: 400_000 }, list, TODAY).applicable)).toContain("ws2");
   });
-  it("adds up every applicable promotion, as if they could all be combined", () => {
-    // 10% (65,000) + 40% (260,000) + 50,000 fixed = 375,000 (57.7%), although the 40% promotion cannot be combined with the others
+  it("splits them into the ones that combine and the ones used alone", () => {
     const r = workshopPromotions(w1, list, TODAY);
-    expect(r.all.amount).toBe(375_000);
-    expect(r.all.percent).toBeCloseTo(57.69, 1);
-    expect(r.all.promotionIds.sort()).toEqual(["alone", "all", "fix"].sort());
-    expect(r.all.amount).toBeGreaterThan(r.max.amount);
+    expect(ids(r.combined.promotions)).toEqual(["all", "fix"]);
+    expect(r.alone.map((a) => a.promotion.id).sort()).toEqual(["alone", "alone2"]);
   });
-  it("is the same as the maximum when every promotion can be combined", () => {
-    const r = workshopPromotions(w1, list.filter((x) => x.id !== "alone"), TODAY);
-    expect(r.all).toEqual(r.max);
-  });
-  it("never adds up to more than the price", () => {
-    const many = [full({ id: "a", discountValue: 70 }), full({ id: "b", discountValue: 60 })];
-    const r = workshopPromotions(w1, many, TODAY);
-    expect(r.all).toMatchObject({ amount: 650_000, percent: 100 });
-  });
-  it("gives the deepest discount a guest can reach, as an amount and a share, and the price after it", () => {
-    // combinable: 10% of 650,000 = 65,000 plus 50,000 = 115,000 (17.7%); the 40% promotion alone takes 260,000 (40%)
+  it("adds up everything that can be combined: percentages on the original price plus fixed amounts", () => {
+    // 10% of 650,000 = 65,000 plus 50,000 = 115,000 (17.7%)
     const r = workshopPromotions(w1, list, TODAY);
-    expect(r.max.amount).toBe(260_000);
-    expect(r.max.percent).toBeCloseTo(40);
-    expect(r.max.promotionIds).toEqual(["alone"]);
-    expect(r.priceAfter).toBe(390_000);
+    expect(r.combined.discount.amount).toBe(115_000);
+    expect(r.combined.discount.percent).toBeCloseTo(17.69, 1);
+    expect(r.combined.discount.promotionIds.sort()).toEqual(["all", "fix"]);
+    expect(r.combined.priceAfter).toBe(535_000);
   });
-  it("combines what can be combined when that beats any single promotion", () => {
-    const r = workshopPromotions(w1, list.filter((x) => x.id !== "alone"), TODAY);
-    expect(r.max.amount).toBe(115_000);
-    expect(r.max.percent).toBeCloseTo(17.69, 1);
-    expect(r.max.promotionIds.sort()).toEqual(["all", "fix"]);
-    expect(r.priceAfter).toBe(535_000);
+  it("gives each promotion used alone its own amount and share of the price", () => {
+    const r = workshopPromotions(w1, list, TODAY);
+    const a = r.alone.find((x) => x.promotion.id === "alone")!;
+    expect(a.amount).toBe(260_000);
+    expect(a.percent).toBeCloseTo(40);
+    const b = r.alone.find((x) => x.promotion.id === "alone2")!;
+    expect(b.amount).toBe(100_000);
+    expect(b.percent).toBeCloseTo(15.38, 1);
   });
-  it("is nothing when no promotion applies", () => {
+  it("does not add a promotion used alone to the combined total", () => {
+    const withAlone = workshopPromotions(w1, list, TODAY);
+    const without = workshopPromotions(w1, list.filter((x) => x.stacking !== "SINGLE"), TODAY);
+    expect(withAlone.combined.discount.amount).toBe(without.combined.discount.amount);
+  });
+  it("is empty where there is nothing of a kind", () => {
+    const onlyAlone = workshopPromotions(w1, [full({ id: "a", stacking: "SINGLE", discountValue: 20 })], TODAY);
+    expect(onlyAlone.combined).toEqual({ promotions: [], discount: { amount: 0, percent: 0, promotionIds: [] }, priceAfter: 650_000 });
+    expect(onlyAlone.alone).toHaveLength(1);
+    const onlyCombined = workshopPromotions(w1, [full({ id: "a", discountValue: 20 })], TODAY);
+    expect(onlyCombined.alone).toEqual([]);
+    expect(onlyCombined.combined.discount.amount).toBe(130_000);
+  });
+  it("is empty when no promotion applies", () => {
     const r = workshopPromotions(w1, [list[1]!], TODAY);
-    expect(r).toEqual({ applicable: [], all: { amount: 0, percent: 0, promotionIds: [] }, max: { amount: 0, percent: 0, promotionIds: [] }, priceAfter: 650_000 });
+    expect(r.applicable).toEqual([]);
+    expect(r.combined.discount.amount).toBe(0);
+    expect(r.alone).toEqual([]);
   });
   it("never goes above the price", () => {
-    const r = workshopPromotions({ id: "ws-1", priceAmount: 40_000 }, [full({ id: "big", discountType: "FIXED_AMOUNT", discountValue: 90_000 })], TODAY);
-    expect(r.max.amount).toBe(40_000);
-    expect(r.priceAfter).toBe(0);
-  });
-});
-
-describe("fullDiscountWorkshops", () => {
-  const workshops = [{ id: "ws-1", priceAmount: 650_000 }, { id: "ws-2", priceAmount: 400_000 }];
-  const cand = (over: Partial<P> = {}) => p({ id: "new", ...over });
-  const fixed = (id: string, v: number, over: Partial<P> = {}) => p({ id, discountType: "FIXED_AMOUNT", discountValue: v, ...over });
-
-  it("is 100%", () => expect(FULL_DISCOUNT_PERCENT).toBe(100));
-  it("finds a promotion that takes 100% off", () => {
-    expect(fullDiscountWorkshops(cand({ discountValue: 100 }), [], workshops).map((x) => [x.workshopId, x.percent])).toEqual([["ws-1", 100], ["ws-2", 100]]);
-  });
-  it("lets 99% through: that is a warning (over budget), not a block", () => {
-    expect(fullDiscountWorkshops(cand({ discountValue: 99 }), [], workshops)).toEqual([]);
-    expect(overBudgetWorkshops(cand({ discountValue: 99 }), [], workshops)).toHaveLength(2);
-  });
-  it("finds a fixed amount that is at least the price, per workshop", () => {
-    const r = fullDiscountWorkshops(cand({ discountType: "FIXED_AMOUNT", discountValue: 400_000 }), [], workshops);
-    expect(r.map((x) => x.workshopId)).toEqual(["ws-2"]); // free at 400,000; 650,000 still costs 250,000
-    expect(fullDiscountWorkshops(cand({ discountType: "FIXED_AMOUNT", discountValue: 399_999 }), [], workshops)).toEqual([]);
-    expect(fullDiscountWorkshops(cand({ discountType: "FIXED_AMOUNT", discountValue: 900_000 }), [], workshops)).toHaveLength(2);
-  });
-  it("finds fixed amounts that together are at least the price (they can be combined)", () => {
-    const r = fullDiscountWorkshops(fixed("new", 150_000, { stacking: "MULTIPLE" }), [fixed("o", 250_000, { stacking: "MULTIPLE" })], workshops);
-    expect(r.map((x) => x.workshopId)).toEqual(["ws-2"]);
-    expect(r[0]!.promotionIds.sort()).toEqual(["new", "o"]);
-  });
-  it("does not add fixed amounts that must be used alone", () => {
-    expect(fullDiscountWorkshops(fixed("new", 150_000, { stacking: "SINGLE" }), [fixed("o", 250_000, { stacking: "MULTIPLE" })], workshops)).toEqual([]);
-  });
-  it("shows 99.9%, not 100%, for a discount that is one unit short of the whole price", () => {
-    const r = overBudgetWorkshops(fixed("new", 399_999), [], [{ id: "ws-2", priceAmount: 400_000 }]);
-    expect(r).toMatchObject([{ workshopId: "ws-2", percent: 99.9 }]);
-    expect(fullDiscountWorkshops(fixed("new", 400_000), [], [{ id: "ws-2", priceAmount: 400_000 }])).toMatchObject([{ percent: 100 }]);
-  });
-  it("finds percentages that add up to 100% of the original price: 60% + 40% is free, 60% + 39% is not", () => {
-    expect(fullDiscountWorkshops(cand({ discountValue: 60 }), [p({ id: "o", discountValue: 40 })], workshops)).toHaveLength(2);
-    expect(fullDiscountWorkshops(cand({ discountValue: 60 }), [p({ id: "o", discountValue: 39 })], workshops)).toEqual([]);
-    expect(fullDiscountWorkshops(cand({ discountValue: 90 }), [p({ id: "a", discountValue: 90 }), p({ id: "b", discountValue: 90 })], workshops)).toHaveLength(2);
-  });
-  it("does not add percentages of promotions that must be used alone", () => {
-    expect(fullDiscountWorkshops(cand({ discountValue: 60, stacking: "SINGLE" }), [p({ id: "o", discountValue: 60, stacking: "SINGLE" })], workshops)).toEqual([]);
-    expect(fullDiscountWorkshops(cand({ discountValue: 60, stacking: "SINGLE" }), [p({ id: "o", discountValue: 60 })], workshops)).toEqual([]);
-  });
-  it("a fixed amount and a percentage together can cover the price", () => {
-    expect(fullDiscountWorkshops(cand({ discountValue: 99 }), [fixed("o", 399_000, { stacking: "MULTIPLE" })], workshops).map((x) => x.workshopId)).toEqual(["ws-1", "ws-2"]);
-    expect(fullDiscountWorkshops(cand({ discountValue: 50 }), [fixed("o", 100_000, { stacking: "MULTIPLE" })], workshops)).toEqual([]);
-  });
-  it("only counts promotions that are enabled and run on the same days", () => {
-    expect(fullDiscountWorkshops(cand({ discountValue: 60 }), [p({ id: "o", discountValue: 100, enabled: false })], workshops)).toEqual([]);
-    expect(fullDiscountWorkshops(cand({ discountValue: 100, startDate: "2027-01-01", endDate: "2027-01-10" }), [], workshops)).toHaveLength(2);
-    expect(fullDiscountWorkshops(cand({ discountValue: 50, startDate: "2027-01-01", endDate: "2027-01-10" }), [p({ id: "o", discountValue: 100, startDate: "2026-11-01", endDate: "2026-11-30" })], workshops)).toEqual([]);
-  });
-  it("a promotion that is paused is never blocked, and the saved version of the one being edited is ignored", () => {
-    expect(fullDiscountWorkshops(cand({ discountValue: 100, enabled: false }), [], workshops)).toEqual([]);
-    expect(fullDiscountWorkshops(cand({ discountValue: 10 }), [p({ id: "new", discountValue: 100 })], workshops)).toEqual([]);
-  });
-  it("only blocks for the workshops the promotion covers", () => {
-    expect(fullDiscountWorkshops(cand({ appliesTo: "SELECTED", workshopIds: ["ws-1"], discountType: "FIXED_AMOUNT", discountValue: 400_000 }), [], workshops)).toEqual([]);
+    const r = workshopPromotions({ id: "ws-1", priceAmount: 40_000 }, [full({ id: "big", discountType: "FIXED_AMOUNT", discountValue: 90_000, stacking: "SINGLE" }), full({ id: "m", discountValue: 70 }), full({ id: "n", discountValue: 60 })], TODAY);
+    expect(r.alone[0]).toMatchObject({ amount: 40_000, percent: 100 });
+    expect(r.combined.discount).toMatchObject({ amount: 40_000, percent: 100 });
+    expect(r.combined.priceAfter).toBe(0);
   });
 });

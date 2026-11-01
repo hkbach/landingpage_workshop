@@ -56,7 +56,6 @@ export default async function WorkshopsPage() {
               {rows.map((w) => {
                 const promo = workshopPromotions(w, promotions, today);
                 const money = (n: number) => formatMoney(n, w.currency, locale);
-                const usedForMax = promo.applicable.filter((p) => promo.max.promotionIds.includes(p.id));
                 return (
                   <TableRow key={w.id}>
                     <TableCell>
@@ -89,30 +88,36 @@ export default async function WorkshopsPage() {
                       )}
                     </TableCell>
                     <TableCell className="min-w-56 whitespace-normal" data-testid="workshop-max-discount">
-                      {promo.max.amount === 0 ? (
+                      {promo.combined.discount.amount === 0 && promo.alone.length === 0 ? (
                         <span className="text-muted-foreground">–</span>
                       ) : (
-                        <div className="grid gap-2 text-sm">
-                          {/* What the promotions are worth added up: every one, even those that cannot be combined. */}
-                          {promo.all.amount !== promo.max.amount ? (
-                            <div className="grid gap-0.5" data-testid="workshop-all-discount">
-                              <span className="text-xs text-muted-foreground">{t("list.allTogether", { count: promo.applicable.length })}</span>
+                        <div className="grid gap-3 text-sm">
+                          {/* Everything that can be combined, applied together. */}
+                          {promo.combined.promotions.length > 0 ? (
+                            <div className="grid gap-0.5" data-testid="workshop-combined-discount">
+                              <span className="text-xs text-muted-foreground">{t("list.combinedLabel", { count: promo.combined.promotions.length })}</span>
                               <span className="font-semibold tabular-nums">
-                                {t("list.maxValue", { amount: `−${money(promo.all.amount)}`, percent: percent.format(promo.all.percent / 100) })}
+                                {t("list.maxValue", { amount: `−${money(promo.combined.discount.amount)}`, percent: percent.format(promo.combined.discount.percent / 100) })}
                               </span>
+                              <span className="text-xs text-muted-foreground">{t("list.priceAfter", { amount: money(promo.combined.priceAfter) })}</span>
                             </div>
                           ) : null}
-                          {/* What one guest can really get: promotions that must be used alone are not added to the others. */}
-                          <div className="grid gap-0.5" data-testid="workshop-combinable-discount">
-                            <span className="text-xs text-muted-foreground">
-                              {promo.all.amount !== promo.max.amount ? t("list.combinableMax") : t("list.allTogether", { count: promo.applicable.length })}
-                            </span>
-                            <span className="font-semibold tabular-nums">
-                              {t("list.maxValue", { amount: `−${money(promo.max.amount)}`, percent: percent.format(promo.max.percent / 100) })}
-                            </span>
-                            <span className="text-xs text-muted-foreground">{t("list.priceAfter", { amount: money(promo.priceAfter) })}</span>
-                            {usedForMax.length > 0 ? <span className="text-xs text-muted-foreground">{t("list.using", { names: usedForMax.map(title).join(", ") })}</span> : null}
-                          </div>
+                          {/* Each promotion that must be used alone, with what it takes off on its own. */}
+                          {promo.alone.length > 0 ? (
+                            <div className="grid gap-1" data-testid="workshop-alone-discounts">
+                              <span className="text-xs text-muted-foreground">{t("list.aloneLabel")}</span>
+                              <ul className="grid gap-1.5">
+                                {promo.alone.map((a) => (
+                                  <li key={a.promotion.id} className="grid gap-0">
+                                    <span className="text-xs">{title(a.promotion)}</span>
+                                    <span className="font-semibold tabular-nums">
+                                      {t("list.maxValue", { amount: `−${money(a.amount)}`, percent: percent.format(a.percent / 100) })}
+                                    </span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ) : null}
                         </div>
                       )}
                     </TableCell>
