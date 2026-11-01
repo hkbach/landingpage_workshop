@@ -233,7 +233,17 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
             <p aria-live="polite" data-testid="result-count" className="text-muted-foreground">{query.data ? t("showing", { shown: rows.length, total: items.length }) : null}</p>
             {filtered ? <Button size="sm" variant="ghost" onClick={() => setFilters(NO_FILTERS)}>{t("clearFilters")}</Button> : null}
           </div>
-          <p data-testid="buttons-help" className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">{t("buttonsHelp")}</p>
+        </CardContent>
+      </Card>
+
+      <Card data-testid="buttons-help">
+        <CardContent className="grid gap-1.5 text-sm">
+          <p className="font-medium">{t("noteTitle")}</p>
+          <ul className="grid list-disc gap-1 pl-5 text-muted-foreground">
+            <li>{t("noteEdit")}</li>
+            <li>{t("noteDelete")}</li>
+            <li>{t("noteStart")}</li>
+          </ul>
         </CardContent>
       </Card>
 
