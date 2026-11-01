@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { firstOverloadedDay, MAX_PROMOTIONS_PER_SHOP, promotionStatus, type PromotionRecord } from "@workshop/shared";
+import { releaseAllBookings, resetBookingStore } from "@/lib/mock/booking-store";
 import { allPromotions, publicPromotions, resetPromotionStore, shopToday } from "@/lib/mock/promotion-store";
 import { GET, POST } from "./promotions/route";
 import { DELETE, PATCH, PUT } from "./promotions/[id]/route";
@@ -15,7 +16,8 @@ const good = {
 };
 const errorOf = async (res: Response) => (await res.json()) as { error: { code: string; details: { fields?: Record<string, string> } } };
 
-beforeEach(() => resetPromotionStore());
+// The demo bookings use promotions, which stops them from being paused: these tests start with every booking cancelled.
+beforeEach(() => { resetPromotionStore(); resetBookingStore(); releaseAllBookings(); });
 
 describe("GET /promotions", () => {
   it("lists every promotion newest first with today's date and the limit", async () => {
@@ -81,8 +83,8 @@ describe("POST /promotions", () => {
       const start = new Date(Date.parse("2028-01-01T12:00:00Z") + i * 7 * 86_400_000);
       return { startDate: start.toISOString().slice(0, 10), endDate: new Date(start.getTime() + 3 * 86_400_000).toISOString().slice(0, 10) };
     };
-    for (let i = allPromotions().length; i < MAX_PROMOTIONS_PER_SHOP; i++) expect((await POST(json("POST", { ...good, ...week(i) }))).status).toBe(201);
-    const res = await POST(json("POST", { ...good, ...week(99) }));
+    for (let i = allPromotions().length; i < MAX_PROMOTIONS_PER_SHOP; i++) expect((await POST(json("POST", { ...good, ...week(i), code: `LIM${i}X` }))).status).toBe(201);
+    const res = await POST(json("POST", { ...good, ...week(99), code: "LIM99X" }));
     expect(res.status).toBe(409);
     expect((await errorOf(res)).error.code).toBe("LIMIT_REACHED");
   });
@@ -112,9 +114,9 @@ describe("PUT, PATCH and DELETE /promotions/{id}", () => {
     expect(publicPromotions().some((p) => p.id === "pr-1")).toBe(true);
   });
   it("deletes with 204", async () => {
-    const res = await DELETE(new Request("http://x", { method: "DELETE" }), ctx("pr-2"));
+    const res = await DELETE(new Request("http://x", { method: "DELETE" }), ctx("pr-4")); // over: it can be deleted
     expect(res.status).toBe(204);
-    expect(allPromotions().some((p) => p.id === "pr-2")).toBe(false);
+    expect(allPromotions().some((p) => p.id === "pr-4")).toBe(false);
   });
 });
 

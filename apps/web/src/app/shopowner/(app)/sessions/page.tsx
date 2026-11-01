@@ -1,7 +1,9 @@
 import { SessionsManager } from "@/components/catalog/sessions-manager";
-import { bookings, currentShop, sessions, workshops } from "@/lib/mock/data";
+import { liveBookings } from "@/lib/mock/booking-store";
+import { currentShop, sessions, workshops } from "@/lib/mock/data";
 
 export default function SessionsPage() {
+  const bookings = liveBookings();
   return (
     <SessionsManager
       sessions={sessions} bookings={bookings} workshops={workshops} nowIso={new Date().toISOString()} actor={currentShop.ownerName}

@@ -29,7 +29,7 @@ export async function PUT(request: Request, ctx: RouteContext<"/api/v1/promotion
   return res.ok ? Response.json(res.promotion) : saveFailure(res);
 }
 
-/** PATCH { enabled }: pause or resume without touching anything else. Resuming is refused (409) when more than 5 would run at once. */
+/** PATCH { enabled }: pause or resume without touching anything else. Pausing is refused (409 PROMOTION_IN_USE) while guests use it in bookings of sessions that have not ended; resuming is refused when more than 5 would run at once or a workshop would be free. */
 export async function PATCH(request: Request, ctx: RouteContext<"/api/v1/promotions/[id]">) {
   const { id } = await ctx.params;
   const json = await readJson(request);
@@ -40,8 +40,12 @@ export async function PATCH(request: Request, ctx: RouteContext<"/api/v1/promoti
   return res.ok ? Response.json(res.promotion) : saveFailure(res);
 }
 
-/** DELETE: 204, or 404 when it does not exist. */
+/** DELETE: 204; 404 when it does not exist; 409 DELETE_NOT_ALLOWED unless the promotion is paused or over. */
 export async function DELETE(_request: Request, ctx: RouteContext<"/api/v1/promotions/[id]">) {
   const { id } = await ctx.params;
-  return deletePromotion(id) ? new Response(null, { status: 204 }) : apiError(404, "NOT_FOUND", "Promotion not found.");
+  const res = deletePromotion(id);
+  if (res.ok) return new Response(null, { status: 204 });
+  return res.code === "NOT_FOUND"
+    ? apiError(404, "NOT_FOUND", "Promotion not found.")
+    : apiError(409, "DELETE_NOT_ALLOWED", "Only a paused or expired promotion can be deleted. Pause it first.");
 }

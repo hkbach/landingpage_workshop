@@ -7,6 +7,7 @@ import {
   canTransition, computePaymentStatus, netPaid, seatDelta, targetStatus,
   type BlockedReason, type BookingAction,
 } from "@/lib/booking-state";
+import { persistBookingStatus } from "@/lib/bookings-api";
 
 export interface BookingEvent { status: BookingStatus; at?: string; note?: string }
 
@@ -53,6 +54,7 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
       );
       adjustSeats(s.id, seatDelta(b.status, to, b.quantity));
       pushEvent(b.id, { status: to, at, note: action === "CANCEL" ? reason!.trim() : undefined });
+      persistBookingStatus(b.id, to, action === "CANCEL" ? reason!.trim() : undefined);
       return { ok: true };
     },
     [bookings, sessions],
@@ -119,12 +121,13 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
   const cancelSession = useCallback((id: string, reason: string) => {
     const text = reason.trim();
     if (!text) return false;
+    for (const b of bookings) if (b.sessionId === id && b.status === "CONFIRMED") persistBookingStatus(b.id, "CANCELLED", text);
     setSessions((list) => list.map((s) => (s.id === id ? { ...s, status: "CANCELLED", cancelReason: text, reservedCount: 0 } : s)));
     setBookings((list) =>
       list.map((b) => (b.sessionId === id && b.status === "CONFIRMED" ? { ...b, status: "CANCELLED", cancelReason: text } : b)),
     );
     return true;
-  }, []);
+  }, [bookings]);
 
   const addSession = useCallback((s: Omit<Session, "id" | "reservedCount" | "status">) => {
     setSessions((list) => [...list, { ...s, id: nextId("se"), reservedCount: 0, status: "OPEN" }]);

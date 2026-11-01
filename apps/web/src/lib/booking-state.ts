@@ -56,8 +56,10 @@ export function canTransition(booking: StateBooking, session: StateSession, now:
     s !== "CONFIRMED" ? no("INVALID_STATE")
       : t >= starts + LATE_RELEASE_AFTER_MINUTES * 60_000 ? ok() : no("TOO_EARLY_LATE_RELEASE");
 
+  // A guest who did not check in is marked SESSION_EXPIRED by the system when the session ends; the shop can then confirm the no-show.
   const noShow: ActionState =
-    s !== "CONFIRMED" ? no("INVALID_STATE") : t >= ends ? ok() : no("SESSION_NOT_ENDED");
+    s === "SESSION_EXPIRED" ? ok()
+      : s !== "CONFIRMED" ? no("INVALID_STATE") : t >= ends ? ok() : no("SESSION_NOT_ENDED");
 
   const cancel: ActionState = s === "CONFIRMED" ? ok({ requiresReason: true }) : no("INVALID_STATE");
   const complete: ActionState = s === "CHECKED_IN" ? ok() : no("INVALID_STATE");
@@ -107,4 +109,13 @@ export function computePaymentStatus(totalAmount: number, entries: readonly Paym
 
 export function netPaid(entries: readonly PaymentLike[]): number {
   return entries.reduce((n, e) => n + (e.type === "PAYMENT" ? e.amount : -e.amount), 0);
+}
+
+/**
+ * The system step at the end of a session: every booking that was not checked in (confirmed, or released for being late) becomes
+ * SESSION_EXPIRED. Checked-in, completed, cancelled and no-show bookings keep their status.
+ */
+export function expiredStatus(status: BookingStatus, session: Pick<StateSession, "endsAt">, now: Date): BookingStatus {
+  const notCheckedIn = status === "CONFIRMED" || status === "LATE_RELEASED";
+  return notCheckedIn && new Date(session.endsAt).getTime() <= now.getTime() ? "SESSION_EXPIRED" : status;
 }

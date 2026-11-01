@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BookingStatusBadge, PaymentStatusBadge } from "@/components/ops/status-badges";
 import { formatDateTime } from "@/lib/format";
-import { bookings, currentShop, customers } from "@/lib/mock/data";
+import { liveBookings } from "@/lib/mock/booking-store";
+import { currentShop, customers } from "@/lib/mock/data";
 
 export default async function CustomerDetailPage(props: PageProps<"/shopowner/customers/[id]">) {
   const { id } = await props.params;
@@ -15,7 +16,7 @@ export default async function CustomerDetailPage(props: PageProps<"/shopowner/cu
   if (!customer) notFound();
   const t = await getTranslations("ops");
   const locale = await getLocale();
-  const history = bookings.filter((b) => b.customerId === customer.id).sort((a, b) => b.startsAt.localeCompare(a.startsAt));
+  const history = liveBookings().filter((b) => b.customerId === customer.id).sort((a, b) => b.startsAt.localeCompare(a.startsAt));
   const tz = currentShop.timezone;
 
   return (

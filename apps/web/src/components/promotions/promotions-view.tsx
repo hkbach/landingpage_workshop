@@ -6,7 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
 import { ImageIcon, OctagonX, Pause, Pencil, Play, Plus, Trash2, TriangleAlert } from "lucide-react";
 import {
-  countByStatus, discountedPrice, DISCOUNT_TYPES, filterPromotions, formatMoney, fullDiscountWorkshops, minorDigits, OVER_BUDGET_PERCENT, overBudgetWorkshops, pickLocalized, promotionAppliesTo,
+  countByStatus, discountedPrice, DISCOUNT_TYPES, filterPromotions, formatMoney, fullDiscountWorkshops, isPromotionCodeTaken, isPromotionDeletable, minorDigits, OVER_BUDGET_PERCENT, overBudgetWorkshops, pickLocalized, promotionAppliesTo,
   promotionInputSchema, promotionStatus, PROMOTION_DESCRIPTION_MAX, PROMOTION_TITLE_MAX, STACKING_MODES,
   type DiscountType, type Locale, type Localized, type OverBudgetWorkshop, type PromotionInput, type PromotionRecord, type PromotionStatus, type StackingMode,
 } from "@workshop/shared";
@@ -57,6 +57,20 @@ function limitNotice(e: unknown, t: T, day: (d: string) => string): Notice | nul
   return { title: t("limitTitle"), body: t("limitReached", { max: 20 }) };
 }
 
+/** The pop-up for a promotion that cannot be paused because guests are using it in bookings of sessions that have not ended. */
+function inUseNotice(e: unknown, t: T): Notice | null {
+  if (!(e instanceof PromotionApiError) || e.code !== "PROMOTION_IN_USE") return null;
+  const codes = Array.isArray(e.details.bookingCodes) ? (e.details.bookingCodes as string[]) : [];
+  const count = Number(e.details.count ?? codes.length);
+  const shown = codes.slice(0, 5).join(", ") + (count > 5 ? ` +${count - 5}` : "");
+  return { title: t("pauseBlockedTitle"), body: t("pauseBlockedBody", { count, codes: shown }) };
+}
+
+/** The pop-up for a delete the server refused (the button is also off for promotions that are active or still to start). */
+function deleteNotice(e: unknown, t: T): Notice | null {
+  return e instanceof PromotionApiError && e.code === "DELETE_NOT_ALLOWED" ? { title: t("deleteBlockedTitle"), body: t("deleteBlockedBody") } : null;
+}
+
 /** The pop-up for a promotion that would make workshops free (also answered by the server). Null for any other failure. */
 function fullDiscountNotice(e: unknown, t: T, nameOf: (id: string) => string, titleKey: string = "fullDiscountTitle"): Notice | null {
   if (!(e instanceof PromotionApiError) || e.code !== "FULL_DISCOUNT") return null;
@@ -103,7 +117,7 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
     mutationFn: (v: { id: string; enabled: boolean }) => setPromotionEnabledRequest(v.id, v.enabled),
     onSuccess: (_p, v) => { setMessage({ text: t(v.enabled ? "resumed" : "paused"), tone: "ok" }); void refresh(); },
     onError: (e) => {
-      const n = fullDiscountNotice(e, t, nameOf, "fullDiscountResumeTitle") ?? limitNotice(e, t, day);
+      const n = inUseNotice(e, t) ?? fullDiscountNotice(e, t, nameOf, "fullDiscountResumeTitle") ?? limitNotice(e, t, day);
       if (n) setNotice(n); else setMessage({ text: t("saveFailed"), tone: "error" });
       void refresh();
     },
@@ -111,7 +125,11 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
   const remove = useMutation({
     mutationFn: (id: string) => deletePromotionRequest(id),
     onSuccess: () => { setMessage({ text: t("deleted"), tone: "ok" }); void refresh(); },
-    onError: (e) => { setMessage({ text: e instanceof PromotionApiError && e.status === 404 ? t("gone") : t("saveFailed"), tone: "error" }); void refresh(); },
+    onError: (e) => {
+      const n = deleteNotice(e, t);
+      if (n) setNotice(n); else setMessage({ text: e instanceof PromotionApiError && e.status === 404 ? t("gone") : t("saveFailed"), tone: "error" });
+      void refresh();
+    },
   });
 
   function openNew() {
@@ -267,7 +285,12 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
                           {p.enabled ? <Pause aria-hidden /> : <Play aria-hidden />}<span className="sr-only">{p.enabled ? t("pause") : t("resume")}: {title}</span>
                         </Button>
                       ) : null}
-                      <Button size="icon-sm" variant="ghost" title={t("delete")} onClick={() => setDeleting(p)}><Trash2 aria-hidden /><span className="sr-only">{t("delete")}: {title}</span></Button>
+                      <Button
+                        size="icon-sm" variant="ghost" disabled={!isPromotionDeletable(p, today)} onClick={() => setDeleting(p)}
+                        title={isPromotionDeletable(p, today) ? t("delete") : t("deleteOnlyPaused")}
+                      >
+                        <Trash2 aria-hidden /><span className="sr-only">{t("delete")}: {title}</span>
+                      </Button>
                     </TableCell>
                   </TableRow>
                 );
@@ -331,8 +354,8 @@ function PromotionDialog({ form, setForm, shop, workshops, others, money, day, o
     mutationFn: (v: { id: string | null; input: PromotionInput }) => savePromotionRequest(v.id, v.input),
     onSuccess: (_p, v) => onSaved(v.id !== null),
     onError: (e) => {
-      const free = fullDiscountNotice(e, t, workshopName);
-      if (free) { onNotice(free); return; }
+      const refused = inUseNotice(e, t) ?? fullDiscountNotice(e, t, workshopName);
+      if (refused) { onNotice(refused); return; }
       if (e instanceof PromotionApiError && e.status === 422) setErrors(Object.fromEntries(Object.entries(e.fields).map(([k, code]) => [k, t(`errors.${code}` as never)])));
       else {
         const n = limitNotice(e, t, day);
@@ -366,6 +389,10 @@ function PromotionDialog({ form, setForm, shop, workshops, others, money, day, o
       const next: Record<string, string> = {};
       for (const i of parsed.error.issues) next[String(i.path[0])] ??= t(`errors.${i.message}` as never);
       setErrors(next);
+      return;
+    }
+    if (isPromotionCodeTaken(others, parsed.data.code, form.id ?? undefined)) {
+      setErrors({ code: t("errors.codeTaken") });
       return;
     }
     if (full.length > 0) {
@@ -447,19 +474,29 @@ function PromotionDialog({ form, setForm, shop, workshops, others, money, day, o
                   </label>
                 ))}
                 {form.appliesTo === "SELECTED" ? (
-                  <ul className="grid gap-1.5 rounded-lg border p-3" aria-label={t("fieldWorkshops")}>
-                    {workshops.map((w) => (
-                      <li key={w.id}>
-                        <label className="flex items-center gap-2 text-sm">
-                          <input
-                            type="checkbox" checked={form.workshopIds.includes(w.id)}
-                            onChange={(e) => set({ workshopIds: e.target.checked ? [...form.workshopIds, w.id] : form.workshopIds.filter((x) => x !== w.id) })}
-                          />
-                          {pickLocalized(w.title, lang, shop.defaultLocale)} <span className="text-muted-foreground">· {money(w.priceAmount)}</span>
-                        </label>
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="rounded-lg border" role="group" aria-label={t("fieldWorkshops")}>
+                    {/* Headers, so it is clear what the two columns are. */}
+                    <div className="grid grid-cols-[1.25rem_1fr_auto] items-center gap-x-3 border-b bg-muted/40 px-3 py-2 text-xs font-medium text-muted-foreground" aria-hidden>
+                      <span />
+                      <span>{t("colWorkshopName")}</span>
+                      <span className="text-right">{t("colOriginalPrice")}</span>
+                    </div>
+                    <ul className="grid">
+                      {workshops.map((w) => (
+                        <li key={w.id} className="border-b last:border-b-0">
+                          <label className="grid cursor-pointer grid-cols-[1.25rem_1fr_auto] items-center gap-x-3 px-3 py-2 text-sm hover:bg-muted/30">
+                            <input
+                              type="checkbox" checked={form.workshopIds.includes(w.id)}
+                              aria-label={`${t("colWorkshopName")}: ${pickLocalized(w.title, lang, shop.defaultLocale)}, ${t("colOriginalPrice")}: ${money(w.priceAmount)}`}
+                              onChange={(e) => set({ workshopIds: e.target.checked ? [...form.workshopIds, w.id] : form.workshopIds.filter((x) => x !== w.id) })}
+                            />
+                            <span>{pickLocalized(w.title, lang, shop.defaultLocale)}</span>
+                            <span className="text-right tabular-nums text-muted-foreground">{money(w.priceAmount)}</span>
+                          </label>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 ) : null}
                 {errors.workshopIds ? <p role="alert" className="text-xs text-destructive">{errors.workshopIds}</p> : null}
               </fieldset>

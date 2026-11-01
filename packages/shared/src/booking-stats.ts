@@ -7,7 +7,7 @@ export const TREND_PERIODS = ["1m", "3m", "6m", "12m"] as const;
 export type TrendPeriod = (typeof TREND_PERIODS)[number];
 
 export type OutcomeGroup = "attended" | "upcoming" | "lost";
-/** Checked in or completed = attended; confirmed = still to come; cancelled, no-show or released = lost. */
+/** Checked in or completed = attended; confirmed = still to come; cancelled, no-show, released or session expired = lost. */
 export function outcomeGroup(status: string): OutcomeGroup {
   if (status === "CHECKED_IN" || status === "COMPLETED") return "attended";
   if (status === "CONFIRMED") return "upcoming";

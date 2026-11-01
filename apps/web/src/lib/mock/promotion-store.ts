@@ -4,17 +4,18 @@
 // It lives on globalThis so it survives hot reloads and is lost when the server restarts (demo data).
 // TODO(api): every query filters by organization_id from the session; the mock has a single shop.
 import {
-  activePromotions, firstOverloadedDay, fullDiscountWorkshops, MAX_PROMOTIONS_PER_SHOP, platformMediaId, type PromotionInput, type PromotionRecord,
+  activePromotions, bookingsBlockingPause, firstOverloadedDay, fullDiscountWorkshops, isPromotionCodeTaken, isPromotionDeletable, MAX_PROMOTIONS_PER_SHOP, platformMediaId, type PromotionInput, type PromotionRecord,
 } from "@workshop/shared";
 import { dayKey } from "@/lib/format";
 import { newUuid } from "@/lib/uuid";
 import { currentShop, workshops } from "./data";
+import { bookingUses } from "./booking-store";
 import { deleteImage, hasImage, resetMediaStore } from "./media-store";
 
 const g = globalThis as unknown as { __promotionStore?: PromotionRecord[]; __promotionSeedVersion?: number };
 
 /** Bump when the seed or the shape of a promotion changes: a dev server that kept the old data across hot reloads starts again from the new seed. */
-const SEED_VERSION = 5;
+const SEED_VERSION = 6;
 
 const DAY = 86_400_000;
 /** "YYYY-MM-DD" of today +/- `days` in the shop timezone. */
@@ -128,7 +129,17 @@ export type SaveResult =
   /** More than the allowed number of promotions would run at once on `date`. */
   | { ok: false; code: "CONCURRENT_LIMIT"; date: string }
   /** A guest could get these workshops for nothing (100% off) with this promotion next to the others. */
-  | { ok: false; code: "FULL_DISCOUNT"; workshopIds: string[] };
+  | { ok: false; code: "FULL_DISCOUNT"; workshopIds: string[] }
+  /** Another promotion of this shop already uses the code. */
+  | { ok: false; code: "CODE_TAKEN" }
+  /** Guests used the promotion in bookings of sessions that have not ended: it cannot be paused yet. */
+  | { ok: false; code: "IN_USE"; bookingCodes: string[] };
+
+/** The booking codes that stop a promotion from being paused now (empty when it can be paused). */
+function pauseBlockers(promotionId: string): string[] {
+  const now = new Date();
+  return bookingsBlockingPause(promotionId, bookingUses(now), now).map((b) => b.bookingCode);
+}
 
 /** Workshops a promotion would make free (empty when it is fine). Archived workshops cannot be booked, so they do not count. */
 function freeWorkshops(candidate: PromotionRecord, others: readonly PromotionRecord[]): string[] {
@@ -154,6 +165,7 @@ export function createPromotion(input: PromotionInput): SaveResult {
   const known = knownWorkshops();
   if (input.workshopIds.some((id) => !known.has(id))) return { ok: false, code: "UNKNOWN_WORKSHOP" };
   if (imageProblem(input.imageUrl)) return { ok: false, code: "UNKNOWN_IMAGE" };
+  if (isPromotionCodeTaken(store(), input.code)) return { ok: false, code: "CODE_TAKEN" };
   const now = new Date().toISOString();
   const promotion: PromotionRecord = { id: `pr-${newUuid().slice(0, 8)}`, ...fromInput(input), createdAt: now, updatedAt: now };
   const free = freeWorkshops(promotion, store());
@@ -170,8 +182,14 @@ export function updatePromotion(id: string, input: PromotionInput): SaveResult {
   const known = knownWorkshops();
   if (input.workshopIds.some((w) => !known.has(w))) return { ok: false, code: "UNKNOWN_WORKSHOP" };
   if (imageProblem(input.imageUrl)) return { ok: false, code: "UNKNOWN_IMAGE" };
+  if (isPromotionCodeTaken(store(), input.code, id)) return { ok: false, code: "CODE_TAKEN" };
   const prev = store()[i]!;
   const next: PromotionRecord = { id, ...fromInput(input), createdAt: prev.createdAt, updatedAt: new Date().toISOString() };
+  // Switching it off (here or with the Pause button) is refused while guests are using it in bookings of sessions that have not ended.
+  if (prev.enabled && !next.enabled) {
+    const used = pauseBlockers(id);
+    if (used.length > 0) return { ok: false, code: "IN_USE", bookingCodes: used };
+  }
   const free = freeWorkshops(next, store().filter((p) => p.id !== id));
   if (free.length > 0) return { ok: false, code: "FULL_DISCOUNT", workshopIds: free };
   const date = firstOverloadedDay(store().map((p) => (p.id === id ? next : p)), shopToday());
@@ -185,6 +203,10 @@ export function updatePromotion(id: string, input: PromotionInput): SaveResult {
 export function setPromotionEnabled(id: string, enabled: boolean): SaveResult {
   const p = store().find((x) => x.id === id);
   if (!p) return { ok: false, code: "NOT_FOUND" };
+  if (!enabled && p.enabled) {
+    const used = pauseBlockers(id);
+    if (used.length > 0) return { ok: false, code: "IN_USE", bookingCodes: used };
+  }
   // Resuming is like adding it again: it can make a workshop free, or push the number running at once over the limit.
   if (enabled) {
     const free = freeWorkshops({ ...p, enabled }, store().filter((x) => x.id !== id));
@@ -197,10 +219,14 @@ export function setPromotionEnabled(id: string, enabled: boolean): SaveResult {
   return { ok: true, promotion: { ...p } };
 }
 
-export function deletePromotion(id: string): boolean {
+export type DeleteResult = { ok: true } | { ok: false; code: "NOT_FOUND" | "NOT_DELETABLE" };
+
+/** Only a paused or expired promotion can be deleted (never one that is active or still to start). */
+export function deletePromotion(id: string): DeleteResult {
   const i = store().findIndex((p) => p.id === id);
-  if (i < 0) return false;
+  if (i < 0) return { ok: false, code: "NOT_FOUND" };
+  if (!isPromotionDeletable(store()[i]!, shopToday())) return { ok: false, code: "NOT_DELETABLE" };
   deleteImage(platformMediaId(store()[i]!.imageUrl));
   store().splice(i, 1);
-  return true;
+  return { ok: true };
 }

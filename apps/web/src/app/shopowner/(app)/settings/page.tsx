@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
-import { bookings, currentShop } from "@/lib/mock/data";
+import { liveBookings } from "@/lib/mock/booking-store";
+import { currentShop } from "@/lib/mock/data";
 import { SettingsForm } from "./settings-form";
 
 export default async function SettingsPage() {
@@ -12,7 +13,7 @@ export default async function SettingsPage() {
         <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
       </div>
       <SettingsForm
-        hasBookings={bookings.length > 0}
+        hasBookings={liveBookings().length > 0}
         readOnly={shop.status === "SUSPENDED"}
         initial={{
           name: shop.name,

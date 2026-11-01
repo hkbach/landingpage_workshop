@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { fullDiscountWorkshops, type PromotionRecord } from "@workshop/shared";
+import { releaseAllBookings, resetBookingStore } from "@/lib/mock/booking-store";
 import { workshops } from "@/lib/mock/data";
 import { allPromotions, resetPromotionStore, shopToday } from "@/lib/mock/promotion-store";
 import { POST } from "./promotions/route";
@@ -12,15 +13,17 @@ const req = (method: string, body: unknown) => new Request("http://x/api/v1", { 
 const addDays = (day: string, n: number) => new Date(Date.parse(`${day}T12:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10);
 const FAR = () => ({ startDate: addDays(shopToday(), 300), endDate: addDays(shopToday(), 305) });
 const TODAY = () => ({ startDate: shopToday(), endDate: addDays(shopToday(), 5) });
+let codeCounter = 0; // every promotion of a shop needs its own code
 const body = (over: Record<string, unknown> = {}) => ({
-  title: { en: "Free test" }, description: {}, code: "FREETEST", discountType: "PERCENT", discountValue: 10, stacking: "SINGLE", appliesTo: "ALL", workshopIds: [],
+  title: { en: "Free test" }, description: {}, code: `FT${++codeCounter}X`, discountType: "PERCENT", discountValue: 10, stacking: "SINGLE", appliesTo: "ALL", workshopIds: [],
   ...FAR(), enabled: true, ...over,
 });
 const create = (over: Record<string, unknown> = {}) => POST(req("POST", body(over)));
 const errorOf = async (res: Response) => (await res.json()) as { error: { code: string; message: string; details: { fields?: Record<string, string>; workshopIds?: string[] } } };
 const ids = (r: { error: { details: { workshopIds?: string[] } } }) => [...(r.error.details.workshopIds ?? [])].sort();
 
-beforeEach(() => resetPromotionStore());
+// The demo bookings use promotions, which stops them from being paused: these tests start with every booking cancelled.
+beforeEach(() => { resetPromotionStore(); resetBookingStore(); releaseAllBookings(); });
 
 describe("a promotion that makes a workshop free is refused", () => {
   it("100% off: 422 FULL_DISCOUNT with the workshops that would be free, and nothing is saved", async () => {

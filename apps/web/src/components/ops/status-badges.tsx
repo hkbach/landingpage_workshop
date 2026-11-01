@@ -10,6 +10,7 @@ const BOOKING: Record<BookingStatus, string> = {
   LATE_RELEASED: "bg-amber-100 text-amber-950",
   NO_SHOW: "bg-orange-100 text-orange-950",
   CANCELLED: "bg-red-100 text-red-900",
+  SESSION_EXPIRED: "bg-zinc-200 text-zinc-900",
 };
 const PAYMENT: Record<PaymentStatus, string> = {
   UNPAID: "bg-slate-100 text-slate-900",

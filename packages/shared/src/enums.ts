@@ -18,6 +18,8 @@ export const BOOKING_STATUSES = [
   "LATE_RELEASED",
   "NO_SHOW",
   "CANCELLED",
+  /** The session ended and the guest had not checked in (set by the system, never by hand). */
+  "SESSION_EXPIRED",
 ] as const;
 export type BookingStatus = (typeof BOOKING_STATUSES)[number];
 

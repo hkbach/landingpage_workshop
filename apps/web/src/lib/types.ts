@@ -39,6 +39,8 @@ export interface Booking {
   unitPriceAmount: number; totalAmount: number; currency: string;
   workshopTitle: string; startsAt: string; endsAt: string; timezone: string;
   specialRequest?: string; cancelReason?: string; createdAt: string; payments: PaymentEntry[];
+  /** Promotions the guest used on this booking (a snapshot: the booking keeps them if the promotion is later deleted) and what they took off. */
+  promotionIds?: string[]; discountAmount?: number;
 }
 
 /** Per-section colour overrides (hex only, #RGB or #RRGGBB). Rendered only via CSS custom properties. */

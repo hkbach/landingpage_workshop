@@ -66,9 +66,9 @@ export const workshops: Workshop[] = [
 export const sessions: Session[] = [
   { id: "se-1", workshopId: "ws-1", startsAt: at(0, 9), endsAt: at(0, 11), capacity: 8, reservedCount: 5, status: "OPEN" },
   { id: "se-2", workshopId: "ws-2", startsAt: at(0, 14), endsAt: at(0, 15.5), capacity: 10, reservedCount: 10, status: "OPEN" },
-  { id: "se-3", workshopId: "ws-1", startsAt: at(1, 9), endsAt: at(1, 11), capacity: 8, reservedCount: 2, status: "OPEN" },
+  { id: "se-3", workshopId: "ws-1", startsAt: at(1, 9), endsAt: at(1, 11), capacity: 8, reservedCount: 4, status: "OPEN" },
   { id: "se-4", workshopId: "ws-1", startsAt: at(1, 14), endsAt: at(1, 16), capacity: 8, reservedCount: 0, status: "CLOSED" },
-  { id: "se-5", workshopId: "ws-2", startsAt: at(2, 10), endsAt: at(2, 11.5), capacity: 10, reservedCount: 3, status: "OPEN" },
+  { id: "se-5", workshopId: "ws-2", startsAt: at(2, 10), endsAt: at(2, 11.5), capacity: 10, reservedCount: 2, status: "OPEN" },
   { id: "se-6", workshopId: "ws-1", startsAt: at(3, 9), endsAt: at(3, 11), capacity: 8, reservedCount: 0, status: "CANCELLED", cancelReason: "Instructor unavailable" },
 ];
 
@@ -90,12 +90,19 @@ function booking(p: Partial<Booking> & Pick<Booking, "id" | "bookingCode" | "ses
 }
 
 export const bookings: Booking[] = [
-  booking({ id: "bk-1", bookingCode: "7K3M9QX2", sessionId: "se-1", customerId: "cu-1", quantity: 2, specialRequest: "Vegetarian snacks please" }),
+  // Bookings that used promotions: 20% off 1,300,000; 150,000 + 15% + 5% off 1,950,000; 100,000 off 4,000,000; 5% off 1,200,000 (cancelled).
+  booking({ id: "bk-1", bookingCode: "7K3M9QX2", sessionId: "se-1", customerId: "cu-1", quantity: 2, specialRequest: "Vegetarian snacks please",
+    promotionIds: ["pr-1"], discountAmount: 260_000, totalAmount: 1_040_000 }),
   booking({ id: "bk-2", bookingCode: "A8D4N6TP", sessionId: "se-1", customerId: "cu-2", quantity: 3, status: "CHECKED_IN",
-    paymentStatus: "PAID", payments: [{ id: "pm-1", type: "PAYMENT", amount: 1_950_000, method: "CASH", recordedAt: at(0, 9), recordedBy: "Linh Tran" }] }),
-  booking({ id: "bk-3", bookingCode: "C2F7R5WZ", sessionId: "se-2", customerId: "cu-4", quantity: 10 }),
+    promotionIds: ["pr-5", "pr-6", "pr-7"], discountAmount: 540_000, totalAmount: 1_410_000,
+    paymentStatus: "PAID", payments: [{ id: "pm-1", type: "PAYMENT", amount: 1_410_000, method: "CASH", recordedAt: at(0, 9), recordedBy: "Linh Tran" }] }),
+  booking({ id: "bk-3", bookingCode: "C2F7R5WZ", sessionId: "se-2", customerId: "cu-4", quantity: 10, promotionIds: ["pr-2"], discountAmount: 100_000, totalAmount: 3_900_000 }),
   booking({ id: "bk-4", bookingCode: "E9H1J3KB", sessionId: "se-3", customerId: "cu-3", quantity: 2, source: "WALK_IN" }),
-  booking({ id: "bk-5", bookingCode: "G4M8P2VS", sessionId: "se-5", customerId: "cu-1", quantity: 3, status: "CANCELLED", cancelReason: "Guest changed plans" }),
+  booking({ id: "bk-5", bookingCode: "G4M8P2VS", sessionId: "se-5", customerId: "cu-1", quantity: 3, status: "CANCELLED", cancelReason: "Guest changed plans",
+    promotionIds: ["pr-7"], discountAmount: 60_000, totalAmount: 1_140_000 }),
+  // Upcoming sessions: these keep their promotions in use whatever the time of day.
+  booking({ id: "bk-6", bookingCode: "K5N2Q8RD", sessionId: "se-3", customerId: "cu-2", quantity: 2, promotionIds: ["pr-1"], discountAmount: 260_000, totalAmount: 1_040_000 }),
+  booking({ id: "bk-7", bookingCode: "M7P3T9XB", sessionId: "se-5", customerId: "cu-3", quantity: 2, promotionIds: ["pr-2"], discountAmount: 100_000, totalAmount: 700_000 }),
 ];
 
 export const auditLogs: AuditEntry[] = [

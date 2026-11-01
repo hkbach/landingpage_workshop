@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { MAX_CONCURRENT_PROMOTIONS, type PromotionRecord } from "@workshop/shared";
+import { releaseAllBookings, resetBookingStore } from "@/lib/mock/booking-store";
 import { allPromotions, resetPromotionStore, shopToday } from "@/lib/mock/promotion-store";
 import { MAX_IMAGE_BYTES } from "@/lib/mock/media-store";
 import { GET as listPromotions, POST as createRoute } from "./promotions/route";
@@ -16,17 +17,19 @@ const req = (method: string, body: unknown, raw?: string) => new Request("http:/
 const upload = (dataUrl: unknown) => uploadImage(req("POST", { dataUrl }));
 const addDays = (day: string, n: number) => new Date(Date.parse(`${day}T12:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10);
 
+let codeCounter = 0; // every promotion of a shop needs its own code
 function body(over: Record<string, unknown> = {}) {
   const today = shopToday();
   return {
-    title: { en: "Flash" }, description: {}, code: "FLASH10", discountType: "PERCENT", discountValue: 10, stacking: "SINGLE", appliesTo: "ALL", workshopIds: [],
+    title: { en: "Flash" }, description: {}, code: `FL${++codeCounter}X`, discountType: "PERCENT", discountValue: 10, stacking: "SINGLE", appliesTo: "ALL", workshopIds: [],
     startDate: addDays(today, 300), endDate: addDays(today, 305), enabled: true, ...over,
   };
 }
 const create = (over: Record<string, unknown> = {}) => createRoute(req("POST", body(over)));
 const errorOf = async (res: Response) => (await res.json()) as { error: { code: string; details: Record<string, unknown> & { fields?: Record<string, string> } } };
 
-beforeEach(() => resetPromotionStore());
+// The demo bookings use promotions, which stops them from being paused: these tests start with every booking cancelled.
+beforeEach(() => { resetPromotionStore(); resetBookingStore(); releaseAllBookings(); });
 
 describe("one image per promotion", () => {
   it("stores an uploaded image and serves it with its type, for everyone", async () => {
@@ -78,6 +81,7 @@ describe("one image per promotion", () => {
     expect((await PUT(req("PUT", body({ imageUrl: second.url })), ctxId(p.id))).status).toBe(200);
     expect((await serveImage(new Request("http://x"), ctxId(first.id))).status).toBe(404);
     expect((await serveImage(new Request("http://x"), ctxId(second.id))).status).toBe(200);
+    await PATCH(req("PATCH", { enabled: false }), ctxId(p.id)); // only a paused or expired promotion can be deleted
     expect((await DELETE(new Request("http://x", { method: "DELETE" }), ctxId(p.id))).status).toBe(204);
     expect((await serveImage(new Request("http://x"), ctxId(second.id))).status).toBe(404);
   });

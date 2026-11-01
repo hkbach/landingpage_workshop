@@ -8,13 +8,15 @@ import { BookingTrend } from "@/components/dashboard/booking-trend";
 import { LiveSummary } from "@/components/dashboard/live-summary";
 import { SummaryCard } from "@/components/dashboard/summary-card";
 import { dayKey } from "@/lib/format";
-import { bookingHistory, bookings, currentShop, customers, mockFinanceEntries, mockLandingPages, sessions, sitePage, workshops } from "@/lib/mock/data";
+import { liveBookings } from "@/lib/mock/booking-store";
+import { bookingHistory, currentShop, customers, mockFinanceEntries, mockLandingPages, sessions, sitePage, workshops } from "@/lib/mock/data";
 
 // Computed outside the component: depends on the current time.
 function computeOverview() {
   const now = Date.now();
   const tz = currentShop.timezone;
   const today = dayKey(new Date(now).toISOString(), tz);
+  const bookings = liveBookings();
   const live = bookings.filter((b) => b.status !== "CANCELLED");
   const upcoming = sessions.filter((s) => s.status === "OPEN" && new Date(s.startsAt).getTime() > now);
   const activeWorkshopIds = new Set(workshops.filter((w) => w.status === "ACTIVE").map((w) => w.id));
@@ -57,6 +59,7 @@ export default async function OverviewPage() {
   const ts = await getTranslations("dashboard.overview.summary");
   const locale = await getLocale();
   const o = computeOverview();
+  const bookings = liveBookings();
   const pct = (n: number) => new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 0 }).format(n);
   const num = (n: number) => new Intl.NumberFormat(locale).format(n);
   const kpis = [
