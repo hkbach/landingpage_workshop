@@ -201,7 +201,7 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
 
       <Card>
         <CardContent className="grid gap-3">
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr_1fr]" role="search" aria-label={t("searchLabel")}>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr]" role="search" aria-label={t("searchLabel")}>
             <div className="grid gap-1.5">
               <Label htmlFor="fl-q">{t("searchTitle")}</Label>
               <Input id="fl-q" type="search" value={filters.q} maxLength={80} placeholder={t("searchPlaceholder")} onChange={(e) => setFilter("q", e.target.value)} autoComplete="off" />
@@ -213,13 +213,6 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
             <div className="grid gap-1.5">
               <Label htmlFor="fl-to">{t("periodTo")}</Label>
               <Input id="fl-to" type="date" value={filters.to} onChange={(e) => setFilter("to", e.target.value)} />
-            </div>
-            <div className="grid gap-1.5">
-              <Label htmlFor="fl-status">{t("statusFilter")}</Label>
-              <NativeSelect id="fl-status" value={filters.status} onChange={(e) => setFilter("status", e.target.value as Filters["status"])}>
-                <option value="">{t("allStatuses")}</option>
-                {(["ACTIVE", "SCHEDULED", "PAUSED", "EXPIRED"] as const).map((s) => <option key={s} value={s}>{t(`status.${s}`)}</option>)}
-              </NativeSelect>
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="fl-workshop">{t("workshopFilter")}</Label>

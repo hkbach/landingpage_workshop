@@ -389,8 +389,6 @@
     "searchPlaceholder": "Promotion title",
     "periodFrom": "Applies from",
     "periodTo": "Applies until",
-    "statusFilter": "Status",
-    "allStatuses": "All statuses",
     "workshopFilter": "Workshop",
     "allWorkshopsOption": "All workshops",
     "showing": "Showing {shown} of {total} promotions",
