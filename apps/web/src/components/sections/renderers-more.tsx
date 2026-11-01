@@ -2,17 +2,61 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
-import { Clock, ExternalLink, Mail, MapPin, MessageCircle, Phone, Play } from "lucide-react";
-import { isYoutubeId, MAX_SECTION_VIDEOS, youtubeEmbedUrl, youtubeThumbnailUrl } from "@workshop/shared";
+import { Clock, ExternalLink, Tag, Mail, MapPin, MessageCircle, Phone, Play } from "lucide-react";
+import { formatMoney, isYoutubeId, MAX_SECTION_VIDEOS, youtubeEmbedUrl, youtubeThumbnailUrl, type PromotionRecord } from "@workshop/shared";
 import { cn } from "@/lib/utils";
-import type { ContactProps, FaqProps, FooterProps, LocationProps, TestimonialsProps, VideoProps } from "./context";
+import type { ContactProps, FaqProps, FooterProps, LocationProps, PromotionsProps, RenderContext, TestimonialsProps, VideoProps } from "./context";
 import {
   arr, box, card, Heading, Img, linkClass, localizer, primaryButton, Section, Socials, str, type RenderProps,
 } from "./renderer-kit";
 import { useReportActions } from "./report-context";
 import { safeMaps, telHref, whatsappHref } from "./safe-url";
 
-// Section renderers (part 2): testimonials, faq, location, contact, video, footer.
+// Section renderers (part 2): promotions, testimonials, faq, location, contact, video, footer.
+
+/** "20% off" or "100,000 ₫ off" in the guest's language. */
+function discountLabel(p: PromotionRecord, ctx: RenderContext, t: (key: string, values?: Record<string, string | number>) => string): string {
+  return p.discountType === "PERCENT"
+    ? t("sections.promotionOffPercent", { value: p.discountValue })
+    : t("sections.promotionOffAmount", { amount: formatMoney(p.discountValue, ctx.shop.currency, ctx.locale) });
+}
+
+/** The promotions that are active today. Business dates are shown as plain calendar days (no timezone shift). */
+export function PromotionsSection({ section, props, ctx, variant }: RenderProps<PromotionsProps>) {
+  const L = localizer(ctx);
+  const t = useTranslations("site");
+  const list = arr<PromotionRecord>(ctx.promotions);
+  if (list.length === 0) return null;
+  const until = (d: string) => new Intl.DateTimeFormat(ctx.locale, { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${d}T12:00:00Z`));
+  const names = (p: PromotionRecord) =>
+    p.appliesTo === "ALL" ? t("sections.promotionAllWorkshops") : p.workshopIds.map((id) => ctx.workshops.find((w) => w.id === id)).filter((w) => !!w).map((w) => L(w.title)).join(", ");
+  const banner = variant === "banner";
+  return (
+    <Section id={section.id}>
+      <Heading>{L(props.heading)}</Heading>
+      <ul className={cn("grid gap-4", banner ? "grid-cols-1" : "@xl:grid-cols-2 @5xl:grid-cols-3")}>
+        {list.map((p) => (
+          <li key={p.id} className={cn("flex gap-4 p-4", card, banner ? "items-center" : "flex-col")}>
+            <span className={cn("inline-flex w-fit shrink-0 items-center gap-1.5 px-3 py-1.5 text-sm font-semibold", box, "bg-[var(--site-primary)] text-[var(--site-primary-fg)]")}>
+              <Tag className="size-4" aria-hidden />{discountLabel(p, ctx, t)}
+            </span>
+            <div className="min-w-0 flex-1">
+              <h3 className="font-semibold text-[var(--site-text)]">{L(p.title)}</h3>
+              {L(p.description) ? <p className="mt-1 whitespace-pre-line text-sm text-[var(--site-muted)]">{L(p.description)}</p> : null}
+              <p className="mt-2 text-sm text-[var(--site-muted)]">{t("sections.promotionAppliesTo", { names: names(p) })}</p>
+              <p className="text-sm text-[var(--site-muted)]">{t("sections.promotionValidUntil", { date: until(p.endDate) })}</p>
+              {p.code ? (
+                <p className="mt-2 text-sm text-[var(--site-text)]">
+                  {t("sections.promotionCode")}: <code className={cn("px-2 py-0.5 font-mono font-semibold", box, "bg-[var(--site-surface)] border border-[color:var(--site-border)]")}>{p.code}</code>
+                </p>
+              ) : null}
+            </div>
+          </li>
+        ))}
+      </ul>
+    </Section>
+  );
+}
 
 export function TestimonialsSection({ section, props, ctx, variant }: RenderProps<TestimonialsProps>) {
   const L = localizer(ctx);

@@ -9,6 +9,8 @@ import { requireSite, resolveLocale } from "@/components/site/resolve";
 import { safeImage } from "@/components/sections/safe-url";
 import type { PageContent } from "@/lib/types";
 import type { RenderContext } from "@/components/sections/context";
+import { currentShop } from "@/lib/mock/data";
+import { publicPromotions } from "@/lib/mock/promotion-store";
 
 function heroImage(content: PageContent): string | undefined {
   const hero = content.sections.find((s) => s.type === "hero" && s.enabled);
@@ -51,6 +53,8 @@ export default async function SitePage({ params }: PageProps<"/sites/[slug]/[[..
     languages,
     shop: { name: shop.name, defaultLocale: shop.defaultLocale, enabledLocales: shop.enabledLocales, timezone: shop.timezone, currency: shop.currency },
     workshops,
+    // TODO(api): the promotions of this shop (organization_id); the mock store only holds the demo shop's.
+    promotions: slug === currentShop.slug ? publicPromotions() : [],
     reportHref: `${base}/report`,
     privacyHref: "#privacy", // placeholder until the legal pages exist
   };

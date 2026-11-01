@@ -1,4 +1,4 @@
-import type { Locale, Localized } from "@workshop/shared";
+import type { Locale, Localized, PromotionRecord } from "@workshop/shared";
 import type { Shop, Workshop } from "@/lib/types";
 
 /** Serializable render context shared by the builder preview and the public site. */
@@ -7,6 +7,8 @@ export interface RenderContext {
   shop: Pick<Shop, "name" | "defaultLocale" | "enabledLocales" | "timezone" | "currency">;
   /** ACTIVE workshops only; the workshops section never takes manual content. */
   workshops: Workshop[];
+  /** Promotions that are active today (Promotion management); the promotions section never takes manual content. Default: none. */
+  promotions?: PromotionRecord[];
   reportHref: string;
   privacyHref: string;
   /** Languages offered by the language switcher of the frame chrome (public site: real links; preview: in-place switch). */
@@ -19,6 +21,7 @@ export interface SocialLink { label: string; url: string }
 export interface HeroProps { title: Localized; subtitle: Localized; imageUrl: string; ctaText: Localized }
 export interface AboutProps { heading: Localized; body: Localized; imageUrl: string }
 export interface WorkshopsProps { heading: Localized }
+export interface PromotionsProps { heading: Localized }
 export interface GalleryProps { heading: Localized; imageUrls: string[] }
 export interface TeamProps { heading: Localized; members: { name: string; role: Localized; bio: Localized; imageUrl: string }[] }
 export interface TestimonialsProps { heading: Localized; items: { name: string; country: string; text: Localized }[] }

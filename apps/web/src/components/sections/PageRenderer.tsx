@@ -16,7 +16,12 @@ import { themeStyle } from "./theme";
  * The wrapper is a size container so every layout responds to the width it actually has (preview frame or window).
  */
 export function PageRenderer({ content, theme, ctx }: { content: PageContent; theme: PageTheme; ctx: RenderContext }) {
-  const { body, footer } = useMemo(() => splitSections(content.sections), [content.sections]);
+  // The promotions section only exists while a promotion is active: without one it would be an empty block (and a dead menu link).
+  const hasPromotions = (ctx.promotions?.length ?? 0) > 0;
+  const { body, footer } = useMemo(
+    () => splitSections(hasPromotions ? content.sections : content.sections.filter((s) => s.type !== "promotions")),
+    [content.sections, hasPromotions],
+  );
   const Frame = FRAMES[resolveLayout(content.layout)];
   return (
     <div

@@ -3,12 +3,12 @@
 import type { PageTheme, SectionInstance } from "@/lib/types";
 import type {
   AboutProps, ContactProps, FaqProps, FooterProps, GalleryProps, HeroProps, LocationProps, RenderContext,
-  TeamProps, TestimonialsProps, VideoProps, WorkshopsProps,
+  PromotionsProps, TeamProps, TestimonialsProps, VideoProps, WorkshopsProps,
 } from "./context";
 import { BookCtaProvider } from "./renderer-kit";
 import { effectiveVariant, isBookButtonShown, SECTION_REGISTRY } from "./registry";
 import { AboutSection, GallerySection, HeroSection, TeamSection, WorkshopsSection } from "./renderers";
-import { ContactSection, FaqSection, FooterSection, LocationSection, TestimonialsSection, VideoSection } from "./renderers-more";
+import { ContactSection, FaqSection, FooterSection, LocationSection, PromotionsSection, TestimonialsSection, VideoSection } from "./renderers-more";
 import { resolveThemeColors, sectionStyleVars } from "./theme";
 
 /**
@@ -32,6 +32,7 @@ export function SectionRenderer({ section, ctx, theme }: { section: SectionInsta
     case "hero": body = <HeroSection {...common} props={p as unknown as HeroProps} />; break;
     case "about": body = <AboutSection {...common} props={p as unknown as AboutProps} />; break;
     case "workshops": body = <WorkshopsSection {...common} props={p as unknown as WorkshopsProps} />; break;
+    case "promotions": body = <PromotionsSection {...common} props={p as unknown as PromotionsProps} />; break;
     case "gallery": body = <GallerySection {...common} props={p as unknown as GalleryProps} />; break;
     case "team": body = <TeamSection {...common} props={p as unknown as TeamProps} />; break;
     case "testimonials": body = <TestimonialsSection {...common} props={p as unknown as TestimonialsProps} />; break;

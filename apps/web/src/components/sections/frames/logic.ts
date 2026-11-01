@@ -57,7 +57,7 @@ export type TabKey = (typeof TAB_KEYS)[number];
 
 const TAB_OF_TYPE: Record<SectionType, TabKey> = {
   hero: "overview", about: "overview", team: "overview", testimonials: "overview",
-  workshops: "workshops",
+  workshops: "workshops", promotions: "workshops",
   gallery: "gallery", video: "gallery",
   faq: "info", location: "info", contact: "info", footer: "info",
 };
@@ -139,7 +139,7 @@ export function planBento(body: SectionInstance[], opts: { workshopCount: number
 export type JourneyStep = "discover" | "choose" | "visit" | "book";
 const STEP_OF_TYPE: Record<SectionType, JourneyStep> = {
   hero: "discover", about: "discover", team: "discover", gallery: "discover", video: "discover",
-  workshops: "choose", testimonials: "choose",
+  workshops: "choose", promotions: "choose", testimonials: "choose",
   location: "visit", faq: "visit",
   contact: "book", footer: "book",
 };

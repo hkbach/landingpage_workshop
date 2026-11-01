@@ -4,7 +4,7 @@ import { useMemo, useState, useSyncExternalStore, type CSSProperties } from "rea
 import Link from "next/link";
 import { NextIntlClientProvider, useTranslations } from "next-intl";
 import { ArrowLeft, Eye, Monitor, Smartphone } from "lucide-react";
-import type { Locale } from "@workshop/shared";
+import type { Locale, PromotionRecord } from "@workshop/shared";
 import { buttonVariants } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { PageRenderer } from "@/components/sections/PageRenderer";
@@ -28,6 +28,8 @@ interface Props {
   shop: PreviewShop;
   initial: { content: PageContent; theme: PageTheme; template: TemplateKey };
   workshops: Workshop[];
+  /** Promotions that are active today: the promotions section shows them as guests will see them. */
+  promotions?: PromotionRecord[];
   siteMessages: Record<string, Record<string, unknown>>;
   /** Template to preview with the current content (in memory only; nothing is saved). */
   previewTemplate?: TemplateKey;
@@ -35,7 +37,7 @@ interface Props {
   pageId?: string;
 }
 
-export function SitePreview({ shop, initial, workshops, siteMessages, previewTemplate, pageId = MAIN_PAGE_ID }: Props) {
+export function SitePreview({ shop, initial, workshops, promotions = [], siteMessages, previewTemplate, pageId = MAIN_PAGE_ID }: Props) {
   const t = useTranslations("builder");
   const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
   const [lang, setLang] = useState<Locale>(shop.defaultLocale);
@@ -61,7 +63,7 @@ export function SitePreview({ shop, initial, workshops, siteMessages, previewTem
   );
 
   const ctx: RenderContext = {
-    locale: lang, shop, workshops, reportHref: "#", privacyHref: "#", allowDataImages: true,
+    locale: lang, shop, workshops, promotions, reportHref: "#", privacyHref: "#", allowDataImages: true,
     languages: shop.enabledLocales.map((l) => ({ locale: l, href: "#" })),
   };
   const chrome = useMemo(() => ({ onSelectLocale: setLang }), []);

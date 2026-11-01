@@ -32,7 +32,7 @@ export const TEMPLATES: Record<TemplateKey, TemplateDef> = {
   classic: {
     key: "classic", layout: "classic", theme: theme("warm", "Inter", "md", "comfortable"),
     sections: [
-      s("hero", "centered"), s("about", "image-left"), s("workshops", "grid"), s("gallery", "grid"), s("team", "cards"),
+      s("hero", "centered"), s("about", "image-left"), s("workshops", "grid"), s("promotions", "cards"), s("gallery", "grid"), s("team", "cards"),
       s("testimonials", "cards"), s("video", "wide", false), s("faq", "accordion"), s("location", "simple"), s("contact", "list"),
       s("footer", "dark"),
     ],
@@ -41,7 +41,7 @@ export const TEMPLATES: Record<TemplateKey, TemplateDef> = {
   quicklinks: {
     key: "quicklinks", layout: "quicklinks", theme: theme("magenta", "Poppins", "xl", "compact"),
     sections: [
-      s("hero", "compact"), s("workshops", "compact"), s("location", "card"), s("contact", "cards"), s("video", "wide"),
+      s("hero", "compact"), s("workshops", "compact"), s("promotions", "banner"), s("location", "card"), s("contact", "cards"), s("video", "wide"),
       s("about", "stacked"), s("gallery", "grid"), s("faq", "accordion"), s("testimonials", "quote", false),
       s("team", "inline", false), s("footer", "centered"),
     ],
@@ -50,7 +50,7 @@ export const TEMPLATES: Record<TemplateKey, TemplateDef> = {
   bookingrail: {
     key: "bookingrail", layout: "bookingrail", theme: theme("forest", "Noto Sans", "lg", "comfortable"),
     sections: [
-      s("hero", "split"), s("about", "image-left"), s("workshops", "list"), s("gallery", "grid"), s("video", "wide"),
+      s("hero", "split"), s("about", "image-left"), s("workshops", "list"), s("promotions", "cards"), s("gallery", "grid"), s("video", "wide"),
       s("team", "inline"), s("testimonials", "cards"), s("faq", "accordion"), s("location", "simple"), s("contact", "list"),
       s("footer", "dark"),
     ],
@@ -59,7 +59,7 @@ export const TEMPLATES: Record<TemplateKey, TemplateDef> = {
   floatingcards: {
     key: "floatingcards", layout: "floatingcards", theme: theme("plum", "Poppins", "xl", "comfortable"),
     sections: [
-      s("hero", "centered"), s("about", "image-left"), s("workshops", "grid"), s("gallery", "masonry"), s("video", "split"),
+      s("hero", "centered"), s("about", "image-left"), s("workshops", "grid"), s("promotions", "cards"), s("gallery", "masonry"), s("video", "split"),
       s("team", "cards"), s("testimonials", "cards"), s("faq", "accordion"), s("location", "card"), s("contact", "cards"),
       s("footer", "centered"),
     ],
@@ -68,7 +68,7 @@ export const TEMPLATES: Record<TemplateKey, TemplateDef> = {
   sidebar: {
     key: "sidebar", layout: "sidebar", theme: theme("ocean", "Inter", "md", "comfortable"),
     sections: [
-      s("hero", "overlay-left"), s("about", "image-right"), s("workshops", "grid"), s("gallery", "masonry"), s("video", "wide"),
+      s("hero", "overlay-left"), s("about", "image-right"), s("workshops", "grid"), s("promotions", "cards"), s("gallery", "masonry"), s("video", "wide"),
       s("team", "inline"), s("testimonials", "cards"), s("faq", "two-column"), s("location", "simple"), s("contact", "cards"),
       s("footer", "light"),
     ],
@@ -78,7 +78,7 @@ export const TEMPLATES: Record<TemplateKey, TemplateDef> = {
     key: "journey", layout: "journey", theme: theme("sage", "Noto Sans", "lg", "comfortable"),
     sections: [
       s("hero", "centered"), s("about", "stacked"), s("team", "inline"), s("gallery", "strip"), s("video", "wide"),
-      s("workshops", "list"), s("testimonials", "cards"), s("location", "card"), s("faq", "accordion"), s("contact", "cards"),
+      s("workshops", "list"), s("promotions", "cards"), s("testimonials", "cards"), s("location", "card"), s("faq", "accordion"), s("contact", "cards"),
       s("footer", "light"),
     ],
   },
@@ -86,7 +86,7 @@ export const TEMPLATES: Record<TemplateKey, TemplateDef> = {
   magazine: {
     key: "magazine", layout: "magazine", theme: theme("mono", "Lora", "none", "spacious"),
     sections: [
-      s("hero", "editorial"), s("about", "image-right"), s("workshops", "list"), s("gallery", "strip"), s("team", "inline"),
+      s("hero", "editorial"), s("about", "image-right"), s("workshops", "list"), s("promotions", "cards"), s("gallery", "strip"), s("team", "inline"),
       s("testimonials", "quote"), s("video", "wide"), s("faq", "two-column"), s("location", "simple"), s("contact", "list"),
       s("footer", "centered"),
     ],
@@ -95,7 +95,7 @@ export const TEMPLATES: Record<TemplateKey, TemplateDef> = {
   bento: {
     key: "bento", layout: "bento", theme: theme("indigo", "Inter", "lg", "compact"),
     sections: [
-      s("hero", "overlay-left"), s("about", "image-left"), s("workshops", "grid"), s("gallery", "grid"), s("video", "wide"),
+      s("hero", "overlay-left"), s("about", "image-left"), s("workshops", "grid"), s("promotions", "cards"), s("gallery", "grid"), s("video", "wide"),
       s("team", "inline"), s("testimonials", "cards"), s("location", "card"), s("contact", "cards"), s("faq", "accordion"),
       s("footer", "light"),
     ],
@@ -104,7 +104,7 @@ export const TEMPLATES: Record<TemplateKey, TemplateDef> = {
   appstyle: {
     key: "appstyle", layout: "appstyle", theme: theme("sunset", "Inter", "xl", "compact"),
     sections: [
-      s("hero", "centered"), s("about", "image-left"), s("team", "cards"), s("testimonials", "cards"), s("workshops", "grid"),
+      s("hero", "centered"), s("about", "image-left"), s("team", "cards"), s("testimonials", "cards"), s("workshops", "grid"), s("promotions", "cards"),
       s("gallery", "masonry"), s("video", "wide"), s("faq", "accordion"), s("location", "card"), s("contact", "cards"),
       s("footer", "dark"),
     ],
@@ -113,7 +113,7 @@ export const TEMPLATES: Record<TemplateKey, TemplateDef> = {
   cinematic: {
     key: "cinematic", layout: "cinematic", theme: theme("noir", "Poppins", "md", "spacious"),
     sections: [
-      s("hero", "fullscreen"), s("about", "image-left"), s("workshops", "featured"), s("gallery", "strip"), s("video", "wide"),
+      s("hero", "fullscreen"), s("about", "image-left"), s("workshops", "featured"), s("promotions", "cards"), s("gallery", "strip"), s("video", "wide"),
       s("testimonials", "quote"), s("team", "inline", false), s("faq", "two-column"), s("location", "card"), s("contact", "cards"),
       s("footer", "centered"),
     ],

@@ -81,6 +81,7 @@
     "hero": "Hero",
     "about": "About",
     "workshops": "Workshops",
+    "promotions": "Promotions",
     "gallery": "Gallery",
     "team": "Team",
     "testimonials": "Testimonials",
@@ -319,6 +320,10 @@
       "list": "List",
       "featured": "First workshop featured",
       "compact": "Compact buttons"
+    },
+    "promotions": {
+      "cards": "Cards",
+      "banner": "Banners"
     },
     "gallery": {
       "grid": "Grid",

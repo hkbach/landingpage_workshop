@@ -22,11 +22,12 @@ describe("template registry integrity", () => {
     for (const k of TEMPLATE_KEYS) expect(TEMPLATES[k].key).toBe(k);
   });
 
-  it("registry covers all 11 section types, including video", () => {
-    expect(SECTION_TYPES).toHaveLength(11);
+  it("registry covers all 12 section types, including video and promotions", () => {
+    expect(SECTION_TYPES).toHaveLength(12);
     expect(SECTION_TYPES).toContain("video");
     expect(Object.keys(SECTION_REGISTRY).sort()).toEqual([...SECTION_TYPES].sort());
     expect(ADDABLE_TYPES).toContain("video");
+    expect(ADDABLE_TYPES).toContain("promotions");
   });
 
   it.each(TEMPLATE_KEYS)("%s: sections, variants and footer are valid", (key) => {

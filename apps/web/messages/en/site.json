@@ -13,7 +13,13 @@
     "galleryLabel": "Photo gallery",
     "phone": "Phone",
     "email": "Email",
-    "videoItem": "{title} – video {n} of {total}"
+    "videoItem": "{title} – video {n} of {total}",
+    "promotionOffPercent": "{value}% off",
+    "promotionOffAmount": "{amount} off",
+    "promotionAllWorkshops": "All workshops",
+    "promotionAppliesTo": "Applies to: {names}",
+    "promotionValidUntil": "Valid until {date}",
+    "promotionCode": "Code"
   },
   "header": {
     "language": "Language"

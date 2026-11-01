@@ -6,7 +6,7 @@ import type { Tone } from "./theme";
 import { newUuid } from "@/lib/uuid";
 
 // Section registry (FR-SITE-02): per type -> schema, defaults, layout variants and a field descriptor that drives the
-// generic editor. All templates share these 11 types and one renderer per type (the variant is a renderer prop).
+// generic editor. All templates share these 12 types and one renderer per type (the variant is a renderer prop).
 
 export type FieldDef =
   | { kind: "localized"; key: string; max: number; multiline?: boolean }
@@ -107,6 +107,14 @@ const DEFINITIONS: Record<SectionType, Define> = {
     variants: ["grid", "list", "featured", "compact"], tone: fixed("surface"),
     make: () => z.object({ heading: localized(80) }),
     defaultProps: () => ({ heading: { en: "Our workshops" } }),
+    fields: [{ kind: "localized", key: "heading", max: 80 }],
+  },
+  promotions: {
+    // Content comes from Promotion management (the promotions that are active today), like the workshops section.
+    type: "promotions", schemaVersion: 1, removable: true, autoContent: true,
+    variants: ["cards", "banner"], tone: fixed("surface"),
+    make: () => z.object({ heading: localized(80) }),
+    defaultProps: () => ({ heading: { en: "Special offers" } }),
     fields: [{ kind: "localized", key: "heading", max: 80 }],
   },
   gallery: {
@@ -215,7 +223,7 @@ export const SECTION_REGISTRY = Object.fromEntries(
   ]),
 ) as Record<SectionType, SectionDef>;
 
-export const ADDABLE_TYPES: SectionType[] = ["hero", "about", "workshops", "gallery", "team", "testimonials", "faq", "location", "contact", "video"];
+export const ADDABLE_TYPES: SectionType[] = ["hero", "about", "workshops", "promotions", "gallery", "team", "testimonials", "faq", "location", "contact", "video"];
 
 export function defaultVariant(type: SectionType): string {
   return SECTION_REGISTRY[type].variants[0]!;
@@ -225,7 +233,7 @@ export function isValidVariant(type: SectionType, variant: unknown): variant is 
 }
 /** Whether each section type shows a Book button when the shop has not chosen (hero CTA and workshop cards are on). */
 export const BOOK_BUTTON_DEFAULT: Record<SectionType, boolean> = {
-  hero: true, about: false, workshops: true, gallery: false, team: false, testimonials: false,
+  hero: true, about: false, workshops: true, promotions: false, gallery: false, team: false, testimonials: false,
   faq: false, location: false, contact: false, video: false, footer: false,
 };
 

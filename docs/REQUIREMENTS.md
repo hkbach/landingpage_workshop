@@ -435,6 +435,13 @@ Browser ────────────────────────
 - Biểu đồ cột chồng theo kết quả: đã tham dự (`CHECKED_IN`, `COMPLETED`), sắp tới (`CONFIRMED`), hủy / no-show (`CANCELLED`, `NO_SHOW`, `LATE_RELEASED`); booking tính theo ngày của session, theo timezone của shop. Kèm tổng booking, số khách, số đã tham dự, tỷ lệ hủy / no-show của kỳ. Có bảng số liệu thay thế; vẽ bằng SVG, không thêm thư viện.
 - API dự kiến: `GET /dashboard/summary` và `GET /dashboard/booking-stats?period=1m|3m|6m|12m`, lọc theo `organization_id`, tổng hợp ở backend.
 
+**FR-PROMO-01 – Quản lý khuyến mãi / Promotion management (Could)**
+- Menu `/shopowner/promotions`. Shop owner tạo, sửa, tạm dừng / tiếp tục và xóa khuyến mãi: tiêu đề và mô tả theo từng ngôn ngữ (chỉ nhập ngôn ngữ đang chọn), loại giảm `PERCENT` (1–100) hoặc `FIXED_AMOUNT` (minor units), mã khuyến mãi tùy chọn (3–20 ký tự A–Z, 0–9), áp dụng cho tất cả workshop hoặc một số workshop, ngày bắt đầu và ngày kết thúc (ngày nghiệp vụ theo timezone của shop, gồm cả hai ngày). Tối đa 20 khuyến mãi / shop.
+- Trạng thái tính từ ngày hiện tại của shop: `SCHEDULED` (chưa tới ngày), `ACTIVE`, `EXPIRED` (quá ngày); `PAUSED` khi shop owner tạm dừng (ưu tiên hơn ngày). Trang quản lý có thẻ tổng hợp theo trạng thái (cũng là bộ lọc), ví dụ giá sau giảm khi nhập, xác nhận khi xóa.
+- **Section "Promotions" trên landing page** (loại section mới, tự lấy nội dung như section Workshops; layout `cards` hoặc `banner`; chỉ có tiêu đề section là nhập tay): hiển thị các khuyến mãi đang `ACTIVE` hôm nay gồm mức giảm, tiêu đề, mô tả, workshop áp dụng, hạn dùng và mã. Section tự ẩn (cùng link menu) khi không có khuyến mãi nào đang chạy. Có sẵn trong cả 10 template; shop owner có thể thêm / bớt / đổi thứ tự như các section khác.
+- **Ngoài phạm vi hiện tại:** khuyến mãi chưa tự giảm giá trong luồng đặt chỗ. Giá khách trả vẫn do backend tính (BR về giá); khi triển khai, backend tính giá sau khuyến mãi theo mã / khuyến mãi hợp lệ tại thời điểm đặt và ghi snapshot vào booking. Thanh toán vẫn tại shop.
+- API (mock trong frontend, hợp đồng theo backend thật): `GET/POST /promotions`, `PUT/PATCH/DELETE /promotions/{id}` (chỉ OWNER / MANAGER, lọc theo `organization_id`, ghi audit); trang public đọc các khuyến mãi đang chạy của shop. Bảng `promotions` (`organization_id`, `title jsonb`, `description jsonb`, `discount_type`, `discount_value bigint`, `code`, `applies_to`, `workshop_ids`, `start_date date`, `end_date date`, `enabled`).
+
 **FR-CUST-01 – Khách hàng (Must)**
 - Danh sách customer của shop, chi tiết và lịch sử booking. Tìm theo tên/email.
 - Customer thuộc riêng từng shop; không gộp giữa các shop.
