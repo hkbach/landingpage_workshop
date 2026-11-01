@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { deepestDiscount, filterPromotions, OVER_BUDGET_PERCENT, overBudgetWorkshops, type PromotionFilter } from "./promotion-insights";
+import { deepestDiscount, filterPromotions, OVER_BUDGET_PERCENT, overBudgetWorkshops, workshopPromotions, type PromotionFilter } from "./promotion-insights";
 import type { PromotionRecord } from "./promotions";
 
 const TODAY = "2026-11-10";
@@ -131,5 +131,50 @@ describe("overBudgetWorkshops", () => {
   it("accepts another limit", () => {
     expect(overBudgetWorkshops(cand({ discountValue: 50 }), [], workshops, 50)).toHaveLength(2);
     expect(overBudgetWorkshops(cand({ discountValue: 49 }), [], workshops, 50)).toEqual([]);
+  });
+});
+
+describe("workshopPromotions", () => {
+  const full = (over: Partial<PromotionRecord> & { id: string }): PromotionRecord => ({
+    ...p(over), description: {}, code: "CODE", createdAt: "", updatedAt: "", ...over,
+  } as PromotionRecord);
+  const w1 = { id: "ws-1", priceAmount: 650_000 };
+  const list = [
+    full({ id: "all", discountValue: 10 }),
+    full({ id: "ws2", appliesTo: "SELECTED", workshopIds: ["ws-2"], discountValue: 30 }),
+    full({ id: "fix", discountType: "FIXED_AMOUNT", discountValue: 50_000, stacking: "MULTIPLE" }),
+    full({ id: "alone", discountValue: 40, stacking: "SINGLE" }),
+    full({ id: "later", startDate: "2026-12-01", endDate: "2026-12-31", discountValue: 90 }),
+    full({ id: "off", enabled: false, discountValue: 90 }),
+    full({ id: "over", startDate: "2026-09-01", endDate: "2026-09-30", discountValue: 90 }),
+  ];
+
+  it("lists the promotions that are active today and cover the workshop", () => {
+    expect(workshopPromotions(w1, list, TODAY).applicable.map((x) => x.id).sort()).toEqual(["alone", "all", "fix"].sort());
+    expect(workshopPromotions({ id: "ws-2", priceAmount: 400_000 }, list, TODAY).applicable.map((x) => x.id)).toContain("ws2");
+  });
+  it("gives the deepest discount a guest can reach, as an amount and a share, and the price after it", () => {
+    // combinable: 50,000 off first, then 10% of 600,000 = 60,000 -> 110,000 (16.9%); the 40% promotion alone takes 260,000 (40%)
+    const r = workshopPromotions(w1, list, TODAY);
+    expect(r.max.amount).toBe(260_000);
+    expect(r.max.percent).toBeCloseTo(40);
+    expect(r.max.promotionIds).toEqual(["alone"]);
+    expect(r.priceAfter).toBe(390_000);
+  });
+  it("combines what can be combined when that beats any single promotion", () => {
+    const r = workshopPromotions(w1, list.filter((x) => x.id !== "alone"), TODAY);
+    expect(r.max.amount).toBe(110_000);
+    expect(r.max.percent).toBeCloseTo(16.92, 1);
+    expect(r.max.promotionIds.sort()).toEqual(["all", "fix"]);
+    expect(r.priceAfter).toBe(540_000);
+  });
+  it("is nothing when no promotion applies", () => {
+    const r = workshopPromotions(w1, [list[1]!], TODAY);
+    expect(r).toEqual({ applicable: [], max: { amount: 0, percent: 0, promotionIds: [] }, priceAfter: 650_000 });
+  });
+  it("never goes above the price", () => {
+    const r = workshopPromotions({ id: "ws-1", priceAmount: 40_000 }, [full({ id: "big", discountType: "FIXED_AMOUNT", discountValue: 90_000 })], TODAY);
+    expect(r.max.amount).toBe(40_000);
+    expect(r.priceAfter).toBe(0);
   });
 });

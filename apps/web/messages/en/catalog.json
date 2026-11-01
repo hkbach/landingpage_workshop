@@ -22,7 +22,19 @@
     "price": "Price per guest",
     "duration": "Duration",
     "capacity": "Capacity",
-    "minutes": "{n} min"
+    "minutes": "{n} min",
+    "promotions": "Promotions you can apply",
+    "maxDiscount": "Maximum discount",
+    "maxDiscountHint": "The most one guest can get off the price with the promotions that run today, following the rules for combining them.",
+    "noPromotions": "No promotion applies",
+    "offPercent": "{value}% off",
+    "offAmount": "{amount} off",
+    "combinable": "Can be combined",
+    "alone": "Only this promotion",
+    "maxValue": "{amount} ({percent})",
+    "using": "Using: {names}",
+    "priceAfter": "Price after: {amount}",
+    "managePromotions": "Manage promotions"
   },
   "detail": {
     "tabDetails": "Details",

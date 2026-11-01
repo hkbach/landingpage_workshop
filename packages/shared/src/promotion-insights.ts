@@ -1,5 +1,5 @@
 import {
-  priceBooking, promotionAppliesTo, promotionStatus, type PromotionRecord, type PromotionStatus,
+  activePromotions, priceBooking, promotionAppliesTo, promotionStatus, type PromotionRecord, type PromotionStatus,
 } from "./promotions";
 
 // Two helpers of the Promotion management page: searching the list, and warning the shop owner when promotions pile up so much
@@ -90,4 +90,22 @@ export function overBudgetWorkshops(
     if (worst) out.push({ workshopId: w.id, percent: Math.round(worst.percent * 10) / 10, promotionIds: worst.promotionIds });
   }
   return out;
+}
+
+// ---- per workshop ------------------------------------------------------------------------------------------------------------
+
+export interface WorkshopPromotions<T extends PromotionRecord = PromotionRecord> {
+  /** The promotions a guest can use on this workshop today (active and covering it), newest start first. */
+  applicable: T[];
+  /** The most they can take off one guest's price (see deepestDiscount), as an amount and as a share of the price. */
+  max: DeepestDiscount;
+  /** The price after that discount. */
+  priceAfter: number;
+}
+
+/** Shown on the shop owner's workshop list: which promotions apply to a workshop and how deep the discount can go. */
+export function workshopPromotions<T extends PromotionRecord>(workshop: { id: string; priceAmount: number }, promotions: readonly T[], today: string): WorkshopPromotions<T> {
+  const applicable = activePromotions(promotions, today).filter((p) => promotionAppliesTo(p, workshop.id));
+  const max = deepestDiscount(workshop.priceAmount, applicable);
+  return { applicable, max, priceAfter: workshop.priceAmount - max.amount };
 }
