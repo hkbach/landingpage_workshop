@@ -4,11 +4,11 @@ import { useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
-import { ImageIcon, Pause, Pencil, Play, Plus, Trash2, TriangleAlert } from "lucide-react";
+import { ImageIcon, OctagonX, Pause, Pencil, Play, Plus, Trash2, TriangleAlert } from "lucide-react";
 import {
-  countByStatus, discountedPrice, DISCOUNT_TYPES, filterPromotions, formatMoney, minorDigits, OVER_BUDGET_PERCENT, overBudgetWorkshops, pickLocalized, promotionAppliesTo,
+  countByStatus, discountedPrice, DISCOUNT_TYPES, filterPromotions, formatMoney, fullDiscountWorkshops, minorDigits, OVER_BUDGET_PERCENT, overBudgetWorkshops, pickLocalized, promotionAppliesTo,
   promotionInputSchema, promotionStatus, PROMOTION_DESCRIPTION_MAX, PROMOTION_TITLE_MAX, STACKING_MODES,
-  type DiscountType, type Locale, type Localized, type PromotionInput, type PromotionRecord, type PromotionStatus, type StackingMode,
+  type DiscountType, type Locale, type Localized, type OverBudgetWorkshop, type PromotionInput, type PromotionRecord, type PromotionStatus, type StackingMode,
 } from "@workshop/shared";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -57,6 +57,13 @@ function limitNotice(e: unknown, t: T, day: (d: string) => string): Notice | nul
   return { title: t("limitTitle"), body: t("limitReached", { max: 20 }) };
 }
 
+/** The pop-up for a promotion that would make workshops free (also answered by the server). Null for any other failure. */
+function fullDiscountNotice(e: unknown, t: T, nameOf: (id: string) => string, titleKey: string = "fullDiscountTitle"): Notice | null {
+  if (!(e instanceof PromotionApiError) || e.code !== "FULL_DISCOUNT") return null;
+  const ids = Array.isArray(e.details.workshopIds) ? (e.details.workshopIds as string[]) : [];
+  return { title: t(titleKey), body: t("fullDiscountBody", { workshops: ids.map(nameOf).join(", ") }) };
+}
+
 const addDays = (day: string, n: number) => new Date(Date.parse(`${day}T12:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10);
 
 interface Filters { q: string; status: "" | PromotionStatus; workshopId: string; from: string; to: string }
@@ -96,7 +103,7 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
     mutationFn: (v: { id: string; enabled: boolean }) => setPromotionEnabledRequest(v.id, v.enabled),
     onSuccess: (_p, v) => { setMessage({ text: t(v.enabled ? "resumed" : "paused"), tone: "ok" }); void refresh(); },
     onError: (e) => {
-      const n = limitNotice(e, t, day);
+      const n = fullDiscountNotice(e, t, nameOf, "fullDiscountResumeTitle") ?? limitNotice(e, t, day);
       if (n) setNotice(n); else setMessage({ text: t("saveFailed"), tone: "error" });
       void refresh();
     },
@@ -324,6 +331,8 @@ function PromotionDialog({ form, setForm, shop, workshops, others, money, day, o
     mutationFn: (v: { id: string | null; input: PromotionInput }) => savePromotionRequest(v.id, v.input),
     onSuccess: (_p, v) => onSaved(v.id !== null),
     onError: (e) => {
+      const free = fullDiscountNotice(e, t, workshopName);
+      if (free) { onNotice(free); return; }
       if (e instanceof PromotionApiError && e.status === 422) setErrors(Object.fromEntries(Object.entries(e.fields).map(([k, code]) => [k, t(`errors.${code}` as never)])));
       else {
         const n = limitNotice(e, t, day);
@@ -335,13 +344,18 @@ function PromotionDialog({ form, setForm, shop, workshops, others, money, day, o
   const setLoc = (key: "title" | "description", text: string) => form && set({ [key]: { ...form[key], [lang]: text } });
   const workshopName = (id: string) => pickLocalized(workshops.find((w) => w.id === id)?.title ?? {}, lang, shop.defaultLocale);
 
-  /** Workshops this promotion could take to OVER_BUDGET_PERCENT off or more, next to the promotions already running on the same days. */
-  const risks = useMemo(() => {
-    if (!form) return [];
+  /**
+   * `full`: workshops this promotion could make free (100% off), next to the promotions already running on the same days: it cannot be
+   * saved. `risks`: workshops it could take to OVER_BUDGET_PERCENT off or more: a warning, shown only when nothing is blocked.
+   */
+  const { full, risks } = useMemo(() => {
+    const none = { full: [] as OverBudgetWorkshop[], risks: [] as OverBudgetWorkshop[] };
+    if (!form) return none;
     const parsed = readForm(form, shop.currency);
-    if (!parsed.success) return [];
+    if (!parsed.success) return none;
     const candidate = { id: form.id ?? "new", ...parsed.data, workshopIds: parsed.data.appliesTo === "ALL" ? [] : parsed.data.workshopIds };
-    return overBudgetWorkshops(candidate, others, workshops);
+    const blocked = fullDiscountWorkshops(candidate, others, workshops);
+    return { full: blocked, risks: blocked.length > 0 ? [] : overBudgetWorkshops(candidate, others, workshops) };
   }, [form, shop.currency, others, workshops]);
 
   function submit(e: FormEvent) {
@@ -352,6 +366,10 @@ function PromotionDialog({ form, setForm, shop, workshops, others, money, day, o
       const next: Record<string, string> = {};
       for (const i of parsed.error.issues) next[String(i.path[0])] ??= t(`errors.${i.message}` as never);
       setErrors(next);
+      return;
+    }
+    if (full.length > 0) {
+      onNotice({ title: t("fullDiscountTitle"), body: t("fullDiscountBody", { workshops: full.map((r) => workshopName(r.workshopId)).join(", ") }) });
       return;
     }
     if (risks.length > 0) { setConfirming({ id: form.id, input: parsed.data }); return; }
@@ -458,6 +476,13 @@ function PromotionDialog({ form, setForm, shop, workshops, others, money, day, o
                 <Label htmlFor="pr-enabled">{t("fieldEnabled")}</Label>
               </div>
               {example ? <p className="rounded-lg bg-muted/50 p-3 text-sm">{t("example", example)}</p> : null}
+              {full.length > 0 ? (
+                <div role="alert" data-testid="full-discount-inline" className="grid gap-1 rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+                  <p className="flex items-center gap-2 font-medium"><OctagonX className="size-4 shrink-0" aria-hidden />{t("fullDiscountInlineTitle")}</p>
+                  <p>{t("fullDiscountInlineBody")}</p>
+                  <ul className="grid gap-1">{full.map((r) => <li key={r.workshopId}>{workshopName(r.workshopId)}</li>)}</ul>
+                </div>
+              ) : null}
               {risks.length > 0 ? (
                 <div role="alert" data-testid="over-budget-inline" className="grid gap-1 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
                   <p className="flex items-center gap-2 font-medium"><TriangleAlert className="size-4 shrink-0" aria-hidden />{t("overBudgetTitle")}</p>

@@ -11,6 +11,8 @@ export function saveFailure(res: Extract<SaveResult, { ok: false }>): Response {
       return apiError(409, "LIMIT_REACHED", `A shop can have at most ${MAX_PROMOTIONS_PER_SHOP} promotions.`);
     case "CONCURRENT_LIMIT":
       return apiError(409, "CONCURRENT_LIMIT", `At most ${MAX_CONCURRENT_PROMOTIONS} promotions can run at the same time.`, { date: res.date, max: MAX_CONCURRENT_PROMOTIONS });
+    case "FULL_DISCOUNT":
+      return apiError(422, "FULL_DISCOUNT", "A guest could get 100% off a workshop with this promotion, so it cannot be saved.", { fields: { discountValue: "fullDiscount" }, workshopIds: res.workshopIds });
     case "UNKNOWN_IMAGE":
       return apiError(422, "VALIDATION", "Please check the highlighted fields.", { fields: { imageUrl: "imageInvalid" } });
     case "UNKNOWN_WORKSHOP":

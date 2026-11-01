@@ -41,6 +41,8 @@ export function filterPromotions<T extends Pick<PromotionRecord, "title" | "enab
 
 /** A workshop is "over budget" when a guest could get this share of its price (or more) off. */
 export const OVER_BUDGET_PERCENT = 80;
+/** A promotion that lets a guest get a workshop for nothing (100% off) is not allowed at all. */
+export const FULL_DISCOUNT_PERCENT = 100;
 
 type Discounting = Pick<PromotionRecord, "id" | "discountType" | "discountValue" | "stacking">;
 
@@ -87,9 +89,21 @@ export function overBudgetWorkshops(
       const deepest = deepestDiscount(w.priceAmount, running);
       if (deepest.amount * 100 >= limitPercent * w.priceAmount && (!worst || deepest.amount > worst.amount)) worst = deepest;
     }
-    if (worst) out.push({ workshopId: w.id, percent: Math.round(worst.percent * 10) / 10, promotionIds: worst.promotionIds });
+    // Shown with one decimal, but "100" only when the workshop really would be free (649,999 off 650,000 is 99.9, not 100).
+    if (worst) out.push({ workshopId: w.id, percent: worst.amount >= w.priceAmount ? 100 : Math.min(99.9, Math.round(worst.percent * 10) / 10), promotionIds: worst.promotionIds });
   }
   return out;
+}
+
+/**
+ * The workshops the `candidate` promotion covers that a guest could get for nothing once it runs next to the promotions already
+ * there (the deepest discount reaches the whole price). Same days-and-combining rules as overBudgetWorkshops. A promotion that
+ * returns anything here must not be saved (or resumed). `others` must not contain the candidate itself.
+ */
+export function fullDiscountWorkshops(
+  candidate: Budgeted, others: readonly Budgeted[], workshops: readonly { id: string; priceAmount: number }[],
+): OverBudgetWorkshop[] {
+  return overBudgetWorkshops(candidate, others, workshops, FULL_DISCOUNT_PERCENT);
 }
 
 // ---- per workshop ------------------------------------------------------------------------------------------------------------

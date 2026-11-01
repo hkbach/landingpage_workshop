@@ -343,7 +343,8 @@
       "dateInvalid": "Enter a valid date.",
       "endBeforeStart": "The last day cannot be before the first day.",
       "imageInvalid": "Use a JPEG, PNG or WebP image, or a secure link starting with https://",
-      "codeRequired": "Enter a promo code."
+      "codeRequired": "Enter a promo code.",
+      "fullDiscount": "A guest could get a workshop for free (100% off). Lower the discount or change the dates."
     },
     "running": "Running now: {count} of {max}.",
     "runningHint": "At most {max} promotions can run at the same time, counting the ones planned for the same days.",
@@ -389,6 +390,11 @@
     "overBudgetLine": "{workshop}: up to {percent}% off",
     "overBudgetAdvice": "Check the discount, the dates and which promotions can be combined. You can still save it as it is.",
     "overBudgetBack": "Go back and change",
-    "overBudgetSave": "Save anyway"
+    "overBudgetSave": "Save anyway",
+    "fullDiscountTitle": "This promotion cannot be saved",
+    "fullDiscountResumeTitle": "This promotion cannot be resumed",
+    "fullDiscountBody": "With this promotion and the others running on the same days, a guest could get 100% off, so these workshops would be free: {workshops}. Lower the discount, change the dates, or pause one of the other promotions.",
+    "fullDiscountInlineTitle": "Cannot be saved: a workshop would be free",
+    "fullDiscountInlineBody": "A guest could get 100% off these workshops with this promotion and the others running on the same days:"
   }
 }

@@ -4,7 +4,7 @@
 // It lives on globalThis so it survives hot reloads and is lost when the server restarts (demo data).
 // TODO(api): every query filters by organization_id from the session; the mock has a single shop.
 import {
-  activePromotions, firstOverloadedDay, MAX_PROMOTIONS_PER_SHOP, platformMediaId, type PromotionInput, type PromotionRecord,
+  activePromotions, firstOverloadedDay, fullDiscountWorkshops, MAX_PROMOTIONS_PER_SHOP, platformMediaId, type PromotionInput, type PromotionRecord,
 } from "@workshop/shared";
 import { dayKey } from "@/lib/format";
 import { newUuid } from "@/lib/uuid";
@@ -126,7 +126,14 @@ export type SaveResult =
   | { ok: true; promotion: PromotionRecord }
   | { ok: false; code: "LIMIT" | "NOT_FOUND" | "UNKNOWN_WORKSHOP" | "UNKNOWN_IMAGE" }
   /** More than the allowed number of promotions would run at once on `date`. */
-  | { ok: false; code: "CONCURRENT_LIMIT"; date: string };
+  | { ok: false; code: "CONCURRENT_LIMIT"; date: string }
+  /** A guest could get these workshops for nothing (100% off) with this promotion next to the others. */
+  | { ok: false; code: "FULL_DISCOUNT"; workshopIds: string[] };
+
+/** Workshops a promotion would make free (empty when it is fine). Archived workshops cannot be booked, so they do not count. */
+function freeWorkshops(candidate: PromotionRecord, others: readonly PromotionRecord[]): string[] {
+  return fullDiscountWorkshops(candidate, others, workshops.filter((w) => w.status !== "ARCHIVED")).map((r) => r.workshopId);
+}
 
 /** A platform image must exist (it was uploaded); an https URL or no image is always fine. */
 function imageProblem(url: string | undefined): boolean {
@@ -149,6 +156,8 @@ export function createPromotion(input: PromotionInput): SaveResult {
   if (imageProblem(input.imageUrl)) return { ok: false, code: "UNKNOWN_IMAGE" };
   const now = new Date().toISOString();
   const promotion: PromotionRecord = { id: `pr-${newUuid().slice(0, 8)}`, ...fromInput(input), createdAt: now, updatedAt: now };
+  const free = freeWorkshops(promotion, store());
+  if (free.length > 0) return { ok: false, code: "FULL_DISCOUNT", workshopIds: free };
   const date = firstOverloadedDay([...store(), promotion], shopToday());
   if (date) return { ok: false, code: "CONCURRENT_LIMIT", date };
   store().push(promotion);
@@ -163,6 +172,8 @@ export function updatePromotion(id: string, input: PromotionInput): SaveResult {
   if (imageProblem(input.imageUrl)) return { ok: false, code: "UNKNOWN_IMAGE" };
   const prev = store()[i]!;
   const next: PromotionRecord = { id, ...fromInput(input), createdAt: prev.createdAt, updatedAt: new Date().toISOString() };
+  const free = freeWorkshops(next, store().filter((p) => p.id !== id));
+  if (free.length > 0) return { ok: false, code: "FULL_DISCOUNT", workshopIds: free };
   const date = firstOverloadedDay(store().map((p) => (p.id === id ? next : p)), shopToday());
   if (date) return { ok: false, code: "CONCURRENT_LIMIT", date };
   store()[i] = next;
@@ -174,7 +185,11 @@ export function updatePromotion(id: string, input: PromotionInput): SaveResult {
 export function setPromotionEnabled(id: string, enabled: boolean): SaveResult {
   const p = store().find((x) => x.id === id);
   if (!p) return { ok: false, code: "NOT_FOUND" };
-  // Resuming can push the number of promotions running at once over the limit.
+  // Resuming is like adding it again: it can make a workshop free, or push the number running at once over the limit.
+  if (enabled) {
+    const free = freeWorkshops({ ...p, enabled }, store().filter((x) => x.id !== id));
+    if (free.length > 0) return { ok: false, code: "FULL_DISCOUNT", workshopIds: free };
+  }
   const date = enabled ? firstOverloadedDay(store().map((x) => (x.id === id ? { ...x, enabled } : x)), shopToday()) : null;
   if (date) return { ok: false, code: "CONCURRENT_LIMIT", date };
   p.enabled = enabled;
