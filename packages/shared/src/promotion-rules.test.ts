@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bookingsBlockingPause, canDeletePromotion, isPromotionCodeTaken, isPromotionDeletable, type BookingUse } from "./promotion-rules";
+import { bookingsBlockingPause, canDeletePromotion, canEditPromotion, isPromotionCodeTaken, isPromotionDeletable, type BookingUse } from "./promotion-rules";
 
 const NOW = new Date("2026-11-10T10:00:00Z");
 const use = (over: Partial<BookingUse> & { id: string }): BookingUse => ({
@@ -70,5 +70,12 @@ describe("a promotion code is unique inside a shop", () => {
   });
   it("an empty code is never 'taken' (it is refused as required instead)", () => {
     expect(isPromotionCodeTaken(list, "   ")).toBe(false);
+  });
+});
+
+describe("canEditPromotion", () => {
+  it("is false only for an active promotion", () => {
+    expect(canEditPromotion("ACTIVE")).toBe(false);
+    for (const st of ["SCHEDULED", "PAUSED", "EXPIRED"] as const) expect(canEditPromotion(st)).toBe(true);
   });
 });

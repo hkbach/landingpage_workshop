@@ -4,7 +4,7 @@
 // It lives on globalThis so it survives hot reloads and is lost when the server restarts (demo data).
 // TODO(api): every query filters by organization_id from the session; the mock has a single shop.
 import {
-  activePromotions, bookingsBlockingPause, firstOverloadedDay, fullDiscountWorkshops, isPromotionCodeTaken, isPromotionDeletable, MAX_PROMOTIONS_PER_SHOP, platformMediaId, type PromotionInput, type PromotionRecord,
+  activePromotions, bookingsBlockingPause, canEditPromotion, firstOverloadedDay, fullDiscountWorkshops, isPromotionCodeTaken, isPromotionDeletable, MAX_PROMOTIONS_PER_SHOP, platformMediaId, promotionStatus, type PromotionInput, type PromotionRecord,
 } from "@workshop/shared";
 import { dayKey } from "@/lib/format";
 import { newUuid } from "@/lib/uuid";
@@ -132,6 +132,10 @@ export type SaveResult =
   | { ok: false; code: "FULL_DISCOUNT"; workshopIds: string[] }
   /** Another promotion of this shop already uses the code. */
   | { ok: false; code: "CODE_TAKEN" }
+  /** The last day is before today (shop time). */
+  | { ok: false; code: "END_IN_PAST" }
+  /** An active promotion cannot be edited: pause it first. */
+  | { ok: false; code: "EDIT_ACTIVE" }
   /** Guests used the promotion in bookings of sessions that have not ended: it cannot be paused yet. */
   | { ok: false; code: "IN_USE"; bookingCodes: string[] };
 
@@ -165,6 +169,7 @@ export function createPromotion(input: PromotionInput): SaveResult {
   const known = knownWorkshops();
   if (input.workshopIds.some((id) => !known.has(id))) return { ok: false, code: "UNKNOWN_WORKSHOP" };
   if (imageProblem(input.imageUrl)) return { ok: false, code: "UNKNOWN_IMAGE" };
+  if (input.endDate < shopToday()) return { ok: false, code: "END_IN_PAST" };
   if (isPromotionCodeTaken(store(), input.code)) return { ok: false, code: "CODE_TAKEN" };
   const now = new Date().toISOString();
   const promotion: PromotionRecord = { id: `pr-${newUuid().slice(0, 8)}`, ...fromInput(input), createdAt: now, updatedAt: now };
@@ -184,6 +189,8 @@ export function updatePromotion(id: string, input: PromotionInput): SaveResult {
   if (imageProblem(input.imageUrl)) return { ok: false, code: "UNKNOWN_IMAGE" };
   if (isPromotionCodeTaken(store(), input.code, id)) return { ok: false, code: "CODE_TAKEN" };
   const prev = store()[i]!;
+  if (!canEditPromotion(promotionStatus(prev, shopToday()))) return { ok: false, code: "EDIT_ACTIVE" };
+  if (input.endDate < shopToday()) return { ok: false, code: "END_IN_PAST" };
   const next: PromotionRecord = { id, ...fromInput(input), createdAt: prev.createdAt, updatedAt: new Date().toISOString() };
   // Switching it off (here or with the Pause button) is refused while guests are using it in bookings of sessions that have not ended.
   if (prev.enabled && !next.enabled) {

@@ -15,6 +15,10 @@ export function saveFailure(res: Extract<SaveResult, { ok: false }>): Response {
       return apiError(422, "FULL_DISCOUNT", "A guest could get 100% off a workshop with this promotion, so it cannot be saved.", { fields: { discountValue: "fullDiscount" }, workshopIds: res.workshopIds });
     case "CODE_TAKEN":
       return apiError(422, "VALIDATION", "Another promotion of your shop already uses this code.", { fields: { code: "codeTaken" } });
+    case "END_IN_PAST":
+      return apiError(422, "VALIDATION", "The last day cannot be before today.", { fields: { endDate: "endInPast" } });
+    case "EDIT_ACTIVE":
+      return apiError(409, "EDIT_NOT_ALLOWED", "An active promotion cannot be edited. Pause it first.");
     case "IN_USE":
       return apiError(409, "PROMOTION_IN_USE", "Guests are using this promotion in bookings of sessions that have not ended, so it cannot be paused yet.", { count: res.bookingCodes.length, bookingCodes: res.bookingCodes.slice(0, 20) });
     case "UNKNOWN_IMAGE":

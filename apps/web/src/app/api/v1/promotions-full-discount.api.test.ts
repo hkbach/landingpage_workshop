@@ -79,6 +79,7 @@ describe("a promotion that makes a workshop free is refused", () => {
 
 describe("editing", () => {
   it("is refused when the new discount would make a workshop free, and the saved promotion stays as it was", async () => {
+    await PATCH(req("PATCH", { enabled: false }), ctxId("pr-1")); // an active promotion is edited only after it is paused
     const before = allPromotions().find((p) => p.id === "pr-1")!;
     const res = await PUT(req("PUT", body({ ...TODAY(), discountValue: 100, code: "EARLY20" })), ctxId("pr-1"));
     expect(res.status).toBe(422);
@@ -86,6 +87,7 @@ describe("editing", () => {
     expect(allPromotions().find((p) => p.id === "pr-1")).toEqual(before);
   });
   it("is allowed when it stays below 100%, and the saved version of the same promotion is not counted twice", async () => {
+    await PATCH(req("PATCH", { enabled: false }), ctxId("pr-1")); // an active promotion is edited only after it is paused
     const res = await PUT(req("PUT", body({ ...TODAY(), discountValue: 25, code: "EARLY25" })), ctxId("pr-1"));
     expect(res.status).toBe(200);
     expect(((await res.json()) as PromotionRecord).discountValue).toBe(25);

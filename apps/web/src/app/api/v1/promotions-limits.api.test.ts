@@ -148,9 +148,12 @@ describe(`at most ${MAX_CONCURRENT_PROMOTIONS} promotions run at the same time`,
     expect(res.status).toBe(409);
     expect(allPromotions().find((p) => p.id === later.id)?.startDate).toBe(addDays(today, 40));
   });
-  it("does not count promotions that are over", async () => {
+  it("does not let a promotion end before today, so promotions that are over are never counted", async () => {
     const today = shopToday();
-    for (let i = 0; i < 6; i++) expect((await create({ startDate: addDays(today, -40), endDate: addDays(today, -35) })).status).toBe(201);
+    const res = await create({ startDate: addDays(today, -40), endDate: addDays(today, -35) });
+    expect(res.status).toBe(422);
+    expect((await errorOf(res)).error.details.fields).toMatchObject({ endDate: "endInPast" });
+    expect((await create({ startDate: addDays(today, -3), endDate: today, enabled: false })).status).toBe(201); // today itself is allowed
   });
 });
 

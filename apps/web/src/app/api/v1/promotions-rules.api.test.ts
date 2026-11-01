@@ -102,3 +102,36 @@ describe("promotion code", () => {
     expect((await createRoute(req("POST", body()))).status).toBe(201);
   });
 });
+
+describe("editing a promotion", () => {
+  const edited = (id: string, over: Record<string, unknown> = {}) => {
+    const p = allPromotions().find((x) => x.id === id)!;
+    const rest: Record<string, unknown> = { ...(p as unknown as Record<string, unknown>), ...over };
+    delete rest.id;
+    return PUT(req("PUT", rest), ctxId(id));
+  };
+  it("is refused while the promotion is active, and allowed once it is paused", async () => {
+    const res = await edited("pr-1", { discountValue: 7 });
+    expect(res.status).toBe(409);
+    expect((await errorOf(res)).error.code).toBe("EDIT_NOT_ALLOWED");
+    await cancel("bk-1");
+    await cancel("bk-6");
+    expect((await pause("pr-1")).status).toBe(200);
+    expect((await edited("pr-1", { discountValue: 7 })).status).toBe(200);
+  });
+  it("cannot set a last day before today, on create or on edit", async () => {
+    const yesterday = new Date(Date.parse(`${shopToday()}T12:00:00Z`) - 86_400_000).toISOString().slice(0, 10);
+    const res = await createRoute(req("POST", body({ code: "PASTDAY", startDate: yesterday, endDate: yesterday })));
+    expect(res.status).toBe(422);
+    expect((await errorOf(res)).error.details.fields?.endDate).toBe("endInPast");
+    await pause("pr-3");
+    const put = await edited("pr-3", { startDate: yesterday, endDate: yesterday });
+    expect(put.status).toBe(422);
+    expect((await errorOf(put)).error.details.fields?.endDate).toBe("endInPast");
+  });
+  it("renews an expired promotion with new dates", async () => {
+    const today = shopToday();
+    const day = (n: number) => new Date(Date.parse(`${today}T12:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10);
+    expect((await edited("pr-4", { startDate: day(300), endDate: day(305) })).status).toBe(200);
+  });
+});

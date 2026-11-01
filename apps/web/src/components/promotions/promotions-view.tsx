@@ -7,7 +7,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
 import { ImageIcon, OctagonX, Pause, Pencil, Play, Plus, RefreshCw, Trash2, TriangleAlert } from "lucide-react";
 import {
-  countByStatus, discountedPrice, DISCOUNT_TYPES, filterPromotions, formatMoney, fullDiscountWorkshops, isPromotionCodeTaken, isPromotionDeletable, minorDigits, OVER_BUDGET_PERCENT, overBudgetWorkshops, pickLocalized, promotionAppliesTo,
+  canEditPromotion, countByStatus, discountedPrice, DISCOUNT_TYPES, filterPromotions, formatMoney, fullDiscountWorkshops, isPromotionCodeTaken, isPromotionDeletable, minorDigits, OVER_BUDGET_PERCENT, overBudgetWorkshops, pickLocalized, promotionAppliesTo,
   promotionInputSchema, promotionStatus, PROMOTION_DESCRIPTION_MAX, PROMOTION_TITLE_MAX, STACKING_MODES,
   type DiscountType, type Locale, type Localized, type OverBudgetWorkshop, type PromotionInput, type PromotionRecord, type PromotionStatus, type StackingMode,
 } from "@workshop/shared";
@@ -125,6 +125,22 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
       void refresh();
     },
   });
+  // Runs an expired promotion again from today, for as many days as it ran before.
+  const start = useMutation({
+    mutationFn: (p: PromotionRecord) => {
+      const days = Math.round((Date.parse(p.endDate) - Date.parse(p.startDate)) / 86_400_000);
+      return savePromotionRequest(p.id, {
+        title: p.title, description: p.description, discountType: p.discountType, discountValue: p.discountValue, code: p.code, imageUrl: p.imageUrl ?? "",
+        stacking: p.stacking, appliesTo: p.appliesTo, workshopIds: p.workshopIds, startDate: today, endDate: addDays(today, days), enabled: true,
+      });
+    },
+    onSuccess: (p) => { setMessage({ text: t("started", { date: day(p.endDate) }), tone: "ok" }); void refresh(); },
+    onError: (e) => {
+      const n = fullDiscountNotice(e, t, nameOf, "fullDiscountResumeTitle") ?? limitNotice(e, t, day);
+      if (n) setNotice(n); else setMessage({ text: t("saveFailed"), tone: "error" });
+      void refresh();
+    },
+  });
   const remove = useMutation({
     mutationFn: (id: string) => deletePromotionRequest(id),
     onSuccess: () => { setMessage({ text: t("deleted"), tone: "ok" }); void refresh(); },
@@ -229,6 +245,7 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
             <p aria-live="polite" data-testid="result-count" className="text-muted-foreground">{query.data ? t("showing", { shown: rows.length, total: items.length }) : null}</p>
             {filtered ? <Button size="sm" variant="ghost" onClick={() => setFilters(NO_FILTERS)}>{t("clearFilters")}</Button> : null}
           </div>
+          <p data-testid="buttons-help" className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">{t("buttonsHelp")}</p>
         </CardContent>
       </Card>
 
@@ -283,10 +300,19 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
                     <TableCell><Badge className={STATUS_STYLES[status]}>{t(`status.${status}`)}</Badge></TableCell>
                     <TableCell className="min-w-28 whitespace-normal text-sm">{t(`stackingOption.${p.stacking}.label`)}</TableCell>
                     <TableCell className="whitespace-nowrap text-right">
-                      <Button size="icon-sm" variant="ghost" title={t("edit")} onClick={() => openEdit(p)}><Pencil aria-hidden /><span className="sr-only">{t("edit")}: {title}</span></Button>
-                      {status === "EXPIRED" ? (
-                        <Button size="icon-sm" variant="ghost" title={t("renew")} onClick={() => openEdit(p, true)}><RefreshCw aria-hidden /><span className="sr-only">{t("renew")}: {title}</span></Button>
-                      ) : null}
+                      {status !== "EXPIRED" ? (
+                        <Button
+                          size="icon-sm" variant="ghost" disabled={!canEditPromotion(status)} onClick={() => openEdit(p)}
+                          title={canEditPromotion(status) ? t("edit") : t("editOnlyPaused")}
+                        >
+                          <Pencil aria-hidden /><span className="sr-only">{t("edit")}: {title}</span>
+                        </Button>
+                      ) : (
+                        <>
+                          <Button size="icon-sm" variant="ghost" title={t("renew")} onClick={() => openEdit(p, true)}><RefreshCw aria-hidden /><span className="sr-only">{t("renew")}: {title}</span></Button>
+                          <Button size="icon-sm" variant="ghost" title={t("start")} disabled={start.isPending} onClick={() => start.mutate(p)}><Play aria-hidden /><span className="sr-only">{t("start")}: {title}</span></Button>
+                        </>
+                      )}
                       {status !== "EXPIRED" ? (
                         <Button size="icon-sm" variant="ghost" title={p.enabled ? t("pause") : t("resume")} disabled={toggle.isPending} onClick={() => toggle.mutate({ id: p.id, enabled: !p.enabled })}>
                           {p.enabled ? <Pause aria-hidden /> : <Play aria-hidden />}<span className="sr-only">{p.enabled ? t("pause") : t("resume")}: {title}</span>
@@ -308,7 +334,7 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
       )}
 
       <PromotionDialog
-        form={form} setForm={setForm} shop={shop} workshops={workshops} others={items} money={money} day={day} onNotice={setNotice}
+        form={form} setForm={setForm} today={today} shop={shop} workshops={workshops} others={items} money={money} day={day} onNotice={setNotice}
         onSaved={(editing) => { setForm(null); setMessage({ text: t(editing ? "updated" : "created"), tone: "ok" }); void refresh(); }}
       />
 
@@ -347,8 +373,8 @@ function readForm(form: FormState, currency: string) {
   });
 }
 
-function PromotionDialog({ form, setForm, shop, workshops, others, money, day, onNotice, onSaved }: {
-  form: FormState | null; setForm: (f: FormState | null) => void; shop: PromotionShop; workshops: PromotionWorkshop[]; others: PromotionRecord[];
+function PromotionDialog({ form, setForm, today, shop, workshops, others, money, day, onNotice, onSaved }: {
+  form: FormState | null; setForm: (f: FormState | null) => void; today: string; shop: PromotionShop; workshops: PromotionWorkshop[]; others: PromotionRecord[];
   money: (n: number) => string; day: (d: string) => string; onNotice: (n: Notice) => void; onSaved: (editing: boolean) => void;
 }) {
   const t = useTranslations("ops.promotions");
@@ -403,6 +429,10 @@ function PromotionDialog({ form, setForm, shop, workshops, others, money, day, o
       const next: Record<string, string> = {};
       for (const i of parsed.error.issues) next[String(i.path[0])] ??= t(`errors.${i.message}` as never);
       setErrors(next);
+      return;
+    }
+    if (parsed.data.endDate < today) {
+      setErrors({ endDate: t("errors.endInPast") });
       return;
     }
     if (isPromotionCodeTaken(others, parsed.data.code, form.id ?? undefined)) {

@@ -92,6 +92,7 @@ describe("POST /promotions", () => {
 
 describe("PUT, PATCH and DELETE /promotions/{id}", () => {
   it("replaces a promotion and keeps its id and creation time", async () => {
+    await PATCH(json("PATCH", { enabled: false }), ctx("pr-1")); // an active promotion is edited only after it is paused
     const before = allPromotions().find((p) => p.id === "pr-1")!;
     const res = await PUT(json("PUT", { ...good, discountValue: 30, appliesTo: "SELECTED", workshopIds: ["ws-1", "ws-1"] }), ctx("pr-1"));
     expect(res.status).toBe(200);
@@ -166,6 +167,7 @@ describe("the promo code is required", () => {
     expect(p.description).toEqual({ en: "padded text" });
   });
   it("PUT trims them too", async () => {
+    await PATCH(json("PATCH", { enabled: false }), ctx("pr-1")); // an active promotion is edited only after it is paused
     const res = await PUT(json("PUT", { ...good, code: " newcode2 ", title: { en: " Early again " } }), ctx("pr-1"));
     expect(res.status).toBe(200);
     const p = (await res.json()) as PromotionRecord;
@@ -177,6 +179,7 @@ describe("the promo code is required", () => {
     expect(((await res.json()) as PromotionRecord).code).toBe("SUMMER2030");
   });
   it("PUT cannot remove the code or break the rules either", async () => {
+    await PATCH(json("PATCH", { enabled: false }), ctx("pr-1")); // an active promotion is edited only after it is paused
     expect((await PUT(json("PUT", withoutCode), ctx("pr-1"))).status).toBe(422);
     expect((await PUT(json("PUT", { ...good, code: "BAD CODE" }), ctx("pr-1"))).status).toBe(422);
     expect(allPromotions().find((p) => p.id === "pr-1")?.code).toBe("EARLY20");
