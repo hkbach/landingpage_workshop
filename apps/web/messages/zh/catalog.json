@@ -170,6 +170,20 @@
     "cutoffHint": "在场次开始前这么多分钟停止在线预订。填 0 表示开始时停止。",
     "cutoffInfo": "开始前 {minutes} 分钟截止预订",
     "autoClosedNote": "场次时间已结束，已自动关闭。",
-    "closeWait": "需等场次时间结束后才能关闭。"
+    "closeWait": "需等场次时间结束后才能关闭。",
+    "closeTitle": "关闭场次",
+    "closeHint": "请选择开始前关闭该场次的原因。",
+    "closeReasonLegend": "原因",
+    "closeNote": "请说明原因",
+    "closeNoteRequired": "请说明原因。",
+    "closeConfirm": "关闭场次",
+    "closedBecause": "关闭原因",
+    "closeReasons": {
+      "NOT_ENOUGH_GUESTS": "人数不足",
+      "INSTRUCTOR_UNAVAILABLE": "讲师无法到场",
+      "VENUE_ISSUE": "工作室或场地问题",
+      "SCHEDULE_CHANGE": "日程变更",
+      "OTHER": "其他"
+    }
   }
 }

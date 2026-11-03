@@ -170,6 +170,20 @@
     "cutoffHint": "세션 시작 이 시간(분) 전에 온라인 예약이 마감됩니다. 0이면 시작 시각에 마감됩니다.",
     "cutoffInfo": "시작 {minutes}분 전 예약 마감",
     "autoClosedNote": "세션 시간이 끝나 자동으로 닫혔습니다.",
-    "closeWait": "세션 시간이 끝날 때까지 기다려야 닫을 수 있습니다."
+    "closeWait": "세션 시간이 끝날 때까지 기다려야 닫을 수 있습니다.",
+    "closeTitle": "세션 닫기",
+    "closeHint": "시작 전에 이 세션을 닫는 이유를 알려 주세요.",
+    "closeReasonLegend": "사유",
+    "closeNote": "사유 설명",
+    "closeNoteRequired": "사유를 설명해 주세요.",
+    "closeConfirm": "세션 닫기",
+    "closedBecause": "닫은 이유",
+    "closeReasons": {
+      "NOT_ENOUGH_GUESTS": "참가자 부족",
+      "INSTRUCTOR_UNAVAILABLE": "강사 불가",
+      "VENUE_ISSUE": "공방 또는 장소 문제",
+      "SCHEDULE_CHANGE": "일정 변경",
+      "OTHER": "기타"
+    }
   }
 }

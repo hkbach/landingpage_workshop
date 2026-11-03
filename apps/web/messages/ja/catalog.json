@@ -170,6 +170,20 @@
     "cutoffHint": "セッション開始のこの分数前にオンライン予約を締め切ります。0なら開始時刻に締め切ります。",
     "cutoffInfo": "開始の{minutes}分前に予約を締め切り",
     "autoClosedNote": "セッションの時間が終了したため、自動的に閉じられました。",
-    "closeWait": "セッションの時間が終了するまで閉じることはできません。"
+    "closeWait": "セッションの時間が終了するまで閉じることはできません。",
+    "closeTitle": "セッションを閉じる",
+    "closeHint": "開始前にこのセッションを閉じる理由を選択してください。",
+    "closeReasonLegend": "理由",
+    "closeNote": "理由の説明",
+    "closeNoteRequired": "理由を入力してください。",
+    "closeConfirm": "セッションを閉じる",
+    "closedBecause": "閉じた理由",
+    "closeReasons": {
+      "NOT_ENOUGH_GUESTS": "参加者不足",
+      "INSTRUCTOR_UNAVAILABLE": "講師の都合がつかない",
+      "VENUE_ISSUE": "スタジオまたは会場の問題",
+      "SCHEDULE_CHANGE": "日程の変更",
+      "OTHER": "その他"
+    }
   }
 }

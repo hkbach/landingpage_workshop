@@ -170,6 +170,20 @@
     "cutoffHint": "Đặt chỗ online đóng trước giờ bắt đầu số phút này. Nhập 0 để đóng đúng giờ bắt đầu.",
     "cutoffInfo": "Đóng đặt chỗ trước giờ bắt đầu {minutes} phút",
     "autoClosedNote": "Tự động chuyển sang Đóng do đã hết thời gian tổ chức.",
-    "closeWait": "Cần chờ đến khi thời gian của session kết thúc mới có thể Đóng."
+    "closeWait": "Cần chờ đến khi thời gian của session kết thúc mới có thể Đóng.",
+    "closeTitle": "Đóng session",
+    "closeHint": "Vui lòng cho biết lý do đóng session trước giờ bắt đầu.",
+    "closeReasonLegend": "Lý do",
+    "closeNote": "Giải thích lý do",
+    "closeNoteRequired": "Vui lòng giải thích lý do.",
+    "closeConfirm": "Đóng session",
+    "closedBecause": "Đóng vì",
+    "closeReasons": {
+      "NOT_ENOUGH_GUESTS": "Không đủ khách",
+      "INSTRUCTOR_UNAVAILABLE": "Giảng viên không có mặt",
+      "VENUE_ISSUE": "Sự cố về studio hoặc địa điểm",
+      "SCHEDULE_CHANGE": "Thay đổi lịch",
+      "OTHER": "Khác"
+    }
   }
 }

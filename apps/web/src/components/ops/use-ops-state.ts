@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { applySessionAction, closeIfEnded, closeWaitsForEnd, type BookingStatus, type PaymentMethod, type SessionAction } from "@workshop/shared";
+import { applySessionAction, checkCloseReason, closeIfEnded, closeWaitsForEnd, type BookingStatus, type PaymentMethod, type SessionAction } from "@workshop/shared";
 import type { Booking, PaymentEntry, Session } from "@/lib/types";
 import {
   canTransition, computePaymentStatus, netPaid, seatDelta, targetStatus,
@@ -106,14 +106,17 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
   );
 
   // ----- session operations (FR-SCHED-02/03) -----
-  /** start / pause / close. False when the action is not allowed now. */
+  /** start / pause / close (close needs a reason). False when the action is not allowed now. */
   const sessionAction = useCallback(
-    (id: string, action: SessionAction): boolean => {
+    (id: string, action: SessionAction, closeReason?: { code: string; note?: string }): boolean => {
       const s = sessions.find((x) => x.id === id);
       const next = s ? applySessionAction(s, action) : null;
       if (!s || !next) return false;
       if (action === "close" && closeWaitsForEnd(s, now)) return false; // not while the session is taking place
-      setSessions((list) => list.map((x) => (x.id === id ? { ...x, ...next } : x)));
+      // Closing before the start needs a reason: a basic one, or OTHER with a text.
+      const reason = action === "close" ? checkCloseReason(closeReason?.code ?? "", closeReason?.note ?? "") : null;
+      if (reason && !reason.ok) return false;
+      setSessions((list) => list.map((x) => (x.id === id ? { ...x, ...next, ...(reason?.ok ? { closeReason: reason.reason } : {}) } : x)));
       return true;
     },
     [sessions, now],

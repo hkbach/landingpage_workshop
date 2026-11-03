@@ -170,6 +170,20 @@
     "cutoffHint": "Online booking closes this many minutes before the session starts. Use 0 to close it when the session starts.",
     "cutoffInfo": "Booking closes {minutes, plural, one {# minute} other {# minutes}} before start",
     "autoClosedNote": "Automatically closed because the session time has ended.",
-    "closeWait": "Wait until the session time has ended before you can close it."
+    "closeWait": "Wait until the session time has ended before you can close it.",
+    "closeTitle": "Close session",
+    "closeHint": "Please tell us why you are closing this session before it starts.",
+    "closeReasonLegend": "Reason",
+    "closeNote": "Explain the reason",
+    "closeNoteRequired": "Please explain the reason.",
+    "closeConfirm": "Close session",
+    "closedBecause": "Closed because",
+    "closeReasons": {
+      "NOT_ENOUGH_GUESTS": "Not enough guests",
+      "INSTRUCTOR_UNAVAILABLE": "Instructor is not available",
+      "VENUE_ISSUE": "Studio or venue problem",
+      "SCHEDULE_CHANGE": "Schedule changed",
+      "OTHER": "Other"
+    }
   }
 }

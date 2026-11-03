@@ -61,3 +61,24 @@ export function isInSessionTime(s: { startsAt: string; endsAt: string }, now: Da
  * see closeIfEnded). Before it starts, a paused session can be closed.
  */
 export const closeWaitsForEnd = (s: { startsAt: string; endsAt: string }, now: Date): boolean => isInSessionTime(s, now);
+
+/** Why the owner closes a session before it starts: a basic reason, or OTHER with a text that explains it. */
+export const SESSION_CLOSE_REASONS = ["NOT_ENOUGH_GUESTS", "INSTRUCTOR_UNAVAILABLE", "VENUE_ISSUE", "SCHEDULE_CHANGE", "OTHER"] as const;
+export type SessionCloseReasonCode = (typeof SESSION_CLOSE_REASONS)[number];
+export const CLOSE_REASON_NOTE_MAX = 300;
+
+export interface SessionCloseReason {
+  code: SessionCloseReasonCode;
+  /** Required (and only kept) for OTHER. */
+  note?: string;
+}
+
+/** The reason as it will be stored (the note trimmed), or the problem: no valid code, or OTHER without an explanation. */
+export function checkCloseReason(code: string, note: string): { ok: true; reason: SessionCloseReason } | { ok: false; error: "REQUIRED" | "NOTE_REQUIRED" | "NOTE_TOO_LONG" } {
+  if (!(SESSION_CLOSE_REASONS as readonly string[]).includes(code)) return { ok: false, error: "REQUIRED" };
+  if (code !== "OTHER") return { ok: true, reason: { code: code as SessionCloseReasonCode } };
+  const text = note.trim();
+  if (text === "") return { ok: false, error: "NOTE_REQUIRED" };
+  if (text.length > CLOSE_REASON_NOTE_MAX) return { ok: false, error: "NOTE_TOO_LONG" };
+  return { ok: true, reason: { code: "OTHER", note: text } };
+}

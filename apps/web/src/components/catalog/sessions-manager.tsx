@@ -3,12 +3,13 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useDisplayLocale } from "@/lib/use-shop-language";
-import { Lock, Pause, Pencil, Play, Plus } from "lucide-react";
-import { allowedSessionActions, closeWaitsForEnd, DEFAULT_BOOKING_CUTOFF_MINUTES, isValidBookingCutoff, MAX_BOOKING_CUTOFF_MINUTES, pickLocalized, SESSION_STATUSES, type Locale, type SessionStatus } from "@workshop/shared";
+import { ArrowLeft, Lock, Pause, Pencil, Play, Plus, Save } from "lucide-react";
+import { allowedSessionActions, checkCloseReason, CLOSE_REASON_NOTE_MAX, closeWaitsForEnd, SESSION_CLOSE_REASONS, DEFAULT_BOOKING_CUTOFF_MINUTES, isValidBookingCutoff, MAX_BOOKING_CUTOFF_MINUTES, pickLocalized, SESSION_STATUSES, type Locale, type SessionStatus } from "@workshop/shared";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { CapacityBar } from "@/components/ops/capacity-bar";
 import { Field } from "@/components/ops/field";
 import { NativeSelect } from "@/components/ops/native-select";
@@ -33,7 +34,7 @@ export function SessionsManager({
   const [status, setStatus] = useState<"" | SessionStatus>("");
   const [from, setFrom] = useState(today);
   const [to, setTo] = useState(addDays(today, 60));
-  const [dialog, setDialog] = useState<{ kind: "add" } | { kind: "capacity"; id: string } | null>(null);
+  const [dialog, setDialog] = useState<{ kind: "add" } | { kind: "capacity" | "close"; id: string } | null>(null);
 
   const displayLocale = useDisplayLocale(shop);
   const title = (id: string) => pickLocalized(workshops.find((w) => w.id === id)?.title, displayLocale, shop.defaultLocale);
@@ -115,6 +116,11 @@ export function SessionsManager({
                       <CapacityBar reserved={s.reservedCount} capacity={s.capacity} />
                       <p className="text-xs text-muted-foreground" data-testid="session-cutoff">{t("sessions.cutoffInfo", { minutes: s.bookingCutoffMinutes })}</p>
                       {s.autoClosed ? <p className="text-xs text-muted-foreground" data-testid="auto-closed-note">{t("sessions.autoClosedNote")}</p> : null}
+                      {s.closeReason ? (
+                        <p className="text-xs text-muted-foreground" data-testid="close-reason">
+                          {t("sessions.closedBecause")}: {s.closeReason.code === "OTHER" ? s.closeReason.note : t(`sessions.closeReasons.${s.closeReason.code}`)}
+                        </p>
+                      ) : null}
                       {s.status !== "CLOSED" ? (
                         <div className="flex flex-wrap gap-1.5">
                           {actions.includes("start") ? (
@@ -127,12 +133,12 @@ export function SessionsManager({
                             closeWaitsForEnd(s, ops.now) ? (
                               // Read-only while the session is taking place: the span carries the tooltip (a disabled button does not).
                               <span title={t("sessions.closeWait")} data-testid="close-wait" className="inline-flex cursor-not-allowed">
-                                <Button size="sm" variant="outline" disabled aria-disabled="true" aria-label={`${t("sessions.close")}: ${t("sessions.closeWait")}`}>
+                                <Button size="sm" variant="destructive" disabled aria-disabled="true" aria-label={`${t("sessions.close")}: ${t("sessions.closeWait")}`}>
                                   <Lock aria-hidden="true" />{t("sessions.close")}
                                 </Button>
                               </span>
                             ) : (
-                              <Button size="sm" variant="outline" onClick={() => ops.sessionAction(s.id, "close")}><Lock aria-hidden="true" />{t("sessions.close")}</Button>
+                              <Button size="sm" variant="destructive" onClick={() => setDialog({ kind: "close", id: s.id })}><Lock aria-hidden="true" />{t("sessions.close")}</Button>
                             )
                           ) : null}
                           <Button size="sm" variant="outline" onClick={() => setDialog({ kind: "capacity", id: s.id })}>
@@ -153,11 +159,60 @@ export function SessionsManager({
         open={dialog?.kind === "add"} onOpenChange={(o) => !o && setDialog(null)} workshops={workshops} shop={shop} sessions={ops.sessions} title={title}
         onAdd={(s) => { ops.addSession(s); setDialog(null); }}
       />
+      <CloseSessionDialog
+        key={`close-${target?.id ?? "none"}`} open={dialog?.kind === "close" && !!target} onOpenChange={(o) => !o && setDialog(null)}
+        onConfirm={(reason) => { if (target && ops.sessionAction(target.id, "close", reason)) setDialog(null); }}
+      />
       <CapacityDialog
         key={target?.id ?? "none"} open={dialog?.kind === "capacity" && !!target} onOpenChange={(o) => !o && setDialog(null)} session={target}
         onSave={(n) => { if (target && ops.setSessionCapacity(target.id, n)) { setDialog(null); return true; } return false; }}
       />
     </div>
+  );
+}
+
+/** Closing a session before it starts: a basic reason from the list, or Other with a text that explains it. */
+function CloseSessionDialog({ open, onOpenChange, onConfirm }: { open: boolean; onOpenChange: (o: boolean) => void; onConfirm: (reason: { code: string; note?: string }) => void }) {
+  const t = useTranslations("catalog");
+  const tops = useTranslations("ops");
+  const [code, setCode] = useState("");
+  const [note, setNote] = useState("");
+  const [error, setError] = useState<string>();
+  const checked = checkCloseReason(code, note);
+  function submit(e: FormEvent) {
+    e.preventDefault();
+    if (!checked.ok) return setError(checked.error === "REQUIRED" ? t("errors.required") : t("sessions.closeNoteRequired"));
+    onConfirm(checked.reason);
+  }
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <form onSubmit={submit} noValidate className="grid gap-4">
+          <DialogHeader>
+            <DialogTitle>{t("sessions.closeTitle")}</DialogTitle>
+            <DialogDescription>{t("sessions.closeHint")}</DialogDescription>
+          </DialogHeader>
+          <fieldset className="grid gap-2" data-testid="close-reasons">
+            <legend className="mb-1 text-sm font-medium">{t("sessions.closeReasonLegend")} <span aria-hidden className="text-destructive">*</span></legend>
+            {SESSION_CLOSE_REASONS.map((r) => (
+              <label key={r} className="flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                <input type="radio" name="close-reason" value={r} checked={code === r} onChange={() => { setCode(r); setError(undefined); }} />
+                {t(`sessions.closeReasons.${r}`)}
+              </label>
+            ))}
+          </fieldset>
+          {code === "OTHER" ? (
+            <Field id="close-note" label={t("sessions.closeNote")} required error={error}>
+              {(p) => <Textarea {...p} rows={3} maxLength={CLOSE_REASON_NOTE_MAX} value={note} onChange={(e) => { setNote(e.target.value); setError(undefined); }} />}
+            </Field>
+          ) : null}
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}><ArrowLeft aria-hidden="true" />{tops("common.back")}</Button>
+            <Button type="submit" variant="destructive" disabled={code === ""}><Lock aria-hidden="true" />{t("sessions.closeConfirm")}</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -190,8 +245,8 @@ function CapacityDialog({
               {(p) => <Input {...p} type="number" inputMode="numeric" min={session.reservedCount} max={MAX_CAPACITY} value={value} onChange={(e) => { setValue(e.target.value); setError(undefined); }} />}
             </Field>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{tops("common.back")}</Button>
-              <Button type="submit" disabled={!dirty}>{t("sessions.save")}</Button>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}><ArrowLeft aria-hidden="true" />{tops("common.back")}</Button>
+              <Button type="submit" disabled={!dirty}><Save aria-hidden="true" />{t("sessions.save")}</Button>
             </DialogFooter>
           </form>
         ) : null}
@@ -282,8 +337,8 @@ function AddSessionForm({
         {(p) => <Input {...p} type="number" inputMode="numeric" min={0} max={MAX_BOOKING_CUTOFF_MINUTES} value={cutoff} onChange={(e) => setCutoff(e.target.value)} />}
       </Field>
       <DialogFooter>
-        <Button type="button" variant="outline" onClick={onCancel}>{tops("common.back")}</Button>
-        <Button type="submit" disabled={!dirty}>{t("sessions.addConfirm")}</Button>
+        <Button type="button" variant="outline" onClick={onCancel}><ArrowLeft aria-hidden="true" />{tops("common.back")}</Button>
+        <Button type="submit" disabled={!dirty}><Plus aria-hidden="true" />{t("sessions.addConfirm")}</Button>
       </DialogFooter>
     </form>
   );

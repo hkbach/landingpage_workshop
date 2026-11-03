@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SESSION_STATUSES } from "./enums";
-import { allowedSessionActions, applySessionAction, closeIfEnded, closeWaitsForEnd, DEFAULT_BOOKING_CUTOFF_MINUTES, isInSessionTime, isSessionBookable, isValidBookingCutoff, type SessionState } from "./session-rules";
+import { allowedSessionActions, applySessionAction, checkCloseReason, CLOSE_REASON_NOTE_MAX, closeIfEnded, closeWaitsForEnd, DEFAULT_BOOKING_CUTOFF_MINUTES, isInSessionTime, isSessionBookable, isValidBookingCutoff, type SessionState } from "./session-rules";
 
 const s = (status: SessionState["status"]): SessionState => ({ status });
 
@@ -68,5 +68,19 @@ describe("closing a session during its time", () => {
   it("Close waits for the end only while the session is taking place", () => {
     expect(closeWaitsForEnd(span("2026-11-03T09:00:00Z", "2026-11-03T11:00:00Z"), NOW)).toBe(true);
     expect(closeWaitsForEnd(span("2026-11-04T09:00:00Z", "2026-11-04T11:00:00Z"), NOW)).toBe(false);
+  });
+});
+
+describe("checkCloseReason", () => {
+  it("accepts a basic reason without a text", () => expect(checkCloseReason("NOT_ENOUGH_GUESTS", "")).toEqual({ ok: true, reason: { code: "NOT_ENOUGH_GUESTS" } }));
+  it("drops the note of a basic reason", () => expect(checkCloseReason("VENUE_ISSUE", "leftover")).toEqual({ ok: true, reason: { code: "VENUE_ISSUE" } }));
+  it("OTHER needs a text, trimmed", () => {
+    expect(checkCloseReason("OTHER", "   ")).toEqual({ ok: false, error: "NOTE_REQUIRED" });
+    expect(checkCloseReason("OTHER", "  The kiln broke  ")).toEqual({ ok: true, reason: { code: "OTHER", note: "The kiln broke" } });
+    expect(checkCloseReason("OTHER", "x".repeat(CLOSE_REASON_NOTE_MAX + 1))).toEqual({ ok: false, error: "NOTE_TOO_LONG" });
+  });
+  it("refuses an unknown or missing reason", () => {
+    expect(checkCloseReason("", "")).toEqual({ ok: false, error: "REQUIRED" });
+    expect(checkCloseReason("BORED", "")).toEqual({ ok: false, error: "REQUIRED" });
   });
 });
