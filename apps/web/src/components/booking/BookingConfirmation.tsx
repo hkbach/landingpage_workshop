@@ -7,11 +7,13 @@ import { formatMoney, type Locale } from "@workshop/shared";
 import { formatDateTime } from "@/lib/format";
 import type { Shop } from "@/lib/types";
 import { safeMaps } from "@/components/sections/safe-url";
+import { CancelBooking } from "./CancelBooking";
 import { readSimulatedBooking, type ConfirmationData } from "./simulate";
 
 export type ConfirmationShop = Pick<Shop, "name" | "address" | "mapsUrl" | "contactEmail" | "contactPhone">;
 
-export function BookingConfirmation({ data, shop, locale, homeHref }: { data: ConfirmationData; shop: ConfirmationShop; locale: Locale; homeHref: string }) {
+/** `cancel` is set when the guest can still cancel the booking (until the session starts): the button is shown. */
+export function BookingConfirmation({ data, shop, locale, homeHref, cancel }: { data: ConfirmationData; shop: ConfirmationShop; locale: Locale; homeHref: string; cancel?: { slug: string } }) {
   const t = useTranslations("site");
   const maps = safeMaps(shop.mapsUrl);
   return (
@@ -21,7 +23,13 @@ export function BookingConfirmation({ data, shop, locale, homeHref }: { data: Co
         <p className="text-[var(--site-muted)]">{t("confirmation.intro", { shop: shop.name })}</p>
       </header>
 
-      {data.status === "NOT_CONFIRMED" ? (
+      {data.status === "CANCELLED" ? (
+        <section role="status" data-testid="booking-cancelled" className="rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-950">
+          <h2 className="font-semibold">{t("confirmation.cancelledTitle")}</h2>
+          <p className="mt-1">{t(data.cancelledBy === "GUEST" ? "confirmation.cancelledByGuest" : "confirmation.cancelledByShop")}</p>
+          {data.cancelReason ? <p className="mt-1">{t("confirmation.cancelledReason", { reason: data.cancelReason })}</p> : null}
+        </section>
+      ) : data.status === "NOT_CONFIRMED" ? (
         <section role="status" data-testid="booking-pending" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">
           <h2 className="font-semibold">{t("confirmation.pendingTitle")}</h2>
           <p className="mt-1">{t("confirmation.pendingText", { email: data.email })}</p>
@@ -77,8 +85,10 @@ export function BookingConfirmation({ data, shop, locale, homeHref }: { data: Co
         <h2 className="font-semibold">{t("confirmation.contact")}</h2>
         <p>{shop.contactEmail}</p>
         <p>{shop.contactPhone}</p>
-        <p className="pt-2 text-[var(--site-muted)]">{t("confirmation.changeOrCancel")}</p>
+        {data.status === "CANCELLED" ? null : <p className="pt-2 text-[var(--site-muted)]">{t(cancel ? "confirmation.changeOnly" : "confirmation.changeOrCancel")}</p>}
       </section>
+
+      {cancel ? <CancelBooking slug={cancel.slug} code={data.code} email={data.email} /> : null}
 
       <a href={homeHref} className="inline-flex min-h-11 items-center rounded-lg border border-black/20 bg-white px-5 py-2 text-sm font-medium text-zinc-900 outline-none focus-visible:ring-4 focus-visible:ring-[var(--site-primary)]/40">
         {t("confirmation.backToSite")}

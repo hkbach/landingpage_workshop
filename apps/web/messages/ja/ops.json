@@ -183,7 +183,8 @@
     "snapshotNote": "料金、ワークショップ名、日時は、予約作成時のスナップショットです。",
     "customer": "顧客",
     "timeline": "ステータスの履歴",
-    "timeUnknown": "時刻の記録なし"
+    "timeUnknown": "時刻の記録なし",
+    "cancelledByGuest": "お客様が取消"
   },
   "customers": {
     "title": "顧客",

@@ -183,7 +183,8 @@
     "snapshotNote": "가격, 워크숍 이름, 시간은 예약 생성 시점의 스냅샷이에요.",
     "customer": "고객",
     "timeline": "상태 이력",
-    "timeUnknown": "시간 기록 없음"
+    "timeUnknown": "시간 기록 없음",
+    "cancelledByGuest": "손님이 직접 취소"
   },
   "customers": {
     "title": "고객",

@@ -183,7 +183,8 @@
     "snapshotNote": "Giá, tên workshop và giờ là dữ liệu được chốt tại thời điểm tạo đặt chỗ.",
     "customer": "Khách hàng",
     "timeline": "Lịch sử trạng thái",
-    "timeUnknown": "Chưa ghi nhận thời gian"
+    "timeUnknown": "Chưa ghi nhận thời gian",
+    "cancelledByGuest": "Khách tự hủy"
   },
   "customers": {
     "title": "Khách hàng",

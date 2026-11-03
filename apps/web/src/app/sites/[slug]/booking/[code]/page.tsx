@@ -5,7 +5,7 @@ import { SiteFrame } from "@/components/site/SiteFrame";
 import { SiteIntlProvider } from "@/components/site/SiteIntlProvider";
 import { requireSite } from "@/components/site/resolve";
 import { getSiteBase } from "@/components/site/site-base";
-import { demoConfirmToken } from "@/lib/mock/booking-store";
+import { canGuestCancel, demoConfirmToken } from "@/lib/mock/booking-store";
 import { demoConfirmationEmailId } from "@/lib/mock/outbox-store";
 import { findBookingForLookup } from "@/lib/mock/site";
 
@@ -22,6 +22,7 @@ export default async function BookingPage({ params, searchParams }: PageProps<"/
   const found = findBookingForLookup(shop.id, code, email);
   const demoToken = found ? demoConfirmToken(found.booking.id) : undefined; // demo only: there is no mailbox in the prototype
   const demoEmailId = found ? demoConfirmationEmailId(found.booking.bookingCode) : undefined;
+  const cancellable = found ? canGuestCancel(found.booking) : false;
   const shopInfo = { name: shop.name, address: shop.address, mapsUrl: shop.mapsUrl, contactEmail: shop.contactEmail, contactPhone: shop.contactPhone };
 
   return (
@@ -30,12 +31,13 @@ export default async function BookingPage({ params, searchParams }: PageProps<"/
         <main>
           {found ? (
             <BookingConfirmation
-              locale={shop.defaultLocale} shop={shopInfo} homeHref={homeHref}
+              locale={shop.defaultLocale} shop={shopInfo} homeHref={homeHref} cancel={cancellable ? { slug } : undefined}
               data={{
                 code: found.booking.bookingCode, email: email.trim().toLowerCase(), workshopTitle: found.booking.workshopTitle,
                 startsAt: found.booking.startsAt, endsAt: found.booking.endsAt, timezone: found.booking.timezone,
                 quantity: found.booking.quantity, totalAmount: found.booking.totalAmount, currency: found.booking.currency,
-                status: found.booking.status, ...(demoToken ? { demoConfirmUrl: `${base}/booking/confirm/${demoToken}` } : {}),
+                status: found.booking.status, ...(found.booking.cancelledBy ? { cancelledBy: found.booking.cancelledBy } : {}), ...(found.booking.cancelReason ? { cancelReason: found.booking.cancelReason } : {}),
+                ...(demoToken ? { demoConfirmUrl: `${base}/booking/confirm/${demoToken}` } : {}),
                 ...(demoToken && demoEmailId ? { demoEmailUrl: `/api/v1/outbox/${demoEmailId}` } : {}),
               }}
             />

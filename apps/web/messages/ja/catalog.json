@@ -285,6 +285,7 @@
     "completedDone": "セッション {code} を完了しました。",
     "paymentsSaved": "支払い{updated, plural, other {#件}}を保存しました。メール送信：{sent}。メールなし：{none}。失敗：{failed}。",
     "cancelledNoPayment": "キャンセル済みの予約は支払いを受け付けません",
-    "closeInProgressHint": "セッションは開催中です。ワークショップが完了した場合にのみ、早めにクローズできます。"
+    "closeInProgressHint": "セッションは開催中です。ワークショップが完了した場合にのみ、早めにクローズできます。",
+    "cancelledByGuest": "お客様が取消"
   }
 }

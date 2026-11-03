@@ -140,7 +140,20 @@
     "demoNote": "Demo (there is no mailbox here):",
     "demoLink": "open the link of the email",
     "confirmedNote": "Your booking is confirmed.",
-    "demoEmail": "view the email that was sent"
+    "demoEmail": "view the email that was sent",
+    "cancelButton": "Cancel booking",
+    "cancelTitle": "Cancel booking {code}?",
+    "cancelText": "The seats go back to the studio and we email you a confirmation. You cannot undo this.",
+    "cancelReasonLabel": "Reason (optional)",
+    "cancelKeep": "Keep my booking",
+    "cancelConfirm": "Yes, cancel my booking",
+    "cancelling": "Cancelling…",
+    "cancelFailed": "The booking could not be cancelled. It may have started already; please contact the studio.",
+    "cancelledTitle": "This booking has been cancelled",
+    "cancelledByGuest": "You cancelled this booking. We sent you an email to confirm it.",
+    "cancelledByShop": "The studio cancelled this booking. Please contact the studio if you have questions.",
+    "cancelledReason": "Reason: {reason}",
+    "changeOnly": "To change the booking, please contact the studio."
   },
   "report": {
     "title": "Report this site",

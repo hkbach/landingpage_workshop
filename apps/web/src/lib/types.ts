@@ -59,7 +59,10 @@ export interface Booking {
   guestName?: string;
   unitPriceAmount: number; totalAmount: number; currency: string;
   workshopTitle: string; startsAt: string; endsAt: string; timezone: string;
-  specialRequest?: string; cancelReason?: string; createdAt: string; payments: PaymentEntry[];
+  specialRequest?: string; cancelReason?: string;
+  /** Who cancelled the booking: the shop owner or the guest (a guest can cancel until the session starts). */
+  cancelledBy?: "SHOP" | "GUEST";
+  createdAt: string; payments: PaymentEntry[];
   /** Promotions the guest used on this booking (a snapshot: the booking keeps them if the promotion is later deleted) and what they took off. */
   promotionIds?: string[]; discountAmount?: number;
   /** When the guest was checked in (set by Check-in, cleared by Uncheck-in), for tracking. */

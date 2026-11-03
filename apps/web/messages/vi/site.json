@@ -140,7 +140,20 @@
     "demoNote": "Demo (ở đây không có hộp thư):",
     "demoLink": "mở link trong email",
     "confirmedNote": "Booking của bạn đã được xác nhận.",
-    "demoEmail": "xem email đã gửi"
+    "demoEmail": "xem email đã gửi",
+    "cancelButton": "Hủy booking",
+    "cancelTitle": "Hủy booking {code}?",
+    "cancelText": "Các chỗ sẽ trả lại cho studio và chúng tôi gửi email xác nhận cho bạn. Bạn không thể hoàn tác.",
+    "cancelReasonLabel": "Lý do (không bắt buộc)",
+    "cancelKeep": "Giữ booking",
+    "cancelConfirm": "Có, hủy booking",
+    "cancelling": "Đang hủy…",
+    "cancelFailed": "Không hủy được booking. Có thể session đã bắt đầu; vui lòng liên hệ studio.",
+    "cancelledTitle": "Booking này đã bị hủy",
+    "cancelledByGuest": "Bạn đã hủy booking này. Chúng tôi đã gửi email xác nhận cho bạn.",
+    "cancelledByShop": "Studio đã hủy booking này. Nếu có thắc mắc, vui lòng liên hệ studio.",
+    "cancelledReason": "Lý do: {reason}",
+    "changeOnly": "Để thay đổi booking, vui lòng liên hệ studio."
   },
   "report": {
     "title": "Báo cáo trang này",

@@ -2,7 +2,7 @@
 // change and a worker sends the email in the language of the guest (REQUIREMENTS 5.7), so nothing is sent from a request handler.
 // Lives on globalThis like the other mock stores.
 import type { Locale, SessionCloseReason } from "@workshop/shared";
-import { renderBookingConfirmation, renderBookingInfo, renderPaymentReceived, renderSessionClosed, renderSessionRescheduled, type RenderedEmail } from "@/lib/email/templates";
+import { renderBookingCancelled, renderBookingConfirmation, renderBookingInfo, renderPaymentReceived, renderShopBookingNotice, renderSessionClosed, renderSessionRescheduled, type RenderedEmail } from "@/lib/email/templates";
 import { newUuid } from "@/lib/uuid";
 
 interface EmailBase extends RenderedEmail {
@@ -57,6 +57,30 @@ export interface BookingInfoEmail extends EmailBase {
   currency: string;
 }
 
+/** A booking was cancelled by the guest (a confirmation for the guest) or by the shop (the guest is told). */
+export interface BookingCancelledEmail extends EmailBase {
+  type: "BOOKING_CANCELLED";
+  startsAt: string;
+  endsAt: string;
+  quantity: number;
+  byGuest: boolean;
+  reason?: string;
+}
+
+/** The email the shop receives when a guest books or cancels (`to` is the contact email of the shop). */
+export interface ShopBookingNoticeEmail extends EmailBase {
+  type: "SHOP_BOOKING_NOTICE";
+  kind: "CREATED" | "CANCELLED_BY_GUEST";
+  guestEmail?: string;
+  guestPhone?: string;
+  startsAt: string;
+  endsAt: string;
+  quantity: number;
+  totalAmount: number;
+  currency: string;
+  reason?: string;
+}
+
 /** The shop confirmed the payment of a booking (it is Paid): a receipt for the guest. */
 export interface PaymentReceivedEmail extends EmailBase {
   type: "PAYMENT_RECEIVED";
@@ -67,7 +91,7 @@ export interface PaymentReceivedEmail extends EmailBase {
   currency: string;
 }
 
-export type OutboxEmail = SessionRescheduledEmail | SessionClosedEmail | BookingConfirmationEmail | BookingInfoEmail | PaymentReceivedEmail;
+export type OutboxEmail = SessionRescheduledEmail | SessionClosedEmail | BookingConfirmationEmail | BookingInfoEmail | BookingCancelledEmail | ShopBookingNoticeEmail | PaymentReceivedEmail;
 
 const g = globalThis as unknown as { __outbox?: OutboxEmail[] };
 const box = () => (g.__outbox ??= []);
@@ -94,6 +118,18 @@ export function queueBookingConfirmation(email: Queued<BookingConfirmationEmail>
 
 export function queueBookingInfo(email: Queued<BookingInfoEmail>): BookingInfoEmail {
   const entry: BookingInfoEmail = { ...email, ...renderBookingInfo(email), id: newUuid(), type: "BOOKING_INFO", createdAt: new Date().toISOString() };
+  box().push(entry);
+  return entry;
+}
+
+export function queueBookingCancelled(email: Queued<BookingCancelledEmail>): BookingCancelledEmail {
+  const entry: BookingCancelledEmail = { ...email, ...renderBookingCancelled(email), id: newUuid(), type: "BOOKING_CANCELLED", createdAt: new Date().toISOString() };
+  box().push(entry);
+  return entry;
+}
+
+export function queueShopBookingNotice(email: Queued<ShopBookingNoticeEmail>): ShopBookingNoticeEmail {
+  const entry: ShopBookingNoticeEmail = { ...email, ...renderShopBookingNotice(email), id: newUuid(), type: "SHOP_BOOKING_NOTICE", createdAt: new Date().toISOString() };
   box().push(entry);
   return entry;
 }

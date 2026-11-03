@@ -19,6 +19,9 @@ export interface ConfirmationData {
   discountAmount?: number;
   /** NOT_CONFIRMED until the guest opens the link of the email. */
   status?: BookingStatus;
+  /** When it is CANCELLED: who cancelled it and why. */
+  cancelledBy?: "SHOP" | "GUEST";
+  cancelReason?: string;
   /** Demo only: the link of the email, so the page can offer it (a real guest only gets it by email). */
   demoConfirmUrl?: string;
   /** Demo only: the page that shows the email as it arrived (six languages), since the prototype has no mailbox. */

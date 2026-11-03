@@ -183,7 +183,8 @@
     "snapshotNote": "Price, workshop name and time are a snapshot taken when the booking was created.",
     "customer": "Customer",
     "timeline": "Status timeline",
-    "timeUnknown": "Time not recorded"
+    "timeUnknown": "Time not recorded",
+    "cancelledByGuest": "Cancelled by the guest"
   },
   "customers": {
     "title": "Customers",

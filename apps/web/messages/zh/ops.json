@@ -183,7 +183,8 @@
     "snapshotNote": "价格、Workshop 名称和时间是创建预订时的快照。",
     "customer": "客户",
     "timeline": "状态时间线",
-    "timeUnknown": "未记录时间"
+    "timeUnknown": "未记录时间",
+    "cancelledByGuest": "客人自行取消"
   },
   "customers": {
     "title": "客户",

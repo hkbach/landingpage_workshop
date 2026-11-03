@@ -140,7 +140,20 @@
     "demoNote": "デモ（ここにはメールボックスがありません）：",
     "demoLink": "メールのリンクを開く",
     "confirmedNote": "ご予約は確認済みです。",
-    "demoEmail": "送信されたメールを見る"
+    "demoEmail": "送信されたメールを見る",
+    "cancelButton": "予約をキャンセル",
+    "cancelTitle": "ご予約 {code} をキャンセルしますか？",
+    "cancelText": "席はスタジオに戻り、確認メールをお送りします。この操作は取り消せません。",
+    "cancelReasonLabel": "理由（任意）",
+    "cancelKeep": "予約を残す",
+    "cancelConfirm": "はい、キャンセルします",
+    "cancelling": "キャンセル中…",
+    "cancelFailed": "予約をキャンセルできませんでした。すでに開始している可能性があります。スタジオまでご連絡ください。",
+    "cancelledTitle": "このご予約はキャンセルされました",
+    "cancelledByGuest": "お客様がこのご予約をキャンセルしました。確認メールをお送りしました。",
+    "cancelledByShop": "スタジオがこのご予約をキャンセルしました。ご不明な点はスタジオまでご連絡ください。",
+    "cancelledReason": "理由：{reason}",
+    "changeOnly": "ご予約の変更はスタジオまでご連絡ください。"
   },
   "report": {
     "title": "このサイトを報告",

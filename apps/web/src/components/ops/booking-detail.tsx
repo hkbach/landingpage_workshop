@@ -81,7 +81,7 @@ export function BookingDetail({
               <Row label={t("detail.source")}>{t(`source.${b.source}`)}</Row>
               <Row label={t("detail.created")}>{formatDateTime(b.createdAt, b.timezone, locale)}</Row>
               {b.specialRequest ? <Row label={t("common.request")}>{b.specialRequest}</Row> : null}
-              {b.cancelReason ? <Row label={t("detail.cancelReason")}>{b.cancelReason}</Row> : null}
+              {b.cancelReason || b.cancelledBy === "GUEST" ? <Row label={t("detail.cancelReason")}>{b.cancelledBy === "GUEST" ? `${t("detail.cancelledByGuest")}${b.cancelReason ? `: ${b.cancelReason}` : ""}` : b.cancelReason}</Row> : null}
             </dl>
             <p className="mt-3 text-xs text-muted-foreground">{t("detail.snapshotNote")}</p>
           </CardContent>

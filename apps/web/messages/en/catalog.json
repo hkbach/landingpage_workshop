@@ -285,6 +285,7 @@
     "completedDone": "Session {code} is Completed.",
     "paymentsSaved": "{updated, plural, one {# payment} other {# payments}} saved. Emails sent: {sent}. Without email: {none}. Failed: {failed}.",
     "cancelledNoPayment": "No payment for a cancelled booking",
-    "closeInProgressHint": "The session is taking place. You can close it early only because the workshop has been completed."
+    "closeInProgressHint": "The session is taking place. You can close it early only because the workshop has been completed.",
+    "cancelledByGuest": "Cancelled by the guest"
   }
 }

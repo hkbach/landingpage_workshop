@@ -116,6 +116,96 @@ export function renderBookingInfo(d: BookingInfoData): RenderedEmail {
   })));
 }
 
+export interface BookingCancelledData {
+  guestName: string; shopName: string; bookingCode: string; workshopTitle: string; startsAt: string; endsAt: string; timezone: string; quantity: number;
+  /** True when the guest cancelled, false when the shop did. */
+  byGuest: boolean;
+  /** Why (the text of the shop, or the one the guest wrote): not translated. */
+  reason?: string;
+}
+
+/** The email sent to the guest when a booking is cancelled: the guest cancelled it (a confirmation) or the shop did. */
+export function renderBookingCancelled(d: BookingCancelledData): RenderedEmail {
+  const T = {
+    subject: w("Your booking {code} has been cancelled", "Booking {code} của bạn đã được hủy", "การจอง {code} ของคุณถูกยกเลิกแล้ว", "您的预订 {code} 已取消", "예약 {code}이(가) 취소되었습니다", "ご予約 {code} がキャンセルされました"),
+    byGuest: w(
+      "As you asked, your booking {code} for {workshop} at {shop} has been cancelled. The seats are free again.",
+      "Theo yêu cầu của bạn, booking {code} cho {workshop} tại {shop} đã được hủy. Các chỗ đã được nhả lại.",
+      "ตามที่คุณขอ การจอง {code} สำหรับ {workshop} ที่ {shop} ถูกยกเลิกแล้ว ที่นั่งว่างอีกครั้งแล้ว",
+      "按您的要求，您在 {shop} 的预订 {code}（{workshop}）已取消，座位已重新开放。",
+      "요청하신 대로 {shop}의 {workshop} 예약 {code}이(가) 취소되었습니다. 자리가 다시 비었습니다.",
+      "ご依頼のとおり、{shop}の{workshop}のご予約 {code} をキャンセルしました。席は再び空きました。",
+    ),
+    byShop: w(
+      "{shop} has cancelled your booking {code} for {workshop}.",
+      "{shop} đã hủy booking {code} của bạn cho {workshop}.",
+      "{shop} ได้ยกเลิกการจอง {code} ของคุณสำหรับ {workshop}",
+      "{shop} 已取消您的预订 {code}（{workshop}）。",
+      "{shop}에서 {workshop} 예약 {code}을(를) 취소했습니다.",
+      "{shop}が{workshop}のご予約 {code} をキャンセルしました。",
+    ),
+    footer: w("If you did not expect this, please contact the studio.", "Nếu bạn không mong đợi điều này, vui lòng liên hệ studio.", "หากคุณไม่คาดคิดเรื่องนี้ โปรดติดต่อสตูดิโอ", "如果这不在您的预期之内，请联系工作室。", "예상하지 못한 일이라면 스튜디오로 문의해 주세요.", "心当たりがない場合は、スタジオまでご連絡ください。"),
+  };
+  return compose(EMAIL_LANGS.map((lang): Section => ({
+    lang, subject: fill(T.subject[lang], { code: d.bookingCode }), greeting: fill(L.hello[lang], { name: d.guestName }),
+    paragraphs: [fill((d.byGuest ? T.byGuest : T.byShop)[lang], { shop: d.shopName, code: d.bookingCode, workshop: d.workshopTitle })],
+    rows: [
+      { label: L.code[lang], value: d.bookingCode }, { label: L.workshop[lang], value: d.workshopTitle },
+      { label: L.when[lang], value: range(d.startsAt, d.endsAt, d.timezone, lang) }, { label: L.guests[lang], value: String(d.quantity) },
+      ...(d.reason ? [{ label: L.reason[lang], value: d.reason }] : []),
+    ],
+    footer: T.footer[lang],
+  })));
+}
+
+export interface ShopBookingNoticeData {
+  /** A guest booked (the booking is not confirmed until the guest opens the link), or a guest cancelled a booking. */
+  kind: "CREATED" | "CANCELLED_BY_GUEST";
+  shopName: string; guestName: string; guestEmail?: string; guestPhone?: string; bookingCode: string; workshopTitle: string; startsAt: string; endsAt: string; timezone: string;
+  quantity: number; totalAmount: number; currency: string; reason?: string;
+}
+
+/** The email the shop receives when a guest books or cancels a booking. */
+export function renderShopBookingNotice(d: ShopBookingNoticeData): RenderedEmail {
+  const T = {
+    created: w("New booking {code}", "Booking mới {code}", "การจองใหม่ {code}", "新预订 {code}", "새 예약 {code}", "新しい予約 {code}"),
+    cancelled: w("Booking {code} was cancelled by the guest", "Booking {code} đã bị khách hủy", "การจอง {code} ถูกผู้จองยกเลิก", "预订 {code} 已被客人取消", "예약 {code}을(를) 손님이 취소했습니다", "ご予約 {code} がお客様によりキャンセルされました"),
+    introCreated: w(
+      "A guest booked a workshop at {shop}. The booking is not confirmed until the guest opens the link in the email.",
+      "Có khách vừa đặt chỗ tại {shop}. Booking chưa được xác nhận cho đến khi khách bấm link trong email.",
+      "มีผู้จองเวิร์กช็อปที่ {shop} การจองจะยังไม่ได้รับการยืนยันจนกว่าผู้จองจะเปิดลิงก์ในอีเมล",
+      "有客人在 {shop} 预订了工作坊。在客人打开邮件中的链接之前，预订处于未确认状态。",
+      "{shop}에 손님이 예약했습니다. 손님이 이메일의 링크를 열 때까지 예약은 확인되지 않은 상태입니다.",
+      "{shop}にお客様のご予約が入りました。お客様がメールのリンクを開くまで、ご予約は未確認の状態です。",
+    ),
+    introCancelled: w(
+      "A guest cancelled a booking at {shop}. The seats are free again.",
+      "Một khách đã hủy booking tại {shop}. Các chỗ đã được nhả lại.",
+      "ผู้จองได้ยกเลิกการจองที่ {shop} ที่นั่งว่างอีกครั้งแล้ว",
+      "有客人取消了在 {shop} 的预订，座位已重新开放。",
+      "손님이 {shop}의 예약을 취소했습니다. 자리가 다시 비었습니다.",
+      "お客様が{shop}のご予約をキャンセルしました。席は再び空きました。",
+    ),
+    guest: w("Guest", "Khách", "ผู้จอง", "客人", "손님", "お客様"),
+    email: w("Email", "Email", "อีเมล", "邮箱", "이메일", "メールアドレス"),
+    phone: w("Phone", "Điện thoại", "โทรศัพท์", "电话", "전화", "電話"),
+    footer: w("You can see the booking in Bookings.", "Bạn có thể xem booking trong mục Bookings.", "คุณดูการจองได้ที่เมนู Bookings", "您可以在“Bookings”中查看该预订。", "Bookings에서 예약을 확인할 수 있습니다.", "予約は「Bookings」で確認できます。"),
+  };
+  const cancelled = d.kind === "CANCELLED_BY_GUEST";
+  return compose(EMAIL_LANGS.map((lang): Section => ({
+    lang, subject: fill((cancelled ? T.cancelled : T.created)[lang], { code: d.bookingCode }), greeting: fill(L.hello[lang], { name: d.shopName }),
+    paragraphs: [fill((cancelled ? T.introCancelled : T.introCreated)[lang], { shop: d.shopName })],
+    rows: [
+      { label: L.code[lang], value: d.bookingCode }, { label: T.guest[lang], value: d.guestName },
+      ...(d.guestEmail ? [{ label: T.email[lang], value: d.guestEmail }] : []), ...(d.guestPhone ? [{ label: T.phone[lang], value: d.guestPhone }] : []),
+      { label: L.workshop[lang], value: d.workshopTitle }, { label: L.when[lang], value: range(d.startsAt, d.endsAt, d.timezone, lang) },
+      { label: L.guests[lang], value: String(d.quantity) }, { label: L.total[lang], value: formatMoney(d.totalAmount, d.currency, TAG[lang]) },
+      ...(d.reason ? [{ label: L.reason[lang], value: d.reason }] : []),
+    ],
+    footer: T.footer[lang],
+  })));
+}
+
 export interface PaymentReceivedData {
   guestName: string; shopName: string; bookingCode: string; workshopTitle: string; startsAt: string; endsAt: string; timezone: string;
   quantity: number; totalAmount: number; currency: string;

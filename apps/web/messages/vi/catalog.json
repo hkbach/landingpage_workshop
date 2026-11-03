@@ -285,6 +285,7 @@
     "completedDone": "Session {code} đã Hoàn thành.",
     "paymentsSaved": "Đã lưu {updated, plural, other {# thanh toán}}. Email đã gửi: {sent}. Không có email: {none}. Lỗi: {failed}.",
     "cancelledNoPayment": "Booking đã hủy không có thanh toán",
-    "closeInProgressHint": "Session đang diễn ra. Bạn chỉ có thể đóng sớm vì buổi workshop đã hoàn thành."
+    "closeInProgressHint": "Session đang diễn ra. Bạn chỉ có thể đóng sớm vì buổi workshop đã hoàn thành.",
+    "cancelledByGuest": "Khách tự hủy"
   }
 }

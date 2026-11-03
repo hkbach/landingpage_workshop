@@ -399,7 +399,9 @@ Browser ────────────────────────
 
 **FR-BOOK-03 – Trang xác nhận (Must)**
 - Sau khi đặt: hiển thị booking code, workshop, ngày giờ (timezone của shop), số khách, tổng tiền ("Pay at the studio"), địa chỉ + link bản đồ, chính sách đến trễ, thông tin liên hệ shop.
-- Không có nút hủy. Hướng dẫn: "To change or cancel, please contact the studio."
+- **Khách tự hủy booking** ngay trên trang này (trang tra cứu bằng **mã booking + email của booking**, cùng quy tắc không lộ thông tin: sai mã hay sai email đều trả lời giống nhau): nút **Cancel booking** mở popup xác nhận ("không hoàn tác được") và ô **lý do tùy chọn** (tối đa 300 ký tự). **Chỉ hủy được khi booking `NOT_CONFIRMED` hoặc `CONFIRMED`, session chưa bắt đầu và chưa đóng** (đã Checked in, session đã bắt đầu hoặc đã đóng thì không có nút; backend trả 409 `NOT_CANCELLABLE`). Hủy xong chỗ được nhả ngay, trang hiện "This booking has been cancelled" (hủy bởi khách, kèm lý do nếu có), `cancelled_by = GUEST`. **Hai bên đều nhận email**: khách nhận email xác nhận đã hủy (6 ngôn ngữ), shop nhận email thông báo (kèm tên, email, điện thoại khách, lý do). Booking đã hủy bởi shop hiển thị "The studio cancelled this booking" kèm lý do của shop.
+- Khi không hủy được: "To change or cancel, please contact the studio."; khi hủy được thì hướng dẫn chỉ còn "To change the booking, please contact the studio." (đổi booking vẫn qua shop).
+- MVP frontend: `POST /api/v1/public/sites/{slug}/bookings/cancel` (200 `{code, status}`; 404 `NOT_FOUND`; 409 `NOT_CANCELLABLE`). TODO(api): giới hạn tần suất, audit log, ghi trạng thái và hai email vào outbox trong cùng một transaction.
 
 **FR-BOOK-05 – Tài khoản khách và gộp booking theo email (Should)**
 - Khi khách **chưa đăng nhập** đặt chỗ, server tra email (trim + lowercase): đã có customer với email đó thì booking được ghi vào customer đó (khách có tài khoản thì vào tài khoản); chưa có thì tạo customer không tài khoản (BR-10). Server chấp nhận email có khoảng trắng hai đầu (trim).
@@ -437,7 +439,7 @@ Browser ────────────────────────
 - Các trạng thái và thao tác **Completed, Late released, No-show, Session expired** (hoàn tất, late release, no-show, tự hết hạn khi session kết thúc) **không còn**; khách đã đặt mà không đến chỉ ở nguyên trạng thái (`CONFIRMED` hoặc `NOT_CONFIRMED`).
 
 **FR-OPS-06 – Hủy booking (Must)**
-- Shop hủy: bắt buộc nhập lý do; `NOT_CONFIRMED | CONFIRMED → CANCELLED`; giảm `reserved_count`; gửi email cho khách (nếu có email); ghi audit.
+- Shop hủy: bắt buộc nhập lý do; `NOT_CONFIRMED | CONFIRMED → CANCELLED` (`cancelled_by = SHOP`); giảm `reserved_count`; **gửi email cho khách (nếu có email) kèm lý do của shop** (chỉ gửi một lần, không gửi lại khi hủy lần nữa); ghi audit. Khách cũng tự hủy được (FR-BOOK-03); booking do khách hủy hiển thị "Cancelled by the guest" kèm lý do trong chi tiết booking và danh sách check-in.
 
 **FR-OPS-07 – Đổi session (Should)**
 - Chuyển booking `NOT_CONFIRMED | CONFIRMED` sang session khác cùng workshop: transaction lock **cả hai** session (lock theo thứ tự `id` tăng dần để tránh deadlock), kiểm tra chỗ ở session mới, cập nhật `reserved_count` hai bên. Giữ nguyên snapshot giá. Gửi email cập nhật.
@@ -499,9 +501,11 @@ Browser ────────────────────────
 | Xác minh email, reset password | Shop owner | Ngôn ngữ UI của user (mặc định EN) |
 | Shop được duyệt / bị từ chối / bị khóa | Shop owner | Như trên |
 | `booking.confirmed` | Khách | Cả 6 ngôn ngữ trong cùng một email (xem bên dưới) |
-| `booking.confirmed` (thông báo booking mới) | Email của shop | Ngôn ngữ của shop |
+| `booking.created` (thông báo booking mới; chưa xác nhận cho đến khi khách bấm link) | Email liên hệ của shop (`contact_email`) | Cả 6 ngôn ngữ trong cùng một email |
 | `booking.created_by_shop` (walk-in / phone có email; thông tin, không cần xác nhận) | Khách | Cả 6 ngôn ngữ trong cùng một email |
-| `booking.cancelled`, `booking.rescheduled`, `session.closed` | Khách | Cả 6 ngôn ngữ trong cùng một email |
+| `booking.cancelled` (shop hủy: báo khách kèm lý do; khách tự hủy: xác nhận cho khách) | Khách | Cả 6 ngôn ngữ trong cùng một email |
+| `booking.cancelled_by_guest` (khách tự hủy) | Email liên hệ của shop | Cả 6 ngôn ngữ trong cùng một email |
+| `booking.rescheduled`, `session.closed` | Khách | Cả 6 ngôn ngữ trong cùng một email |
 | `booking.paid` (shop xác nhận đã thanh toán; biên nhận) | Khách (nếu có email; khách walk-in không có email thì bỏ qua) | Cả 6 ngôn ngữ trong cùng một email |
 | Nhắc lịch 24 giờ trước (Should) | Khách | Locale của khách |
 

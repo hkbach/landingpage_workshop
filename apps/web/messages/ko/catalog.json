@@ -285,6 +285,7 @@
     "completedDone": "세션 {code}이(가) 완료되었습니다.",
     "paymentsSaved": "결제 {updated, plural, other {#건}} 저장됨. 이메일 발송: {sent}. 이메일 없음: {none}. 실패: {failed}.",
     "cancelledNoPayment": "취소된 예약은 결제를 받지 않습니다",
-    "closeInProgressHint": "세션이 진행 중입니다. 워크숍이 완료된 경우에만 일찍 닫을 수 있습니다."
+    "closeInProgressHint": "세션이 진행 중입니다. 워크숍이 완료된 경우에만 일찍 닫을 수 있습니다.",
+    "cancelledByGuest": "손님이 직접 취소"
   }
 }

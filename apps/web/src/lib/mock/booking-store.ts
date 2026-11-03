@@ -6,10 +6,10 @@ import { computePaymentStatus, confirmation, netPaid, reservedSeats, type PreChe
 import type { Booking, Customer, PaymentEntry } from "@/lib/types";
 import { newUuid } from "@/lib/uuid";
 import { bookings as seed, currentShop, customers as seedCustomers, sessions, workshops } from "./data";
-import { queueBookingConfirmation, queueBookingInfo } from "./outbox-store";
+import { queueBookingCancelled, queueBookingConfirmation, queueBookingInfo, queueShopBookingNotice } from "./outbox-store";
 import { allPromotions, shopToday } from "./promotion-store";
 
-interface Change { status: BookingStatus; cancelReason?: string; checkedInAt?: string; statusBeforeCheckIn?: PreCheckInStatus }
+interface Change { status: BookingStatus; cancelReason?: string; cancelledBy?: "SHOP" | "GUEST"; checkedInAt?: string; statusBeforeCheckIn?: PreCheckInStatus }
 interface Store {
   changes: Map<string, Change>;
   /** Bookings guests made on the landing page, and the customers they created. */
@@ -58,7 +58,7 @@ export function liveBookings(): Booking[] {
     const extra = store().extra.get(b.id);
     const payments = extra ? [...b.payments, ...extra] : b.payments;
     return {
-      ...rest, payments, paymentStatus: extra ? computePaymentStatus(b.totalAmount, payments) : b.paymentStatus, status, ...(c ? { cancelReason: c.cancelReason ?? b.cancelReason, checkedInAt: c.checkedInAt } : {}), ...(before ? { statusBeforeCheckIn: before } : {}),
+      ...rest, payments, paymentStatus: extra ? computePaymentStatus(b.totalAmount, payments) : b.paymentStatus, status, ...(c ? { cancelReason: c.cancelReason ?? b.cancelReason, checkedInAt: c.checkedInAt, ...(c.cancelledBy ? { cancelledBy: c.cancelledBy } : {}) } : {}), ...(before ? { statusBeforeCheckIn: before } : {}),
     };
   });
 }
@@ -134,14 +134,14 @@ export function registerGuestAccount(input: { email: string; fullName: string; c
  * Records a status change of a booking; false when the booking does not exist. A check-in remembers the status the booking had (`before`, or the
  * one it has now when it is not given) so an uncheck-in goes back to it.
  */
-export function setBookingStatus(id: string, status: BookingStatus, cancelReason?: string, checkedInAt?: string, before?: PreCheckInStatus): boolean {
+export function setBookingStatus(id: string, status: BookingStatus, cancelReason?: string, checkedInAt?: string, before?: PreCheckInStatus, cancelledBy?: "SHOP" | "GUEST"): boolean {
   const base = allRows().find((b) => b.id === id);
   if (!base) return false;
   const now = liveBookings().find((b) => b.id === id)!;
   // The time of the check-in is kept while the booking is checked in; any other status (an uncheck-in, a cancel) drops it.
   const keep = status === "CHECKED_IN" ? (checkedInAt ?? now.checkedInAt) : undefined;
   const wasBefore = status === "CHECKED_IN" ? (before ?? (isOpen(now.status) ? now.status : now.statusBeforeCheckIn) ?? "CONFIRMED") : undefined;
-  changes().set(id, { status, ...(cancelReason ? { cancelReason } : {}), ...(keep ? { checkedInAt: keep } : {}), ...(wasBefore ? { statusBeforeCheckIn: wasBefore } : {}) });
+  changes().set(id, { status, ...(cancelReason ? { cancelReason } : {}), ...(status === "CANCELLED" && cancelledBy ? { cancelledBy } : {}), ...(keep ? { checkedInAt: keep } : {}), ...(wasBefore ? { statusBeforeCheckIn: wasBefore } : {}) });
   return true;
 }
 
@@ -254,7 +254,49 @@ export function createGuestBooking(input: GuestBookingInput, confirmUrlFor: (tok
     to: email, locale: customer.preferredLocale, guestName: booking.guestName ?? customer.fullName, shopName: currentShop.name, bookingCode: booking.bookingCode, workshopTitle: booking.workshopTitle, timezone: booking.timezone,
     startsAt: booking.startsAt, endsAt: booking.endsAt, quantity: booking.quantity, totalAmount: booking.totalAmount, currency: booking.currency, confirmUrl: confirmUrlFor(token),
   });
+  // The shop is told of the new booking (it stays not confirmed until the guest opens the link).
+  queueShopBookingNotice({
+    to: currentShop.contactEmail, locale: currentShop.defaultLocale, guestName: booking.guestName ?? customer.fullName, shopName: currentShop.name, bookingCode: booking.bookingCode,
+    workshopTitle: booking.workshopTitle, timezone: booking.timezone, kind: "CREATED", guestEmail: email, ...(input.phone?.trim() ? { guestPhone: input.phone.trim() } : {}),
+    startsAt: booking.startsAt, endsAt: booking.endsAt, quantity: booking.quantity, totalAmount: booking.totalAmount, currency: booking.currency,
+  });
   return { ok: true, booking, confirmToken: token, repeated: false };
+}
+
+// ---- a guest cancels their booking --------------------------------------------------------------------------------------------------------
+
+/** A guest can cancel until the session starts, while the booking is Not confirmed or Confirmed and the session is not closed. */
+export function canGuestCancel(booking: Pick<Booking, "status" | "sessionId" | "startsAt">, now: Date = new Date()): boolean {
+  const session = sessions.find((s) => s.id === booking.sessionId);
+  return isOpen(booking.status) && !!session && !isSessionFinished(session.status) && Date.parse(booking.startsAt) > now.getTime();
+}
+
+export type GuestCancelResult = { ok: true; booking: Booking } | { ok: false; code: "NOT_FOUND" | "NOT_CANCELLABLE" };
+
+/**
+ * A guest cancels their own booking, found by its code AND the email of the booking (anything else is NOT_FOUND, the same answer as for a code that does not
+ * exist). Allowed until the session starts, while the booking is Not confirmed or Confirmed (a checked in booking cannot be cancelled, nor one of a session that
+ * is closed). The reason is optional. The seats go back at once, the guest gets a confirmation email and the shop is told.
+ */
+export function cancelBookingByGuest(code: string, email: string, reason: string | undefined, now: Date = new Date()): GuestCancelResult {
+  const booking = liveBookings().find((b) => b.bookingCode === code.trim().toUpperCase());
+  const customer = booking && liveCustomers().find((c) => c.id === booking.customerId);
+  if (!booking || !customer?.email || normalizeEmail(customer.email) !== normalizeEmail(email)) return { ok: false, code: "NOT_FOUND" };
+  if (!canGuestCancel(booking, now)) return { ok: false, code: "NOT_CANCELLABLE" };
+  const why = reason?.trim().slice(0, 300) || undefined;
+  setBookingStatus(booking.id, "CANCELLED", why, undefined, undefined, "GUEST");
+  const cancelled = liveBookings().find((b) => b.id === booking.id)!;
+  const guestName = booking.guestName ?? customer.fullName;
+  queueBookingCancelled({
+    to: normalizeEmail(customer.email), locale: customer.preferredLocale, guestName, shopName: currentShop.name, bookingCode: booking.bookingCode, workshopTitle: booking.workshopTitle,
+    timezone: booking.timezone, startsAt: booking.startsAt, endsAt: booking.endsAt, quantity: booking.quantity, byGuest: true, ...(why ? { reason: why } : {}),
+  });
+  queueShopBookingNotice({
+    to: currentShop.contactEmail, locale: currentShop.defaultLocale, guestName, shopName: currentShop.name, bookingCode: booking.bookingCode, workshopTitle: booking.workshopTitle,
+    timezone: booking.timezone, kind: "CANCELLED_BY_GUEST", guestEmail: normalizeEmail(customer.email), ...(customer.phone ? { guestPhone: customer.phone } : {}),
+    startsAt: booking.startsAt, endsAt: booking.endsAt, quantity: booking.quantity, totalAmount: booking.totalAmount, currency: booking.currency, ...(why ? { reason: why } : {}),
+  });
+  return { ok: true, booking: cancelled };
 }
 
 export type ConfirmResult =

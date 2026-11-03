@@ -140,7 +140,20 @@
     "demoNote": "演示（此处没有邮箱）：",
     "demoLink": "打开邮件中的链接",
     "confirmedNote": "您的预订已确认。",
-    "demoEmail": "查看已发送的邮件"
+    "demoEmail": "查看已发送的邮件",
+    "cancelButton": "取消预订",
+    "cancelTitle": "取消预订 {code}？",
+    "cancelText": "座位将归还工作室，我们会向您发送确认邮件。此操作无法撤销。",
+    "cancelReasonLabel": "原因（可选）",
+    "cancelKeep": "保留预订",
+    "cancelConfirm": "是，取消预订",
+    "cancelling": "取消中…",
+    "cancelFailed": "无法取消预订。场次可能已开始，请联系工作室。",
+    "cancelledTitle": "该预订已取消",
+    "cancelledByGuest": "您已取消此预订，我们已向您发送确认邮件。",
+    "cancelledByShop": "工作室已取消此预订。如有疑问，请联系工作室。",
+    "cancelledReason": "原因：{reason}",
+    "changeOnly": "如需更改预订，请联系工作室。"
   },
   "report": {
     "title": "举报此网站",

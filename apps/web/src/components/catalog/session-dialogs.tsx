@@ -212,7 +212,7 @@ export function CheckInDialog({ open, onOpenChange, session, bookings, customers
                               )}
                             </td>
                             <td className="whitespace-nowrap px-3 py-2 text-muted-foreground" data-testid="checkin-at">{b.checkedInAt && b.status === "CHECKED_IN" ? stamp(b.checkedInAt) : "—"}</td>
-                            <td className="px-3 py-2 text-muted-foreground" data-testid="checkin-reason">{b.status === "CANCELLED" ? (b.cancelReason || "—") : ""}</td>
+                            <td className="px-3 py-2 text-muted-foreground" data-testid="checkin-reason">{b.status === "CANCELLED" ? (b.cancelledBy === "GUEST" ? `${t("sessions.cancelledByGuest")}${b.cancelReason ? `: ${b.cancelReason}` : ""}` : (b.cancelReason || "—")) : ""}</td>
                             <td className="px-3 py-2 text-right">
                               {readOnly ? null : state.CHECK_IN.allowed ? (
                                 <Button size="sm" onClick={() => run(b, "CHECK_IN")}><LogIn aria-hidden="true" />{t("sessions.checkInRow")}</Button>
