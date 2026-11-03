@@ -5,6 +5,7 @@ import { formatMoney, socialEntries } from "@workshop/shared";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { Booking, Customer } from "@/lib/types";
 import { formatDate } from "@/lib/format";
+import { CustomerAvatar } from "./customer-avatar";
 import { CustomerBookingsTable } from "./customer-bookings-table";
 
 /**
@@ -37,9 +38,13 @@ function Content({ customer, bookings, timezone }: { customer: Customer; booking
   const socials = socialEntries(customer.account?.socials);
   return (
     <div className="grid gap-4" data-testid="customer-dialog">
-      <DialogHeader>
-        <DialogTitle>{customer.fullName}</DialogTitle>
-        <DialogDescription>{t("customers.perShop")}</DialogDescription>
+      <DialogHeader className="flex-row items-center gap-4">
+        {/* The avatar area: the picture of the account, or the initials of a guest who only booked. */}
+        <CustomerAvatar name={customer.fullName} url={customer.account?.avatarUrl} className="size-16 text-xl" />
+        <div className="grid gap-1">
+          <DialogTitle>{customer.fullName}</DialogTitle>
+          <DialogDescription>{t("customers.perShop")}</DialogDescription>
+        </div>
       </DialogHeader>
       <section aria-label={t("customers.details")} className="grid gap-2">
         <h3 className="text-sm font-medium">{t("customers.details")}</h3>

@@ -22,5 +22,11 @@
   "dateInput": {
     "placeholder": "年/月/日",
     "openCalendar": "カレンダーを開く"
+  },
+  "sort": {
+    "by": "{column}で並べ替え",
+    "ascending": "昇順に並べ替え済み",
+    "descending": "降順に並べ替え済み",
+    "none": "並べ替えなし"
   }
 }

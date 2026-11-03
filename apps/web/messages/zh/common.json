@@ -22,5 +22,11 @@
   "dateInput": {
     "placeholder": "年/月/日",
     "openCalendar": "打开日历"
+  },
+  "sort": {
+    "by": "按{column}排序",
+    "ascending": "已升序排列",
+    "descending": "已降序排列",
+    "none": "未排序"
   }
 }

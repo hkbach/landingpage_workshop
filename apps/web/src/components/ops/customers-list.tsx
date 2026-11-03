@@ -11,8 +11,11 @@ import type { Booking, Customer } from "@/lib/types";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Field } from "./field";
+import { CustomerAvatar } from "./customer-avatar";
 import { CustomerBookingsTable } from "./customer-bookings-table";
 import { CustomerDialog } from "./customer-dialog";
+import { SortableHead } from "./sortable-head";
+import { nextSort, sortRows, type SortState } from "@/lib/table-sort";
 import { ShopLink } from "@/components/dashboard/shell/shop-link";
 
 /**
@@ -28,6 +31,7 @@ export function CustomersList({ customers, bookings, timezone }: { customers: Cu
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState<ReadonlySet<string>>(new Set());
   const [viewing, setViewing] = useState<string | null>(null); // the customer whose popup is open
+  const [sort, setSort] = useState<SortState>(null); // none: the most recent booking first
   const q = query.trim().toLowerCase();
   const toggle = (id: string) => setOpen((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   const all = customers
@@ -38,7 +42,20 @@ export function CustomersList({ customers, bookings, timezone }: { customers: Cu
     })
     .filter((r) => r.count > 0)
     .sort((a, b) => b.last!.startsAt.localeCompare(a.last!.startsAt) || a.c.fullName.localeCompare(b.c.fullName));
-  const rows = all.filter((r) => !q || r.c.fullName.toLowerCase().includes(q) || r.c.email?.toLowerCase().includes(q));
+  const found = all.filter((r) => !q || r.c.fullName.toLowerCase().includes(q) || r.c.email?.toLowerCase().includes(q));
+  // What each column is sorted by (a guest with no account has no country and no birth date: those rows go last).
+  const rows = sortRows(found, sort, (r, key) => {
+    switch (key) {
+      case "name": return r.c.fullName;
+      case "email": return r.c.email;
+      case "country": return r.c.account ? regionName.of(r.c.account.country) ?? r.c.account.country : null;
+      case "birth": return r.c.account?.birthDate;
+      case "bookings": return r.count;
+      case "last": return r.last?.startsAt;
+      case "paid": return r.spent;
+      default: return null;
+    }
+  }, locale);
 
   return (
     <div className="grid gap-4">
@@ -68,13 +85,13 @@ export function CustomersList({ customers, bookings, timezone }: { customers: Cu
             <TableHeader>
               <TableRow>
                 <TableHead className="w-10"><span className="sr-only">{t("customers.history")}</span></TableHead>
-                <TableHead>{t("customers.name")}</TableHead>
-                <TableHead>{t("customers.email")}</TableHead>
-                <TableHead>{t("customers.country")}</TableHead>
-                <TableHead>{t("customers.birthDate")}</TableHead>
-                <TableHead>{t("customers.bookings")}</TableHead>
-                <TableHead>{t("customers.lastBooking")}</TableHead>
-                <TableHead className="text-right">{t("customers.paid")}</TableHead>
+                <SortableHead label={t("customers.name")} sortKey="name" sort={sort} onSort={(k) => setSort((s) => nextSort(s, k))} />
+                <SortableHead label={t("customers.email")} sortKey="email" sort={sort} onSort={(k) => setSort((s) => nextSort(s, k))} />
+                <SortableHead label={t("customers.country")} sortKey="country" sort={sort} onSort={(k) => setSort((s) => nextSort(s, k))} />
+                <SortableHead label={t("customers.birthDate")} sortKey="birth" sort={sort} onSort={(k) => setSort((s) => nextSort(s, k))} />
+                <SortableHead label={t("customers.bookings")} sortKey="bookings" sort={sort} onSort={(k) => setSort((s) => nextSort(s, k))} />
+                <SortableHead label={t("customers.lastBooking")} sortKey="last" sort={sort} onSort={(k) => setSort((s) => nextSort(s, k))} />
+                <SortableHead label={t("customers.paid")} sortKey="paid" align="right" sort={sort} onSort={(k) => setSort((s) => nextSort(s, k))} />
                 <TableHead className="w-12"><span className="sr-only">{t("customers.details")}</span></TableHead>
               </TableRow>
             </TableHeader>
@@ -98,7 +115,12 @@ export function CustomersList({ customers, bookings, timezone }: { customers: Cu
                           {isOpen ? <ChevronDown className="size-4" aria-hidden="true" /> : <ChevronRight className="size-4" aria-hidden="true" />}
                         </button>
                       </TableCell>
-                      <TableCell className="font-medium">{c.fullName}</TableCell>
+                      <TableCell className="font-medium">
+                        <span className="flex items-center gap-2.5">
+                          <CustomerAvatar name={c.fullName} url={c.account?.avatarUrl} />
+                          {c.fullName}
+                        </span>
+                      </TableCell>
                       <TableCell>{c.email ?? t("common.noEmail")}</TableCell>
                       <TableCell data-testid="customer-country">{c.account ? regionName.of(c.account.country) ?? c.account.country : t("customers.guest")}</TableCell>
                       <TableCell data-testid="customer-birth">{c.account ? birthDay(c.account.birthDate) : "-"}</TableCell>

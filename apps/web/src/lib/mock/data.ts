@@ -156,10 +156,10 @@ export const sessions: Session[] = [
 ];
 
 export const customers: Customer[] = [
-  { id: "cu-1", fullName: "Emma Johnson", email: "emma@example.com", phone: "+44 7000 000000", preferredLocale: "en", account: { country: "GB", birthDate: "1990-04-12", gender: "FEMALE", socials: { WHATSAPP: "+44 7000 000000", FACEBOOK: "emma.johnson.clay", INSTAGRAM: "@emma.makes" } } },
+  { id: "cu-1", fullName: "Emma Johnson", email: "emma@example.com", phone: "+44 7000 000000", preferredLocale: "en", account: { country: "GB", birthDate: "1990-04-12", avatarUrl: "https://picsum.photos/seed/avatar-emma/200/200", gender: "FEMALE", socials: { WHATSAPP: "+44 7000 000000", FACEBOOK: "emma.johnson.clay", INSTAGRAM: "@emma.makes" } } },
   { id: "cu-2", fullName: "Kim Min-jun", email: "minjun@example.com", preferredLocale: "ko" }, // booked without an account
   { id: "cu-3", fullName: "Walk-in guest", preferredLocale: "en" },
-  { id: "cu-4", fullName: "Nguyen Thu", email: "thu@example.com", phone: "+84 90 123 4567", preferredLocale: "vi", account: { country: "VN", birthDate: "1995-09-30", socials: { ZALO: "0901 234 567", TIKTOK: "@thu.clay" } } }, // no gender given
+  { id: "cu-4", fullName: "Nguyen Thu", email: "thu@example.com", phone: "+84 90 123 4567", preferredLocale: "vi", account: { country: "VN", birthDate: "1995-09-30", avatarUrl: "https://picsum.photos/seed/avatar-thu/200/200", socials: { ZALO: "0901 234 567", TIKTOK: "@thu.clay" } } }, // no gender given
 ];
 
 // The booking code is "<session code>-<3 digits>", counted per session in the order the demo bookings are listed.

@@ -22,5 +22,11 @@
   "dateInput": {
     "placeholder": "mm/dd/yyyy",
     "openCalendar": "Open the calendar"
+  },
+  "sort": {
+    "by": "Sort by {column}",
+    "ascending": "sorted ascending",
+    "descending": "sorted descending",
+    "none": "not sorted"
   }
 }
