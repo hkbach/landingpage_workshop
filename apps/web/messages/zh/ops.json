@@ -183,7 +183,9 @@
     "count2": "{count, plural, other {# 个预订}}",
     "guest": "访客",
     "birthDate": "出生日期",
-    "guestHint": "国家和出生日期来自客户注册的账户。仅预订、没有账户的访客，国家显示为“访客”，出生日期显示为“-”。"
+    "guestHint": "国家和出生日期来自客户注册的账户。仅预订、没有账户的访客，国家显示为“访客”，出生日期显示为“-”。",
+    "viewDetailsOf": "查看 {name} 的详细信息",
+    "firstBooking": "首次 {date}"
   },
   "newBooking": {
     "title": "新建预订",

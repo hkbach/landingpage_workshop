@@ -183,7 +183,9 @@
     "count2": "{count, plural, one {# booking} other {# bookings}}",
     "guest": "Guest",
     "birthDate": "Date of birth",
-    "guestHint": "Country and date of birth come from the account a customer registered. A guest who only booked has no account, so the country reads \"Guest\" and the date of birth \"-\"."
+    "guestHint": "Country and date of birth come from the account a customer registered. A guest who only booked has no account, so the country reads \"Guest\" and the date of birth \"-\".",
+    "viewDetailsOf": "View details of {name}",
+    "firstBooking": "first on {date}"
   },
   "newBooking": {
     "title": "New booking",

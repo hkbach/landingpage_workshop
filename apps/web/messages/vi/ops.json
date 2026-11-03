@@ -183,7 +183,9 @@
     "count2": "{count, plural, other {# booking}}",
     "guest": "Vãng lai",
     "birthDate": "Ngày sinh",
-    "guestHint": "Quốc gia và ngày sinh lấy từ tài khoản khách đã đăng ký. Khách chỉ booking mà không có tài khoản thì không biết quốc gia cư trú nên ghi \"Vãng lai\", ngày sinh ghi \"-\"."
+    "guestHint": "Quốc gia và ngày sinh lấy từ tài khoản khách đã đăng ký. Khách chỉ booking mà không có tài khoản thì không biết quốc gia cư trú nên ghi \"Vãng lai\", ngày sinh ghi \"-\".",
+    "viewDetailsOf": "Xem chi tiết của {name}",
+    "firstBooking": "đầu tiên ngày {date}"
   },
   "newBooking": {
     "title": "Đặt chỗ mới",

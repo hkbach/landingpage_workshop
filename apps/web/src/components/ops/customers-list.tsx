@@ -2,16 +2,17 @@
 
 import { Fragment, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { ChevronDown, ChevronRight, Search } from "lucide-react";
+import { ChevronDown, ChevronRight, Eye, Search } from "lucide-react";
 import { formatMoney } from "@workshop/shared";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { Booking, Customer } from "@/lib/types";
-import { formatDate, formatDateTime } from "@/lib/format";
+import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Field } from "./field";
-import { BookingStatusBadge, PaymentStatusBadge } from "./status-badges";
+import { CustomerBookingsTable } from "./customer-bookings-table";
+import { CustomerDialog } from "./customer-dialog";
 import { ShopLink } from "@/components/dashboard/shell/shop-link";
 
 /**
@@ -26,17 +27,18 @@ export function CustomersList({ customers, bookings, timezone }: { customers: Cu
   const birthDay = (d: string) => new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${d}T12:00:00Z`));
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState<ReadonlySet<string>>(new Set());
+  const [viewing, setViewing] = useState<string | null>(null); // the customer whose popup is open
   const q = query.trim().toLowerCase();
   const toggle = (id: string) => setOpen((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
-  const rows = customers
+  const all = customers
     .map((c) => {
       const mine = bookings.filter((b) => b.customerId === c.id).sort((a, b) => b.startsAt.localeCompare(a.startsAt));
       const spent = mine.reduce((n, b) => n + b.payments.reduce((m, p) => m + (p.type === "PAYMENT" ? p.amount : -p.amount), 0), 0);
       return { c, mine, count: mine.length, last: mine[0], spent, currency: mine[0]?.currency };
     })
     .filter((r) => r.count > 0)
-    .filter((r) => !q || r.c.fullName.toLowerCase().includes(q) || r.c.email?.toLowerCase().includes(q))
     .sort((a, b) => b.last!.startsAt.localeCompare(a.last!.startsAt) || a.c.fullName.localeCompare(b.c.fullName));
+  const rows = all.filter((r) => !q || r.c.fullName.toLowerCase().includes(q) || r.c.email?.toLowerCase().includes(q));
 
   return (
     <div className="grid gap-4">
@@ -73,6 +75,7 @@ export function CustomersList({ customers, bookings, timezone }: { customers: Cu
                 <TableHead>{t("customers.bookings")}</TableHead>
                 <TableHead>{t("customers.lastBooking")}</TableHead>
                 <TableHead className="text-right">{t("customers.paid")}</TableHead>
+                <TableHead className="w-12"><span className="sr-only">{t("customers.details")}</span></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -102,42 +105,26 @@ export function CustomersList({ customers, bookings, timezone }: { customers: Cu
                       <TableCell>{count}</TableCell>
                       <TableCell>{formatDate(last!.startsAt, timezone, locale)}</TableCell>
                       <TableCell className="text-right">{currency ? formatMoney(spent, currency, locale) : "-"}</TableCell>
+                      <TableCell>
+                        <button
+                          type="button" data-testid="customer-view" title={t("customers.viewDetailsOf", { name: c.fullName })} aria-label={t("customers.viewDetailsOf", { name: c.fullName })}
+                          onClick={() => setViewing(c.id)}
+                          className="flex size-7 items-center justify-center rounded-md text-muted-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
+                        >
+                          <Eye className="size-4" aria-hidden="true" />
+                        </button>
+                      </TableCell>
                     </TableRow>
                     {isOpen ? (
                       <TableRow data-testid="customer-bookings" className="bg-muted/20 hover:bg-muted/20">
                         <TableCell />
-                        <TableCell colSpan={7} className="whitespace-normal py-3">
+                        <TableCell colSpan={8} className="whitespace-normal py-3">
                           <div id={panelId} className="grid gap-2">
                             <div className="flex flex-wrap items-center justify-between gap-2">
                               <p className="text-sm font-medium">{t("customers.history")} · {t("customers.count2", { count })}</p>
                               <ShopLink href={`/shopowner/customers/${c.id}`} className="text-xs text-primary underline-offset-4 hover:underline">{t("customers.viewCustomer")}</ShopLink>
                             </div>
-                            <div className="overflow-x-auto rounded-lg border bg-background">
-                              <Table>
-                                <TableHeader>
-                                  <TableRow>
-                                    <TableHead>{t("bookings.code")}</TableHead>
-                                    <TableHead>{t("bookings.workshop")}</TableHead>
-                                    <TableHead>{t("bookings.session")}</TableHead>
-                                    <TableHead>{t("bookings.status")}</TableHead>
-                                    <TableHead>{t("bookings.payment")}</TableHead>
-                                    <TableHead className="text-right">{t("payment.total")}</TableHead>
-                                  </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                  {mine.map((b) => (
-                                    <TableRow key={b.id} data-testid="customer-booking">
-                                      <TableCell><ShopLink href={`/shopowner/bookings/${b.id}`} className="font-mono font-medium underline-offset-4 hover:underline">{b.bookingCode}</ShopLink></TableCell>
-                                      <TableCell>{b.workshopTitle}</TableCell>
-                                      <TableCell className="whitespace-nowrap">{formatDateTime(b.startsAt, timezone, locale)}</TableCell>
-                                      <TableCell><BookingStatusBadge status={b.status} /></TableCell>
-                                      <TableCell><PaymentStatusBadge status={b.paymentStatus} /></TableCell>
-                                      <TableCell className="text-right">{formatMoney(b.totalAmount, b.currency, locale)}</TableCell>
-                                    </TableRow>
-                                  ))}
-                                </TableBody>
-                              </Table>
-                            </div>
+                            <CustomerBookingsTable bookings={mine} timezone={timezone} />
                           </div>
                         </TableCell>
                       </TableRow>
@@ -149,6 +136,10 @@ export function CustomersList({ customers, bookings, timezone }: { customers: Cu
           </Table>
         </Card>
       )}
+      {viewing ? (() => {
+        const r = all.find((x) => x.c.id === viewing);
+        return r ? <CustomerDialog customer={r.c} bookings={r.mine} timezone={timezone} open onOpenChange={(o) => { if (!o) setViewing(null); }} /> : null;
+      })() : null}
     </div>
   );
 }
