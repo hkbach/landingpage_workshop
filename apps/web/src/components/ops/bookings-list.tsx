@@ -189,17 +189,18 @@ export function BookingsList({
       ) : (
         <Card>
           <TooltipProvider>
-          <Table>
+          {/* Fixed layout: the columns keep their width whatever the rows hold (a filter must not make them jump). */}
+          <Table className="table-fixed min-w-[60rem]" data-testid="bookings-table">
             <TableHeader>
               <TableRow>
-                <TableHead>{t("bookings.code")}</TableHead>
+                <TableHead className="w-[8.5rem]">{t("bookings.code")}</TableHead>
                 <TableHead>{t("bookings.guest")}</TableHead>
                 <TableHead>{t("bookings.session")}</TableHead>
-                <TableHead>{t("common.guestsLabel")}</TableHead>
-                <TableHead>{t("bookings.status")}</TableHead>
-                <TableHead>{t("bookings.payment")}</TableHead>
-                <TableHead>{t("bookings.voucher")}</TableHead>
-                <TableHead className="text-right">{t("payment.total")}</TableHead>
+                <TableHead className="w-[4.5rem]">{t("common.guestsLabel")}</TableHead>
+                <TableHead className="w-[6.5rem]">{t("bookings.status")}</TableHead>
+                <TableHead className="w-[5.5rem]">{t("bookings.payment")}</TableHead>
+                <TableHead className="w-[7rem]">{t("bookings.voucher")}</TableHead>
+                <TableHead className="w-[7rem] text-right">{t("payment.total")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -211,11 +212,11 @@ export function BookingsList({
                     <TableCell>
                       <ShopLink href={`/shopowner/bookings/${b.id}`} className="font-mono font-medium underline-offset-4 hover:underline">{b.bookingCode}</ShopLink>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="whitespace-normal break-words">
                       <div className="font-medium">{c?.fullName ?? "-"}</div>
                       <div className="text-xs text-muted-foreground">{c?.email ?? t("common.noEmail")}</div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="whitespace-normal break-words">
                       <div>{wsTitle(b.workshopId)}</div>
                       <div className="text-xs text-muted-foreground">{formatDateTime(b.startsAt, timezone, locale)}</div>
                     </TableCell>
