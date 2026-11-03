@@ -273,7 +273,7 @@
     "completedTitle": "Payments of {code} (Completed)",
     "completedHint": "This session is Completed: it and its payments can no longer be changed.",
     "completeConfirmTitle": "Mark {code} as Completed?",
-    "completeConfirmText": "Once the session is Completed, it and its bookings and payments can no longer be changed. The payment information will be used for statistics and to confirm the total amount payable for the platform fee.",
+    "completeConfirmText": "Once the session is Completed, it and its bookings and payments can no longer be changed.",
     "completeBack": "Back",
     "completeConfirmButton": "Yes, Completed",
     "selectAll": "Select all",

@@ -41,7 +41,6 @@
     "CHECK_IN": "Check-in",
     "CANCEL": "Hủy đặt chỗ",
     "RESCHEDULE": "Đổi buổi",
-    "RECORD_PAYMENT": "Ghi nhận thanh toán",
     "UNDO_CHECK_IN": "Hủy check-in"
   },
   "blocked": {
@@ -145,20 +144,11 @@
     "last1y": "1 năm gần nhất"
   },
   "payment": {
-    "dialogTitle": "Ghi nhận thanh toán",
-    "dialogHint": "Các khoản đã nhập không thể sửa hoặc xóa. Để chỉnh sửa sai sót, hãy thêm một khoản hoàn tiền.",
     "total": "Tổng cộng",
     "netPaid": "Đã thanh toán ròng",
     "balance": "Còn lại",
-    "type": "Loại",
-    "typePAYMENT": "Thanh toán",
-    "typeREFUND": "Hoàn tiền",
     "method": "Phương thức",
-    "amount": "Số tiền ({currency})",
-    "note": "Ghi chú",
-    "resultingStatus": "Trạng thái thanh toán sau khi lưu:",
-    "immutable": "Các khoản thanh toán chỉ được thêm mới, không sửa. Trạng thái thanh toán được tính lại từ tất cả các khoản và độc lập với trạng thái đặt chỗ.",
-    "save": "Lưu khoản này",
+    "immutable": "Các khoản thanh toán chỉ được thêm, không sửa hay xóa. Trạng thái thanh toán được tính lại từ mọi khoản.",
     "entries": "Thanh toán",
     "none": "Chưa ghi nhận thanh toán nào.",
     "when": "Thời điểm ghi nhận",

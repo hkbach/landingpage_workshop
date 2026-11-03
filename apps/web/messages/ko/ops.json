@@ -41,7 +41,6 @@
     "CHECK_IN": "체크인",
     "CANCEL": "예약 취소",
     "RESCHEDULE": "세션 변경",
-    "RECORD_PAYMENT": "결제 기록",
     "UNDO_CHECK_IN": "체크인 취소"
   },
   "blocked": {
@@ -145,20 +144,11 @@
     "last1y": "최근 1년"
   },
   "payment": {
-    "dialogTitle": "결제 기록",
-    "dialogHint": "기록은 수정하거나 삭제할 수 없어요. 실수를 바로잡으려면 환불 기록을 추가해 주세요.",
     "total": "합계",
     "netPaid": "순 결제 금액",
     "balance": "잔액",
-    "type": "유형",
-    "typePAYMENT": "결제",
-    "typeREFUND": "환불",
     "method": "결제 방법",
-    "amount": "금액 ({currency})",
-    "note": "메모",
-    "resultingStatus": "저장 후 결제 상태:",
-    "immutable": "결제 기록은 추가만 가능해요. 결제 상태는 모든 기록을 기준으로 다시 계산되며 예약 상태와는 별개예요.",
-    "save": "기록 저장",
+    "immutable": "결제 내역은 추가만 가능하며 수정하거나 삭제할 수 없습니다. 결제 상태는 모든 내역으로 다시 계산됩니다.",
     "entries": "결제 내역",
     "none": "기록된 결제가 없어요.",
     "when": "기록 일시",

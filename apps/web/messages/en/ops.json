@@ -41,7 +41,6 @@
     "CHECK_IN": "Check in",
     "CANCEL": "Cancel booking",
     "RESCHEDULE": "Change session",
-    "RECORD_PAYMENT": "Record payment",
     "UNDO_CHECK_IN": "Undo check-in"
   },
   "blocked": {
@@ -145,20 +144,11 @@
     "last1y": "Last year"
   },
   "payment": {
-    "dialogTitle": "Record payment",
-    "dialogHint": "Entries cannot be edited or deleted. To correct a mistake, add a refund entry.",
     "total": "Total",
     "netPaid": "Net paid",
     "balance": "Balance",
-    "type": "Type",
-    "typePAYMENT": "Payment",
-    "typeREFUND": "Refund",
     "method": "Method",
-    "amount": "Amount ({currency})",
-    "note": "Note",
-    "resultingStatus": "Payment status after saving:",
-    "immutable": "Payment entries are append-only. Payment status is recalculated from all entries and is independent of the booking status.",
-    "save": "Save entry",
+    "immutable": "Payment entries are append-only. Payment status is recalculated from all entries.",
     "entries": "Payments",
     "none": "No payments recorded.",
     "when": "Recorded",

@@ -41,7 +41,6 @@
     "CHECK_IN": "签到",
     "CANCEL": "取消预订",
     "RESCHEDULE": "更换场次",
-    "RECORD_PAYMENT": "记录付款",
     "UNDO_CHECK_IN": "撤销签到"
   },
   "blocked": {
@@ -145,20 +144,11 @@
     "last1y": "最近1年"
   },
   "payment": {
-    "dialogTitle": "记录付款",
-    "dialogHint": "记录无法编辑或删除。如需更正错误，请添加一条退款记录。",
     "total": "总计",
     "netPaid": "实付净额",
     "balance": "余额",
-    "type": "类型",
-    "typePAYMENT": "付款",
-    "typeREFUND": "退款",
     "method": "方式",
-    "amount": "金额（{currency}）",
-    "note": "备注",
-    "resultingStatus": "保存后的付款状态：",
-    "immutable": "付款记录只能追加。付款状态根据所有记录重新计算，与预订状态相互独立。",
-    "save": "保存记录",
+    "immutable": "付款记录只能新增，不能修改或删除。支付状态根据所有记录重新计算。",
     "entries": "付款",
     "none": "暂无付款记录。",
     "when": "记录时间",

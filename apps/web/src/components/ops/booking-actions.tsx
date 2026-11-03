@@ -2,18 +2,17 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { Ban, CalendarClock, CircleDollarSign, LogIn, Undo2 } from "lucide-react";
+import { Ban, CalendarClock, LogIn, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Booking, Session } from "@/lib/types";
 import { canTransition, type BookingAction } from "@/lib/booking-state";
-import { PaymentDialog, ReasonDialog, RescheduleDialog } from "./booking-dialogs";
-import type { OpResult, PaymentInput } from "./use-ops-state";
+import { ReasonDialog, RescheduleDialog } from "./booking-dialogs";
+import type { OpResult } from "./use-ops-state";
 
 export interface BookingOps {
   now: Date;
   sessions: Session[];
   perform: (bookingId: string, action: BookingAction, reason?: string) => OpResult;
-  addPayment: (bookingId: string, input: PaymentInput) => OpResult;
   reschedule: (bookingId: string, targetSessionId: string) => OpResult;
 }
 
@@ -22,13 +21,13 @@ const PRIMARY: BookingAction[] = ["CHECK_IN", "UNDO_CHECK_IN", "CANCEL"];
 
 /**
  * Quick actions for one booking. Enablement comes from the pure state machine (`canTransition`).
- * Check-in and payment are separate actions (FR-OPS-03).
+ * Payments are confirmed on the Sessions screen (FR-PAY-01), not here.
  */
 export function BookingActions({
   booking, session, ops, timezone, compact = false, showReschedule = false, checkInOnly = false,
 }: { booking: Booking; session: Session; ops: BookingOps; timezone: string; compact?: boolean; showReschedule?: boolean; checkInOnly?: boolean }) {
   const t = useTranslations("ops");
-  const [dialog, setDialog] = useState<"cancel" | "payment" | "reschedule" | null>(null);
+  const [dialog, setDialog] = useState<"cancel" | "reschedule" | null>(null);
   const [message, setMessage] = useState<string>();
   const states = canTransition(booking, session, ops.now);
 
@@ -69,12 +68,6 @@ export function BookingActions({
             </Button>
           );
         })}
-        {checkInOnly ? null : (
-          <Button size={size} variant="outline" onClick={() => setDialog("payment")}>
-            <CircleDollarSign aria-hidden="true" />
-            {t("action.RECORD_PAYMENT")}
-          </Button>
-        )}
       </div>
       <p role="status" className="text-xs text-destructive empty:hidden">{message}</p>
 
@@ -83,10 +76,6 @@ export function BookingActions({
         title={t("cancelBooking.title")} description={t("cancelBooking.hint", { code: booking.bookingCode })}
         label={t("cancelBooking.reason")} confirmLabel={t("cancelBooking.confirm")}
         onConfirm={(reason) => { if (run("CANCEL", reason)) setDialog(null); }}
-      />
-      <PaymentDialog
-        open={dialog === "payment"} onOpenChange={(o) => !o && setDialog(null)} booking={booking}
-        onSubmit={(input) => { const r = ops.addPayment(booking.id, input); if (r.ok) setDialog(null); return r.ok; }}
       />
       {showReschedule ? (
         <RescheduleDialog

@@ -41,7 +41,6 @@
     "CHECK_IN": "チェックイン",
     "CANCEL": "予約をキャンセル",
     "RESCHEDULE": "セッションを変更",
-    "RECORD_PAYMENT": "支払いを記録",
     "UNDO_CHECK_IN": "チェックイン取消"
   },
   "blocked": {
@@ -145,20 +144,11 @@
     "last1y": "直近1年"
   },
   "payment": {
-    "dialogTitle": "支払いを記録",
-    "dialogHint": "記録は編集も削除もできません。間違いを訂正するには、返金の記録を追加してください。",
     "total": "合計",
     "netPaid": "支払い済み純額",
     "balance": "残高",
-    "type": "種類",
-    "typePAYMENT": "支払い",
-    "typeREFUND": "返金",
     "method": "方法",
-    "amount": "金額（{currency}）",
-    "note": "メモ",
-    "resultingStatus": "保存後の支払いステータス:",
-    "immutable": "支払いの記録は追記のみです。支払いステータスはすべての記録から再計算され、予約ステータスとは独立しています。",
-    "save": "記録を保存",
+    "immutable": "支払い履歴は追加のみで、編集や削除はできません。支払いステータスはすべての履歴から再計算されます。",
     "entries": "支払い",
     "none": "記録された支払いはありません。",
     "when": "記録日時",

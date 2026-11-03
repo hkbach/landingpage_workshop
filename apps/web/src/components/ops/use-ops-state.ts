@@ -268,7 +268,7 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
   }, []);
 
   return {
-    bookings, sessions, history, now, perform, addPayment, setPaid, reschedule,
+    bookings, sessions, history, now, perform, setPaid, reschedule,
     sessionAction, completeSession, reopenSession, rescheduleSession, updateSession, addSession, addBooking,
   };
 }

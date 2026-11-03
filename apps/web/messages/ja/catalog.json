@@ -273,7 +273,7 @@
     "completedTitle": "{code} の支払い（完了）",
     "completedHint": "このセッションは完了しました。セッションと支払い情報は変更できません。",
     "completeConfirmTitle": "{code} を完了にしますか？",
-    "completeConfirmText": "セッションを完了すると、セッション、予約、支払い情報は変更できなくなります。支払い情報は、統計およびシステム利用料として支払う合計金額の確認に使用されます。",
+    "completeConfirmText": "セッションを完了すると、セッション、予約、支払い情報は変更できなくなります。",
     "completeBack": "戻る",
     "completeConfirmButton": "はい、完了にします",
     "selectAll": "すべて選択",

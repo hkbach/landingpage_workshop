@@ -420,7 +420,7 @@ Browser ────────────────────────
 - Xem theo **khoảng ngày Từ (From) và Đến (To)** (mặc định từ 30 ngày trước đến 30 ngày sau hôm nay, theo timezone của shop; có nút chọn nhanh 3 tháng, 6 tháng, 1 năm gần nhất và All dates; bộ lọc Session chỉ liệt kê session trong khoảng), theo **Payment status** (bộ lọc thả xuống: tất cả / Paid / Unpaid; áp dụng cho cả danh sách lẫn các ô tổng hợp), theo **workshop** (bộ lọc thả xuống thay cho bộ lọc Status; chọn workshop thì danh sách session của bộ lọc Session chỉ còn các session của workshop đó), theo session; theo trạng thái bằng cách bấm vào các ô tổng hợp ở trên; tìm theo booking code, tên, email.
 - **Biểu đồ tình hình booking theo thời gian** (nhỏ gọn, nằm giữa các ô tổng hợp và bảng): thống kê **theo khoảng From - To đang chọn** và đổi theo khoảng đó, cùng bộ lọc workshop / session / ô tìm kiếm như các ô số liệu (nên tổng của biểu đồ bằng số booking ở các ô tổng hợp). Cột chồng theo ngày của session: **khoảng ≤ 31 ngày vẽ theo ngày, ≤ 20 tuần (tuần bắt đầu thứ Hai) vẽ theo tuần, dài hơn vẽ theo tháng** (tối đa 36 tháng); có nút đổi cách xem **Booking status** (Checked in, Upcoming, Cancelled) hoặc **Payment status** (Paid, Unpaid), các số tổng dạng chip (booking, khách, checked in / tỷ lệ thanh toán, tỷ lệ hủy / unpaid), chú giải có số và tooltip trên từng cột. Biểu đồ không chịu bộ lọc Payment và các ô booking status (chính nó chia theo hai cách đó).
 - View "Today": danh sách session hôm nay, mỗi session hiển thị danh sách khách để check-in nhanh (tối ưu cho tablet/mobile).
-  - **Màn hình Today chỉ check-in / undo check-in cho khách: không có Cancel booking và không có Record payment** (hủy booking và ghi thanh toán làm ở màn hình Bookings / chi tiết booking và ở màn hình Sessions). Số liệu đầu trang: Sessions, Guests expected, Arrived, **Not confirmed** (số booking chưa xác nhận qua email) và **Paid** (số booking đã thanh toán / tổng số booking chưa hủy). Mỗi booking hiển thị trạng thái booking, Payment status (Paid / Unpaid) và **Total**; booking `NOT_CONFIRMED` ghi chú đang chờ khách xác nhận qua email. Session đã Closed / Completed không có nút Add walk-in và không có nút check-in (chỉ xem).
+  - **Màn hình Today chỉ check-in / undo check-in cho khách: không có Cancel booking và không có nút ghi thanh toán** (hủy booking làm ở chi tiết booking, thanh toán xác nhận ở màn hình Sessions). Số liệu đầu trang: Sessions, Guests expected, Arrived, **Not confirmed** (số booking chưa xác nhận qua email) và **Paid** (số booking đã thanh toán / tổng số booking chưa hủy). Mỗi booking hiển thị trạng thái booking, Payment status (Paid / Unpaid) và **Total**; booking `NOT_CONFIRMED` ghi chú đang chờ khách xác nhận qua email. Session đã Closed / Completed không có nút Add walk-in và không có nút check-in (chỉ xem).
 
 **FR-OPS-02 – Tạo booking thủ công (Must)**
 - Shop tạo booking cho khách walk-in, điện thoại hoặc WhatsApp. `source ∈ ONLINE | WALK_IN | PHONE | OTHER`.
@@ -443,7 +443,7 @@ Browser ────────────────────────
 **FR-OPS-08 – (đã bỏ)** Không còn bước "hoàn tất" (`COMPLETED`): booking đã check-in giữ nguyên trạng thái `CHECKED_IN`.
 
 **FR-PAY-01 – Ghi nhận thanh toán tại shop (Must)**
-- Thêm payment entry: amount, method (`CASH | CARD | BANK_TRANSFER | E_WALLET | OTHER`), type (`PAYMENT | REFUND`), note. Ghi `recorded_by`, `recorded_at`.
+- **Thanh toán chỉ được ghi bằng Confirm payment / Unpaid ở popup của session đã đóng** (không còn màn hình nhập thủ công số tiền, phương thức hay hoàn tiền ở chi tiết booking): Confirm payment ghi một payment entry **tiền mặt** cho phần còn thiếu; Unpaid ghi một refund entry. Mỗi entry có amount, method (`CASH | CARD | BANK_TRANSFER | E_WALLET | OTHER`, hiện luôn `CASH`), type (`PAYMENT | REFUND`), note, `recorded_by`, `recorded_at`. Chi tiết booking chỉ xem danh sách entry.
 - `bookings.payment_status` **chỉ có 2 giá trị: `UNPAID` (Unpaid) và `PAID` (Paid)**; mọi booking mới đều mặc định `UNPAID`. Trạng thái được **tính lại** từ tổng các payment entry trong cùng transaction: `PAID` khi số đã thu ròng (payment trừ refund) > 0 và ≥ tổng tiền của booking, còn lại là `UNPAID` (chưa thu, mới thu một phần, hoặc đã hoàn lại). Số tiền thu từng phần và hoàn tiền vẫn nằm trong các payment entry và trang Income & expenses, không có trạng thái riêng.
 - Không sửa/xóa payment entry; sai thì tạo entry điều chỉnh (refund). Ghi audit.
 
@@ -901,7 +901,7 @@ Mục tiêu coverage: ≥ 80% cho `bookings`, `sessions`, `payments`, `auth`; c�
 | AC-04 | Khách đặt chỗ không cần tài khoản; nhận email có đủ 6 ngôn ngữ (Anh, Việt, Thái, Trung, Hàn, Nhật) trong cùng một email, không phụ thuộc quốc gia của khách. |
 | AC-05 | Không overbooking khi có request đồng thời (có test chứng minh). |
 | AC-06 | Giá do backend tính; booking giữ snapshot khi workshop đổi giá. |
-| AC-07 | Shop tạo booking walk-in, check-in / uncheck-in, hủy, ghi nhận thanh toán; tất cả có audit log. Khách đặt thành công nhận email có link xác nhận; bấm link thì booking `CONFIRMED`. |
+| AC-07 | Shop tạo booking walk-in, check-in / uncheck-in, hủy, xác nhận thanh toán (Confirm payment); tất cả có audit log. Khách đặt thành công nhận email có link xác nhận; bấm link thì booking `CONFIRMED`. |
 | AC-08 | Close hoặc đổi lịch session thì mọi khách đã đặt (trừ khách đã hủy) nhận email; hệ thống không có chức năng hủy session. Khách tự hủy booking được đến lúc session bắt đầu và cả hai bên nhận email. |
 | AC-09 | Dữ liệu và quyền được cô lập giữa các shop (có test cho mọi module). |
 | AC-10 | Landing page có hreflang, sitemap, meta/OG đúng theo từng ngôn ngữ. |
@@ -954,7 +954,7 @@ Mỗi milestone: code → test → `pnpm lint && pnpm typecheck && pnpm test` pa
 - [ ] Danh sách booking, view "Today"
 - [ ] Booking thủ công (walk-in/phone)
 - [ ] State machine: check-in / uncheck-in, xác nhận qua email, hủy (shop và khách), Paid / Unpaid kéo theo check-in
-- [ ] Ghi nhận payment + tính payment_status
+- [ ] Xác nhận thanh toán (Confirm payment / Unpaid) + tính payment_status
 - [ ] Customers list/detail
 - [ ] (Should) Đổi session, email nhắc lịch 24h, file .ics
 
