@@ -220,6 +220,8 @@
     "allTypes": "收款和退款",
     "date": "日期",
     "booking": "预订",
+    "vouchers": "已用优惠券",
+    "noVoucher": "未使用优惠券",
     "typeLabel": "类型",
     "kind": {
       "PAYMENT": "收款",

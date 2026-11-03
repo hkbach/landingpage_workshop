@@ -59,6 +59,10 @@ describe("ledgerFromPayments", () => {
       ["REFUND", -200_000, -4_000, -6_000, -190_000],
     ]);
   });
+  it("keeps the vouchers the booking used on each of its rows (none when it used none)", () => {
+    expect(ledgerFromPayments([{ ...src[0]!, vouchers: ["EARLY20", "NEWS5"] }], RATES).map((r) => r.vouchers)).toEqual([["EARLY20", "NEWS5"], ["EARLY20", "NEWS5"]]);
+    expect(ledgerFromPayments(src, RATES).map((r) => r.vouchers)).toEqual([[], []]);
+  });
   it("Profit = total income - maintenance fee - service fee", () => {
     const t = summarizeLedger(ledgerFromPayments(src, RATES));
     expect(t).toEqual({ income: 800_000, maintenanceFee: 16_000, serviceFee: 24_000, fees: 40_000, profit: 760_000 });
@@ -84,7 +88,7 @@ describe("months", () => {
 describe("reports", () => {
   const row = (id: string, kind: LedgerRow["kind"], amount: number, occurredAt: string): LedgerRow => {
     const maintenanceFee = feeOf(amount, RATES.maintenanceBps), serviceFee = feeOf(amount, RATES.serviceBps);
-    return { id, bookingCode: id, kind, currency: "VND", occurredAt, amount, maintenanceFee, serviceFee, profit: amount - maintenanceFee - serviceFee };
+    return { id, bookingCode: id, kind, currency: "VND", vouchers: [], occurredAt, amount, maintenanceFee, serviceFee, profit: amount - maintenanceFee - serviceFee };
   };
   const rows = [
     row("1", "PAYMENT", 1000, "2026-09-10T05:00:00Z"),

@@ -10,7 +10,8 @@ import { ShopLink } from "@/components/dashboard/shell/shop-link";
 import { dayKey } from "@/lib/format";
 import { liveBookings } from "@/lib/mock/booking-store";
 import { getFeeRates } from "@/lib/mock/fee-rates-store";
-import { bookingHistory, currentShop, customers, mockLandingPages, paymentHistory, sessions, sitePage, workshops } from "@/lib/mock/data";
+import { paymentSources } from "@/lib/mock/ledger-source";
+import { bookingHistory, currentShop, customers, mockLandingPages, sessions, sitePage, workshops } from "@/lib/mock/data";
 
 // Computed outside the component: depends on the current time.
 function computeOverview() {
@@ -113,7 +114,7 @@ export default async function OverviewPage() {
             rows={[{ label: ts("customers.total"), value: num(o.customers.total) }, { label: ts("customers.repeat"), value: num(o.customers.repeat) }]}
           />
           <LiveSummary
-            rows={ledgerFromPayments([...paymentHistory, ...bookings], getFeeRates(currentShop.id))} currency={currentShop.currency} timezone={currentShop.timezone}
+            rows={ledgerFromPayments(paymentSources(bookings), getFeeRates(currentShop.id))} currency={currentShop.currency} timezone={currentShop.timezone}
             mainPage={{ name: currentShop.name, template: sitePage.template, seed: mockLandingPages }} shopStatus={currentShop.status}
           />
         </ul>

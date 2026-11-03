@@ -121,6 +121,7 @@ export function FinanceView({ rows, rates, currency, timezone }: Props) {
                 <TableHeader>
                   <TableRow>
                     <TableHead>{t("date")}</TableHead><TableHead>{t("booking")}</TableHead><TableHead>{t("typeLabel")}</TableHead>
+                    <TableHead>{t("vouchers")}</TableHead>
                     <TableHead className="text-right">{t("amount")}</TableHead><TableHead className="text-right">{t("maintenanceFee", { rate: maintenance })}</TableHead>
                     <TableHead className="text-right">{t("serviceFee", { rate: service })}</TableHead><TableHead className="text-right">{t("profit")}</TableHead>
                   </TableRow>
@@ -132,6 +133,13 @@ export function FinanceView({ rows, rates, currency, timezone }: Props) {
                       <TableCell className="font-mono">{r.bookingCode}</TableCell>
                       <TableCell>
                         <Badge className={r.kind === "PAYMENT" ? "bg-blue-100 text-blue-950" : "bg-orange-100 text-orange-950"}>{t(`kind.${r.kind}`)}</Badge>
+                      </TableCell>
+                      <TableCell data-testid="ledger-vouchers">
+                        {r.vouchers.length ? (
+                          <span className="flex flex-wrap gap-1">
+                            {r.vouchers.map((v) => <Badge key={v} variant="outline" className="font-mono">{v}</Badge>)}
+                          </span>
+                        ) : <span className="text-muted-foreground" aria-label={t("noVoucher")}>—</span>}
                       </TableCell>
                       <TableCell className="text-right tabular-nums">{signed(r.amount)}</TableCell>
                       <TableCell className="text-right tabular-nums">{signed(-r.maintenanceFee)}</TableCell>

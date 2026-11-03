@@ -8,6 +8,8 @@
 
 export interface PaymentSource {
   id: string; bookingCode: string; currency: string;
+  /** Codes of the vouchers (promotions) the booking used when it was paid. */
+  vouchers?: readonly string[];
   payments: { id: string; type: "PAYMENT" | "REFUND"; amount: number; recordedAt: string }[];
 }
 
@@ -46,6 +48,8 @@ export const feeOf = (amount: number, bps: number): number => Math.sign(amount) 
 /** One payment or refund of a booking with the fees taken from it. `amount` is signed: a refund is negative. */
 export interface LedgerRow {
   id: string; bookingCode: string; kind: "PAYMENT" | "REFUND"; currency: string;
+  /** Vouchers (promotion codes) the booking used when it was paid; empty when it used none. */
+  vouchers: string[];
   /** ISO UTC instant the payment was recorded. */
   occurredAt: string;
   amount: number; maintenanceFee: number; serviceFee: number;
@@ -59,7 +63,7 @@ export function ledgerFromPayments(bookings: readonly PaymentSource[], rates: Fe
       const amount = p.type === "PAYMENT" ? p.amount : -p.amount;
       const maintenanceFee = feeOf(amount, rates.maintenanceBps);
       const serviceFee = feeOf(amount, rates.serviceBps);
-      return { id: `pay-${p.id}`, bookingCode: b.bookingCode, kind: p.type, currency: b.currency, occurredAt: p.recordedAt, amount, maintenanceFee, serviceFee, profit: amount - maintenanceFee - serviceFee };
+      return { id: `pay-${p.id}`, bookingCode: b.bookingCode, kind: p.type, currency: b.currency, vouchers: [...(b.vouchers ?? [])], occurredAt: p.recordedAt, amount, maintenanceFee, serviceFee, profit: amount - maintenanceFee - serviceFee };
     }),
   );
 }

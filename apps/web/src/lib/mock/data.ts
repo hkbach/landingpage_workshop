@@ -325,11 +325,11 @@ export const sitePage: { draft: PageContent; theme: PageTheme; template: Templat
  * Payments of the five months before this one (a few each month, growing a little) so the Income page has history. Their bookings are not listed
  * above: only the payments matter here. Deterministic, dated the 3rd to the 26th at noon UTC; a refund now and then.
  */
-export const paymentHistory: { id: string; bookingCode: string; currency: string; payments: { id: string; type: "PAYMENT" | "REFUND"; amount: number; recordedAt: string }[] }[] = (() => {
+export const paymentHistory: { id: string; bookingCode: string; currency: string; vouchers?: string[]; payments: { id: string; type: "PAYMENT" | "REFUND"; amount: number; recordedAt: string }[] }[] = (() => {
   const now = new Date();
   const base = now.getUTCFullYear() * 12 + now.getUTCMonth();
   const amounts = [650_000, 1_300_000, 1_950_000, 780_000, 2_600_000, 1_040_000, 1_560_000];
-  const out: { id: string; bookingCode: string; currency: string; payments: { id: string; type: "PAYMENT" | "REFUND"; amount: number; recordedAt: string }[] }[] = [];
+  const out: { id: string; bookingCode: string; currency: string; vouchers?: string[]; payments: { id: string; type: "PAYMENT" | "REFUND"; amount: number; recordedAt: string }[] }[] = [];
   for (let back = 5; back >= 1; back--) {
     const idx = base - back;
     const count = 7 + ((5 - back) * 2) % 5 + (5 - back);
@@ -340,7 +340,9 @@ export const paymentHistory: { id: string; bookingCode: string; currency: string
       const code = `HIS-${String(back)}${String(n + 1).padStart(2, "0")}`;
       const payments: { id: string; type: "PAYMENT" | "REFUND"; amount: number; recordedAt: string }[] = [{ id: `ph-${back}-${n}`, type: "PAYMENT", amount, recordedAt: at }];
       if (n % 9 === 4) payments.push({ id: `ph-${back}-${n}-r`, type: "REFUND", amount: Math.round(amount / 2), recordedAt: at });
-      out.push({ id: `bk-his-${back}-${n}`, bookingCode: code, currency: "VND", payments });
+      // Some of the bookings used one voucher, a few used two (codes of promotions of this shop).
+      const vouchers = n % 6 === 2 ? ["MUG100", "NEWS5"] : n % 4 === 1 ? ["EARLY20"] : n % 5 === 3 ? ["SPRING10"] : [];
+      out.push({ id: `bk-his-${back}-${n}`, bookingCode: code, currency: "VND", vouchers, payments });
     }
   }
   return out;

@@ -220,6 +220,8 @@
     "allTypes": "支払いと返金",
     "date": "日付",
     "booking": "予約",
+    "vouchers": "適用バウチャー",
+    "noVoucher": "バウチャーなし",
     "typeLabel": "種類",
     "kind": {
       "PAYMENT": "支払い",

@@ -220,6 +220,8 @@
     "allTypes": "결제 및 환불",
     "date": "날짜",
     "booking": "예약",
+    "vouchers": "적용된 바우처",
+    "noVoucher": "바우처 없음",
     "typeLabel": "유형",
     "kind": {
       "PAYMENT": "결제",

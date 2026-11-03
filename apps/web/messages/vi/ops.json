@@ -220,6 +220,8 @@
     "allTypes": "Thanh toán và hoàn tiền",
     "date": "Ngày",
     "booking": "Booking",
+    "vouchers": "Voucher áp dụng",
+    "noVoucher": "Không dùng voucher",
     "typeLabel": "Loại",
     "kind": {
       "PAYMENT": "Thanh toán",

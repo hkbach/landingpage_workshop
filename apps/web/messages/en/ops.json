@@ -220,6 +220,8 @@
     "allTypes": "Payments and refunds",
     "date": "Date",
     "booking": "Booking",
+    "vouchers": "Vouchers applied",
+    "noVoucher": "No voucher",
     "typeLabel": "Type",
     "kind": {
       "PAYMENT": "Payment",
