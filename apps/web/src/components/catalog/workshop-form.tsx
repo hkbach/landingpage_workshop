@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { z } from "zod";
 import { Archive, ImageOff, Plus, Trash2, TriangleAlert } from "lucide-react";
 import {
-  LOCALES, WORKSHOP_STATUSES, formatMoney, minorDigits, missingLocales, trimDeep,
+  LOCALES, formatMoney, minorDigits, missingLocales, trimDeep,
   type Locale, type Localized, type WorkshopStatus,
 } from "@workshop/shared";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Field } from "@/components/ops/field";
-import { NativeSelect } from "@/components/ops/native-select";
+import { WorkshopStatusBadge } from "./workshop-status-badge";
 import { issuesToErrors } from "@/components/ops/validation";
 import type { Workshop } from "@/lib/types";
 import { LanguageBar } from "@/components/language/LanguageBar";
@@ -56,8 +56,12 @@ const url = z.string().trim().refine((v) => v === "" || /^https?:\/\/\S+$/i.test
 
 /** FR-WS-01 workshop form. Mock only: "Save" simulates, nothing is persisted. */
 export function WorkshopForm({
-  workshop, shop, bookingCount = 0, onStatusChange,
-}: { workshop?: Workshop; shop: ShopForCatalog; bookingCount?: number; onStatusChange?: (s: WorkshopStatus) => void }) {
+  workshop, shop, bookingCount = 0, onStatusChange, onSaved, onCancel,
+}: {
+  workshop?: Workshop; shop: ShopForCatalog; bookingCount?: number; onStatusChange?: (s: WorkshopStatus) => void;
+  /** In a popup (new workshop): called once the workshop is saved, and when the person cancels (the Back link becomes a Cancel button). */
+  onSaved?: () => void; onCancel?: () => void;
+}) {
   const t = useTranslations("catalog");
   const tops = useTranslations("ops");
   const locale = useLocale();
@@ -112,6 +116,7 @@ export function WorkshopForm({
     setD((p) => trimDeep(p));
     setSaved(true); setVersion((v) => v + 1);
     onStatusChange?.(d.status);
+    onSaved?.();
   }
 
   function archive() {
@@ -242,12 +247,12 @@ export function WorkshopForm({
         <Card>
           <CardHeader><CardTitle>{t("form.visibility")}</CardTitle></CardHeader>
           <CardContent className="grid gap-3">
-            <Field id="ws-status" label={t("form.status")} className="max-w-xs">
-              {(p) => (
-                <NativeSelect {...p} value={d.status} onChange={(e) => setField("status", e.target.value as WorkshopStatus)}
-                  options={WORKSHOP_STATUSES.map((s) => ({ value: s, label: t(`status.${s}`) }))} />
-              )}
-            </Field>
+            {/* The status is switched with Activate / Deactivate in the workshop list (it needs every session to be closed), not here. */}
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              <span className="text-muted-foreground">{t("form.status")}:</span>
+              <WorkshopStatusBadge status={d.status} />
+              <span className="text-xs text-muted-foreground">{t("form.statusFromList")}</span>
+            </div>
             <p className="text-xs text-muted-foreground">{bookingCount > 0 ? t("form.hasBookings", { count: bookingCount }) : t("form.noDelete")}</p>
           </CardContent>
         </Card>
@@ -255,7 +260,11 @@ export function WorkshopForm({
 
       <div className="flex flex-wrap items-center gap-2">
         <Button type="submit" disabled={!dirty}>{t("form.save")}</Button>
-        <ShopLink href="/shopowner/workshops" className={buttonVariants({ variant: "outline" })}>{t("form.back")}</ShopLink>
+        {onCancel ? (
+          <Button type="button" variant="outline" onClick={onCancel}>{t("form.cancel")}</Button>
+        ) : (
+          <ShopLink href="/shopowner/workshops" className={buttonVariants({ variant: "outline" })}>{t("form.back")}</ShopLink>
+        )}
         {workshop && d.status !== "ARCHIVED" ? (
           <Button type="button" variant="destructive" onClick={() => setArchiveOpen(true)}>
             <Archive aria-hidden="true" />

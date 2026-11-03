@@ -36,7 +36,18 @@
     "managePromotions": "Quản lý khuyến mãi",
     "validRange": "Áp dụng từ {from} đến {to}",
     "combinedLabel": "{count, plural, other {Cả # khuyến mãi đều có thể kết hợp}}",
-    "aloneLabel": "Khuyến mãi dùng riêng lẻ"
+    "aloneLabel": "Khuyến mãi dùng riêng lẻ",
+    "actions": "Thao tác",
+    "activate": "Kích hoạt",
+    "deactivate": "Ngừng kích hoạt",
+    "edit": "Sửa",
+    "deactivateBlocked": "Chỉ ngừng kích hoạt được workshop khi tất cả session đều đã Closed. Còn {count} session chưa đóng.",
+    "editLocked": "Chỉ sửa được workshop đã ngừng kích hoạt. Hãy ngừng kích hoạt trước.",
+    "activated": "Đã kích hoạt workshop: workshop hiển thị trên landing page.",
+    "deactivated": "Đã ngừng kích hoạt workshop: workshop không còn hiển thị trên landing page.",
+    "statusFailed": "Không thể đổi trạng thái.",
+    "newHint": "Workshop mới được lưu ở trạng thái Nháp. Hãy kích hoạt trong danh sách khi sẵn sàng.",
+    "createdSim": "Đã tạo workshop ở trạng thái Nháp (chế độ demo: không lưu lại). Hãy kích hoạt trong danh sách khi sẵn sàng."
   },
   "detail": {
     "tabDetails": "Chi tiết",
@@ -88,7 +99,9 @@
     "fixErrors": "Vui lòng sửa các trường được đánh dấu.",
     "archiveTitle": "Lưu trữ workshop này?",
     "archiveHint": "Workshop đã lưu trữ sẽ bị ẩn khỏi trang landing và không nhận đặt chỗ mới. Các đặt chỗ hiện có được giữ lại.",
-    "archiveConfirm": "Lưu trữ workshop"
+    "archiveConfirm": "Lưu trữ workshop",
+    "cancel": "Hủy",
+    "statusFromList": "Đổi bằng nút Kích hoạt / Ngừng kích hoạt trong danh sách workshop."
   },
   "errors": {
     "titleRequired": "Bắt buộc nhập tiêu đề bằng ngôn ngữ mặc định.",

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { ArrowLeft } from "lucide-react";
-import { pickLocalized, type WorkshopStatus } from "@workshop/shared";
+import { canEditWorkshop, pickLocalized, type WorkshopStatus } from "@workshop/shared";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDisplayLocale } from "@/lib/use-shop-language";
 import type { Workshop } from "@/lib/types";
@@ -36,7 +36,12 @@ export function WorkshopDetail({
           <TabsTrigger value="schedule">{t("detail.tabSchedule")}</TabsTrigger>
         </TabsList>
         <TabsContent value="details" className="pt-2">
-          <WorkshopForm workshop={workshop} shop={shop} bookingCount={bookingCount} onStatusChange={setStatus} />
+          {canEditWorkshop(workshop.status) ? (
+            <WorkshopForm workshop={workshop} shop={shop} bookingCount={bookingCount} onStatusChange={setStatus} />
+          ) : (
+            // Only a deactivated (draft) workshop can be edited: an active or archived one is switched off in the workshop list first.
+            <p role="note" data-testid="edit-locked-note" className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">{t("list.editLocked")}</p>
+          )}
         </TabsContent>
         <TabsContent value="schedule" className="pt-2">
           <ScheduleRulesEditor workshopId={workshop.id} initialRules={rules} timezone={shop.timezone} />

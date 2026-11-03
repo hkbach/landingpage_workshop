@@ -36,7 +36,18 @@
     "managePromotions": "管理促销",
     "validRange": "适用 {from} 至 {to}",
     "combinedLabel": "{count, plural, other {全部 # 个促销均可叠加}}",
-    "aloneLabel": "单独使用的促销"
+    "aloneLabel": "单独使用的促销",
+    "actions": "操作",
+    "activate": "启用",
+    "deactivate": "停用",
+    "edit": "编辑",
+    "deactivateBlocked": "只有所有场次都已关闭的工作坊才能停用。还有 {count} 个场次未关闭。",
+    "editLocked": "只有已停用的工作坊才能编辑。请先停用。",
+    "activated": "工作坊已启用，现在会显示在落地页上。",
+    "deactivated": "工作坊已停用，不再显示在落地页上。",
+    "statusFailed": "无法更改状态。",
+    "newHint": "新工作坊会保存为草稿。准备好后请在列表中启用。",
+    "createdSim": "工作坊已创建为草稿（演示模式：不会保存）。准备好后请在列表中启用。"
   },
   "detail": {
     "tabDetails": "详情",
@@ -88,7 +99,9 @@
     "fixErrors": "请修正高亮显示的字段。",
     "archiveTitle": "归档此 Workshop？",
     "archiveHint": "已归档的 Workshop 将从落地页隐藏，且无法接收新预订。已有预订会保留。",
-    "archiveConfirm": "归档 Workshop"
+    "archiveConfirm": "归档 Workshop",
+    "cancel": "取消",
+    "statusFromList": "请在工作坊列表中使用“启用 / 停用”来更改。"
   },
   "errors": {
     "titleRequired": "必须填写默认语言的标题。",

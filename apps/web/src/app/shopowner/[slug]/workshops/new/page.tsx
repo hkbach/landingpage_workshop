@@ -1,21 +1,7 @@
-import { getTranslations } from "next-intl/server";
-import { ArrowLeft } from "lucide-react";
-import { WorkshopForm } from "@/components/catalog/workshop-form";
-import { currentShop } from "@/lib/mock/data";
-import { ShopLink } from "@/components/dashboard/shell/shop-link";
+import { redirect } from "next/navigation";
 
-export default async function NewWorkshopPage() {
-  const t = await getTranslations("catalog");
-  return (
-    <div className="grid gap-4">
-      <ShopLink href="/shopowner/workshops" className="inline-flex items-center gap-1 text-sm text-muted-foreground underline-offset-4 hover:underline">
-        <ArrowLeft className="size-4" aria-hidden="true" />
-        {t("list.title")}
-      </ShopLink>
-      <h1 className="text-xl font-semibold sm:text-2xl">{t("list.new")}</h1>
-      <WorkshopForm
-        shop={{ currency: currentShop.currency, timezone: currentShop.timezone, defaultLocale: currentShop.defaultLocale, enabledLocales: currentShop.enabledLocales }}
-      />
-    </div>
-  );
+// New workshop is a popup over the list now: an old address goes to the list.
+export default async function NewWorkshopPage({ params }: PageProps<"/shopowner/[slug]/workshops/new">) {
+  const { slug } = await params;
+  redirect(`/shopowner/${slug}/workshops`);
 }

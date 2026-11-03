@@ -4,6 +4,7 @@ import { reservedSeats } from "../booking-state";
 import { liveBookings } from "./booking-store";
 import { bookings, currentShop, customers, sessions, shops, sitePage, workshops } from "./data";
 import { withAdminChanges } from "./session-admin-store";
+import { withWorkshopStatus } from "./workshop-status-store";
 
 export interface PublicSite {
   shop: Shop;
@@ -19,7 +20,7 @@ export function getPublicSite(slug: string): PublicSite | null {
   if (!shop || shop.status !== "ACTIVE") return null;
   // Mock: only the current shop has content; published content == draft here.
   if (shop.id !== currentShop.id) return null;
-  const active = workshops.filter((w) => w.status === "ACTIVE");
+  const active = withWorkshopStatus(workshops).filter((w) => w.status === "ACTIVE");
   const ids = new Set(active.map((w) => w.id));
   const live = liveBookings(); // a cancelled booking frees its seats on the landing page too
   return { shop, content: sitePage.draft, theme: sitePage.theme, workshops: active, sessions: withAdminChanges(sessions).filter((s) => ids.has(s.workshopId)).map((s) => ({ ...s, reservedCount: reservedSeats(live, s.id) })) };

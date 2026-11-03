@@ -36,7 +36,18 @@
     "managePromotions": "프로모션 관리",
     "validRange": "{from}부터 {to}까지 적용",
     "combinedLabel": "{count, plural, other {프로모션 #개 모두 중복 적용 가능}}",
-    "aloneLabel": "단독으로 사용하는 프로모션"
+    "aloneLabel": "단독으로 사용하는 프로모션",
+    "actions": "작업",
+    "activate": "활성화",
+    "deactivate": "비활성화",
+    "edit": "편집",
+    "deactivateBlocked": "모든 세션이 닫힌 워크숍만 비활성화할 수 있습니다. 아직 닫히지 않은 세션이 {count}개 있습니다.",
+    "editLocked": "비활성화된 워크숍만 편집할 수 있습니다. 먼저 비활성화하세요.",
+    "activated": "워크숍이 활성화되었습니다. 이제 랜딩 페이지에 표시됩니다.",
+    "deactivated": "워크숍이 비활성화되었습니다. 더 이상 랜딩 페이지에 표시되지 않습니다.",
+    "statusFailed": "상태를 변경할 수 없습니다.",
+    "newHint": "새 워크숍은 초안으로 저장됩니다. 준비되면 목록에서 활성화하세요.",
+    "createdSim": "워크숍이 초안으로 생성되었습니다(데모 모드: 저장되지 않음). 준비되면 목록에서 활성화하세요."
   },
   "detail": {
     "tabDetails": "상세",
@@ -88,7 +99,9 @@
     "fixErrors": "강조 표시된 항목을 수정해 주세요.",
     "archiveTitle": "이 워크숍을 보관할까요?",
     "archiveHint": "보관된 워크숍은 랜딩 페이지에서 숨겨지며 새 예약을 받을 수 없어요. 기존 예약은 유지돼요.",
-    "archiveConfirm": "워크숍 보관"
+    "archiveConfirm": "워크숍 보관",
+    "cancel": "취소",
+    "statusFromList": "워크숍 목록의 활성화 / 비활성화 버튼으로 변경하세요."
   },
   "errors": {
     "titleRequired": "기본 언어의 제목을 입력해 주세요.",

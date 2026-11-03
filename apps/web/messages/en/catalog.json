@@ -36,7 +36,18 @@
     "managePromotions": "Manage promotions",
     "validRange": "Applies {from} to {to}",
     "combinedLabel": "{count, plural, one {The promotion that can be combined} other {All # promotions can be combined}}",
-    "aloneLabel": "Promotions used on their own"
+    "aloneLabel": "Promotions used on their own",
+    "actions": "Actions",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "edit": "Edit",
+    "deactivateBlocked": "A workshop can only be deactivated when all its sessions are closed. {count, plural, one {# session is not closed yet.} other {# sessions are not closed yet.}}",
+    "editLocked": "Only deactivated workshops can be edited. Deactivate it first.",
+    "activated": "Workshop activated: it now shows on your landing page.",
+    "deactivated": "Workshop deactivated: it no longer shows on your landing page.",
+    "statusFailed": "The status could not be changed.",
+    "newHint": "A new workshop is saved as a draft. Activate it from the list when it is ready.",
+    "createdSim": "Workshop created as a draft (demo mode: not persisted). Activate it from the list when it is ready."
   },
   "detail": {
     "tabDetails": "Details",
@@ -88,7 +99,9 @@
     "fixErrors": "Please fix the highlighted fields.",
     "archiveTitle": "Archive this workshop?",
     "archiveHint": "Archived workshops are hidden from the landing page and cannot receive new bookings. Existing bookings are kept.",
-    "archiveConfirm": "Archive workshop"
+    "archiveConfirm": "Archive workshop",
+    "cancel": "Cancel",
+    "statusFromList": "Change it with Activate / Deactivate in the workshop list."
   },
   "errors": {
     "titleRequired": "A title in the default language is required.",

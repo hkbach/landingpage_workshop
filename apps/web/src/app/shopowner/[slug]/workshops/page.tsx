@@ -1,19 +1,22 @@
 import { getLocale, getTranslations } from "next-intl/server";
-import { Plus, Tag } from "lucide-react";
-import { formatMoney, pickLocalized, resolveShopLocale, workshopPromotions, type Locale } from "@workshop/shared";
+import { Tag } from "lucide-react";
+import { formatMoney, openSessionCount, pickLocalized, resolveShopLocale, workshopPromotions, type Locale } from "@workshop/shared";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { NewWorkshopDialog } from "@/components/catalog/new-workshop-dialog";
+import { WorkshopRowActions } from "@/components/catalog/workshop-row-actions";
 import { WorkshopStatusBadge } from "@/components/catalog/workshop-status-badge";
 import { currentShop, workshops } from "@/lib/mock/data";
 import { allPromotions, shopToday } from "@/lib/mock/promotion-store";
 import { ShopLink } from "@/components/dashboard/shell/shop-link";
+import { withWorkshopStatus, workshopSessionStatuses } from "@/lib/mock/workshop-status-store";
 
 export default async function WorkshopsPage() {
   const t = await getTranslations("catalog");
   const locale = (await getLocale()) as Locale;
   const displayLocale = resolveShopLocale(locale, currentShop.enabledLocales, currentShop.defaultLocale);
-  const rows = [...workshops].sort((a, b) => a.sortOrder - b.sortOrder);
+  const rows = withWorkshopStatus(workshops).sort((a, b) => a.sortOrder - b.sortOrder);
   // TODO(api): the promotions of this shop (organization_id), computed by the backend with the workshop list.
   const promotions = allPromotions();
   const today = shopToday();
@@ -30,10 +33,7 @@ export default async function WorkshopsPage() {
             <Tag aria-hidden="true" />
             {t("list.managePromotions")}
           </ShopLink>
-          <ShopLink href="/shopowner/workshops/new" className={buttonVariants()}>
-            <Plus aria-hidden="true" />
-            {t("list.new")}
-          </ShopLink>
+          <NewWorkshopDialog shop={{ currency: currentShop.currency, timezone: currentShop.timezone, defaultLocale: currentShop.defaultLocale, enabledLocales: currentShop.enabledLocales }} />
         </div>
       </div>
       {rows.length === 0 ? (
@@ -50,6 +50,7 @@ export default async function WorkshopsPage() {
                 <TableHead>{t("list.capacity")}</TableHead>
                 <TableHead>{t("list.promotions")}</TableHead>
                 <TableHead title={t("list.maxDiscountHint")}>{t("list.maxDiscount")}</TableHead>
+                <TableHead>{t("list.actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -120,6 +121,9 @@ export default async function WorkshopsPage() {
                           ) : null}
                         </div>
                       )}
+                    </TableCell>
+                    <TableCell className="min-w-56 whitespace-normal align-top">
+                      <WorkshopRowActions id={w.id} status={w.status} openSessions={openSessionCount(workshopSessionStatuses(w.id))} />
                     </TableCell>
                   </TableRow>
                 );
