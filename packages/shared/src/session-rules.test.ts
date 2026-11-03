@@ -3,7 +3,7 @@ import { SESSION_STATUSES } from "./enums";
 import {
   allowedSessionActions, applySessionAction, canEditSession, canRescheduleSession, canReopenSession, checkCloseReason, checkReschedule, CLOSE_REASON_NOTE_MAX, closeIfEnded, closeWaitsForEnd,
   DEFAULT_BOOKING_CUTOFF_MINUTES, isFutureStart, isInSessionTime, isSessionBookable, isValidBookingCutoff, nextSessionCode, notesInOrder, SESSION_CODE_RE, wasRescheduled, withNote,
-  canCloseAgain, canRescheduleAgain, closeCount, MAX_CLOSES, MAX_RESCHEDULES, rescheduleCount,
+  canAdminClose, canAdminReopen, canCloseAgain, canRescheduleAgain, closeCount, closedForGood, isFinalClose, MAX_CLOSES, MAX_RESCHEDULES, rescheduleCount,
   type SessionNote, type SessionState,
 } from "./session-rules";
 
@@ -168,9 +168,9 @@ describe("canRescheduleSession", () => {
   it("is true only for an open or a paused session", () => expect(SESSION_STATUSES.filter(canRescheduleSession)).toEqual(["OPEN", "PAUSED"]));
 });
 
-describe("3 re-schedules and 3 closes per session", () => {
+describe("3 re-schedules and 4 closes per session", () => {
   const note = (type: SessionNote["type"], day: number): SessionNote => ({ type, at: `2026-11-0${day}T09:00:00Z`, ...(type === "CLOSED" || type === "RESCHEDULED" ? { reason: { code: "SCHEDULE_CHANGE" as const } } : {}) });
-  it("the limits are 3", () => expect([MAX_RESCHEDULES, MAX_CLOSES]).toEqual([3, 3]));
+  it("3 re-schedules and 4 closes (the 4th for good)", () => expect([MAX_RESCHEDULES, MAX_CLOSES]).toEqual([3, 4]));
   it("count the re-schedules and the closes of the notes, and nothing else", () => {
     const notes = [note("CLOSED", 1), note("REOPENED", 2), note("RESCHEDULED", 3), note("CLOSED", 4), note("AUTO_CLOSED", 5)];
     expect(rescheduleCount(notes)).toBe(1);
@@ -179,8 +179,8 @@ describe("3 re-schedules and 3 closes per session", () => {
   it("allow a session until the third time", () => {
     expect(canRescheduleAgain([note("RESCHEDULED", 1), note("RESCHEDULED", 2)])).toBe(true);
     expect(canRescheduleAgain([note("RESCHEDULED", 1), note("RESCHEDULED", 2), note("RESCHEDULED", 3)])).toBe(false);
-    expect(canCloseAgain([note("CLOSED", 1), note("CLOSED", 2)])).toBe(true);
-    expect(canCloseAgain([note("CLOSED", 1), note("CLOSED", 2), note("CLOSED", 3)])).toBe(false);
+    expect(canCloseAgain([note("CLOSED", 1), note("CLOSED", 2), note("CLOSED", 3)])).toBe(true); // the 4th click
+    expect(canCloseAgain([note("CLOSED", 1), note("CLOSED", 2), note("CLOSED", 3), note("CLOSED", 4)])).toBe(false);
     expect(canCloseAgain(undefined)).toBe(true);
   });
   it("the automatic close is a note of the history and does not count as a close of the owner", () => {
@@ -208,5 +208,44 @@ describe("the notes of a session", () => {
     expect(wasRescheduled(undefined)).toBe(false);
     expect(wasRescheduled([closed, reopened])).toBe(false);
     expect(wasRescheduled([closed, moved])).toBe(true);
+  });
+});
+
+describe("the 4th close is for good", () => {
+  const closes = (n: number): SessionNote[] => Array.from({ length: n }, (_, i) => ({ type: "CLOSED" as const, at: `2026-11-0${i + 1}T09:00:00Z`, reason: { code: "SCHEDULE_CHANGE" as const } }));
+  const NOW = new Date("2026-11-03T10:00:00Z");
+  const future = { startsAt: "2026-11-20T09:00:00Z", endsAt: "2026-11-20T11:00:00Z" };
+  it("the first 3 closes can be re-opened, the 4th cannot", () => {
+    for (const n of [1, 2, 3]) expect(canReopenSession({ status: "CLOSED", ...future, notes: closes(n) }, NOW), String(n)).toBe(true);
+    expect(canReopenSession({ status: "CLOSED", ...future, notes: closes(4) }, NOW)).toBe(false);
+  });
+  it("the third close is followed by the final one", () => {
+    expect(isFinalClose(closes(2))).toBe(false);
+    expect(isFinalClose(closes(3))).toBe(true);
+    expect(isFinalClose(closes(4))).toBe(false);
+  });
+  it("a session closed 4 times is closed for good", () => {
+    expect(closedForGood({ status: "CLOSED", notes: closes(4) })).toBe(true);
+    expect(closedForGood({ status: "CLOSED", notes: closes(3) })).toBe(false);
+    expect(closedForGood({ status: "OPEN", notes: closes(4) })).toBe(false);
+  });
+  it("the closes of a system administrator are not counted", () => {
+    const withAdmin: SessionNote[] = [...closes(2), { type: "CLOSED", at: "2026-11-03T08:00:00Z", by: "ADMIN", reason: { code: "OTHER", note: "x" } }];
+    expect(closeCount(withAdmin)).toBe(2);
+    expect(canCloseAgain([...closes(3), ...withAdmin.slice(2)])).toBe(true);
+  });
+});
+
+describe("what a system administrator can do", () => {
+  const NOW = new Date("2026-11-03T10:00:00Z");
+  it("close any session that is not closed (also one that is taking place)", () => {
+    for (const st of ["OPEN", "PAUSED", "RUNNING"] as const) expect(canAdminClose({ status: st }), st).toBe(true);
+    expect(canAdminClose({ status: "CLOSED" })).toBe(false);
+  });
+  it("open any closed session that has not ended, also one closed for good, but not one that has ended", () => {
+    expect(canAdminReopen({ status: "CLOSED", endsAt: "2026-11-20T11:00:00Z" }, NOW)).toBe(true);
+    expect(canAdminReopen({ status: "CLOSED", endsAt: "2026-11-03T11:00:00Z" }, NOW)).toBe(true); // taking place
+    expect(canAdminReopen({ status: "CLOSED", endsAt: "2026-11-02T11:00:00Z" }, NOW)).toBe(false);
+    expect(canAdminReopen({ status: "OPEN", endsAt: "2026-11-20T11:00:00Z" }, NOW)).toBe(false);
   });
 });

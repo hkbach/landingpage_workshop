@@ -229,5 +229,30 @@
     "loading": "Đang tải...",
     "end": "Hết nhật ký.",
     "platform": "Nền tảng"
+  },
+  "sessions": {
+    "title": "Session",
+    "intro": "Đóng hoặc mở bất kỳ session nào của shop này chưa kết thúc. Giới hạn của shop owner (đổi lịch 3 lần, đóng 4 lần) không áp dụng cho bạn và thao tác của bạn không được tính vào đó.",
+    "loading": "Đang tải session...",
+    "empty": "Chưa có session sắp diễn ra.",
+    "code": "Mã",
+    "start": "Bắt đầu",
+    "status": "Trạng thái",
+    "ownerCloses": "Lần owner đã đóng",
+    "actions": "Thao tác",
+    "statuses": {
+      "OPEN": "Open",
+      "RUNNING": "Running",
+      "PAUSED": "Paused",
+      "CLOSED": "Closed"
+    },
+    "forGood": "đã đóng hoàn toàn",
+    "close": "Đóng",
+    "reopen": "Mở",
+    "closeTitle": "Đóng session {code}",
+    "closeBody": "Shop owner sẽ thấy việc này trong lịch sử ghi chú của session. Vui lòng nhập lý do.",
+    "closed": "Đã đóng session {code}.",
+    "reopened": "Đã mở session {code}.",
+    "failed": "Không thể thay đổi session."
   }
 }

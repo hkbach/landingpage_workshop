@@ -123,7 +123,7 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
       const next = s ? applySessionAction(s, action) : null;
       if (!s || !next) return false;
       if (action === "close" && closeWaitsForEnd(s, now)) return false; // not while the session is taking place
-      if (action === "close" && !canCloseAgain(s.notes)) return false; // at most 3 closes per session
+      if (action === "close" && !canCloseAgain(s.notes)) return false; // at most 4 closes per session
       // Closing before the start needs a reason: a basic one, or OTHER with a text.
       const reason = action === "close" ? checkCloseReason(closeReason?.code ?? "", closeReason?.note ?? "") : null;
       if (reason && !reason.ok) return false;

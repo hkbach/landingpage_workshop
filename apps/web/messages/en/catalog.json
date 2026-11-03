@@ -227,6 +227,9 @@
     "reopen": "Re-open",
     "reopenedNote": "Re-opened",
     "rescheduleLimit": "A session can be re-scheduled at most 3 times, and this session has already been re-scheduled 3 times.",
-    "closeLimit": "A session can be closed at most 3 times, and this session has already been closed 3 times."
+    "closeLimit": "A session can be closed at most 4 times, and this session has already been closed 4 times.",
+    "closeFinalWarning": "This is the last time you can close this session. It will be closed for good: you cannot re-open it, and only a system administrator can open it again.",
+    "closedForGood": "Closed for good. Only a system administrator can open this session again.",
+    "byAdmin": "by system administrator"
   }
 }

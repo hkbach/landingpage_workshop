@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BOOKING_CODE_RE, SESSION_CLOSE_REASONS, wasRescheduled, SESSION_CODE_RE, SESSION_STATUSES, closeIfEnded, isInSessionTime, isValidBookingCutoff } from "@workshop/shared";
+import { BOOKING_CODE_RE, closedForGood, SESSION_CLOSE_REASONS, wasRescheduled, SESSION_CODE_RE, SESSION_STATUSES, closeIfEnded, isInSessionTime, isValidBookingCutoff } from "@workshop/shared";
 import { reservedSeats } from "@/lib/booking-state";
 import { bookings, sessions, workshops } from "./data";
 
@@ -45,10 +45,10 @@ describe("demo sessions: well formed", () => {
       }
     }
   });
-  it("a closed session was last closed by its owner (or by the system); a session has been re-scheduled and closed at most 3 times", () => {
+  it("a closed session was last closed by its owner (or by the system); a session has been re-scheduled and closed at most 4 times", () => {
     for (const s of sessions) {
       expect(s.notes?.filter((n) => n.type === "RESCHEDULED").length ?? 0, s.id).toBeLessThanOrEqual(3);
-      expect(s.notes?.filter((n) => n.type === "CLOSED").length ?? 0, s.id).toBeLessThanOrEqual(3);
+      expect(s.notes?.filter((n) => n.type === "CLOSED").length ?? 0, s.id).toBeLessThanOrEqual(4);
       if (s.status === "CLOSED" && s.notes?.length) expect(s.notes[s.notes.length - 1]!.type, s.id).toBe("CLOSED");
     }
   });
@@ -58,6 +58,9 @@ describe("demo sessions: well formed", () => {
   });
   it("a session that used its three re-schedules (their button is read-only)", () => {
     expect(sessions.some((s) => s.notes?.filter((n) => n.type === "RESCHEDULED").length === 3)).toBe(true);
+  });
+  it("a session closed for good (4 closes, in the future) to try the system administrator", () => {
+    expect(sessions.some((s) => s.status === "CLOSED" && closedForGood(s) && new Date(s.startsAt) > new Date())).toBe(true);
   });
   it("a clone points at a session that exists, of the same workshop", () => {
     for (const s of sessions.filter((x) => x.clonedFrom)) {

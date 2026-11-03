@@ -43,7 +43,7 @@ function ReasonPicker({ prefix, code, onCode, note, onNote, error }: {
 }
 
 /** Closing a session before it starts. */
-export function CloseSessionDialog({ open, onOpenChange, onConfirm }: { open: boolean; onOpenChange: (o: boolean) => void; onConfirm: (reason: SessionCloseReason) => void }) {
+export function CloseSessionDialog({ open, onOpenChange, onConfirm, final = false }: { open: boolean; onOpenChange: (o: boolean) => void; onConfirm: (reason: SessionCloseReason) => void; final?: boolean }) {
   const t = useTranslations("catalog");
   const tops = useTranslations("ops");
   const [code, setCode] = useState("");
@@ -63,6 +63,7 @@ export function CloseSessionDialog({ open, onOpenChange, onConfirm }: { open: bo
             <DialogTitle>{t("sessions.closeTitle")}</DialogTitle>
             <DialogDescription>{t("sessions.closeHint")}</DialogDescription>
           </DialogHeader>
+          {final ? <p role="alert" data-testid="close-final-warning" className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm font-medium text-destructive">{t("sessions.closeFinalWarning")}</p> : null}
           <ReasonPicker prefix="close" code={code} onCode={(c) => { setCode(c); setError(undefined); }} note={note} onNote={(n) => { setNote(n); setError(undefined); }} error={error} />
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}><ArrowLeft aria-hidden="true" />{tops("common.back")}</Button>

@@ -3,6 +3,7 @@ import type { Session, Shop, Workshop, PageContent, PageTheme, Booking, Customer
 import { reservedSeats } from "../booking-state";
 import { liveBookings } from "./booking-store";
 import { bookings, currentShop, customers, sessions, shops, sitePage, workshops } from "./data";
+import { withAdminChanges } from "./session-admin-store";
 
 export interface PublicSite {
   shop: Shop;
@@ -21,7 +22,7 @@ export function getPublicSite(slug: string): PublicSite | null {
   const active = workshops.filter((w) => w.status === "ACTIVE");
   const ids = new Set(active.map((w) => w.id));
   const live = liveBookings(); // a cancelled booking frees its seats on the landing page too
-  return { shop, content: sitePage.draft, theme: sitePage.theme, workshops: active, sessions: sessions.filter((s) => ids.has(s.workshopId)).map((s) => ({ ...s, reservedCount: reservedSeats(live, s.id) })) };
+  return { shop, content: sitePage.draft, theme: sitePage.theme, workshops: active, sessions: withAdminChanges(sessions).filter((s) => ids.has(s.workshopId)).map((s) => ({ ...s, reservedCount: reservedSeats(live, s.id) })) };
 }
 
 /** Mock booking lookup: needs the code AND a matching email, otherwise null (generic not-found). */

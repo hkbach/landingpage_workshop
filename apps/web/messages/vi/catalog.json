@@ -227,6 +227,9 @@
     "reopen": "Mở lại",
     "reopenedNote": "Đã mở lại",
     "rescheduleLimit": "Mỗi session chỉ được đổi lịch tối đa 3 lần và session này đã đổi lịch đủ 3 lần.",
-    "closeLimit": "Mỗi session chỉ được đóng tối đa 3 lần và session này đã đóng đủ 3 lần."
+    "closeLimit": "Mỗi session chỉ được đóng tối đa 4 lần và session này đã đóng đủ 4 lần.",
+    "closeFinalWarning": "Đây là lần đóng cuối cùng. Session sẽ bị đóng hoàn toàn: bạn không thể mở lại, chỉ admin hệ thống mới mở lại được.",
+    "closedForGood": "Đã đóng hoàn toàn. Chỉ admin hệ thống mới có thể mở lại session này.",
+    "byAdmin": "bởi admin hệ thống"
   }
 }

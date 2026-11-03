@@ -4,7 +4,7 @@ import { useMemo, useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useDisplayLocale } from "@/lib/use-shop-language";
 import { ArrowLeft, CalendarClock, Copy, Lock, LockOpen, LogIn, Pause, Pencil, Play, Plus, Save } from "lucide-react";
-import { allowedSessionActions, canEditSession, canRescheduleSession, canReopenSession, canCloseAgain, canRescheduleAgain, notesInOrder, closeWaitsForEnd, isFutureStart, type SessionCloseReason, DEFAULT_BOOKING_CUTOFF_MINUTES, isValidBookingCutoff, MAX_BOOKING_CUTOFF_MINUTES, pickLocalized, SESSION_STATUSES, type Locale, type SessionStatus } from "@workshop/shared";
+import { allowedSessionActions, closedForGood, isFinalClose, canEditSession, canRescheduleSession, canReopenSession, canCloseAgain, canRescheduleAgain, notesInOrder, closeWaitsForEnd, isFutureStart, type SessionCloseReason, DEFAULT_BOOKING_CUTOFF_MINUTES, isValidBookingCutoff, MAX_BOOKING_CUTOFF_MINUTES, pickLocalized, SESSION_STATUSES, type Locale, type SessionStatus } from "@workshop/shared";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -153,8 +153,12 @@ export function SessionsManager({
                             : n.type === "AUTO_CLOSED"
                               ? t("sessions.autoClosedNote")
                               : `${t(n.type === "CLOSED" ? "sessions.closedBecause" : "sessions.rescheduledBecause")}: ${n.reason?.code === "OTHER" ? n.reason.note : n.reason ? t(`sessions.closeReasons.${n.reason.code}`) : ""}`}
+                          {n.by === "ADMIN" ? ` (${t("sessions.byAdmin")})` : ""}
                         </p>
                       ))}
+                      {closedForGood(s) ? (
+                        <p className="text-xs font-medium text-destructive" data-testid="closed-for-good">{t("sessions.closedForGood")}</p>
+                      ) : null}
                       <div className="flex flex-wrap gap-1.5">
                           {actions.includes("start") ? (
                             <Button size="sm" variant="outline" onClick={() => ops.sessionAction(s.id, "start")}><Play aria-hidden="true" />{t("sessions.start")}</Button>
@@ -176,7 +180,7 @@ export function SessionsManager({
                           ) : null}
                           {actions.includes("close") ? (
                             !canCloseAgain(s.notes) || closeWaitsForEnd(s, ops.now) ? (
-                              // Read-only while the session is taking place, or once it was closed 3 times: the span carries the tooltip (a disabled button does not).
+                              // Read-only while the session is taking place, or once it was closed 4 times: the span carries the tooltip (a disabled button does not).
                               <span title={canCloseAgain(s.notes) ? t("sessions.closeWait") : t("sessions.closeLimit")} data-testid={canCloseAgain(s.notes) ? "close-wait" : "close-limit"} className="inline-flex cursor-not-allowed">
                                 <Button size="sm" variant="destructive" disabled aria-disabled="true" aria-label={`${t("sessions.close")}: ${canCloseAgain(s.notes) ? t("sessions.closeWait") : t("sessions.closeLimit")}`}>
                                   <Lock aria-hidden="true" />{t("sessions.close")}
@@ -227,6 +231,7 @@ export function SessionsManager({
       />
       <CloseSessionDialog
         key={`close-${target?.id ?? "none"}`} open={dialog?.kind === "close" && !!target} onOpenChange={(o) => !o && setDialog(null)}
+        final={isFinalClose(target?.notes)}
         onConfirm={(reason) => { if (target && ops.sessionAction(target.id, "close", reason)) setDialog(null); }}
       />
       <RescheduleSessionDialog

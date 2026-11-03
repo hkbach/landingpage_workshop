@@ -130,8 +130,8 @@ export const isFutureStart = (startsAt: string, now: Date): boolean => {
  * A session the owner closed can be re-opened (it goes back to OPEN) while it has not started. A session the system closed because its time
  * was over (`autoClosed`), or one that has started, stays closed.
  */
-export const canReopenSession = (s: { status: SessionStatus; startsAt: string; autoClosed?: boolean }, now: Date): boolean =>
-  s.status === "CLOSED" && !s.autoClosed && new Date(s.startsAt).getTime() > now.getTime();
+export const canReopenSession = (s: { status: SessionStatus; startsAt: string; autoClosed?: boolean; notes?: readonly SessionNote[] }, now: Date): boolean =>
+  s.status === "CLOSED" && !s.autoClosed && !closedForGood(s) && new Date(s.startsAt).getTime() > now.getTime();
 
 /** An open or a paused session can be re-scheduled (once); a running one is paused first and a closed one is final. */
 export const canRescheduleSession = (status: SessionStatus): boolean => status === "OPEN" || status === "PAUSED";
@@ -141,22 +141,33 @@ export const canRescheduleSession = (status: SessionStatus): boolean => status =
  * the reason) or re-opened it. A note says when it happened.
  */
 export type SessionNoteType = "CLOSED" | "RESCHEDULED" | "REOPENED" | "AUTO_CLOSED";
+/** Who made a change: the shop owner (not set) or a system administrator. */
+export type SessionNoteBy = "ADMIN";
 export interface SessionNote {
   type: SessionNoteType;
   /** When it happened (ISO). */
   at: string;
   /** Why it was closed or re-scheduled (not for REOPENED or AUTO_CLOSED). */
   reason?: SessionCloseReason;
+  /** Set when a system administrator made the change: the limits of the owner do not apply to it and it is not counted in them. */
+  by?: SessionNoteBy;
 }
 
-/** A session can be re-scheduled at most 3 times and closed (by its owner) at most 3 times; every time is a note of its history. */
+/**
+ * A session can be re-scheduled at most 3 times by its owner. The owner can click Close 4 times: the first 3 closes can be re-opened and the
+ * 4th closes the session for good. Every time is a note of its history. A system administrator is not held to these limits (his notes do not count).
+ */
 export const MAX_RESCHEDULES = 3;
-export const MAX_CLOSES = 3;
-const countNotes = (notes: readonly SessionNote[] | undefined, type: SessionNoteType): number => notes?.filter((n) => n.type === type).length ?? 0;
+export const MAX_CLOSES = 4;
+const countNotes = (notes: readonly SessionNote[] | undefined, type: SessionNoteType): number => notes?.filter((n) => n.type === type && n.by !== "ADMIN").length ?? 0;
 export const rescheduleCount = (notes?: readonly SessionNote[]): number => countNotes(notes, "RESCHEDULED");
 export const closeCount = (notes?: readonly SessionNote[]): number => countNotes(notes, "CLOSED");
 export const canRescheduleAgain = (notes?: readonly SessionNote[]): boolean => rescheduleCount(notes) < MAX_RESCHEDULES;
 export const canCloseAgain = (notes?: readonly SessionNote[]): boolean => closeCount(notes) < MAX_CLOSES;
+/** The close the owner is about to make is the last one: the session will be closed for good. */
+export const isFinalClose = (notes?: readonly SessionNote[]): boolean => closeCount(notes) === MAX_CLOSES - 1;
+/** The owner has closed the session for good (all 4 closes used): only a system administrator can open it again. */
+export const closedForGood = (s: { status: SessionStatus; notes?: readonly SessionNote[] }): boolean => s.status === "CLOSED" && closeCount(s.notes) >= MAX_CLOSES;
 /** True when the session has been re-scheduled at least once. */
 export const wasRescheduled = (notes?: readonly SessionNote[]): boolean => rescheduleCount(notes) > 0;
 
@@ -165,3 +176,10 @@ export const notesInOrder = (notes?: readonly SessionNote[]): SessionNote[] => [
 
 /** The notes with one more at the end: the earlier ones are kept. */
 export const withNote = (notes: readonly SessionNote[] | undefined, note: SessionNote): SessionNote[] => [...(notes ?? []), note];
+
+/**
+ * What a system administrator can do, without the limits of the owner: close any session that is not closed yet (even one that is taking place or
+ * closed for good before) and open any closed session that has not ended (even one closed for good). A session that has ended stays closed.
+ */
+export const canAdminClose = (s: { status: SessionStatus }): boolean => s.status !== "CLOSED";
+export const canAdminReopen = (s: { status: SessionStatus; endsAt: string }, now: Date): boolean => s.status === "CLOSED" && new Date(s.endsAt).getTime() > now.getTime();

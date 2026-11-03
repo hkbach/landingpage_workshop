@@ -229,5 +229,30 @@
     "loading": "Loading...",
     "end": "End of log.",
     "platform": "Platform"
+  },
+  "sessions": {
+    "title": "Sessions",
+    "intro": "Close or open any session of this shop that has not ended. The limits of the shop owner (3 re-schedules, 4 closes) do not apply to you, and your changes are not counted in them.",
+    "loading": "Loading sessions...",
+    "empty": "No upcoming sessions.",
+    "code": "Code",
+    "start": "Starts",
+    "status": "Status",
+    "ownerCloses": "Owner closes",
+    "actions": "Actions",
+    "statuses": {
+      "OPEN": "Open",
+      "RUNNING": "Running",
+      "PAUSED": "Paused",
+      "CLOSED": "Closed"
+    },
+    "forGood": "closed for good",
+    "close": "Close",
+    "reopen": "Open",
+    "closeTitle": "Close session {code}",
+    "closeBody": "The shop owner will see this in the history of the session. Please give the reason.",
+    "closed": "Session {code} closed.",
+    "reopened": "Session {code} opened.",
+    "failed": "The session could not be changed."
   }
 }

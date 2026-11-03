@@ -105,7 +105,12 @@ export const sessions: Session[] = [
   { id: "se-10", code: "SES-0010", workshopId: "ws-2", startsAt: at(5, 10), endsAt: at(5, 11.5), capacity: 10, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 120 },
   // Paused with two guests: one has an email (re-scheduling emails them), the other is a walk-in.
   { id: "se-11", code: "SES-0011", workshopId: "ws-1", startsAt: at(6, 14), endsAt: at(6, 16), capacity: 8, reservedCount: 0, status: "PAUSED", bookingCutoffMinutes: 120 },
-  { id: "se-12", code: "SES-0012", workshopId: "ws-2", startsAt: at(6, 9), endsAt: at(6, 10.5), capacity: 10, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, notes: [{ type: "CLOSED", at: at(0, 10), reason: { code: "SCHEDULE_CHANGE" } }] },
+  { id: "se-12", code: "SES-0012", workshopId: "ws-2", startsAt: at(6, 9), endsAt: at(6, 10.5), capacity: 10, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, notes: [
+    { type: "CLOSED", at: at(-4, 9), reason: { code: "NOT_ENOUGH_GUESTS" } }, { type: "REOPENED", at: at(-3, 9) },
+    { type: "CLOSED", at: at(-3, 15), reason: { code: "VENUE_ISSUE" } }, { type: "REOPENED", at: at(-2, 9) },
+    { type: "CLOSED", at: at(-2, 15), reason: { code: "INSTRUCTOR_UNAVAILABLE" } }, { type: "REOPENED", at: at(-1, 9) },
+    { type: "CLOSED", at: at(0, 10), reason: { code: "SCHEDULE_CHANGE" } }, // the 4th close: closed for good (only a system administrator can open it)
+  ] },
   { id: "se-13", code: "SES-0013", workshopId: "ws-1", startsAt: at(7, 9), endsAt: at(7, 11), capacity: 8, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, notes: [{ type: "CLOSED", at: at(-3, 10), reason: { code: "NOT_ENOUGH_GUESTS" } }, { type: "REOPENED", at: at(-2, 9) }, { type: "CLOSED", at: at(-1, 9), reason: { code: "NOT_ENOUGH_GUESTS" } }] },
   { id: "se-14", code: "SES-0014", workshopId: "ws-2", startsAt: at(7, 14), endsAt: at(7, 15.5), capacity: 10, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, notes: [{ type: "RESCHEDULED", at: at(-4, 11), reason: { code: "VENUE_ISSUE" } }, { type: "CLOSED", at: at(-1, 11), reason: { code: "OTHER", note: "The glaze delivery is late." } }] },
   // Sold out: every seat is booked.

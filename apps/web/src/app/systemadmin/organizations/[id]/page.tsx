@@ -4,7 +4,8 @@ import { getTranslations } from "next-intl/server";
 import { ArrowLeft } from "lucide-react";
 import { OrganizationDetail } from "@/components/admin/organization-detail";
 import { adminAuditLogs, orgStats } from "@/lib/mock/admin";
-import { shops } from "@/lib/mock/data";
+import { AdminSessions } from "@/components/admin/admin-sessions";
+import { currentShop, shops } from "@/lib/mock/data";
 
 export default async function OrganizationDetailPage({ params }: PageProps<"/systemadmin/organizations/[id]">) {
   const { id } = await params;
@@ -23,6 +24,8 @@ export default async function OrganizationDetailPage({ params }: PageProps<"/sys
         <h1 className="text-2xl font-semibold">{shop.name}</h1>
       </header>
       <OrganizationDetail shop={shop} stats={orgStats[shop.id] ?? { workshops: 0, bookings30d: 0 }} audit={audit} />
+      {/* Mock: only the demo shop has sessions. */}
+      {shop.id === currentShop.id ? <AdminSessions /> : null}
     </div>
   );
 }
