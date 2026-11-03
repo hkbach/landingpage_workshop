@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   addDaysToKey, bpsToPercent, checkDateRange, checkFeeRates, daysInRange, filterLedgerRange, ledgerSeries, DEFAULT_FEE_RATES, feeOf, feeShares, filterLedger, lastMonthKeys, ledgerFromPayments, monthKey, monthlyLedger,
-  niceScale, percentToBps, summarizeLedger, type FeeRates, type LedgerRow,
+  feeBase, niceScale, percentToBps, summarizeLedger, type FeeRates, type LedgerRow,
 } from "./finance";
 
 const TZ = "Asia/Ho_Chi_Minh";
@@ -65,6 +65,38 @@ describe("ledgerFromPayments", () => {
     expect(rows.map((r) => r.price)).toEqual([price, price]);
     expect(rows[0]!.price).not.toBe(price); // a copy
     expect(ledgerFromPayments(src, RATES).map((r) => r.price)).toEqual([{ subtotal: 0, discounts: [] }, { subtotal: 0, discounts: [] }]);
+  });
+  describe("the fees are taken on the original price of the booking, not on what was paid after the vouchers", () => {
+    // 2 seats of 650,000: 1,300,000 before the vouchers; EARLY20 (260,000) and NEWS5 (65,000) leave 975,000 to pay.
+    const price = { subtotal: 1_300_000, discounts: [{ code: "EARLY20", amount: 260_000 }, { code: "NEWS5", amount: 65_000 }] };
+    const voucher = { id: "bk-2", bookingCode: "SES-0002-001", currency: "VND", price, payments: [{ id: "q1", type: "PAYMENT" as const, amount: 975_000, recordedAt: "2026-10-01T03:00:00Z" }] };
+    it("feeBase puts the amount back on the original price", () => {
+      expect(feeBase(975_000, price)).toBe(1_300_000);
+      expect(feeBase(-487_500, price)).toBe(-650_000); // half of it refunded: half of the original price
+    });
+    it("the fees are a percentage of the original price (2% and 3% of 1,300,000), the income is what was paid", () => {
+      const [row] = ledgerFromPayments([voucher], RATES);
+      expect(row).toMatchObject({ amount: 975_000, maintenanceFee: 26_000, serviceFee: 39_000, profit: 910_000 });
+    });
+    it("a refund gives back the fees of the same part of the original price", () => {
+      const rows = ledgerFromPayments([{ ...voucher, payments: [...voucher.payments, { id: "q2", type: "REFUND" as const, amount: 975_000, recordedAt: "2026-10-02T03:00:00Z" }] }], RATES);
+      expect(rows[1]).toMatchObject({ amount: -975_000, maintenanceFee: -26_000, serviceFee: -39_000 });
+      expect(summarizeLedger(rows)).toEqual({ income: 0, maintenanceFee: 0, serviceFee: 0, fees: 0, profit: 0 });
+    });
+    it("without a voucher nothing changes", () => {
+      const plain = { ...voucher, price: { subtotal: 1_300_000, discounts: [] }, payments: [{ id: "q3", type: "PAYMENT" as const, amount: 1_300_000, recordedAt: "2026-10-01T03:00:00Z" }] };
+      expect(ledgerFromPayments([plain], RATES)[0]).toMatchObject({ maintenanceFee: 26_000, serviceFee: 39_000, profit: 1_235_000 });
+    });
+    it("with no known original price, or a booking free after its vouchers, the fees are taken on the amount", () => {
+      expect(feeBase(1_000, undefined)).toBe(1_000);
+      expect(feeBase(1_000, { subtotal: 0, discounts: [] })).toBe(1_000);
+      expect(feeBase(1_000, { subtotal: 500_000, discounts: [{ code: "FREE", amount: 500_000 }] })).toBe(1_000);
+    });
+    it("a voucher can make the fees bigger than what was paid: the profit of that booking is negative", () => {
+      const heavy = { subtotal: 1_000_000, discounts: [{ code: "HALF", amount: 900_000 }] }; // 100,000 to pay, fees on 1,000,000
+      const [row] = ledgerFromPayments([{ ...voucher, price: heavy, payments: [{ id: "q4", type: "PAYMENT" as const, amount: 100_000, recordedAt: "2026-10-01T03:00:00Z" }] }], { maintenanceBps: 2_000, serviceBps: 3_000 });
+      expect(row).toMatchObject({ amount: 100_000, maintenanceFee: 200_000, serviceFee: 300_000, profit: -400_000 });
+    });
   });
   it("Profit = total income - maintenance fee - service fee", () => {
     const t = summarizeLedger(ledgerFromPayments(src, RATES));

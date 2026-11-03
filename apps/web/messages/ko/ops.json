@@ -271,7 +271,7 @@
     "loss": "손실",
     "profitNote": "총수입 − 유지비 − 서비스 수수료",
     "formulaTitle": "수익 계산 방법",
-    "formula": "수익 = 총수입 − 시스템 유지비(예약당 {maintenance}) − 서비스 수수료({service})",
+    "formula": "수익 = 총수입 − 시스템 유지비(예약 정가의 {maintenance}, 바우처 적용 전) − 서비스 수수료(예약 정가의 {service})",
     "ratesNote": "요율은 플랫폼이 정하며 모든 예약에 적용됩니다.",
     "monthlyTitle": "기간별 수입, 수수료, 수익",
     "showTable": "숫자를 표로 보기",

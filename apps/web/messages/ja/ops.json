@@ -271,7 +271,7 @@
     "loss": "赤字",
     "profitNote": "総収入 − 維持費 − サービス手数料",
     "formulaTitle": "利益の計算方法",
-    "formula": "利益 = 総収入 − システム維持費（予約ごとに{maintenance}）− サービス手数料（{service}）",
+    "formula": "利益 = 総収入 − システム維持費（予約の元の価格（バウチャー適用前）の{maintenance}）− サービス手数料（元の価格の{service}）",
     "ratesNote": "料率はプラットフォームが設定し、すべての予約に適用されます。",
     "monthlyTitle": "期間別の収入・手数料・利益",
     "showTable": "数値を表で表示",

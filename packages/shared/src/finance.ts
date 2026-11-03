@@ -3,7 +3,9 @@
 // Profit = total income - maintenance fee - service fee
 //  - Total income: the payments received on the bookings minus the refunds (FR-PAY-01).
 //  - Maintenance fee: a percentage of every booking, set by the platform administrator.
-//  - Service fee: a percentage, set by the platform administrator, of the same income.
+//  - Service fee: a percentage, set by the platform administrator, of the same booking.
+//  Both percentages are taken on the ORIGINAL price of the booking (unit price x quantity, before any voucher), not on what the guest paid after the vouchers
+//  (see feeBase): a voucher lowers the income of the shop, not the fees.
 // The rates are kept in basis points (1% = 100) so no amount is ever computed with a fractional percent.
 
 /** What a voucher (a promotion code) took off a booking, in minor units. */
@@ -48,6 +50,18 @@ export const bpsToPercent = (bps: number): string => String(bps / 100);
 /** The fee on an amount (negative for a refund, so a refund gives its fee back), rounded to the minor unit. */
 export const feeOf = (amount: number, bps: number): number => Math.sign(amount) * Math.round((Math.abs(amount) * bps) / MAX_FEE_BPS);
 
+/**
+ * The amount the fees are a percentage of. A payment or a refund is a part of what the booking cost after its vouchers; the fees are taken on the same part of the
+ * ORIGINAL price (before the vouchers): amount x original price / price after the vouchers. A booking with no known original price, or one that cost nothing after
+ * its vouchers, has no ratio to apply, so its fees are taken on the amount itself. Signed like the amount (a refund is negative).
+ */
+export function feeBase(amount: number, price?: BookingPriceInfo): number {
+  const subtotal = price?.subtotal ?? 0;
+  const paid = subtotal - (price?.discounts ?? []).reduce((n, d) => n + d.amount, 0); // what the booking costs after its vouchers
+  if (subtotal <= 0 || paid <= 0 || paid === subtotal) return amount;
+  return Math.sign(amount) * Math.round((Math.abs(amount) * subtotal) / paid);
+}
+
 // ---- ledger ------------------------------------------------------------------------------------------------------------------
 
 /** One payment or refund of a booking with the fees taken from it. `amount` is signed: a refund is negative. */
@@ -66,8 +80,9 @@ export function ledgerFromPayments(bookings: readonly PaymentSource[], rates: Fe
   return bookings.flatMap((b) =>
     b.payments.map((p): LedgerRow => {
       const amount = p.type === "PAYMENT" ? p.amount : -p.amount;
-      const maintenanceFee = feeOf(amount, rates.maintenanceBps);
-      const serviceFee = feeOf(amount, rates.serviceBps);
+      const base = feeBase(amount, b.price); // the fees are a percentage of the original price, not of what was paid after the vouchers
+      const maintenanceFee = feeOf(base, rates.maintenanceBps);
+      const serviceFee = feeOf(base, rates.serviceBps);
       return { id: `pay-${p.id}`, bookingCode: b.bookingCode, kind: p.type, currency: b.currency, price: { subtotal: b.price?.subtotal ?? 0, discounts: (b.price?.discounts ?? []).map((d) => ({ ...d })) }, occurredAt: p.recordedAt, amount, maintenanceFee, serviceFee, profit: amount - maintenanceFee - serviceFee };
     }),
   );

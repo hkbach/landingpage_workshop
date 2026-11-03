@@ -271,7 +271,7 @@
     "loss": "Loss",
     "profitNote": "Total income − maintenance fee − service fee.",
     "formulaTitle": "How your profit is calculated",
-    "formula": "Profit = Total income − Maintenance fee ({maintenance} of each booking) − Service fee ({service})",
+    "formula": "Profit = Total income − Maintenance fee ({maintenance} of the original price of each booking, before vouchers) − Service fee ({service} of the original price)",
     "ratesNote": "The rates are set by the platform and apply to every booking.",
     "monthlyTitle": "Income, fees and profit over time",
     "showTable": "Show the numbers as a table",

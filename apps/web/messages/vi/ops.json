@@ -271,7 +271,7 @@
     "loss": "Lỗ",
     "profitNote": "Tổng thu − phí duy trì − phí dịch vụ.",
     "formulaTitle": "Cách tính lợi nhuận",
-    "formula": "Lợi nhuận = Tổng thu − Phí duy trì hệ thống ({maintenance} mỗi booking) − Phí dịch vụ ({service})",
+    "formula": "Lợi nhuận = Tổng thu − Phí duy trì hệ thống ({maintenance} trên giá gốc của mỗi booking, trước voucher) − Phí dịch vụ ({service} trên giá gốc)",
     "ratesNote": "Tỷ lệ do quản trị hệ thống cài đặt và áp dụng cho mọi booking.",
     "monthlyTitle": "Thu, phí và lợi nhuận theo thời gian",
     "showTable": "Hiển thị số liệu dạng bảng",
