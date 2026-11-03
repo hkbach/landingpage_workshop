@@ -369,6 +369,16 @@ export const bookings: Booking[] = [
   booking({ id: "bk-110", sessionId: "se-9", customerId: "cu-17", quantity: 1 }),
   booking({ id: "bk-111", sessionId: "se-45", customerId: "cu-18", quantity: 1, ...ci("se-45", 11) }),
   booking({ id: "bk-113", sessionId: "se-17", customerId: "cu-18", quantity: 1 }),
+  // Guests of earlier sessions too, so every guest has bookings made on different days whatever time it is now.
+  booking({ id: "bk-114", sessionId: "se-22", customerId: "cu-11", quantity: 1, ...ci("se-22", 7) }),
+  booking({ id: "bk-115", sessionId: "se-22", customerId: "cu-12", quantity: 1, ...ci("se-22", 8) }),
+  booking({ id: "bk-116", sessionId: "se-24", customerId: "cu-13", quantity: 1, ...ci("se-24", 9) }),
+  booking({ id: "bk-117", sessionId: "se-24", customerId: "cu-14", quantity: 1, ...ci("se-24", 10) }),
+  booking({ id: "bk-118", sessionId: "se-22", customerId: "cu-16", quantity: 1, ...ci("se-22", 11) }),
+  booking({ id: "bk-119", sessionId: "se-24", customerId: "cu-16", quantity: 1, ...ci("se-24", 5) }),
+  booking({ id: "bk-120", sessionId: "se-22", customerId: "cu-17", quantity: 1, ...ci("se-22", 6) }),
+  booking({ id: "bk-121", sessionId: "se-24", customerId: "cu-18", quantity: 1, ...ci("se-24", 7) }),
+  booking({ id: "bk-122", sessionId: "se-32", customerId: "cu-18", quantity: 1, ...ci("se-32", 8) }),
 ];
 
 // What each demo booking has paid, so the Income page, the payment status of the bookings and the cancelled bookings agree. A guest who cancels
