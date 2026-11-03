@@ -85,6 +85,16 @@ export const sessions: Session[] = [
   { id: "se-17", workshopId: "ws-1", startsAt: at(10, 9), endsAt: at(10, 11), capacity: 8, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 120 },
   // Its time is over while it was still Running: the system shows it as Closed (automatically).
   { id: "se-18", workshopId: "ws-1", startsAt: at(-1, 9), endsAt: at(-1, 11), capacity: 8, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 120 },
+  // Sessions in the past (the Sessions page shows them when From is set to an earlier day). Closed by the owner before they started, with a reason:
+  { id: "se-19", workshopId: "ws-1", startsAt: at(-2, 9), endsAt: at(-2, 11), capacity: 8, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, closeReason: { code: "NOT_ENOUGH_GUESTS" } },
+  { id: "se-20", workshopId: "ws-2", startsAt: at(-2, 14), endsAt: at(-2, 15.5), capacity: 10, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 60, closeReason: { code: "INSTRUCTOR_UNAVAILABLE" } },
+  { id: "se-21", workshopId: "ws-1", startsAt: at(-3, 14), endsAt: at(-3, 16), capacity: 8, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, closeReason: { code: "OTHER", note: "The kiln needed an urgent repair." } },
+  { id: "se-26", workshopId: "ws-2", startsAt: at(-9, 10), endsAt: at(-9, 11.5), capacity: 10, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 180, closeReason: { code: "SCHEDULE_CHANGE" } },
+  // Left Running, Paused or Open when their time was over: the system shows them as Closed automatically.
+  { id: "se-22", workshopId: "ws-2", startsAt: at(-4, 10), endsAt: at(-4, 11.5), capacity: 10, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 120 },
+  { id: "se-23", workshopId: "ws-1", startsAt: at(-5, 9), endsAt: at(-5, 11), capacity: 8, reservedCount: 0, status: "PAUSED", bookingCutoffMinutes: 240 },
+  { id: "se-24", workshopId: "ws-2", startsAt: at(-6, 14), endsAt: at(-6, 15.5), capacity: 12, reservedCount: 0, status: "OPEN", bookingCutoffMinutes: 120 },
+  { id: "se-25", workshopId: "ws-1", startsAt: at(-7, 9), endsAt: at(-7, 11), capacity: 8, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 90 },
 ];
 
 export const customers: Customer[] = [
