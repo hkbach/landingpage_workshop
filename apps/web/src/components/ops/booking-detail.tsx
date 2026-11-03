@@ -93,7 +93,7 @@ export function BookingDetail({
             {customer ? (
               <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
                 <Row label={t("customers.name")}>
-                  <ShopLink href={`/shopowner/customers/${customer.id}`} className="font-medium underline-offset-4 hover:underline">{customer.fullName}</ShopLink>
+                  <ShopLink href={`/shopowner/customers/${customer.id}`} className="font-medium underline-offset-4 hover:underline">{b.guestName ?? customer.fullName}</ShopLink>
                 </Row>
                 <Row label={t("customers.email")}>{customer.email ?? t("common.noEmail")}</Row>
                 <Row label={t("customers.phone")}>{customer.phone ?? "-"}</Row>

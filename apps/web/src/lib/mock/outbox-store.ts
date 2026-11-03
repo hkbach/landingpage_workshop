@@ -2,7 +2,7 @@
 // change and a worker sends the email in the language of the guest (REQUIREMENTS 5.7), so nothing is sent from a request handler.
 // Lives on globalThis like the other mock stores.
 import type { Locale, SessionCloseReason } from "@workshop/shared";
-import { renderBookingConfirmation, renderPaymentReceived, renderSessionClosed, renderSessionRescheduled, type RenderedEmail } from "@/lib/email/templates";
+import { renderBookingConfirmation, renderBookingInfo, renderPaymentReceived, renderSessionClosed, renderSessionRescheduled, type RenderedEmail } from "@/lib/email/templates";
 import { newUuid } from "@/lib/uuid";
 
 interface EmailBase extends RenderedEmail {
@@ -47,6 +47,16 @@ export interface BookingConfirmationEmail extends EmailBase {
   confirmUrl: string;
 }
 
+/** The shop made a booking for a guest (walk-in, phone): the booking is confirmed already, the email holds its details. */
+export interface BookingInfoEmail extends EmailBase {
+  type: "BOOKING_INFO";
+  startsAt: string;
+  endsAt: string;
+  quantity: number;
+  totalAmount: number;
+  currency: string;
+}
+
 /** The shop confirmed the payment of a booking (it is Paid): a receipt for the guest. */
 export interface PaymentReceivedEmail extends EmailBase {
   type: "PAYMENT_RECEIVED";
@@ -57,7 +67,7 @@ export interface PaymentReceivedEmail extends EmailBase {
   currency: string;
 }
 
-export type OutboxEmail = SessionRescheduledEmail | SessionClosedEmail | BookingConfirmationEmail | PaymentReceivedEmail;
+export type OutboxEmail = SessionRescheduledEmail | SessionClosedEmail | BookingConfirmationEmail | BookingInfoEmail | PaymentReceivedEmail;
 
 const g = globalThis as unknown as { __outbox?: OutboxEmail[] };
 const box = () => (g.__outbox ??= []);
@@ -78,6 +88,12 @@ export function queueSessionClosed(email: Queued<SessionClosedEmail>): SessionCl
 
 export function queueBookingConfirmation(email: Queued<BookingConfirmationEmail>): BookingConfirmationEmail {
   const entry: BookingConfirmationEmail = { ...email, ...renderBookingConfirmation(email), id: newUuid(), type: "BOOKING_CONFIRMATION", createdAt: new Date().toISOString() };
+  box().push(entry);
+  return entry;
+}
+
+export function queueBookingInfo(email: Queued<BookingInfoEmail>): BookingInfoEmail {
+  const entry: BookingInfoEmail = { ...email, ...renderBookingInfo(email), id: newUuid(), type: "BOOKING_INFO", createdAt: new Date().toISOString() };
   box().push(entry);
   return entry;
 }

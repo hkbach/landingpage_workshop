@@ -424,8 +424,10 @@ Browser ────────────────────────
 
 **FR-OPS-02 – Tạo booking thủ công (Must)**
 - Shop tạo booking cho khách walk-in, điện thoại hoặc WhatsApp. `source ∈ ONLINE | WALK_IN | PHONE | OTHER`.
-- Cùng logic chống overbooking. Không bắt buộc email với `WALK_IN` (khi đó customer không có email; không gửi email).
-- Cho phép tạo cho session đã bắt đầu (walk-in) nếu còn chỗ.
+- Cùng logic chống overbooking. **Booking do shop tạo là `CONFIRMED` ngay** (shop đã xác nhận với khách tại chỗ), `payment_status = UNPAID`, giá do server tính (không khuyến mãi). Họ tên bắt buộc; email không bắt buộc với `WALK_IN` (khi đó không gửi email), bắt buộc với `PHONE` và `OTHER`.
+- **Khách có email thì nhận email thông tin (đủ 6 ngôn ngữ, không có link xác nhận vì không cần xác nhận)**: mã booking, workshop, ngày giờ, số khách, tổng tiền trả tại studio. Customer tìm theo email như booking online (không ghi đè); booking lưu riêng tên đã nhập.
+- Cho phép tạo cho session đã bắt đầu (walk-in) nếu session còn `RUNNING`, chưa hết giờ và còn chỗ; danh sách session của form không liệt kê session đã hết giờ.
+- MVP frontend: `POST /api/v1/bookings` (201 `{id, code, emailed}`; 409 `SESSION_FULL` / `SESSION_CLOSED`; 422); trước đây form chỉ mô phỏng và không lưu. TODO(api): kiểm tra chỗ trong một bước khóa, ghi booking và outbox trong cùng transaction, audit log.
 
 **FR-OPS-03 – Check-in (Must)**
 - Shop owner bấm **Check-in**: `NOT_CONFIRMED | CONFIRMED → CHECKED_IN` (khách chưa bấm link xác nhận vẫn check-in được). Ghi `checked_in_at`, `checked_in_by` và **trạng thái trước khi check-in** (`status_before_check_in`).
@@ -498,6 +500,7 @@ Browser ────────────────────────
 | Shop được duyệt / bị từ chối / bị khóa | Shop owner | Như trên |
 | `booking.confirmed` | Khách | Cả 6 ngôn ngữ trong cùng một email (xem bên dưới) |
 | `booking.confirmed` (thông báo booking mới) | Email của shop | Ngôn ngữ của shop |
+| `booking.created_by_shop` (walk-in / phone có email; thông tin, không cần xác nhận) | Khách | Cả 6 ngôn ngữ trong cùng một email |
 | `booking.cancelled`, `booking.rescheduled`, `session.closed` | Khách | Cả 6 ngôn ngữ trong cùng một email |
 | `booking.paid` (shop xác nhận đã thanh toán; biên nhận) | Khách (nếu có email; khách walk-in không có email thì bỏ qua) | Cả 6 ngôn ngữ trong cùng một email |
 | Nhắc lịch 24 giờ trước (Should) | Khách | Locale của khách |

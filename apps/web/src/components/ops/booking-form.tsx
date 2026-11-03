@@ -1,14 +1,14 @@
 "use client";
 
-import { useMemo, useRef, useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { z } from "zod";
-import { BOOKING_SOURCES, formatMoney, pickLocalized, resolveShopLocale, type Locale, nextBookingCode } from "@workshop/shared";
+import { BOOKING_SOURCES, formatMoney, pickLocalized, resolveShopLocale, type Locale } from "@workshop/shared";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import type { Booking, Customer, Session, Workshop } from "@/lib/types";
+import type { Session, Workshop } from "@/lib/types";
 import { formatDateTime } from "@/lib/format";
 import { Field } from "./field";
 import { NativeSelect } from "./native-select";
@@ -21,24 +21,20 @@ const MANUAL_SOURCES = BOOKING_SOURCES.filter((s): s is ManualSource => s !== "O
 
 /** FR-OPS-02: manual booking (walk-in / phone / other). Email optional for WALK_IN. Price is shown as an estimate only. */
 export function BookingForm({
-  sessions, workshops, shop, initialSessionId, nowIso, bookingCodes,
+  sessions, workshops, shop, initialSessionId, nowIso,
 }: {
   nowIso: string;
   sessions: Session[]; workshops: Workshop[]; shop: { timezone: string; defaultLocale: Locale; enabledLocales: Locale[] };
   initialSessionId?: string;
-  /** The booking codes already given, so the next one of a session follows them. */
-  bookingCodes: string[];
 }) {
   const t = useTranslations("ops");
   const locale = useLocale() as Locale;
-  const seq = useRef(0);
-  const given = useRef<string[]>([]); // the codes this form has given
   const wsOf = (id: string) => workshops.find((w) => w.id === id);
 
-  // Open sessions with room; already-started sessions are allowed for walk-ins (FR-OPS-02).
+  // Running sessions with room whose time is not over; already-started sessions are allowed for walk-ins (FR-OPS-02).
   const options = useMemo(
-    () => sessions.filter((s) => s.status === "RUNNING" && s.capacity - s.reservedCount > 0).sort((a, b) => a.startsAt.localeCompare(b.startsAt)),
-    [sessions],
+    () => sessions.filter((s) => s.status === "RUNNING" && s.capacity - s.reservedCount > 0 && Date.parse(s.endsAt) > Date.parse(nowIso)).sort((a, b) => a.startsAt.localeCompare(b.startsAt)),
+    [sessions, nowIso],
   );
   const [v, setV] = useState({
     sessionId: options.some((s) => s.id === initialSessionId) ? (initialSessionId as string) : "",
@@ -46,7 +42,9 @@ export function BookingForm({
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const dirty = useDirty(v, "new");
-  const [created, setCreated] = useState<{ code: string; booking: Booking; customer: Customer } | null>(null);
+  const [created, setCreated] = useState<{ code: string; emailed: boolean; email: string } | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [failed, setFailed] = useState(""); // the key of the message when the server refused the booking
   const set = <K extends keyof typeof v>(k: K, val: (typeof v)[K]) => { setV((p) => ({ ...p, [k]: val })); setErrors((e) => ({ ...e, [k]: "" })); };
 
   const session = options.find((s) => s.id === v.sessionId);
@@ -73,20 +71,31 @@ export function BookingForm({
     const parsed = schema.safeParse({ ...v, quantity: v.quantity.trim() === "" ? NaN : qty });
     if (!parsed.success || !session || !workshop) return setErrors(parsed.success ? { sessionId: "errors.sessionRequired" } : issuesToErrors(parsed.error));
     const d = parsed.data;
-    const now = new Date().toISOString();
-    const customer: Customer = {
-      id: `cu-local-${++seq.current}`, fullName: d.fullName, email: d.email.trim().toLowerCase() || undefined,
-      phone: d.phone || undefined, preferredLocale: shop.defaultLocale, // no account: the shop knows neither the country nor the birth date
-    };
-    const booking: Booking = {
-      id: `bk-local-${++seq.current}`, bookingCode: nextBookingCode(session.code, [...bookingCodes, ...given.current], session.reservedCount + 1), sessionId: session.id, workshopId: workshop.id, customerId: customer.id,
-      source: d.source, quantity: d.quantity, status: "CONFIRMED", paymentStatus: "UNPAID", unitPriceAmount: workshop.priceAmount,
-      totalAmount: workshop.priceAmount * d.quantity, currency: workshop.currency,
-      workshopTitle: pickLocalized(workshop.title, shop.defaultLocale, shop.defaultLocale), startsAt: session.startsAt, endsAt: session.endsAt,
-      timezone: shop.timezone, specialRequest: d.specialRequest || undefined, createdAt: now, payments: [],
-    };
-    given.current.push(booking.bookingCode);
-    setCreated({ code: booking.bookingCode, booking, customer });
+    void createOnServer(d);
+  }
+
+  /** The booking is made by the server (seats, price, customer and the email to the guest); the form shows its code. */
+  async function createOnServer(d: { sessionId: string; quantity: number; source: ManualSource; fullName: string; email: string; phone: string; specialRequest: string }) {
+    setSubmitting(true);
+    setFailed("");
+    try {
+      const res = await fetch("/api/v1/bookings", {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ sessionId: d.sessionId, quantity: d.quantity, source: d.source, fullName: d.fullName, ...(d.email.trim() ? { email: d.email.trim() } : {}), ...(d.phone ? { phone: d.phone } : {}), ...(d.specialRequest ? { specialRequest: d.specialRequest } : {}) }),
+      });
+      if (res.status === 201) {
+        const made = (await res.json()) as { code: string; emailed: boolean };
+        setCreated({ code: made.code, emailed: made.emailed, email: d.email.trim().toLowerCase() });
+      } else if (res.status === 409) {
+        setFailed((await res.json() as { error?: { code?: string } }).error?.code === "SESSION_FULL" ? "errors.sessionFull" : "errors.sessionClosed");
+      } else {
+        setFailed("errors.createFailed");
+      }
+    } catch {
+      setFailed("errors.createFailed");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   const err = (k: string) => (errors[k] ? t(errors[k]) : undefined);
@@ -100,7 +109,7 @@ export function BookingForm({
           <CardContent className="grid gap-3" role="status">
             <p className="font-medium">{t("newBooking.created")}</p>
             <p className="text-sm">{t("newBooking.code")}: <span className="font-mono font-semibold">{created.code}</span></p>
-            <p className="text-sm text-muted-foreground">{t("newBooking.simulated")}</p>
+            <p className="text-sm text-muted-foreground" data-testid="new-booking-mail">{created.emailed ? t("newBooking.emailSent", { email: created.email }) : t("newBooking.noEmailSent")}</p>
             <div className="flex flex-wrap gap-2">
               <Button onClick={() => { setCreated(null); setV((p) => ({ ...p, fullName: "", email: "", phone: "", specialRequest: "", quantity: "1" })); }}>
                 {t("newBooking.another")}
@@ -171,8 +180,9 @@ export function BookingForm({
             </Field>
           </CardContent>
         </Card>
+        {failed ? <p role="alert" data-testid="new-booking-error" className="text-sm font-medium text-destructive">{t(failed)}</p> : null}
         <div className="flex gap-2">
-          <Button type="submit" disabled={!dirty}>{t("newBooking.submit")}</Button>
+          <Button type="submit" disabled={!dirty || submitting}>{t("newBooking.submit")}</Button>
           <ShopLink href="/shopowner/bookings" className={buttonVariants({ variant: "outline" })}>{t("common.back")}</ShopLink>
         </div>
       </form>

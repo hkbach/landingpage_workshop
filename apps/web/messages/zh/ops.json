@@ -62,7 +62,10 @@
     "required": "此项为必填。",
     "emailRequired": "除现场散客预订外，邮箱为必填。",
     "emailInvalid": "请输入有效的邮箱地址。",
-    "tooLong": "文本过长。"
+    "tooLong": "文本过长。",
+    "sessionFull": "该场次已没有足够空位容纳此预订。",
+    "sessionClosed": "该场次已不能再接受预订。",
+    "createFailed": "无法创建预订，请重试。"
   },
   "capacity": {
     "seats": "{reserved}/{capacity} 个座位",
@@ -235,7 +238,6 @@
     "title": "新建预订",
     "created": "预订已创建。",
     "code": "预订编号",
-    "simulated": "演示模式：此预订为模拟数据，不会保存。",
     "another": "再创建一个",
     "chooseSession": "选择场次",
     "startedNote": "该场次已开始。只要还有空位，就允许现场散客加入。",
@@ -243,7 +245,9 @@
     "estimate": "预估总额：{total}",
     "estimateNote": "最终价格由服务器计算。",
     "emailOptional": "现场散客可不填。未填写邮箱时不会发送确认邮件。",
-    "submit": "创建预订"
+    "submit": "创建预订",
+    "emailSent": "已向 {email} 发送确认邮件。",
+    "noEmailSent": "未发送邮件：客人未留邮箱。"
   },
   "finance": {
     "title": "收入与支出",

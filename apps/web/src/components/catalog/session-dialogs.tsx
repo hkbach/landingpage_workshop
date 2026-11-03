@@ -15,6 +15,7 @@ import { zonedToUtcIso } from "@/components/ops/time";
 import { dayKey } from "@/lib/format";
 import type { Booking, Customer, Session } from "@/lib/types";
 import { canTransition, type BookingAction } from "@/lib/booking-state";
+import { guestNameOf } from "@/lib/guest-name";
 import { draftChanges, draftPaid, withChoice, type PaymentDraft } from "@/lib/payment-draft";
 import { BookingStatusBadge, PaymentStatusBadge } from "@/components/ops/status-badges";
 import type { OpResult } from "@/components/ops/use-ops-state";
@@ -156,7 +157,7 @@ export function CheckInDialog({ open, onOpenChange, session, bookings, customers
   const readOnly = session ? isSessionFinished(session.status) : false; // a closed or completed session: the list is for viewing
   const stamp = (iso: string) => new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short", timeZone: timezone }).format(new Date(iso));
   const rows = session ? bookings.filter((b) => b.sessionId === session.id).sort((a, b) => a.bookingCode.localeCompare(b.bookingCode)) : [];
-  const nameOf = (b: Booking) => customers.find((c) => c.id === b.customerId)?.fullName ?? "";
+  const nameOf = (b: Booking) => guestNameOf(b, customers);
   // Guests expected: a cancelled booking is not counted (its guests do not come).
   const guests = rows.reduce((n, b) => (b.status === "CANCELLED" ? n : n + b.quantity), 0);
   const checked = rows.filter((b) => b.status === "CHECKED_IN").reduce((n, b) => n + b.quantity, 0);
@@ -267,7 +268,7 @@ export function PaymentDialog({ open, onOpenChange, session, bookings, customers
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const rows = session ? bookings.filter((b) => b.sessionId === session.id).sort((a, b) => a.bookingCode.localeCompare(b.bookingCode)) : [];
-  const nameOf = (b: Booking) => customers.find((c) => c.id === b.customerId)?.fullName ?? "";
+  const nameOf = (b: Booking) => guestNameOf(b, customers);
   const parts = [
     { key: "checkedIn", title: t("sessions.partCheckedIn"), list: rows.filter((b) => b.status === "CHECKED_IN") },
     { key: "notCheckedIn", title: t("sessions.partNotCheckedIn"), list: rows.filter((b) => b.status !== "CHECKED_IN" && b.status !== "CANCELLED") },

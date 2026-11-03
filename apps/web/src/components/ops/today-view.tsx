@@ -100,7 +100,7 @@ export function TodayView({
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <div className="min-w-0">
                           <ShopLink href={`/shopowner/bookings/${b.id}`} className="font-medium underline-offset-4 hover:underline">
-                            {c?.fullName ?? "-"}
+                            {b.guestName ?? c?.fullName ?? "-"}
                           </ShopLink>
                           <p className="flex flex-wrap items-center gap-x-3 text-xs text-muted-foreground">
                             <span className="font-mono">{b.bookingCode}</span>

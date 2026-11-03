@@ -13,7 +13,7 @@ export function mailPaymentReceived(bookingId: string): PaymentMailResult {
   const guest = liveCustomers().find((c) => c.id === b.customerId);
   if (!guest?.email) return { ok: true, notified: 0 };
   queuePaymentReceived({
-    to: guest.email, locale: guest.preferredLocale, guestName: guest.fullName, shopName: currentShop.name, bookingCode: b.bookingCode, workshopTitle: b.workshopTitle,
+    to: guest.email, locale: guest.preferredLocale, guestName: b.guestName ?? guest.fullName, shopName: currentShop.name, bookingCode: b.bookingCode, workshopTitle: b.workshopTitle,
     timezone: b.timezone, startsAt: b.startsAt, endsAt: b.endsAt, quantity: b.quantity, totalAmount: b.totalAmount, currency: b.currency,
   });
   return { ok: true, notified: 1 };

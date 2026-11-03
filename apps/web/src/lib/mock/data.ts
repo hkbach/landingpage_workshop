@@ -244,7 +244,7 @@ export const bookings: Booking[] = [
     promotionIds: ["pr-5", "pr-6", "pr-7"], discountAmount: 540_000, totalAmount: 1_410_000,
     paymentStatus: "PAID", payments: [{ id: "pm-1", type: "PAYMENT", amount: 1_410_000, method: "CASH", recordedAt: at(0, 9), recordedBy: "Linh Tran" }] }),
   booking({ id: "bk-3", sessionId: "se-2", customerId: "cu-4", quantity: 10, promotionIds: ["pr-2"], discountAmount: 100_000, totalAmount: 3_900_000 }),
-  booking({ id: "bk-4", sessionId: "se-3", customerId: "cu-3", quantity: 2, source: "WALK_IN" }),
+  booking({ id: "bk-4", guestName: "Hoa Pham", sessionId: "se-3", customerId: "cu-3", quantity: 2, source: "WALK_IN" }),
   booking({ id: "bk-5", sessionId: "se-5", customerId: "cu-1", quantity: 3, status: "CANCELLED", cancelReason: "Guest changed plans",
     promotionIds: ["pr-7"], discountAmount: 60_000, totalAmount: 1_140_000 }),
   // Upcoming sessions: these keep their promotions in use whatever the time of day.
@@ -256,7 +256,7 @@ export const bookings: Booking[] = [
   booking({ id: "bk-8", sessionId: "se-15", customerId: "cu-4", quantity: 6 }),
   // Two guests of the paused session se-11 (re-scheduling it emails the guest who has an email; the walk-in has none).
   booking({ id: "bk-9", sessionId: "se-11", customerId: "cu-1", quantity: 2 }),
-  booking({ id: "bk-10", sessionId: "se-11", customerId: "cu-3", quantity: 1, source: "WALK_IN" }),
+  booking({ id: "bk-10", guestName: "Nam Le", sessionId: "se-11", customerId: "cu-3", quantity: 1, source: "WALK_IN" }),
   // ---- More guests, for the sessions above ----
   // SES-0027 (taking place): one checked in and paid, two not yet.
   booking({ id: "bk-12", sessionId: "se-27", customerId: "cu-1", quantity: 2, status: "CHECKED_IN", checkedInAt: inMinutes(-25), paymentStatus: "PAID",
@@ -273,7 +273,7 @@ export const bookings: Booking[] = [
     payments: [{ id: "pm-3", type: "PAYMENT", amount: 800_000, method: "CASH", recordedAt: at(-1, 15), recordedBy: "Linh Tran" }] }),
   booking({ id: "bk-20", sessionId: "se-32", customerId: "cu-2", quantity: 1 }), // confirmed, never came
   booking({ id: "bk-21", sessionId: "se-32", customerId: "cu-4", quantity: 2, status: "CHECKED_IN", checkedInAt: at(-1, 14.1), statusBeforeCheckIn: "NOT_CONFIRMED" }),
-  booking({ id: "bk-22", sessionId: "se-32", customerId: "cu-3", quantity: 1, source: "WALK_IN" }),
+  booking({ id: "bk-22", guestName: "Ly Vo", sessionId: "se-32", customerId: "cu-3", quantity: 1, source: "WALK_IN" }),
   booking({ id: "bk-23", sessionId: "se-32", customerId: "cu-1", quantity: 1, status: "CANCELLED", cancelReason: "Schedule conflict" }),
   booking({ id: "bk-24", sessionId: "se-32", customerId: "cu-2", quantity: 1 }),
   // SES-0033 (paused when its time was over) and SES-0034 / SES-0039 (to come).
@@ -282,7 +282,7 @@ export const bookings: Booking[] = [
   booking({ id: "bk-27", sessionId: "se-34", customerId: "cu-1", quantity: 1 }),
   booking({ id: "bk-28", status: "NOT_CONFIRMED", sessionId: "se-39", customerId: "cu-4", quantity: 3 }),
   // A guest of the session taking place who was late: the booking was released, and the guest can still be checked in while there is room.
-  booking({ id: "bk-29", sessionId: "se-27", customerId: "cu-3", quantity: 1, source: "WALK_IN" }),
+  booking({ id: "bk-29", guestName: "Quan Do", sessionId: "se-27", customerId: "cu-3", quantity: 1, source: "WALK_IN" }),
   // ---- Closed sessions: closing one emails every guest who booked it except the one who cancelled (the walk-in has no email) ----
   // SES-0012 (closed for good by the owner).
   booking({ id: "bk-30", sessionId: "se-12", customerId: "cu-1", quantity: 2 }),
@@ -290,7 +290,7 @@ export const bookings: Booking[] = [
   booking({ id: "bk-32", sessionId: "se-12", customerId: "cu-4", quantity: 1, status: "CANCELLED", cancelReason: "The session was closed several times" }),
   // SES-0013 (closed, re-opened and closed again) and SES-0016 (closed by a system administrator).
   booking({ id: "bk-33", sessionId: "se-13", customerId: "cu-4", quantity: 2 }),
-  booking({ id: "bk-34", sessionId: "se-13", customerId: "cu-3", quantity: 1, source: "WALK_IN" }),
+  booking({ id: "bk-34", guestName: "Mai Tran", sessionId: "se-13", customerId: "cu-3", quantity: 1, source: "WALK_IN" }),
   booking({ id: "bk-35", sessionId: "se-16", customerId: "cu-1", quantity: 2 }),
   booking({ id: "bk-36", sessionId: "se-16", customerId: "cu-2", quantity: 2 }),
   booking({ id: "bk-37", sessionId: "se-16", customerId: "cu-4", quantity: 1, status: "CANCELLED", cancelReason: "Guest changed plans" }),
@@ -314,7 +314,7 @@ export const bookings: Booking[] = [
   booking({ id: "bk-51", sessionId: "se-46", customerId: "cu-6", quantity: 2, ...ci("se-46", 7) }),
   booking({ id: "bk-52", sessionId: "se-46", customerId: "cu-5", quantity: 1, ...ci("se-46", 8) }),
   booking({ id: "bk-53", sessionId: "se-46", customerId: "cu-9", quantity: 2, ...ci("se-46", 9) }),
-  booking({ id: "bk-54", sessionId: "se-46", customerId: "cu-3", quantity: 1, ...ci("se-46", 10), source: "WALK_IN" }),
+  booking({ id: "bk-54", guestName: "Tuan Ngo", sessionId: "se-46", customerId: "cu-3", quantity: 1, ...ci("se-46", 10), source: "WALK_IN" }),
   booking({ id: "bk-55", sessionId: "se-18", customerId: "cu-7", quantity: 2, ...ci("se-18", 11) }),
   booking({ id: "bk-56", sessionId: "se-18", customerId: "cu-8", quantity: 1, ...ci("se-18", 5) }),
   booking({ id: "bk-57", sessionId: "se-18", customerId: "cu-10", quantity: 2 }),
@@ -328,7 +328,7 @@ export const bookings: Booking[] = [
   booking({ id: "bk-65", sessionId: "se-23", customerId: "cu-11", quantity: 1, ...ci("se-23", 7), source: "PHONE" }),
   booking({ id: "bk-66", sessionId: "se-23", customerId: "cu-8", quantity: 1, source: "OTHER" }),
   booking({ id: "bk-67", sessionId: "se-24", customerId: "cu-7", quantity: 2, ...ci("se-24", 9) }),
-  booking({ id: "bk-68", sessionId: "se-24", customerId: "cu-3", quantity: 1, ...ci("se-24", 10), source: "WALK_IN" }),
+  booking({ id: "bk-68", guestName: "Chi Dang", sessionId: "se-24", customerId: "cu-3", quantity: 1, ...ci("se-24", 10), source: "WALK_IN" }),
   booking({ id: "bk-69", sessionId: "se-24", customerId: "cu-10", quantity: 2, status: "NOT_CONFIRMED" }),
   booking({ id: "bk-70", sessionId: "se-22", customerId: "cu-5", quantity: 1, ...ci("se-22", 5) }),
   booking({ id: "bk-71", sessionId: "se-1", customerId: "cu-8", quantity: 2, status: "NOT_CONFIRMED" }),

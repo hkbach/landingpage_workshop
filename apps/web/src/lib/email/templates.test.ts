@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { EMAIL_LANGS, EMAIL_LANG_NAMES, renderBookingConfirmation, renderPaymentReceived, renderSessionClosed, renderSessionRescheduled, type BookingConfirmationData } from "./templates";
+import { EMAIL_LANGS, EMAIL_LANG_NAMES, renderBookingConfirmation, renderBookingInfo, renderPaymentReceived, renderSessionClosed, renderSessionRescheduled, type BookingConfirmationData } from "./templates";
 
 // An email holds the same message in six languages, one after the other; nothing about the recipient chooses the language.
 
@@ -102,5 +102,21 @@ describe("the payment received email", () => {
     expect(mail.html).toContain("Your booking is now paid.");
     expect(mail.html).toContain("Pottery &lt;Wheel&gt; Basics");
     expect(mail.html).not.toContain("<a href=\"http");
+  });
+});
+
+describe("the booking information email (a booking the shop made)", () => {
+  const mail = renderBookingInfo({ guestName: "Tran Binh", shopName: "Clay & Co Studio", bookingCode: "SES-0007-001", workshopTitle: "Pottery <Wheel> Basics", startsAt: "2026-11-07T02:00:00Z", endsAt: "2026-11-07T04:00:00Z", timezone: "Asia/Ho_Chi_Minh", quantity: 2, totalAmount: 1_300_000, currency: "VND" });
+  it("is in the six languages with the details and the total to pay at the studio", () => {
+    expect([...mail.html.matchAll(/<section lang="([^"]+)"/g)].map((m) => m[1])).toEqual(["en", "vi", "th", "zh-Hans", "ko", "ja"]);
+    expect(mail.subject.split(" | ")).toHaveLength(6);
+    expect(mail.subject).toContain("Your booking SES-0007-001 is confirmed");
+    expect(mail.html).toContain("Total (pay at the studio)");
+    expect(mail.html).toContain("₫1,300,000");
+  });
+  it("says there is nothing to confirm, has no button or link, and escapes the title", () => {
+    expect(mail.html).toContain("there is nothing more to confirm");
+    expect(mail.html).not.toContain("<a href=\"http");
+    expect(mail.html).toContain("Pottery &lt;Wheel&gt; Basics");
   });
 });

@@ -62,7 +62,10 @@
     "required": "Trường này là bắt buộc.",
     "emailRequired": "Bắt buộc nhập email, trừ khi là khách vãng lai.",
     "emailInvalid": "Nhập địa chỉ email hợp lệ.",
-    "tooLong": "Nội dung này quá dài."
+    "tooLong": "Nội dung này quá dài.",
+    "sessionFull": "Session này không còn đủ chỗ cho booking này.",
+    "sessionClosed": "Session này không nhận booking nữa.",
+    "createFailed": "Không tạo được booking. Vui lòng thử lại."
   },
   "capacity": {
     "seats": "{reserved}/{capacity} chỗ",
@@ -235,7 +238,6 @@
     "title": "Đặt chỗ mới",
     "created": "Đã tạo đặt chỗ.",
     "code": "Mã đặt chỗ",
-    "simulated": "Chế độ demo: đặt chỗ này chỉ là mô phỏng và không được lưu.",
     "another": "Tạo thêm",
     "chooseSession": "Chọn một buổi",
     "startedNote": "Buổi này đã bắt đầu. Vẫn nhận khách vãng lai khi còn chỗ.",
@@ -243,7 +245,9 @@
     "estimate": "Tổng tạm tính: {total}",
     "estimateNote": "Giá cuối cùng do máy chủ tính.",
     "emailOptional": "Không bắt buộc với khách vãng lai. Nếu không có email, sẽ không gửi xác nhận.",
-    "submit": "Tạo đặt chỗ"
+    "submit": "Tạo đặt chỗ",
+    "emailSent": "Đã gửi email xác nhận tới {email}.",
+    "noEmailSent": "Chưa gửi email: khách không để lại email."
   },
   "finance": {
     "title": "Thu & chi",

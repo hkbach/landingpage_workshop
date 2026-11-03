@@ -88,6 +88,34 @@ export function renderBookingConfirmation(d: BookingConfirmationData): RenderedE
   })));
 }
 
+export type BookingInfoData = Omit<BookingConfirmationData, "confirmUrl">;
+
+/** The email sent to a guest the shop booked (walk-in, phone): the booking is already confirmed, so it only holds the details. */
+export function renderBookingInfo(d: BookingInfoData): RenderedEmail {
+  const T = {
+    subject: w("Your booking {code} is confirmed", "Booking {code} của bạn đã được xác nhận", "การจอง {code} ของคุณได้รับการยืนยันแล้ว", "您的预订 {code} 已确认", "예약 {code}이(가) 확정되었습니다", "ご予約 {code} が確定しました"),
+    intro: w(
+      "Thank you for booking at {shop}. {shop} has recorded your booking for you, so there is nothing more to confirm. The details are below.",
+      "Cảm ơn bạn đã đặt chỗ tại {shop}. {shop} đã ghi nhận booking cho bạn nên bạn không cần xác nhận thêm. Thông tin chi tiết ở bên dưới.",
+      "ขอบคุณที่จองกับ {shop} ทางร้านได้บันทึกการจองให้คุณแล้ว จึงไม่ต้องยืนยันเพิ่มเติม รายละเอียดอยู่ด้านล่าง",
+      "感谢您在 {shop} 预订。{shop} 已为您登记预订，无需再次确认。详情如下。",
+      "{shop}에 예약해 주셔서 감사합니다. {shop}에서 예약을 대신 등록했으므로 추가 확인은 필요하지 않습니다. 자세한 내용은 아래와 같습니다.",
+      "{shop}にご予約いただきありがとうございます。{shop}がご予約を登録しましたので、追加の確認は不要です。詳細は以下のとおりです。",
+    ),
+    footer: w("If anything looks wrong, please contact the studio.", "Nếu có sai sót, vui lòng liên hệ studio.", "หากมีสิ่งใดไม่ถูกต้อง โปรดติดต่อสตูดิโอ", "如有不符，请联系工作室。", "문제가 있으면 스튜디오로 문의해 주세요.", "誤りがある場合は、スタジオまでご連絡ください。"),
+  };
+  return compose(EMAIL_LANGS.map((lang): Section => ({
+    lang, subject: fill(T.subject[lang], { code: d.bookingCode }), greeting: fill(L.hello[lang], { name: d.guestName }),
+    paragraphs: [fill(T.intro[lang], { shop: d.shopName })],
+    rows: [
+      { label: L.code[lang], value: d.bookingCode }, { label: L.workshop[lang], value: d.workshopTitle },
+      { label: L.when[lang], value: range(d.startsAt, d.endsAt, d.timezone, lang) }, { label: L.guests[lang], value: String(d.quantity) },
+      { label: L.total[lang], value: formatMoney(d.totalAmount, d.currency, TAG[lang]) },
+    ],
+    footer: T.footer[lang],
+  })));
+}
+
 export interface PaymentReceivedData {
   guestName: string; shopName: string; bookingCode: string; workshopTitle: string; startsAt: string; endsAt: string; timezone: string;
   quantity: number; totalAmount: number; currency: string;

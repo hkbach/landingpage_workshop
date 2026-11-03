@@ -62,7 +62,10 @@
     "required": "This field is required.",
     "emailRequired": "Email is required unless the booking is a walk-in.",
     "emailInvalid": "Enter a valid email address.",
-    "tooLong": "This text is too long."
+    "tooLong": "This text is too long.",
+    "sessionFull": "This session has no free seats for this booking any more.",
+    "sessionClosed": "This session cannot take bookings any more.",
+    "createFailed": "The booking could not be created. Please try again."
   },
   "capacity": {
     "seats": "{reserved}/{capacity} seats",
@@ -235,7 +238,6 @@
     "title": "New booking",
     "created": "Booking created.",
     "code": "Booking code",
-    "simulated": "Demo mode: this booking is simulated and not saved.",
     "another": "Create another",
     "chooseSession": "Choose a session",
     "startedNote": "This session has already started. Walk-ins are allowed while seats remain.",
@@ -243,7 +245,9 @@
     "estimate": "Estimated total: {total}",
     "estimateNote": "The final price is calculated by the server.",
     "emailOptional": "Optional for walk-ins. Without an email, no confirmation is sent.",
-    "submit": "Create booking"
+    "submit": "Create booking",
+    "emailSent": "A confirmation email was sent to {email}.",
+    "noEmailSent": "No email was sent: the guest left none."
   },
   "finance": {
     "title": "Income & expenses",

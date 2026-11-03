@@ -62,7 +62,10 @@
     "required": "필수 입력 항목이에요.",
     "emailRequired": "현장 방문 예약이 아니면 이메일이 필요해요.",
     "emailInvalid": "올바른 이메일 주소를 입력해 주세요.",
-    "tooLong": "텍스트가 너무 길어요."
+    "tooLong": "텍스트가 너무 길어요.",
+    "sessionFull": "이 세션에는 이 예약을 받을 빈 자리가 더 이상 없습니다.",
+    "sessionClosed": "이 세션은 더 이상 예약을 받을 수 없습니다.",
+    "createFailed": "예약을 만들지 못했습니다. 다시 시도해 주세요."
   },
   "capacity": {
     "seats": "{reserved}/{capacity}석",
@@ -235,7 +238,6 @@
     "title": "새 예약",
     "created": "예약이 생성되었어요.",
     "code": "예약 코드",
-    "simulated": "데모 모드: 이 예약은 시뮬레이션이며 저장되지 않아요.",
     "another": "다른 예약 만들기",
     "chooseSession": "세션 선택",
     "startedNote": "이 세션은 이미 시작되었어요. 좌석이 남아 있으면 현장 방문을 받을 수 있어요.",
@@ -243,7 +245,9 @@
     "estimate": "예상 합계: {total}",
     "estimateNote": "최종 가격은 서버에서 계산돼요.",
     "emailOptional": "현장 방문은 선택 사항이에요. 이메일이 없으면 확인 메일이 발송되지 않아요.",
-    "submit": "예약 생성"
+    "submit": "예약 생성",
+    "emailSent": "{email}(으)로 확인 이메일을 보냈습니다.",
+    "noEmailSent": "이메일을 보내지 않았습니다. 손님이 이메일을 남기지 않았습니다."
   },
   "finance": {
     "title": "수입 및 지출",

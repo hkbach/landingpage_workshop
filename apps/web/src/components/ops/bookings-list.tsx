@@ -74,7 +74,7 @@ export function BookingsList({
     .filter((b) => {
       if (!q) return true;
       const c = customerOf(b.customerId);
-      return [b.bookingCode, c?.fullName, c?.email].some((v) => v?.toLowerCase().includes(q));
+      return [b.bookingCode, b.guestName, c?.fullName, c?.email].some((v) => v?.toLowerCase().includes(q));
     });
   const byPayment = base.filter((b) => !payment || b.paymentStatus === payment);
   const matching = byPayment.filter((b) => !status || b.status === status).sort((a, b) => a.startsAt.localeCompare(b.startsAt));
@@ -217,7 +217,7 @@ export function BookingsList({
                       <ShopLink href={`/shopowner/bookings/${b.id}`} className="font-mono font-medium underline-offset-4 hover:underline">{b.bookingCode}</ShopLink>
                     </TableCell>
                     <TableCell className="whitespace-normal break-words">
-                      <div className="font-medium">{c?.fullName ?? "-"}</div>
+                      <div className="font-medium">{b.guestName ?? c?.fullName ?? "-"}</div>
                       <div className="text-xs text-muted-foreground">{c?.email ?? t("common.noEmail")}</div>
                     </TableCell>
                     <TableCell className="whitespace-normal break-words">

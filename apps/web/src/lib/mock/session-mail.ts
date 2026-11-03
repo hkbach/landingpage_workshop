@@ -21,7 +21,7 @@ export function mailSessionRescheduled(sessionId: string, change: { oldStartsAt:
   const res: MailResult = { notified: 0, withoutEmail: 0 };
   for (const { booking: b, guest } of bookingsToTell(sessionId)) {
     if (!guest?.email) { res.withoutEmail++; continue; } // walk-in guests have no email
-    queueSessionRescheduled({ to: guest.email, locale: guest.preferredLocale, guestName: guest.fullName, shopName: currentShop.name, bookingCode: b.bookingCode, workshopTitle: b.workshopTitle, timezone: b.timezone, ...change });
+    queueSessionRescheduled({ to: guest.email, locale: guest.preferredLocale, guestName: b.guestName ?? guest.fullName, shopName: currentShop.name, bookingCode: b.bookingCode, workshopTitle: b.workshopTitle, timezone: b.timezone, ...change });
     res.notified++;
   }
   return res;
@@ -33,7 +33,7 @@ export function mailSessionClosed(sessionId: string, change: { startsAt: string;
   for (const { booking: b, guest } of bookingsToTell(sessionId)) {
     if (!guest?.email) { res.withoutEmail++; continue; }
     queueSessionClosed({
-      to: guest.email, locale: guest.preferredLocale, guestName: guest.fullName, shopName: currentShop.name, bookingCode: b.bookingCode, workshopTitle: b.workshopTitle, timezone: b.timezone,
+      to: guest.email, locale: guest.preferredLocale, guestName: b.guestName ?? guest.fullName, shopName: currentShop.name, bookingCode: b.bookingCode, workshopTitle: b.workshopTitle, timezone: b.timezone,
       startsAt: change.startsAt, endsAt: change.endsAt, auto: !change.reason, ...(change.reason ? { reason: change.reason } : {}),
     });
     res.notified++;

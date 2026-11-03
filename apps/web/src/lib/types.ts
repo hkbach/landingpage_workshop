@@ -55,6 +55,8 @@ export interface PaymentEntry {
 export interface Booking {
   id: string; bookingCode: string; sessionId: string; workshopId: string; customerId: string;
   source: BookingSource; quantity: number; status: BookingStatus; paymentStatus: PaymentStatus;
+  /** The name of the guest as it was typed when the booking was made. Each booking keeps its own; the customer (found by email) keeps one name. */
+  guestName?: string;
   unitPriceAmount: number; totalAmount: number; currency: string;
   workshopTitle: string; startsAt: string; endsAt: string; timezone: string;
   specialRequest?: string; cancelReason?: string; createdAt: string; payments: PaymentEntry[];
