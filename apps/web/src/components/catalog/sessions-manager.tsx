@@ -225,11 +225,13 @@ export function SessionsManager({
                           {s.status === "CLOSED" || s.status === "COMPLETED" ? (
                             // Nobody can be checked in after the session is closed, so the list is only viewed. A closed session has its payments confirmed
                             // (Confirm payment) and is then marked Completed (the Completed button shows the same list with a submit that locks the session).
-                            // A Completed session no longer changes: View booking, and the Completed button that shows its payments.
+                            // A Completed session no longer changes: only the Completed button, which shows its payments.
                             <>
-                              <Button size="sm" variant="outline" data-testid="view-bookings-button" onClick={() => setDialog({ kind: "checkin", id: s.id })}>
-                                <Eye aria-hidden="true" />{t("sessions.viewBooking")}
-                              </Button>
+                              {s.status === "CLOSED" ? (
+                                <Button size="sm" variant="outline" data-testid="view-bookings-button" onClick={() => setDialog({ kind: "checkin", id: s.id })}>
+                                  <Eye aria-hidden="true" />{t("sessions.viewBooking")}
+                                </Button>
+                              ) : null}
                               {s.status === "CLOSED" ? (
                                 <Button size="sm" data-testid="payment-button" onClick={() => setDialog({ kind: "payment", id: s.id })}>
                                   <BadgeCheck aria-hidden="true" />{t("sessions.confirmPayment")}
