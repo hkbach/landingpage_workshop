@@ -153,6 +153,9 @@ describe("priceBooking", () => {
   it("is unit price x quantity without a promotion", () => {
     expect(priceBooking({ ...base, promotions: [] })).toEqual({ ok: true, subtotal: 1_300_000, discounts: [], discount: 0, total: 1_300_000 });
   });
+  it("applies a promotion given twice only once", () => {
+    expect(priceBooking({ ...base, promotions: [pct("a", 40), pct("a", 40)] })).toMatchObject({ ok: true, discount: 520_000, total: 780_000 });
+  });
   it("takes a percentage off the whole booking", () => {
     expect(priceBooking({ ...base, promotions: [pct("a", 20, "SINGLE")] })).toMatchObject({ ok: true, discount: 260_000, total: 1_040_000 });
   });

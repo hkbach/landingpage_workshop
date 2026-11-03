@@ -417,9 +417,9 @@ function PromotionDialog({ form, setForm, today, shop, workshops, others, money,
     if (!parsed.success) return none;
     // Checked as if it ran: the Start button is what makes it run, and by then it must already be safe.
     const candidate = { id: form.id ?? "new", ...parsed.data, enabled: true, workshopIds: parsed.data.appliesTo === "ALL" ? [] : parsed.data.workshopIds };
-    const blocked = fullDiscountWorkshops(candidate, others, workshops);
-    return { full: blocked, risks: blocked.length > 0 ? [] : overBudgetWorkshops(candidate, others, workshops) };
-  }, [form, shop.currency, others, workshops]);
+    const blocked = fullDiscountWorkshops(candidate, others, workshops, today || undefined);
+    return { full: blocked, risks: blocked.length > 0 ? [] : overBudgetWorkshops(candidate, others, workshops, undefined, today || undefined) };
+  }, [form, shop.currency, others, workshops, today]);
 
   function submit(e: FormEvent) {
     e.preventDefault();

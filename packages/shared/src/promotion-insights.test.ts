@@ -132,6 +132,14 @@ describe("overBudgetWorkshops", () => {
     expect(overBudgetWorkshops(cand({ discountValue: 50 }), [], workshops, 50)).toHaveLength(2);
     expect(overBudgetWorkshops(cand({ discountValue: 49 }), [], workshops, 50)).toEqual([]);
   });
+  it("with today, a promotion that has ended does not count, and the days that are over are not looked at", () => {
+    const ended = p({ id: "old", discountValue: 50, startDate: "2026-11-01", endDate: "2026-11-05" });
+    const c = cand({ discountValue: 50, startDate: "2026-11-01", endDate: "2026-11-30" });
+    expect(fullDiscountWorkshops(c, [ended], workshops)).toHaveLength(2); // without today: both ran together on Nov 1-5
+    expect(fullDiscountWorkshops(c, [ended], workshops, TODAY)).toEqual([]); // on Nov 10 the other one is over
+    expect(fullDiscountWorkshops(c, [p({ id: "next", discountValue: 50, startDate: "2026-11-20" })], workshops, TODAY)).toHaveLength(2); // a later one still adds up
+    expect(overBudgetWorkshops(cand({ discountValue: 95, endDate: "2026-11-05" }), [], workshops, undefined, TODAY)).toEqual([]); // the candidate itself is over
+  });
 });
 
 describe("workshopPromotions", () => {

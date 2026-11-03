@@ -71,18 +71,21 @@ export interface OverBudgetWorkshop { workshopId: string; percent: number; promo
  * The workshops the `candidate` promotion covers that could reach `limitPercent` off (or more) once it runs next to the
  * promotions already there. Only promotions that are enabled and run on the same days count, and each day is looked at on its
  * own: promotions that never run together do not add up. `others` must not contain the candidate itself (when editing, leave
- * the saved version out). A paused candidate never warns.
+ * the saved version out). A paused candidate never warns. With `today` (YYYY-MM-DD of the shop), the days that are over do not
+ * count: a promotion that has ended no longer runs next to the candidate.
  */
 export function overBudgetWorkshops(
-  candidate: Budgeted, others: readonly Budgeted[], workshops: readonly { id: string; priceAmount: number }[], limitPercent = OVER_BUDGET_PERCENT,
+  candidate: Budgeted, others: readonly Budgeted[], workshops: readonly { id: string; priceAmount: number }[], limitPercent = OVER_BUDGET_PERCENT, today?: string,
 ): OverBudgetWorkshop[] {
   if (!candidate.enabled) return [];
+  const from = today && today > candidate.startDate ? today : candidate.startDate; // the first day still to come
+  if (from > candidate.endDate) return [];
   const out: OverBudgetWorkshop[] = [];
   for (const w of workshops) {
     if (!(w.priceAmount > 0) || !promotionAppliesTo(candidate, w.id)) continue;
-    const peers = [candidate, ...others.filter((o) => o.id !== candidate.id && o.enabled && promotionAppliesTo(o, w.id))];
+    const peers = [candidate, ...others.filter((o) => o.id !== candidate.id && o.enabled && o.endDate >= from && promotionAppliesTo(o, w.id))];
     // The set of running promotions only grows on a start date, so those days (inside the candidate's period) are enough.
-    const days = new Set([candidate.startDate, ...peers.map((p) => p.startDate).filter((d) => d > candidate.startDate && d <= candidate.endDate)]);
+    const days = new Set([from, ...peers.map((p) => p.startDate).filter((d) => d > from && d <= candidate.endDate)]);
     let worst: DeepestDiscount | null = null;
     for (const d of days) {
       const running = peers.filter((p) => p.startDate <= d && d <= p.endDate);
@@ -101,9 +104,9 @@ export function overBudgetWorkshops(
  * returns anything here must not be saved (or resumed). `others` must not contain the candidate itself.
  */
 export function fullDiscountWorkshops(
-  candidate: Budgeted, others: readonly Budgeted[], workshops: readonly { id: string; priceAmount: number }[],
+  candidate: Budgeted, others: readonly Budgeted[], workshops: readonly { id: string; priceAmount: number }[], today?: string,
 ): OverBudgetWorkshop[] {
-  return overBudgetWorkshops(candidate, others, workshops, FULL_DISCOUNT_PERCENT);
+  return overBudgetWorkshops(candidate, others, workshops, FULL_DISCOUNT_PERCENT, today);
 }
 
 // ---- per workshop ------------------------------------------------------------------------------------------------------------

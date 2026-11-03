@@ -67,14 +67,14 @@ export const promotionInputSchema = z
     description: localizedText(PROMOTION_DESCRIPTION_MAX),
     discountType: z.enum(DISCOUNT_TYPES, { error: "required" }),
     discountValue: z.number({ error: "valueInvalid" }).int("valueInvalid").positive("valueInvalid").max(FIXED_AMOUNT_MAX, "valueInvalid"),
-    imageUrl: z.string().max(500, "imageInvalid").refine((v) => v === "" || isHttpsUrl(v) || isPlatformMediaPath(v), "imageInvalid").optional(),
+    imageUrl: z.string().trim().max(500, "imageInvalid").refine((v) => v === "" || isHttpsUrl(v) || isPlatformMediaPath(v), "imageInvalid").optional(),
     // Required. Spaces at either end are allowed when typing and trimmed; a space inside, an accent or any special character is refused. Kept in capitals.
     code: z.string({ error: "codeRequired" }).trim().min(1, "codeRequired").regex(PROMOTION_CODE_RE, "codeInvalid").transform((c) => c.toUpperCase()),
     stacking: z.enum(STACKING_MODES, { error: "required" }),
     appliesTo: z.enum(["ALL", "SELECTED"], { error: "required" }),
-    workshopIds: z.array(z.string().min(1)).max(100),
-    startDate: z.string({ error: "dateInvalid" }).refine(isRealDate, "dateInvalid"),
-    endDate: z.string({ error: "dateInvalid" }).refine(isRealDate, "dateInvalid"),
+    workshopIds: z.array(z.string().trim().min(1)).max(100),
+    startDate: z.string({ error: "dateInvalid" }).trim().refine(isRealDate, "dateInvalid"),
+    endDate: z.string({ error: "dateInvalid" }).trim().refine(isRealDate, "dateInvalid"),
     enabled: z.boolean(),
   })
   .superRefine((v, ctx) => {
@@ -176,9 +176,11 @@ export function priceBooking(input: {
   unitPrice: number; quantity: number;
   promotions: readonly Pick<PromotionRecord, "id" | "discountType" | "discountValue" | "stacking">[];
 }): BookingPrice {
-  if (!canCombine(input.promotions)) return { ok: false, error: "NOT_COMBINABLE" };
+  // A promotion given twice is applied once.
+  const promotions = input.promotions.filter((p, i, all) => all.findIndex((q) => q.id === p.id) === i);
+  if (!canCombine(promotions)) return { ok: false, error: "NOT_COMBINABLE" };
   const subtotal = Math.max(0, input.unitPrice) * Math.max(0, input.quantity);
-  const ordered = [...input.promotions].sort((a, b) => (a.discountType === b.discountType ? 0 : a.discountType === "FIXED_AMOUNT" ? -1 : 1));
+  const ordered = [...promotions].sort((a, b) => (a.discountType === b.discountType ? 0 : a.discountType === "FIXED_AMOUNT" ? -1 : 1));
   let left = subtotal;
   const discounts: PriceLine[] = [];
   for (const p of ordered) {

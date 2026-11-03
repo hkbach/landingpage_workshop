@@ -48,7 +48,8 @@ export const isSessionBookable = (status: SessionStatus): boolean => status === 
  * with `autoClosed` set (so the screen can say it was closed automatically). A session the owner closed keeps no such flag.
  */
 export function closeIfEnded<T extends { status: SessionStatus; endsAt: string; autoClosed?: boolean; notes?: SessionNote[] }>(s: T, now: Date): T {
-  if (isSessionFinished(s.status) || new Date(s.endsAt).getTime() > now.getTime()) return s;
+  const end = new Date(s.endsAt).getTime();
+  if (isSessionFinished(s.status) || Number.isNaN(end) || end > now.getTime()) return s; // a time that cannot be read closes nothing
   // The automatic close is one more note of the history of the session (at the time its time was over).
   return { ...s, status: "CLOSED", autoClosed: true, notes: withNote(s.notes, { type: "AUTO_CLOSED", at: s.endsAt }) };
 }
@@ -196,7 +197,7 @@ export const closedForGood = (s: { status: SessionStatus; notes?: readonly Sessi
 export const wasRescheduled = (notes?: readonly SessionNote[]): boolean => rescheduleCount(notes) > 0;
 
 /** The notes in the order they happened (oldest first). */
-export const notesInOrder = (notes?: readonly SessionNote[]): SessionNote[] => [...(notes ?? [])].sort((a, b) => a.at.localeCompare(b.at));
+export const notesInOrder = (notes?: readonly SessionNote[]): SessionNote[] => [...(notes ?? [])].sort((a, b) => Date.parse(a.at) - Date.parse(b.at)); // by the time itself: the texts may be in different ISO forms
 
 /** The notes with one more at the end: the earlier ones are kept. */
 export const withNote = (notes: readonly SessionNote[] | undefined, note: SessionNote): SessionNote[] => [...(notes ?? []), note];

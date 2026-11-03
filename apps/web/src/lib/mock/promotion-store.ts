@@ -147,7 +147,7 @@ function pauseBlockers(promotionId: string): string[] {
 
 /** Workshops a promotion would make free (empty when it is fine). */
 function freeWorkshops(candidate: PromotionRecord, others: readonly PromotionRecord[]): string[] {
-  return fullDiscountWorkshops(candidate, others, workshops).map((r) => r.workshopId);
+  return fullDiscountWorkshops(candidate, others, workshops, shopToday()).map((r) => r.workshopId);
 }
 
 /** A platform image must exist (it was uploaded); an https URL or no image is always fine. */

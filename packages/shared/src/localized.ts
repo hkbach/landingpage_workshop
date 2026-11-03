@@ -31,7 +31,8 @@ export function mergeLegacyChineseKeys<T>(value: T): T {
     const src = value as Record<string, unknown>;
     const out: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(src)) {
-      if (k !== LEGACY_CHINESE_KEY) out[k] = mergeLegacyChineseKeys(v);
+      // "__proto__" would replace the prototype of `out` instead of making a key: it is dropped, as trimDeep does.
+      if (k !== LEGACY_CHINESE_KEY && k !== "__proto__") out[k] = mergeLegacyChineseKeys(v);
     }
     if (LEGACY_CHINESE_KEY in src) {
       const legacy = mergeLegacyChineseKeys(src[LEGACY_CHINESE_KEY]);

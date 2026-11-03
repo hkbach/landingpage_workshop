@@ -116,7 +116,7 @@ export function filterLedger(rows: readonly LedgerRow[], months: readonly string
   const set = new Set(months);
   return rows
     .filter((r) => set.has(monthKey(r.occurredAt, timeZone)) && (!kind || r.kind === kind))
-    .sort((a, b) => b.occurredAt.localeCompare(a.occurredAt) || a.id.localeCompare(b.id));
+    .sort((a, b) => Date.parse(b.occurredAt) - Date.parse(a.occurredAt) || a.id.localeCompare(b.id));
 }
 
 /** One point of the monthly chart: `expense` is the fees and `net` the profit. */
@@ -161,7 +161,7 @@ export function checkDateRange(from: string, to: string): "OK" | "REQUIRED" | "I
 export function filterLedgerRange(rows: readonly LedgerRow[], from: string, to: string, timeZone: string, kind?: LedgerRow["kind"]): LedgerRow[] {
   return rows
     .filter((r) => { const d = dayKeyOf(r.occurredAt, timeZone); return d >= from && d <= to && (!kind || r.kind === kind); })
-    .sort((a, b) => b.occurredAt.localeCompare(a.occurredAt) || a.id.localeCompare(b.id));
+    .sort((a, b) => Date.parse(b.occurredAt) - Date.parse(a.occurredAt) || a.id.localeCompare(b.id));
 }
 
 export interface LedgerSeries { unit: "day" | "month"; points: MonthPoint[] }

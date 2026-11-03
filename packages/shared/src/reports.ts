@@ -74,7 +74,7 @@ export function filterReports(reports: readonly ReportRecord[], f: ReportFilter)
     (!q || r.description.toLowerCase().includes(q) || (r.reporterEmail ?? "").toLowerCase().includes(q) || r.shopSlug.toLowerCase().includes(q)),
   );
   const dir = f.sort === "oldest" ? 1 : -1;
-  return rows.sort((a, b) => dir * a.createdAt.localeCompare(b.createdAt));
+  return rows.sort((a, b) => dir * (Date.parse(a.createdAt) - Date.parse(b.createdAt)));
 }
 
 export interface ReportCounts { total: number; OPEN: number; RESOLVED: number; DISMISSED: number }
