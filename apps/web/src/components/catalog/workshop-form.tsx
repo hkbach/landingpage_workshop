@@ -3,14 +3,13 @@
 import { useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { z } from "zod";
-import { Archive, ImageOff, Plus, Trash2, TriangleAlert } from "lucide-react";
+import { ImageOff, Plus, Trash2, TriangleAlert } from "lucide-react";
 import {
   LOCALES, formatMoney, minorDigits, missingLocales, trimDeep,
   type Locale, type Localized, type WorkshopStatus,
 } from "@workshop/shared";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Field } from "@/components/ops/field";
@@ -63,13 +62,11 @@ export function WorkshopForm({
   onSaved?: () => void; onCancel?: () => void;
 }) {
   const t = useTranslations("catalog");
-  const tops = useTranslations("ops");
   const locale = useLocale();
   const [d, setD] = useState<Draft>(() => toDraft(workshop, shop.currency));
   const [lang, setLang] = useEditingLanguage(shop.enabledLocales, shop.defaultLocale);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saved, setSaved] = useState(false);
-  const [archiveOpen, setArchiveOpen] = useState(false);
   const [initialPrice] = useState(d.price);
   const [version, setVersion] = useState(0); // bumped when the data is saved: what is saved is the new starting point
   const dirty = useDirty(d, version);
@@ -117,12 +114,6 @@ export function WorkshopForm({
     setSaved(true); setVersion((v) => v + 1);
     onStatusChange?.(d.status);
     onSaved?.();
-  }
-
-  function archive() {
-    setD((p) => ({ ...p, status: "ARCHIVED" }));
-    setArchiveOpen(false); setSaved(true); setVersion((v) => v + 1);
-    onStatusChange?.("ARCHIVED");
   }
 
   const err = (k: string) => (errors[k] ? t(errors[k]) : undefined);
@@ -265,28 +256,10 @@ export function WorkshopForm({
         ) : (
           <ShopLink href="/shopowner/workshops" className={buttonVariants({ variant: "outline" })}>{t("form.back")}</ShopLink>
         )}
-        {workshop && d.status !== "ARCHIVED" ? (
-          <Button type="button" variant="destructive" onClick={() => setArchiveOpen(true)}>
-            <Archive aria-hidden="true" />
-            {t("form.archive")}
-          </Button>
-        ) : null}
       </div>
       <p role="status" className="text-sm text-emerald-800 empty:hidden">{saved ? t("form.savedSim") : ""}</p>
       {Object.values(errors).some(Boolean) ? <p role="alert" className="text-sm text-destructive">{t("form.fixErrors")}</p> : null}
 
-      <Dialog open={archiveOpen} onOpenChange={setArchiveOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t("form.archiveTitle")}</DialogTitle>
-            <DialogDescription>{t("form.archiveHint")}</DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setArchiveOpen(false)}>{tops("common.back")}</Button>
-            <Button type="button" variant="destructive" onClick={archive}>{t("form.archiveConfirm")}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </form>
   );
 }
