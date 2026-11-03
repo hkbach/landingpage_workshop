@@ -116,7 +116,7 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
       // Closing before the start needs a reason: a basic one, or OTHER with a text.
       const reason = action === "close" ? checkCloseReason(closeReason?.code ?? "", closeReason?.note ?? "") : null;
       if (reason && !reason.ok) return false;
-      setSessions((list) => list.map((x) => (x.id === id ? { ...x, ...next, ...(reason?.ok ? { closeReason: reason.reason } : {}) } : x)));
+      setSessions((list) => list.map((x) => (x.id === id ? { ...x, ...next, ...(reason?.ok ? { closeReason: reason.reason, closedAt: now.toISOString() } : {}) } : x)));
       return true;
     },
     [sessions, now],
@@ -135,7 +135,7 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
       const why = checkCloseReason(reason.code, reason.note ?? "");
       if (!checked.ok) return { ok: false, error: checked.error };
       if (!why.ok) return { ok: false, error: "NOT_PAUSED" };
-      setSessions((list) => list.map((x) => (x.id === id ? { ...x, startsAt: checked.startsAt, endsAt: checked.endsAt, rescheduleReason: why.reason } : x)));
+      setSessions((list) => list.map((x) => (x.id === id ? { ...x, startsAt: checked.startsAt, endsAt: checked.endsAt, rescheduleReason: why.reason, rescheduledAt: now.toISOString() } : x)));
       const moved = bookings.filter((b) => b.sessionId === id && b.status === "CONFIRMED");
       setBookings((list) => list.map((b) => (b.sessionId === id ? { ...b, startsAt: checked.startsAt, endsAt: checked.endsAt } : b)));
       return { ok: true, oldStartsAt: s.startsAt, startsAt: checked.startsAt, endsAt: checked.endsAt, reason: why.reason, moved };

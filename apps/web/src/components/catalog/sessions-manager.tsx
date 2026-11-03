@@ -39,6 +39,8 @@ export function SessionsManager({
   const [dialog, setDialog] = useState<{ kind: "add" } | { kind: "capacity" | "close" | "reschedule"; id: string } | null>(null);
 
   const displayLocale = useDisplayLocale(shop);
+  /** The date of a note ("Nov 12, 2026"), in the time zone of the shop. */
+  const dateText = (iso: string) => new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: shop.timezone }).format(new Date(iso));
   const title = (id: string) => pickLocalized(workshops.find((w) => w.id === id)?.title, displayLocale, shop.defaultLocale);
   const filtered = useMemo(
     () =>
@@ -128,15 +130,15 @@ export function SessionsManager({
                       </div>
                       <CapacityBar reserved={s.reservedCount} capacity={s.capacity} />
                       <p className="text-xs text-muted-foreground" data-testid="session-cutoff">{t("sessions.cutoffInfo", { minutes: s.bookingCutoffMinutes })}</p>
-                      {s.autoClosed ? <p className="text-xs text-muted-foreground" data-testid="auto-closed-note">{t("sessions.autoClosedNote")}</p> : null}
+                      {s.autoClosed ? <p className="text-xs text-muted-foreground" data-testid="auto-closed-note">{dateText(s.endsAt)} - {t("sessions.autoClosedNote")}</p> : null}
                       {s.rescheduleReason ? (
                         <p className="text-xs text-muted-foreground" data-testid="reschedule-reason">
-                          {t("sessions.rescheduledBecause")}: {s.rescheduleReason.code === "OTHER" ? s.rescheduleReason.note : t(`sessions.closeReasons.${s.rescheduleReason.code}`)}
+                          {s.rescheduledAt ? `${dateText(s.rescheduledAt)} - ` : ""}{t("sessions.rescheduledBecause")}: {s.rescheduleReason.code === "OTHER" ? s.rescheduleReason.note : t(`sessions.closeReasons.${s.rescheduleReason.code}`)}
                         </p>
                       ) : null}
                       {s.closeReason ? (
                         <p className="text-xs text-muted-foreground" data-testid="close-reason">
-                          {t("sessions.closedBecause")}: {s.closeReason.code === "OTHER" ? s.closeReason.note : t(`sessions.closeReasons.${s.closeReason.code}`)}
+                          {s.closedAt ? `${dateText(s.closedAt)} - ` : ""}{t("sessions.closedBecause")}: {s.closeReason.code === "OTHER" ? s.closeReason.note : t(`sessions.closeReasons.${s.closeReason.code}`)}
                         </p>
                       ) : null}
                       {s.status !== "CLOSED" ? (
