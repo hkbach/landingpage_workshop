@@ -5,16 +5,17 @@ import { allowedSessionActions, applySessionAction, DEFAULT_BOOKING_CUTOFF_MINUT
 const s = (status: SessionState["status"], hasRun = true): SessionState => ({ status, hasRun });
 
 describe("session statuses", () => {
-  it("are paused, running, cancelled and closed", () => expect([...SESSION_STATUSES]).toEqual(["PAUSED", "RUNNING", "CANCELLED", "CLOSED"]));
+  it("are open, paused, running, cancelled and closed", () => expect([...SESSION_STATUSES]).toEqual(["OPEN", "PAUSED", "RUNNING", "CANCELLED", "CLOSED"]));
 });
 
 describe("allowedSessionActions", () => {
-  it("a paused session can be started or closed", () => expect(allowedSessionActions(s("PAUSED", false), true)).toEqual(["start", "close"]));
+  it("a new (open) session can be started or closed", () => expect(allowedSessionActions(s("OPEN", false), false)).toEqual(["start", "close"]));
+  it("a paused session can be started or closed", () => expect(allowedSessionActions(s("PAUSED", true), true)).toEqual(["start", "close"]));
   it("a running session can be paused", () => expect(allowedSessionActions(s("RUNNING"), true)).toEqual(["pause"]));
   it("only a session that has run and has no bookings can be cancelled", () => {
     expect(allowedSessionActions(s("RUNNING"), false)).toEqual(["pause", "cancel"]);
     expect(allowedSessionActions(s("PAUSED", true), false)).toEqual(["start", "close", "cancel"]);
-    expect(allowedSessionActions(s("PAUSED", false), false)).toEqual(["start", "close"]); // never ran
+    expect(allowedSessionActions(s("OPEN", false), false)).toEqual(["start", "close"]); // never ran
     expect(allowedSessionActions(s("RUNNING"), true)).not.toContain("cancel"); // has bookings
   });
   it("closed and cancelled sessions are final", () => {
@@ -25,7 +26,7 @@ describe("allowedSessionActions", () => {
 
 describe("applySessionAction", () => {
   it("starting sets the status and remembers that the session has run", () => {
-    expect(applySessionAction(s("PAUSED", false), "start", false)).toEqual({ status: "RUNNING", hasRun: true });
+    expect(applySessionAction(s("OPEN", false), "start", false)).toEqual({ status: "RUNNING", hasRun: true });
   });
   it("pausing keeps hasRun, and a paused session that ran can be cancelled", () => {
     expect(applySessionAction(s("RUNNING"), "pause", true)).toEqual({ status: "PAUSED", hasRun: true });
@@ -34,7 +35,7 @@ describe("applySessionAction", () => {
   it("returns null for an action that is not allowed", () => {
     expect(applySessionAction(s("RUNNING"), "close", false)).toBeNull();
     expect(applySessionAction(s("CLOSED"), "start", false)).toBeNull();
-    expect(applySessionAction(s("PAUSED", false), "cancel", false)).toBeNull();
+    expect(applySessionAction(s("OPEN", false), "cancel", false)).toBeNull();
   });
 });
 

@@ -171,7 +171,7 @@
     "allStatuses": "All statuses",
     "start": "Start",
     "pause": "Pause",
-    "statusNote": "New sessions are Paused. Start makes a session Running, so guests can book it. Pause stops new bookings. Close (from Paused) ends the session for good. Cancel is only for a session that has run and has no bookings.",
+    "statusNote": "New sessions are Open. Start makes a session Running, so guests can book it. Pause stops new bookings. Close (from Open or Paused) ends the session for good. Cancel is only for a session that has run and has no bookings.",
     "cutoff": "Booking cut-off (minutes before start)",
     "cutoffHint": "Online booking closes this many minutes before the session starts. Use 0 to close it when the session starts.",
     "cutoffInfo": "Booking closes {minutes, plural, one {# minute} other {# minutes}} before start"

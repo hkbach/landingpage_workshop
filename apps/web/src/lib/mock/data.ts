@@ -70,10 +70,10 @@ export const sessions: Session[] = [
   { id: "se-4", workshopId: "ws-1", startsAt: at(1, 14), endsAt: at(1, 16), capacity: 8, reservedCount: 0, status: "CLOSED", hasRun: true, bookingCutoffMinutes: 120 },
   { id: "se-5", workshopId: "ws-2", startsAt: at(2, 10), endsAt: at(2, 11.5), capacity: 10, reservedCount: 2, status: "RUNNING", hasRun: true, bookingCutoffMinutes: 180 },
   { id: "se-6", workshopId: "ws-1", startsAt: at(3, 9), endsAt: at(3, 11), capacity: 8, reservedCount: 0, status: "CANCELLED", hasRun: true, bookingCutoffMinutes: 120, cancelReason: "Instructor unavailable" },
-  // More demo sessions, one of each situation of the Sessions page: new (Paused, never ran), Running without bookings (can be cancelled),
+  // More demo sessions, one of each situation of the Sessions page: new (Open, never ran), Running without bookings (can be cancelled),
   // Paused after it ran, Closed, Cancelled and a sold-out Running session with a booking.
-  { id: "se-7", workshopId: "ws-1", startsAt: at(4, 9), endsAt: at(4, 11), capacity: 8, reservedCount: 0, status: "PAUSED", hasRun: false, bookingCutoffMinutes: 60 },
-  { id: "se-8", workshopId: "ws-2", startsAt: at(4, 14), endsAt: at(4, 15.5), capacity: 10, reservedCount: 0, status: "PAUSED", hasRun: false, bookingCutoffMinutes: 120 },
+  { id: "se-7", workshopId: "ws-1", startsAt: at(4, 9), endsAt: at(4, 11), capacity: 8, reservedCount: 0, status: "OPEN", hasRun: false, bookingCutoffMinutes: 60 },
+  { id: "se-8", workshopId: "ws-2", startsAt: at(4, 14), endsAt: at(4, 15.5), capacity: 10, reservedCount: 0, status: "OPEN", hasRun: false, bookingCutoffMinutes: 120 },
   { id: "se-9", workshopId: "ws-1", startsAt: at(5, 9), endsAt: at(5, 11), capacity: 8, reservedCount: 0, status: "RUNNING", hasRun: true, bookingCutoffMinutes: 1440 },
   { id: "se-10", workshopId: "ws-2", startsAt: at(5, 10), endsAt: at(5, 11.5), capacity: 10, reservedCount: 0, status: "RUNNING", hasRun: true, bookingCutoffMinutes: 120 },
   { id: "se-11", workshopId: "ws-1", startsAt: at(6, 14), endsAt: at(6, 16), capacity: 8, reservedCount: 0, status: "PAUSED", hasRun: true, bookingCutoffMinutes: 120 },
@@ -81,7 +81,7 @@ export const sessions: Session[] = [
   { id: "se-13", workshopId: "ws-1", startsAt: at(7, 9), endsAt: at(7, 11), capacity: 8, reservedCount: 0, status: "CANCELLED", hasRun: true, bookingCutoffMinutes: 120, cancelReason: "Studio maintenance" },
   { id: "se-14", workshopId: "ws-2", startsAt: at(7, 14), endsAt: at(7, 15.5), capacity: 10, reservedCount: 0, status: "CANCELLED", hasRun: true, bookingCutoffMinutes: 120, cancelReason: "Not enough guests" },
   { id: "se-15", workshopId: "ws-1", startsAt: at(8, 10), endsAt: at(8, 12), capacity: 6, reservedCount: 6, status: "RUNNING", hasRun: true, bookingCutoffMinutes: 30 },
-  { id: "se-16", workshopId: "ws-2", startsAt: at(9, 10), endsAt: at(9, 11.5), capacity: 12, reservedCount: 0, status: "PAUSED", hasRun: false, bookingCutoffMinutes: 240 },
+  { id: "se-16", workshopId: "ws-2", startsAt: at(9, 10), endsAt: at(9, 11.5), capacity: 12, reservedCount: 0, status: "OPEN", hasRun: false, bookingCutoffMinutes: 240 },
   { id: "se-17", workshopId: "ws-1", startsAt: at(10, 9), endsAt: at(10, 11), capacity: 8, reservedCount: 0, status: "RUNNING", hasRun: true, bookingCutoffMinutes: 120 },
 ];
 

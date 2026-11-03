@@ -143,7 +143,7 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
   }, [sessions, sessionHasBookings]);
 
   const addSession = useCallback((s: Omit<Session, "id" | "reservedCount" | "status" | "hasRun">) => {
-    setSessions((list) => [...list, { ...s, id: nextId("se"), reservedCount: 0, status: "PAUSED", hasRun: false }]); // a new session is paused: Start makes it bookable
+    setSessions((list) => [...list, { ...s, id: nextId("se"), reservedCount: 0, status: "OPEN", hasRun: false }]); // a new session is open (not running): Start makes it bookable
   }, []);
 
   const addBooking = useCallback((b: Booking) => {

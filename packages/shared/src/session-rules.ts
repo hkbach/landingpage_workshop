@@ -1,9 +1,10 @@
 import type { SessionStatus } from "./enums";
 
 // Life cycle of a session (shop owner, Sessions page):
-//   PAUSED --start--> RUNNING --pause--> PAUSED --close--> CLOSED
+//   OPEN --start--> RUNNING --pause--> PAUSED --start--> RUNNING
+//   OPEN or PAUSED --close--> CLOSED
 //   PAUSED or RUNNING --cancel--> CANCELLED, only for a session that has run and has no bookings.
-// A new session is PAUSED. Only a RUNNING session can be booked by guests. CLOSED and CANCELLED are final.
+// A new session is OPEN (created, not running yet). Only a RUNNING session can be booked by guests. CLOSED and CANCELLED are final.
 
 /** Booking cut-off of a session: minutes before it starts at which online booking closes (0 = when it starts). */
 export const DEFAULT_BOOKING_CUTOFF_MINUTES = 120;
@@ -29,7 +30,7 @@ export const SESSION_ACTION_TARGET: Record<SessionAction, SessionStatus> = {
 /** The actions the owner may take now. `hasBookings`: a booking that is not cancelled exists for the session. */
 export function allowedSessionActions(s: SessionState, hasBookings: boolean): SessionAction[] {
   const out: SessionAction[] = [];
-  if (s.status === "PAUSED") out.push("start", "close");
+  if (s.status === "OPEN" || s.status === "PAUSED") out.push("start", "close");
   if (s.status === "RUNNING") out.push("pause");
   if ((s.status === "PAUSED" || s.status === "RUNNING") && s.hasRun && !hasBookings) out.push("cancel");
   return out;

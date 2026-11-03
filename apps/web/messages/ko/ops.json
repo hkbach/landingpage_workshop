@@ -24,6 +24,7 @@
     "PARTIALLY_REFUNDED": "일부 환불"
   },
   "sessionStatus": {
+    "OPEN": "열림",
     "PAUSED": "일시중지",
     "RUNNING": "진행 중",
     "CLOSED": "마감",

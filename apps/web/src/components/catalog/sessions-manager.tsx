@@ -117,7 +117,7 @@ export function SessionsManager({
                       <CapacityBar reserved={s.reservedCount} capacity={s.capacity} />
                       <p className="text-xs text-muted-foreground" data-testid="session-cutoff">{t("sessions.cutoffInfo", { minutes: s.bookingCutoffMinutes })}</p>
                       {cancelled && s.cancelReason ? <p className="text-xs text-muted-foreground">{t("sessions.cancelReasonLabel")}: {s.cancelReason}</p> : null}
-                      {actions.length > 0 || s.status === "RUNNING" || s.status === "PAUSED" ? (
+                      {actions.length > 0 || s.status === "RUNNING" || s.status === "PAUSED" || s.status === "OPEN" ? (
                         <div className="flex flex-wrap gap-1.5">
                           {actions.includes("start") ? (
                             <Button size="sm" variant="outline" onClick={() => ops.sessionAction(s.id, "start")}><Play aria-hidden="true" />{t("sessions.start")}</Button>
