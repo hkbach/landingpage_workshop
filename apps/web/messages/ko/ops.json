@@ -176,7 +176,11 @@
     "details": "상세",
     "locale": "선호 언어",
     "history": "예약 내역",
-    "noHistory": "이 고객은 예약 내역이 없어요."
+    "noHistory": "이 고객은 예약 내역이 없어요.",
+    "showBookings": "{name}님의 예약 보기",
+    "hideBookings": "{name}님의 예약 숨기기",
+    "viewCustomer": "고객 페이지 열기",
+    "count2": "{count, plural, other {예약 #건}}"
   },
   "newBooking": {
     "title": "새 예약",

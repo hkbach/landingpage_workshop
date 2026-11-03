@@ -176,7 +176,11 @@
     "details": "详情",
     "locale": "首选语言",
     "history": "预订历史",
-    "noHistory": "该客户暂无预订。"
+    "noHistory": "该客户暂无预订。",
+    "showBookings": "显示 {name} 的预订",
+    "hideBookings": "隐藏 {name} 的预订",
+    "viewCustomer": "打开客户页面",
+    "count2": "{count, plural, other {# 个预订}}"
   },
   "newBooking": {
     "title": "新建预订",

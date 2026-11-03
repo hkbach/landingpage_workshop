@@ -470,6 +470,7 @@ Browser ────────────────────────
 
 **FR-CUST-01 – Khách hàng (Must)**
 - Danh sách customer của shop, chi tiết và lịch sử booking. Tìm theo tên/email.
+- **Danh sách customer lấy từ các booking:** chỉ hiển thị khách đã có ít nhất một booking (thông tin khách là thông tin nhập khi booking), sắp theo booking gần nhất; mỗi dòng có tên, email, quốc gia, số booking, booking gần nhất, tổng đã thu ròng. **Bấm vào một dòng (hoặc nút mũi tên ở đầu dòng) để mở danh sách mọi booking khách đó từng đặt** (kể cả booking đã hủy), mới nhất trước: mã booking (link tới booking), workshop, thời gian session, trạng thái, thanh toán, tổng tiền; bấm lần nữa để đóng, mở được nhiều khách cùng lúc; bàn phím dùng nút mũi tên (`aria-expanded`). Có link tới trang chi tiết customer.
 - Customer thuộc riêng từng shop; không gộp giữa các shop.
 - Should: export CSV; xóa/ẩn danh customer theo yêu cầu (quyền riêng tư).
 

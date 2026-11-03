@@ -176,7 +176,11 @@
     "details": "Chi tiết",
     "locale": "Ngôn ngữ ưa thích",
     "history": "Lịch sử đặt chỗ",
-    "noHistory": "Khách hàng này chưa có đặt chỗ nào."
+    "noHistory": "Khách hàng này chưa có đặt chỗ nào.",
+    "showBookings": "Xem các booking của {name}",
+    "hideBookings": "Ẩn các booking của {name}",
+    "viewCustomer": "Mở trang khách hàng",
+    "count2": "{count, plural, other {# booking}}"
   },
   "newBooking": {
     "title": "Đặt chỗ mới",

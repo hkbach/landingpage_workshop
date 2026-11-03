@@ -176,7 +176,11 @@
     "details": "詳細",
     "locale": "希望言語",
     "history": "予約履歴",
-    "noHistory": "この顧客の予約はありません。"
+    "noHistory": "この顧客の予約はありません。",
+    "showBookings": "{name}様の予約を表示",
+    "hideBookings": "{name}様の予約を非表示",
+    "viewCustomer": "顧客ページを開く",
+    "count2": "{count, plural, other {予約#件}}"
   },
   "newBooking": {
     "title": "新規予約",

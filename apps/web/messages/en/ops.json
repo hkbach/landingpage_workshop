@@ -176,7 +176,11 @@
     "details": "Details",
     "locale": "Preferred language",
     "history": "Booking history",
-    "noHistory": "This customer has no bookings."
+    "noHistory": "This customer has no bookings.",
+    "showBookings": "Show the bookings of {name}",
+    "hideBookings": "Hide the bookings of {name}",
+    "viewCustomer": "Open customer page",
+    "count2": "{count, plural, one {# booking} other {# bookings}}"
   },
   "newBooking": {
     "title": "New booking",
