@@ -1,13 +1,21 @@
 // SERVER-ONLY: the bookings as the mock backend knows them, until apps/api exists. The demo rows, plus the bookings guests make on the landing page
 // (they start NOT_CONFIRMED and become CONFIRMED when the guest opens the link of the email), plus the status changes the ops screens make (cancel,
 // check-in, ...: they are sent here so they survive a reload and the promotion rules can see them). Lives on globalThis like the other mock stores.
-import { eligiblePromotions, isSessionFinished, nextBookingCode, priceBooking, type BookingStatus, type BookingUse } from "@workshop/shared";
+import { closeIfEnded, eligiblePromotions, isSessionBookable, isSessionFinished, nextBookingCode, priceBooking, type BookingStatus, type BookingUse } from "@workshop/shared";
 import { computePaymentStatus, confirmation, netPaid, reservedSeats, type PreCheckInStatus } from "@/lib/booking-state";
-import type { Booking, Customer, PaymentEntry } from "@/lib/types";
+import type { Booking, Customer, PaymentEntry, Session } from "@/lib/types";
 import { newUuid } from "@/lib/uuid";
 import { bookings as seed, currentShop, customers as seedCustomers, sessions, workshops } from "./data";
 import { queueBookingCancelled, queueBookingConfirmation, queueBookingInfo, queueShopBookingNotice } from "./outbox-store";
 import { allPromotions, shopToday } from "./promotion-store";
+import { withAdminChanges } from "./session-admin-store";
+import { withWorkshopStatus } from "./workshop-status-store";
+
+/** A session as the server knows it now: an administrator's close or reopen counts, and a session whose time is over is Closed. */
+export function liveSession(id: string, now: Date = new Date()): Session | undefined {
+  const s = withAdminChanges(sessions).find((x) => x.id === id);
+  return s && closeIfEnded(s, now);
+}
 
 interface Change { status: BookingStatus; cancelReason?: string; cancelledBy?: "SHOP" | "GUEST"; checkedInAt?: string; statusBeforeCheckIn?: PreCheckInStatus }
 interface Store {
@@ -72,6 +80,7 @@ export function liveBookings(): Booking[] {
 export function recordPaid(id: string, paid: boolean, by: string, now: Date = new Date()): boolean {
   const b = liveBookings().find((x) => x.id === id);
   if (!b || b.totalAmount <= 0 || b.status === "CANCELLED") return false; // a cancelled booking takes no payment
+  if (liveSession(b.sessionId, now)?.status === "COMPLETED") return false; // a completed session is final: its payments no longer change
   const net = netPaid(b.payments);
   if (paid ? b.paymentStatus === "PAID" : b.paymentStatus === "UNPAID") return true;
   const entry: PaymentEntry = {
@@ -160,10 +169,10 @@ export type ManualBookingResult =
  * The price is the server's (no promotions). The customer is found by email, or made; the booking keeps the name that was typed.
  */
 export function createManualBooking(input: ManualBookingInput, now: Date = new Date()): ManualBookingResult {
-  const session = sessions.find((s) => s.id === input.sessionId);
+  const session = liveSession(input.sessionId, now);
   const workshop = session && workshops.find((w) => w.id === session.workshopId);
   if (!session || !workshop) return { ok: false, code: "UNKNOWN_SESSION" };
-  if (session.status !== "RUNNING" || Date.parse(session.endsAt) <= now.getTime()) return { ok: false, code: "SESSION_CLOSED" };
+  if (!isSessionBookable(session.status)) return { ok: false, code: "SESSION_CLOSED" };
   if (!Number.isInteger(input.quantity) || input.quantity < 1 || input.quantity > workshop.maxPerBooking) return { ok: false, code: "QUANTITY" };
   const email = input.email?.trim() ? normalizeEmail(input.email) : undefined;
   if (!email && input.source !== "WALK_IN") return { ok: false, code: "EMAIL_REQUIRED" };
@@ -210,15 +219,18 @@ export type GuestBookingResult =
  * created without an account (BR-10). A repeated Idempotency-Key gives the booking it already made.
  */
 export function createGuestBooking(input: GuestBookingInput, confirmUrlFor: (token: string) => string, idempotencyKey?: string, now: Date = new Date()): GuestBookingResult {
-  if (idempotencyKey) {
-    const id = store().keys.get(idempotencyKey);
+  // The key only repeats a booking of the same guest for the same session (another body with the same key is a new booking).
+  const key = idempotencyKey ? `${idempotencyKey}|${input.email.trim().toLowerCase()}|${input.sessionId}` : undefined;
+  if (key) {
+    const id = store().keys.get(key);
     const again = id ? liveBookings().find((b) => b.id === id) : undefined;
     if (again) return { ok: true, booking: again, confirmToken: [...store().tokens].find(([, v]) => v === again.id)?.[0] ?? "", repeated: true };
   }
-  const session = sessions.find((s) => s.id === input.sessionId);
-  const workshop = session && workshops.find((w) => w.id === session.workshopId);
+  const session = liveSession(input.sessionId, now);
+  const workshop = session && withWorkshopStatus(workshops).find((w) => w.id === session.workshopId);
   if (!session || !workshop) return { ok: false, code: "UNKNOWN_SESSION" };
-  if (isSessionFinished(session.status) || Date.parse(session.endsAt) <= now.getTime()) return { ok: false, code: "SESSION_CLOSED" };
+  // Bookable: the session is Running, the booking is made before its cutoff, and the workshop is Active (FR-BOOK-01).
+  if (!isSessionBookable(session.status) || workshop.status !== "ACTIVE" || Date.parse(session.startsAt) - session.bookingCutoffMinutes * 60_000 <= now.getTime()) return { ok: false, code: "SESSION_CLOSED" };
   if (!Number.isInteger(input.quantity) || input.quantity < 1 || input.quantity > workshop.maxPerBooking) return { ok: false, code: "QUANTITY" };
   const live = liveBookings();
   // The seats left (SessionCapacityService in the real backend: the check and the booking are one locked step).
@@ -248,7 +260,7 @@ export function createGuestBooking(input: GuestBookingInput, confirmUrlFor: (tok
   store().made.push(booking);
   const token = newUuid();
   store().tokens.set(token, booking.id);
-  if (idempotencyKey) store().keys.set(idempotencyKey, booking.id);
+  if (key) store().keys.set(key, booking.id);
   // The email goes to the person who booked, in their language, with the booking and the link that confirms it.
   queueBookingConfirmation({
     to: email, locale: customer.preferredLocale, guestName: booking.guestName ?? customer.fullName, shopName: currentShop.name, bookingCode: booking.bookingCode, workshopTitle: booking.workshopTitle, timezone: booking.timezone,
@@ -267,7 +279,7 @@ export function createGuestBooking(input: GuestBookingInput, confirmUrlFor: (tok
 
 /** A guest can cancel until the session starts, while the booking is Not confirmed or Confirmed and the session is not closed. */
 export function canGuestCancel(booking: Pick<Booking, "status" | "sessionId" | "startsAt">, now: Date = new Date()): boolean {
-  const session = sessions.find((s) => s.id === booking.sessionId);
+  const session = liveSession(booking.sessionId, now);
   return isOpen(booking.status) && !!session && !isSessionFinished(session.status) && Date.parse(booking.startsAt) > now.getTime();
 }
 

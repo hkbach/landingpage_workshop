@@ -33,7 +33,8 @@ export async function POST(request: Request, ctx: RouteContext<"/api/v1/public/s
   const parsed = bodySchema.safeParse(body);
   if (!parsed.success) return apiError(422, "VALIDATION", "Please check the highlighted fields.", { fields: fieldCodes(parsed.error.issues) });
   // The link in the email points at the site of the shop ({slug}.PLATFORM_DOMAIN), with the port of the server in development.
-  const port = (request.headers.get("host") ?? new URL(request.url).host).split(":")[1];
+  const raw = (request.headers.get("host") ?? new URL(request.url).host).split(":")[1];
+  const port = raw && /^\d{1,5}$/.test(raw) ? raw : undefined; // only a port number goes into the link (the Host header comes from the client)
   const base = siteOrigin(slug);
   const origin = port && base.startsWith("http:") ? `${base}:${port}` : base;
   const res = createGuestBooking(parsed.data, (token) => `${origin}/booking/confirm/${token}`, request.headers.get("idempotency-key") ?? undefined);

@@ -16,11 +16,23 @@ describe("the time of a check-in", () => {
     expect((await patch("bk-13", { status: "CONFIRMED" })).status).toBe(200);
     expect(at("bk-13")).toBeUndefined();
   });
-  it("is dropped by a cancel", async () => {
+  it("is dropped by an uncheck-in; a checked in booking cannot be cancelled", async () => {
     await patch("bk-14", { status: "CHECKED_IN", checkedInAt: "2026-11-03T09:10:00.000Z" });
     expect(at("bk-14")).toBe("2026-11-03T09:10:00.000Z");
-    await patch("bk-14", { status: "CANCELLED", cancelReason: "x" });
+    expect((await patch("bk-14", { status: "CANCELLED", cancelReason: "x" })).status).toBe(409);
+    expect(at("bk-14")).toBe("2026-11-03T09:10:00.000Z");
+    await patch("bk-14", { status: "CONFIRMED" });
     expect(at("bk-14")).toBeUndefined();
+  });
+  it("a time in the future is not taken: the check-in is now", async () => {
+    await patch("bk-13", { status: "CHECKED_IN", checkedInAt: "2999-01-01T00:00:00.000Z" });
+    expect(Date.parse(at("bk-13")!)).toBeLessThanOrEqual(Date.now());
+  });
+  it("a cancelled booking does not come back (its seats may be gone)", async () => {
+    await patch("bk-13", { status: "CANCELLED", cancelReason: "x" });
+    expect((await patch("bk-13", { status: "CONFIRMED" })).status).toBe(409);
+    expect((await patch("bk-13", { status: "CHECKED_IN" })).status).toBe(409);
+    expect(liveBookings().find((b) => b.id === "bk-13")!.status).toBe("CANCELLED");
   });
   it("the demo guests who were checked in have their time", () => {
     for (const id of ["bk-2", "bk-12", "bk-19", "bk-21"]) expect(at(id), id).toBeDefined();

@@ -15,7 +15,7 @@ const post = (route: (request: Request, ctx: never) => Promise<Response>, body: 
   route(new Request("http://clayco.localtest.me:3000/x", { method: "POST", headers: { "content-type": "application/json", ...headers }, body: JSON.stringify(body) }), ctx);
 const patch = (id: string, body: unknown) => PATCH(new Request("http://x", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }), { params: Promise.resolve({ id }) } as never);
 
-const FREE = sessions.find((s) => s.status === "OPEN" && Date.parse(s.startsAt) > Date.now())!; // an open session of the future, with free seats
+const FREE = sessions.find((s) => s.status === "RUNNING" && Date.parse(s.startsAt) > Date.now() + 86_400_000 && s.capacity - s.reservedCount >= 4 && workshops.find((w) => w.id === s.workshopId)?.status === "ACTIVE")!; // an open session of the future, with free seats
 const GUEST = { sessionId: FREE.id, quantity: 2, fullName: "Tran Binh", email: "Binh@Example.com", phone: "+84 90 111 2222" };
 const emails = () => outboxEmails().filter((e): e is BookingConfirmationEmail => e.type === "BOOKING_CONFIRMATION");
 const statusOf = (id: string) => liveBookings().find((b) => b.id === id)!;
@@ -77,6 +77,30 @@ describe("a guest books", () => {
     expect((await post(book, { ...GUEST, quantity: 99 })).status).toBe(422);
     expect((await post(book, { ...GUEST, email: "nope" })).status).toBe(422);
     expect(emails()).toHaveLength(0);
+  });
+  it("refuses a session that is not Running, one inside its cutoff or already started, one an administrator closed, and a workshop that is not Active", async () => {
+    const future = (s: (typeof sessions)[number]) => Date.parse(s.startsAt) > Date.now();
+    for (const status of ["OPEN", "PAUSED"] as const) {
+      const s = sessions.find((x) => x.status === status && future(x));
+      if (s) expect((await post(book, { ...GUEST, sessionId: s.id, quantity: 1 })).status, status).toBe(409);
+    }
+    const inCutoff = sessions.find((x) => x.status === "RUNNING" && future(x) && Date.parse(x.startsAt) - x.bookingCutoffMinutes * 60_000 <= Date.now());
+    if (inCutoff) expect((await post(book, { ...GUEST, sessionId: inCutoff.id, quantity: 1 })).status).toBe(409);
+    const started = sessions.find((x) => x.status === "RUNNING" && !future(x) && Date.parse(x.endsAt) > Date.now());
+    if (started) expect((await post(book, { ...GUEST, sessionId: started.id, quantity: 1 })).status).toBe(409);
+    const { adminChangeSession, resetSessionAdminStore } = await import("@/lib/mock/session-admin-store");
+    expect(adminChangeSession(FREE.id, "close", "Studio flooded").ok).toBe(true);
+    expect((await post(book, { ...GUEST, quantity: 1 })).status).toBe(409);
+    resetSessionAdminStore();
+    const draft = sessions.find((x) => x.status === "RUNNING" && future(x) && workshops.find((w) => w.id === x.workshopId)?.status === "DRAFT");
+    if (draft) expect((await post(book, { ...GUEST, sessionId: draft.id, quantity: 1 })).status).toBe(409);
+    expect(emails()).toHaveLength(0);
+  });
+  it("the Idempotency-Key only repeats the booking of the same guest and session", async () => {
+    const a = await post(book, GUEST, { "idempotency-key": "k-2" });
+    const b = await post(book, { ...GUEST, email: "someone@example.com" }, { "idempotency-key": "k-2" });
+    expect(b.status).toBe(201);
+    expect(((await b.json()) as { code: string }).code).not.toBe(((await a.json()) as { code: string }).code);
   });
 });
 
