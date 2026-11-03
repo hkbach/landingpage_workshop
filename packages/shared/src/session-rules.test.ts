@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SESSION_STATUSES } from "./enums";
-import { allowedSessionActions, applySessionAction, checkCloseReason, checkReschedule, nextSessionCode, SESSION_CODE_RE, CLOSE_REASON_NOTE_MAX, closeIfEnded, closeWaitsForEnd, DEFAULT_BOOKING_CUTOFF_MINUTES, isInSessionTime, isSessionBookable, isValidBookingCutoff, type SessionState } from "./session-rules";
+import { allowedSessionActions, applySessionAction, canEditSession, checkCloseReason, checkReschedule, nextSessionCode, SESSION_CODE_RE, CLOSE_REASON_NOTE_MAX, closeIfEnded, closeWaitsForEnd, DEFAULT_BOOKING_CUTOFF_MINUTES, isInSessionTime, isSessionBookable, isValidBookingCutoff, type SessionState } from "./session-rules";
 
 const s = (status: SessionState["status"]): SessionState => ({ status });
 
@@ -125,5 +125,11 @@ describe("session codes", () => {
   it("have a format check", () => {
     expect(SESSION_CODE_RE.test("SES-0042")).toBe(true);
     expect(SESSION_CODE_RE.test("SES-42")).toBe(false);
+  });
+});
+
+describe("canEditSession", () => {
+  it("is true only for an open or a paused session", () => {
+    expect(SESSION_STATUSES.filter(canEditSession)).toEqual(["OPEN", "PAUSED"]);
   });
 });

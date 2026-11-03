@@ -114,3 +114,6 @@ export function nextSessionCode(codes: readonly string[]): string {
   const highest = codes.reduce((max, c) => (SESSION_CODE_RE.test(c) ? Math.max(max, Number(c.slice(4))) : max), 0);
   return `SES-${String(highest + 1).padStart(4, "0")}`;
 }
+
+/** A session is edited while it is Open or Paused; a Running session cannot be edited (pause it first) and a Closed one is final. */
+export const canEditSession = (status: SessionStatus): boolean => status === "OPEN" || status === "PAUSED";

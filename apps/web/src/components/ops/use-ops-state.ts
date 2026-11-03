@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { applySessionAction, checkCloseReason, checkReschedule, closeIfEnded, isValidBookingCutoff, nextSessionCode, closeWaitsForEnd, type BookingStatus, type PaymentMethod, type RescheduleError, type SessionAction, type SessionCloseReason } from "@workshop/shared";
+import { applySessionAction, canEditSession, checkCloseReason, checkReschedule, closeIfEnded, isValidBookingCutoff, nextSessionCode, closeWaitsForEnd, type BookingStatus, type PaymentMethod, type RescheduleError, type SessionAction, type SessionCloseReason } from "@workshop/shared";
 import type { Booking, PaymentEntry, Session } from "@/lib/types";
 import {
   canTransition, computePaymentStatus, netPaid, reservedSeats, seatDelta, targetStatus,
@@ -154,7 +154,7 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
   const updateSession = useCallback(
     (id: string, patch: { workshopId: string; capacity: number; bookingCutoffMinutes: number; imageUrl?: string; endsAt: string }): boolean => {
       const s = sessions.find((x) => x.id === id);
-      if (!s || s.status === "CLOSED") return false;
+      if (!s || !canEditSession(s.status)) return false; // a running session is not edited: pause it first
       const hasBookings = s.reservedCount > 0 || bookings.some((b) => b.sessionId === id && b.status !== "CANCELLED");
       if (patch.workshopId !== s.workshopId) {
         if (hasBookings) return false;
