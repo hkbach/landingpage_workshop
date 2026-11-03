@@ -256,6 +256,8 @@ export function PaymentDialog({ open, onOpenChange, session, bookings, customers
   const [failed, setFailed] = useState<string | null>(null);
   const [mail, setMail] = useState<{ code: string; state: "sent" | "none" | "failed" } | null>(null);
   const [confirming, setConfirming] = useState(false);
+  const [selected, setSelected] = useState<ReadonlySet<string>>(new Set()); // the bookings ticked for Confirm payment of a whole part
+  const [bulk, setBulk] = useState<{ part: string; count: number; sent: number; none: number; failed: number } | null>(null);
   const rows = session ? bookings.filter((b) => b.sessionId === session.id).sort((a, b) => a.bookingCode.localeCompare(b.bookingCode)) : [];
   const nameOf = (b: Booking) => customers.find((c) => c.id === b.customerId)?.fullName ?? "";
   const parts = [
@@ -270,16 +272,41 @@ export function PaymentDialog({ open, onOpenChange, session, bookings, customers
     setFailed(res.ok ? null : b.bookingCode);
     if (!res.ok) return;
     setMail(null);
+    setBulk(null);
     notifyPaid(b.id).then((n) => setMail({ code: b.bookingCode, state: n > 0 ? "sent" : "none" })).catch(() => setMail({ code: b.bookingCode, state: "failed" }));
   }
   function undo(b: Booking) {
     setFailed(setPaid(b.id, false).ok ? null : b.bookingCode);
     setMail(null);
+    setBulk(null);
+  }
+
+  // A booking can be ticked while it is Unpaid and has something to pay (a Completed session only shows its payments).
+  const tickable = (b: Booking) => mode !== "view" && b.totalAmount > 0 && b.paymentStatus !== "PAID";
+  const toggleOne = (id: string) => setSelected((prev) => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  /** Select all of a part: ticks every tickable booking of it, or unticks them when they are all ticked already. */
+  const toggleAll = (list: Booking[]) => {
+    const ids = list.filter(tickable).map((b) => b.id);
+    setSelected((prev) => { const n = new Set(prev); const all = ids.every((id) => n.has(id)); for (const id of ids) { if (all) n.delete(id); else n.add(id); } return n; });
+  };
+
+  /** Confirm payment of every ticked booking of a part at once; each guest is emailed, and the result is told under the title of the part. */
+  function bulkConfirm(part: string, list: Booking[]) {
+    const targets = list.filter((b) => tickable(b) && selected.has(b.id));
+    if (targets.length === 0) return;
+    const done = targets.filter((b) => setPaid(b.id, true).ok);
+    setFailed(done.length < targets.length ? "bulk" : null);
+    setMail(null);
+    setSelected((prev) => { const n = new Set(prev); for (const b of done) n.delete(b.id); return n; });
+    Promise.allSettled(done.map((b) => notifyPaid(b.id))).then((r) => setBulk({
+      part, count: done.length, sent: r.filter((x) => x.status === "fulfilled" && x.value > 0).length,
+      none: r.filter((x) => x.status === "fulfilled" && x.value === 0).length, failed: r.filter((x) => x.status === "rejected").length,
+    }));
   }
 
   return (
     <>
-    <Dialog open={open} onOpenChange={(o) => { if (!o) { setFailed(null); setMail(null); setConfirming(false); } onOpenChange(o); }}>
+    <Dialog open={open} onOpenChange={(o) => { if (!o) { setFailed(null); setMail(null); setConfirming(false); setSelected(new Set()); setBulk(null); } onOpenChange(o); }}>
       <DialogContent className="max-h-[92dvh] overflow-y-auto sm:max-w-2xl">
         {session ? (
           <div className="grid gap-4">
@@ -294,17 +321,53 @@ export function PaymentDialog({ open, onOpenChange, session, bookings, customers
                 <p role="status" data-testid="payment-count" className="text-sm font-medium">{t("sessions.paidCount", { paid, total: rows.length })}</p>
                 {parts.map((part) => (
                   <section key={part.key} aria-labelledby={`pay-${part.key}`} data-testid={`payment-part-${part.key}`} className="grid gap-2">
-                    <h3 id={`pay-${part.key}`} className="text-sm font-semibold">{part.title} ({part.list.length})</h3>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <h3 id={`pay-${part.key}`} className="text-sm font-semibold">{part.title} ({part.list.length})</h3>
+                      {part.list.some(tickable) ? (
+                        <div className="flex items-center gap-3">
+                          <label className="flex cursor-pointer items-center gap-2 text-xs font-medium">
+                            <input
+                              type="checkbox" className="size-4 accent-emerald-600" data-testid={`select-all-${part.key}`} aria-label={t("sessions.selectAllIn", { part: part.title })}
+                              checked={part.list.filter(tickable).every((b) => selected.has(b.id))}
+                              ref={(el) => { if (el) { const n = part.list.filter((b) => tickable(b) && selected.has(b.id)).length; el.indeterminate = n > 0 && n < part.list.filter(tickable).length; } }}
+                              onChange={() => toggleAll(part.list)}
+                            />
+                            {t("sessions.selectAll")}
+                          </label>
+                          <Button
+                            size="sm" data-testid={`bulk-confirm-${part.key}`} disabled={!part.list.some((b) => tickable(b) && selected.has(b.id))}
+                            onClick={() => bulkConfirm(part.key, part.list)}
+                          >
+                            <BadgeCheck aria-hidden="true" />{t("sessions.confirmSelected", { count: part.list.filter((b) => tickable(b) && selected.has(b.id)).length })}
+                          </Button>
+                        </div>
+                      ) : null}
+                    </div>
+                    {bulk?.part === part.key ? (
+                      <p role="status" data-testid="bulk-result" className={`text-xs ${bulk.failed > 0 ? "text-destructive" : "text-emerald-800"}`}>
+                        {t("sessions.bulkDone", { count: bulk.count, sent: bulk.sent, none: bulk.none, failed: bulk.failed })}
+                      </p>
+                    ) : null}
                     {part.list.length === 0 ? (
                       <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">{t("sessions.partEmpty")}</p>
                     ) : (
                       <ul className="divide-y rounded-lg border">
                         {part.list.map((b) => (
                           <li key={b.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm" data-testid="payment-row">
-                            <div className="min-w-0">
+                            <div className="flex min-w-0 items-start gap-3">
+                              {mode === "view" ? null : tickable(b) ? (
+                                <input
+                                  type="checkbox" className="mt-0.5 size-4 shrink-0 accent-emerald-600" data-testid="payment-select" checked={selected.has(b.id)}
+                                  aria-label={t("sessions.selectBooking", { guest: nameOf(b), code: b.bookingCode })} onChange={() => toggleOne(b.id)}
+                                />
+                              ) : (
+                                <span aria-hidden className="size-4 shrink-0" />
+                              )}
+                              <div className="min-w-0">
                               <div className="font-medium">{nameOf(b)}</div>
                               <div className="text-xs text-muted-foreground">
                                 <span className="font-mono" data-testid="payment-code">{b.bookingCode}</span> · {t("sessions.guestCount", { count: b.quantity })} · <span data-testid="payment-amount">{formatMoney(b.totalAmount, b.currency, locale)}</span>
+                              </div>
                               </div>
                             </div>
                             <div className="flex items-center gap-2">

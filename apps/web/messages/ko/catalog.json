@@ -277,6 +277,11 @@
     "completeConfirmTitle": "{code}을(를) 완료 처리할까요?",
     "completeConfirmText": "세션이 완료되면 세션과 예약, 결제 정보를 더 이상 변경할 수 없습니다. 결제 정보는 통계와 시스템 수수료로 지불해야 할 총액 확인에 사용됩니다.",
     "completeBack": "뒤로",
-    "completeConfirmButton": "예, 완료합니다"
+    "completeConfirmButton": "예, 완료합니다",
+    "selectAll": "전체 선택",
+    "selectAllIn": "{part} 전체 선택",
+    "selectBooking": "{guest}, {code} 선택",
+    "confirmSelected": "결제 확인 ({count})",
+    "bulkDone": "예약 {count, plural, other {#건}} 확인 완료. 이메일 발송: {sent}. 이메일 없음: {none}. 실패: {failed}."
   }
 }

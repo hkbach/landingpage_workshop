@@ -277,6 +277,11 @@
     "completeConfirmTitle": "确认将 {code} 标记为已完成？",
     "completeConfirmText": "场次完成后，场次及其预订和支付信息将不能再更改。支付信息将用于统计，并用于确认需向平台支付的系统费用总额。",
     "completeBack": "返回",
-    "completeConfirmButton": "确认完成"
+    "completeConfirmButton": "确认完成",
+    "selectAll": "全选",
+    "selectAllIn": "全选{part}",
+    "selectBooking": "选择 {guest}，{code}",
+    "confirmSelected": "确认支付（{count}）",
+    "bulkDone": "已确认 {count, plural, other {#个预订}}。已发送邮件：{sent}。无邮箱：{none}。失败：{failed}。"
   }
 }

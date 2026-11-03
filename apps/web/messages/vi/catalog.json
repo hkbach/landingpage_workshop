@@ -277,6 +277,11 @@
     "completeConfirmTitle": "Xác nhận Hoàn thành session {code}?",
     "completeConfirmText": "Khi session Hoàn thành, session cùng các booking và thanh toán của nó sẽ không thể thay đổi nữa. Thông tin thanh toán sẽ được dùng để thống kê và xác nhận tổng số tiền phải thanh toán cho chi phí hệ thống.",
     "completeBack": "Quay lại",
-    "completeConfirmButton": "Xác nhận Hoàn thành"
+    "completeConfirmButton": "Xác nhận Hoàn thành",
+    "selectAll": "Chọn tất cả",
+    "selectAllIn": "Chọn tất cả trong mục {part}",
+    "selectBooking": "Chọn {guest}, {code}",
+    "confirmSelected": "Xác nhận thanh toán ({count})",
+    "bulkDone": "Đã xác nhận {count, plural, other {# booking}}. Email đã gửi: {sent}. Không có email: {none}. Lỗi: {failed}."
   }
 }

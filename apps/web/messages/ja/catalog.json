@@ -277,6 +277,11 @@
     "completeConfirmTitle": "{code} を完了にしますか？",
     "completeConfirmText": "セッションを完了すると、セッション、予約、支払い情報は変更できなくなります。支払い情報は、統計およびシステム利用料として支払う合計金額の確認に使用されます。",
     "completeBack": "戻る",
-    "completeConfirmButton": "はい、完了にします"
+    "completeConfirmButton": "はい、完了にします",
+    "selectAll": "すべて選択",
+    "selectAllIn": "{part}をすべて選択",
+    "selectBooking": "{guest}、{code} を選択",
+    "confirmSelected": "支払いを確認（{count}）",
+    "bulkDone": "予約{count, plural, other {#件}}を確認しました。メール送信：{sent}。メールなし：{none}。失敗：{failed}。"
   }
 }
