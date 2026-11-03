@@ -230,6 +230,10 @@
     "closeLimit": "A session can be closed at most 4 times, and this session has already been closed 4 times.",
     "closeFinalWarning": "This is the last time you can close this session. It will be closed for good: you cannot re-open it, and only a system administrator can open it again.",
     "closedForGood": "Closed for good. Only a system administrator can open this session again.",
-    "byAdmin": "by system administrator"
+    "byAdmin": "by system administrator",
+    "guestCount": "{count, plural, one {# guest} other {# guests}}",
+    "closedNotified": "Session closed. {count, plural, =0 {No guest needed an email.} one {# guest was emailed.} other {# guests were emailed.}}",
+    "closeMailFailed": "The session was closed, but the emails to the guests could not be queued. Please contact the guests yourself.",
+    "autoClosedNotified": "Sessions closed automatically because their time ended. {count, plural, one {# guest was emailed.} other {# guests were emailed.}}"
   }
 }

@@ -4,23 +4,37 @@
 import type { Locale, SessionCloseReason } from "@workshop/shared";
 import { newUuid } from "@/lib/uuid";
 
-export interface SessionRescheduledEmail {
+interface EmailBase {
   id: string;
-  type: "SESSION_RESCHEDULED";
   to: string;
   /** Language of the email: the preferred language of the guest. */
   locale: Locale;
   bookingCode: string;
   workshopTitle: string;
-  oldStartsAt: string;
-  newStartsAt: string;
-  newEndsAt: string;
   timezone: string;
-  reason: SessionCloseReason;
   createdAt: string;
 }
 
-const g = globalThis as unknown as { __outbox?: SessionRescheduledEmail[] };
+export interface SessionRescheduledEmail extends EmailBase {
+  type: "SESSION_RESCHEDULED";
+  oldStartsAt: string;
+  newStartsAt: string;
+  newEndsAt: string;
+  reason: SessionCloseReason;
+}
+
+/** A session was closed: by its owner or an administrator (`reason`), or by the system when its time ended (`auto`, no reason). */
+export interface SessionClosedEmail extends EmailBase {
+  type: "SESSION_CLOSED";
+  startsAt: string;
+  endsAt: string;
+  auto: boolean;
+  reason?: SessionCloseReason;
+}
+
+export type OutboxEmail = SessionRescheduledEmail | SessionClosedEmail;
+
+const g = globalThis as unknown as { __outbox?: OutboxEmail[] };
 const box = () => (g.__outbox ??= []);
 
 export function queueSessionRescheduled(email: Omit<SessionRescheduledEmail, "id" | "type" | "createdAt">): SessionRescheduledEmail {
@@ -29,7 +43,13 @@ export function queueSessionRescheduled(email: Omit<SessionRescheduledEmail, "id
   return entry;
 }
 
-export const outboxEmails = (): SessionRescheduledEmail[] => box().map((e) => ({ ...e }));
+export function queueSessionClosed(email: Omit<SessionClosedEmail, "id" | "type" | "createdAt">): SessionClosedEmail {
+  const entry: SessionClosedEmail = { ...email, id: newUuid(), type: "SESSION_CLOSED", createdAt: new Date().toISOString() };
+  box().push(entry);
+  return entry;
+}
+
+export const outboxEmails = (): OutboxEmail[] => box().map((e) => ({ ...e }));
 
 /** Test helper. */
 export function resetOutbox(): void {

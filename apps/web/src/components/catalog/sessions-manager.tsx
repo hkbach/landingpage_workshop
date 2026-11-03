@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useDisplayLocale } from "@/lib/use-shop-language";
 import { ArrowLeft, CalendarClock, Copy, Lock, LockOpen, LogIn, Pause, Pencil, Play, Plus, Save } from "lucide-react";
@@ -19,7 +19,7 @@ import type { Booking, Customer, Session, Workshop } from "@/lib/types";
 import { dayKey, formatTime } from "@/lib/format";
 import { MAX_CAPACITY, type ShopForCatalog } from "./workshop-form";
 import { CheckInDialog, CloseSessionDialog, dateAndTime, RescheduleSessionDialog } from "./session-dialogs";
-import { notifyRescheduleRequest } from "@/lib/sessions-api";
+import { notifyAutoClosedRequest, notifyClosedRequest, notifyRescheduleRequest } from "@/lib/sessions-api";
 import { ImageUploadField } from "@/components/builder/ImageUploadField";
 import { sessionImageUploader } from "@/lib/media/session-uploader";
 import { safeImage } from "@/components/sections/safe-url";
@@ -78,6 +78,26 @@ export function SessionsManager({
       setNotice({ text: t("sessions.rescheduleMailFailed"), tone: "error" });
     }
   }
+
+  async function notifyClosed(s: Session, reason: SessionCloseReason) {
+    try {
+      const sent = await notifyClosedRequest(s.id, { startsAt: s.startsAt, endsAt: s.endsAt, reason });
+      setNotice({ text: t("sessions.closedNotified", { count: sent.notified }), tone: "ok" });
+    } catch {
+      setNotice({ text: t("sessions.closeMailFailed"), tone: "error" });
+    }
+  }
+
+  // The sessions the system closed because their time ended: the server emails their guests, once for each session.
+  const autoClosedKey = ops.sessions.filter((s) => s.autoClosed).map((s) => `${s.id}|${s.startsAt}|${s.endsAt}`).join(",");
+  useEffect(() => {
+    if (!autoClosedKey) return;
+    const list = autoClosedKey.split(",").map((k) => { const [id, startsAt, endsAt] = k.split("|"); return { id: id!, startsAt: startsAt!, endsAt: endsAt! }; });
+    notifyAutoClosedRequest(list).then((r) => {
+      const guests = r.mailed.reduce((n, m) => n + m.notified, 0);
+      if (guests > 0) setNotice({ text: t("sessions.autoClosedNotified", { count: guests }), tone: "ok" });
+    }).catch(() => undefined); // the next check tries again
+  }, [autoClosedKey, t]);
 
   const target = dialog && dialog.kind !== "add" ? ops.sessions.find((s) => s.id === dialog.id) : undefined;
 
@@ -232,7 +252,7 @@ export function SessionsManager({
       <CloseSessionDialog
         key={`close-${target?.id ?? "none"}`} open={dialog?.kind === "close" && !!target} onOpenChange={(o) => !o && setDialog(null)}
         final={isFinalClose(target?.notes)}
-        onConfirm={(reason) => { if (target && ops.sessionAction(target.id, "close", reason)) setDialog(null); }}
+        onConfirm={(reason) => { if (target && ops.sessionAction(target.id, "close", reason)) { setDialog(null); void notifyClosed(target, reason); } }}
       />
       <RescheduleSessionDialog
         key={`resched-${target?.id ?? "none"}`} open={dialog?.kind === "reschedule" && !!target} onOpenChange={(o) => !o && setDialog(null)}
@@ -337,14 +357,16 @@ function AddSessionForm({
         )}
       </Field>
       {editing && hasBookings ? <p className="-mt-2 text-xs text-muted-foreground" data-testid="workshop-locked">{t("sessions.workshopLocked")}</p> : null}
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Field id="add-date" label={t("sessions.date")} required={!editing} error={err("date")}>
-          {(p) => <Input {...p} type="date" min={editing ? undefined : today} value={date} readOnly={!!editing} disabled={!!editing} onChange={(e) => setDate(e.target.value)} />}
-        </Field>
-        <Field id="add-time" label={t("sessions.startTime")} required={!editing} error={err("time")}>
-          {(p) => <Input {...p} type="time" value={time} readOnly={!!editing} disabled={!!editing} onChange={(e) => setTime(e.target.value)} />}
-        </Field>
-      </div>
+      {editing ? null : (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field id="add-date" label={t("sessions.date")} required error={err("date")}>
+            {(p) => <Input {...p} type="date" min={today} value={date} onChange={(e) => setDate(e.target.value)} />}
+          </Field>
+          <Field id="add-time" label={t("sessions.startTime")} required error={err("time")}>
+            {(p) => <Input {...p} type="time" value={time} onChange={(e) => setTime(e.target.value)} />}
+          </Field>
+        </div>
+      )}
       <Field id="add-cap" label={t("sessions.capacity")} required error={err("cap")}>
         {(p) => <Input {...p} type="number" inputMode="numeric" min={1} max={MAX_CAPACITY} value={cap} onChange={(e) => setCap(e.target.value)} />}
       </Field>

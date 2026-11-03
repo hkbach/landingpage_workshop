@@ -230,6 +230,10 @@
     "closeLimit": "每个场次最多可关闭 4 次，该场次已关闭 4 次。",
     "closeFinalWarning": "这是最后一次关闭该场次。它将被永久关闭：您无法重新开放，只有系统管理员可以重新开放。",
     "closedForGood": "已永久关闭。只有系统管理员可以重新开放该场次。",
-    "byAdmin": "由系统管理员操作"
+    "byAdmin": "由系统管理员操作",
+    "guestCount": "{count, plural, other {# 位}}",
+    "closedNotified": "场次已关闭。{count, plural, =0 {没有需要发送邮件的客人。} other {已向 # 位客人发送邮件。}}",
+    "closeMailFailed": "场次已关闭，但无法将发给客人的邮件加入队列。请自行联系客人。",
+    "autoClosedNotified": "场次因时间结束已自动关闭。{count, plural, other {已向 # 位客人发送邮件。}}"
   }
 }

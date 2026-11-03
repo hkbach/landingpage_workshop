@@ -1,9 +1,7 @@
 import { z } from "zod";
 import { checkCloseReason } from "@workshop/shared";
 import { apiError, fieldCodes } from "@/lib/api-error";
-import { liveBookings } from "@/lib/mock/booking-store";
-import { customers, sessions } from "@/lib/mock/data";
-import { queueSessionRescheduled } from "@/lib/mock/outbox-store";
+import { mailSessionRescheduled } from "@/lib/mock/session-mail";
 
 // A session was re-scheduled: tell the guests who booked it. MOCK implementation inside Next until apps/api exists.
 // TODO(api): POST /dashboard/sessions/{id}/reschedule changes the session, moves its bookings and writes the outbox events in ONE transaction
@@ -31,19 +29,8 @@ export async function POST(request: Request, ctx: RouteContext<"/api/v1/sessions
   const reason = checkCloseReason(parsed.data.reason.code, parsed.data.reason.note ?? "");
   if (!reason.ok) return apiError(422, "VALIDATION", "A reason is required.", { fields: { reason: reason.error === "NOTE_REQUIRED" ? "noteRequired" : "required" } });
 
-  // Sessions made in the browser only (not in the mock data) have no bookings here.
-  const known = sessions.some((s) => s.id === id);
-  const booked = known ? liveBookings().filter((b) => b.sessionId === id && b.status === "CONFIRMED") : [];
-  let notified = 0;
-  let withoutEmail = 0;
-  for (const b of booked) {
-    const guest = customers.find((c) => c.id === b.customerId);
-    if (!guest?.email) { withoutEmail++; continue; } // walk-in guests have no email
-    queueSessionRescheduled({
-      to: guest.email, locale: guest.preferredLocale, bookingCode: b.bookingCode, workshopTitle: b.workshopTitle,
-      oldStartsAt: parsed.data.oldStartsAt, newStartsAt: parsed.data.newStartsAt, newEndsAt: parsed.data.newEndsAt, timezone: b.timezone, reason: reason.reason,
-    });
-    notified++;
-  }
-  return Response.json({ notified, withoutEmail });
+  // Every guest who booked the session is told, except the ones who cancelled their booking (sessions made in the browser only have no bookings here).
+  return Response.json(mailSessionRescheduled(id, {
+    oldStartsAt: parsed.data.oldStartsAt, newStartsAt: parsed.data.newStartsAt, newEndsAt: parsed.data.newEndsAt, reason: reason.reason,
+  }));
 }

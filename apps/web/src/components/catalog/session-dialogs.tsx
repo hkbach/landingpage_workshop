@@ -182,9 +182,7 @@ export function CheckInDialog({ open, onOpenChange, session, bookings, customers
                   <table className="w-full text-sm" data-testid="checkin-table">
                     <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
                       <tr>
-                        <th className="px-3 py-2 font-medium">{t("sessions.colBooking")}</th>
                         <th className="px-3 py-2 font-medium">{t("sessions.colGuest")}</th>
-                        <th className="px-3 py-2 font-medium">{t("sessions.colSeats")}</th>
                         <th className="px-3 py-2 font-medium">{t("sessions.colStatus")}</th>
                         <th className="px-3 py-2 font-medium">{t("sessions.colCheckedInAt")}</th>
                         <th className="px-3 py-2 font-medium">{t("sessions.colReason")}</th>
@@ -196,9 +194,12 @@ export function CheckInDialog({ open, onOpenChange, session, bookings, customers
                         const state = canTransition(b, session, now);
                         return (
                           <tr key={b.id} className="border-t" data-testid="checkin-row">
-                            <td className="px-3 py-2 font-mono">{b.bookingCode}</td>
-                            <td className="px-3 py-2">{nameOf(b)}</td>
-                            <td className="px-3 py-2 tabular-nums">{b.quantity}</td>
+                            <td className="px-3 py-2">
+                              <div className="font-medium" data-testid="checkin-guest">{nameOf(b)}</div>
+                              <div className="text-xs text-muted-foreground">
+                                <span className="font-mono" data-testid="checkin-code">{b.bookingCode}</span> · <span data-testid="checkin-seats">{t("sessions.guestCount", { count: b.quantity })}</span>
+                              </div>
+                            </td>
                             <td className="px-3 py-2">
                               {b.status === "CANCELLED" ? (
                                 <Badge variant="outline" className="border-transparent bg-red-100 text-red-900" data-testid="canceled-badge">{t("sessions.canceledBooking")}</Badge>
