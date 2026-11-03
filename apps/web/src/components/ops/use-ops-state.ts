@@ -99,7 +99,7 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
   /**
    * Sets a booking Paid or Unpaid after the session (the shop owner confirms the payment received at the studio). Paid records the missing
    * amount as a cash payment and checks the booking in (Not confirmed / Confirmed only); Unpaid gives back what was recorded as a refund entry (entries
-   * are never edited or deleted) and brings back the status the booking had if the payment is why it was checked in. A free booking has nothing to pay.
+   * are never edited or deleted) and sends a Checked in booking back to the status it had before the check-in. A free booking has nothing to pay.
    */
   const setPaid = useCallback(
     (bookingId: string, paid: boolean): OpResult => {
@@ -116,7 +116,7 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
           if (b.status === "NOT_CONFIRMED" || b.status === "CONFIRMED") {
             const at = new Date().toISOString();
             const before = b.status;
-            setBookings((list) => list.map((x) => (x.id === b.id ? { ...x, status: "CHECKED_IN", checkedInAt: at, statusBeforeCheckIn: before, checkedInByPayment: true } : x)));
+            setBookings((list) => list.map((x) => (x.id === b.id ? { ...x, status: "CHECKED_IN", checkedInAt: at, statusBeforeCheckIn: before } : x)));
             pushEvent(b.id, { status: "CHECKED_IN", at });
           }
         }
@@ -126,13 +126,13 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
       const res = addPayment(bookingId, { type: "REFUND", amount: net, method: "CASH", note: "Marked as unpaid" });
       if (res.ok) {
         persistPaid(bookingId, false); // the server brings the status back too (recordPaid)
-        // Checked in because it became Paid: back to the status it had (a guest the owner checked in stays checked in).
-        if (b.status === "CHECKED_IN" && b.checkedInByPayment) {
+        // A Checked in booking goes back to the status it had before the check-in, however it was checked in.
+        if (b.status === "CHECKED_IN") {
           const back = b.statusBeforeCheckIn ?? "CONFIRMED";
           setBookings((list) => list.map((x) => {
             if (x.id !== b.id) return x;
-            const { checkedInAt: _at, statusBeforeCheckIn: _before, checkedInByPayment: _by, ...rest } = x;
-            void _at; void _before; void _by;
+            const { checkedInAt: _at, statusBeforeCheckIn: _before, ...rest } = x;
+            void _at; void _before;
             return { ...rest, status: back };
           }));
           pushEvent(b.id, { status: back, at: new Date().toISOString() });

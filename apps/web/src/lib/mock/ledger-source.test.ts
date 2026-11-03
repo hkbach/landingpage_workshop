@@ -65,31 +65,33 @@ describe("a booking the shop sets Paid or Unpaid (recordPaid)", () => {
       if (!b) continue;
       recordPaid(b.id, true, "x", new Date("2026-11-05T10:00:00Z"));
       expect(liveBookings().find((x) => x.id === b.id)).toMatchObject({ status: "CHECKED_IN", statusBeforeCheckIn: status, checkedInAt: "2026-11-05T10:00:00.000Z" });
-      expect(liveBookings().find((x) => x.id === b.id)!.checkedInByPayment).toBe(true);
       recordPaid(b.id, false, "x");
       const back = liveBookings().find((x) => x.id === b.id)!;
       expect(back.status).toBe(status);
       expect(back.checkedInAt).toBeUndefined();
-      expect(back.checkedInByPayment).toBeUndefined();
       expect(back.paymentStatus).toBe("UNPAID");
       // Paid once more: checked in again.
       recordPaid(b.id, true, "x");
       expect(liveBookings().find((x) => x.id === b.id)!.status).toBe("CHECKED_IN");
     }
   });
-  it("a guest the owner checked in stays checked in when the booking is set Unpaid", () => {
-    const b = liveBookings().find((x) => x.status === "CONFIRMED" && x.paymentStatus === "UNPAID" && x.totalAmount > 0 && x.payments.length === 0)!;
-    setBookingStatus(b.id, "CHECKED_IN", undefined, "2026-11-05T10:00:00Z", "CONFIRMED");
-    recordPaid(b.id, true, "x");
-    expect(liveBookings().find((x) => x.id === b.id)!.checkedInByPayment).toBeUndefined();
-    recordPaid(b.id, false, "x");
-    expect(liveBookings().find((x) => x.id === b.id)).toMatchObject({ status: "CHECKED_IN", paymentStatus: "UNPAID" });
+  it("a guest the owner checked in by hand also goes back to the status before the check-in when the booking is set Unpaid", () => {
+    for (const status of ["NOT_CONFIRMED", "CONFIRMED"] as const) {
+      resetBookingStore();
+      const b = liveBookings().find((x) => x.status === status && x.paymentStatus === "UNPAID" && x.totalAmount > 0 && x.payments.length === 0);
+      if (!b) continue;
+      setBookingStatus(b.id, "CHECKED_IN", undefined, "2026-11-05T10:00:00Z", status);
+      recordPaid(b.id, true, "x");
+      expect(liveBookings().find((x) => x.id === b.id)!.status).toBe("CHECKED_IN"); // already checked in: it stays
+      recordPaid(b.id, false, "x");
+      expect(liveBookings().find((x) => x.id === b.id)).toMatchObject({ status, paymentStatus: "UNPAID" });
+    }
   });
-  it("an uncheck-in by the owner forgets that the payment checked the booking in", () => {
-    const b = liveBookings().find((x) => x.status === "CONFIRMED" && x.paymentStatus === "UNPAID" && x.totalAmount > 0 && x.payments.length === 0)!;
-    recordPaid(b.id, true, "x");
-    setBookingStatus(b.id, "CONFIRMED");
-    expect(liveBookings().find((x) => x.id === b.id)!.checkedInByPayment).toBeUndefined();
+  it("a seeded booking that was checked in (no status recorded before) goes back to Confirmed", () => {
+    const b = liveBookings().find((x) => x.status === "CHECKED_IN" && x.paymentStatus === "PAID" && x.totalAmount > 0)!;
+    expect(b).toBeDefined();
+    recordPaid(b.id, false, "x");
+    expect(liveBookings().find((x) => x.id === b.id)).toMatchObject({ status: "CONFIRMED", paymentStatus: "UNPAID" });
   });
   it("a cancelled booking keeps its status when it becomes Paid", () => {
     const b = liveBookings().find((x) => x.status === "CANCELLED" && x.paymentStatus === "UNPAID" && x.totalAmount > 0)!;
