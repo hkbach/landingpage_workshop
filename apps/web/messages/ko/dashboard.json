@@ -41,7 +41,8 @@
     "kpi": {
       "today": "오늘 예약",
       "upcoming": "예정된 세션",
-      "unpaid": "미결제 예약"
+      "unpaid": "미결제 예약",
+      "notConfirmed": "미확인 예약"
     },
     "checklist": {
       "title": "게시할 준비가 되었나요?",
@@ -68,7 +69,7 @@
         "title": "예약",
         "month": "이번 달 예약",
         "guests": "이번 달 고객 수",
-        "lostRate": "취소 또는 노쇼"
+        "lostRate": "취소율"
       },
       "workshops": {
         "title": "워크숍",
@@ -78,7 +79,9 @@
       "sessions": {
         "title": "세션",
         "upcoming": "예정",
-        "fill": "예약된 좌석"
+        "fill": "예약된 좌석",
+        "toComplete": "마감됨, 완료 대기",
+        "completed": "완료"
       },
       "customers": {
         "title": "고객",
@@ -112,11 +115,11 @@
       "totalsLabel": "기간 합계",
       "total": "예약",
       "guests": "고객 수",
-      "attended": "참석",
+      "attended": "체크인",
       "upcoming": "예정",
-      "lost": "취소 또는 노쇼",
-      "lostRate": "취소 또는 노쇼 비율",
-      "chartSummary": "{period} 예약: 총 {total}건, 참석 {attended}건, 예정 {upcoming}건, 취소 또는 노쇼 {lost}건.",
+      "lost": "취소됨",
+      "lostRate": "취소율",
+      "chartSummary": "{period} 예약: 총 {total}건, 체크인 {attended}건, 예정 {upcoming}건, 취소 {lost}건.",
       "showTable": "수치를 표로 보기",
       "day": "일",
       "month": "월"

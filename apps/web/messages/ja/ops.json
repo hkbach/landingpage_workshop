@@ -77,7 +77,11 @@
     "arrived": "到着済み",
     "empty": "今日予定されているセッションはありません。",
     "noGuests": "このセッションの予約はまだありません。",
-    "addWalkIn": "飛び込みを追加"
+    "addWalkIn": "飛び込みを追加",
+    "notConfirmed": "未確認",
+    "paidOf": "支払い済み",
+    "total": "合計",
+    "waitingConfirm": "お客様がメールでご予約を確認するのを待っています。"
   },
   "bookings": {
     "title": "予約",

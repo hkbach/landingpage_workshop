@@ -1,6 +1,6 @@
 import { getLocale, getTranslations } from "next-intl/server";
-import { CalendarClock, CalendarDays, CheckCircle2, Circle, ClipboardList, Sparkles, Users, Wallet } from "lucide-react";
-import { bookingSeries, ledgerFromPayments, TREND_PERIODS, type TrendBucket, type TrendPeriod } from "@workshop/shared";
+import { CalendarClock, CalendarDays, CheckCircle2, Circle, ClipboardList, MailQuestion, Sparkles, Users, Wallet } from "lucide-react";
+import { closeIfEnded, ledgerFromPayments, type TrendBucket, type TrendPeriod } from "@workshop/shared";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { SubmitForReview } from "@/components/dashboard/shell/submit-for-review";
 import { BookingTrend } from "@/components/dashboard/booking-trend";
@@ -11,7 +11,8 @@ import { dayKey } from "@/lib/format";
 import { liveBookings, liveCustomers } from "@/lib/mock/booking-store";
 import { getFeeRates } from "@/lib/mock/fee-rates-store";
 import { paymentSources } from "@/lib/mock/ledger-source";
-import { bookingHistory, currentShop, mockLandingPages, sessions, sitePage, workshops } from "@/lib/mock/data";
+import { bookingTrend } from "@/lib/mock/trend";
+import { currentShop, mockLandingPages, sessions, sitePage, workshops } from "@/lib/mock/data";
 
 // Computed outside the component: depends on the current time.
 function computeOverview() {
@@ -23,9 +24,9 @@ function computeOverview() {
   const upcoming = sessions.filter((s) => s.status === "RUNNING" && new Date(s.startsAt).getTime() > now);
   const activeWorkshopIds = new Set(workshops.filter((w) => w.status === "ACTIVE").map((w) => w.id));
   // Every booking of the past year: the history plus the recent bookings of the mock shop.
-  const points = [...bookingHistory, ...bookings.map((b) => ({ startsAt: b.startsAt, status: b.status, guests: b.quantity }))];
-  const nowDate = new Date(now);
-  const trend = Object.fromEntries(TREND_PERIODS.map((p) => [p, bookingSeries(points, p, nowDate, tz)])) as Record<TrendPeriod, TrendBucket[]>;
+  const trend: Record<TrendPeriod, TrendBucket[]> = bookingTrend(bookings, tz, new Date(now));
+  // The sessions that are closed (by the owner, or by the system when their time ended) wait for the owner to complete them.
+  const shown = sessions.map((s) => closeIfEnded(s, new Date(now)));
   const month = trend["3m"].at(-1)!;
   const seatsOpen = upcoming.reduce((n, s) => n + s.capacity, 0);
   const seatsTaken = upcoming.reduce((n, s) => n + s.reservedCount, 0);
@@ -34,10 +35,11 @@ function computeOverview() {
     trend,
     month: { total: month.total, guests: month.guests, lostRate: month.total ? month.lost / month.total : 0 },
     workshops: { active: workshops.filter((w) => w.status === "ACTIVE").length, draft: workshops.filter((w) => w.status === "DRAFT").length },
-    sessions: { upcoming: upcoming.length, fill: seatsOpen ? seatsTaken / seatsOpen : 0 },
+    sessions: { upcoming: upcoming.length, fill: seatsOpen ? seatsTaken / seatsOpen : 0, toComplete: shown.filter((s) => s.status === "CLOSED").length, completed: shown.filter((s) => s.status === "COMPLETED").length },
     customers: { total: liveCustomers().length, repeat: liveCustomers().filter((c) => bookingCount(c.id) >= 2).length },
     todayBookings: live.filter((b) => dayKey(b.startsAt, tz) === today).length,
     upcomingSessions: upcoming.length,
+    notConfirmed: bookings.filter((b) => b.status === "NOT_CONFIRMED").length,
     unpaid: live.filter((b) => b.paymentStatus === "UNPAID").length,
     // FR-SITE-04 prerequisites for "Submit for review".
     checklist: {
@@ -67,6 +69,7 @@ export default async function OverviewPage() {
   const kpis = [
     { key: "today", value: o.todayBookings, href: "/shopowner/today", icon: CalendarClock },
     { key: "upcoming", value: o.upcomingSessions, href: "/shopowner/sessions", icon: ClipboardList },
+    { key: "notConfirmed", value: o.notConfirmed, href: "/shopowner/bookings", icon: MailQuestion },
     { key: "unpaid", value: o.unpaid, href: "/shopowner/bookings", icon: Wallet },
   ] as const;
   const items = Object.entries(o.checklist) as [keyof typeof o.checklist, boolean][];
@@ -77,7 +80,7 @@ export default async function OverviewPage() {
     <div className="mx-auto grid max-w-5xl gap-6">
       <h1 className="text-2xl font-semibold">{t("title")}</h1>
 
-      <section aria-label={t("kpiLabel")} className="grid gap-4 sm:grid-cols-3">
+      <section aria-label={t("kpiLabel")} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {kpis.map(({ key, value, href, icon: Icon }) => (
           <ShopLink key={key} href={href} className="rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
             <Card className="h-full transition-colors hover:bg-muted/50">
@@ -107,7 +110,10 @@ export default async function OverviewPage() {
           />
           <SummaryCard
             href="/shopowner/sessions" icon={CalendarDays} title={ts("sessions.title")} linkLabel={ts("open")}
-            rows={[{ label: ts("sessions.upcoming"), value: num(o.sessions.upcoming) }, { label: ts("sessions.fill"), value: pct(o.sessions.fill) }]}
+            rows={[
+              { label: ts("sessions.upcoming"), value: num(o.sessions.upcoming) }, { label: ts("sessions.fill"), value: pct(o.sessions.fill) },
+              { label: ts("sessions.toComplete"), value: num(o.sessions.toComplete) }, { label: ts("sessions.completed"), value: num(o.sessions.completed) },
+            ]}
           />
           <SummaryCard
             href="/shopowner/customers" icon={Users} title={ts("customers.title")} linkLabel={ts("open")}

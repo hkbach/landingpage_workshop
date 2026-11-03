@@ -41,7 +41,8 @@
     "kpi": {
       "today": "本日の予約",
       "upcoming": "今後のセッション",
-      "unpaid": "未払いの予約"
+      "unpaid": "未払いの予約",
+      "notConfirmed": "未確認の予約"
     },
     "checklist": {
       "title": "公開の準備はできましたか？",
@@ -68,7 +69,7 @@
         "title": "予約",
         "month": "今月の予約",
         "guests": "今月の参加者",
-        "lostRate": "キャンセルまたは無断欠席"
+        "lostRate": "キャンセル率"
       },
       "workshops": {
         "title": "ワークショップ",
@@ -78,7 +79,9 @@
       "sessions": {
         "title": "セッション",
         "upcoming": "今後",
-        "fill": "予約済みの席"
+        "fill": "予約済みの席",
+        "toComplete": "クローズ済み・完了待ち",
+        "completed": "完了"
       },
       "customers": {
         "title": "顧客",
@@ -112,11 +115,11 @@
       "totalsLabel": "期間の合計",
       "total": "予約",
       "guests": "参加者",
-      "attended": "参加済み",
+      "attended": "チェックイン済み",
       "upcoming": "今後",
-      "lost": "キャンセルまたは無断欠席",
-      "lostRate": "キャンセルまたは無断欠席の割合",
-      "chartSummary": "{period}の予約：合計{total}件、参加済み{attended}件、今後{upcoming}件、キャンセルまたは無断欠席{lost}件。",
+      "lost": "キャンセル",
+      "lostRate": "キャンセル率",
+      "chartSummary": "{period}の予約：合計{total}件、チェックイン済み{attended}件、今後{upcoming}件、キャンセル{lost}件。",
       "showTable": "数値を表で表示",
       "day": "日",
       "month": "月"

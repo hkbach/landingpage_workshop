@@ -15,10 +15,10 @@ const GROUPS = ["attended", "upcoming", "lost"] as const;
 const W = 640, H = 260, LEFT = 40, RIGHT = 8, TOP = 12, BOTTOM = 32;
 const PLOT_W = W - LEFT - RIGHT, PLOT_H = H - TOP - BOTTOM;
 
-export function BookingTrend({ series }: { series: Record<TrendPeriod, TrendBucket[]> }) {
+export function BookingTrend({ series, periods = TREND_PERIODS }: { series: Record<TrendPeriod, TrendBucket[]>; periods?: readonly TrendPeriod[] }) {
   const t = useTranslations("dashboard.overview.trend");
   const locale = useLocale();
-  const [period, setPeriod] = useState<TrendPeriod>("3m");
+  const [period, setPeriod] = useState<TrendPeriod>(periods.includes("3m") ? "3m" : periods[0]!);
   const data = series[period];
   const totals = trendTotals(data);
   const daily = isDailyPeriod(period);
@@ -47,7 +47,7 @@ export function BookingTrend({ series }: { series: Record<TrendPeriod, TrendBuck
           <div className="grid content-start gap-1.5">
             <Label htmlFor="trend-period">{t("periodLabel")}</Label>
             <NativeSelect id="trend-period" value={period} onChange={(e) => setPeriod(e.target.value as TrendPeriod)}>
-              {TREND_PERIODS.map((p) => <option key={p} value={p}>{t(`period.${p}`)}</option>)}
+              {periods.map((p) => <option key={p} value={p}>{t(`period.${p}`)}</option>)}
             </NativeSelect>
           </div>
         </div>

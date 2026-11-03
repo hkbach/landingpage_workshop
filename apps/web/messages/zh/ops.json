@@ -77,7 +77,11 @@
     "arrived": "已到场",
     "empty": "今天没有安排场次。",
     "noGuests": "该场次暂无预订。",
-    "addWalkIn": "添加现场散客"
+    "addWalkIn": "添加现场散客",
+    "notConfirmed": "未确认",
+    "paidOf": "已支付",
+    "total": "总价",
+    "waitingConfirm": "正在等待客人通过邮件确认预订。"
   },
   "bookings": {
     "title": "预订",

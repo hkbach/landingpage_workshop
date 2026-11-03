@@ -77,7 +77,11 @@
     "arrived": "Arrived",
     "empty": "There are no sessions scheduled for today.",
     "noGuests": "No bookings for this session yet.",
-    "addWalkIn": "Add walk-in"
+    "addWalkIn": "Add walk-in",
+    "notConfirmed": "Not confirmed",
+    "paidOf": "Paid",
+    "total": "Total",
+    "waitingConfirm": "Waiting for the guest to confirm the booking from the email."
   },
   "bookings": {
     "title": "Bookings",

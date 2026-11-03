@@ -41,7 +41,8 @@
     "kpi": {
       "today": "今日预订",
       "upcoming": "即将开始的场次",
-      "unpaid": "未付款预订"
+      "unpaid": "未付款预订",
+      "notConfirmed": "未确认的预订"
     },
     "checklist": {
       "title": "准备好发布了吗？",
@@ -68,7 +69,7 @@
         "title": "预订",
         "month": "本月预订",
         "guests": "本月客人",
-        "lostRate": "已取消或未到场"
+        "lostRate": "取消率"
       },
       "workshops": {
         "title": "工作坊",
@@ -78,7 +79,9 @@
       "sessions": {
         "title": "场次",
         "upcoming": "即将开始",
-        "fill": "已预订名额"
+        "fill": "已预订名额",
+        "toComplete": "已关闭，待完成",
+        "completed": "已完成"
       },
       "customers": {
         "title": "客户",
@@ -112,11 +115,11 @@
       "totalsLabel": "该时间段合计",
       "total": "预订",
       "guests": "客人",
-      "attended": "已到场",
+      "attended": "已签到",
       "upcoming": "即将开始",
-      "lost": "已取消或未到场",
-      "lostRate": "取消或未到场率",
-      "chartSummary": "{period}的预订：共 {total} 个，{attended} 个已到场，{upcoming} 个尚未开始，{lost} 个已取消或未到场。",
+      "lost": "已取消",
+      "lostRate": "取消率",
+      "chartSummary": "{period}预订：共 {total} 个，已签到 {attended} 个，待进行 {upcoming} 个，已取消 {lost} 个。",
       "showTable": "以表格显示数据",
       "day": "日",
       "month": "月"

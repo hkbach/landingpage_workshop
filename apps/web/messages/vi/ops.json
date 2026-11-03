@@ -77,7 +77,11 @@
     "arrived": "Đã đến",
     "empty": "Hôm nay chưa có buổi nào được lên lịch.",
     "noGuests": "Buổi này chưa có đặt chỗ nào.",
-    "addWalkIn": "Thêm khách vãng lai"
+    "addWalkIn": "Thêm khách vãng lai",
+    "notConfirmed": "Chưa xác nhận",
+    "paidOf": "Đã thanh toán",
+    "total": "Tổng tiền",
+    "waitingConfirm": "Đang chờ khách xác nhận booking qua email."
   },
   "bookings": {
     "title": "Đặt chỗ",

@@ -41,7 +41,8 @@
     "kpi": {
       "today": "Đặt chỗ hôm nay",
       "upcoming": "Các buổi sắp tới",
-      "unpaid": "Đặt chỗ chưa thanh toán"
+      "unpaid": "Đặt chỗ chưa thanh toán",
+      "notConfirmed": "Booking chưa xác nhận"
     },
     "checklist": {
       "title": "Sẵn sàng xuất bản?",
@@ -68,7 +69,7 @@
         "title": "Đặt chỗ",
         "month": "Đặt chỗ tháng này",
         "guests": "Khách tháng này",
-        "lostRate": "Đã hủy hoặc vắng mặt"
+        "lostRate": "Tỷ lệ hủy"
       },
       "workshops": {
         "title": "Workshop",
@@ -78,7 +79,9 @@
       "sessions": {
         "title": "Buổi",
         "upcoming": "Sắp tới",
-        "fill": "Chỗ đã đặt"
+        "fill": "Chỗ đã đặt",
+        "toComplete": "Đã đóng, chờ hoàn thành",
+        "completed": "Đã hoàn thành"
       },
       "customers": {
         "title": "Khách hàng",
@@ -112,11 +115,11 @@
       "totalsLabel": "Tổng trong khoảng thời gian",
       "total": "Đặt chỗ",
       "guests": "Khách",
-      "attended": "Đã tham dự",
+      "attended": "Đã check-in",
       "upcoming": "Sắp tới",
-      "lost": "Đã hủy hoặc vắng mặt",
-      "lostRate": "Tỷ lệ hủy hoặc vắng mặt",
-      "chartSummary": "Đặt chỗ cho {period}: tổng {total}, {attended} đã tham dự, {upcoming} sắp tới, {lost} đã hủy hoặc vắng mặt.",
+      "lost": "Đã hủy",
+      "lostRate": "Tỷ lệ hủy",
+      "chartSummary": "Booking trong {period}: tổng {total}, {attended} đã check-in, {upcoming} sắp tới, {lost} đã hủy.",
       "showTable": "Hiển thị số liệu dạng bảng",
       "day": "Ngày",
       "month": "Tháng"

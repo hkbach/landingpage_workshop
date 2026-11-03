@@ -118,7 +118,7 @@ describe("demo sessions: every case", () => {
     expect(has((s) => Boolean(s.imageUrl))).toBe(true);
     expect(has((s) => !s.imageUrl)).toBe(true);
     expect(has((s) => Boolean(s.clonedFrom))).toBe(true);
-    expect(new Set(sessions.map((s) => s.workshopId)).size).toBe(2);
+    expect(new Set(sessions.map((s) => s.workshopId)).size).toBe(workshops.filter((w) => w.status === "ACTIVE").length);
   });
   it("every reason of closing, and Other with its explanation", () => {
     for (const r of SESSION_CLOSE_REASONS) expect(has((s) => (s.notes ?? []).some((n) => n.type === "CLOSED" && n.reason?.code === r)), r).toBe(true);

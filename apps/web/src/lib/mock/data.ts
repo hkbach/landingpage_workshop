@@ -62,6 +62,20 @@ export const workshops: Workshop[] = [
     includes: {}, notes: {}, durationMinutes: 150, priceAmount: 500_000, currency: "VND", defaultCapacity: 6, maxPerBooking: 4,
     coverUrl: "https://picsum.photos/seed/plates/1200/800", galleryUrls: [], status: "DRAFT", sortOrder: 3, createdAt: at(-6, 10.5),
   },
+  {
+    id: "ws-4", title: { en: "Raku Firing Day", vi: "Ngày nung Raku", ko: "라쿠 소성 데이", ja: "楽焼きの一日", zh: "乐烧体验日" },
+    shortDescription: { en: "Glaze a piece and watch it fired in the open kiln.", vi: "Tráng men và xem sản phẩm được nung trong lò mở." },
+    description: { en: "A half-day class: glaze your own bowl, then fire it in a raku kiln with our instructor." },
+    includes: { en: ["Clay piece", "Glazes", "Firing", "Tea"] }, notes: { en: "Closed shoes are required near the kiln." },
+    durationMinutes: 180, priceAmount: 700_000, currency: "VND", defaultCapacity: 8, maxPerBooking: 4,
+    coverUrl: "https://picsum.photos/seed/raku/1200/800", galleryUrls: ["https://picsum.photos/seed/raku1/800/600"],
+    status: "ACTIVE", sortOrder: 4, createdAt: at(-40, 11),
+  },
+  {
+    id: "ws-5", title: { en: "Couples Night Class" }, shortDescription: { en: "Make a pair of cups together." }, description: { en: "Draft." },
+    includes: {}, notes: {}, durationMinutes: 150, priceAmount: 900_000, currency: "VND", defaultCapacity: 12, maxPerBooking: 2,
+    coverUrl: "https://picsum.photos/seed/kids/1200/800", galleryUrls: [], status: "DRAFT", sortOrder: 5, createdAt: at(-2, 15),
+  },
 ];
 
 /** ISO UTC for `minutes` from now (negative: in the past). Used by the demo sessions that must be taking place, or about to start, when the page is opened. */
@@ -153,6 +167,17 @@ export const sessions: Session[] = [
   { id: "se-23", code: "SES-0023", workshopId: "ws-1", startsAt: at(-5, 9), endsAt: at(-5, 11), capacity: 8, reservedCount: 0, status: "PAUSED", bookingCutoffMinutes: 240 },
   { id: "se-24", code: "SES-0024", workshopId: "ws-2", startsAt: at(-6, 14), endsAt: at(-6, 15.5), capacity: 12, reservedCount: 0, status: "OPEN", bookingCutoffMinutes: 120 },
   { id: "se-25", code: "SES-0025", workshopId: "ws-1", startsAt: at(-7, 9), endsAt: at(-7, 11), capacity: 8, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 90 },
+
+  // ---- COMPLETED: the owner checked the payments and completed them (final: nothing about them changes any more) ----
+  { id: "se-44", code: "SES-0044", workshopId: "ws-1", startsAt: at(-8, 9), endsAt: at(-8, 11), capacity: 8, reservedCount: 0, status: "COMPLETED", bookingCutoffMinutes: 120, imageUrl: pic("done1") },
+  { id: "se-45", code: "SES-0045", workshopId: "ws-2", startsAt: at(-10, 14), endsAt: at(-10, 15.5), capacity: 10, reservedCount: 0, status: "COMPLETED", bookingCutoffMinutes: 120 },
+  { id: "se-46", code: "SES-0046", workshopId: "ws-4", startsAt: at(-15, 10), endsAt: at(-15, 13), capacity: 8, reservedCount: 0, status: "COMPLETED", bookingCutoffMinutes: 120, imageUrl: pic("raku") },
+
+  // ---- A fourth workshop with sessions of its own: running, paused, open, and one closed by the owner (it has guests) ----
+  { id: "se-48", code: "SES-0048", workshopId: "ws-4", startsAt: at(3, 15), endsAt: at(3, 18), capacity: 8, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 120, imageUrl: pic("raku2") },
+  { id: "se-49", code: "SES-0049", workshopId: "ws-4", startsAt: at(9, 15), endsAt: at(9, 18), capacity: 8, reservedCount: 0, status: "OPEN", bookingCutoffMinutes: 120 },
+  { id: "se-50", code: "SES-0050", workshopId: "ws-4", startsAt: at(5, 16), endsAt: at(5, 19), capacity: 8, reservedCount: 0, status: "PAUSED", bookingCutoffMinutes: 120 },
+  { id: "se-51", code: "SES-0051", workshopId: "ws-4", startsAt: at(4, 16), endsAt: at(4, 19), capacity: 8, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, notes: [{ type: "CLOSED", at: at(-1, 10), reason: { code: "NOT_ENOUGH_GUESTS" } }] },
 ];
 
 export const customers: Customer[] = [
@@ -160,6 +185,21 @@ export const customers: Customer[] = [
   { id: "cu-2", fullName: "Kim Min-jun", email: "minjun@example.com", preferredLocale: "ko" }, // booked without an account
   { id: "cu-3", fullName: "Walk-in guest", preferredLocale: "en" },
   { id: "cu-4", fullName: "Nguyen Thu", email: "thu@example.com", phone: "+84 90 123 4567", preferredLocale: "vi", account: { country: "VN", birthDate: "1995-09-30", avatarUrl: "https://picsum.photos/seed/avatar-thu/200/200", socials: { ZALO: "0901 234 567", TIKTOK: "@thu.clay" } } }, // no gender given
+  // More guests so every language, every gender (and none), and guests with and without an account have a few records.
+  { id: "cu-5", fullName: "Sato Yuki", email: "yuki@example.com", phone: "+81 90 0000 1111", preferredLocale: "ja", account: { country: "JP", birthDate: "1992-02-14", avatarUrl: "https://picsum.photos/seed/avatar-yuki/200/200", gender: "FEMALE", socials: { INSTAGRAM: "@yuki.clay" } } },
+  { id: "cu-6", fullName: "Wang Wei", email: "wei@example.com", phone: "+86 138 0000 0000", preferredLocale: "zh", account: { country: "CN", birthDate: "1988-11-05", avatarUrl: "https://picsum.photos/seed/avatar-wei/200/200", gender: "MALE" } },
+  { id: "cu-7", fullName: "Bui Khoa", email: "khoa@example.com", phone: "+84 91 222 3333", preferredLocale: "vi", account: { country: "VN", birthDate: "2000-06-21", gender: "MALE", socials: { ZALO: "0912 223 333" } } },
+  { id: "cu-8", fullName: "Park Ji-woo", email: "jiwoo@example.com", preferredLocale: "ko" }, // booked without an account
+  { id: "cu-9", fullName: "Oliver Smith", email: "oliver@example.com", phone: "+1 202 555 0100", preferredLocale: "en", account: { country: "US", birthDate: "1985-01-09", avatarUrl: "https://picsum.photos/seed/avatar-oliver/200/200", gender: "OTHER", socials: { FACEBOOK: "oliver.smith.clay" } } },
+  { id: "cu-10", fullName: "Le Lan Anh", email: "lananh@example.com", preferredLocale: "vi" }, // booked without an account
+  { id: "cu-11", fullName: "Pham Huy", phone: "+84 93 555 6666", preferredLocale: "vi" }, // booked by phone: no email, no account
+  { id: "cu-12", fullName: "Lee Seo-yeon", email: "seoyeon@example.com", phone: "+82 10 0000 2222", preferredLocale: "ko", account: { country: "KR", birthDate: "1997-07-23", gender: "FEMALE" } },
+  { id: "cu-13", fullName: "Tanaka Ren", email: "ren@example.com", preferredLocale: "ja" }, // booked without an account
+  { id: "cu-14", fullName: "Chen Mei", email: "mei@example.com", preferredLocale: "zh", account: { country: "CN", birthDate: "1993-03-30", gender: "OTHER" } },
+  { id: "cu-15", fullName: "Ito Haru", email: "haru@example.com", phone: "+81 80 0000 3333", preferredLocale: "ja", account: { country: "JP", birthDate: "2001-12-02", gender: "OTHER" } },
+  { id: "cu-16", fullName: "Liu Yang", email: "yang@example.com", preferredLocale: "zh", account: { country: "CN", birthDate: "1990-08-17", gender: "MALE" } },
+  { id: "cu-17", fullName: "Vo Hanh", email: "hanh@example.com", preferredLocale: "vi", account: { country: "VN", birthDate: "1999-05-11" } }, // no gender given
+  { id: "cu-18", fullName: "Do Quan", email: "quan@example.com", preferredLocale: "vi", account: { country: "VN", birthDate: "1987-10-26" } }, // no gender given
 ];
 
 // The booking code is "<session code>-<3 digits>", counted per session in the order the demo bookings are listed.
@@ -187,6 +227,12 @@ function booking(p: Partial<Booking> & Pick<Booking, "id" | "sessionId" | "custo
     bookingCode: `${s.code}-${String(n).padStart(3, "0")}`,
   };
 }
+
+/** A booking that was checked in a few minutes after its session started. */
+const ci = (sessionId: string, minutes: number) => ({
+  status: "CHECKED_IN" as const,
+  checkedInAt: new Date(Math.min(Date.parse(sessions.find((x) => x.id === sessionId)!.startsAt) + minutes * 60_000, Date.now() - 60_000)).toISOString(),
+});
 
 export const bookings: Booking[] = [
   // Bookings that used promotions: 20% off 1,300,000; 150,000 + 15% + 5% off 1,950,000; 100,000 off 4,000,000; 5% off 1,200,000 (cancelled).
@@ -250,6 +296,79 @@ export const bookings: Booking[] = [
   booking({ id: "bk-38", sessionId: "se-38", customerId: "cu-2", quantity: 1 }),
   booking({ id: "bk-39", sessionId: "se-22", customerId: "cu-1", quantity: 2 }),
   booking({ id: "bk-40", sessionId: "se-22", customerId: "cu-4", quantity: 1, status: "CANCELLED", cancelReason: "Could not come" }),
+  // ---- More demo bookings: every status with every payment status, every source, completed sessions and sessions to complete ----
+  booking({ id: "bk-41", sessionId: "se-44", customerId: "cu-5", quantity: 2, ...ci("se-44", 11) }),
+  booking({ id: "bk-42", sessionId: "se-44", customerId: "cu-6", quantity: 1, ...ci("se-44", 5) }),
+  booking({ id: "bk-43", sessionId: "se-44", customerId: "cu-7", quantity: 3, ...ci("se-44", 6) }),
+  booking({ id: "bk-44", sessionId: "se-44", customerId: "cu-8", quantity: 1, status: "CANCELLED", cancelReason: "Guest changed plans" }),
+  booking({ id: "bk-45", sessionId: "se-44", customerId: "cu-9", quantity: 2, status: "CANCELLED", cancelReason: "Guest is ill" }),
+  booking({ id: "bk-98", sessionId: "se-44", customerId: "cu-15", quantity: 1, ...ci("se-44", 5) }),
+  booking({ id: "bk-46", sessionId: "se-45", customerId: "cu-1", quantity: 2, ...ci("se-45", 9) }),
+  booking({ id: "bk-47", sessionId: "se-45", customerId: "cu-10", quantity: 1, ...ci("se-45", 10) }),
+  booking({ id: "bk-48", sessionId: "se-45", customerId: "cu-2", quantity: 2, ...ci("se-45", 11) }),
+  booking({ id: "bk-49", sessionId: "se-45", customerId: "cu-11", quantity: 1, ...ci("se-45", 5), source: "PHONE" }),
+  booking({ id: "bk-50", sessionId: "se-45", customerId: "cu-4", quantity: 1, status: "CANCELLED", cancelReason: "Schedule conflict" }),
+  booking({ id: "bk-97", sessionId: "se-45", customerId: "cu-14", quantity: 1, ...ci("se-45", 11) }),
+  booking({ id: "bk-51", sessionId: "se-46", customerId: "cu-6", quantity: 2, ...ci("se-46", 7) }),
+  booking({ id: "bk-52", sessionId: "se-46", customerId: "cu-5", quantity: 1, ...ci("se-46", 8) }),
+  booking({ id: "bk-53", sessionId: "se-46", customerId: "cu-9", quantity: 2, ...ci("se-46", 9) }),
+  booking({ id: "bk-54", sessionId: "se-46", customerId: "cu-3", quantity: 1, ...ci("se-46", 10), source: "WALK_IN" }),
+  booking({ id: "bk-55", sessionId: "se-18", customerId: "cu-7", quantity: 2, ...ci("se-18", 11) }),
+  booking({ id: "bk-56", sessionId: "se-18", customerId: "cu-8", quantity: 1, ...ci("se-18", 5) }),
+  booking({ id: "bk-57", sessionId: "se-18", customerId: "cu-10", quantity: 2 }),
+  booking({ id: "bk-58", sessionId: "se-18", customerId: "cu-6", quantity: 1, status: "NOT_CONFIRMED" }),
+  booking({ id: "bk-59", sessionId: "se-18", customerId: "cu-2", quantity: 1, status: "CANCELLED", cancelReason: "Could not come" }),
+  booking({ id: "bk-60", sessionId: "se-25", customerId: "cu-1", quantity: 1, ...ci("se-25", 9) }),
+  booking({ id: "bk-61", sessionId: "se-25", customerId: "cu-5", quantity: 2, ...ci("se-25", 10) }),
+  booking({ id: "bk-62", sessionId: "se-25", customerId: "cu-9", quantity: 1 }),
+  booking({ id: "bk-63", sessionId: "se-25", customerId: "cu-4", quantity: 2 }),
+  booking({ id: "bk-64", sessionId: "se-23", customerId: "cu-6", quantity: 2, ...ci("se-23", 6) }),
+  booking({ id: "bk-65", sessionId: "se-23", customerId: "cu-11", quantity: 1, ...ci("se-23", 7), source: "PHONE" }),
+  booking({ id: "bk-66", sessionId: "se-23", customerId: "cu-8", quantity: 1, source: "OTHER" }),
+  booking({ id: "bk-67", sessionId: "se-24", customerId: "cu-7", quantity: 2, ...ci("se-24", 9) }),
+  booking({ id: "bk-68", sessionId: "se-24", customerId: "cu-3", quantity: 1, ...ci("se-24", 10), source: "WALK_IN" }),
+  booking({ id: "bk-69", sessionId: "se-24", customerId: "cu-10", quantity: 2, status: "NOT_CONFIRMED" }),
+  booking({ id: "bk-70", sessionId: "se-22", customerId: "cu-5", quantity: 1, ...ci("se-22", 5) }),
+  booking({ id: "bk-71", sessionId: "se-1", customerId: "cu-8", quantity: 2, status: "NOT_CONFIRMED" }),
+  booking({ id: "bk-72", sessionId: "se-27", customerId: "cu-6", quantity: 1 }),
+  booking({ id: "bk-73", sessionId: "se-28", customerId: "cu-9", quantity: 2 }),
+  booking({ id: "bk-74", sessionId: "se-28", customerId: "cu-5", quantity: 1, status: "NOT_CONFIRMED" }),
+  booking({ id: "bk-75", sessionId: "se-29", customerId: "cu-7", quantity: 2 }),
+  booking({ id: "bk-76", sessionId: "se-3", customerId: "cu-10", quantity: 1, source: "PHONE" }),
+  booking({ id: "bk-77", sessionId: "se-5", customerId: "cu-8", quantity: 3 }),
+  booking({ id: "bk-78", sessionId: "se-5", customerId: "cu-11", quantity: 1, status: "NOT_CONFIRMED", source: "PHONE" }),
+  booking({ id: "bk-79", sessionId: "se-9", customerId: "cu-5", quantity: 2 }),
+  booking({ id: "bk-80", sessionId: "se-9", customerId: "cu-6", quantity: 2, status: "NOT_CONFIRMED", source: "OTHER" }),
+  booking({ id: "bk-81", sessionId: "se-10", customerId: "cu-1", quantity: 2 }),
+  booking({ id: "bk-82", sessionId: "se-10", customerId: "cu-9", quantity: 1 }),
+  booking({ id: "bk-83", sessionId: "se-17", customerId: "cu-7", quantity: 2 }),
+  booking({ id: "bk-84", sessionId: "se-36", customerId: "cu-10", quantity: 2, status: "NOT_CONFIRMED" }),
+  booking({ id: "bk-85", sessionId: "se-48", customerId: "cu-1", quantity: 2 }),
+  booking({ id: "bk-86", sessionId: "se-48", customerId: "cu-6", quantity: 2 }),
+  booking({ id: "bk-87", sessionId: "se-48", customerId: "cu-8", quantity: 1, status: "NOT_CONFIRMED" }),
+  booking({ id: "bk-88", sessionId: "se-50", customerId: "cu-5", quantity: 1, source: "OTHER" }),
+  booking({ id: "bk-89", sessionId: "se-50", customerId: "cu-2", quantity: 2 }),
+  booking({ id: "bk-90", sessionId: "se-51", customerId: "cu-9", quantity: 1 }),
+  booking({ id: "bk-91", sessionId: "se-51", customerId: "cu-7", quantity: 1, status: "CANCELLED", cancelReason: "Booked by mistake" }),
+  booking({ id: "bk-92", sessionId: "se-17", customerId: "cu-12", quantity: 1 }),
+  booking({ id: "bk-93", sessionId: "se-36", customerId: "cu-13", quantity: 1, status: "NOT_CONFIRMED" }),
+  booking({ id: "bk-94", sessionId: "se-10", customerId: "cu-14", quantity: 1 }),
+  booking({ id: "bk-95", sessionId: "se-48", customerId: "cu-15", quantity: 1 }),
+  booking({ id: "bk-96", sessionId: "se-5", customerId: "cu-16", quantity: 1 }),
+  booking({ id: "bk-99", sessionId: "se-9", customerId: "cu-17", quantity: 1 }),
+  booking({ id: "bk-100", sessionId: "se-36", customerId: "cu-18", quantity: 1 }),
+  booking({ id: "bk-101", sessionId: "se-24", customerId: "cu-12", quantity: 1, ...ci("se-24", 8) }),
+  booking({ id: "bk-102", sessionId: "se-23", customerId: "cu-12", quantity: 1, ...ci("se-23", 9) }),
+  booking({ id: "bk-103", sessionId: "se-25", customerId: "cu-13", quantity: 1, ...ci("se-25", 10) }),
+  booking({ id: "bk-104", sessionId: "se-46", customerId: "cu-13", quantity: 1, ...ci("se-46", 11) }),
+  booking({ id: "bk-105", sessionId: "se-23", customerId: "cu-14", quantity: 1, ...ci("se-23", 5) }),
+  booking({ id: "bk-106", sessionId: "se-24", customerId: "cu-15", quantity: 1, ...ci("se-24", 6) }),
+  booking({ id: "bk-107", sessionId: "se-25", customerId: "cu-16", quantity: 1 }),
+  booking({ id: "bk-108", sessionId: "se-36", customerId: "cu-16", quantity: 1 }),
+  booking({ id: "bk-109", sessionId: "se-44", customerId: "cu-17", quantity: 1, ...ci("se-44", 9) }),
+  booking({ id: "bk-110", sessionId: "se-9", customerId: "cu-17", quantity: 1 }),
+  booking({ id: "bk-111", sessionId: "se-45", customerId: "cu-18", quantity: 1, ...ci("se-45", 11) }),
+  booking({ id: "bk-113", sessionId: "se-17", customerId: "cu-18", quantity: 1 }),
 ];
 
 // What each demo booking has paid, so the Income page, the payment status of the bookings and the cancelled bookings agree. A guest who cancels
@@ -286,6 +405,29 @@ export const bookings: Booking[] = [
       const paid = entries[0]!.amount;
       entries.push({ id: `pm-${id}-2`, type: "REFUND", amount: plan.refund === "ALL" ? paid : plan.refund, method: plan.method, note: "Booking cancelled", recordedAt: plan.refundAt ?? plan.at, recordedBy: "Linh Tran" });
     }
+    b.payments = entries;
+    b.paymentStatus = computePaymentStatus(b.totalAmount, entries);
+  }
+  // The payments of the bookings above: paid at the studio a little after the session started (or online before it, for the ones to come). A cancelled
+  // booking may keep its payment (no refund) or have it given back (all or part of it). A payment that does not cover the price leaves it Unpaid.
+  type Pay = { pay: number | "FULL"; method: PaymentMethod; minutes: number; refund?: number | "ALL" };
+  const pays: Record<string, Pay> = {
+    "bk-41": { pay: "FULL", method: "CARD", minutes: 130 }, "bk-42": { pay: "FULL", method: "CASH", minutes: 125 },
+    "bk-46": { pay: "FULL", method: "E_WALLET", minutes: 100 }, "bk-47": { pay: "FULL", method: "BANK_TRANSFER", minutes: 95 },
+    "bk-49": { pay: "FULL", method: "CASH", minutes: 90 }, "bk-50": { pay: "FULL", method: "CARD", minutes: -1800, refund: "ALL" }, "bk-51": { pay: "FULL", method: "CARD", minutes: 200 },
+    "bk-52": { pay: "FULL", method: "OTHER", minutes: 190 }, "bk-53": { pay: "FULL", method: "OTHER", minutes: 195 }, "bk-55": { pay: "FULL", method: "CARD", minutes: 120 },
+    "bk-60": { pay: "FULL", method: "CARD", minutes: 110 }, "bk-61": { pay: "FULL", method: "BANK_TRANSFER", minutes: 115 },
+    "bk-62": { pay: "FULL", method: "CARD", minutes: -2880 }, "bk-63": { pay: 400_000, method: "BANK_TRANSFER", minutes: -2000 }, "bk-64": { pay: "FULL", method: "CASH", minutes: 120 },
+    "bk-67": { pay: "FULL", method: "E_WALLET", minutes: 100 }, "bk-68": { pay: "FULL", method: "CASH", minutes: 95 }, "bk-70": { pay: "FULL", method: "OTHER", minutes: 100 },
+    "bk-81": { pay: "FULL", method: "CARD", minutes: -4000 }, "bk-85": { pay: "FULL", method: "CARD", minutes: -3000 }, "bk-91": { pay: "FULL", method: "E_WALLET", minutes: -2500, refund: "ALL" },
+    "bk-97": { pay: "FULL", method: "CARD", minutes: 100 }, "bk-98": { pay: "FULL", method: "BANK_TRANSFER", minutes: 100 },
+  };
+  for (const [id, p] of Object.entries(pays)) {
+    const b = bookings.find((x) => x.id === id)!;
+    const stamp = (m: number) => new Date(Math.min(Date.parse(b.startsAt) + m * 60_000, Date.now() - 3_600_000)).toISOString();
+    const amount = p.pay === "FULL" ? b.totalAmount : p.pay;
+    const entries: PaymentEntry[] = [{ id: `pm-${id}-1`, type: "PAYMENT", amount, method: p.method, recordedAt: stamp(p.minutes), recordedBy: "Linh Tran" }];
+    if (p.refund) entries.push({ id: `pm-${id}-2`, type: "REFUND", amount: p.refund === "ALL" ? amount : p.refund, method: p.method, note: "Booking cancelled", recordedAt: stamp(p.minutes + 180), recordedBy: "Linh Tran" });
     b.payments = entries;
     b.paymentStatus = computePaymentStatus(b.totalAmount, entries);
   }

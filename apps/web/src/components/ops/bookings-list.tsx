@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Plus, Search } from "lucide-react";
-import { BOOKING_STATUSES, formatMoney, PAYMENT_STATUSES, pickLocalized, resolveShopLocale, type BookingPriceInfo, type BookingStatus, type Locale, type PaymentStatus } from "@workshop/shared";
+import { BOOKING_STATUSES, formatMoney, PAYMENT_STATUSES, pickLocalized, resolveShopLocale, type BookingPriceInfo, type BookingStatus, type Locale, type PaymentStatus, type TrendBucket, type TrendPeriod } from "@workshop/shared";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DateInput } from "@/components/ui/date-input";
@@ -17,6 +17,7 @@ import { Field } from "./field";
 import { NativeSelect } from "./native-select";
 import { BookingStatusBadge, PaymentStatusBadge } from "./status-badges";
 import { PriceTip } from "./price-tip";
+import { BookingTrend } from "@/components/dashboard/booking-trend";
 import { ShopLink } from "@/components/dashboard/shell/shop-link";
 import { cn } from "@/lib/utils";
 
@@ -25,9 +26,9 @@ import { cn } from "@/lib/utils";
  * shows only the bookings of that status (a click on the same figure, or on All bookings, shows them all again).
  */
 export function BookingsList({
-  bookings, prices, sessions, customers, workshops, timezone, defaultLocale, enabledLocales, nowIso,
+  bookings, prices, trend, sessions, customers, workshops, timezone, defaultLocale, enabledLocales, nowIso,
 }: {
-  bookings: Booking[]; /** The original price of each booking and its vouchers, by booking id. */ prices: Record<string, BookingPriceInfo>; sessions: Session[]; customers: Customer[]; workshops: Workshop[];
+  bookings: Booking[]; /** The original price of each booking and its vouchers, by booking id. */ prices: Record<string, BookingPriceInfo>; /** The bookings over time, by period (the chart above the table). */ trend: Record<TrendPeriod, TrendBucket[]>; sessions: Session[]; customers: Customer[]; workshops: Workshop[];
   timezone: string; defaultLocale: Locale; enabledLocales: Locale[]; nowIso: string;
 }) {
   const t = useTranslations("ops");
@@ -139,6 +140,9 @@ export function BookingsList({
         ))}
       </div>
       <p className="-mt-2 text-xs text-muted-foreground">{t("bookings.summaryHint")}</p>
+
+      {/* The bookings over time (by the date of their session): the last 3 months, 6 months or year. */}
+      <BookingTrend series={trend} periods={["3m", "6m", "12m"]} />
 
       <p className="text-sm text-muted-foreground" role="status">{t("bookings.count", { count: rows.length })}</p>
 

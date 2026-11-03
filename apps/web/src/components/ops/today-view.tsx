@@ -2,11 +2,11 @@
 
 import { useLocale, useTranslations } from "next-intl";
 import { Clock, Users } from "lucide-react";
-import { formatMoney, pickLocalized, resolveShopLocale, type Locale } from "@workshop/shared";
+import { formatMoney, isSessionFinished, pickLocalized, resolveShopLocale, type Locale } from "@workshop/shared";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Booking, Customer, Session, Workshop } from "@/lib/types";
 import { dayKey, formatTime } from "@/lib/format";
-import { holdsSeat, netPaid } from "@/lib/booking-state";
+import { holdsSeat } from "@/lib/booking-state";
 import { BookingActions } from "./booking-actions";
 import { CapacityBar } from "./capacity-bar";
 import { BookingStatusBadge, PaymentStatusBadge, SessionStatusBadge } from "./status-badges";
@@ -33,6 +33,9 @@ export function TodayView({
   const live = ops.bookings.filter((b) => todays.some((s) => s.id === b.sessionId));
   const expected = live.filter((b) => holdsSeat(b.status)).reduce((n, b) => n + b.quantity, 0);
   const arrived = live.filter((b) => b.status === "CHECKED_IN").reduce((n, b) => n + b.quantity, 0);
+  const notConfirmed = live.filter((b) => b.status === "NOT_CONFIRMED").length;
+  const payable = live.filter((b) => b.status !== "CANCELLED");
+  const paid = payable.filter((b) => b.paymentStatus === "PAID").length;
 
   return (
     <div className="grid gap-4">
@@ -45,10 +48,12 @@ export function TodayView({
         </p>
       </header>
 
-      <dl className="grid grid-cols-3 gap-2 sm:max-w-xl">
+      <dl className="grid grid-cols-2 gap-2 sm:grid-cols-5 lg:max-w-3xl" data-testid="today-stats">
         <Stat label={t("today.sessions")} value={todays.length} />
         <Stat label={t("today.guestsExpected")} value={expected} />
         <Stat label={t("today.arrived")} value={`${arrived}/${expected}`} />
+        <Stat label={t("today.notConfirmed")} value={notConfirmed} />
+        <Stat label={t("today.paidOf")} value={`${paid}/${payable.length}`} />
       </dl>
 
       {todays.length === 0 ? (
@@ -73,14 +78,16 @@ export function TodayView({
                 <SessionStatusBadge status={s.status} />
               </div>
               <CapacityBar reserved={s.reservedCount} capacity={s.capacity} />
-              <div className="flex flex-wrap gap-2">
-                <ShopLink
-                  href={`/shopowner/bookings/new?session=${s.id}`}
-                  className="inline-flex h-7 items-center rounded-lg border border-border px-2.5 text-[0.8rem] font-medium hover:bg-muted"
-                >
-                  {t("today.addWalkIn")}
-                </ShopLink>
-              </div>
+              {isSessionFinished(s.status) ? null : (
+                <div className="flex flex-wrap gap-2">
+                  <ShopLink
+                    href={`/shopowner/bookings/new?session=${s.id}`}
+                    className="inline-flex h-7 items-center rounded-lg border border-border px-2.5 text-[0.8rem] font-medium hover:bg-muted"
+                  >
+                    {t("today.addWalkIn")}
+                  </ShopLink>
+                </div>
+              )}
             </CardHeader>
             <CardContent className="grid gap-3">
               {list.length === 0 ? <p className="text-sm text-muted-foreground">{t("today.noGuests")}</p> : null}
@@ -88,7 +95,6 @@ export function TodayView({
                 {list.map((b) => {
                   const c = customerOf(b.customerId);
                   const inactive = b.status === "CANCELLED";
-                  const balance = Math.max(0, b.totalAmount - netPaid(b.payments));
                   return (
                     <li key={b.id} className={`grid gap-2 rounded-lg border p-3 ${inactive ? "bg-muted/40" : ""}`}>
                       <div className="flex flex-wrap items-start justify-between gap-2">
@@ -108,12 +114,13 @@ export function TodayView({
                         </div>
                       </div>
                       {b.specialRequest ? <p className="text-xs italic text-muted-foreground">{t("common.request")}: {b.specialRequest}</p> : null}
+                      {b.status === "NOT_CONFIRMED" && !isSessionFinished(s.status) ? <p className="text-xs text-amber-800" data-testid="waiting-confirm">{t("today.waitingConfirm")}</p> : null}
                       {b.status !== "CANCELLED" ? (
                         <p className="text-xs text-muted-foreground">
-                          {t("payment.balance")}: <span className="font-medium text-foreground">{formatMoney(balance, b.currency, locale)}</span>
+                          {t("today.total")}: <span className="font-medium text-foreground">{formatMoney(b.totalAmount, b.currency, locale)}</span>
                         </p>
                       ) : null}
-                      <BookingActions booking={b} session={s} ops={ops} timezone={shop.timezone} compact />
+                      {isSessionFinished(s.status) ? null : <BookingActions booking={b} session={s} ops={ops} timezone={shop.timezone} compact checkInOnly />}
                     </li>
                   );
                 })}

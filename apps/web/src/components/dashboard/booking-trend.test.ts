@@ -18,13 +18,19 @@ describe("booking trend", () => {
     for (const label of ["Last month (by day)", "Last 3 months", "Last 6 months", "Last year"]) expect(html).toContain(label);
     expect(html).toMatch(/<option value="3m" selected/);
   });
+  it("can offer some of the periods only (the Bookings screen: 3 months, 6 months and a year)", () => {
+    const some = renderToStaticMarkup(createElement(Provider, { locale: "en", timeZone: "UTC", messages: { dashboard } }, createElement(BookingTrend, { series, periods: ["3m", "6m", "12m"] })));
+    for (const label of ["Last 3 months", "Last 6 months", "Last year"]) expect(some).toContain(label);
+    expect(some).not.toContain("Last month (by day)");
+    expect(some).toMatch(/<option value="3m" selected/);
+  });
   it("is an image with a text summary and a table with the same numbers", () => {
     expect(html).toContain('role="img"');
     expect(html).toMatch(/aria-label="Bookings for the last 3 months: \d+ in total/);
     expect(html).toContain("<table");
   });
   it("shows the totals of the period", () => {
-    for (const k of ["Bookings", "Guests", "Attended", "Cancelled or no-show rate"]) expect(html).toContain(k);
+    for (const k of ["Bookings", "Guests", "Checked in", "Cancellation rate"]) expect(html).toContain(k);
   });
   it("draws bars only where there are bookings, split in at most three colours", () => {
     const rects = html.match(/<rect /g)?.length ?? 0;

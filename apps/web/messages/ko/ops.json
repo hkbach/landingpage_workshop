@@ -77,7 +77,11 @@
     "arrived": "도착",
     "empty": "오늘 예정된 세션이 없어요.",
     "noGuests": "이 세션에는 아직 예약이 없어요.",
-    "addWalkIn": "현장 방문 추가"
+    "addWalkIn": "현장 방문 추가",
+    "notConfirmed": "미확인",
+    "paidOf": "결제 완료",
+    "total": "합계",
+    "waitingConfirm": "손님이 이메일로 예약을 확인하기를 기다리는 중입니다."
   },
   "bookings": {
     "title": "예약",

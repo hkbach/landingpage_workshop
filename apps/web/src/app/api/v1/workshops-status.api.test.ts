@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { closeIfEnded } from "@workshop/shared";
+import { closeIfEnded, isSessionFinished } from "@workshop/shared";
 import { sessions, workshops } from "@/lib/mock/data";
 import { adminChangeSession, resetSessionAdminStore, withAdminChanges } from "@/lib/mock/session-admin-store";
 import { resetWorkshopStatusStore, withWorkshopStatus } from "@/lib/mock/workshop-status-store";
@@ -20,7 +20,7 @@ beforeEach(() => { resetWorkshopStatusStore(); resetSessionAdminStore(); });
 describe("the demo data", () => {
   it("has an active workshop with sessions that are not closed, and a draft one without sessions", () => {
     expect(statusOf(ACTIVE_WITH_OPEN_SESSIONS)).toBe("ACTIVE");
-    expect(sessions.some((s) => s.workshopId === ACTIVE_WITH_OPEN_SESSIONS && closeIfEnded(s, new Date()).status !== "CLOSED")).toBe(true);
+    expect(sessions.some((s) => s.workshopId === ACTIVE_WITH_OPEN_SESSIONS && !isSessionFinished(closeIfEnded(s, new Date()).status))).toBe(true);
     expect(statusOf(DRAFT_WITHOUT_SESSIONS)).toBe("DRAFT");
     expect(sessions.some((s) => s.workshopId === DRAFT_WITHOUT_SESSIONS)).toBe(false);
   });
@@ -37,7 +37,7 @@ describe("POST /workshops/{id}/status", () => {
   });
   it("deactivates it once every session is closed", async () => {
     for (const s of withAdminChanges(sessions).filter((x) => x.workshopId === ACTIVE_WITH_OPEN_SESSIONS)) {
-      if (closeIfEnded(s, new Date()).status !== "CLOSED") expect(adminChangeSession(s.id, "close", "closing for the test").ok, s.id).toBe(true);
+      if (!isSessionFinished(closeIfEnded(s, new Date()).status)) expect(adminChangeSession(s.id, "close", "closing for the test").ok, s.id).toBe(true);
     }
     const res = await call(ACTIVE_WITH_OPEN_SESSIONS, { status: "DRAFT" });
     expect(res.status).toBe(200);

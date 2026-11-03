@@ -25,8 +25,8 @@ const PRIMARY: BookingAction[] = ["CHECK_IN", "UNDO_CHECK_IN", "CANCEL"];
  * Check-in and payment are separate actions (FR-OPS-03).
  */
 export function BookingActions({
-  booking, session, ops, timezone, compact = false, showReschedule = false,
-}: { booking: Booking; session: Session; ops: BookingOps; timezone: string; compact?: boolean; showReschedule?: boolean }) {
+  booking, session, ops, timezone, compact = false, showReschedule = false, checkInOnly = false,
+}: { booking: Booking; session: Session; ops: BookingOps; timezone: string; compact?: boolean; showReschedule?: boolean; checkInOnly?: boolean }) {
   const t = useTranslations("ops");
   const [dialog, setDialog] = useState<"cancel" | "payment" | "reschedule" | null>(null);
   const [message, setMessage] = useState<string>();
@@ -41,6 +41,7 @@ export function BookingActions({
   const actions: BookingAction[] = (showReschedule ? [...PRIMARY, "RESCHEDULE" as const] : PRIMARY).filter((a) => {
     // Hide actions that can never apply from the current status: check-in, cancel and re-schedule while the booking is open (not confirmed or
     // confirmed), uncheck-in once it is checked in.
+    if (checkInOnly && a === "CANCEL") return false; // the Today screen only checks guests in (and undoes it): no Cancel booking
     if (a === "UNDO_CHECK_IN") return booking.status === "CHECKED_IN";
     return booking.status === "NOT_CONFIRMED" || booking.status === "CONFIRMED";
   });
@@ -68,10 +69,12 @@ export function BookingActions({
             </Button>
           );
         })}
-        <Button size={size} variant="outline" onClick={() => setDialog("payment")}>
-          <CircleDollarSign aria-hidden="true" />
-          {t("action.RECORD_PAYMENT")}
-        </Button>
+        {checkInOnly ? null : (
+          <Button size={size} variant="outline" onClick={() => setDialog("payment")}>
+            <CircleDollarSign aria-hidden="true" />
+            {t("action.RECORD_PAYMENT")}
+          </Button>
+        )}
       </div>
       <p role="status" className="text-xs text-destructive empty:hidden">{message}</p>
 
