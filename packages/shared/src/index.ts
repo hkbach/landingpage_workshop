@@ -17,3 +17,4 @@ export * from "./promotion-rules";
 export * from "./session-rules";
 export * from "./booking-code";
 export * from "./workshop-rules";
+export * from "./customer-profile";

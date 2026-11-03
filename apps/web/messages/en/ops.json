@@ -185,7 +185,26 @@
     "birthDate": "Date of birth",
     "guestHint": "Country and date of birth come from the account a customer registered. A guest who only booked has no account, so the country reads \"Guest\" and the date of birth \"-\".",
     "viewDetailsOf": "View details of {name}",
-    "firstBooking": "first on {date}"
+    "firstBooking": "first on {date}",
+    "gender": "Gender",
+    "genders": {
+      "MALE": "Male",
+      "FEMALE": "Female",
+      "OTHER": "Other"
+    },
+    "socials": "Social information",
+    "social": {
+      "ZALO": "Zalo",
+      "WHATSAPP": "WhatsApp",
+      "FACEBOOK": "Facebook",
+      "INSTAGRAM": "Instagram",
+      "TIKTOK": "TikTok",
+      "LINE": "LINE",
+      "KAKAOTALK": "KakaoTalk",
+      "WECHAT": "WeChat",
+      "TELEGRAM": "Telegram",
+      "X": "X"
+    }
   },
   "newBooking": {
     "title": "New booking",

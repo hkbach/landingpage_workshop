@@ -1,7 +1,7 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { formatMoney } from "@workshop/shared";
+import { formatMoney, socialEntries } from "@workshop/shared";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { Booking, Customer } from "@/lib/types";
 import { formatDate } from "@/lib/format";
@@ -33,6 +33,8 @@ function Content({ customer, bookings, timezone }: { customer: Customer; booking
   const paid = bookings.reduce((n, b) => n + b.payments.reduce((m, p) => m + (p.type === "PAYMENT" ? p.amount : -p.amount), 0), 0);
   const currency = bookings[0]?.currency;
   const first = bookings[bookings.length - 1];
+  // The chat and social accounts the customer gave with their account (none for a guest who only booked).
+  const socials = socialEntries(customer.account?.socials);
   return (
     <div className="grid gap-4" data-testid="customer-dialog">
       <DialogHeader>
@@ -48,10 +50,22 @@ function Content({ customer, bookings, timezone }: { customer: Customer; booking
           <dd data-testid="dialog-country">{customer.account ? region.of(customer.account.country) ?? customer.account.country : t("customers.guest")}</dd>
           <dt className="text-muted-foreground">{t("customers.birthDate")}</dt>
           <dd data-testid="dialog-birth">{customer.account ? day(customer.account.birthDate) : "-"}</dd>
+          <dt className="text-muted-foreground">{t("customers.gender")}</dt>
+          <dd data-testid="dialog-gender">{customer.account?.gender ? t(`customers.genders.${customer.account.gender}`) : "-"}</dd>
           <dt className="text-muted-foreground">{t("customers.locale")}</dt><dd>{language.of(customer.preferredLocale) ?? customer.preferredLocale}</dd>
           <dt className="text-muted-foreground">{t("customers.bookings")}</dt>
           <dd>{bookings.length}{first ? <span className="text-muted-foreground"> · {t("customers.firstBooking", { date: formatDate(first.startsAt, timezone, locale) })}</span> : null}</dd>
           <dt className="text-muted-foreground">{t("customers.paid")}</dt><dd>{currency ? formatMoney(paid, currency, locale) : "-"}</dd>
+          <dt className="text-muted-foreground">{t("customers.socials")}</dt>
+          <dd className="sm:col-span-3" data-testid="dialog-socials">
+            {socials.length === 0 ? "-" : (
+              <ul className="flex flex-wrap gap-x-4 gap-y-1">
+                {socials.map(([platform, handle]) => (
+                  <li key={platform}><span className="text-muted-foreground">{t(`customers.social.${platform}`)}:</span> <span className="[overflow-wrap:anywhere]">{handle}</span></li>
+                ))}
+              </ul>
+            )}
+          </dd>
         </dl>
       </section>
       <section aria-label={t("customers.history")} className="grid gap-2">

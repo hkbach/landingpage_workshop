@@ -185,7 +185,26 @@
     "birthDate": "生年月日",
     "guestHint": "国と生年月日は、お客様が登録したアカウントから取得します。予約のみのお客様はアカウントがないため、国は「ゲスト」、生年月日は「-」と表示されます。",
     "viewDetailsOf": "{name}様の詳細を表示",
-    "firstBooking": "初回 {date}"
+    "firstBooking": "初回 {date}",
+    "gender": "性別",
+    "genders": {
+      "MALE": "男性",
+      "FEMALE": "女性",
+      "OTHER": "その他"
+    },
+    "socials": "SNS情報",
+    "social": {
+      "ZALO": "Zalo",
+      "WHATSAPP": "WhatsApp",
+      "FACEBOOK": "Facebook",
+      "INSTAGRAM": "Instagram",
+      "TIKTOK": "TikTok",
+      "LINE": "LINE",
+      "KAKAOTALK": "カカオトーク",
+      "WECHAT": "WeChat",
+      "TELEGRAM": "Telegram",
+      "X": "X"
+    }
   },
   "newBooking": {
     "title": "新規予約",

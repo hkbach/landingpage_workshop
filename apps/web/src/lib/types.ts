@@ -1,6 +1,6 @@
 import type {
-  BookingSource, BookingStatus, Localized, Locale, OrgStatus, PaymentMethod,
-  PaymentStatus, ReportRecord, SectionType, SessionNote, SessionStatus, WorkshopStatus
+  BookingSource, BookingStatus, Gender, Localized, Locale, OrgStatus, PaymentMethod,
+  PaymentStatus, ReportRecord, SectionType, SessionNote, SessionStatus, Socials, WorkshopStatus
 } from "@workshop/shared";
 
 // UI-side view models. Money is minor units (number here; bigint is serialized by the API). Times are ISO UTC strings.
@@ -45,7 +45,7 @@ export interface Customer {
    * Set only for a guest who registered an account: the country they live in and their birth date ("YYYY-MM-DD"), both given at registration. A guest who
    * only booked has no account, so the shop knows neither.
    */
-  account?: { country: string; birthDate: string };
+  account?: { country: string; birthDate: string; gender?: Gender; socials?: Socials };
 }
 
 export interface PaymentEntry {

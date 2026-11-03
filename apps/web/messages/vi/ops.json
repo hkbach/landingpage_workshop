@@ -185,7 +185,26 @@
     "birthDate": "Ngày sinh",
     "guestHint": "Quốc gia và ngày sinh lấy từ tài khoản khách đã đăng ký. Khách chỉ booking mà không có tài khoản thì không biết quốc gia cư trú nên ghi \"Vãng lai\", ngày sinh ghi \"-\".",
     "viewDetailsOf": "Xem chi tiết của {name}",
-    "firstBooking": "đầu tiên ngày {date}"
+    "firstBooking": "đầu tiên ngày {date}",
+    "gender": "Giới tính",
+    "genders": {
+      "MALE": "Nam",
+      "FEMALE": "Nữ",
+      "OTHER": "Khác"
+    },
+    "socials": "Thông tin mạng xã hội",
+    "social": {
+      "ZALO": "Zalo",
+      "WHATSAPP": "WhatsApp",
+      "FACEBOOK": "Facebook",
+      "INSTAGRAM": "Instagram",
+      "TIKTOK": "TikTok",
+      "LINE": "LINE",
+      "KAKAOTALK": "KakaoTalk",
+      "WECHAT": "WeChat",
+      "TELEGRAM": "Telegram",
+      "X": "X"
+    }
   },
   "newBooking": {
     "title": "Đặt chỗ mới",

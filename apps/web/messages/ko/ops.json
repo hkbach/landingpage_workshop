@@ -185,7 +185,26 @@
     "birthDate": "생년월일",
     "guestHint": "국가와 생년월일은 고객이 가입한 계정에서 가져옵니다. 예약만 한 고객은 계정이 없으므로 국가는 \"비회원\", 생년월일은 \"-\"로 표시됩니다.",
     "viewDetailsOf": "{name}님의 상세 정보 보기",
-    "firstBooking": "첫 예약 {date}"
+    "firstBooking": "첫 예약 {date}",
+    "gender": "성별",
+    "genders": {
+      "MALE": "남성",
+      "FEMALE": "여성",
+      "OTHER": "기타"
+    },
+    "socials": "소셜 정보",
+    "social": {
+      "ZALO": "Zalo",
+      "WHATSAPP": "WhatsApp",
+      "FACEBOOK": "Facebook",
+      "INSTAGRAM": "Instagram",
+      "TIKTOK": "TikTok",
+      "LINE": "LINE",
+      "KAKAOTALK": "카카오톡",
+      "WECHAT": "WeChat",
+      "TELEGRAM": "Telegram",
+      "X": "X"
+    }
   },
   "newBooking": {
     "title": "새 예약",
