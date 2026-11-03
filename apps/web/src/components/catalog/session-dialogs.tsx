@@ -332,7 +332,7 @@ export function PaymentDialog({ open, onOpenChange, session, bookings, customers
               </>
             )}
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}><Check aria-hidden="true" />{t("sessions.checkInDone")}</Button>
+              {mode === "complete" ? null : <Button type="button" variant="outline" onClick={() => onOpenChange(false)}><Check aria-hidden="true" />{t("sessions.checkInDone")}</Button>}
               {mode === "complete" ? (
                 <Button type="button" data-testid="complete-submit" className="bg-emerald-600 text-white hover:bg-emerald-700 focus-visible:ring-emerald-600/40" onClick={() => setConfirming(true)}>
                   <CheckCheck aria-hidden="true" />{t("sessions.complete")}
