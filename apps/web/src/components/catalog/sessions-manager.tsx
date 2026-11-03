@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useDisplayLocale } from "@/lib/use-shop-language";
-import { ArrowLeft, CalendarClock, Copy, Lock, LockOpen, LogIn, Pause, Pencil, Play, Plus, Save } from "lucide-react";
+import { ArrowLeft, BadgeCheck, CalendarClock, Copy, Eye, Lock, LockOpen, LogIn, Pause, Pencil, Play, Plus, Save } from "lucide-react";
 import { allowedSessionActions, closedForGood, isFinalClose, canEditSession, canRescheduleSession, canReopenSession, canCloseAgain, canRescheduleAgain, notesInOrder, closeWaitsForEnd, isFutureStart, type SessionCloseReason, DEFAULT_BOOKING_CUTOFF_MINUTES, isValidBookingCutoff, MAX_BOOKING_CUTOFF_MINUTES, pickLocalized, SESSION_STATUSES, type Locale, type SessionStatus } from "@workshop/shared";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,7 +19,7 @@ import { useOpsState } from "@/components/ops/use-ops-state";
 import type { Booking, Customer, Session, Workshop } from "@/lib/types";
 import { dayKey, formatTime } from "@/lib/format";
 import { MAX_CAPACITY, type ShopForCatalog } from "./workshop-form";
-import { CheckInDialog, CloseSessionDialog, dateAndTime, RescheduleSessionDialog } from "./session-dialogs";
+import { CheckInDialog, CloseSessionDialog, dateAndTime, PaymentDialog, RescheduleSessionDialog } from "./session-dialogs";
 import { notifyAutoClosedRequest, notifyClosedRequest, notifyRescheduleRequest } from "@/lib/sessions-api";
 import { ImageUploadField } from "@/components/builder/ImageUploadField";
 import { sessionImageUploader } from "@/lib/media/session-uploader";
@@ -43,7 +43,7 @@ export function SessionsManager({
   const [from, setFrom] = useState(today);
   const [to, setTo] = useState(addDays(today, 60));
   const [notice, setNotice] = useState<{ text: string; tone: "ok" | "error" } | null>(null);
-  const [dialog, setDialog] = useState<{ kind: "add" } | { kind: "edit" | "close" | "reschedule" | "clone" | "checkin"; id: string } | null>(null);
+  const [dialog, setDialog] = useState<{ kind: "add" } | { kind: "edit" | "close" | "reschedule" | "clone" | "checkin" | "payment"; id: string } | null>(null);
 
   const displayLocale = useDisplayLocale(shop);
   /** The date and time of a note ("Nov 12, 2026, 2:06 PM"), in the time zone of the shop. */
@@ -221,9 +221,21 @@ export function SessionsManager({
                               <Pencil aria-hidden="true" />{t("sessions.edit")}
                             </Button>
                           ) : null}
-                          <Button size="sm" variant="outline" data-testid="checkin-button" onClick={() => setDialog({ kind: "checkin", id: s.id })}>
-                            <LogIn aria-hidden="true" />{t("sessions.checkIn")}
-                          </Button>
+                          {s.autoClosed ? (
+                            // The session ended: nobody can be checked in any more, so the list is only viewed, and the payments are confirmed.
+                            <>
+                              <Button size="sm" variant="outline" data-testid="view-bookings-button" onClick={() => setDialog({ kind: "checkin", id: s.id })}>
+                                <Eye aria-hidden="true" />{t("sessions.viewBooking")}
+                              </Button>
+                              <Button size="sm" data-testid="payment-button" onClick={() => setDialog({ kind: "payment", id: s.id })}>
+                                <BadgeCheck aria-hidden="true" />{t("sessions.confirmPayment")}
+                              </Button>
+                            </>
+                          ) : (
+                            <Button size="sm" variant="outline" data-testid="checkin-button" onClick={() => setDialog({ kind: "checkin", id: s.id })}>
+                              <LogIn aria-hidden="true" />{t("sessions.checkIn")}
+                            </Button>
+                          )}
                           <Button size="sm" variant="outline" data-testid="clone-button" onClick={() => setDialog({ kind: "clone", id: s.id })}>
                             <Copy aria-hidden="true" />{t("sessions.clone")}
                           </Button>
@@ -249,6 +261,10 @@ export function SessionsManager({
       <CheckInDialog
         key={`guests-${target?.id ?? "none"}`} open={dialog?.kind === "checkin" && !!target} onOpenChange={(o) => !o && setDialog(null)}
         session={target} bookings={ops.bookings} customers={customers} now={ops.now} timezone={shop.timezone} perform={ops.perform}
+      />
+      <PaymentDialog
+        key={`pay-${target?.id ?? "none"}`} open={dialog?.kind === "payment" && !!target} onOpenChange={(o) => !o && setDialog(null)}
+        session={target} bookings={ops.bookings} customers={customers} setPaid={ops.setPaid}
       />
       <CloseSessionDialog
         key={`close-${target?.id ?? "none"}`} open={dialog?.kind === "close" && !!target} onOpenChange={(o) => !o && setDialog(null)}

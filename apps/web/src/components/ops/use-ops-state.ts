@@ -95,6 +95,26 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
     [bookings, init.actor],
   );
 
+  /**
+   * Sets a booking Paid or Unpaid after the session (the shop owner confirms the payment received at the studio). Paid records the missing
+   * amount as a cash payment; Unpaid gives back what was recorded as a refund entry (entries are never edited or deleted). A free booking has nothing to pay.
+   */
+  const setPaid = useCallback(
+    (bookingId: string, paid: boolean): OpResult => {
+      const b = bookings.find((x) => x.id === bookingId);
+      if (!b) return { ok: false, reason: "NOT_FOUND" };
+      if (b.status === "CANCELLED" || b.totalAmount <= 0) return { ok: false, reason: "INVALID_STATE" };
+      const net = netPaid(b.payments);
+      if (paid) {
+        if (b.paymentStatus === "PAID") return { ok: true };
+        return addPayment(bookingId, { type: "PAYMENT", amount: b.totalAmount - Math.max(0, net), method: "CASH", note: "Payment confirmed after the session" });
+      }
+      if (b.paymentStatus === "UNPAID") return { ok: true };
+      return addPayment(bookingId, { type: "REFUND", amount: net, method: "CASH", note: "Marked as unpaid" });
+    },
+    [bookings, addPayment],
+  );
+
   const reschedule = useCallback(
     (bookingId: string, targetSessionId: string): OpResult => {
       const b = bookings.find((x) => x.id === bookingId);
@@ -208,7 +228,7 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
   }, []);
 
   return {
-    bookings, sessions, history, now, perform, addPayment, reschedule,
+    bookings, sessions, history, now, perform, addPayment, setPaid, reschedule,
     sessionAction, reopenSession, rescheduleSession, updateSession, addSession, addBooking,
   };
 }

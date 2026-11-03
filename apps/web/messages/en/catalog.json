@@ -253,6 +253,17 @@
     "closedNotified": "Session closed. {count, plural, =0 {No guest needed an email.} one {# guest was emailed.} other {# guests were emailed.}}",
     "closeMailFailed": "The session was closed, but the emails to the guests could not be queued. Please contact the guests yourself.",
     "autoClosedNotified": "Sessions closed automatically because their time ended. {count, plural, one {# guest was emailed.} other {# guests were emailed.}}",
-    "checkInRules": "A guest who has not confirmed the booking by email can still be checked in. Uncheck-in puts the booking back to the status it had before the check-in."
+    "checkInRules": "A guest who has not confirmed the booking by email can still be checked in. Uncheck-in puts the booking back to the status it had before the check-in.",
+    "viewBooking": "View booking",
+    "confirmPayment": "Confirm payment",
+    "paymentTitle": "Confirm payments of {code}",
+    "paymentHint": "The session has ended. Confirm the payment of each guest who paid at the studio.",
+    "partCheckedIn": "Checked in",
+    "partNotCheckedIn": "Not checked in",
+    "partEmpty": "No bookings.",
+    "paidCount": "{paid} of {total} bookings paid",
+    "markUnpaid": "Unpaid",
+    "nothingToPay": "Nothing to pay",
+    "paymentFailed": "The payment could not be changed."
   }
 }

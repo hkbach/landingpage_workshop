@@ -2,8 +2,8 @@
 
 import { useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { ArrowLeft, CalendarClock, Check, Lock, LogIn, Undo2 } from "lucide-react";
-import { checkCloseReason, CLOSE_REASON_NOTE_MAX, SESSION_CLOSE_REASONS, type RescheduleError, type SessionCloseReason } from "@workshop/shared";
+import { ArrowLeft, BadgeCheck, CalendarClock, Check, Lock, LogIn, Undo2 } from "lucide-react";
+import { checkCloseReason, CLOSE_REASON_NOTE_MAX, formatMoney, SESSION_CLOSE_REASONS, type RescheduleError, type SessionCloseReason } from "@workshop/shared";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -15,7 +15,7 @@ import { zonedToUtcIso } from "@/components/ops/time";
 import { dayKey } from "@/lib/format";
 import type { Booking, Customer, Session } from "@/lib/types";
 import { canTransition, type BookingAction } from "@/lib/booking-state";
-import { BookingStatusBadge } from "@/components/ops/status-badges";
+import { BookingStatusBadge, PaymentStatusBadge } from "@/components/ops/status-badges";
 import type { OpResult } from "@/components/ops/use-ops-state";
 
 /** The reason of a change to a session: a basic reason from the list, or Other with a text that explains it. Used by Close and Re-schedule. */
@@ -225,6 +225,83 @@ export function CheckInDialog({ open, onOpenChange, session, bookings, customers
                     </tbody>
                   </table>
                 </div>
+              </>
+            )}
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}><Check aria-hidden="true" />{t("sessions.checkInDone")}</Button>
+            </DialogFooter>
+          </div>
+        ) : null}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/**
+ * After a session has ended: the bookings of the session in two parts, the guests who checked in and the ones who did not. Each row has Confirm payment
+ * (the guest paid at the studio: the booking becomes Paid) or, once it is Paid, Unpaid (to undo a mistake). A cancelled booking is not listed.
+ */
+export function PaymentDialog({ open, onOpenChange, session, bookings, customers, setPaid }: {
+  open: boolean; onOpenChange: (o: boolean) => void; session?: Session; bookings: Booking[]; customers: Customer[];
+  setPaid: (bookingId: string, paid: boolean) => OpResult;
+}) {
+  const t = useTranslations("catalog");
+  const locale = useLocale();
+  const [failed, setFailed] = useState<string | null>(null);
+  const rows = session ? bookings.filter((b) => b.sessionId === session.id && b.status !== "CANCELLED").sort((a, b) => a.bookingCode.localeCompare(b.bookingCode)) : [];
+  const nameOf = (b: Booking) => customers.find((c) => c.id === b.customerId)?.fullName ?? "";
+  const parts = [
+    { key: "checkedIn", title: t("sessions.partCheckedIn"), list: rows.filter((b) => b.status === "CHECKED_IN") },
+    { key: "notCheckedIn", title: t("sessions.partNotCheckedIn"), list: rows.filter((b) => b.status !== "CHECKED_IN") },
+  ];
+  const paid = rows.filter((b) => b.paymentStatus === "PAID").length;
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { if (!o) setFailed(null); onOpenChange(o); }}>
+      <DialogContent className="sm:max-w-2xl">
+        {session ? (
+          <div className="grid gap-4">
+            <DialogHeader>
+              <DialogTitle>{t("sessions.paymentTitle", { code: session.code })}</DialogTitle>
+              <DialogDescription>{t("sessions.paymentHint")}</DialogDescription>
+            </DialogHeader>
+            {rows.length === 0 ? (
+              <p role="status" data-testid="payment-empty" className="rounded-lg bg-muted/50 p-4 text-sm text-muted-foreground">{t("sessions.noBookings")}</p>
+            ) : (
+              <>
+                <p role="status" data-testid="payment-count" className="text-sm font-medium">{t("sessions.paidCount", { paid, total: rows.length })}</p>
+                {parts.map((part) => (
+                  <section key={part.key} aria-labelledby={`pay-${part.key}`} data-testid={`payment-part-${part.key}`} className="grid gap-2">
+                    <h3 id={`pay-${part.key}`} className="text-sm font-semibold">{part.title} ({part.list.length})</h3>
+                    {part.list.length === 0 ? (
+                      <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">{t("sessions.partEmpty")}</p>
+                    ) : (
+                      <ul className="divide-y rounded-lg border">
+                        {part.list.map((b) => (
+                          <li key={b.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm" data-testid="payment-row">
+                            <div className="min-w-0">
+                              <div className="font-medium">{nameOf(b)}</div>
+                              <div className="text-xs text-muted-foreground">
+                                <span className="font-mono" data-testid="payment-code">{b.bookingCode}</span> · {t("sessions.guestCount", { count: b.quantity })} · <span data-testid="payment-amount">{formatMoney(b.totalAmount, b.currency, locale)}</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span data-testid="payment-status"><PaymentStatusBadge status={b.paymentStatus} /></span>
+                              {b.totalAmount <= 0 ? (
+                                <span className="text-xs text-muted-foreground">{t("sessions.nothingToPay")}</span>
+                              ) : b.paymentStatus === "PAID" ? (
+                                <Button size="sm" variant="outline" data-testid="payment-unpaid" onClick={() => setFailed(setPaid(b.id, false).ok ? null : b.bookingCode)}><Undo2 aria-hidden="true" />{t("sessions.markUnpaid")}</Button>
+                              ) : (
+                                <Button size="sm" data-testid="payment-confirm" onClick={() => setFailed(setPaid(b.id, true).ok ? null : b.bookingCode)}><BadgeCheck aria-hidden="true" />{t("sessions.confirmPayment")}</Button>
+                              )}
+                            </div>
+                            {failed === b.bookingCode ? <p role="alert" className="basis-full text-right text-xs text-destructive">{t("sessions.paymentFailed")}</p> : null}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </section>
+                ))}
               </>
             )}
             <DialogFooter>

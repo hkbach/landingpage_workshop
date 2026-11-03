@@ -253,6 +253,17 @@
     "closedNotified": "Đã đóng session. {count, plural, =0 {Không có khách nào cần gửi email.} other {Đã gửi email cho # khách.}}",
     "closeMailFailed": "Session đã đóng nhưng không thể xếp hàng gửi email cho khách. Vui lòng tự liên hệ với khách.",
     "autoClosedNotified": "Session tự động đóng vì đã hết giờ. {count, plural, other {Đã gửi email cho # khách.}}",
-    "checkInRules": "Khách chưa xác nhận booking qua email vẫn check-in được. Uncheck-in sẽ đưa booking về trạng thái trước khi check-in."
+    "checkInRules": "Khách chưa xác nhận booking qua email vẫn check-in được. Uncheck-in sẽ đưa booking về trạng thái trước khi check-in.",
+    "viewBooking": "Xem booking",
+    "confirmPayment": "Xác nhận thanh toán",
+    "paymentTitle": "Xác nhận thanh toán của {code}",
+    "paymentHint": "Session đã kết thúc. Hãy xác nhận thanh toán cho từng khách đã trả tiền tại studio.",
+    "partCheckedIn": "Đã check-in",
+    "partNotCheckedIn": "Chưa check-in",
+    "partEmpty": "Không có booking.",
+    "paidCount": "Đã thanh toán {paid}/{total} booking",
+    "markUnpaid": "Unpaid",
+    "nothingToPay": "Không có gì để thanh toán",
+    "paymentFailed": "Không thể đổi trạng thái thanh toán."
   }
 }
