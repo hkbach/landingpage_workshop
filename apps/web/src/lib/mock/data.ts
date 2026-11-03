@@ -1,9 +1,10 @@
 // Temporary mock data for UI development. Replaced by API calls (TanStack Query) once apps/api exists.
 import type {
-  AbuseReport, AuditEntry, Booking, Customer, PageContent, PageTheme, Session, Shop, Workshop,
+  AbuseReport, AuditEntry, Booking, Customer, PageContent, PageTheme, PaymentEntry, Session, Shop, Workshop,
 } from "../types";
 import { applyTemplate, themeForTemplate, type TemplateKey } from "@/components/sections/templates";
-import { reservedSeats } from "../booking-state";
+import type { PaymentMethod } from "@workshop/shared";
+import { computePaymentStatus, reservedSeats } from "../booking-state";
 
 const TZ = "Asia/Ho_Chi_Minh"; // UTC+7
 const DAY = 86_400_000;
@@ -241,6 +242,45 @@ export const bookings: Booking[] = [
   booking({ id: "bk-40", sessionId: "se-22", customerId: "cu-4", quantity: 1, status: "CANCELLED", cancelReason: "Could not come" }),
 ];
 
+// What each demo booking has paid, so the Income page, the payment status of the bookings and the cancelled bookings agree. A guest who cancels
+// is refunded (all or part of it), a no-show keeps the payment, a booking of a session that was closed keeps what it paid until the owner refunds
+// it. Booking bk-2, bk-12 and bk-19 above already carry their payments.
+{
+  type Plan = { pay?: number | "FULL"; method: PaymentMethod; at: string; refund?: number | "ALL"; refundAt?: string };
+  const plans: Record<string, Plan> = {
+    "bk-1": { pay: "FULL", method: "CARD", at: at(-1, 12.5) },
+    "bk-3": { pay: 1_000_000, method: "BANK_TRANSFER", at: at(-1, 13) }, // a deposit: partly paid
+    "bk-5": { pay: "FULL", method: "BANK_TRANSFER", at: at(-2, 10), refund: "ALL", refundAt: at(-1, 9) }, // cancelled: refunded in full
+    "bk-6": { pay: "FULL", method: "CARD", at: at(-1, 14) },
+    "bk-7": { pay: 350_000, method: "E_WALLET", at: at(-1, 15) },
+    "bk-8": { pay: "FULL", method: "CARD", at: at(-1, 16) },
+    "bk-9": { pay: "FULL", method: "BANK_TRANSFER", at: at(-1, 12.2) },
+    "bk-11": { pay: "FULL", method: "CARD", at: at(-2, 11), refund: 975_000, refundAt: at(-1, 10) }, // cancelled: half refunded
+    "bk-20": { pay: "FULL", method: "CARD", at: at(-2, 9) }, // no-show: keeps the payment
+    "bk-21": { pay: "FULL", method: "CASH", at: at(-1, 14.1) },
+    "bk-23": { pay: "FULL", method: "CARD", at: at(-3, 11), refund: "ALL", refundAt: at(-1, 10) }, // paid last month, refunded this month
+    "bk-30": { pay: "FULL", method: "BANK_TRANSFER", at: at(-4, 10) },
+    "bk-32": { pay: "FULL", method: "E_WALLET", at: at(-4, 11), refund: "ALL", refundAt: at(0, 7) },
+    "bk-33": { pay: "FULL", method: "CARD", at: at(-3, 9) },
+    "bk-35": { pay: "FULL", method: "CARD", at: at(-2, 15) },
+    "bk-36": { pay: "FULL", method: "BANK_TRANSFER", at: at(-2, 16) },
+    "bk-37": { pay: "FULL", method: "CARD", at: at(-2, 17), refund: "ALL", refundAt: at(-1, 8) },
+    "bk-39": { pay: "FULL", method: "CASH", at: at(-5, 12) },
+    "bk-40": { pay: "FULL", method: "CARD", at: at(-5, 13), refund: "ALL", refundAt: at(-4, 9) },
+  };
+  for (const [id, plan] of Object.entries(plans)) {
+    const b = bookings.find((x) => x.id === id)!;
+    const entries: PaymentEntry[] = [];
+    if (plan.pay) entries.push({ id: `pm-${id}-1`, type: "PAYMENT", amount: plan.pay === "FULL" ? b.totalAmount : plan.pay, method: plan.method, recordedAt: plan.at, recordedBy: "Linh Tran" });
+    if (plan.refund) {
+      const paid = entries[0]!.amount;
+      entries.push({ id: `pm-${id}-2`, type: "REFUND", amount: plan.refund === "ALL" ? paid : plan.refund, method: plan.method, note: "Booking cancelled", recordedAt: plan.refundAt ?? plan.at, recordedBy: "Linh Tran" });
+    }
+    b.payments = entries;
+    b.paymentStatus = computePaymentStatus(b.totalAmount, entries);
+  }
+}
+
 // The seats a session has taken come from its bookings (a cancelled booking holds none).
 for (const session of sessions) session.reservedCount = reservedSeats(bookings, session.id);
 
@@ -322,27 +362,48 @@ export const sitePage: { draft: PageContent; theme: PageTheme; template: Templat
 };
 
 /**
- * Payments of the five months before this one (a few each month, growing a little) so the Income page has history. Their bookings are not listed
- * above: only the payments matter here. Deterministic, dated the 3rd to the 26th at noon UTC; a refund now and then.
+ * Bookings of the five months before this one, as the Income page sees them: only their payments matter, so they are not in `bookings`. Each has a
+ * booking code made from a session code (the sessions are past and not listed), a quantity of a workshop at its price, the vouchers used (the
+ * discount comes off the price like the real promotions: fixed amounts and percentages of the price), the payment of what is left, and now and then
+ * a refund (a cancelled booking is refunded in full, one in eleven in half). Deterministic: the 3rd to the 26th of each month at noon UTC.
  */
-export const paymentHistory: { id: string; bookingCode: string; currency: string; vouchers?: string[]; payments: { id: string; type: "PAYMENT" | "REFUND"; amount: number; recordedAt: string }[] }[] = (() => {
+type HistoryPayment = { id: string; type: "PAYMENT" | "REFUND"; amount: number; recordedAt: string };
+export const paymentHistory: { id: string; bookingCode: string; currency: string; vouchers?: string[]; payments: HistoryPayment[] }[] = (() => {
   const now = new Date();
   const base = now.getUTCFullYear() * 12 + now.getUTCMonth();
-  const amounts = [650_000, 1_300_000, 1_950_000, 780_000, 2_600_000, 1_040_000, 1_560_000];
-  const out: { id: string; bookingCode: string; currency: string; vouchers?: string[]; payments: { id: string; type: "PAYMENT" | "REFUND"; amount: number; recordedAt: string }[] }[] = [];
+  const prices = [650_000, 400_000, 500_000]; // the three workshops
+  // Vouchers of this shop (codes as in the promotions): fixed amounts, and percentages of the price. Only combinations the promotions allow.
+  const combos: { codes: string[]; fixed: number; percent: number }[] = [
+    { codes: [], fixed: 0, percent: 0 },
+    { codes: ["EARLY20"], fixed: 0, percent: 20 },
+    { codes: [], fixed: 0, percent: 0 },
+    { codes: ["SPRING10"], fixed: 0, percent: 10 },
+    { codes: ["GROUP15", "NEWS5"], fixed: 0, percent: 20 },
+    { codes: ["MUG100"], fixed: 100_000, percent: 0 },
+    { codes: [], fixed: 0, percent: 0 },
+    { codes: ["COUPLE150", "NEWS5"], fixed: 150_000, percent: 5 },
+  ];
+  const out: { id: string; bookingCode: string; currency: string; vouchers?: string[]; payments: HistoryPayment[] }[] = [];
   for (let back = 5; back >= 1; back--) {
     const idx = base - back;
     const count = 7 + ((5 - back) * 2) % 5 + (5 - back);
     for (let n = 0; n < count; n++) {
       const day = 3 + ((n * 7 + back * 3) % 24);
-      const at = new Date(Date.UTC(Math.floor(idx / 12), idx % 12, day, 12)).toISOString();
-      const amount = amounts[(n + back) % amounts.length]!;
-      const code = `HIS-${String(back)}${String(n + 1).padStart(2, "0")}`;
-      const payments: { id: string; type: "PAYMENT" | "REFUND"; amount: number; recordedAt: string }[] = [{ id: `ph-${back}-${n}`, type: "PAYMENT", amount, recordedAt: at }];
-      if (n % 9 === 4) payments.push({ id: `ph-${back}-${n}-r`, type: "REFUND", amount: Math.round(amount / 2), recordedAt: at });
-      // Some of the bookings used one voucher, a few used two (codes of promotions of this shop).
-      const vouchers = n % 6 === 2 ? ["MUG100", "NEWS5"] : n % 4 === 1 ? ["EARLY20"] : n % 5 === 3 ? ["SPRING10"] : [];
-      out.push({ id: `bk-his-${back}-${n}`, bookingCode: code, currency: "VND", vouchers, payments });
+      const at = (d: number) => new Date(Date.UTC(Math.floor(idx / 12), idx % 12, d, 12)).toISOString();
+      const price = prices[(n + back) % prices.length]!;
+      const quantity = ((n * 5 + back) % 4) + 1;
+      const combo = combos[(n * 3 + back) % combos.length]!;
+      const gross = price * quantity;
+      const discount = Math.min(gross, combo.fixed + Math.round((gross * combo.percent) / 100));
+      const total = gross - discount;
+      const sessionNo = 100 + (5 - back) * 20 + Math.floor(n / 3); // SES-0100... : sessions of past months, three bookings each
+      const payments: HistoryPayment[] = [{ id: `ph-${back}-${n}`, type: "PAYMENT", amount: total, recordedAt: at(day) }];
+      if (n % 9 === 4) payments.push({ id: `ph-${back}-${n}-r`, type: "REFUND", amount: total, recordedAt: at(day + 2) }); // cancelled: refunded in full
+      else if (n % 11 === 6) payments.push({ id: `ph-${back}-${n}-r`, type: "REFUND", amount: Math.round(total / 2 / 1000) * 1000, recordedAt: at(day + 2) });
+      out.push({
+        id: `bk-his-${back}-${n}`, bookingCode: `SES-${String(sessionNo).padStart(4, "0")}-${String((n % 3) + 1).padStart(3, "0")}`, currency: "VND",
+        vouchers: combo.codes, payments,
+      });
     }
   }
   return out;
