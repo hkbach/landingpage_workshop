@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { BOOKING_STATUSES } from "@workshop/shared";
-import { allowedActions, canTransition, confirmation, holdsSeat, reservedSeats, seatDelta, targetStatus } from "./booking-state";
+import { allowedActions, canTransition, computePaymentStatus, confirmation, holdsSeat, reservedSeats, seatDelta, targetStatus } from "./booking-state";
 
 const live = { startsAt: "2026-11-05T09:00:00Z", endsAt: "2026-11-05T11:00:00Z", status: "RUNNING" as const, capacity: 8, reservedCount: 3 };
 const closed = { ...live, status: "CLOSED" as const };
@@ -101,4 +101,17 @@ describe("a closed session", () => {
     expect(canTransition({ status: "NOT_CONFIRMED", quantity: 1 }, closed, later).CHECK_IN.allowed).toBe(false);
     expect(canTransition({ status: "CHECKED_IN", quantity: 2 }, closed, later).UNDO_CHECK_IN.allowed).toBe(false);
   });
+});
+
+describe("computePaymentStatus: only Unpaid and Paid", () => {
+  const pay = (amount: number) => ({ type: "PAYMENT" as const, amount });
+  const refund = (amount: number) => ({ type: "REFUND" as const, amount });
+  it("a booking with no payment is Unpaid", () => expect(computePaymentStatus(500_000, [])).toBe("UNPAID"));
+  it("a part of the total is still Unpaid", () => expect(computePaymentStatus(500_000, [pay(200_000)])).toBe("UNPAID"));
+  it("the whole total is Paid", () => expect(computePaymentStatus(500_000, [pay(500_000)])).toBe("PAID"));
+  it("a payment that was refunded (all or part of it) is Unpaid again", () => {
+    expect(computePaymentStatus(500_000, [pay(500_000), refund(500_000)])).toBe("UNPAID");
+    expect(computePaymentStatus(500_000, [pay(500_000), refund(100_000)])).toBe("UNPAID");
+  });
+  it("a free booking (total 0) with no payment stays Unpaid", () => expect(computePaymentStatus(0, [])).toBe("UNPAID"));
 });

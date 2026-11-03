@@ -411,7 +411,7 @@ Browser ────────────────────────
 **FR-OPS-01 – Danh sách booking (Must)**
 - **Khu vực tổng hợp theo Booking Status** (cùng kiểu các ô số liệu của màn hình Today) nằm giữa bộ lọc và bảng: một ô **All bookings** và một ô cho từng trạng thái (Not confirmed, Confirmed, Checked in, Cancelled), mỗi ô có **số booking** (chữ lớn) và **số khách** của các booking đó. Số liệu tính trên các booking thỏa bộ lọc **ngày, workshop, session và ô tìm kiếm**, nên các trạng thái luôn cộng lại bằng ô All bookings. **Mỗi ô là một nút bấm được (`aria-pressed`): bấm vào ô của một trạng thái thì bảng chỉ liệt kê các booking có trạng thái đó** (ô đang chọn được tô nổi; bấm lại ô đó, hoặc bấm ô All bookings, để xem tất cả). **Không còn bộ lọc Status dạng thả xuống**: trạng thái được lọc bằng chính các ô tổng hợp.
 - **Cột Voucher và tooltip ở cột Total của danh sách booking:** thêm cột **Voucher** (mã các voucher / khuyến mãi đã áp dụng cho booking, "—" nếu không dùng) đứng trước cột Total. Rê chuột hoặc focus bàn phím vào số tiền ở cột **Total** hiện tooltip: giá gốc của booking (đơn giá × số khách), từng voucher kèm số tiền đã giảm (mỗi voucher tính trên giá gốc) và tổng tiền sau giảm giá; booking không dùng voucher ghi "No voucher". Cùng thành phần tooltip với cột Amount của trang Income & expenses.
-- Xem theo ngày (mặc định hôm nay), theo **workshop** (bộ lọc thả xuống thay cho bộ lọc Status; chọn workshop thì danh sách session của bộ lọc Session chỉ còn các session của workshop đó), theo session; theo trạng thái bằng cách bấm vào các ô tổng hợp ở trên; tìm theo booking code, tên, email.
+- Xem theo ngày (mặc định hôm nay), theo **Payment status** (bộ lọc thả xuống: tất cả / Paid / Unpaid; áp dụng cho cả danh sách lẫn các ô tổng hợp), theo **workshop** (bộ lọc thả xuống thay cho bộ lọc Status; chọn workshop thì danh sách session của bộ lọc Session chỉ còn các session của workshop đó), theo session; theo trạng thái bằng cách bấm vào các ô tổng hợp ở trên; tìm theo booking code, tên, email.
 - View "Today": danh sách session hôm nay, mỗi session hiển thị danh sách khách để check-in nhanh (tối ưu cho tablet/mobile).
 
 **FR-OPS-02 – Tạo booking thủ công (Must)**
@@ -436,7 +436,7 @@ Browser ────────────────────────
 
 **FR-PAY-01 – Ghi nhận thanh toán tại shop (Must)**
 - Thêm payment entry: amount, method (`CASH | CARD | BANK_TRANSFER | E_WALLET | OTHER`), type (`PAYMENT | REFUND`), note. Ghi `recorded_by`, `recorded_at`.
-- `bookings.payment_status` được **tính lại** từ tổng các payment entry trong cùng transaction: `UNPAID` (0), `PARTIALLY_PAID` (0 < net < total), `PAID` (net ≥ total), `REFUNDED` (có refund và net ≤ 0), `PARTIALLY_REFUNDED` (có refund và 0 < net < tổng đã trả).
+- `bookings.payment_status` **chỉ có 2 giá trị: `UNPAID` (Unpaid) và `PAID` (Paid)**; mọi booking mới đều mặc định `UNPAID`. Trạng thái được **tính lại** từ tổng các payment entry trong cùng transaction: `PAID` khi số đã thu ròng (payment trừ refund) > 0 và ≥ tổng tiền của booking, còn lại là `UNPAID` (chưa thu, mới thu một phần, hoặc đã hoàn lại). Số tiền thu từng phần và hoàn tiền vẫn nằm trong các payment entry và trang Income & expenses, không có trạng thái riêng.
 - Không sửa/xóa payment entry; sai thì tạo entry điều chỉnh (refund). Ghi audit.
 
 **FR-PAY-02 – Thu nhập và lợi nhuận của shop (Could)**

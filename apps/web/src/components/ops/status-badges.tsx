@@ -11,10 +11,7 @@ const BOOKING: Record<BookingStatus, string> = {
 };
 const PAYMENT: Record<PaymentStatus, string> = {
   UNPAID: "bg-slate-100 text-slate-900",
-  PARTIALLY_PAID: "bg-amber-100 text-amber-950",
   PAID: "bg-emerald-100 text-emerald-900",
-  REFUNDED: "bg-purple-100 text-purple-900",
-  PARTIALLY_REFUNDED: "bg-purple-100 text-purple-900",
 };
 const SESSION: Record<SessionStatus, string> = {
   OPEN: "bg-sky-100 text-sky-900",

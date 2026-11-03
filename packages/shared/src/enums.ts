@@ -20,13 +20,8 @@ export type SessionStatus = (typeof SESSION_STATUSES)[number];
 export const BOOKING_STATUSES = ["NOT_CONFIRMED", "CONFIRMED", "CHECKED_IN", "CANCELLED"] as const;
 export type BookingStatus = (typeof BOOKING_STATUSES)[number];
 
-export const PAYMENT_STATUSES = [
-  "UNPAID",
-  "PARTIALLY_PAID",
-  "PAID",
-  "REFUNDED",
-  "PARTIALLY_REFUNDED",
-] as const;
+/** A booking is UNPAID until what was paid (net of refunds) covers its total, then PAID. Every booking starts UNPAID. */
+export const PAYMENT_STATUSES = ["UNPAID", "PAID"] as const;
 export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
 
 export const BOOKING_SOURCES = ["ONLINE", "WALK_IN", "PHONE", "OTHER"] as const;

@@ -15,10 +15,7 @@
   },
   "paymentStatus": {
     "UNPAID": "未支付",
-    "PARTIALLY_PAID": "部分支付",
-    "PAID": "已支付",
-    "REFUNDED": "已退款",
-    "PARTIALLY_REFUNDED": "部分退款"
+    "PAID": "已支付"
   },
   "sessionStatus": {
     "OPEN": "开放",
@@ -107,7 +104,9 @@
     "search": "搜索",
     "searchPlaceholder": "编号、姓名或邮箱",
     "workshop": "工作坊",
-    "allWorkshops": "所有工作坊"
+    "allWorkshops": "所有工作坊",
+    "payment": "支付",
+    "allPayments": "全部支付状态"
   },
   "payment": {
     "dialogTitle": "记录付款",

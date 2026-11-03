@@ -15,10 +15,7 @@
   },
   "paymentStatus": {
     "UNPAID": "미결제",
-    "PARTIALLY_PAID": "일부 결제",
-    "PAID": "결제 완료",
-    "REFUNDED": "환불 완료",
-    "PARTIALLY_REFUNDED": "일부 환불"
+    "PAID": "결제 완료"
   },
   "sessionStatus": {
     "OPEN": "열림",
@@ -107,7 +104,9 @@
     "search": "검색",
     "searchPlaceholder": "코드, 이름 또는 이메일",
     "workshop": "워크숍",
-    "allWorkshops": "모든 워크숍"
+    "allWorkshops": "모든 워크숍",
+    "payment": "결제",
+    "allPayments": "모든 결제"
   },
   "payment": {
     "dialogTitle": "결제 기록",

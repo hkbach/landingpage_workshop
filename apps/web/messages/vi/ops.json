@@ -15,10 +15,7 @@
   },
   "paymentStatus": {
     "UNPAID": "Chưa thanh toán",
-    "PARTIALLY_PAID": "Thanh toán một phần",
-    "PAID": "Đã thanh toán",
-    "REFUNDED": "Đã hoàn tiền",
-    "PARTIALLY_REFUNDED": "Hoàn tiền một phần"
+    "PAID": "Đã thanh toán"
   },
   "sessionStatus": {
     "OPEN": "Mở",
@@ -107,7 +104,9 @@
     "search": "Tìm kiếm",
     "searchPlaceholder": "Mã, tên hoặc email",
     "workshop": "Workshop",
-    "allWorkshops": "Tất cả workshop"
+    "allWorkshops": "Tất cả workshop",
+    "payment": "Thanh toán",
+    "allPayments": "Tất cả thanh toán"
   },
   "payment": {
     "dialogTitle": "Ghi nhận thanh toán",

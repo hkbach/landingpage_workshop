@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Plus, Search } from "lucide-react";
-import { BOOKING_STATUSES, formatMoney, pickLocalized, resolveShopLocale, type BookingPriceInfo, type BookingStatus, type Locale } from "@workshop/shared";
+import { BOOKING_STATUSES, formatMoney, PAYMENT_STATUSES, pickLocalized, resolveShopLocale, type BookingPriceInfo, type BookingStatus, type Locale, type PaymentStatus } from "@workshop/shared";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DateInput } from "@/components/ui/date-input";
@@ -21,7 +21,7 @@ import { ShopLink } from "@/components/dashboard/shell/shop-link";
 import { cn } from "@/lib/utils";
 
 /**
- * FR-OPS-01: filter by date / session / workshop, search by code, name, email. The summary counts the bookings by status; a click on one of its figures
+ * FR-OPS-01: filter by date / session / workshop / payment status, search by code, name, email. The summary counts the bookings by status; a click on one of its figures
  * shows only the bookings of that status (a click on the same figure, or on All bookings, shows them all again).
  */
 export function BookingsList({
@@ -36,6 +36,7 @@ export function BookingsList({
   const [date, setDate] = useState(() => dayKey(nowIso, timezone)); // default: today (shop timezone)
   const [sessionId, setSessionId] = useState("");
   const [workshopId, setWorkshopId] = useState("");
+  const [payment, setPayment] = useState<"" | PaymentStatus>("");
   const [status, setStatus] = useState<"" | BookingStatus>(""); // set by a click on a figure of the summary
   const [query, setQuery] = useState("");
 
@@ -53,10 +54,11 @@ export function BookingsList({
   );
 
   const q = query.trim().toLowerCase();
-  // The bookings the date, the workshop, the session and the search let through; the summary counts them by status, and the status chosen in it narrows the table.
+  // The bookings the date, the workshop, the payment status, the session and the search let through; the summary counts them by status, and the status chosen in it narrows the table.
   const inScope = bookings
     .filter((b) => (!date || dayKey(b.startsAt, timezone) === date))
     .filter((b) => !workshopId || b.workshopId === workshopId)
+    .filter((b) => !payment || b.paymentStatus === payment)
     .filter((b) => !sessionId || b.sessionId === sessionId)
     .filter((b) => {
       if (!q) return true;
@@ -82,7 +84,7 @@ export function BookingsList({
 
       <Card>
         <CardContent>
-          <form role="search" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" onSubmit={(e) => e.preventDefault()}>
+          <form role="search" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5" onSubmit={(e) => e.preventDefault()}>
             <Field id="f-date" label={t("filters.date")} hint={t("common.tzNote", { tz: timezone })}>
               {(p) => (
                 <div className="flex gap-2">
@@ -106,6 +108,12 @@ export function BookingsList({
               {(p) => (
                 <NativeSelect {...p} value={workshopId} onChange={(e) => { setWorkshopId(e.target.value); setSessionId(""); }}
                   options={[{ value: "", label: t("filters.allWorkshops") }, ...workshops.map((w) => ({ value: w.id, label: wsTitle(w.id) }))]} />
+              )}
+            </Field>
+            <Field id="f-payment" label={t("filters.payment")}>
+              {(p) => (
+                <NativeSelect {...p} value={payment} onChange={(e) => setPayment(e.target.value as "" | PaymentStatus)}
+                  options={[{ value: "", label: t("filters.allPayments") }, ...PAYMENT_STATUSES.map((s) => ({ value: s, label: t(`paymentStatus.${s}`) }))]} />
               )}
             </Field>
             <Field id="f-q" label={t("filters.search")}>

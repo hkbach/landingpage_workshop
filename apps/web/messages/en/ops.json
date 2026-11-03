@@ -15,10 +15,7 @@
   },
   "paymentStatus": {
     "UNPAID": "Unpaid",
-    "PARTIALLY_PAID": "Partially paid",
-    "PAID": "Paid",
-    "REFUNDED": "Refunded",
-    "PARTIALLY_REFUNDED": "Partially refunded"
+    "PAID": "Paid"
   },
   "sessionStatus": {
     "OPEN": "Open",
@@ -107,7 +104,9 @@
     "search": "Search",
     "searchPlaceholder": "Code, name or email",
     "workshop": "Workshop",
-    "allWorkshops": "All workshops"
+    "allWorkshops": "All workshops",
+    "payment": "Payment",
+    "allPayments": "All payments"
   },
   "payment": {
     "dialogTitle": "Record payment",

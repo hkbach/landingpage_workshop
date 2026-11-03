@@ -101,19 +101,8 @@ export interface PaymentLike { type: "PAYMENT" | "REFUND"; amount: number }
 
 /** payment_status recomputed from entries (FR-PAY-01). */
 export function computePaymentStatus(totalAmount: number, entries: readonly PaymentLike[]): PaymentStatus {
-  let paid = 0;
-  let refunded = 0;
-  for (const e of entries) {
-    if (e.type === "PAYMENT") paid += e.amount;
-    else refunded += e.amount;
-  }
-  const net = paid - refunded;
-  const hasRefund = refunded > 0;
-  if (entries.length === 0) return "UNPAID";
-  if (net >= totalAmount && net > 0) return "PAID";
-  if (hasRefund) return net <= 0 ? "REFUNDED" : "PARTIALLY_REFUNDED";
-  if (net > 0) return "PARTIALLY_PAID";
-  return "UNPAID";
+  const net = netPaid(entries);
+  return net > 0 && net >= totalAmount ? "PAID" : "UNPAID";
 }
 
 export function netPaid(entries: readonly PaymentLike[]): number {
