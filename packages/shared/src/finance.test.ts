@@ -1,47 +1,76 @@
 import { describe, expect, it } from "vitest";
 import {
-  byCategory, dateToOccurredAt, entriesFromPayments, filterEntries, financeEntrySchema, isRealDate, lastMonthKeys, monthKey, monthlySeries,
-  niceScale, summarize, type FinanceEntry,
+  bpsToPercent, checkFeeRates, DEFAULT_FEE_RATES, feeOf, feeShares, filterLedger, lastMonthKeys, ledgerFromPayments, monthKey, monthlyLedger,
+  niceScale, percentToBps, summarizeLedger, type FeeRates, type LedgerRow,
 } from "./finance";
 
 const TZ = "Asia/Ho_Chi_Minh";
-const e = (id: string, type: "INCOME" | "EXPENSE", category: FinanceEntry["category"], amount: number, occurredAt: string): FinanceEntry =>
-  ({ id, type, category, amount, currency: "VND", occurredAt, source: "MANUAL" });
+const RATES: FeeRates = { maintenanceBps: 200, serviceBps: 300 }; // 2% and 3%
 
-describe("financeEntrySchema", () => {
-  const ok = { type: "EXPENSE", category: "RENT", amount: 5_000_000, date: "2026-10-05", note: "October" };
-  it("accepts a valid manual entry", () => expect(financeEntrySchema.safeParse(ok).success).toBe(true));
-  const code = (v: unknown) => financeEntrySchema.safeParse(v).error?.issues.map((i) => i.message);
-  it("needs a positive whole amount", () => {
-    expect(code({ ...ok, amount: 0 })).toContain("amountInvalid");
-    expect(code({ ...ok, amount: -5 })).toContain("amountInvalid");
-    expect(code({ ...ok, amount: 1.5 })).toContain("amountInvalid");
-    expect(code({ ...ok, amount: 2e12 })).toContain("amountTooLarge");
+describe("fee rates", () => {
+  it("accept whole basis points from 0 to 100%, together at most 100%", () => {
+    expect(checkFeeRates(DEFAULT_FEE_RATES)).toBe("OK");
+    expect(checkFeeRates({ maintenanceBps: 0, serviceBps: 0 })).toBe("OK");
+    expect(checkFeeRates({ maintenanceBps: 10_000, serviceBps: 0 })).toBe("OK");
+    expect(checkFeeRates({ maintenanceBps: -1, serviceBps: 0 })).toBe("MAINTENANCE_INVALID");
+    expect(checkFeeRates({ maintenanceBps: 1.5, serviceBps: 0 })).toBe("MAINTENANCE_INVALID");
+    expect(checkFeeRates({ maintenanceBps: 0, serviceBps: 10_001 })).toBe("SERVICE_INVALID");
+    expect(checkFeeRates({ maintenanceBps: 0, serviceBps: "3" })).toBe("SERVICE_INVALID");
+    expect(checkFeeRates({ maintenanceBps: 6_000, serviceBps: 4_001 })).toBe("TOTAL_TOO_HIGH");
   });
-  it("needs a real calendar date", () => {
-    expect(code({ ...ok, date: "2026-02-30" })).toContain("dateInvalid");
-    expect(code({ ...ok, date: "05/10/2026" })).toContain("dateInvalid");
-    expect(isRealDate("2028-02-29")).toBe(true);
-    expect(isRealDate("2027-02-29")).toBe(false);
+  it("a typed percentage becomes basis points, with at most 2 decimals", () => {
+    expect(percentToBps("2")).toBe(200);
+    expect(percentToBps(" 2.5 ")).toBe(250);
+    expect(percentToBps("2,75")).toBe(275);
+    expect(percentToBps("0")).toBe(0);
+    expect(percentToBps("100")).toBe(10_000);
+    for (const bad of ["", "abc", "-1", "101", "2.555", "1e2", "2%", "."]) expect(percentToBps(bad), bad).toBeNull();
   });
-  it("only allows categories that fit the type, and never the derived ones", () => {
-    expect(code({ ...ok, category: "SALES" })).toContain("categoryMismatch");
-    expect(code({ ...ok, type: "INCOME", category: "RENT" })).toContain("categoryMismatch");
-    expect(code({ ...ok, type: "INCOME", category: "BOOKINGS" })).toContain("categoryMismatch");
-    expect(code({ ...ok, category: "REFUNDS" })).toContain("categoryMismatch");
-    expect(financeEntrySchema.safeParse({ ...ok, type: "INCOME", category: "SALES" }).success).toBe(true);
-  });
-  it("limits the note to 200 characters and trims it", () => {
-    expect(code({ ...ok, note: "x".repeat(201) })).toContain("noteTooLong");
-    expect(financeEntrySchema.parse({ ...ok, note: "  hi  " }).note).toBe("hi");
+  it("basis points go back to the text of a percentage", () => {
+    expect(bpsToPercent(200)).toBe("2");
+    expect(bpsToPercent(250)).toBe("2.5");
+    expect(bpsToPercent(25)).toBe("0.25");
+    for (const bps of [0, 1, 25, 250, 9_999, 10_000]) expect(percentToBps(bpsToPercent(bps))).toBe(bps);
   });
 });
 
-describe("dates and months", () => {
-  it("a business date keeps its calendar day in the shop timezone", () => {
-    expect(monthKey(dateToOccurredAt("2026-10-31"), TZ)).toBe("2026-10");
-    expect(monthKey(dateToOccurredAt("2026-11-01"), TZ)).toBe("2026-11");
+describe("feeOf", () => {
+  it("is a percentage of the amount, rounded to the minor unit", () => {
+    expect(feeOf(1_000_000, 200)).toBe(20_000);
+    expect(feeOf(999, 250)).toBe(25); // 24.975
+    expect(feeOf(100, 0)).toBe(0);
+    expect(feeOf(0, 300)).toBe(0);
   });
+  it("gives the fee back for a refund", () => {
+    expect(feeOf(-1_000_000, 200)).toBe(-20_000);
+    expect(feeOf(-999, 250)).toBe(-25);
+  });
+});
+
+describe("ledgerFromPayments", () => {
+  const src = [{
+    id: "bk-1", bookingCode: "SES-0001-001", currency: "VND",
+    payments: [{ id: "p1", type: "PAYMENT" as const, amount: 1_000_000, recordedAt: "2026-10-01T03:00:00Z" }, { id: "p2", type: "REFUND" as const, amount: 200_000, recordedAt: "2026-10-02T03:00:00Z" }],
+  }];
+  it("takes both fees from every payment and gives them back on a refund", () => {
+    const rows = ledgerFromPayments(src, RATES);
+    expect(rows.map((r) => [r.kind, r.amount, r.maintenanceFee, r.serviceFee, r.profit])).toEqual([
+      ["PAYMENT", 1_000_000, 20_000, 30_000, 950_000],
+      ["REFUND", -200_000, -4_000, -6_000, -190_000],
+    ]);
+  });
+  it("Profit = total income - maintenance fee - service fee", () => {
+    const t = summarizeLedger(ledgerFromPayments(src, RATES));
+    expect(t).toEqual({ income: 800_000, maintenanceFee: 16_000, serviceFee: 24_000, fees: 40_000, profit: 760_000 });
+    expect(t.profit).toBe(t.income - t.maintenanceFee - t.serviceFee);
+  });
+  it("with no fee the profit is the income; with no payment everything is zero", () => {
+    expect(summarizeLedger(ledgerFromPayments(src, { maintenanceBps: 0, serviceBps: 0 })).profit).toBe(800_000);
+    expect(summarizeLedger([])).toEqual({ income: 0, maintenanceFee: 0, serviceFee: 0, fees: 0, profit: 0 });
+  });
+});
+
+describe("months", () => {
   it("groups by the shop timezone, not by UTC", () => {
     expect(monthKey("2026-10-31T20:00:00Z", TZ)).toBe("2026-11"); // 03:00 on 1 Nov in Ho Chi Minh
     expect(monthKey("2026-10-31T20:00:00Z", "UTC")).toBe("2026-10");
@@ -53,48 +82,35 @@ describe("dates and months", () => {
 });
 
 describe("reports", () => {
-  const entries = [
-    e("1", "INCOME", "SALES", 300, "2026-09-10T05:00:00Z"),
-    e("2", "EXPENSE", "RENT", 200, "2026-09-12T05:00:00Z"),
-    e("3", "EXPENSE", "MATERIALS", 100, "2026-10-02T05:00:00Z"),
-    e("4", "EXPENSE", "RENT", 200, "2026-10-12T05:00:00Z"),
-    e("5", "INCOME", "OTHER_INCOME", 50, "2026-07-01T05:00:00Z"),
+  const row = (id: string, kind: LedgerRow["kind"], amount: number, occurredAt: string): LedgerRow => {
+    const maintenanceFee = feeOf(amount, RATES.maintenanceBps), serviceFee = feeOf(amount, RATES.serviceBps);
+    return { id, bookingCode: id, kind, currency: "VND", occurredAt, amount, maintenanceFee, serviceFee, profit: amount - maintenanceFee - serviceFee };
+  };
+  const rows = [
+    row("1", "PAYMENT", 1000, "2026-09-10T05:00:00Z"),
+    row("2", "PAYMENT", 2000, "2026-09-12T05:00:00Z"),
+    row("3", "REFUND", -500, "2026-10-02T05:00:00Z"),
+    row("4", "PAYMENT", 4000, "2026-10-12T05:00:00Z"),
+    row("5", "PAYMENT", 100, "2026-07-01T05:00:00Z"),
   ];
-  it("sums income, expense and the net result", () => {
-    expect(summarize(entries)).toEqual({ income: 350, expense: 500, net: -150 });
-    expect(summarize([])).toEqual({ income: 0, expense: 0, net: 0 });
-  });
-  it("has one point for every month, zero where nothing happened", () => {
-    const s = monthlySeries(entries, TZ, ["2026-08", "2026-09", "2026-10"]);
-    expect(s).toEqual([
+  it("has one point for every month (expense = fees, net = profit), zero where nothing happened", () => {
+    expect(monthlyLedger(rows, TZ, ["2026-08", "2026-09", "2026-10"])).toEqual([
       { key: "2026-08", income: 0, expense: 0, net: 0 },
-      { key: "2026-09", income: 300, expense: 200, net: 100 },
-      { key: "2026-10", income: 0, expense: 300, net: -300 },
+      { key: "2026-09", income: 3000, expense: 150, net: 2850 },
+      { key: "2026-10", income: 3500, expense: 175, net: 3325 },
     ]);
   });
-  it("splits one type by category, biggest first, with shares that add up to 1", () => {
-    const c = byCategory(entries, "EXPENSE");
-    expect(c.map((x) => [x.category, x.amount])).toEqual([["RENT", 400], ["MATERIALS", 100]]);
-    expect(c.reduce((n, x) => n + x.share, 0)).toBeCloseTo(1);
-    expect(byCategory(entries, "INCOME").map((x) => x.category)).toEqual(["SALES", "OTHER_INCOME"]);
-    expect(byCategory([], "INCOME")).toEqual([]);
-  });
-  it("filters by months, type and category, newest first", () => {
+  it("filters by months and kind, newest first", () => {
     const months = ["2026-09", "2026-10"];
-    expect(filterEntries(entries, { months }, TZ).map((x) => x.id)).toEqual(["4", "3", "2", "1"]);
-    expect(filterEntries(entries, { months, type: "EXPENSE", category: "RENT" }, TZ).map((x) => x.id)).toEqual(["4", "2"]);
-    expect(filterEntries(entries, { months: ["2026-07"] }, TZ).map((x) => x.id)).toEqual(["5"]);
+    expect(filterLedger(rows, months, TZ).map((r) => r.id)).toEqual(["4", "3", "2", "1"]);
+    expect(filterLedger(rows, months, TZ, "REFUND").map((r) => r.id)).toEqual(["3"]);
+    expect(filterLedger(rows, ["2026-07"], TZ).map((r) => r.id)).toEqual(["5"]);
   });
-});
-
-describe("entriesFromPayments", () => {
-  it("turns payments into income from bookings and refunds into expenses", () => {
-    const out = entriesFromPayments([{
-      id: "bk-1", bookingCode: "7K3M9QX2", currency: "VND",
-      payments: [{ id: "p1", type: "PAYMENT", amount: 900, recordedAt: "2026-10-01T03:00:00Z" }, { id: "p2", type: "REFUND", amount: 100, recordedAt: "2026-10-02T03:00:00Z" }],
-    }]);
-    expect(out.map((x) => [x.type, x.category, x.amount, x.source])).toEqual([["INCOME", "BOOKINGS", 900, "BOOKING"], ["EXPENSE", "REFUNDS", 100, "BOOKING"]]);
-    expect(summarize(out).net).toBe(800);
+  it("splits the fees by kind, biggest first, with shares that add up to 1", () => {
+    const shares = feeShares(summarizeLedger(rows));
+    expect(shares.map((s) => s.category)).toEqual(["SERVICE", "MAINTENANCE"]);
+    expect(shares.reduce((n, s) => n + s.share, 0)).toBeCloseTo(1);
+    expect(feeShares(summarizeLedger([]))).toEqual([]);
   });
 });
 

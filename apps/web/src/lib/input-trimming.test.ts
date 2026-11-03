@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { createReportSchema, financeEntrySchema, trimDeep } from "@workshop/shared";
+import { createReportSchema, percentToBps, trimDeep } from "@workshop/shared";
 import { bookingContactSchema } from "@/components/booking/schema";
 
 // BR-16: a person may type spaces at both ends of a text box; every text is trimmed when the form is submitted.
@@ -40,10 +40,10 @@ describe("the report form", () => {
   });
 });
 
-describe("the income and expenses form", () => {
-  it("trims the note", () => {
-    const r = financeEntrySchema.safeParse({ type: "EXPENSE", category: "RENT", amount: 100, date: "2026-10-05", note: "   Studio rent  " });
-    expect(r.data?.note).toBe("Studio rent");
+describe("the platform fees form", () => {
+  it("trims the percentages", () => {
+    expect(percentToBps("   2.5  ")).toBe(250);
+    expect(percentToBps("  ")).toBeNull();
   });
 });
 

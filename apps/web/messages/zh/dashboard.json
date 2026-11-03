@@ -88,9 +88,9 @@
       "finance": {
         "title": "收入与支出（本月）",
         "income": "收入",
-        "expense": "支出",
         "profit": "利润",
-        "loss": "亏损"
+        "loss": "亏损",
+        "fees": "费用"
       },
       "pages": {
         "title": "落地页",

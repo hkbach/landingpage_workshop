@@ -88,9 +88,9 @@
       "finance": {
         "title": "収支（今月）",
         "income": "収入",
-        "expense": "支出",
         "profit": "利益",
-        "loss": "損失"
+        "loss": "損失",
+        "fees": "手数料"
       },
       "pages": {
         "title": "ランディングページ",

@@ -88,9 +88,9 @@
       "finance": {
         "title": "Thu chi (tháng này)",
         "income": "Thu",
-        "expense": "Chi",
         "profit": "Lãi",
-        "loss": "Lỗ"
+        "loss": "Lỗ",
+        "fees": "Phí"
       },
       "pages": {
         "title": "Trang giới thiệu",

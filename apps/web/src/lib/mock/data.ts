@@ -2,7 +2,6 @@
 import type {
   AbuseReport, AuditEntry, Booking, Customer, PageContent, PageTheme, Session, Shop, Workshop,
 } from "../types";
-import type { FinanceEntry } from "@workshop/shared";
 import { applyTemplate, themeForTemplate, type TemplateKey } from "@/components/sections/templates";
 import { reservedSeats } from "../booking-state";
 
@@ -321,38 +320,6 @@ export const sitePage: { draft: PageContent; theme: PageTheme; template: Templat
   // applyTemplate sets the layout and each section's variant / enabled flag / order from the template.
   draft: applyTemplate(mockContent, MOCK_TEMPLATE),
 };
-
-/**
- * Income and expenses the shop owner entered by hand over the last six months (the starting list; income from bookings is derived
- * from the payment entries). Dates are business dates stored at 12:00 UTC, never after today.
- */
-export const mockFinanceEntries: FinanceEntry[] = (() => {
-  const now = new Date();
-  const base = now.getUTCFullYear() * 12 + now.getUTCMonth();
-  const rows: [type: "INCOME" | "EXPENSE", category: FinanceEntry["category"], day: number, amounts: number[], note: string][] = [
-    ["EXPENSE", "RENT", 5, [12_000_000, 12_000_000, 12_000_000, 12_000_000, 12_000_000, 12_000_000], "Studio rent"],
-    ["EXPENSE", "SALARY", 28, [18_000_000, 18_000_000, 19_500_000, 19_500_000, 19_500_000, 21_000_000], "Instructor and assistant salaries"],
-    ["EXPENSE", "MATERIALS", 12, [4_200_000, 3_600_000, 5_100_000, 4_800_000, 6_300_000, 5_400_000], "Clay, glaze and tools"],
-    ["EXPENSE", "MARKETING", 15, [1_500_000, 2_500_000, 1_500_000, 3_000_000, 2_000_000, 2_800_000], "Social ads"],
-    ["EXPENSE", "UTILITIES", 20, [1_900_000, 1_700_000, 1_800_000, 2_100_000, 2_300_000, 2_000_000], "Electricity, water, internet"],
-    ["INCOME", "SALES", 18, [33_000_000, 36_500_000, 41_000_000, 44_500_000, 52_000_000, 48_000_000], "Workshop sales (walk-in, cash)"],
-    ["INCOME", "OTHER_INCOME", 22, [0, 0, 2_500_000, 0, 3_200_000, 0], "Private event deposit"],
-  ];
-  const out: FinanceEntry[] = [{ id: "fe-equip", type: "EXPENSE", category: "EQUIPMENT", amount: 14_500_000, currency: "VND", occurredAt: "", note: "New kiln", source: "MANUAL" }];
-  rows.forEach(([type, category, day, amounts, note], r) => {
-    amounts.forEach((amount, i) => {
-      if (!amount) return;
-      const idx = base - (amounts.length - 1 - i);
-      const isCurrent = i === amounts.length - 1;
-      const d = isCurrent ? Math.min(day, now.getUTCDate()) : day;
-      const date = new Date(Date.UTC(Math.floor(idx / 12), idx % 12, d, 12));
-      out.push({ id: `fe-${r}-${i}`, type, category, amount, currency: "VND", occurredAt: date.toISOString(), note, source: "MANUAL" });
-    });
-  });
-  const equip = out[0]!;
-  equip.occurredAt = new Date(Date.UTC(Math.floor((base - 3) / 12), (base - 3) % 12, 9, 12)).toISOString();
-  return out;
-})();
 
 /**
  * Bookings of the past year (one point per booking: session start, outcome, guests) so the overview chart has history. The

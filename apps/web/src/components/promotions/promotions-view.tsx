@@ -23,7 +23,7 @@ import { Field } from "@/components/ops/field";
 import { LanguageBar } from "@/components/language/LanguageBar";
 import { ImageUploadField } from "@/components/builder/ImageUploadField";
 import { promotionImageUploader } from "@/lib/media/promotion-uploader";
-import { parseAmount } from "@/components/finance/finance-store";
+import { parseAmount } from "@/lib/parse-amount";
 import { useEditingLanguage } from "@/lib/use-shop-language";
 import { PromotionApiError, deletePromotionRequest, fetchPromotions, savePromotionRequest, setPromotionEnabledRequest } from "@/lib/promotions-api";
 import { cn } from "@/lib/utils";

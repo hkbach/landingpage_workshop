@@ -88,9 +88,9 @@
       "finance": {
         "title": "수입 및 지출 (이번 달)",
         "income": "수입",
-        "expense": "지출",
         "profit": "이익",
-        "loss": "손실"
+        "loss": "손실",
+        "fees": "수수료"
       },
       "pages": {
         "title": "랜딩 페이지",

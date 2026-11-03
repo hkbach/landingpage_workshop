@@ -88,9 +88,9 @@
       "finance": {
         "title": "Income & expenses (this month)",
         "income": "Income",
-        "expense": "Expenses",
         "profit": "Profit",
-        "loss": "Loss"
+        "loss": "Loss",
+        "fees": "Fees"
       },
       "pages": {
         "title": "Landing pages",

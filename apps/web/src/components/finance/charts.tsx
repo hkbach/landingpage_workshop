@@ -1,7 +1,7 @@
-import { minorDigits, niceScale, type CategoryShare, type MonthPoint } from "@workshop/shared";
+import { minorDigits, niceScale, type MonthPoint } from "@workshop/shared";
 
 // Charts are drawn with plain SVG / CSS: no chart library (a new dependency needs approval). Colours: blue for income, orange for
-// expenses (distinguishable without relying on hue alone: the legend names them, bars sit in a fixed order, the net result is a
+// the fees (`expense` in the data: maintenance and service fee) (distinguishable without relying on hue alone: the legend names them, bars sit in a fixed order, the net result is a
 // dark line with markers). Every chart has a text alternative.
 export const INCOME_COLOR = "#1d4ed8";
 export const EXPENSE_COLOR = "#c2410c";
@@ -87,8 +87,8 @@ export function MonthlyChart({ series, currency, locale, labels }: { series: Mon
 }
 
 /** Share of each category as horizontal bars with the amount and the percentage written next to them. */
-export function CategoryBars({ items, color, label, format, percent }: {
-  items: CategoryShare[]; color: string; label: (c: CategoryShare["category"]) => string; format: (minor: number) => string; percent: (share: number) => string;
+export function CategoryBars<K extends string>({ items, color, label, format, percent }: {
+  items: { category: K; amount: number; share: number }[]; color: string; label: (c: K) => string; format: (minor: number) => string; percent: (share: number) => string;
 }) {
   return (
     <ul className="grid gap-3">

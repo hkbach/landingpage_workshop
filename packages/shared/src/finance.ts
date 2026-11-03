@@ -1,83 +1,70 @@
-import { z } from "zod";
-
-// Income and expense ledger of a shop (shop owner area). Money is bigint minor units on the API; plain numbers here, like the other
-// UI view models. Booking payments are read-only entries derived from the payment entries (FR-PAY-01); everything else is
-// entered by the shop owner.
-
-export const FINANCE_TYPES = ["INCOME", "EXPENSE"] as const;
-export type FinanceType = (typeof FINANCE_TYPES)[number];
-
-/** Categories the shop owner can pick. BOOKINGS and REFUNDS only exist as derived entries. */
-export const MANUAL_INCOME_CATEGORIES = ["SALES", "OTHER_INCOME"] as const;
-export const MANUAL_EXPENSE_CATEGORIES = ["RENT", "MATERIALS", "SALARY", "MARKETING", "UTILITIES", "EQUIPMENT", "OTHER_EXPENSE"] as const;
-export const DERIVED_CATEGORIES = ["BOOKINGS", "REFUNDS"] as const;
-
-export const INCOME_CATEGORIES = [...DERIVED_CATEGORIES.slice(0, 1), ...MANUAL_INCOME_CATEGORIES] as const;
-export const EXPENSE_CATEGORIES = [...MANUAL_EXPENSE_CATEGORIES, ...DERIVED_CATEGORIES.slice(1)] as const;
-export type FinanceCategory = (typeof INCOME_CATEGORIES)[number] | (typeof EXPENSE_CATEGORIES)[number];
-
-export const manualCategories = (type: FinanceType): readonly FinanceCategory[] =>
-  type === "INCOME" ? MANUAL_INCOME_CATEGORIES : MANUAL_EXPENSE_CATEGORIES;
-
-export const FINANCE_NOTE_MAX = 200;
-export const FINANCE_AMOUNT_MAX = 1_000_000_000_000; // minor units, far above any shop
-
-export interface FinanceEntry {
-  id: string;
-  type: FinanceType;
-  category: FinanceCategory;
-  /** Minor units, always positive; the type says the direction. */
-  amount: number;
-  currency: string;
-  /**
-   * ISO UTC. Entered as a business date, so it is stored at 12:00 UTC of that date: the same calendar day in every timezone from
-   * UTC-12 to UTC+11.
-   */
-  occurredAt: string;
-  note?: string;
-  source: "BOOKING" | "MANUAL";
-}
-
-const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-export function isRealDate(d: string): boolean {
-  if (!DATE_RE.test(d)) return false;
-  const t = new Date(`${d}T12:00:00Z`);
-  return !Number.isNaN(t.getTime()) && t.toISOString().startsWith(d);
-}
-export const dateToOccurredAt = (d: string) => `${d}T12:00:00.000Z`;
-
-/** Body of POST/PUT /finance/entries (manual entries). Error messages are codes the UI turns into text. */
-export const financeEntrySchema = z
-  .object({
-    type: z.enum(FINANCE_TYPES, { error: "required" }),
-    category: z.string({ error: "required" }).min(1, "required"),
-    amount: z.number({ error: "amountInvalid" }).int("amountInvalid").positive("amountInvalid").max(FINANCE_AMOUNT_MAX, "amountTooLarge"),
-    date: z.string({ error: "dateInvalid" }).refine(isRealDate, "dateInvalid"),
-    note: z.string().trim().max(FINANCE_NOTE_MAX, "noteTooLong").optional(),
-  })
-  .superRefine((v, ctx) => {
-    if (!(manualCategories(v.type) as readonly string[]).includes(v.category)) ctx.addIssue({ code: "custom", path: ["category"], message: "categoryMismatch" });
-  });
-export type FinanceEntryInput = z.infer<typeof financeEntrySchema>;
-
-// ---- derived entries -----------------------------------------------------------------------------------------------------
+// Income of a shop (shop owner area). Money is bigint minor units on the API; plain numbers here, like the other UI view models.
+//
+// Profit = total income - maintenance fee - service fee
+//  - Total income: the payments received on the bookings minus the refunds (FR-PAY-01).
+//  - Maintenance fee: a percentage of every booking, set by the platform administrator.
+//  - Service fee: a percentage, set by the platform administrator, of the same income.
+// The rates are kept in basis points (1% = 100) so no amount is ever computed with a fractional percent.
 
 export interface PaymentSource {
   id: string; bookingCode: string; currency: string;
   payments: { id: string; type: "PAYMENT" | "REFUND"; amount: number; recordedAt: string }[];
 }
 
-/** Payments received are income from bookings, refunds are an expense. Never edited here: they follow the booking. */
-export function entriesFromPayments(bookings: readonly PaymentSource[]): FinanceEntry[] {
+// ---- fee rates ---------------------------------------------------------------------------------------------------------------
+
+export interface FeeRates { maintenanceBps: number; serviceBps: number }
+export const MAX_FEE_BPS = 10_000; // 100%
+/** The rates until an administrator sets them (mock data): 2% maintenance, 3% service. */
+export const DEFAULT_FEE_RATES: FeeRates = { maintenanceBps: 200, serviceBps: 300 };
+
+export const isValidFeeBps = (n: unknown): n is number => typeof n === "number" && Number.isInteger(n) && n >= 0 && n <= MAX_FEE_BPS;
+
+/** Both rates are whole basis points from 0 to 100%, and together they cannot take more than the whole income. */
+export function checkFeeRates(r: { maintenanceBps: unknown; serviceBps: unknown }): "OK" | "MAINTENANCE_INVALID" | "SERVICE_INVALID" | "TOTAL_TOO_HIGH" {
+  if (!isValidFeeBps(r.maintenanceBps)) return "MAINTENANCE_INVALID";
+  if (!isValidFeeBps(r.serviceBps)) return "SERVICE_INVALID";
+  return r.maintenanceBps + r.serviceBps > MAX_FEE_BPS ? "TOTAL_TOO_HIGH" : "OK";
+}
+
+/** A percentage typed by a person ("2", "2.5", "2,5") to basis points; null when it is not a number from 0 to 100 with at most 2 decimals. */
+export function percentToBps(text: string): number | null {
+  const s = text.trim().replace(",", ".");
+  if (!/^\d{1,3}(\.\d{1,2})?$/.test(s)) return null;
+  const bps = Math.round(Number(s) * 100);
+  return bps <= MAX_FEE_BPS ? bps : null;
+}
+
+/** Basis points as the text of a percentage to edit ("2", "2.5", "0.25"). */
+export const bpsToPercent = (bps: number): string => String(bps / 100);
+
+/** The fee on an amount (negative for a refund, so a refund gives its fee back), rounded to the minor unit. */
+export const feeOf = (amount: number, bps: number): number => Math.sign(amount) * Math.round((Math.abs(amount) * bps) / MAX_FEE_BPS);
+
+// ---- ledger ------------------------------------------------------------------------------------------------------------------
+
+/** One payment or refund of a booking with the fees taken from it. `amount` is signed: a refund is negative. */
+export interface LedgerRow {
+  id: string; bookingCode: string; kind: "PAYMENT" | "REFUND"; currency: string;
+  /** ISO UTC instant the payment was recorded. */
+  occurredAt: string;
+  amount: number; maintenanceFee: number; serviceFee: number;
+  /** amount - maintenanceFee - serviceFee. */
+  profit: number;
+}
+
+export function ledgerFromPayments(bookings: readonly PaymentSource[], rates: FeeRates): LedgerRow[] {
   return bookings.flatMap((b) =>
-    b.payments.map((p): FinanceEntry => ({
-      id: `pay-${p.id}`, type: p.type === "PAYMENT" ? "INCOME" : "EXPENSE", category: p.type === "PAYMENT" ? "BOOKINGS" : "REFUNDS",
-      amount: p.amount, currency: b.currency, occurredAt: p.recordedAt, note: b.bookingCode, source: "BOOKING",
-    })),
+    b.payments.map((p): LedgerRow => {
+      const amount = p.type === "PAYMENT" ? p.amount : -p.amount;
+      const maintenanceFee = feeOf(amount, rates.maintenanceBps);
+      const serviceFee = feeOf(amount, rates.serviceBps);
+      return { id: `pay-${p.id}`, bookingCode: b.bookingCode, kind: p.type, currency: b.currency, occurredAt: p.recordedAt, amount, maintenanceFee, serviceFee, profit: amount - maintenanceFee - serviceFee };
+    }),
   );
 }
 
-// ---- reporting -----------------------------------------------------------------------------------------------------------
+// ---- reporting ---------------------------------------------------------------------------------------------------------------
 
 /** "YYYY-MM" of an instant in the shop timezone. */
 export function monthKey(iso: string, timeZone: string): string {
@@ -93,38 +80,38 @@ export function lastMonthKeys(now: Date, timeZone: string, count: number): strin
   });
 }
 
-export interface Totals { income: number; expense: number; net: number }
-export function summarize(entries: readonly FinanceEntry[]): Totals {
-  let income = 0, expense = 0;
-  for (const e of entries) { if (e.type === "INCOME") income += e.amount; else expense += e.amount; }
-  return { income, expense, net: income - expense };
+export interface LedgerTotals { income: number; maintenanceFee: number; serviceFee: number; fees: number; profit: number }
+export function summarizeLedger(rows: readonly LedgerRow[]): LedgerTotals {
+  let income = 0, maintenanceFee = 0, serviceFee = 0;
+  for (const r of rows) { income += r.amount; maintenanceFee += r.maintenanceFee; serviceFee += r.serviceFee; }
+  return { income, maintenanceFee, serviceFee, fees: maintenanceFee + serviceFee, profit: income - maintenanceFee - serviceFee };
 }
 
-export interface MonthPoint extends Totals { key: string }
-/** One point per month key (zero when nothing happened), so the chart always shows every month of the period. */
-export function monthlySeries(entries: readonly FinanceEntry[], timeZone: string, keys: readonly string[]): MonthPoint[] {
-  const by = new Map<string, FinanceEntry[]>(keys.map((k) => [k, []]));
-  for (const e of entries) by.get(monthKey(e.occurredAt, timeZone))?.push(e);
-  return keys.map((key) => ({ key, ...summarize(by.get(key) ?? []) }));
-}
-
-export interface CategoryShare { category: FinanceCategory; amount: number; share: number }
-/** Totals per category of one type, biggest first. `share` is 0..1 of that type's total. */
-export function byCategory(entries: readonly FinanceEntry[], type: FinanceType): CategoryShare[] {
-  const sums = new Map<FinanceCategory, number>();
-  for (const e of entries) if (e.type === type) sums.set(e.category, (sums.get(e.category) ?? 0) + e.amount);
-  const total = [...sums.values()].reduce((a, b) => a + b, 0);
-  return [...sums.entries()]
-    .map(([category, amount]) => ({ category, amount, share: total ? amount / total : 0 }))
-    .sort((a, b) => b.amount - a.amount || a.category.localeCompare(b.category));
-}
-
-export interface FinanceFilter { months: readonly string[]; type?: FinanceType; category?: FinanceCategory }
-export function filterEntries(entries: readonly FinanceEntry[], f: FinanceFilter, timeZone: string): FinanceEntry[] {
-  const set = new Set(f.months);
-  return entries
-    .filter((e) => set.has(monthKey(e.occurredAt, timeZone)) && (!f.type || e.type === f.type) && (!f.category || e.category === f.category))
+/** The rows of the given months (shop timezone), newest first. */
+export function filterLedger(rows: readonly LedgerRow[], months: readonly string[], timeZone: string, kind?: LedgerRow["kind"]): LedgerRow[] {
+  const set = new Set(months);
+  return rows
+    .filter((r) => set.has(monthKey(r.occurredAt, timeZone)) && (!kind || r.kind === kind))
     .sort((a, b) => b.occurredAt.localeCompare(a.occurredAt) || a.id.localeCompare(b.id));
+}
+
+/** One point of the monthly chart: `expense` is the fees and `net` the profit. */
+export interface MonthPoint { key: string; income: number; expense: number; net: number }
+/** One point per month key (zero when nothing happened), so the chart always shows every month of the period. */
+export function monthlyLedger(rows: readonly LedgerRow[], timeZone: string, keys: readonly string[]): MonthPoint[] {
+  const by = new Map<string, LedgerRow[]>(keys.map((k) => [k, []]));
+  for (const r of rows) by.get(monthKey(r.occurredAt, timeZone))?.push(r);
+  return keys.map((key) => { const t = summarizeLedger(by.get(key) ?? []); return { key, income: t.income, expense: t.fees, net: t.profit }; });
+}
+
+export type FeeKind = "MAINTENANCE" | "SERVICE";
+export interface FeeShare { category: FeeKind; amount: number; share: number }
+/** What each fee takes, biggest first; `share` is 0..1 of all the fees. Empty when no fee was taken. */
+export function feeShares(t: Pick<LedgerTotals, "maintenanceFee" | "serviceFee" | "fees">): FeeShare[] {
+  return ([["MAINTENANCE", t.maintenanceFee], ["SERVICE", t.serviceFee]] as const)
+    .filter(([, amount]) => amount !== 0)
+    .map(([category, amount]) => ({ category, amount, share: t.fees ? amount / t.fees : 0 }))
+    .sort((a, b) => b.amount - a.amount || a.category.localeCompare(b.category));
 }
 
 export interface AxisScale { top: number; bottom: number; step: number }

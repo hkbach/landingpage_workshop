@@ -1,6 +1,6 @@
 import { getLocale, getTranslations } from "next-intl/server";
 import { CalendarClock, CalendarDays, CheckCircle2, Circle, ClipboardList, Sparkles, Users, Wallet } from "lucide-react";
-import { bookingSeries, entriesFromPayments, TREND_PERIODS, type TrendBucket, type TrendPeriod } from "@workshop/shared";
+import { bookingSeries, ledgerFromPayments, TREND_PERIODS, type TrendBucket, type TrendPeriod } from "@workshop/shared";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { SubmitForReview } from "@/components/dashboard/shell/submit-for-review";
 import { BookingTrend } from "@/components/dashboard/booking-trend";
@@ -9,7 +9,8 @@ import { SummaryCard } from "@/components/dashboard/summary-card";
 import { ShopLink } from "@/components/dashboard/shell/shop-link";
 import { dayKey } from "@/lib/format";
 import { liveBookings } from "@/lib/mock/booking-store";
-import { bookingHistory, currentShop, customers, mockFinanceEntries, mockLandingPages, sessions, sitePage, workshops } from "@/lib/mock/data";
+import { getFeeRates } from "@/lib/mock/fee-rates-store";
+import { bookingHistory, currentShop, customers, mockLandingPages, sessions, sitePage, workshops } from "@/lib/mock/data";
 
 // Computed outside the component: depends on the current time.
 function computeOverview() {
@@ -112,7 +113,7 @@ export default async function OverviewPage() {
             rows={[{ label: ts("customers.total"), value: num(o.customers.total) }, { label: ts("customers.repeat"), value: num(o.customers.repeat) }]}
           />
           <LiveSummary
-            derived={entriesFromPayments(bookings)} seed={mockFinanceEntries} currency={currentShop.currency} timezone={currentShop.timezone}
+            rows={ledgerFromPayments(bookings, getFeeRates())} currency={currentShop.currency} timezone={currentShop.timezone}
             mainPage={{ name: currentShop.name, template: sitePage.template, seed: mockLandingPages }} shopStatus={currentShop.status}
           />
         </ul>

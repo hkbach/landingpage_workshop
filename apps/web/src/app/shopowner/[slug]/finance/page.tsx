@@ -1,9 +1,12 @@
-import { entriesFromPayments } from "@workshop/shared";
+import { ledgerFromPayments } from "@workshop/shared";
 import { FinanceView } from "@/components/finance/finance-view";
 import { liveBookings } from "@/lib/mock/booking-store";
-import { currentShop, mockFinanceEntries } from "@/lib/mock/data";
+import { currentShop } from "@/lib/mock/data";
+import { getFeeRates } from "@/lib/mock/fee-rates-store";
 
-// Income and expenses of the shop. Booking payments are income (refunds an expense) and follow the bookings; the rest is entered here.
+// Income of the shop: Profit = total income (booking payments minus refunds) - maintenance fee - service fee. The two rates are set by the
+// platform administrator (/systemadmin/settings).
 export default function FinancePage() {
-  return <FinanceView derived={entriesFromPayments(liveBookings())} seed={mockFinanceEntries} currency={currentShop.currency} timezone={currentShop.timezone} />;
+  const rates = getFeeRates();
+  return <FinanceView rows={ledgerFromPayments(liveBookings(), rates)} rates={rates} currency={currentShop.currency} timezone={currentShop.timezone} />;
 }
