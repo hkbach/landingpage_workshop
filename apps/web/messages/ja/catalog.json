@@ -206,6 +206,19 @@
     "edit": "編集",
     "editTitle": "セッションを編集",
     "editHint": "{code}の情報を変更します。日付と時刻はここでは変更できません。一時停止中のセッションは日程変更をご利用ください。",
-    "workshopLocked": "このセッションには予約があるため、ワークショップは変更できません。"
+    "workshopLocked": "このセッションには予約があるため、ワークショップは変更できません。",
+    "checkIn": "チェックイン",
+    "checkInTitle": "チェックイン · {code}",
+    "checkInHint": "このセッションを予約したお客様の一覧です。到着したお客様をチェックインし、間違えた場合はチェックイン取消で元に戻せます。",
+    "colBooking": "予約",
+    "colGuest": "お客様",
+    "colSeats": "人数",
+    "colStatus": "ステータス",
+    "checkInRow": "チェックイン",
+    "uncheckInRow": "チェックイン取消",
+    "noBookings": "このセッションを予約したお客様はいません。",
+    "checkedInCount": "{total}名中{checked}名がチェックイン済み",
+    "checkInFailed": "現在このお客様は操作できません。",
+    "checkInDone": "完了"
   }
 }

@@ -3,7 +3,7 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useDisplayLocale } from "@/lib/use-shop-language";
-import { ArrowLeft, CalendarClock, Copy, Lock, Pause, Pencil, Play, Plus, Save } from "lucide-react";
+import { ArrowLeft, CalendarClock, Copy, Lock, LogIn, Pause, Pencil, Play, Plus, Save } from "lucide-react";
 import { allowedSessionActions, closeWaitsForEnd, type SessionCloseReason, DEFAULT_BOOKING_CUTOFF_MINUTES, isValidBookingCutoff, MAX_BOOKING_CUTOFF_MINUTES, pickLocalized, SESSION_STATUSES, type Locale, type SessionStatus } from "@workshop/shared";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,10 +15,10 @@ import { NativeSelect } from "@/components/ops/native-select";
 import { SessionStatusBadge } from "@/components/ops/status-badges";
 import { addDays, formatDayKey, zonedToUtcIso } from "@/components/ops/time";
 import { useOpsState } from "@/components/ops/use-ops-state";
-import type { Booking, Session, Workshop } from "@/lib/types";
+import type { Booking, Customer, Session, Workshop } from "@/lib/types";
 import { dayKey, formatTime } from "@/lib/format";
 import { MAX_CAPACITY, type ShopForCatalog } from "./workshop-form";
-import { CloseSessionDialog, dateAndTime, RescheduleSessionDialog } from "./session-dialogs";
+import { CheckInDialog, CloseSessionDialog, dateAndTime, RescheduleSessionDialog } from "./session-dialogs";
 import { notifyRescheduleRequest } from "@/lib/sessions-api";
 import { ImageUploadField } from "@/components/builder/ImageUploadField";
 import { sessionImageUploader } from "@/lib/media/session-uploader";
@@ -27,8 +27,8 @@ import { useDirty } from "@/lib/use-dirty";
 
 /** FR-SCHED-02/03: sessions agenda by date range + workshop; add one-off, close/open, edit capacity, cancel. */
 export function SessionsManager({
-  sessions, bookings, workshops, shop, nowIso, actor,
-}: { sessions: Session[]; bookings: Booking[]; workshops: Workshop[]; shop: ShopForCatalog; nowIso: string; actor: string }) {
+  sessions, bookings, customers, workshops, shop, nowIso, actor,
+}: { sessions: Session[]; bookings: Booking[]; customers: Customer[]; workshops: Workshop[]; shop: ShopForCatalog; nowIso: string; actor: string }) {
   const t = useTranslations("catalog");
   const tops = useTranslations("ops");
   const locale = useLocale() as Locale;
@@ -39,7 +39,7 @@ export function SessionsManager({
   const [from, setFrom] = useState(today);
   const [to, setTo] = useState(addDays(today, 60));
   const [notice, setNotice] = useState<{ text: string; tone: "ok" | "error" } | null>(null);
-  const [dialog, setDialog] = useState<{ kind: "add" } | { kind: "edit" | "close" | "reschedule" | "clone"; id: string } | null>(null);
+  const [dialog, setDialog] = useState<{ kind: "add" } | { kind: "edit" | "close" | "reschedule" | "clone" | "checkin"; id: string } | null>(null);
 
   const displayLocale = useDisplayLocale(shop);
   /** The date of a note ("Nov 12, 2026"), in the time zone of the shop. */
@@ -190,6 +190,9 @@ export function SessionsManager({
                               <Pencil aria-hidden="true" />{t("sessions.edit")}
                             </Button>
                           ) : null}
+                          <Button size="sm" variant="outline" data-testid="checkin-button" onClick={() => setDialog({ kind: "checkin", id: s.id })}>
+                            <LogIn aria-hidden="true" />{t("sessions.checkIn")}
+                          </Button>
                           <Button size="sm" variant="outline" data-testid="clone-button" onClick={() => setDialog({ kind: "clone", id: s.id })}>
                             <Copy aria-hidden="true" />{t("sessions.clone")}
                           </Button>
@@ -204,13 +207,17 @@ export function SessionsManager({
       ))}
 
       <AddSessionDialog
-        key={dialog && dialog.kind !== "add" ? `${dialog.kind}-${dialog.id}` : "add"}
+        key={dialog && dialog.kind !== "add" ? `form-${dialog.kind}-${dialog.id}` : "form-add"}
         open={dialog?.kind === "add" || ((dialog?.kind === "clone" || dialog?.kind === "edit") && !!target)} onOpenChange={(o) => !o && setDialog(null)}
         workshops={workshops} shop={shop} sessions={ops.sessions} title={title}
         source={dialog?.kind === "clone" ? target : undefined} editing={dialog?.kind === "edit" ? target : undefined}
         hasBookings={target ? target.reservedCount > 0 || ops.bookings.some((b) => b.sessionId === target.id && b.status !== "CANCELLED") : false}
         onAdd={(s) => { ops.addSession(s); setDialog(null); }}
         onUpdate={(id, patch) => { if (ops.updateSession(id, patch)) setDialog(null); }}
+      />
+      <CheckInDialog
+        key={`guests-${target?.id ?? "none"}`} open={dialog?.kind === "checkin" && !!target} onOpenChange={(o) => !o && setDialog(null)}
+        session={target} bookings={ops.bookings} customers={customers} now={ops.now} perform={ops.perform}
       />
       <CloseSessionDialog
         key={`close-${target?.id ?? "none"}`} open={dialog?.kind === "close" && !!target} onOpenChange={(o) => !o && setDialog(null)}

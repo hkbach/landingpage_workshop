@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useTranslations } from "next-intl";
-import { ArrowLeft, CalendarClock, Lock } from "lucide-react";
+import { ArrowLeft, CalendarClock, Check, Lock, LogIn, Undo2 } from "lucide-react";
 import { checkCloseReason, CLOSE_REASON_NOTE_MAX, SESSION_CLOSE_REASONS, type RescheduleError, type SessionCloseReason } from "@workshop/shared";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -11,7 +11,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Field } from "@/components/ops/field";
 import { zonedToUtcIso } from "@/components/ops/time";
 import { dayKey } from "@/lib/format";
-import type { Session } from "@/lib/types";
+import type { Booking, Customer, Session } from "@/lib/types";
+import { canTransition, type BookingAction } from "@/lib/booking-state";
+import { BookingStatusBadge } from "@/components/ops/status-badges";
+import type { OpResult } from "@/components/ops/use-ops-state";
 
 /** The reason of a change to a session: a basic reason from the list, or Other with a text that explains it. Used by Close and Re-schedule. */
 function ReasonPicker({ prefix, code, onCode, note, onNote, error }: {
@@ -129,6 +132,86 @@ export function RescheduleSessionDialog({ open, onOpenChange, session, timezone,
               <Button type="submit" disabled={code === ""}><CalendarClock aria-hidden="true" />{t("sessions.rescheduleConfirm")}</Button>
             </DialogFooter>
           </form>
+        ) : null}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/**
+ * The guests who booked a session, each with Check-in or Uncheck-in (undo a mistake). Only a confirmed (or late-released) booking can be checked
+ * in and only a checked-in one can be unchecked; the other statuses are shown without a button. The rules are the booking state machine.
+ */
+export function CheckInDialog({ open, onOpenChange, session, bookings, customers, now, perform }: {
+  open: boolean; onOpenChange: (o: boolean) => void; session?: Session; bookings: Booking[]; customers: Customer[]; now: Date;
+  perform: (bookingId: string, action: BookingAction) => OpResult;
+}) {
+  const t = useTranslations("catalog");
+  const [failed, setFailed] = useState<string | null>(null);
+  const rows = session ? bookings.filter((b) => b.sessionId === session.id).sort((a, b) => a.bookingCode.localeCompare(b.bookingCode)) : [];
+  const nameOf = (b: Booking) => customers.find((c) => c.id === b.customerId)?.fullName ?? "";
+  const guests = rows.reduce((n, b) => n + b.quantity, 0);
+  const checked = rows.filter((b) => b.status === "CHECKED_IN" || b.status === "COMPLETED").reduce((n, b) => n + b.quantity, 0);
+
+  function run(b: Booking, action: BookingAction) {
+    const res = perform(b.id, action);
+    setFailed(res.ok ? null : b.bookingCode);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { if (!o) setFailed(null); onOpenChange(o); }}>
+      <DialogContent className="sm:max-w-2xl">
+        {session ? (
+          <div className="grid gap-4">
+            <DialogHeader>
+              <DialogTitle>{t("sessions.checkInTitle", { code: session.code })}</DialogTitle>
+              <DialogDescription>{t("sessions.checkInHint")}</DialogDescription>
+            </DialogHeader>
+            {rows.length === 0 ? (
+              <p role="status" data-testid="checkin-empty" className="rounded-lg bg-muted/50 p-4 text-sm text-muted-foreground">{t("sessions.noBookings")}</p>
+            ) : (
+              <>
+                <p role="status" data-testid="checkin-count" className="text-sm font-medium">{t("sessions.checkedInCount", { checked, total: guests })}</p>
+                <div className="overflow-x-auto rounded-lg border">
+                  <table className="w-full text-sm" data-testid="checkin-table">
+                    <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+                      <tr>
+                        <th className="px-3 py-2 font-medium">{t("sessions.colBooking")}</th>
+                        <th className="px-3 py-2 font-medium">{t("sessions.colGuest")}</th>
+                        <th className="px-3 py-2 font-medium">{t("sessions.colSeats")}</th>
+                        <th className="px-3 py-2 font-medium">{t("sessions.colStatus")}</th>
+                        <th className="px-3 py-2"><span className="sr-only">{t("sessions.checkIn")}</span></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.map((b) => {
+                        const state = canTransition(b, session, now);
+                        return (
+                          <tr key={b.id} className="border-t" data-testid="checkin-row">
+                            <td className="px-3 py-2 font-mono">{b.bookingCode}</td>
+                            <td className="px-3 py-2">{nameOf(b)}</td>
+                            <td className="px-3 py-2 tabular-nums">{b.quantity}</td>
+                            <td className="px-3 py-2"><BookingStatusBadge status={b.status} /></td>
+                            <td className="px-3 py-2 text-right">
+                              {state.CHECK_IN.allowed ? (
+                                <Button size="sm" onClick={() => run(b, "CHECK_IN")}><LogIn aria-hidden="true" />{t("sessions.checkInRow")}</Button>
+                              ) : state.UNDO_CHECK_IN.allowed ? (
+                                <Button size="sm" variant="outline" onClick={() => run(b, "UNDO_CHECK_IN")}><Undo2 aria-hidden="true" />{t("sessions.uncheckInRow")}</Button>
+                              ) : null}
+                              {failed === b.bookingCode ? <p role="alert" className="mt-1 text-xs text-destructive">{t("sessions.checkInFailed")}</p> : null}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}><Check aria-hidden="true" />{t("sessions.checkInDone")}</Button>
+            </DialogFooter>
+          </div>
         ) : null}
       </DialogContent>
     </Dialog>

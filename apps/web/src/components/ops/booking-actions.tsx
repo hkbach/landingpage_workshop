@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { Ban, CalendarClock, CheckCheck, CircleDollarSign, Clock, LogIn, UserX } from "lucide-react";
+import { Ban, CalendarClock, CheckCheck, CircleDollarSign, Clock, LogIn, Undo2, UserX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Booking, Session } from "@/lib/types";
 import { canTransition, type BookingAction } from "@/lib/booking-state";
@@ -17,7 +17,7 @@ export interface BookingOps {
   reschedule: (bookingId: string, targetSessionId: string) => OpResult;
 }
 
-const ICONS = { CHECK_IN: LogIn, LATE_RELEASE: Clock, NO_SHOW: UserX, CANCEL: Ban, COMPLETE: CheckCheck, RESCHEDULE: CalendarClock } as const;
+const ICONS = { CHECK_IN: LogIn, UNDO_CHECK_IN: Undo2, LATE_RELEASE: Clock, NO_SHOW: UserX, CANCEL: Ban, COMPLETE: CheckCheck, RESCHEDULE: CalendarClock } as const;
 const PRIMARY: BookingAction[] = ["CHECK_IN", "COMPLETE", "LATE_RELEASE", "NO_SHOW", "CANCEL"];
 
 /**

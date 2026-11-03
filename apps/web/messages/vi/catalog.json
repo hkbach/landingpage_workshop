@@ -206,6 +206,19 @@
     "edit": "Chỉnh sửa",
     "editTitle": "Chỉnh sửa session",
     "editHint": "Thay đổi thông tin của {code}. Không thể đổi ngày giờ tại đây: hãy dùng Đổi lịch session với session đang tạm dừng.",
-    "workshopLocked": "Không thể đổi workshop vì session này đã có booking."
+    "workshopLocked": "Không thể đổi workshop vì session này đã có booking.",
+    "checkIn": "Check-in",
+    "checkInTitle": "Check-in · {code}",
+    "checkInHint": "Danh sách khách đã đặt session này. Check-in cho từng khách đến; dùng Hủy check-in nếu bấm nhầm.",
+    "colBooking": "Booking",
+    "colGuest": "Khách",
+    "colSeats": "Số khách",
+    "colStatus": "Trạng thái",
+    "checkInRow": "Check-in",
+    "uncheckInRow": "Hủy check-in",
+    "noBookings": "Chưa có khách nào đặt session này.",
+    "checkedInCount": "Đã check-in {checked} trên {total} khách",
+    "checkInFailed": "Hiện chưa thể thao tác với khách này.",
+    "checkInDone": "Xong"
   }
 }

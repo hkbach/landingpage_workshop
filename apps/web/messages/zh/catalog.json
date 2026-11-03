@@ -206,6 +206,19 @@
     "edit": "编辑",
     "editTitle": "编辑场次",
     "editHint": "修改 {code} 的信息。日期和时间不能在此更改：已暂停的场次请使用“更改场次时间”。",
-    "workshopLocked": "该场次已有预订，无法更改工作坊。"
+    "workshopLocked": "该场次已有预订，无法更改工作坊。",
+    "checkIn": "签到",
+    "checkInTitle": "签到 · {code}",
+    "checkInHint": "已预订该场次的客人名单。客人到场后签到；误操作可点“取消签到”撤销。",
+    "colBooking": "预订",
+    "colGuest": "客人",
+    "colSeats": "人数",
+    "colStatus": "状态",
+    "checkInRow": "签到",
+    "uncheckInRow": "取消签到",
+    "noBookings": "还没有客人预订该场次。",
+    "checkedInCount": "{total} 位客人中已签到 {checked} 位",
+    "checkInFailed": "目前无法操作该客人。",
+    "checkInDone": "完成"
   }
 }

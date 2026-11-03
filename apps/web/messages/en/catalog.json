@@ -206,6 +206,19 @@
     "edit": "Edit",
     "editTitle": "Edit session",
     "editHint": "Change the details of {code}. The date and time cannot be changed here: use Re-schedule for a paused session.",
-    "workshopLocked": "The workshop cannot be changed because this session has bookings."
+    "workshopLocked": "The workshop cannot be changed because this session has bookings.",
+    "checkIn": "Check-in",
+    "checkInTitle": "Check-in · {code}",
+    "checkInHint": "Guests who booked this session. Check in each guest who arrives; use Uncheck-in to undo a mistake.",
+    "colBooking": "Booking",
+    "colGuest": "Guest",
+    "colSeats": "Guests",
+    "colStatus": "Status",
+    "checkInRow": "Check-in",
+    "uncheckInRow": "Uncheck-in",
+    "noBookings": "No guests have booked this session.",
+    "checkedInCount": "{checked} of {total} guests checked in",
+    "checkInFailed": "This guest cannot be changed right now.",
+    "checkInDone": "Done"
   }
 }

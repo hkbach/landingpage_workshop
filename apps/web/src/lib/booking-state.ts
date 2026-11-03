@@ -7,7 +7,7 @@ import type { BookingStatus, PaymentStatus, SessionStatus } from "@workshop/shar
 
 export const LATE_RELEASE_AFTER_MINUTES = 30;
 
-export type BookingAction = "CHECK_IN" | "LATE_RELEASE" | "NO_SHOW" | "CANCEL" | "COMPLETE" | "RESCHEDULE";
+export type BookingAction = "CHECK_IN" | "UNDO_CHECK_IN" | "LATE_RELEASE" | "NO_SHOW" | "CANCEL" | "COMPLETE" | "RESCHEDULE";
 
 export type BlockedReason =
   | "INVALID_STATE" // not allowed from the current status
@@ -48,6 +48,9 @@ export function canTransition(booking: StateBooking, session: StateSession, now:
         ? session.capacity - session.reservedCount >= booking.quantity ? ok() : no("SESSION_FULL")
         : no("INVALID_STATE");
 
+  // Uncheck-in: a check-in made by mistake goes back to CONFIRMED (only before the booking is completed).
+  const undoCheckIn: ActionState = s === "CHECKED_IN" ? ok() : no("INVALID_STATE");
+
   const lateRelease: ActionState =
     s !== "CONFIRMED" ? no("INVALID_STATE")
       : t >= starts + LATE_RELEASE_AFTER_MINUTES * 60_000 ? ok() : no("TOO_EARLY_LATE_RELEASE");
@@ -63,7 +66,7 @@ export function canTransition(booking: StateBooking, session: StateSession, now:
   const reschedule: ActionState =
     s !== "CONFIRMED" ? no("INVALID_STATE") : ok();
 
-  return { CHECK_IN: checkIn, LATE_RELEASE: lateRelease, NO_SHOW: noShow, CANCEL: cancel, COMPLETE: complete, RESCHEDULE: reschedule };
+  return { CHECK_IN: checkIn, UNDO_CHECK_IN: undoCheckIn, LATE_RELEASE: lateRelease, NO_SHOW: noShow, CANCEL: cancel, COMPLETE: complete, RESCHEDULE: reschedule };
 }
 
 export function allowedActions(booking: StateBooking, session: StateSession, now: Date): BookingAction[] {
@@ -72,7 +75,7 @@ export function allowedActions(booking: StateBooking, session: StateSession, now
 }
 
 const TARGET: Partial<Record<BookingAction, BookingStatus>> = {
-  CHECK_IN: "CHECKED_IN", LATE_RELEASE: "LATE_RELEASED", NO_SHOW: "NO_SHOW", CANCEL: "CANCELLED", COMPLETE: "COMPLETED",
+  CHECK_IN: "CHECKED_IN", UNDO_CHECK_IN: "CONFIRMED", LATE_RELEASE: "LATE_RELEASED", NO_SHOW: "NO_SHOW", CANCEL: "CANCELLED", COMPLETE: "COMPLETED",
 };
 
 export function targetStatus(action: BookingAction): BookingStatus | undefined {

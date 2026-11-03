@@ -206,6 +206,19 @@
     "edit": "수정",
     "editTitle": "세션 수정",
     "editHint": "{code}의 정보를 변경합니다. 날짜와 시간은 여기서 변경할 수 없습니다. 일시중지된 세션은 일정 변경을 사용하세요.",
-    "workshopLocked": "이 세션에 예약이 있어 워크숍을 변경할 수 없습니다."
+    "workshopLocked": "이 세션에 예약이 있어 워크숍을 변경할 수 없습니다.",
+    "checkIn": "체크인",
+    "checkInTitle": "체크인 · {code}",
+    "checkInHint": "이 세션을 예약한 손님 목록입니다. 도착한 손님마다 체크인하고, 실수는 체크인 취소로 되돌리세요.",
+    "colBooking": "예약",
+    "colGuest": "손님",
+    "colSeats": "인원",
+    "colStatus": "상태",
+    "checkInRow": "체크인",
+    "uncheckInRow": "체크인 취소",
+    "noBookings": "이 세션을 예약한 손님이 없습니다.",
+    "checkedInCount": "{total}명 중 {checked}명 체크인",
+    "checkInFailed": "지금은 이 손님을 처리할 수 없습니다.",
+    "checkInDone": "완료"
   }
 }
