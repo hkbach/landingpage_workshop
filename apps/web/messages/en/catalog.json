@@ -196,6 +196,15 @@
     "rescheduleMailFailed": "The session was re-scheduled, but the emails to the guests could not be queued. Please contact the guests yourself.",
     "rescheduledBecause": "Re-scheduled because",
     "rescheduleSame": "Choose a different date or time.",
-    "reschedulePast": "The new start must be in the future."
+    "reschedulePast": "The new start must be in the future.",
+    "codeLabel": "Session code",
+    "image": "Session image",
+    "imageHint": "One image for this session. Guests see it next to the time on your landing page.",
+    "clone": "Clone",
+    "cloneTitle": "Clone session",
+    "cloneHint": "A new session like {code}: same workshop, capacity, cut-off and image. Choose its date and time (times in {tz}).",
+    "cloneConfirm": "Clone session",
+    "clonedFrom": "Cloned from {code} - {workshop}",
+    "rescheduleOnce": "A session can only be re-scheduled once, and this session has already been re-scheduled."
   }
 }

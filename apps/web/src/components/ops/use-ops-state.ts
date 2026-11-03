@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { applySessionAction, checkCloseReason, checkReschedule, closeIfEnded, closeWaitsForEnd, type BookingStatus, type PaymentMethod, type RescheduleError, type SessionAction, type SessionCloseReason } from "@workshop/shared";
+import { applySessionAction, checkCloseReason, checkReschedule, closeIfEnded, nextSessionCode, closeWaitsForEnd, type BookingStatus, type PaymentMethod, type RescheduleError, type SessionAction, type SessionCloseReason } from "@workshop/shared";
 import type { Booking, PaymentEntry, Session } from "@/lib/types";
 import {
   canTransition, computePaymentStatus, netPaid, seatDelta, targetStatus,
@@ -131,7 +131,7 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
       { ok: true; oldStartsAt: string; startsAt: string; endsAt: string; reason: SessionCloseReason; moved: Booking[] } | { ok: false; error: RescheduleError } => {
       const s = sessions.find((x) => x.id === id);
       if (!s) return { ok: false, error: "NOT_PAUSED" };
-      const checked = checkReschedule(s, newStartsAt, now, sessions.filter((x) => x.workshopId === s.workshopId && x.id !== id).map((x) => x.startsAt));
+      const checked = checkReschedule({ ...s, rescheduled: s.rescheduledAt !== undefined }, newStartsAt, now, sessions.filter((x) => x.workshopId === s.workshopId && x.id !== id).map((x) => x.startsAt));
       const why = checkCloseReason(reason.code, reason.note ?? "");
       if (!checked.ok) return { ok: false, error: checked.error };
       if (!why.ok) return { ok: false, error: "NOT_PAUSED" };
@@ -153,8 +153,8 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
     [sessions],
   );
 
-  const addSession = useCallback((s: Omit<Session, "id" | "reservedCount" | "status">) => {
-    setSessions((list) => [...list, { ...s, id: nextId("se"), reservedCount: 0, status: "OPEN" }]); // a new session is open (not running): Start makes it bookable
+  const addSession = useCallback((s: Omit<Session, "id" | "code" | "reservedCount" | "status">) => {
+    setSessions((list) => [...list, { ...s, id: nextId("se"), code: nextSessionCode(list.map((x) => x.code)), reservedCount: 0, status: "OPEN" }]); // a new session is open (not running): Start makes it bookable
   }, []);
 
   const addBooking = useCallback((b: Booking) => {

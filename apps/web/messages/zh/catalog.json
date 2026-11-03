@@ -196,6 +196,15 @@
     "rescheduleMailFailed": "场次时间已更改，但无法将邮件加入发送队列。请自行联系客人。",
     "rescheduledBecause": "更改原因",
     "rescheduleSame": "请选择不同的日期或时间。",
-    "reschedulePast": "新的开始时间必须在将来。"
+    "reschedulePast": "新的开始时间必须在将来。",
+    "codeLabel": "场次编码",
+    "image": "场次图片",
+    "imageHint": "为该场次上传一张图片。客人会在落地页的时间旁边看到它。",
+    "clone": "复制",
+    "cloneTitle": "复制场次",
+    "cloneHint": "创建一个与 {code} 相同的新场次：相同的工作坊、容量、预订截止时间和图片。请选择日期和时间（按 {tz} 时间）。",
+    "cloneConfirm": "复制场次",
+    "clonedFrom": "复制自 {code} - {workshop}",
+    "rescheduleOnce": "每个场次只能更改一次时间，该场次已经更改过。"
   }
 }

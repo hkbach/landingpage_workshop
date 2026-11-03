@@ -196,6 +196,15 @@
     "rescheduleMailFailed": "세션 일정은 변경되었지만 손님에게 보낼 이메일을 등록하지 못했습니다. 손님에게 직접 연락해 주세요.",
     "rescheduledBecause": "일정 변경 이유",
     "rescheduleSame": "다른 날짜나 시간을 선택하세요.",
-    "reschedulePast": "새 시작 시간은 미래여야 합니다."
+    "reschedulePast": "새 시작 시간은 미래여야 합니다.",
+    "codeLabel": "세션 코드",
+    "image": "세션 이미지",
+    "imageHint": "이 세션의 이미지 한 장입니다. 손님은 랜딩 페이지의 시간 옆에서 보게 됩니다.",
+    "clone": "복제",
+    "cloneTitle": "세션 복제",
+    "cloneHint": "{code}와 같은 새 세션입니다: 같은 워크숍, 정원, 예약 마감, 이미지. 날짜와 시간을 선택하세요({tz} 기준).",
+    "cloneConfirm": "세션 복제",
+    "clonedFrom": "{code}에서 복제됨 - {workshop}",
+    "rescheduleOnce": "세션 일정은 한 번만 변경할 수 있으며, 이 세션은 이미 변경되었습니다."
   }
 }

@@ -18,6 +18,7 @@ import { modalThemeStyle } from "@/components/sections/theme";
 import { COUNTRY_CODES, countryName } from "./countries";
 import { bookingContactSchema, type BookingFormValues } from "./schema";
 import { slotState, type SlotState } from "./availability";
+import { safeImage } from "@/components/sections/safe-url";
 import { cleanOtp, DEMO_OTP, isOtpComplete, OTP_LENGTH, OTP_MAX_ATTEMPTS, OTP_RESEND_SECONDS, sendOtp, verifyOtp } from "./otp";
 import { simulateBooking } from "./simulate";
 import { newUuid } from "@/lib/uuid";
@@ -344,9 +345,15 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
                     const state = stateOf(x);
                     return (
                       <Choice key={x.id} name="bk-time" checked={sessionId === x.id} disabled={state !== "OK"} onSelect={() => { setSessionId(x.id); setQuantity(1); }}>
-                        <span className="grid">
+                        <span className="flex items-center gap-2">
+                          {safeImage(x.imageUrl) ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={safeImage(x.imageUrl)} alt="" data-testid="session-photo" className="size-12 shrink-0 rounded-md object-cover" />
+                          ) : null}
+                          <span className="grid">
                           <span className="font-medium">{formatTime(x.startsAt, shop.timezone, locale)} – {formatTime(x.endsAt, shop.timezone, locale)}</span>
                           <span className="text-xs text-[var(--site-muted)]" data-testid="cutoff-note">{t("cutoffNote", { minutes: x.bookingCutoffMinutes })}</span>
+                          </span>
                         </span>
                         <span className={cn("text-xs", state === "FULL" ? "font-semibold text-red-700" : "text-[var(--site-muted)]")}>
                           {state === "OK" ? t("spotsLeft", { count: left }) : t(`slot.${state}`)}

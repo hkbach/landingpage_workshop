@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SESSION_STATUSES } from "./enums";
-import { allowedSessionActions, applySessionAction, checkCloseReason, checkReschedule, CLOSE_REASON_NOTE_MAX, closeIfEnded, closeWaitsForEnd, DEFAULT_BOOKING_CUTOFF_MINUTES, isInSessionTime, isSessionBookable, isValidBookingCutoff, type SessionState } from "./session-rules";
+import { allowedSessionActions, applySessionAction, checkCloseReason, checkReschedule, nextSessionCode, SESSION_CODE_RE, CLOSE_REASON_NOTE_MAX, closeIfEnded, closeWaitsForEnd, DEFAULT_BOOKING_CUTOFF_MINUTES, isInSessionTime, isSessionBookable, isValidBookingCutoff, type SessionState } from "./session-rules";
 
 const s = (status: SessionState["status"]): SessionState => ({ status });
 
@@ -103,5 +103,27 @@ describe("checkReschedule", () => {
   });
   it("a session that has already ended cannot be re-scheduled", () => {
     expect(checkReschedule({ ...paused, startsAt: "2026-11-01T09:00:00Z", endsAt: "2026-11-01T11:00:00Z" }, "2026-11-07T14:00:00Z", NOW, [])).toEqual({ ok: false, error: "ENDED" });
+  });
+});
+
+describe("one re-schedule per session", () => {
+  const NOW = new Date("2026-11-03T10:00:00Z");
+  const paused = { status: "PAUSED" as const, startsAt: "2026-11-05T09:00:00Z", endsAt: "2026-11-05T11:00:00Z" };
+  it("a session that was re-scheduled once cannot be re-scheduled again", () => {
+    expect(checkReschedule({ ...paused, rescheduled: true }, "2026-11-07T14:00:00Z", NOW, [])).toEqual({ ok: false, error: "ALREADY_RESCHEDULED" });
+    expect(checkReschedule({ ...paused, rescheduled: false }, "2026-11-07T14:00:00Z", NOW, []).ok).toBe(true);
+  });
+});
+
+describe("session codes", () => {
+  it("start at SES-0001 and go one past the highest code", () => {
+    expect(nextSessionCode([])).toBe("SES-0001");
+    expect(nextSessionCode(["SES-0001", "SES-0009", "SES-0003"])).toBe("SES-0010");
+    expect(nextSessionCode(["SES-9999"])).toBe("SES-10000");
+  });
+  it("ignore anything that is not a session code", () => expect(nextSessionCode(["x", "SES-12", "ses-0005"])).toBe("SES-0001"));
+  it("have a format check", () => {
+    expect(SESSION_CODE_RE.test("SES-0042")).toBe(true);
+    expect(SESSION_CODE_RE.test("SES-42")).toBe(false);
   });
 });

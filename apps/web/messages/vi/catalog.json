@@ -196,6 +196,15 @@
     "rescheduleMailFailed": "Đã đổi lịch session nhưng không thể xếp hàng gửi email cho khách. Vui lòng tự liên hệ với khách.",
     "rescheduledBecause": "Đổi lịch vì",
     "rescheduleSame": "Hãy chọn ngày hoặc giờ khác.",
-    "reschedulePast": "Giờ bắt đầu mới phải ở tương lai."
+    "reschedulePast": "Giờ bắt đầu mới phải ở tương lai.",
+    "codeLabel": "Mã session",
+    "image": "Ảnh đại diện của session",
+    "imageHint": "Một ảnh đại diện cho session này. Khách thấy ảnh cạnh giờ của session trên landing page.",
+    "clone": "Nhân bản",
+    "cloneTitle": "Nhân bản session",
+    "cloneHint": "Tạo session mới giống {code}: cùng workshop, sức chứa, hạn chót đặt chỗ và ảnh. Hãy chọn ngày và giờ (giờ theo {tz}).",
+    "cloneConfirm": "Nhân bản session",
+    "clonedFrom": "Nhân bản từ {code} - {workshop}",
+    "rescheduleOnce": "Mỗi session chỉ được đổi lịch một lần và session này đã được đổi lịch rồi."
   }
 }

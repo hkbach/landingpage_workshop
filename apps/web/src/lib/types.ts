@@ -21,7 +21,9 @@ export interface Workshop {
 }
 
 export interface Session {
-  id: string; workshopId: string; startsAt: string; endsAt: string;
+  id: string;
+  /** Code the owner uses to manage the session ("SES-0001"), made by the system and never changed. */
+  code: string; workshopId: string; startsAt: string; endsAt: string;
   capacity: number; reservedCount: number; status: SessionStatus;
   /** Set when the system closed the session because its time was over (an owner's Close does not set it). */
   autoClosed?: boolean;
@@ -35,6 +37,10 @@ export interface Session {
   rescheduledAt?: string;
   /** Minutes before the session starts at which online booking closes (set per session when it is created). */
   bookingCutoffMinutes: number;
+  /** One picture for the session (https URL or a platform media path); guests see it when they choose a time. */
+  imageUrl?: string;
+  /** The session this one was cloned from (shown as a note on the session). */
+  clonedFrom?: { code: string; workshopId: string };
 }
 
 export interface Customer {

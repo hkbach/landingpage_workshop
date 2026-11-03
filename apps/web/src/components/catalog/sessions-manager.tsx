@@ -3,7 +3,7 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useDisplayLocale } from "@/lib/use-shop-language";
-import { ArrowLeft, CalendarClock, Lock, Pause, Pencil, Play, Plus, Save } from "lucide-react";
+import { ArrowLeft, CalendarClock, Copy, Lock, Pause, Pencil, Play, Plus, Save } from "lucide-react";
 import { allowedSessionActions, closeWaitsForEnd, type SessionCloseReason, DEFAULT_BOOKING_CUTOFF_MINUTES, isValidBookingCutoff, MAX_BOOKING_CUTOFF_MINUTES, pickLocalized, SESSION_STATUSES, type Locale, type SessionStatus } from "@workshop/shared";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,6 +20,9 @@ import { dayKey, formatTime } from "@/lib/format";
 import { MAX_CAPACITY, type ShopForCatalog } from "./workshop-form";
 import { CloseSessionDialog, RescheduleSessionDialog } from "./session-dialogs";
 import { notifyRescheduleRequest } from "@/lib/sessions-api";
+import { ImageUploadField } from "@/components/builder/ImageUploadField";
+import { sessionImageUploader } from "@/lib/media/session-uploader";
+import { safeImage } from "@/components/sections/safe-url";
 import { useDirty } from "@/lib/use-dirty";
 
 /** FR-SCHED-02/03: sessions agenda by date range + workshop; add one-off, close/open, edit capacity, cancel. */
@@ -36,7 +39,7 @@ export function SessionsManager({
   const [from, setFrom] = useState(today);
   const [to, setTo] = useState(addDays(today, 60));
   const [notice, setNotice] = useState<{ text: string; tone: "ok" | "error" } | null>(null);
-  const [dialog, setDialog] = useState<{ kind: "add" } | { kind: "capacity" | "close" | "reschedule"; id: string } | null>(null);
+  const [dialog, setDialog] = useState<{ kind: "add" } | { kind: "capacity" | "close" | "reschedule" | "clone"; id: string } | null>(null);
 
   const displayLocale = useDisplayLocale(shop);
   /** The date of a note ("Nov 12, 2026"), in the time zone of the shop. */
@@ -120,16 +123,26 @@ export function SessionsManager({
                   <Card size="sm" className={s.status === "CLOSED" ? "opacity-80" : ""}>
                     <CardContent className="grid gap-2">
                       <div className="flex flex-wrap items-start justify-between gap-2">
-                        <div>
-                          <p className="font-medium">{title(s.workshopId)}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {formatTime(s.startsAt, shop.timezone, locale)} - {formatTime(s.endsAt, shop.timezone, locale)}
-                          </p>
+                        <div className="flex min-w-0 items-start gap-3">
+                          {safeImage(s.imageUrl) ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={safeImage(s.imageUrl)} alt="" data-testid="session-image" className="size-14 shrink-0 rounded-md object-cover" />
+                          ) : null}
+                          <div className="min-w-0">
+                            <p className="font-medium">{title(s.workshopId)}</p>
+                            <p className="font-mono text-xs text-muted-foreground" data-testid="session-code" aria-label={`${t("sessions.codeLabel")}: ${s.code}`}>{s.code}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {formatTime(s.startsAt, shop.timezone, locale)} - {formatTime(s.endsAt, shop.timezone, locale)}
+                            </p>
+                          </div>
                         </div>
                         <SessionStatusBadge status={s.status} />
                       </div>
                       <CapacityBar reserved={s.reservedCount} capacity={s.capacity} />
                       <p className="text-xs text-muted-foreground" data-testid="session-cutoff">{t("sessions.cutoffInfo", { minutes: s.bookingCutoffMinutes })}</p>
+                      {s.clonedFrom ? (
+                        <p className="text-xs text-muted-foreground" data-testid="cloned-note">{t("sessions.clonedFrom", { code: s.clonedFrom.code, workshop: title(s.clonedFrom.workshopId) })}</p>
+                      ) : null}
                       {s.autoClosed ? <p className="text-xs text-muted-foreground" data-testid="auto-closed-note">{dateText(s.endsAt)} - {t("sessions.autoClosedNote")}</p> : null}
                       {s.rescheduleReason ? (
                         <p className="text-xs text-muted-foreground" data-testid="reschedule-reason">
@@ -141,8 +154,7 @@ export function SessionsManager({
                           {s.closedAt ? `${dateText(s.closedAt)} - ` : ""}{t("sessions.closedBecause")}: {s.closeReason.code === "OTHER" ? s.closeReason.note : t(`sessions.closeReasons.${s.closeReason.code}`)}
                         </p>
                       ) : null}
-                      {s.status !== "CLOSED" ? (
-                        <div className="flex flex-wrap gap-1.5">
+                      <div className="flex flex-wrap gap-1.5">
                           {actions.includes("start") ? (
                             <Button size="sm" variant="outline" onClick={() => ops.sessionAction(s.id, "start")}><Play aria-hidden="true" />{t("sessions.start")}</Button>
                           ) : null}
@@ -150,7 +162,16 @@ export function SessionsManager({
                             <Button size="sm" variant="outline" onClick={() => ops.sessionAction(s.id, "pause")}><Pause aria-hidden="true" />{t("sessions.pause")}</Button>
                           ) : null}
                           {s.status === "PAUSED" ? (
-                            <Button size="sm" variant="outline" onClick={() => setDialog({ kind: "reschedule", id: s.id })}><CalendarClock aria-hidden="true" />{t("sessions.reschedule")}</Button>
+                            s.rescheduledAt ? (
+                              // A session is re-scheduled once: read-only, the span carries the tooltip (a disabled button does not).
+                              <span title={t("sessions.rescheduleOnce")} data-testid="reschedule-once" className="inline-flex cursor-not-allowed">
+                                <Button size="sm" variant="outline" disabled aria-disabled="true" aria-label={`${t("sessions.reschedule")}: ${t("sessions.rescheduleOnce")}`}>
+                                  <CalendarClock aria-hidden="true" />{t("sessions.reschedule")}
+                                </Button>
+                              </span>
+                            ) : (
+                              <Button size="sm" variant="outline" onClick={() => setDialog({ kind: "reschedule", id: s.id })}><CalendarClock aria-hidden="true" />{t("sessions.reschedule")}</Button>
+                            )
                           ) : null}
                           {actions.includes("close") ? (
                             closeWaitsForEnd(s, ops.now) ? (
@@ -164,11 +185,15 @@ export function SessionsManager({
                               <Button size="sm" variant="destructive" onClick={() => setDialog({ kind: "close", id: s.id })}><Lock aria-hidden="true" />{t("sessions.close")}</Button>
                             )
                           ) : null}
-                          <Button size="sm" variant="outline" onClick={() => setDialog({ kind: "capacity", id: s.id })}>
-                            <Pencil aria-hidden="true" />{t("sessions.editCapacity")}
+                          {s.status !== "CLOSED" ? (
+                            <Button size="sm" variant="outline" onClick={() => setDialog({ kind: "capacity", id: s.id })}>
+                              <Pencil aria-hidden="true" />{t("sessions.editCapacity")}
+                            </Button>
+                          ) : null}
+                          <Button size="sm" variant="outline" data-testid="clone-button" onClick={() => setDialog({ kind: "clone", id: s.id })}>
+                            <Copy aria-hidden="true" />{t("sessions.clone")}
                           </Button>
-                        </div>
-                      ) : null}
+                      </div>
                     </CardContent>
                   </Card>
                 </li>
@@ -179,7 +204,8 @@ export function SessionsManager({
       ))}
 
       <AddSessionDialog
-        open={dialog?.kind === "add"} onOpenChange={(o) => !o && setDialog(null)} workshops={workshops} shop={shop} sessions={ops.sessions} title={title}
+        key={dialog?.kind === "clone" ? `clone-${dialog.id}` : "add"} open={dialog?.kind === "add" || (dialog?.kind === "clone" && !!target)} onOpenChange={(o) => !o && setDialog(null)}
+        workshops={workshops} shop={shop} sessions={ops.sessions} title={title} source={dialog?.kind === "clone" ? target : undefined}
         onAdd={(s) => { ops.addSession(s); setDialog(null); }}
       />
       <CloseSessionDialog
@@ -238,37 +264,39 @@ function CapacityDialog({
   );
 }
 
+/** Add a session, or (with `source`) clone one: the same workshop, capacity, cut-off and image, with a new date and time. */
 function AddSessionDialog({
-  open, onOpenChange, workshops, shop, sessions, title, onAdd,
+  open, onOpenChange, workshops, shop, sessions, title, onAdd, source,
 }: {
   open: boolean; onOpenChange: (o: boolean) => void; workshops: Workshop[]; shop: ShopForCatalog; sessions: Session[];
-  title: (id: string) => string; onAdd: (s: Omit<Session, "id" | "reservedCount" | "status">) => void;
+  title: (id: string) => string; onAdd: (s: Omit<Session, "id" | "code" | "reservedCount" | "status">) => void; source?: Session;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        {open ? <AddSessionForm workshops={workshops} shop={shop} sessions={sessions} title={title} onAdd={onAdd} onCancel={() => onOpenChange(false)} /> : null}
+        {open ? <AddSessionForm workshops={workshops} shop={shop} sessions={sessions} title={title} source={source} onAdd={onAdd} onCancel={() => onOpenChange(false)} /> : null}
       </DialogContent>
     </Dialog>
   );
 }
 
 function AddSessionForm({
-  workshops, shop, sessions, title, onAdd, onCancel,
+  workshops, shop, sessions, title, onAdd, onCancel, source,
 }: {
   workshops: Workshop[]; shop: ShopForCatalog; sessions: Session[]; title: (id: string) => string;
-  onAdd: (s: Omit<Session, "id" | "reservedCount" | "status">) => void; onCancel: () => void;
+  onAdd: (s: Omit<Session, "id" | "code" | "reservedCount" | "status">) => void; onCancel: () => void; source?: Session;
 }) {
   const t = useTranslations("catalog");
   const tops = useTranslations("ops");
   const choices = workshops.filter((w) => w.status !== "ARCHIVED");
-  const [wsId, setWsId] = useState(choices[0]?.id ?? "");
+  const [wsId, setWsId] = useState(source?.workshopId ?? choices[0]?.id ?? "");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
-  const [cap, setCap] = useState(String(choices[0]?.defaultCapacity ?? 8));
-  const [cutoff, setCutoff] = useState(String(DEFAULT_BOOKING_CUTOFF_MINUTES));
+  const [cap, setCap] = useState(String(source?.capacity ?? choices[0]?.defaultCapacity ?? 8));
+  const [cutoff, setCutoff] = useState(String(source?.bookingCutoffMinutes ?? DEFAULT_BOOKING_CUTOFF_MINUTES));
+  const [image, setImage] = useState(source?.imageUrl ?? "");
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const dirty = useDirty({ wsId, date, time, cap, cutoff }, "add");
+  const dirty = useDirty({ wsId, date, time, cap, cutoff, image }, source ? `clone-${source.id}` : "add");
 
   function submit(e: FormEvent) {
     e.preventDefault();
@@ -288,19 +316,22 @@ function AddSessionForm({
     }
     setErrors(errs);
     if (Object.keys(errs).length > 0 || !w) return;
-    onAdd({ workshopId: w.id, startsAt, endsAt: new Date(new Date(startsAt).getTime() + w.durationMinutes * 60_000).toISOString(), capacity: n, bookingCutoffMinutes: cutoffMinutes });
+    onAdd({ workshopId: w.id, startsAt, endsAt: new Date(new Date(startsAt).getTime() + w.durationMinutes * 60_000).toISOString(), capacity: n, bookingCutoffMinutes: cutoffMinutes,
+      ...(image ? { imageUrl: image } : {}),
+      ...(source ? { clonedFrom: { code: source.code, workshopId: source.workshopId } } : {}),
+    });
   }
   const err = (k: string) => (errors[k] ? t(errors[k]) : undefined);
 
   return (
     <form onSubmit={submit} noValidate className="grid gap-4">
       <DialogHeader>
-        <DialogTitle>{t("sessions.addTitle")}</DialogTitle>
-        <DialogDescription>{t("sessions.addHint", { tz: shop.timezone })}</DialogDescription>
+        <DialogTitle>{source ? t("sessions.cloneTitle") : t("sessions.addTitle")}</DialogTitle>
+        <DialogDescription>{source ? t("sessions.cloneHint", { code: source.code, tz: shop.timezone }) : t("sessions.addHint", { tz: shop.timezone })}</DialogDescription>
       </DialogHeader>
       <Field id="add-ws" label={t("sessions.workshop")} required error={err("ws")}>
         {(p) => (
-          <NativeSelect {...p} value={wsId}
+          <NativeSelect {...p} value={wsId} disabled={!!source}
             onChange={(e) => { setWsId(e.target.value); const w = workshops.find((x) => x.id === e.target.value); if (w) setCap(String(w.defaultCapacity)); }}
             options={choices.map((w) => ({ value: w.id, label: title(w.id) }))} />
         )}
@@ -319,9 +350,13 @@ function AddSessionForm({
       <Field id="add-cutoff" label={t("sessions.cutoff")} hint={t("sessions.cutoffHint")} required error={err("cutoff")}>
         {(p) => <Input {...p} type="number" inputMode="numeric" min={0} max={MAX_BOOKING_CUTOFF_MINUTES} value={cutoff} onChange={(e) => setCutoff(e.target.value)} />}
       </Field>
+      <div className="grid content-start gap-1.5">
+        <ImageUploadField id="add-image" label={t("sessions.image")} value={image} onChange={setImage} uploader={sessionImageUploader} />
+        <p className="text-xs text-muted-foreground">{t("sessions.imageHint")}</p>
+      </div>
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onCancel}><ArrowLeft aria-hidden="true" />{tops("common.back")}</Button>
-        <Button type="submit" disabled={!dirty}><Plus aria-hidden="true" />{t("sessions.addConfirm")}</Button>
+        <Button type="submit" disabled={!dirty}>{source ? <Copy aria-hidden="true" /> : <Plus aria-hidden="true" />}{source ? t("sessions.cloneConfirm") : t("sessions.addConfirm")}</Button>
       </DialogFooter>
     </form>
   );

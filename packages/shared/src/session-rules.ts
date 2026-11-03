@@ -83,19 +83,20 @@ export function checkCloseReason(code: string, note: string): { ok: true; reason
   return { ok: true, reason: { code: "OTHER", note: text } };
 }
 
-export type RescheduleError = "NOT_PAUSED" | "ENDED" | "SAME" | "PAST" | "DUPLICATE";
+export type RescheduleError = "NOT_PAUSED" | "ALREADY_RESCHEDULED" | "ENDED" | "SAME" | "PAST" | "DUPLICATE";
 
 /**
- * Re-scheduling a paused session to a new start (the length of the session stays). The new start must differ from the current one, be in the
+ * Re-scheduling a paused session to a new start (the length of the session stays). A session can be re-scheduled only once (`rescheduled`). The new start must differ from the current one, be in the
  * future and not be the start of another session of the same workshop (`otherStarts`). Returns the new start and end.
  */
 export function checkReschedule(
-  s: { status: SessionStatus; startsAt: string; endsAt: string },
+  s: { status: SessionStatus; startsAt: string; endsAt: string; rescheduled?: boolean },
   newStartsAt: string,
   now: Date,
   otherStarts: readonly string[],
 ): { ok: true; startsAt: string; endsAt: string } | { ok: false; error: RescheduleError } {
   if (s.status !== "PAUSED") return { ok: false, error: "NOT_PAUSED" };
+  if (s.rescheduled) return { ok: false, error: "ALREADY_RESCHEDULED" };
   if (new Date(s.endsAt).getTime() <= now.getTime()) return { ok: false, error: "ENDED" };
   const next = new Date(newStartsAt).getTime();
   if (Number.isNaN(next) || next === new Date(s.startsAt).getTime()) return { ok: false, error: "SAME" };
@@ -103,4 +104,13 @@ export function checkReschedule(
   if (otherStarts.some((o) => new Date(o).getTime() === next)) return { ok: false, error: "DUPLICATE" };
   const length = new Date(s.endsAt).getTime() - new Date(s.startsAt).getTime();
   return { ok: true, startsAt: new Date(next).toISOString(), endsAt: new Date(next + length).toISOString() };
+}
+
+/** A session code is "SES-" and at least 4 digits: the code the owner uses to find and talk about a session. It never changes. */
+export const SESSION_CODE_RE = /^SES-[0-9]{4,}$/;
+
+/** The next free code of a shop: one more than the highest number used so far ("SES-0001" for the first session). */
+export function nextSessionCode(codes: readonly string[]): string {
+  const highest = codes.reduce((max, c) => (SESSION_CODE_RE.test(c) ? Math.max(max, Number(c.slice(4))) : max), 0);
+  return `SES-${String(highest + 1).padStart(4, "0")}`;
 }
