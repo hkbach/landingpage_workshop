@@ -322,6 +322,30 @@ export const sitePage: { draft: PageContent; theme: PageTheme; template: Templat
 };
 
 /**
+ * Payments of the five months before this one (a few each month, growing a little) so the Income page has history. Their bookings are not listed
+ * above: only the payments matter here. Deterministic, dated the 3rd to the 26th at noon UTC; a refund now and then.
+ */
+export const paymentHistory: { id: string; bookingCode: string; currency: string; payments: { id: string; type: "PAYMENT" | "REFUND"; amount: number; recordedAt: string }[] }[] = (() => {
+  const now = new Date();
+  const base = now.getUTCFullYear() * 12 + now.getUTCMonth();
+  const amounts = [650_000, 1_300_000, 1_950_000, 780_000, 2_600_000, 1_040_000, 1_560_000];
+  const out: { id: string; bookingCode: string; currency: string; payments: { id: string; type: "PAYMENT" | "REFUND"; amount: number; recordedAt: string }[] }[] = [];
+  for (let back = 5; back >= 1; back--) {
+    const idx = base - back;
+    const count = 7 + ((5 - back) * 2) % 5 + (5 - back);
+    for (let n = 0; n < count; n++) {
+      const day = 3 + ((n * 7 + back * 3) % 24);
+      const at = new Date(Date.UTC(Math.floor(idx / 12), idx % 12, day, 12)).toISOString();
+      const amount = amounts[(n + back) % amounts.length]!;
+      const code = `HIS-${String(back)}${String(n + 1).padStart(2, "0")}`;
+      const payments: { id: string; type: "PAYMENT" | "REFUND"; amount: number; recordedAt: string }[] = [{ id: `ph-${back}-${n}`, type: "PAYMENT", amount, recordedAt: at }];
+      if (n % 9 === 4) payments.push({ id: `ph-${back}-${n}-r`, type: "REFUND", amount: Math.round(amount / 2), recordedAt: at });
+      out.push({ id: `bk-his-${back}-${n}`, bookingCode: code, currency: "VND", payments });
+    }
+  }
+  return out;
+})();
+/**
  * Bookings of the past year (one point per booking: session start, outcome, guests) so the overview chart has history. The
  * recent `bookings` above are added on top. Deterministic, never dated after yesterday; busier on weekends and slowly growing.
  */
