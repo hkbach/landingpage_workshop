@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useDisplayLocale } from "@/lib/use-shop-language";
-import { ArrowLeft, BadgeCheck, CalendarClock, Copy, Eye, Lock, LockOpen, LogIn, Pause, Pencil, Play, Plus, Save } from "lucide-react";
-import { allowedSessionActions, closedForGood, isFinalClose, canEditSession, canRescheduleSession, canReopenSession, canCloseAgain, canRescheduleAgain, notesInOrder, closeWaitsForEnd, isFutureStart, type SessionCloseReason, DEFAULT_BOOKING_CUTOFF_MINUTES, isValidBookingCutoff, MAX_BOOKING_CUTOFF_MINUTES, pickLocalized, SESSION_STATUSES, type Locale, type SessionStatus } from "@workshop/shared";
+import { ArrowLeft, BadgeCheck, CalendarClock, CheckCheck, Copy, Eye, Lock, LockOpen, LogIn, Pause, Pencil, Play, Plus, Save } from "lucide-react";
+import { allowedSessionActions, canCompleteSession, closedForGood, isSessionFinished, isFinalClose, canEditSession, canRescheduleSession, canReopenSession, canCloseAgain, canRescheduleAgain, notesInOrder, closeWaitsForEnd, isFutureStart, type SessionCloseReason, DEFAULT_BOOKING_CUTOFF_MINUTES, isValidBookingCutoff, MAX_BOOKING_CUTOFF_MINUTES, pickLocalized, SESSION_STATUSES, type Locale, type SessionStatus } from "@workshop/shared";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -20,6 +20,7 @@ import type { Booking, Customer, Session, Workshop } from "@/lib/types";
 import { dayKey, formatTime } from "@/lib/format";
 import { MAX_CAPACITY, type ShopForCatalog } from "./workshop-form";
 import { CheckInDialog, CloseSessionDialog, dateAndTime, PaymentDialog, RescheduleSessionDialog } from "./session-dialogs";
+import { notifyPaidRequest } from "@/lib/bookings-api";
 import { notifyAutoClosedRequest, notifyClosedRequest, notifyRescheduleRequest } from "@/lib/sessions-api";
 import { ImageUploadField } from "@/components/builder/ImageUploadField";
 import { sessionImageUploader } from "@/lib/media/session-uploader";
@@ -144,7 +145,7 @@ export function SessionsManager({
               const actions = allowedSessionActions(s);
               return (
                 <li key={s.id}>
-                  <Card size="sm" className={s.status === "CLOSED" ? "opacity-80" : ""}>
+                  <Card size="sm" className={isSessionFinished(s.status) ? "opacity-80" : ""}>
                     <CardContent className="grid gap-2">
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <div className="flex min-w-0 items-start gap-3">
@@ -221,15 +222,22 @@ export function SessionsManager({
                               <Pencil aria-hidden="true" />{t("sessions.edit")}
                             </Button>
                           ) : null}
-                          {s.autoClosed ? (
-                            // The session ended: nobody can be checked in any more, so the list is only viewed, and the payments are confirmed.
+                          {canCompleteSession(s, ops.now) || s.status === "COMPLETED" ? (
+                            // The session took place and ended: nobody can be checked in any more, so the list is only viewed. Completed marks the session
+                            // completed and opens the payments; once it is Completed the payments can be opened again.
                             <>
                               <Button size="sm" variant="outline" data-testid="view-bookings-button" onClick={() => setDialog({ kind: "checkin", id: s.id })}>
                                 <Eye aria-hidden="true" />{t("sessions.viewBooking")}
                               </Button>
-                              <Button size="sm" data-testid="payment-button" onClick={() => setDialog({ kind: "payment", id: s.id })}>
-                                <BadgeCheck aria-hidden="true" />{t("sessions.confirmPayment")}
-                              </Button>
+                              {s.status === "COMPLETED" ? (
+                                <Button size="sm" data-testid="payment-button" onClick={() => setDialog({ kind: "payment", id: s.id })}>
+                                  <BadgeCheck aria-hidden="true" />{t("sessions.confirmPayment")}
+                                </Button>
+                              ) : (
+                                <Button size="sm" data-testid="complete-button" className="bg-emerald-600 text-white hover:bg-emerald-700 focus-visible:ring-emerald-600/40" onClick={() => { if (ops.completeSession(s.id)) setDialog({ kind: "payment", id: s.id }); }}>
+                                  <CheckCheck aria-hidden="true" />{t("sessions.complete")}
+                                </Button>
+                              )}
                             </>
                           ) : (
                             <Button size="sm" variant="outline" data-testid="checkin-button" onClick={() => setDialog({ kind: "checkin", id: s.id })}>
@@ -265,6 +273,7 @@ export function SessionsManager({
       <PaymentDialog
         key={`pay-${target?.id ?? "none"}`} open={dialog?.kind === "payment" && !!target} onOpenChange={(o) => !o && setDialog(null)}
         session={target} bookings={ops.bookings} customers={customers} setPaid={ops.setPaid}
+        notifyPaid={async (id) => (await notifyPaidRequest(id)).notified}
       />
       <CloseSessionDialog
         key={`close-${target?.id ?? "none"}`} open={dialog?.kind === "close" && !!target} onOpenChange={(o) => !o && setDialog(null)}

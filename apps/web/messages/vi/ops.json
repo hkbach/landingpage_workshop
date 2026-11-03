@@ -21,7 +21,8 @@
     "OPEN": "Mở",
     "PAUSED": "Tạm dừng",
     "RUNNING": "Đang chạy",
-    "CLOSED": "Đã đóng"
+    "CLOSED": "Đã đóng",
+    "COMPLETED": "Hoàn thành"
   },
   "paymentMethod": {
     "CASH": "Tiền mặt",

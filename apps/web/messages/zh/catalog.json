@@ -257,13 +257,18 @@
     "viewBooking": "查看预订",
     "confirmPayment": "确认支付",
     "paymentTitle": "确认 {code} 的支付",
-    "paymentHint": "场次已结束。请为在工作室付款的每位客人确认支付。",
+    "paymentHint": "为在工作室付款的每位客人确认支付。预订变为已支付时会向客人发送邮件。",
     "partCheckedIn": "已签到",
     "partNotCheckedIn": "未签到",
     "partEmpty": "暂无预订。",
     "paidCount": "{total} 个预订中已支付 {paid} 个",
     "markUnpaid": "未支付",
     "nothingToPay": "无需支付",
-    "paymentFailed": "无法更改支付状态。"
+    "paymentFailed": "无法更改支付状态。",
+    "complete": "已完成",
+    "partCancelled": "已取消",
+    "paymentMailed": "已发送付款确认邮件。",
+    "paymentMailNone": "该客人没有邮箱，未发送邮件。",
+    "paymentMailFailed": "邮件发送失败。"
   }
 }

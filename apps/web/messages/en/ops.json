@@ -21,7 +21,8 @@
     "OPEN": "Open",
     "PAUSED": "Paused",
     "RUNNING": "Running",
-    "CLOSED": "Closed"
+    "CLOSED": "Closed",
+    "COMPLETED": "Completed"
   },
   "paymentMethod": {
     "CASH": "Cash",

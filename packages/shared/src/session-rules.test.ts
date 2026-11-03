@@ -1,16 +1,17 @@
 import { describe, expect, it } from "vitest";
 import { SESSION_STATUSES } from "./enums";
+import { openSessionCount } from "./workshop-rules";
 import {
   allowedSessionActions, applySessionAction, canEditSession, canRescheduleSession, canReopenSession, checkCloseReason, checkReschedule, CLOSE_REASON_NOTE_MAX, closeIfEnded, closeWaitsForEnd,
   DEFAULT_BOOKING_CUTOFF_MINUTES, isFutureStart, isInSessionTime, isSessionBookable, isValidBookingCutoff, nextSessionCode, notesInOrder, SESSION_CODE_RE, wasRescheduled, withNote,
-  canAdminClose, canAdminReopen, canCloseAgain, canRescheduleAgain, closeCount, closedForGood, isFinalClose, MAX_CLOSES, MAX_RESCHEDULES, rescheduleCount,
+  canCompleteSession, isSessionFinished, canAdminClose, canAdminReopen, canCloseAgain, canRescheduleAgain, closeCount, closedForGood, isFinalClose, MAX_CLOSES, MAX_RESCHEDULES, rescheduleCount,
   type SessionNote, type SessionState,
 } from "./session-rules";
 
 const s = (status: SessionState["status"]): SessionState => ({ status });
 
 describe("session statuses", () => {
-  it("are open, paused, running and closed: a session cannot be cancelled", () => expect([...SESSION_STATUSES]).toEqual(["OPEN", "PAUSED", "RUNNING", "CLOSED"]));
+  it("are open, paused, running, closed and completed: a session cannot be cancelled", () => expect([...SESSION_STATUSES]).toEqual(["OPEN", "PAUSED", "RUNNING", "CLOSED", "COMPLETED"]));
 });
 
 describe("allowedSessionActions", () => {
@@ -247,5 +248,43 @@ describe("what a system administrator can do", () => {
     expect(canAdminReopen({ status: "CLOSED", endsAt: "2026-11-03T11:00:00Z" }, NOW)).toBe(true); // taking place
     expect(canAdminReopen({ status: "CLOSED", endsAt: "2026-11-02T11:00:00Z" }, NOW)).toBe(false);
     expect(canAdminReopen({ status: "OPEN", endsAt: "2026-11-20T11:00:00Z" }, NOW)).toBe(false);
+  });
+});
+
+describe("Completed", () => {
+  const NOW = new Date("2026-11-10T12:00:00Z");
+  const ended = { endsAt: "2026-11-10T10:00:00Z" };
+  const notFinished = { endsAt: "2026-11-10T14:00:00Z" };
+  it("CLOSED and COMPLETED are both finished; the others are not", () => {
+    expect(isSessionFinished("CLOSED")).toBe(true);
+    expect(isSessionFinished("COMPLETED")).toBe(true);
+    for (const s of ["OPEN", "PAUSED", "RUNNING"] as const) expect(isSessionFinished(s)).toBe(false);
+  });
+  it("a closed session whose time is over can be completed", () => {
+    expect(canCompleteSession({ status: "CLOSED", ...ended }, NOW)).toBe(true);
+    expect(canCompleteSession({ status: "CLOSED", ...ended, notes: [{ type: "AUTO_CLOSED", at: ended.endsAt }] }, NOW)).toBe(true);
+  });
+  it("not before its time is over, and not from any other status", () => {
+    expect(canCompleteSession({ status: "CLOSED", ...notFinished }, NOW)).toBe(false);
+    for (const s of ["OPEN", "PAUSED", "RUNNING", "COMPLETED"] as const) expect(canCompleteSession({ status: s, ...ended }, NOW), s).toBe(false);
+  });
+  it("not a session a person closed and did not re-open: it never took place", () => {
+    expect(canCompleteSession({ status: "CLOSED", ...ended, notes: [{ type: "CLOSED", at: "2026-11-08T09:00:00Z", reason: { code: "VENUE_ISSUE" } }] }, NOW)).toBe(false);
+    expect(canCompleteSession({ status: "CLOSED", ...ended, notes: [{ type: "CLOSED", at: "2026-11-08T09:00:00Z", by: "ADMIN", reason: { code: "OTHER", note: "x" } }] }, NOW)).toBe(false);
+  });
+  it("but a session closed and then re-opened can be, once it has taken place", () => {
+    expect(canCompleteSession({ status: "CLOSED", ...ended, notes: [{ type: "CLOSED", at: "2026-11-08T09:00:00Z", reason: { code: "VENUE_ISSUE" } }, { type: "REOPENED", at: "2026-11-08T10:00:00Z" }] }, NOW)).toBe(true);
+  });
+  it("a completed session stays completed: the system does not close it again, and nothing can be done to it", () => {
+    const s = { status: "COMPLETED" as const, ...ended };
+    expect(closeIfEnded(s, NOW)).toBe(s);
+    expect(allowedSessionActions(s)).toEqual([]);
+    expect(canAdminClose(s)).toBe(false);
+    expect(canEditSession("COMPLETED")).toBe(false);
+    expect(canRescheduleSession("COMPLETED")).toBe(false);
+  });
+  it("a completed session is not an open one for the workshop", () => {
+    expect(openSessionCount(["COMPLETED", "CLOSED"])).toBe(0);
+    expect(openSessionCount(["COMPLETED", "RUNNING"])).toBe(1);
   });
 });

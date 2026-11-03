@@ -87,6 +87,45 @@ export function renderBookingConfirmation(d: BookingConfirmationData): RenderedE
   })));
 }
 
+export interface PaymentReceivedData {
+  guestName: string; shopName: string; bookingCode: string; workshopTitle: string; startsAt: string; endsAt: string; timezone: string;
+  quantity: number; totalAmount: number; currency: string;
+}
+
+/** The email sent when the shop confirms the payment of a booking (it became Paid): a receipt for the guest. */
+export function renderPaymentReceived(d: PaymentReceivedData): RenderedEmail {
+  const T = {
+    subject: w("Payment received for booking {code}", "Đã nhận thanh toán cho booking {code}", "ได้รับการชำระเงินสำหรับการจอง {code} แล้ว", "已收到预订 {code} 的付款", "예약 {code} 결제가 완료되었습니다", "ご予約 {code} のお支払いを確認しました"),
+    intro: w(
+      "Thank you! {shop} has received your payment for booking {code} ({workshop}). Your booking is now paid.",
+      "Cảm ơn bạn! {shop} đã nhận được thanh toán cho booking {code} ({workshop}). Booking của bạn đã được thanh toán.",
+      "ขอบคุณ {shop} ได้รับการชำระเงินสำหรับการจอง {code} ({workshop}) แล้ว การจองของคุณชำระเงินเรียบร้อยแล้ว",
+      "感谢您！{shop} 已收到您的预订 {code}（{workshop}）的付款，您的预订现已付款。",
+      "감사합니다! {shop}에서 예약 {code}({workshop})의 결제를 확인했습니다. 예약이 결제 완료 상태입니다.",
+      "ありがとうございます。{shop}は、ご予約 {code}（{workshop}）のお支払いを確認しました。ご予約は支払い済みです。",
+    ),
+    paid: w("Amount paid", "Số tiền đã thanh toán", "จำนวนเงินที่ชำระ", "已付金额", "결제 금액", "お支払い金額"),
+    footer: w(
+      "Please keep this email as your receipt. If anything looks wrong, contact the studio.",
+      "Hãy giữ email này làm biên nhận. Nếu có sai sót, vui lòng liên hệ studio.",
+      "โปรดเก็บอีเมลนี้ไว้เป็นหลักฐานการชำระเงิน หากมีสิ่งใดไม่ถูกต้อง โปรดติดต่อสตูดิโอ",
+      "请保留此邮件作为付款凭证。如有疑问，请联系工作室。",
+      "이 이메일을 영수증으로 보관해 주세요. 문제가 있으면 스튜디오로 문의해 주세요.",
+      "このメールは領収の控えとして保管してください。誤りがある場合はスタジオまでご連絡ください。",
+    ),
+  };
+  return compose(EMAIL_LANGS.map((lang): Section => ({
+    lang, subject: fill(T.subject[lang], { code: d.bookingCode }), greeting: fill(L.hello[lang], { name: d.guestName }),
+    paragraphs: [fill(T.intro[lang], { shop: d.shopName, code: d.bookingCode, workshop: d.workshopTitle })],
+    rows: [
+      { label: L.code[lang], value: d.bookingCode }, { label: L.workshop[lang], value: d.workshopTitle },
+      { label: L.when[lang], value: range(d.startsAt, d.endsAt, d.timezone, lang) }, { label: L.guests[lang], value: String(d.quantity) },
+      { label: T.paid[lang], value: formatMoney(d.totalAmount, d.currency, TAG[lang]) },
+    ],
+    footer: T.footer[lang],
+  })));
+}
+
 export interface SessionRescheduledData {
   guestName: string; shopName: string; bookingCode: string; workshopTitle: string; timezone: string;
   oldStartsAt: string; newStartsAt: string; newEndsAt: string; reason: SessionCloseReason;

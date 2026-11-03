@@ -18,6 +18,7 @@ const SESSION: Record<SessionStatus, string> = {
   PAUSED: "bg-slate-100 text-slate-900",
   RUNNING: "bg-emerald-100 text-emerald-900",
   CLOSED: "bg-amber-100 text-amber-950",
+  COMPLETED: "bg-teal-100 text-teal-900",
 };
 
 export function BookingStatusBadge({ status, className }: { status: BookingStatus; className?: string }) {

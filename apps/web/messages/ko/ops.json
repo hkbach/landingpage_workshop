@@ -21,7 +21,8 @@
     "OPEN": "열림",
     "PAUSED": "일시중지",
     "RUNNING": "진행 중",
-    "CLOSED": "마감"
+    "CLOSED": "마감",
+    "COMPLETED": "완료"
   },
   "paymentMethod": {
     "CASH": "현금",

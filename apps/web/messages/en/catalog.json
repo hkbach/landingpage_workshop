@@ -257,13 +257,18 @@
     "viewBooking": "View booking",
     "confirmPayment": "Confirm payment",
     "paymentTitle": "Confirm payments of {code}",
-    "paymentHint": "The session has ended. Confirm the payment of each guest who paid at the studio.",
+    "paymentHint": "Confirm the payment of each guest who paid at the studio. The guest is emailed when a booking becomes Paid.",
     "partCheckedIn": "Checked in",
     "partNotCheckedIn": "Not checked in",
     "partEmpty": "No bookings.",
     "paidCount": "{paid} of {total} bookings paid",
     "markUnpaid": "Unpaid",
     "nothingToPay": "Nothing to pay",
-    "paymentFailed": "The payment could not be changed."
+    "paymentFailed": "The payment could not be changed.",
+    "complete": "Completed",
+    "partCancelled": "Cancelled",
+    "paymentMailed": "Email sent: payment received.",
+    "paymentMailNone": "This guest left no email, so nothing was sent.",
+    "paymentMailFailed": "The email could not be sent."
   }
 }

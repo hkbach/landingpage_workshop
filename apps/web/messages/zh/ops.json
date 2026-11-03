@@ -21,7 +21,8 @@
     "OPEN": "开放",
     "PAUSED": "已暂停",
     "RUNNING": "进行中",
-    "CLOSED": "已关闭"
+    "CLOSED": "已关闭",
+    "COMPLETED": "已完成"
   },
   "paymentMethod": {
     "CASH": "现金",

@@ -257,13 +257,18 @@
     "viewBooking": "Xem booking",
     "confirmPayment": "Xác nhận thanh toán",
     "paymentTitle": "Xác nhận thanh toán của {code}",
-    "paymentHint": "Session đã kết thúc. Hãy xác nhận thanh toán cho từng khách đã trả tiền tại studio.",
+    "paymentHint": "Xác nhận thanh toán cho từng khách đã trả tiền tại studio. Khách nhận email khi booking chuyển sang Paid.",
     "partCheckedIn": "Đã check-in",
     "partNotCheckedIn": "Chưa check-in",
     "partEmpty": "Không có booking.",
     "paidCount": "Đã thanh toán {paid}/{total} booking",
     "markUnpaid": "Unpaid",
     "nothingToPay": "Không có gì để thanh toán",
-    "paymentFailed": "Không thể đổi trạng thái thanh toán."
+    "paymentFailed": "Không thể đổi trạng thái thanh toán.",
+    "complete": "Hoàn thành",
+    "partCancelled": "Đã hủy",
+    "paymentMailed": "Đã gửi email báo đã nhận thanh toán.",
+    "paymentMailNone": "Khách này không có email nên chưa gửi gì.",
+    "paymentMailFailed": "Không gửi được email."
   }
 }

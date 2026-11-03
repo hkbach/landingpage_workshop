@@ -139,7 +139,7 @@ export const sessions: Session[] = [
 
   // ---- PAST (the Sessions page shows them when From is set to an earlier day) ----
   // Left Running with every kind of booking: the system shows it as Closed, and the check-in list shows each status.
-  { id: "se-32", code: "SES-0032", workshopId: "ws-2", startsAt: at(-1, 14), endsAt: at(-1, 15.5), capacity: 10, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 120, imageUrl: pic("past") },
+  { id: "se-32", code: "SES-0032", workshopId: "ws-2", startsAt: at(-1, 14), endsAt: at(-1, 15.5), capacity: 10, reservedCount: 0, status: "COMPLETED", bookingCutoffMinutes: 120, imageUrl: pic("past") },
   { id: "se-18", code: "SES-0018", workshopId: "ws-1", startsAt: at(-1, 9), endsAt: at(-1, 11), capacity: 8, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 120 },
   // Closed by the owner before it started, with each kind of reason:
   { id: "se-19", code: "SES-0019", workshopId: "ws-1", startsAt: at(-2, 9), endsAt: at(-2, 11), capacity: 8, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, notes: [{ type: "CLOSED", at: at(-3, 10), reason: { code: "NOT_ENOUGH_GUESTS" } }] },

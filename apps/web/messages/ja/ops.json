@@ -21,7 +21,8 @@
     "OPEN": "オープン",
     "PAUSED": "一時停止",
     "RUNNING": "実施中",
-    "CLOSED": "受付終了"
+    "CLOSED": "受付終了",
+    "COMPLETED": "完了"
   },
   "paymentMethod": {
     "CASH": "現金",

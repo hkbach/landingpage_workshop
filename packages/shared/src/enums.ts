@@ -10,7 +10,8 @@ export type OrgStatus = (typeof ORG_STATUSES)[number];
 export const WORKSHOP_STATUSES = ["DRAFT", "ACTIVE"] as const;
 export type WorkshopStatus = (typeof WORKSHOP_STATUSES)[number];
 
-export const SESSION_STATUSES = ["OPEN", "PAUSED", "RUNNING", "CLOSED"] as const;
+/** COMPLETED: a session that took place and ended; the owner marks it from CLOSED once its time is over, then confirms the payments. */
+export const SESSION_STATUSES = ["OPEN", "PAUSED", "RUNNING", "CLOSED", "COMPLETED"] as const;
 export type SessionStatus = (typeof SESSION_STATUSES)[number];
 
 /**

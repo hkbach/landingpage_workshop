@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent, type ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { PAYMENT_METHODS, formatMoney, minorDigits, type PaymentMethod } from "@workshop/shared";
+import { isSessionFinished, PAYMENT_METHODS, formatMoney, minorDigits, type PaymentMethod } from "@workshop/shared";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -172,7 +172,7 @@ function RescheduleForm({
   const t = useTranslations("ops");
   const locale = useLocale();
   const candidates = sessions
-    .filter((s) => s.workshopId === booking.workshopId && s.id !== booking.sessionId && s.status !== "CLOSED")
+    .filter((s) => s.workshopId === booking.workshopId && s.id !== booking.sessionId && !isSessionFinished(s.status))
     .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
   const [target, setTarget] = useState("");
   const [error, setError] = useState<string>();

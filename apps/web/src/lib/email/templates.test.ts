@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { EMAIL_LANGS, EMAIL_LANG_NAMES, renderBookingConfirmation, renderSessionClosed, renderSessionRescheduled, type BookingConfirmationData } from "./templates";
+import { EMAIL_LANGS, EMAIL_LANG_NAMES, renderBookingConfirmation, renderPaymentReceived, renderSessionClosed, renderSessionRescheduled, type BookingConfirmationData } from "./templates";
 
 // An email holds the same message in six languages, one after the other; nothing about the recipient chooses the language.
 
@@ -86,5 +86,21 @@ describe("the session emails", () => {
     expect(mail.html).toContain("has been closed because its time has ended.");
     expect(mail.html).not.toContain("It will not take place.");
     for (const r of ["The session time has ended.", "Session đã hết thời gian tổ chức.", "หมดเวลาจัดเซสชันแล้ว", "场次举办时间已结束。", "세션 진행 시간이 종료되었습니다.", "セッションの開催時間が終了しました。"]) expect(mail.html, r).toContain(r);
+  });
+});
+
+describe("the payment received email", () => {
+  const mail = renderPaymentReceived({ guestName: "Tran Binh", shopName: "Clay & Co Studio", bookingCode: "SES-0007-001", workshopTitle: "Pottery <Wheel> Basics", startsAt: "2026-11-07T02:00:00Z", endsAt: "2026-11-07T04:00:00Z", timezone: "Asia/Ho_Chi_Minh", quantity: 2, totalAmount: 1_300_000, currency: "VND" });
+  it("is in the six languages, with the booking code and the amount paid", () => {
+    expect([...mail.html.matchAll(/<section lang="([^"]+)"/g)].map((m) => m[1])).toEqual(["en", "vi", "th", "zh-Hans", "ko", "ja"]);
+    expect(mail.subject.split(" | ")).toHaveLength(6);
+    expect(mail.subject).toContain("Payment received for booking SES-0007-001");
+    for (const label of ["Amount paid", "Số tiền đã thanh toán", "จำนวนเงินที่ชำระ", "已付金额", "결제 금액", "お支払い金額"]) expect(mail.html, label).toContain(label);
+    expect(mail.html).toContain("₫1,300,000");
+  });
+  it("says the booking is paid, escapes the title and has no confirmation link", () => {
+    expect(mail.html).toContain("Your booking is now paid.");
+    expect(mail.html).toContain("Pottery &lt;Wheel&gt; Basics");
+    expect(mail.html).not.toContain("<a href=\"http");
   });
 });

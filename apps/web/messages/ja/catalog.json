@@ -257,13 +257,18 @@
     "viewBooking": "予約を見る",
     "confirmPayment": "支払いを確認",
     "paymentTitle": "{code} の支払い確認",
-    "paymentHint": "セッションは終了しました。スタジオでお支払いいただいたお客様ごとに支払いを確認してください。",
+    "paymentHint": "スタジオでお支払いいただいたお客様ごとに支払いを確認してください。予約が支払い済みになると、お客様にメールが送信されます。",
     "partCheckedIn": "チェックイン済み",
     "partNotCheckedIn": "未チェックイン",
     "partEmpty": "予約はありません。",
     "paidCount": "{total}件中{paid}件が支払い済み",
     "markUnpaid": "未払い",
     "nothingToPay": "支払いなし",
-    "paymentFailed": "支払いステータスを変更できませんでした。"
+    "paymentFailed": "支払いステータスを変更できませんでした。",
+    "complete": "完了",
+    "partCancelled": "キャンセル済み",
+    "paymentMailed": "お支払い確認のメールを送信しました。",
+    "paymentMailNone": "このお客様はメールアドレスがないため送信していません。",
+    "paymentMailFailed": "メールを送信できませんでした。"
   }
 }

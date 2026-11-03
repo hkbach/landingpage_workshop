@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowLeft, BadgeCheck, CalendarClock, Check, Lock, LogIn, Undo2 } from "lucide-react";
-import { checkCloseReason, CLOSE_REASON_NOTE_MAX, formatMoney, SESSION_CLOSE_REASONS, type RescheduleError, type SessionCloseReason } from "@workshop/shared";
+import { checkCloseReason, CLOSE_REASON_NOTE_MAX, formatMoney, isSessionFinished, SESSION_CLOSE_REASONS, type RescheduleError, type SessionCloseReason } from "@workshop/shared";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -152,7 +152,7 @@ export function CheckInDialog({ open, onOpenChange, session, bookings, customers
   const t = useTranslations("catalog");
   const locale = useLocale();
   const [failed, setFailed] = useState<string | null>(null);
-  const readOnly = session?.status === "CLOSED"; // a closed session: the list is for viewing
+  const readOnly = session ? isSessionFinished(session.status) : false; // a closed or completed session: the list is for viewing
   const stamp = (iso: string) => new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short", timeZone: timezone }).format(new Date(iso));
   const rows = session ? bookings.filter((b) => b.sessionId === session.id).sort((a, b) => a.bookingCode.localeCompare(b.bookingCode)) : [];
   const nameOf = (b: Booking) => customers.find((c) => c.id === b.customerId)?.fullName ?? "";
@@ -238,27 +238,43 @@ export function CheckInDialog({ open, onOpenChange, session, bookings, customers
 }
 
 /**
- * After a session has ended: the bookings of the session in two parts, the guests who checked in and the ones who did not. Each row has Confirm payment
- * (the guest paid at the studio: the booking becomes Paid) or, once it is Paid, Unpaid (to undo a mistake). A cancelled booking is not listed.
+ * After a session has ended: the bookings of the session in three parts, the guests who checked in, the ones who did not, and the cancelled ones. Each
+ * row has Confirm payment (the guest paid at the studio: the booking becomes Paid and the guest is emailed) or, once it is Paid, Unpaid (to undo a mistake).
  */
-export function PaymentDialog({ open, onOpenChange, session, bookings, customers, setPaid }: {
+export function PaymentDialog({ open, onOpenChange, session, bookings, customers, setPaid, notifyPaid }: {
   open: boolean; onOpenChange: (o: boolean) => void; session?: Session; bookings: Booking[]; customers: Customer[];
   setPaid: (bookingId: string, paid: boolean) => OpResult;
+  /** Tells the server a booking became Paid so the guest is emailed; resolves with the number of emails queued (0: the guest left no email). */
+  notifyPaid: (bookingId: string) => Promise<number>;
 }) {
   const t = useTranslations("catalog");
   const locale = useLocale();
   const [failed, setFailed] = useState<string | null>(null);
-  const rows = session ? bookings.filter((b) => b.sessionId === session.id && b.status !== "CANCELLED").sort((a, b) => a.bookingCode.localeCompare(b.bookingCode)) : [];
+  const [mail, setMail] = useState<{ code: string; state: "sent" | "none" | "failed" } | null>(null);
+  const rows = session ? bookings.filter((b) => b.sessionId === session.id).sort((a, b) => a.bookingCode.localeCompare(b.bookingCode)) : [];
   const nameOf = (b: Booking) => customers.find((c) => c.id === b.customerId)?.fullName ?? "";
   const parts = [
     { key: "checkedIn", title: t("sessions.partCheckedIn"), list: rows.filter((b) => b.status === "CHECKED_IN") },
-    { key: "notCheckedIn", title: t("sessions.partNotCheckedIn"), list: rows.filter((b) => b.status !== "CHECKED_IN") },
+    { key: "notCheckedIn", title: t("sessions.partNotCheckedIn"), list: rows.filter((b) => b.status !== "CHECKED_IN" && b.status !== "CANCELLED") },
+    { key: "cancelled", title: t("sessions.partCancelled"), list: rows.filter((b) => b.status === "CANCELLED") },
   ];
   const paid = rows.filter((b) => b.paymentStatus === "PAID").length;
 
+  function confirm(b: Booking) {
+    const res = setPaid(b.id, true);
+    setFailed(res.ok ? null : b.bookingCode);
+    if (!res.ok) return;
+    setMail(null);
+    notifyPaid(b.id).then((n) => setMail({ code: b.bookingCode, state: n > 0 ? "sent" : "none" })).catch(() => setMail({ code: b.bookingCode, state: "failed" }));
+  }
+  function undo(b: Booking) {
+    setFailed(setPaid(b.id, false).ok ? null : b.bookingCode);
+    setMail(null);
+  }
+
   return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o) setFailed(null); onOpenChange(o); }}>
-      <DialogContent className="sm:max-w-2xl">
+    <Dialog open={open} onOpenChange={(o) => { if (!o) { setFailed(null); setMail(null); } onOpenChange(o); }}>
+      <DialogContent className="max-h-[92dvh] overflow-y-auto sm:max-w-2xl">
         {session ? (
           <div className="grid gap-4">
             <DialogHeader>
@@ -290,12 +306,17 @@ export function PaymentDialog({ open, onOpenChange, session, bookings, customers
                               {b.totalAmount <= 0 ? (
                                 <span className="text-xs text-muted-foreground">{t("sessions.nothingToPay")}</span>
                               ) : b.paymentStatus === "PAID" ? (
-                                <Button size="sm" variant="outline" data-testid="payment-unpaid" onClick={() => setFailed(setPaid(b.id, false).ok ? null : b.bookingCode)}><Undo2 aria-hidden="true" />{t("sessions.markUnpaid")}</Button>
+                                <Button size="sm" variant="outline" data-testid="payment-unpaid" onClick={() => undo(b)}><Undo2 aria-hidden="true" />{t("sessions.markUnpaid")}</Button>
                               ) : (
-                                <Button size="sm" data-testid="payment-confirm" onClick={() => setFailed(setPaid(b.id, true).ok ? null : b.bookingCode)}><BadgeCheck aria-hidden="true" />{t("sessions.confirmPayment")}</Button>
+                                <Button size="sm" data-testid="payment-confirm" onClick={() => confirm(b)}><BadgeCheck aria-hidden="true" />{t("sessions.confirmPayment")}</Button>
                               )}
                             </div>
                             {failed === b.bookingCode ? <p role="alert" className="basis-full text-right text-xs text-destructive">{t("sessions.paymentFailed")}</p> : null}
+                            {mail?.code === b.bookingCode ? (
+                              <p role="status" data-testid="payment-mail" data-state={mail.state} className={`basis-full text-right text-xs ${mail.state === "failed" ? "text-destructive" : "text-emerald-800"}`}>
+                                {t(mail.state === "sent" ? "sessions.paymentMailed" : mail.state === "none" ? "sessions.paymentMailNone" : "sessions.paymentMailFailed")}
+                              </p>
+                            ) : null}
                           </li>
                         ))}
                       </ul>

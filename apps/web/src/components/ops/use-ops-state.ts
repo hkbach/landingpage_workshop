@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { applySessionAction, canEditSession, canReopenSession, checkCloseReason, isFutureStart, checkReschedule, closeIfEnded, isValidBookingCutoff, nextSessionCode, rescheduleCount, canCloseAgain, withNote, closeWaitsForEnd, type BookingStatus, type PaymentMethod, type RescheduleError, type SessionAction, type SessionCloseReason } from "@workshop/shared";
+import { applySessionAction, canCompleteSession, canEditSession, isSessionFinished, canReopenSession, checkCloseReason, isFutureStart, checkReschedule, closeIfEnded, isValidBookingCutoff, nextSessionCode, rescheduleCount, canCloseAgain, withNote, closeWaitsForEnd, type BookingStatus, type PaymentMethod, type RescheduleError, type SessionAction, type SessionCloseReason } from "@workshop/shared";
 import type { Booking, PaymentEntry, Session } from "@/lib/types";
 import {
   canTransition, computePaymentStatus, netPaid, reservedSeats, seatDelta, targetStatus,
@@ -103,7 +103,7 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
     (bookingId: string, paid: boolean): OpResult => {
       const b = bookings.find((x) => x.id === bookingId);
       if (!b) return { ok: false, reason: "NOT_FOUND" };
-      if (b.status === "CANCELLED" || b.totalAmount <= 0) return { ok: false, reason: "INVALID_STATE" };
+      if (b.totalAmount <= 0) return { ok: false, reason: "INVALID_STATE" };
       const net = netPaid(b.payments);
       if (paid) {
         if (b.paymentStatus === "PAID") return { ok: true };
@@ -122,7 +122,7 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
       const to = sessions.find((x) => x.id === targetSessionId);
       if (!b || !from || !to) return { ok: false, reason: "NOT_FOUND" };
       if (!canTransition(b, from, new Date()).RESCHEDULE.allowed) return { ok: false, reason: "INVALID_STATE" };
-      if (to.workshopId !== b.workshopId || to.status === "CLOSED" || to.id === from.id) return { ok: false, reason: "INVALID_STATE" };
+      if (to.workshopId !== b.workshopId || isSessionFinished(to.status) || to.id === from.id) return { ok: false, reason: "INVALID_STATE" };
       if (to.capacity - to.reservedCount < b.quantity) return { ok: false, reason: "NO_CAPACITY" };
       setBookings((list) => list.map((x) => (x.id === b.id ? { ...x, sessionId: to.id, startsAt: to.startsAt, endsAt: to.endsAt } : x)));
       setSessions((list) =>
@@ -149,6 +149,18 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
       const reason = action === "close" ? checkCloseReason(closeReason?.code ?? "", closeReason?.note ?? "") : null;
       if (reason && !reason.ok) return false;
       setSessions((list) => list.map((x) => (x.id === id ? { ...x, ...next, ...(reason?.ok ? { notes: withNote(x.notes, { type: "CLOSED", at: now.toISOString(), reason: reason.reason }) } : {}) } : x)));
+      return true;
+    },
+    [sessions, now],
+  );
+
+  /** The owner marks a closed session that took place as Completed (it is final). False when it cannot be. */
+  const completeSession = useCallback(
+    (id: string): boolean => {
+      const s = sessions.find((x) => x.id === id);
+      if (!s || !canCompleteSession(s, now)) return false;
+      // The displayed session (closed by the system when its time ended) becomes the stored one, so its history is kept.
+      setSessions((list) => list.map((x) => (x.id === id ? { ...closeIfEnded(x, now), status: "COMPLETED" } : x)));
       return true;
     },
     [sessions, now],
@@ -229,6 +241,6 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
 
   return {
     bookings, sessions, history, now, perform, addPayment, setPaid, reschedule,
-    sessionAction, reopenSession, rescheduleSession, updateSession, addSession, addBooking,
+    sessionAction, completeSession, reopenSession, rescheduleSession, updateSession, addSession, addBooking,
   };
 }

@@ -1,7 +1,7 @@
 // SERVER-ONLY: the bookings as the mock backend knows them, until apps/api exists. The demo rows, plus the bookings guests make on the landing page
 // (they start NOT_CONFIRMED and become CONFIRMED when the guest opens the link of the email), plus the status changes the ops screens make (cancel,
 // check-in, ...: they are sent here so they survive a reload and the promotion rules can see them). Lives on globalThis like the other mock stores.
-import { eligiblePromotions, nextBookingCode, priceBooking, type BookingStatus, type BookingUse } from "@workshop/shared";
+import { eligiblePromotions, isSessionFinished, nextBookingCode, priceBooking, type BookingStatus, type BookingUse } from "@workshop/shared";
 import { confirmation, reservedSeats, type PreCheckInStatus } from "@/lib/booking-state";
 import type { Booking, Customer } from "@/lib/types";
 import { newUuid } from "@/lib/uuid";
@@ -94,7 +94,7 @@ export function createGuestBooking(input: GuestBookingInput, confirmUrlFor: (tok
   const session = sessions.find((s) => s.id === input.sessionId);
   const workshop = session && workshops.find((w) => w.id === session.workshopId);
   if (!session || !workshop) return { ok: false, code: "UNKNOWN_SESSION" };
-  if (session.status === "CLOSED" || Date.parse(session.endsAt) <= now.getTime()) return { ok: false, code: "SESSION_CLOSED" };
+  if (isSessionFinished(session.status) || Date.parse(session.endsAt) <= now.getTime()) return { ok: false, code: "SESSION_CLOSED" };
   if (!Number.isInteger(input.quantity) || input.quantity < 1 || input.quantity > workshop.maxPerBooking) return { ok: false, code: "QUANTITY" };
   const live = liveBookings();
   // The seats left (SessionCapacityService in the real backend: the check and the booking are one locked step).

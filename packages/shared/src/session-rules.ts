@@ -6,7 +6,8 @@ import type { SessionStatus } from "./enums";
 // A new session is OPEN (created, not running yet): it can only be started. A RUNNING session can only be paused (it never goes to
 // another status directly). Only a RUNNING session can be booked by guests. CLOSED is final, except that a session the owner closed before
 // it started can be re-opened (back to OPEN, see canReopenSession). There is no way to cancel a session.
-// A session whose end time has passed is closed by the system (see closeIfEnded).
+// A session whose end time has passed is closed by the system (see closeIfEnded). The owner then marks a session that took place COMPLETED
+// (CLOSED --complete--> COMPLETED, see canCompleteSession); COMPLETED is final.
 
 /** Booking cut-off of a session: minutes before it starts at which online booking closes (0 = when it starts). */
 export const DEFAULT_BOOKING_CUTOFF_MINUTES = 120;
@@ -47,9 +48,22 @@ export const isSessionBookable = (status: SessionStatus): boolean => status === 
  * with `autoClosed` set (so the screen can say it was closed automatically). A session the owner closed keeps no such flag.
  */
 export function closeIfEnded<T extends { status: SessionStatus; endsAt: string; autoClosed?: boolean; notes?: SessionNote[] }>(s: T, now: Date): T {
-  if (s.status === "CLOSED" || new Date(s.endsAt).getTime() > now.getTime()) return s;
+  if (isSessionFinished(s.status) || new Date(s.endsAt).getTime() > now.getTime()) return s;
   // The automatic close is one more note of the history of the session (at the time its time was over).
   return { ...s, status: "CLOSED", autoClosed: true, notes: withNote(s.notes, { type: "AUTO_CLOSED", at: s.endsAt }) };
+}
+
+/** CLOSED and COMPLETED are the end of the life of a session: it cannot be booked, changed or re-scheduled any more. */
+export const isSessionFinished = (status: SessionStatus): boolean => status === "CLOSED" || status === "COMPLETED";
+
+/**
+ * The owner can mark a session COMPLETED when it is CLOSED, its time is over and it was not held closed by a person (a session the owner or an
+ * administrator closed before it started did not take place: its last close is not followed by a re-open).
+ */
+export function canCompleteSession(s: { status: SessionStatus; endsAt: string; notes?: readonly SessionNote[] }, now: Date): boolean {
+  if (s.status !== "CLOSED" || new Date(s.endsAt).getTime() > now.getTime()) return false;
+  const last = notesInOrder(s.notes).filter((n) => n.type === "CLOSED" || n.type === "REOPENED").at(-1);
+  return last?.type !== "CLOSED";
 }
 
 /** True while the session is taking place (it has started and not ended yet). */
@@ -181,5 +195,5 @@ export const withNote = (notes: readonly SessionNote[] | undefined, note: Sessio
  * What a system administrator can do, without the limits of the owner: close any session that is not closed yet (even one that is taking place or
  * closed for good before) and open any closed session that has not ended (even one closed for good). A session that has ended stays closed.
  */
-export const canAdminClose = (s: { status: SessionStatus }): boolean => s.status !== "CLOSED";
+export const canAdminClose = (s: { status: SessionStatus }): boolean => !isSessionFinished(s.status);
 export const canAdminReopen = (s: { status: SessionStatus; endsAt: string }, now: Date): boolean => s.status === "CLOSED" && new Date(s.endsAt).getTime() > now.getTime();

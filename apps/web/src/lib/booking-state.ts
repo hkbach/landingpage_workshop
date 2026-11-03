@@ -1,4 +1,4 @@
-import type { BookingStatus, PaymentStatus, SessionStatus } from "@workshop/shared";
+import { isSessionFinished, type BookingStatus, type PaymentStatus, type SessionStatus } from "@workshop/shared";
 
 /**
  * Booking state machine. Pure; mirrors the future backend `bookings/booking-state.ts`. Booking status and payment status are independent (BR-06).
@@ -42,7 +42,7 @@ export function canTransition(booking: StateBooking, session: StateSession, _now
   void _now;
   const s = booking.status;
   // A closed session is final: nobody is checked in or unchecked any more (its list is read-only).
-  const closed = session.status === "CLOSED";
+  const closed = isSessionFinished(session.status);
 
   // Check-in works from both NOT_CONFIRMED and CONFIRMED: a guest who has not opened the link yet can still arrive.
   const checkIn: ActionState = !closed && isOpen(s) ? ok() : no("INVALID_STATE");

@@ -13,7 +13,7 @@ import { ReasonDialog } from "./reason-dialog";
 import { fmt } from "./utils";
 
 const STATUS_STYLE: Record<SessionStatus, string> = {
-  OPEN: "bg-sky-100 text-sky-900", PAUSED: "bg-slate-100 text-slate-900", RUNNING: "bg-emerald-100 text-emerald-900", CLOSED: "bg-amber-100 text-amber-950",
+  OPEN: "bg-sky-100 text-sky-900", PAUSED: "bg-slate-100 text-slate-900", RUNNING: "bg-emerald-100 text-emerald-900", CLOSED: "bg-amber-100 text-amber-950", COMPLETED: "bg-teal-100 text-teal-900",
 };
 
 /**

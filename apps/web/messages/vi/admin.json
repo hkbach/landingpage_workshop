@@ -244,7 +244,8 @@
       "OPEN": "Open",
       "RUNNING": "Running",
       "PAUSED": "Paused",
-      "CLOSED": "Closed"
+      "CLOSED": "Closed",
+      "COMPLETED": "Completed"
     },
     "forGood": "đã đóng hoàn toàn",
     "close": "Đóng",

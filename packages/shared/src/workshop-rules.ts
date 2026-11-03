@@ -1,4 +1,5 @@
 import type { SessionStatus, WorkshopStatus } from "./enums";
+import { isSessionFinished } from "./session-rules";
 
 // What the shop owner can do with a workshop of the list (FR-WS-01). A workshop is Active (shown on the landing page, bookable) or deactivated
 // (a draft). A workshop is never deleted (and there is no other state): it is switched off to take it off the landing page.
@@ -12,8 +13,8 @@ export const canActivateWorkshop = (status: WorkshopStatus): boolean => status =
 export const canDeactivateWorkshop = (status: WorkshopStatus, sessionStatuses: readonly SessionStatus[]): boolean =>
   isActive(status) && openSessionCount(sessionStatuses) === 0;
 
-/** How many of the sessions are not Closed yet. */
-export const openSessionCount = (sessionStatuses: readonly SessionStatus[]): number => sessionStatuses.filter((s) => s !== "CLOSED").length;
+/** How many of the sessions are not Closed or Completed yet. */
+export const openSessionCount = (sessionStatuses: readonly SessionStatus[]): number => sessionStatuses.filter((s) => !isSessionFinished(s)).length;
 
 /** Only a deactivated (draft) workshop can be edited. */
 export const canEditWorkshop = (status: WorkshopStatus): boolean => status === "DRAFT";

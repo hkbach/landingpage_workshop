@@ -244,7 +244,8 @@
       "OPEN": "Open",
       "RUNNING": "Running",
       "PAUSED": "Paused",
-      "CLOSED": "Closed"
+      "CLOSED": "Closed",
+      "COMPLETED": "Completed"
     },
     "forGood": "closed for good",
     "close": "Close",
