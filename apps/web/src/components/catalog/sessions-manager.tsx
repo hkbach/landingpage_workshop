@@ -280,7 +280,8 @@ export function SessionsManager({
       <PaymentDialog
         key={`pay-${dialog?.kind ?? "none"}-${target?.id ?? "none"}`} open={(dialog?.kind === "payment" || dialog?.kind === "complete" || dialog?.kind === "completed") && !!target} onOpenChange={(o) => !o && setDialog(null)}
         mode={dialog?.kind === "complete" ? "complete" : dialog?.kind === "completed" ? "view" : "payment"}
-        onComplete={() => { if (target && ops.completeSession(target.id)) setDialog(null); }}
+        onComplete={() => { if (target && ops.completeSession(target.id)) { setDialog(null); setNotice({ text: t("sessions.completedDone", { code: target.code }), tone: "ok" }); } }}
+        onSubmitted={(r) => setNotice({ text: t("sessions.paymentsSaved", { ...r }), tone: r.failed > 0 ? "error" : "ok" })}
         session={target} bookings={ops.bookings} customers={customers} setPaid={ops.setPaid}
         notifyPaid={async (id) => (await notifyPaidRequest(id)).notified}
       />

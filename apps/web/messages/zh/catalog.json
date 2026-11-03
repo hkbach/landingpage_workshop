@@ -257,7 +257,7 @@
     "viewBooking": "查看预订",
     "confirmPayment": "确认支付",
     "paymentTitle": "确认 {code} 的支付",
-    "paymentHint": "为在工作室付款的每位客人确认支付。预订变为已支付时会向客人发送邮件。预订同时变为已签到。",
+    "paymentHint": "标记在工作室付款的客人，然后点击“提交”。提交之前不会有任何更改。变为已支付的预订同时变为已签到，并向客人发送邮件。",
     "partCheckedIn": "已签到",
     "partNotCheckedIn": "未签到",
     "partEmpty": "暂无预订。",
@@ -267,11 +267,8 @@
     "paymentFailed": "无法更改支付状态。",
     "complete": "已完成",
     "partCancelled": "已取消",
-    "paymentMailed": "已发送付款确认邮件。",
-    "paymentMailNone": "该客人没有邮箱，未发送邮件。",
-    "paymentMailFailed": "邮件发送失败。",
     "completeTitle": "完成场次 {code}",
-    "completeHint": "确认每个预订的支付情况，然后点击“已完成”结束场次。预订同时变为已签到。",
+    "completeHint": "确认每个预订的支付情况，然后点击“已完成”。确认之前不会有任何更改。变为已支付的预订同时变为已签到，并向客人发送邮件。",
     "completedTitle": "{code} 的支付（已完成）",
     "completedHint": "该场次已完成，场次及其支付信息不能再更改。",
     "completeConfirmTitle": "确认将 {code} 标记为已完成？",
@@ -282,6 +279,10 @@
     "selectAllIn": "全选{part}",
     "selectBooking": "选择 {guest}，{code}",
     "confirmSelected": "确认支付（{count}）",
-    "bulkDone": "已确认 {count, plural, other {#个预订}}。已发送邮件：{sent}。无邮箱：{none}。失败：{failed}。"
+    "paymentSubmit": "提交",
+    "paymentCancel": "取消",
+    "unsaved": "尚未保存",
+    "completedDone": "场次 {code} 已完成。",
+    "paymentsSaved": "已保存 {updated, plural, other {#笔支付}}。已发送邮件：{sent}。无邮箱：{none}。失败：{failed}。"
   }
 }

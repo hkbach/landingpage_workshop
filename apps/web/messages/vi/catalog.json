@@ -257,7 +257,7 @@
     "viewBooking": "Xem booking",
     "confirmPayment": "Xác nhận thanh toán",
     "paymentTitle": "Xác nhận thanh toán của {code}",
-    "paymentHint": "Xác nhận thanh toán cho từng khách đã trả tiền tại studio. Khách nhận email khi booking chuyển sang Paid. Booking cũng được chuyển sang Checked in.",
+    "paymentHint": "Đánh dấu các khách đã trả tiền tại studio, rồi bấm Gửi. Chưa có gì thay đổi cho đến khi bạn bấm Gửi. Booking chuyển sang Paid cũng được chuyển sang Checked in và khách nhận email.",
     "partCheckedIn": "Đã check-in",
     "partNotCheckedIn": "Chưa check-in",
     "partEmpty": "Không có booking.",
@@ -267,11 +267,8 @@
     "paymentFailed": "Không thể đổi trạng thái thanh toán.",
     "complete": "Hoàn thành",
     "partCancelled": "Đã hủy",
-    "paymentMailed": "Đã gửi email báo đã nhận thanh toán.",
-    "paymentMailNone": "Khách này không có email nên chưa gửi gì.",
-    "paymentMailFailed": "Không gửi được email.",
     "completeTitle": "Hoàn thành session {code}",
-    "completeHint": "Kiểm tra thanh toán của từng booking, rồi bấm Hoàn thành để kết thúc session. Booking cũng được chuyển sang Checked in.",
+    "completeHint": "Kiểm tra thanh toán của từng booking, rồi bấm Hoàn thành. Chưa có gì thay đổi cho đến khi bạn xác nhận. Booking chuyển sang Paid cũng được chuyển sang Checked in và khách nhận email.",
     "completedTitle": "Thanh toán của {code} (Hoàn thành)",
     "completedHint": "Session đã Hoàn thành: session và các thanh toán không thể thay đổi nữa.",
     "completeConfirmTitle": "Xác nhận Hoàn thành session {code}?",
@@ -282,6 +279,10 @@
     "selectAllIn": "Chọn tất cả trong mục {part}",
     "selectBooking": "Chọn {guest}, {code}",
     "confirmSelected": "Xác nhận thanh toán ({count})",
-    "bulkDone": "Đã xác nhận {count, plural, other {# booking}}. Email đã gửi: {sent}. Không có email: {none}. Lỗi: {failed}."
+    "paymentSubmit": "Gửi",
+    "paymentCancel": "Hủy",
+    "unsaved": "Chưa lưu",
+    "completedDone": "Session {code} đã Hoàn thành.",
+    "paymentsSaved": "Đã lưu {updated, plural, other {# thanh toán}}. Email đã gửi: {sent}. Không có email: {none}. Lỗi: {failed}."
   }
 }

@@ -257,7 +257,7 @@
     "viewBooking": "予約を見る",
     "confirmPayment": "支払いを確認",
     "paymentTitle": "{code} の支払い確認",
-    "paymentHint": "スタジオでお支払いいただいたお客様ごとに支払いを確認してください。予約が支払い済みになると、お客様にメールが送信されます。 予約もチェックイン済みになります。",
+    "paymentHint": "スタジオでお支払いいただいたお客様にチェックを入れて、「送信」を押してください。送信するまで何も変わりません。支払い済みになった予約はチェックイン済みになり、お客様にメールが送信されます。",
     "partCheckedIn": "チェックイン済み",
     "partNotCheckedIn": "未チェックイン",
     "partEmpty": "予約はありません。",
@@ -267,11 +267,8 @@
     "paymentFailed": "支払いステータスを変更できませんでした。",
     "complete": "完了",
     "partCancelled": "キャンセル済み",
-    "paymentMailed": "お支払い確認のメールを送信しました。",
-    "paymentMailNone": "このお客様はメールアドレスがないため送信していません。",
-    "paymentMailFailed": "メールを送信できませんでした。",
     "completeTitle": "セッション {code} を完了",
-    "completeHint": "すべての予約の支払いを確認してから、「完了」を押してセッションを終了してください。 予約もチェックイン済みになります。",
+    "completeHint": "すべての予約の支払いを確認してから、「完了」を押してください。確認するまで何も変わりません。支払い済みになった予約はチェックイン済みになり、お客様にメールが送信されます。",
     "completedTitle": "{code} の支払い（完了）",
     "completedHint": "このセッションは完了しました。セッションと支払い情報は変更できません。",
     "completeConfirmTitle": "{code} を完了にしますか？",
@@ -282,6 +279,10 @@
     "selectAllIn": "{part}をすべて選択",
     "selectBooking": "{guest}、{code} を選択",
     "confirmSelected": "支払いを確認（{count}）",
-    "bulkDone": "予約{count, plural, other {#件}}を確認しました。メール送信：{sent}。メールなし：{none}。失敗：{failed}。"
+    "paymentSubmit": "送信",
+    "paymentCancel": "キャンセル",
+    "unsaved": "未保存",
+    "completedDone": "セッション {code} を完了しました。",
+    "paymentsSaved": "支払い{updated, plural, other {#件}}を保存しました。メール送信：{sent}。メールなし：{none}。失敗：{failed}。"
   }
 }

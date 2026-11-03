@@ -15,6 +15,7 @@ import { zonedToUtcIso } from "@/components/ops/time";
 import { dayKey } from "@/lib/format";
 import type { Booking, Customer, Session } from "@/lib/types";
 import { canTransition, type BookingAction } from "@/lib/booking-state";
+import { draftChanges, draftPaid, withChoice, type PaymentDraft } from "@/lib/payment-draft";
 import { BookingStatusBadge, PaymentStatusBadge } from "@/components/ops/status-badges";
 import type { OpResult } from "@/components/ops/use-ops-state";
 
@@ -237,27 +238,34 @@ export function CheckInDialog({ open, onOpenChange, session, bookings, customers
   );
 }
 
+/** What a submit did, for the notice of the screen. */
+export interface PaymentSummary { updated: number; sent: number; none: number; failed: number }
+
 /**
  * The payments of the bookings of a session, in three parts: the guests who checked in, the ones who did not, and the cancelled ones. Each row has
- * Confirm payment (the guest paid at the studio: the booking becomes Paid and the guest is emailed) or, once it is Paid, Unpaid (to undo a mistake).
- * `mode`: "payment" (Confirm payment button of a closed session), "complete" (the same list with a Completed button at the end: after a confirmation the
- * session is Completed and nothing about it changes any more) or "view" (a Completed session: the payments are only shown).
+ * Confirm payment (the guest paid at the studio) or, once it is Paid, Unpaid (to undo a mistake). **What the owner does in the popup is only a draft**:
+ * nothing is saved, no status of a booking changes and no email is sent until the owner presses Submit (a booking that becomes Paid is also set to
+ * Checked in and its guest is emailed). Closing the popup throws the draft away.
+ * `mode`: "payment" (Confirm payment button of a closed session: Cancel and Submit), "complete" (the same list with a Completed button at the end: after
+ * a confirmation the draft is applied and the session is Completed, and nothing about it changes any more) or "view" (a Completed session: only shown).
  */
-export function PaymentDialog({ open, onOpenChange, session, bookings, customers, setPaid, notifyPaid, mode, onComplete }: {
+export function PaymentDialog({ open, onOpenChange, session, bookings, customers, setPaid, notifyPaid, mode, onComplete, onSubmitted }: {
   open: boolean; onOpenChange: (o: boolean) => void; session?: Session; bookings: Booking[]; customers: Customer[]; mode: "payment" | "complete" | "view";
-  /** Called once the owner has confirmed that the session is Completed. */
-  onComplete?: () => void;
+  /** Saves one booking as Paid or Unpaid (a booking that becomes Paid is also checked in). */
   setPaid: (bookingId: string, paid: boolean) => OpResult;
   /** Tells the server a booking became Paid so the guest is emailed; resolves with the number of emails queued (0: the guest left no email). */
   notifyPaid: (bookingId: string) => Promise<number>;
+  /** Called once the owner has confirmed that the session is Completed (after the draft was applied). */
+  onComplete?: () => void;
+  /** Called when the draft was applied, with what it did. */
+  onSubmitted?: (summary: PaymentSummary) => void;
 }) {
   const t = useTranslations("catalog");
   const locale = useLocale();
-  const [failed, setFailed] = useState<string | null>(null);
-  const [mail, setMail] = useState<{ code: string; state: "sent" | "none" | "failed" } | null>(null);
-  const [confirming, setConfirming] = useState(false);
+  const [draft, setDraft] = useState<PaymentDraft>(new Map());
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set()); // the bookings ticked for Confirm payment of a whole part
-  const [bulk, setBulk] = useState<{ part: string; count: number; sent: number; none: number; failed: number } | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
   const rows = session ? bookings.filter((b) => b.sessionId === session.id).sort((a, b) => a.bookingCode.localeCompare(b.bookingCode)) : [];
   const nameOf = (b: Booking) => customers.find((c) => c.id === b.customerId)?.fullName ?? "";
   const parts = [
@@ -265,48 +273,61 @@ export function PaymentDialog({ open, onOpenChange, session, bookings, customers
     { key: "notCheckedIn", title: t("sessions.partNotCheckedIn"), list: rows.filter((b) => b.status !== "CHECKED_IN" && b.status !== "CANCELLED") },
     { key: "cancelled", title: t("sessions.partCancelled"), list: rows.filter((b) => b.status === "CANCELLED") },
   ];
-  const paid = rows.filter((b) => b.paymentStatus === "PAID").length;
+  const paid = rows.filter((b) => draftPaid(b, draft)).length;
+  const changes = draftChanges(draft);
 
-  function confirm(b: Booking) {
-    const res = setPaid(b.id, true);
-    setFailed(res.ok ? null : b.bookingCode);
-    if (!res.ok) return;
-    setMail(null);
-    setBulk(null);
-    notifyPaid(b.id).then((n) => setMail({ code: b.bookingCode, state: n > 0 ? "sent" : "none" })).catch(() => setMail({ code: b.bookingCode, state: "failed" }));
-  }
-  function undo(b: Booking) {
-    setFailed(setPaid(b.id, false).ok ? null : b.bookingCode);
-    setMail(null);
-    setBulk(null);
-  }
+  const reset = () => { setDraft(new Map()); setSelected(new Set()); setConfirming(false); setBusy(false); };
+  const choose = (b: Booking, value: boolean) => setDraft((d) => withChoice(d, b, value));
 
-  // A booking can be ticked while it is Unpaid and has something to pay (a Completed session only shows its payments).
-  const tickable = (b: Booking) => mode !== "view" && b.totalAmount > 0 && b.paymentStatus !== "PAID";
+  // A booking can be ticked while it is Unpaid as the popup shows it and has something to pay (a Completed session only shows its payments).
+  const tickable = (b: Booking) => mode !== "view" && b.totalAmount > 0 && !draftPaid(b, draft);
   const toggleOne = (id: string) => setSelected((prev) => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   /** Select all of a part: ticks every tickable booking of it, or unticks them when they are all ticked already. */
   const toggleAll = (list: Booking[]) => {
     const ids = list.filter(tickable).map((b) => b.id);
     setSelected((prev) => { const n = new Set(prev); const all = ids.every((id) => n.has(id)); for (const id of ids) { if (all) n.delete(id); else n.add(id); } return n; });
   };
-
-  /** Confirm payment of every ticked booking of a part at once; each guest is emailed, and the result is told under the title of the part. */
-  function bulkConfirm(part: string, list: Booking[]) {
+  /** Confirm payment of every ticked booking of a part: only in the draft, until Submit. */
+  function bulkChoose(list: Booking[]) {
     const targets = list.filter((b) => tickable(b) && selected.has(b.id));
-    if (targets.length === 0) return;
-    const done = targets.filter((b) => setPaid(b.id, true).ok);
-    setFailed(done.length < targets.length ? "bulk" : null);
-    setMail(null);
-    setSelected((prev) => { const n = new Set(prev); for (const b of done) n.delete(b.id); return n; });
-    Promise.allSettled(done.map((b) => notifyPaid(b.id))).then((r) => setBulk({
-      part, count: done.length, sent: r.filter((x) => x.status === "fulfilled" && x.value > 0).length,
-      none: r.filter((x) => x.status === "fulfilled" && x.value === 0).length, failed: r.filter((x) => x.status === "rejected").length,
-    }));
+    setDraft((d) => targets.reduce((acc, b) => withChoice(acc, b, true), d));
+    setSelected((prev) => { const n = new Set(prev); for (const b of targets) n.delete(b.id); return n; });
+  }
+
+  /** Saves every choice of the draft (a booking that becomes Paid is also checked in); the emails of the guests follow. */
+  function applyDraft() {
+    let updated = 0;
+    let failed = 0;
+    const toMail: string[] = [];
+    for (const c of changes) {
+      if (setPaid(c.id, c.paid).ok) { updated++; if (c.paid) toMail.push(c.id); } else failed++;
+    }
+    return { updated, failed, toMail };
+  }
+  async function mailGuests(done: ReturnType<typeof applyDraft>): Promise<PaymentSummary> {
+    const results = await Promise.allSettled(done.toMail.map((id) => notifyPaid(id)));
+    return {
+      updated: done.updated, failed: done.failed + results.filter((r) => r.status === "rejected").length,
+      sent: results.filter((r) => r.status === "fulfilled" && r.value > 0).length, none: results.filter((r) => r.status === "fulfilled" && r.value === 0).length,
+    };
+  }
+  async function submit() {
+    if (changes.length === 0 || busy) return;
+    setBusy(true);
+    const done = applyDraft();
+    onOpenChange(false);
+    onSubmitted?.(await mailGuests(done));
+  }
+  async function complete() {
+    setConfirming(false);
+    const done = applyDraft(); // before the session is Completed: a Completed session no longer takes payments
+    onComplete?.();
+    if (changes.length > 0) onSubmitted?.(await mailGuests(done));
   }
 
   return (
     <>
-    <Dialog open={open} onOpenChange={(o) => { if (!o) { setFailed(null); setMail(null); setConfirming(false); setSelected(new Set()); setBulk(null); } onOpenChange(o); }}>
+    <Dialog open={open} onOpenChange={(o) => { if (!o) reset(); onOpenChange(o); }}>
       <DialogContent className="max-h-[92dvh] overflow-y-auto sm:max-w-2xl">
         {session ? (
           <div className="grid gap-4">
@@ -336,58 +357,51 @@ export function PaymentDialog({ open, onOpenChange, session, bookings, customers
                           </label>
                           <Button
                             size="sm" data-testid={`bulk-confirm-${part.key}`} disabled={!part.list.some((b) => tickable(b) && selected.has(b.id))}
-                            onClick={() => bulkConfirm(part.key, part.list)}
+                            onClick={() => bulkChoose(part.list)}
                           >
                             <BadgeCheck aria-hidden="true" />{t("sessions.confirmSelected", { count: part.list.filter((b) => tickable(b) && selected.has(b.id)).length })}
                           </Button>
                         </div>
                       ) : null}
                     </div>
-                    {bulk?.part === part.key ? (
-                      <p role="status" data-testid="bulk-result" className={`text-xs ${bulk.failed > 0 ? "text-destructive" : "text-emerald-800"}`}>
-                        {t("sessions.bulkDone", { count: bulk.count, sent: bulk.sent, none: bulk.none, failed: bulk.failed })}
-                      </p>
-                    ) : null}
                     {part.list.length === 0 ? (
                       <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">{t("sessions.partEmpty")}</p>
                     ) : (
                       <ul className="divide-y rounded-lg border">
-                        {part.list.map((b) => (
-                          <li key={b.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm" data-testid="payment-row">
-                            <div className="flex min-w-0 items-start gap-3">
-                              {mode === "view" ? null : tickable(b) ? (
-                                <input
-                                  type="checkbox" className="mt-0.5 size-4 shrink-0 accent-emerald-600" data-testid="payment-select" checked={selected.has(b.id)}
-                                  aria-label={t("sessions.selectBooking", { guest: nameOf(b), code: b.bookingCode })} onChange={() => toggleOne(b.id)}
-                                />
-                              ) : (
-                                <span aria-hidden className="size-4 shrink-0" />
-                              )}
-                              <div className="min-w-0">
-                              <div className="font-medium">{nameOf(b)}</div>
-                              <div className="text-xs text-muted-foreground">
-                                <span className="font-mono" data-testid="payment-code">{b.bookingCode}</span> · {t("sessions.guestCount", { count: b.quantity })} · <span data-testid="payment-amount">{formatMoney(b.totalAmount, b.currency, locale)}</span>
+                        {part.list.map((b) => {
+                          const isPaid = draftPaid(b, draft);
+                          return (
+                            <li key={b.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm" data-testid="payment-row" data-pending={draft.has(b.id) ? "true" : undefined}>
+                              <div className="flex min-w-0 items-start gap-3">
+                                {mode === "view" ? null : tickable(b) ? (
+                                  <input
+                                    type="checkbox" className="mt-0.5 size-4 shrink-0 accent-emerald-600" data-testid="payment-select" checked={selected.has(b.id)}
+                                    aria-label={t("sessions.selectBooking", { guest: nameOf(b), code: b.bookingCode })} onChange={() => toggleOne(b.id)}
+                                  />
+                                ) : (
+                                  <span aria-hidden className="size-4 shrink-0" />
+                                )}
+                                <div className="min-w-0">
+                                  <div className="font-medium">{nameOf(b)}</div>
+                                  <div className="text-xs text-muted-foreground">
+                                    <span className="font-mono" data-testid="payment-code">{b.bookingCode}</span> · {t("sessions.guestCount", { count: b.quantity })} · <span data-testid="payment-amount">{formatMoney(b.totalAmount, b.currency, locale)}</span>
+                                  </div>
+                                </div>
                               </div>
+                              <div className="flex items-center gap-2">
+                                {draft.has(b.id) ? <span className="text-xs text-amber-800" data-testid="payment-unsaved">{t("sessions.unsaved")}</span> : null}
+                                <span data-testid="payment-status"><PaymentStatusBadge status={isPaid ? "PAID" : "UNPAID"} /></span>
+                                {b.totalAmount <= 0 ? (
+                                  <span className="text-xs text-muted-foreground">{t("sessions.nothingToPay")}</span>
+                                ) : mode === "view" ? null : isPaid ? (
+                                  <Button size="sm" variant="outline" data-testid="payment-unpaid" onClick={() => choose(b, false)}><Undo2 aria-hidden="true" />{t("sessions.markUnpaid")}</Button>
+                                ) : (
+                                  <Button size="sm" data-testid="payment-confirm" onClick={() => choose(b, true)}><BadgeCheck aria-hidden="true" />{t("sessions.confirmPayment")}</Button>
+                                )}
                               </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span data-testid="payment-status"><PaymentStatusBadge status={b.paymentStatus} /></span>
-                              {b.totalAmount <= 0 ? (
-                                <span className="text-xs text-muted-foreground">{t("sessions.nothingToPay")}</span>
-                              ) : mode === "view" ? null : b.paymentStatus === "PAID" ? (
-                                <Button size="sm" variant="outline" data-testid="payment-unpaid" onClick={() => undo(b)}><Undo2 aria-hidden="true" />{t("sessions.markUnpaid")}</Button>
-                              ) : (
-                                <Button size="sm" data-testid="payment-confirm" onClick={() => confirm(b)}><BadgeCheck aria-hidden="true" />{t("sessions.confirmPayment")}</Button>
-                              )}
-                            </div>
-                            {failed === b.bookingCode ? <p role="alert" className="basis-full text-right text-xs text-destructive">{t("sessions.paymentFailed")}</p> : null}
-                            {mail?.code === b.bookingCode ? (
-                              <p role="status" data-testid="payment-mail" data-state={mail.state} className={`basis-full text-right text-xs ${mail.state === "failed" ? "text-destructive" : "text-emerald-800"}`}>
-                                {t(mail.state === "sent" ? "sessions.paymentMailed" : mail.state === "none" ? "sessions.paymentMailNone" : "sessions.paymentMailFailed")}
-                              </p>
-                            ) : null}
-                          </li>
-                        ))}
+                            </li>
+                          );
+                        })}
                       </ul>
                     )}
                   </section>
@@ -395,12 +409,18 @@ export function PaymentDialog({ open, onOpenChange, session, bookings, customers
               </>
             )}
             <DialogFooter>
-              {mode === "complete" ? null : <Button type="button" variant="outline" onClick={() => onOpenChange(false)}><Check aria-hidden="true" />{t("sessions.checkInDone")}</Button>}
-              {mode === "complete" ? (
+              {mode === "view" ? (
+                <Button type="button" variant="outline" onClick={() => onOpenChange(false)}><Check aria-hidden="true" />{t("sessions.checkInDone")}</Button>
+              ) : mode === "payment" ? (
+                <>
+                  <Button type="button" variant="outline" data-testid="payment-cancel" onClick={() => onOpenChange(false)}><ArrowLeft aria-hidden="true" />{t("sessions.paymentCancel")}</Button>
+                  <Button type="button" data-testid="payment-submit" disabled={changes.length === 0 || busy} onClick={() => void submit()}><Check aria-hidden="true" />{t("sessions.paymentSubmit")}</Button>
+                </>
+              ) : (
                 <Button type="button" data-testid="complete-submit" className="bg-emerald-600 text-white hover:bg-emerald-700 focus-visible:ring-emerald-600/40" onClick={() => setConfirming(true)}>
                   <CheckCheck aria-hidden="true" />{t("sessions.complete")}
                 </Button>
-              ) : null}
+              )}
             </DialogFooter>
           </div>
         ) : null}
@@ -414,7 +434,7 @@ export function PaymentDialog({ open, onOpenChange, session, bookings, customers
         </DialogHeader>
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => setConfirming(false)}><ArrowLeft aria-hidden="true" />{t("sessions.completeBack")}</Button>
-          <Button type="button" data-testid="complete-confirm-button" className="bg-emerald-600 text-white hover:bg-emerald-700 focus-visible:ring-emerald-600/40" onClick={() => { setConfirming(false); onComplete?.(); }}>
+          <Button type="button" data-testid="complete-confirm-button" className="bg-emerald-600 text-white hover:bg-emerald-700 focus-visible:ring-emerald-600/40" onClick={() => void complete()}>
             <CheckCheck aria-hidden="true" />{t("sessions.completeConfirmButton")}
           </Button>
         </DialogFooter>

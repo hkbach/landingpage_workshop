@@ -257,7 +257,7 @@
     "viewBooking": "예약 보기",
     "confirmPayment": "결제 확인",
     "paymentTitle": "{code} 결제 확인",
-    "paymentHint": "스튜디오에서 결제한 손님별로 결제를 확인하세요. 예약이 결제 완료가 되면 손님에게 이메일이 발송됩니다. 예약도 체크인 상태로 바뀝니다.",
+    "paymentHint": "스튜디오에서 결제한 손님을 표시한 다음 제출을 누르세요. 제출하기 전에는 아무것도 바뀌지 않습니다. 결제 완료가 된 예약은 체크인 상태로 바뀌고 손님에게 이메일이 발송됩니다.",
     "partCheckedIn": "체크인함",
     "partNotCheckedIn": "체크인 안 함",
     "partEmpty": "예약이 없습니다.",
@@ -267,11 +267,8 @@
     "paymentFailed": "결제 상태를 변경할 수 없습니다.",
     "complete": "완료",
     "partCancelled": "취소됨",
-    "paymentMailed": "결제 완료 이메일을 보냈습니다.",
-    "paymentMailNone": "이 손님은 이메일이 없어 발송하지 않았습니다.",
-    "paymentMailFailed": "이메일을 보내지 못했습니다.",
     "completeTitle": "세션 {code} 완료",
-    "completeHint": "모든 예약의 결제를 확인한 다음 완료를 눌러 세션을 마무리하세요. 예약도 체크인 상태로 바뀝니다.",
+    "completeHint": "모든 예약의 결제를 확인한 다음 완료를 누르세요. 확인하기 전에는 아무것도 바뀌지 않습니다. 결제 완료가 된 예약은 체크인 상태로 바뀌고 손님에게 이메일이 발송됩니다.",
     "completedTitle": "{code} 결제 내역(완료)",
     "completedHint": "이 세션은 완료되었습니다. 세션과 결제 정보는 더 이상 변경할 수 없습니다.",
     "completeConfirmTitle": "{code}을(를) 완료 처리할까요?",
@@ -282,6 +279,10 @@
     "selectAllIn": "{part} 전체 선택",
     "selectBooking": "{guest}, {code} 선택",
     "confirmSelected": "결제 확인 ({count})",
-    "bulkDone": "예약 {count, plural, other {#건}} 확인 완료. 이메일 발송: {sent}. 이메일 없음: {none}. 실패: {failed}."
+    "paymentSubmit": "제출",
+    "paymentCancel": "취소",
+    "unsaved": "저장 전",
+    "completedDone": "세션 {code}이(가) 완료되었습니다.",
+    "paymentsSaved": "결제 {updated, plural, other {#건}} 저장됨. 이메일 발송: {sent}. 이메일 없음: {none}. 실패: {failed}."
   }
 }
