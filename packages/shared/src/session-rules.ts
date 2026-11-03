@@ -117,3 +117,9 @@ export function nextSessionCode(codes: readonly string[]): string {
 
 /** A session is edited while it is Open or Paused; a Running session cannot be edited (pause it first) and a Closed one is final. */
 export const canEditSession = (status: SessionStatus): boolean => status === "OPEN" || status === "PAUSED";
+
+/** A session cannot be created (added or cloned) with a start in the past: it must start after `now`. */
+export const isFutureStart = (startsAt: string, now: Date): boolean => {
+  const t = Date.parse(startsAt);
+  return !Number.isNaN(t) && t > now.getTime();
+};

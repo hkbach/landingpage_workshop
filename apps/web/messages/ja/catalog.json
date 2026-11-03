@@ -105,7 +105,8 @@
     "required": "この項目は必須です。",
     "duplicateSession": "この日時のセッションは、このワークショップにすでに存在します。",
     "capacityBelowReserved": "定員は、すでに予約済みの{reserved}席を下回ることはできません。",
-    "cutoffInvalid": "0〜10080の整数を入力してください。"
+    "cutoffInvalid": "0〜10080の整数を入力してください。",
+    "pastStart": "開始日時は過去にできません。より後の日付と時刻を選択してください。"
   },
   "rules": {
     "title": "スケジュールルール",

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SESSION_STATUSES } from "./enums";
-import { allowedSessionActions, applySessionAction, canEditSession, checkCloseReason, checkReschedule, nextSessionCode, SESSION_CODE_RE, CLOSE_REASON_NOTE_MAX, closeIfEnded, closeWaitsForEnd, DEFAULT_BOOKING_CUTOFF_MINUTES, isInSessionTime, isSessionBookable, isValidBookingCutoff, type SessionState } from "./session-rules";
+import { allowedSessionActions, applySessionAction, canEditSession, checkCloseReason, isFutureStart, checkReschedule, nextSessionCode, SESSION_CODE_RE, CLOSE_REASON_NOTE_MAX, closeIfEnded, closeWaitsForEnd, DEFAULT_BOOKING_CUTOFF_MINUTES, isInSessionTime, isSessionBookable, isValidBookingCutoff, type SessionState } from "./session-rules";
 
 const s = (status: SessionState["status"]): SessionState => ({ status });
 
@@ -131,5 +131,15 @@ describe("session codes", () => {
 describe("canEditSession", () => {
   it("is true only for an open or a paused session", () => {
     expect(SESSION_STATUSES.filter(canEditSession)).toEqual(["OPEN", "PAUSED"]);
+  });
+});
+
+describe("isFutureStart", () => {
+  const NOW = new Date("2026-11-03T10:00:00Z");
+  it("is true only for a start after now", () => {
+    expect(isFutureStart("2026-11-03T10:00:01Z", NOW)).toBe(true);
+    expect(isFutureStart("2026-11-03T10:00:00Z", NOW)).toBe(false);
+    expect(isFutureStart("2026-11-02T10:00:00Z", NOW)).toBe(false);
+    expect(isFutureStart("nope", NOW)).toBe(false);
   });
 });

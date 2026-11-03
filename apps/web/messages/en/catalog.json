@@ -105,7 +105,8 @@
     "required": "This field is required.",
     "duplicateSession": "A session for this workshop already exists at that time.",
     "capacityBelowReserved": "Capacity cannot be lower than the {reserved} seats already reserved.",
-    "cutoffInvalid": "Enter a whole number between 0 and 10080."
+    "cutoffInvalid": "Enter a whole number between 0 and 10080.",
+    "pastStart": "The start cannot be in the past. Choose a later date and time."
   },
   "rules": {
     "title": "Schedule rules",

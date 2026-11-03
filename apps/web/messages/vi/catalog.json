@@ -105,7 +105,8 @@
     "required": "Trường này là bắt buộc.",
     "duplicateSession": "Đã có một buổi của workshop này vào thời điểm đó.",
     "capacityBelowReserved": "Sức chứa không được thấp hơn {reserved} chỗ đã đặt.",
-    "cutoffInvalid": "Nhập số nguyên từ 0 đến 10080."
+    "cutoffInvalid": "Nhập số nguyên từ 0 đến 10080.",
+    "pastStart": "Giờ bắt đầu không được ở quá khứ. Hãy chọn ngày giờ muộn hơn."
   },
   "rules": {
     "title": "Quy tắc lịch",

@@ -105,7 +105,8 @@
     "required": "필수 입력 항목이에요.",
     "duplicateSession": "해당 시간에 이 워크숍의 세션이 이미 있어요.",
     "capacityBelowReserved": "정원은 이미 예약된 {reserved}석보다 적을 수 없어요.",
-    "cutoffInvalid": "0에서 10080 사이의 정수를 입력하세요."
+    "cutoffInvalid": "0에서 10080 사이의 정수를 입력하세요.",
+    "pastStart": "시작 시간은 과거일 수 없습니다. 더 늦은 날짜와 시간을 선택하세요."
   },
   "rules": {
     "title": "일정 규칙",

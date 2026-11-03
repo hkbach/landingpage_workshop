@@ -4,7 +4,7 @@ import { useMemo, useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useDisplayLocale } from "@/lib/use-shop-language";
 import { ArrowLeft, CalendarClock, Copy, Lock, LogIn, Pause, Pencil, Play, Plus, Save } from "lucide-react";
-import { allowedSessionActions, canEditSession, closeWaitsForEnd, type SessionCloseReason, DEFAULT_BOOKING_CUTOFF_MINUTES, isValidBookingCutoff, MAX_BOOKING_CUTOFF_MINUTES, pickLocalized, SESSION_STATUSES, type Locale, type SessionStatus } from "@workshop/shared";
+import { allowedSessionActions, canEditSession, closeWaitsForEnd, isFutureStart, type SessionCloseReason, DEFAULT_BOOKING_CUTOFF_MINUTES, isValidBookingCutoff, MAX_BOOKING_CUTOFF_MINUTES, pickLocalized, SESSION_STATUSES, type Locale, type SessionStatus } from "@workshop/shared";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -24,6 +24,9 @@ import { ImageUploadField } from "@/components/builder/ImageUploadField";
 import { sessionImageUploader } from "@/lib/media/session-uploader";
 import { safeImage } from "@/components/sections/safe-url";
 import { useDirty } from "@/lib/use-dirty";
+
+/** The current time, read when the form is submitted (not while rendering). */
+const clock = () => new Date();
 
 /** FR-SCHED-02/03: sessions agenda by date range + workshop; add one-off, close/open, edit capacity, cancel. */
 export function SessionsManager({
@@ -212,7 +215,7 @@ export function SessionsManager({
         workshops={workshops} shop={shop} sessions={ops.sessions} title={title}
         source={dialog?.kind === "clone" ? target : undefined} editing={dialog?.kind === "edit" ? target : undefined}
         hasBookings={target ? target.reservedCount > 0 || ops.bookings.some((b) => b.sessionId === target.id && b.status !== "CANCELLED") : false}
-        onAdd={(s) => { ops.addSession(s); setDialog(null); }}
+        today={today} onAdd={(s) => { if (ops.addSession(s)) setDialog(null); }}
         onUpdate={(id, patch) => { if (ops.updateSession(id, patch)) setDialog(null); }}
       />
       <CheckInDialog
@@ -237,28 +240,28 @@ export function SessionsManager({
  * except the date and time, which only Re-schedule changes).
  */
 function AddSessionDialog({
-  open, onOpenChange, workshops, shop, sessions, title, onAdd, source, editing, hasBookings, onUpdate,
+  open, onOpenChange, workshops, shop, sessions, title, onAdd, source, editing, hasBookings, onUpdate, today,
 }: {
   open: boolean; onOpenChange: (o: boolean) => void; workshops: Workshop[]; shop: ShopForCatalog; sessions: Session[];
   title: (id: string) => string; onAdd: (s: Omit<Session, "id" | "code" | "reservedCount" | "status">) => void; source?: Session;
-  editing?: Session; hasBookings: boolean;
+  editing?: Session; hasBookings: boolean; today: string;
   onUpdate: (id: string, patch: { workshopId: string; capacity: number; bookingCutoffMinutes: number; imageUrl?: string; endsAt: string }) => void;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        {open ? <AddSessionForm workshops={workshops} shop={shop} sessions={sessions} title={title} source={source} editing={editing} hasBookings={hasBookings} onAdd={onAdd} onUpdate={onUpdate} onCancel={() => onOpenChange(false)} /> : null}
+        {open ? <AddSessionForm workshops={workshops} shop={shop} sessions={sessions} title={title} source={source} editing={editing} hasBookings={hasBookings} today={today} onAdd={onAdd} onUpdate={onUpdate} onCancel={() => onOpenChange(false)} /> : null}
       </DialogContent>
     </Dialog>
   );
 }
 
 function AddSessionForm({
-  workshops, shop, sessions, title, onAdd, onCancel, source, editing, hasBookings, onUpdate,
+  workshops, shop, sessions, title, onAdd, onCancel, source, editing, hasBookings, onUpdate, today,
 }: {
   workshops: Workshop[]; shop: ShopForCatalog; sessions: Session[]; title: (id: string) => string;
   onAdd: (s: Omit<Session, "id" | "code" | "reservedCount" | "status">) => void; onCancel: () => void; source?: Session;
-  editing?: Session; hasBookings: boolean;
+  editing?: Session; hasBookings: boolean; today: string;
   onUpdate: (id: string, patch: { workshopId: string; capacity: number; bookingCutoffMinutes: number; imageUrl?: string; endsAt: string }) => void;
 }) {
   const t = useTranslations("catalog");
@@ -294,7 +297,8 @@ function AddSessionForm({
       if (sessions.some((x) => x.id !== editing.id && x.workshopId === w.id && x.startsAt === startsAt)) errs.ws = "errors.duplicateSession";
     } else if (w && date && time) {
       startsAt = zonedToUtcIso(date, time, shop.timezone);
-      if (sessions.some((s) => s.workshopId === w.id && s.startsAt === startsAt)) errs.time = "errors.duplicateSession";
+      if (!isFutureStart(startsAt, clock())) errs.date = "errors.pastStart"; // no session in the past
+      else if (sessions.some((s) => s.workshopId === w.id && s.startsAt === startsAt)) errs.time = "errors.duplicateSession";
     }
     setErrors(errs);
     if (Object.keys(errs).length > 0 || !w) return;
@@ -327,7 +331,7 @@ function AddSessionForm({
       {editing && hasBookings ? <p className="-mt-2 text-xs text-muted-foreground" data-testid="workshop-locked">{t("sessions.workshopLocked")}</p> : null}
       <div className="grid gap-3 sm:grid-cols-2">
         <Field id="add-date" label={t("sessions.date")} required={!editing} error={err("date")}>
-          {(p) => <Input {...p} type="date" value={date} readOnly={!!editing} disabled={!!editing} onChange={(e) => setDate(e.target.value)} />}
+          {(p) => <Input {...p} type="date" min={editing ? undefined : today} value={date} readOnly={!!editing} disabled={!!editing} onChange={(e) => setDate(e.target.value)} />}
         </Field>
         <Field id="add-time" label={t("sessions.startTime")} required={!editing} error={err("time")}>
           {(p) => <Input {...p} type="time" value={time} readOnly={!!editing} disabled={!!editing} onChange={(e) => setTime(e.target.value)} />}

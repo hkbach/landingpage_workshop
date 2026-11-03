@@ -105,7 +105,8 @@
     "required": "此项为必填。",
     "duplicateSession": "该 Workshop 在此时间已存在场次。",
     "capacityBelowReserved": "容量不能低于已预订的 {reserved} 个座位。",
-    "cutoffInvalid": "请输入 0 到 10080 之间的整数。"
+    "cutoffInvalid": "请输入 0 到 10080 之间的整数。",
+    "pastStart": "开始时间不能是过去。请选择更晚的日期和时间。"
   },
   "rules": {
     "title": "排期规则",

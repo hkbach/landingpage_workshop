@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { applySessionAction, canEditSession, checkCloseReason, checkReschedule, closeIfEnded, isValidBookingCutoff, nextSessionCode, closeWaitsForEnd, type BookingStatus, type PaymentMethod, type RescheduleError, type SessionAction, type SessionCloseReason } from "@workshop/shared";
+import { applySessionAction, canEditSession, checkCloseReason, isFutureStart, checkReschedule, closeIfEnded, isValidBookingCutoff, nextSessionCode, closeWaitsForEnd, type BookingStatus, type PaymentMethod, type RescheduleError, type SessionAction, type SessionCloseReason } from "@workshop/shared";
 import type { Booking, PaymentEntry, Session } from "@/lib/types";
 import {
   canTransition, computePaymentStatus, netPaid, reservedSeats, seatDelta, targetStatus,
@@ -172,8 +172,10 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
     [sessions, bookings],
   );
 
-  const addSession = useCallback((s: Omit<Session, "id" | "code" | "reservedCount" | "status">) => {
+  const addSession = useCallback((s: Omit<Session, "id" | "code" | "reservedCount" | "status">): boolean => {
+    if (!isFutureStart(s.startsAt, new Date())) return false; // no session in the past
     setSessions((list) => [...list, { ...s, id: nextId("se"), code: nextSessionCode(list.map((x) => x.code)), reservedCount: 0, status: "OPEN" }]); // a new session is open (not running): Start makes it bookable
+    return true;
   }, []);
 
   const addBooking = useCallback((b: Booking) => {
