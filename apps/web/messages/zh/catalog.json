@@ -151,9 +151,6 @@
     "empty": "此范围内没有场次。",
     "today": "今天",
     "close": "关闭",
-    "editCapacity": "编辑容量",
-    "capacityTitle": "编辑容量",
-    "capacityHint": "已预订 {reserved} 个座位。容量不能低于此数。",
     "capacity": "容量",
     "save": "保存",
     "addTitle": "添加单次场次",
@@ -205,6 +202,10 @@
     "cloneHint": "创建一个与 {code} 相同的新场次：相同的工作坊、容量、预订截止时间和图片。请选择日期和时间（按 {tz} 时间）。",
     "cloneConfirm": "复制场次",
     "clonedFrom": "复制自 {code} - {workshop}",
-    "rescheduleOnce": "每个场次只能更改一次时间，该场次已经更改过。"
+    "rescheduleOnce": "每个场次只能更改一次时间，该场次已经更改过。",
+    "edit": "编辑",
+    "editTitle": "编辑场次",
+    "editHint": "修改 {code} 的信息。日期和时间不能在此更改：已暂停的场次请使用“更改场次时间”。",
+    "workshopLocked": "该场次已有预订，无法更改工作坊。"
   }
 }

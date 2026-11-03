@@ -151,9 +151,6 @@
     "empty": "이 기간에는 세션이 없어요.",
     "today": "오늘",
     "close": "마감",
-    "editCapacity": "정원 수정",
-    "capacityTitle": "정원 수정",
-    "capacityHint": "이미 {reserved}석이 예약되었어요. 정원은 그보다 적게 설정할 수 없어요.",
     "capacity": "정원",
     "save": "저장",
     "addTitle": "단발성 세션 추가",
@@ -205,6 +202,10 @@
     "cloneHint": "{code}와 같은 새 세션입니다: 같은 워크숍, 정원, 예약 마감, 이미지. 날짜와 시간을 선택하세요({tz} 기준).",
     "cloneConfirm": "세션 복제",
     "clonedFrom": "{code}에서 복제됨 - {workshop}",
-    "rescheduleOnce": "세션 일정은 한 번만 변경할 수 있으며, 이 세션은 이미 변경되었습니다."
+    "rescheduleOnce": "세션 일정은 한 번만 변경할 수 있으며, 이 세션은 이미 변경되었습니다.",
+    "edit": "수정",
+    "editTitle": "세션 수정",
+    "editHint": "{code}의 정보를 변경합니다. 날짜와 시간은 여기서 변경할 수 없습니다. 일시중지된 세션은 일정 변경을 사용하세요.",
+    "workshopLocked": "이 세션에 예약이 있어 워크숍을 변경할 수 없습니다."
   }
 }

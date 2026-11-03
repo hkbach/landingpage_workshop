@@ -18,7 +18,7 @@ import { useOpsState } from "@/components/ops/use-ops-state";
 import type { Booking, Session, Workshop } from "@/lib/types";
 import { dayKey, formatTime } from "@/lib/format";
 import { MAX_CAPACITY, type ShopForCatalog } from "./workshop-form";
-import { CloseSessionDialog, RescheduleSessionDialog } from "./session-dialogs";
+import { CloseSessionDialog, dateAndTime, RescheduleSessionDialog } from "./session-dialogs";
 import { notifyRescheduleRequest } from "@/lib/sessions-api";
 import { ImageUploadField } from "@/components/builder/ImageUploadField";
 import { sessionImageUploader } from "@/lib/media/session-uploader";
@@ -39,7 +39,7 @@ export function SessionsManager({
   const [from, setFrom] = useState(today);
   const [to, setTo] = useState(addDays(today, 60));
   const [notice, setNotice] = useState<{ text: string; tone: "ok" | "error" } | null>(null);
-  const [dialog, setDialog] = useState<{ kind: "add" } | { kind: "capacity" | "close" | "reschedule" | "clone"; id: string } | null>(null);
+  const [dialog, setDialog] = useState<{ kind: "add" } | { kind: "edit" | "close" | "reschedule" | "clone"; id: string } | null>(null);
 
   const displayLocale = useDisplayLocale(shop);
   /** The date of a note ("Nov 12, 2026"), in the time zone of the shop. */
@@ -186,8 +186,8 @@ export function SessionsManager({
                             )
                           ) : null}
                           {s.status !== "CLOSED" ? (
-                            <Button size="sm" variant="outline" onClick={() => setDialog({ kind: "capacity", id: s.id })}>
-                              <Pencil aria-hidden="true" />{t("sessions.editCapacity")}
+                            <Button size="sm" variant="outline" data-testid="edit-button" onClick={() => setDialog({ kind: "edit", id: s.id })}>
+                              <Pencil aria-hidden="true" />{t("sessions.edit")}
                             </Button>
                           ) : null}
                           <Button size="sm" variant="outline" data-testid="clone-button" onClick={() => setDialog({ kind: "clone", id: s.id })}>
@@ -204,9 +204,13 @@ export function SessionsManager({
       ))}
 
       <AddSessionDialog
-        key={dialog?.kind === "clone" ? `clone-${dialog.id}` : "add"} open={dialog?.kind === "add" || (dialog?.kind === "clone" && !!target)} onOpenChange={(o) => !o && setDialog(null)}
-        workshops={workshops} shop={shop} sessions={ops.sessions} title={title} source={dialog?.kind === "clone" ? target : undefined}
+        key={dialog && dialog.kind !== "add" ? `${dialog.kind}-${dialog.id}` : "add"}
+        open={dialog?.kind === "add" || ((dialog?.kind === "clone" || dialog?.kind === "edit") && !!target)} onOpenChange={(o) => !o && setDialog(null)}
+        workshops={workshops} shop={shop} sessions={ops.sessions} title={title}
+        source={dialog?.kind === "clone" ? target : undefined} editing={dialog?.kind === "edit" ? target : undefined}
+        hasBookings={target ? target.reservedCount > 0 || ops.bookings.some((b) => b.sessionId === target.id && b.status !== "CANCELLED") : false}
         onAdd={(s) => { ops.addSession(s); setDialog(null); }}
+        onUpdate={(id, patch) => { if (ops.updateSession(id, patch)) setDialog(null); }}
       />
       <CloseSessionDialog
         key={`close-${target?.id ?? "none"}`} open={dialog?.kind === "close" && !!target} onOpenChange={(o) => !o && setDialog(null)}
@@ -217,131 +221,109 @@ export function SessionsManager({
         session={target} timezone={shop.timezone} bookings={target ? ops.bookings.filter((b) => b.sessionId === target.id && b.status === "CONFIRMED").length : 0}
         onConfirm={(newStartsAt, reason) => { if (!target) return null; const res = ops.rescheduleSession(target.id, newStartsAt, reason); if (!res.ok) return res.error; setDialog(null); void notifyGuests(target.id, res); return null; }}
       />
-      <CapacityDialog
-        key={target?.id ?? "none"} open={dialog?.kind === "capacity" && !!target} onOpenChange={(o) => !o && setDialog(null)} session={target}
-        onSave={(n) => { if (target && ops.setSessionCapacity(target.id, n)) { setDialog(null); return true; } return false; }}
-      />
     </div>
   );
 }
 
-function CapacityDialog({
-  open, onOpenChange, session, onSave,
-}: { open: boolean; onOpenChange: (o: boolean) => void; session?: Session; onSave: (n: number) => boolean }) {
-  const t = useTranslations("catalog");
-  const tops = useTranslations("ops");
-  const [value, setValue] = useState(session ? String(session.capacity) : "");
-  const [error, setError] = useState<string>();
-  const dirty = useDirty(value, session?.id ?? null);
-  function submit(e: FormEvent) {
-    e.preventDefault();
-    if (!session) return;
-    const n = Number(value);
-    if (!Number.isInteger(n) || n < 1 || n > MAX_CAPACITY) return setError(t("errors.capacityRange"));
-    if (n < session.reservedCount) return setError(t("errors.capacityBelowReserved", { reserved: session.reservedCount }));
-    if (!onSave(n)) setError(t("errors.capacityRange"));
-  }
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        {session ? (
-          <form onSubmit={submit} noValidate className="grid gap-4">
-            <DialogHeader>
-              <DialogTitle>{t("sessions.capacityTitle")}</DialogTitle>
-              <DialogDescription>{t("sessions.capacityHint", { reserved: session.reservedCount })}</DialogDescription>
-            </DialogHeader>
-            <Field id="cap-value" label={t("sessions.capacity")} required error={error}>
-              {(p) => <Input {...p} type="number" inputMode="numeric" min={session.reservedCount} max={MAX_CAPACITY} value={value} onChange={(e) => { setValue(e.target.value); setError(undefined); }} />}
-            </Field>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}><ArrowLeft aria-hidden="true" />{tops("common.back")}</Button>
-              <Button type="submit" disabled={!dirty}><Save aria-hidden="true" />{t("sessions.save")}</Button>
-            </DialogFooter>
-          </form>
-        ) : null}
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-/** Add a session, or (with `source`) clone one: the same workshop, capacity, cut-off and image, with a new date and time. */
+/**
+ * Add a session, clone one (`source`: the same workshop, capacity, cut-off and image, with a new date and time) or edit one (`editing`: everything
+ * except the date and time, which only Re-schedule changes).
+ */
 function AddSessionDialog({
-  open, onOpenChange, workshops, shop, sessions, title, onAdd, source,
+  open, onOpenChange, workshops, shop, sessions, title, onAdd, source, editing, hasBookings, onUpdate,
 }: {
   open: boolean; onOpenChange: (o: boolean) => void; workshops: Workshop[]; shop: ShopForCatalog; sessions: Session[];
   title: (id: string) => string; onAdd: (s: Omit<Session, "id" | "code" | "reservedCount" | "status">) => void; source?: Session;
+  editing?: Session; hasBookings: boolean;
+  onUpdate: (id: string, patch: { workshopId: string; capacity: number; bookingCutoffMinutes: number; imageUrl?: string; endsAt: string }) => void;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        {open ? <AddSessionForm workshops={workshops} shop={shop} sessions={sessions} title={title} source={source} onAdd={onAdd} onCancel={() => onOpenChange(false)} /> : null}
+        {open ? <AddSessionForm workshops={workshops} shop={shop} sessions={sessions} title={title} source={source} editing={editing} hasBookings={hasBookings} onAdd={onAdd} onUpdate={onUpdate} onCancel={() => onOpenChange(false)} /> : null}
       </DialogContent>
     </Dialog>
   );
 }
 
 function AddSessionForm({
-  workshops, shop, sessions, title, onAdd, onCancel, source,
+  workshops, shop, sessions, title, onAdd, onCancel, source, editing, hasBookings, onUpdate,
 }: {
   workshops: Workshop[]; shop: ShopForCatalog; sessions: Session[]; title: (id: string) => string;
   onAdd: (s: Omit<Session, "id" | "code" | "reservedCount" | "status">) => void; onCancel: () => void; source?: Session;
+  editing?: Session; hasBookings: boolean;
+  onUpdate: (id: string, patch: { workshopId: string; capacity: number; bookingCutoffMinutes: number; imageUrl?: string; endsAt: string }) => void;
 }) {
   const t = useTranslations("catalog");
   const tops = useTranslations("ops");
   const choices = workshops.filter((w) => w.status !== "ARCHIVED");
-  const [wsId, setWsId] = useState(source?.workshopId ?? choices[0]?.id ?? "");
-  const [date, setDate] = useState("");
-  const [time, setTime] = useState("");
-  const [cap, setCap] = useState(String(source?.capacity ?? choices[0]?.defaultCapacity ?? 8));
-  const [cutoff, setCutoff] = useState(String(source?.bookingCutoffMinutes ?? DEFAULT_BOOKING_CUTOFF_MINUTES));
-  const [image, setImage] = useState(source?.imageUrl ?? "");
+  const start = editing ? dateAndTime(editing.startsAt, shop.timezone) : { date: "", time: "" };
+  const base = editing ?? source;
+  const [wsId, setWsId] = useState(base?.workshopId ?? choices[0]?.id ?? "");
+  const [date, setDate] = useState(start.date);
+  const [time, setTime] = useState(start.time);
+  const [cap, setCap] = useState(String(base?.capacity ?? choices[0]?.defaultCapacity ?? 8));
+  const [cutoff, setCutoff] = useState(String(base?.bookingCutoffMinutes ?? DEFAULT_BOOKING_CUTOFF_MINUTES));
+  const [image, setImage] = useState(base?.imageUrl ?? "");
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const dirty = useDirty({ wsId, date, time, cap, cutoff, image }, source ? `clone-${source.id}` : "add");
+  const dirty = useDirty({ wsId, date, time, cap, cutoff, image }, editing ? `edit-${editing.id}` : source ? `clone-${source.id}` : "add");
 
   function submit(e: FormEvent) {
     e.preventDefault();
     const w = workshops.find((x) => x.id === wsId);
     const errs: Record<string, string> = {};
     if (!w) errs.ws = "errors.required";
-    if (!date) errs.date = "errors.required";
-    if (!time) errs.time = "errors.required";
+    if (!editing && !date) errs.date = "errors.required";
+    if (!editing && !time) errs.time = "errors.required";
     const n = Number(cap);
     if (!Number.isInteger(n) || n < 1 || n > MAX_CAPACITY) errs.cap = "errors.capacityRange";
+    else if (editing && n < editing.reservedCount) errs.cap = "errors.capacityBelowReserved";
     const cutoffMinutes = cutoff.trim() === "" ? Number.NaN : Number(cutoff);
     if (!isValidBookingCutoff(cutoffMinutes)) errs.cutoff = "errors.cutoffInvalid";
     let startsAt = "";
-    if (w && date && time) {
+    if (editing && w) {
+      // The date and time stay as they are; a new workshop must not already have a session that starts at that time.
+      startsAt = editing.startsAt;
+      if (sessions.some((x) => x.id !== editing.id && x.workshopId === w.id && x.startsAt === startsAt)) errs.ws = "errors.duplicateSession";
+    } else if (w && date && time) {
       startsAt = zonedToUtcIso(date, time, shop.timezone);
       if (sessions.some((s) => s.workshopId === w.id && s.startsAt === startsAt)) errs.time = "errors.duplicateSession";
     }
     setErrors(errs);
     if (Object.keys(errs).length > 0 || !w) return;
+    if (editing) {
+      onUpdate(editing.id, { workshopId: w.id, capacity: n, bookingCutoffMinutes: cutoffMinutes, endsAt: new Date(new Date(startsAt).getTime() + w.durationMinutes * 60_000).toISOString(), ...(image ? { imageUrl: image } : {}) });
+      return;
+    }
     onAdd({ workshopId: w.id, startsAt, endsAt: new Date(new Date(startsAt).getTime() + w.durationMinutes * 60_000).toISOString(), capacity: n, bookingCutoffMinutes: cutoffMinutes,
       ...(image ? { imageUrl: image } : {}),
       ...(source ? { clonedFrom: { code: source.code, workshopId: source.workshopId } } : {}),
     });
   }
-  const err = (k: string) => (errors[k] ? t(errors[k]) : undefined);
+  const err = (k: string) => (errors[k] ? t(errors[k], { reserved: editing?.reservedCount ?? 0 }) : undefined);
 
   return (
     <form onSubmit={submit} noValidate className="grid gap-4">
       <DialogHeader>
-        <DialogTitle>{source ? t("sessions.cloneTitle") : t("sessions.addTitle")}</DialogTitle>
-        <DialogDescription>{source ? t("sessions.cloneHint", { code: source.code, tz: shop.timezone }) : t("sessions.addHint", { tz: shop.timezone })}</DialogDescription>
+        <DialogTitle>{editing ? t("sessions.editTitle") : source ? t("sessions.cloneTitle") : t("sessions.addTitle")}</DialogTitle>
+        <DialogDescription>
+          {editing ? t("sessions.editHint", { code: editing.code }) : source ? t("sessions.cloneHint", { code: source.code, tz: shop.timezone }) : t("sessions.addHint", { tz: shop.timezone })}
+        </DialogDescription>
       </DialogHeader>
       <Field id="add-ws" label={t("sessions.workshop")} required error={err("ws")}>
         {(p) => (
-          <NativeSelect {...p} value={wsId} disabled={!!source}
+          <NativeSelect {...p} value={wsId} disabled={!!source || (!!editing && hasBookings)}
             onChange={(e) => { setWsId(e.target.value); const w = workshops.find((x) => x.id === e.target.value); if (w) setCap(String(w.defaultCapacity)); }}
             options={choices.map((w) => ({ value: w.id, label: title(w.id) }))} />
         )}
       </Field>
+      {editing && hasBookings ? <p className="-mt-2 text-xs text-muted-foreground" data-testid="workshop-locked">{t("sessions.workshopLocked")}</p> : null}
       <div className="grid gap-3 sm:grid-cols-2">
-        <Field id="add-date" label={t("sessions.date")} required error={err("date")}>
-          {(p) => <Input {...p} type="date" value={date} onChange={(e) => setDate(e.target.value)} />}
+        <Field id="add-date" label={t("sessions.date")} required={!editing} error={err("date")}>
+          {(p) => <Input {...p} type="date" value={date} readOnly={!!editing} disabled={!!editing} onChange={(e) => setDate(e.target.value)} />}
         </Field>
-        <Field id="add-time" label={t("sessions.startTime")} required error={err("time")}>
-          {(p) => <Input {...p} type="time" value={time} onChange={(e) => setTime(e.target.value)} />}
+        <Field id="add-time" label={t("sessions.startTime")} required={!editing} error={err("time")}>
+          {(p) => <Input {...p} type="time" value={time} readOnly={!!editing} disabled={!!editing} onChange={(e) => setTime(e.target.value)} />}
         </Field>
       </div>
       <Field id="add-cap" label={t("sessions.capacity")} required error={err("cap")}>
@@ -356,7 +338,7 @@ function AddSessionForm({
       </div>
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onCancel}><ArrowLeft aria-hidden="true" />{tops("common.back")}</Button>
-        <Button type="submit" disabled={!dirty}>{source ? <Copy aria-hidden="true" /> : <Plus aria-hidden="true" />}{source ? t("sessions.cloneConfirm") : t("sessions.addConfirm")}</Button>
+        <Button type="submit" disabled={!dirty}>{editing ? <Save aria-hidden="true" /> : source ? <Copy aria-hidden="true" /> : <Plus aria-hidden="true" />}{editing ? t("sessions.save") : source ? t("sessions.cloneConfirm") : t("sessions.addConfirm")}</Button>
       </DialogFooter>
     </form>
   );

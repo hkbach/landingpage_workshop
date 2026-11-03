@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { applySessionAction, checkCloseReason, checkReschedule, closeIfEnded, nextSessionCode, closeWaitsForEnd, type BookingStatus, type PaymentMethod, type RescheduleError, type SessionAction, type SessionCloseReason } from "@workshop/shared";
+import { applySessionAction, checkCloseReason, checkReschedule, closeIfEnded, isValidBookingCutoff, nextSessionCode, closeWaitsForEnd, type BookingStatus, type PaymentMethod, type RescheduleError, type SessionAction, type SessionCloseReason } from "@workshop/shared";
 import type { Booking, PaymentEntry, Session } from "@/lib/types";
 import {
   canTransition, computePaymentStatus, netPaid, seatDelta, targetStatus,
@@ -143,14 +143,30 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
     [sessions, bookings, now],
   );
 
-  const setSessionCapacity = useCallback(
-    (id: string, capacity: number): boolean => {
+  /**
+   * Edits a session: workshop, capacity, booking cut-off and image (never the date and time: that is Re-schedule). The capacity cannot go below
+   * the seats already reserved, and the workshop of a session that has bookings cannot change. When the workshop changes the session keeps
+   * its start and takes the length of the new workshop (`endsAt`). False when something is not allowed.
+   */
+  const updateSession = useCallback(
+    (id: string, patch: { workshopId: string; capacity: number; bookingCutoffMinutes: number; imageUrl?: string; endsAt: string }): boolean => {
       const s = sessions.find((x) => x.id === id);
-      if (!s || capacity < s.reservedCount || capacity < 1) return false;
-      setSessions((list) => list.map((x) => (x.id === id ? { ...x, capacity } : x)));
+      if (!s || s.status === "CLOSED") return false;
+      const hasBookings = s.reservedCount > 0 || bookings.some((b) => b.sessionId === id && b.status !== "CANCELLED");
+      if (patch.workshopId !== s.workshopId) {
+        if (hasBookings) return false;
+        if (sessions.some((x) => x.id !== id && x.workshopId === patch.workshopId && x.startsAt === s.startsAt)) return false;
+      }
+      if (!Number.isInteger(patch.capacity) || patch.capacity < 1 || patch.capacity < s.reservedCount || !isValidBookingCutoff(patch.bookingCutoffMinutes)) return false;
+      setSessions((list) => list.map((x) => {
+        if (x.id !== id) return x;
+        const { imageUrl: _old, ...rest } = x;
+        void _old;
+        return { ...rest, workshopId: patch.workshopId, capacity: patch.capacity, bookingCutoffMinutes: patch.bookingCutoffMinutes, endsAt: patch.endsAt, ...(patch.imageUrl ? { imageUrl: patch.imageUrl } : {}) };
+      }));
       return true;
     },
-    [sessions],
+    [sessions, bookings],
   );
 
   const addSession = useCallback((s: Omit<Session, "id" | "code" | "reservedCount" | "status">) => {
@@ -164,6 +180,6 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
 
   return {
     bookings, sessions, history, now, perform, addPayment, reschedule,
-    sessionAction, rescheduleSession, setSessionCapacity, addSession, addBooking,
+    sessionAction, rescheduleSession, updateSession, addSession, addBooking,
   };
 }

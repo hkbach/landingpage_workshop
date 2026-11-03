@@ -71,7 +71,7 @@ export function CloseSessionDialog({ open, onOpenChange, onConfirm }: { open: bo
 }
 
 /** The start of a session as the date and the time to show in the form (in the time zone of the shop). */
-function dateAndTime(iso: string, timeZone: string): { date: string; time: string } {
+export function dateAndTime(iso: string, timeZone: string): { date: string; time: string } {
   const parts = new Intl.DateTimeFormat("en-GB", { timeZone, hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(iso));
   return { date: dayKey(iso, timeZone), time: parts.replace(/^24:/, "00:") };
 }

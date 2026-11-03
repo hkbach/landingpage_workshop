@@ -151,9 +151,6 @@
     "empty": "No sessions in this range.",
     "today": "today",
     "close": "Close",
-    "editCapacity": "Edit capacity",
-    "capacityTitle": "Edit capacity",
-    "capacityHint": "{reserved} seats are already reserved. Capacity cannot go below that.",
     "capacity": "Capacity",
     "save": "Save",
     "addTitle": "Add one-off session",
@@ -205,6 +202,10 @@
     "cloneHint": "A new session like {code}: same workshop, capacity, cut-off and image. Choose its date and time (times in {tz}).",
     "cloneConfirm": "Clone session",
     "clonedFrom": "Cloned from {code} - {workshop}",
-    "rescheduleOnce": "A session can only be re-scheduled once, and this session has already been re-scheduled."
+    "rescheduleOnce": "A session can only be re-scheduled once, and this session has already been re-scheduled.",
+    "edit": "Edit",
+    "editTitle": "Edit session",
+    "editHint": "Change the details of {code}. The date and time cannot be changed here: use Re-schedule for a paused session.",
+    "workshopLocked": "The workshop cannot be changed because this session has bookings."
   }
 }

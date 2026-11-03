@@ -151,9 +151,6 @@
     "empty": "Không có buổi nào trong khoảng này.",
     "today": "hôm nay",
     "close": "Đóng",
-    "editCapacity": "Sửa sức chứa",
-    "capacityTitle": "Sửa sức chứa",
-    "capacityHint": "Đã có {reserved} chỗ được đặt. Sức chứa không được thấp hơn mức đó.",
     "capacity": "Sức chứa",
     "save": "Lưu",
     "addTitle": "Thêm buổi riêng lẻ",
@@ -205,6 +202,10 @@
     "cloneHint": "Tạo session mới giống {code}: cùng workshop, sức chứa, hạn chót đặt chỗ và ảnh. Hãy chọn ngày và giờ (giờ theo {tz}).",
     "cloneConfirm": "Nhân bản session",
     "clonedFrom": "Nhân bản từ {code} - {workshop}",
-    "rescheduleOnce": "Mỗi session chỉ được đổi lịch một lần và session này đã được đổi lịch rồi."
+    "rescheduleOnce": "Mỗi session chỉ được đổi lịch một lần và session này đã được đổi lịch rồi.",
+    "edit": "Chỉnh sửa",
+    "editTitle": "Chỉnh sửa session",
+    "editHint": "Thay đổi thông tin của {code}. Không thể đổi ngày giờ tại đây: hãy dùng Đổi lịch session với session đang tạm dừng.",
+    "workshopLocked": "Không thể đổi workshop vì session này đã có booking."
   }
 }
