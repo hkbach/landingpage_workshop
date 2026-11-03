@@ -237,20 +237,21 @@ export function WorkshopForm({
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader><CardTitle>{t("form.visibility")}</CardTitle></CardHeader>
-        <CardContent className="grid gap-3">
-          <Field id="ws-status" label={t("form.status")} className="max-w-xs">
-            {(p) => (
-              <NativeSelect {...p} value={d.status} onChange={(e) => setField("status", e.target.value as WorkshopStatus)}
-                options={WORKSHOP_STATUSES.map((s) => ({ value: s, label: t(`status.${s}`) }))} />
-            )}
-          </Field>
-          {workshop ? (
+      {/* A new workshop has no visibility to choose: it is always saved as a draft (its `status` starts as DRAFT). */}
+      {workshop ? (
+        <Card>
+          <CardHeader><CardTitle>{t("form.visibility")}</CardTitle></CardHeader>
+          <CardContent className="grid gap-3">
+            <Field id="ws-status" label={t("form.status")} className="max-w-xs">
+              {(p) => (
+                <NativeSelect {...p} value={d.status} onChange={(e) => setField("status", e.target.value as WorkshopStatus)}
+                  options={WORKSHOP_STATUSES.map((s) => ({ value: s, label: t(`status.${s}`) }))} />
+              )}
+            </Field>
             <p className="text-xs text-muted-foreground">{bookingCount > 0 ? t("form.hasBookings", { count: bookingCount }) : t("form.noDelete")}</p>
-          ) : null}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <div className="flex flex-wrap items-center gap-2">
         <Button type="submit" disabled={!dirty}>{t("form.save")}</Button>
