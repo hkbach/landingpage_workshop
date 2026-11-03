@@ -113,11 +113,11 @@ export type RegisterResult = { ok: true; customerId: string; created: boolean; m
  * booked becomes the account, so every booking of that email is in it (a new customer is made only when the email never booked). `merged` is how many
  * bookings the account got that way. Refused when the email has an account already.
  */
-export function registerGuestAccount(input: { email: string; fullName: string; country: string; birthDate: string; phone?: string; locale?: Customer["preferredLocale"] }): RegisterResult {
+export function registerGuestAccount(input: { email: string; fullName: string; country: string; birthDate: string; consentAt?: string; phone?: string; locale?: Customer["preferredLocale"] }): RegisterResult {
   const email = normalizeEmail(input.email);
   const matches = customersWithEmail(email);
   if (matches.some((c) => c.account)) return { ok: false, code: "ALREADY_REGISTERED" };
-  const account = { country: input.country, birthDate: input.birthDate };
+  const account = { country: input.country, birthDate: input.birthDate, ...(input.consentAt ? { consentAt: input.consentAt } : {}) };
   const phone = input.phone?.trim() || undefined;
   if (matches.length === 0) {
     const customer: Customer = { id: `cu-${newUuid().slice(0, 8)}`, fullName: input.fullName.trim(), email, ...(phone ? { phone } : {}), preferredLocale: input.locale ?? currentShop.defaultLocale, account };

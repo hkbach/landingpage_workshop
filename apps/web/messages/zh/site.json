@@ -258,6 +258,8 @@
     "registerFailed": "无法创建账户，请重试。",
     "accountCreated": "账户已创建",
     "accountMerged": "{merged, plural, =0 {未找到使用此邮箱的历史预订。} other {已将使用此邮箱的 # 个历史预订添加到您的账户。}}",
-    "proceed": "继续"
+    "proceed": "继续",
+    "consentLabel": "我同意 {shop} 保存我的国家/地区和出生日期，用于了解客人和策划优惠。我可以要求工作室删除这些信息。",
+    "consentRequired": "请勾选同意框以创建账户。"
   }
 }

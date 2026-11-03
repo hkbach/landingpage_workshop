@@ -15,7 +15,7 @@ const post = (route: (request: Request, ctx: never) => Promise<Response>, body: 
   route(new Request("http://clayco.localtest.me:3000/x", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }), ctx);
 const FREE = sessions.find((s) => s.status === "OPEN" && Date.parse(s.startsAt) > Date.now())!;
 const guest = (email: string, fullName = "Someone") => ({ sessionId: FREE.id, quantity: 1, fullName, email, phone: "+84 90 111 2222" });
-const PROFILE = { fullName: "Tran Binh", country: "VN", birthDate: "1995-05-20" };
+const PROFILE = { fullName: "Tran Binh", country: "VN", birthDate: "1995-05-20", consent: true };
 
 beforeEach(() => { resetBookingStore(); resetOutbox(); });
 
@@ -72,7 +72,7 @@ describe("a guest registers an account", () => {
   it("merges the bookings of a customer who booked in the demo data too, and a later booking goes to the account", async () => {
     const old = customers.find((c) => c.email === "minjun@example.com")!;
     const count = liveBookings().filter((b) => b.customerId === old.id).length;
-    const res = await post(register, { email: "minjun@example.com", fullName: "Kim Min-jun", country: "KR", birthDate: "1993-03-03" });
+    const res = await post(register, { email: "minjun@example.com", fullName: "Kim Min-jun", country: "KR", birthDate: "1993-03-03", consent: true });
     expect(await res.json()).toMatchObject({ customerId: old.id, created: false, merged: count });
     expect(liveCustomers().find((c) => c.id === old.id)!.account).toMatchObject({ country: "KR" });
     await post(book, guest("MINJUN@example.com"));
@@ -102,6 +102,17 @@ describe("a guest registers an account", () => {
     expect((await post(register, { email: "a@example.com", ...PROFILE, birthDate: "not a date" })).status).toBe(422);
     expect(liveCustomers().some((c) => c.email === "a@example.com")).toBe(false);
   });
+  it("needs the consent of the guest, and keeps when it was given", async () => {
+    expect((await post(register, { email: "c@example.com", ...PROFILE, consent: false })).status).toBe(422);
+    const { consent: _drop, ...without } = PROFILE;
+    void _drop;
+    expect((await post(register, { email: "c@example.com", ...without })).status).toBe(422);
+    expect(liveCustomers().some((c) => c.email === "c@example.com")).toBe(false);
+    const res = await post(register, { email: "c@example.com", ...PROFILE });
+    const body = (await res.json()) as { customerId: string };
+    const at = liveCustomers().find((c) => c.id === body.customerId)!.account!.consentAt!;
+    expect(Math.abs(Date.now() - Date.parse(at))).toBeLessThan(10_000);
+  });
   it("404 for a shop that does not exist", async () => {
     const res = await register(new Request("http://x", { method: "POST", body: JSON.stringify({ email: "a@example.com", ...PROFILE }) }), { params: Promise.resolve({ slug: "nope" }) } as never);
     expect(res.status).toBe(404);
@@ -117,7 +128,7 @@ describe("does an email have an account", () => {
     expect(await (await post(lookup, { email: "nobody@example.com" })).json()).toEqual({ registered: false, bookings: 0 });
   });
   it("is registered after the account was made", async () => {
-    await post(register, { email: "minjun@example.com", fullName: "Kim", country: "KR", birthDate: "1993-03-03" });
+    await post(register, { email: "minjun@example.com", fullName: "Kim", country: "KR", birthDate: "1993-03-03", consent: true });
     expect(await (await post(lookup, { email: "minjun@example.com" })).json()).toMatchObject({ registered: true });
   });
   it("422 for an email that is not one", async () => {

@@ -41,8 +41,9 @@
     "kpi": {
       "today": "今日预订",
       "upcoming": "即将开始的场次",
-      "unpaid": "未付款预订",
-      "notConfirmed": "未确认的预订"
+      "notConfirmed": "未确认的预订",
+      "awaitingPayment": "待确认支付",
+      "payAtStudio": "到工作室支付"
     },
     "checklist": {
       "title": "准备好发布了吗？",

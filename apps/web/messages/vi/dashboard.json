@@ -41,8 +41,9 @@
     "kpi": {
       "today": "Đặt chỗ hôm nay",
       "upcoming": "Các buổi sắp tới",
-      "unpaid": "Đặt chỗ chưa thanh toán",
-      "notConfirmed": "Booking chưa xác nhận"
+      "notConfirmed": "Booking chưa xác nhận",
+      "awaitingPayment": "Chờ xác nhận thanh toán",
+      "payAtStudio": "Sẽ thu tại studio"
     },
     "checklist": {
       "title": "Sẵn sàng xuất bản?",

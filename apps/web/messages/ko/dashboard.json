@@ -41,8 +41,9 @@
     "kpi": {
       "today": "오늘 예약",
       "upcoming": "예정된 세션",
-      "unpaid": "미결제 예약",
-      "notConfirmed": "미확인 예약"
+      "notConfirmed": "미확인 예약",
+      "awaitingPayment": "결제 확인 대기",
+      "payAtStudio": "스튜디오에서 결제 예정"
     },
     "checklist": {
       "title": "게시할 준비가 되었나요?",

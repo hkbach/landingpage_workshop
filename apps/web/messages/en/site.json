@@ -258,6 +258,8 @@
     "registerFailed": "We could not create the account. Please try again.",
     "accountCreated": "Account created",
     "accountMerged": "{merged, plural, =0 {No earlier booking was found with this email.} one {# earlier booking made with this email was added to your account.} other {# earlier bookings made with this email were added to your account.}}",
-    "proceed": "Continue"
+    "proceed": "Continue",
+    "consentLabel": "I agree that {shop} keeps my country and date of birth to know its guests and plan offers. I can ask the studio to delete them.",
+    "consentRequired": "Please tick the box to create your account."
   }
 }

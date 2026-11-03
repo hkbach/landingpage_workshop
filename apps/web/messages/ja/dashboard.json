@@ -41,8 +41,9 @@
     "kpi": {
       "today": "本日の予約",
       "upcoming": "今後のセッション",
-      "unpaid": "未払いの予約",
-      "notConfirmed": "未確認の予約"
+      "notConfirmed": "未確認の予約",
+      "awaitingPayment": "支払い確認待ち",
+      "payAtStudio": "スタジオで支払い予定"
     },
     "checklist": {
       "title": "公開の準備はできましたか？",

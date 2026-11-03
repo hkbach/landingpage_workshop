@@ -41,8 +41,9 @@
     "kpi": {
       "today": "Today's bookings",
       "upcoming": "Upcoming sessions",
-      "unpaid": "Unpaid bookings",
-      "notConfirmed": "Not confirmed bookings"
+      "notConfirmed": "Not confirmed bookings",
+      "awaitingPayment": "Awaiting payment confirmation",
+      "payAtStudio": "To pay at the studio"
     },
     "checklist": {
       "title": "Ready to publish?",

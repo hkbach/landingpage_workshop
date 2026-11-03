@@ -45,7 +45,7 @@ export interface Customer {
    * Set only for a guest who registered an account: the country they live in and their birth date ("YYYY-MM-DD"), both given at registration. A guest who
    * only booked has no account, so the shop knows neither.
    */
-  account?: { country: string; birthDate: string; gender?: Gender; socials?: Socials; avatarUrl?: string };
+  account?: { country: string; birthDate: string; gender?: Gender; socials?: Socials; avatarUrl?: string; /** When the guest agreed that the shop keeps the country and the date of birth. */ consentAt?: string };
 }
 
 export interface PaymentEntry {

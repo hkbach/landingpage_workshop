@@ -258,6 +258,8 @@
     "registerFailed": "Không tạo được tài khoản. Vui lòng thử lại.",
     "accountCreated": "Đã tạo tài khoản",
     "accountMerged": "{merged, plural, =0 {Không tìm thấy booking nào trước đó với email này.} other {Đã thêm # booking trước đó đặt bằng email này vào tài khoản của bạn.}}",
-    "proceed": "Tiếp tục"
+    "proceed": "Tiếp tục",
+    "consentLabel": "Tôi đồng ý để {shop} lưu quốc gia và ngày sinh của tôi nhằm hiểu khách hàng và lên kế hoạch ưu đãi. Tôi có thể yêu cầu studio xóa các thông tin này.",
+    "consentRequired": "Vui lòng đánh dấu ô đồng ý để tạo tài khoản."
   }
 }

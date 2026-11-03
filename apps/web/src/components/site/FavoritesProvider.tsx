@@ -52,7 +52,7 @@ export function FavoritesProvider({ slug, shopName, theme, children }: { slug: s
         <DialogContent style={modalThemeStyle(theme)} className={cn("max-h-[92dvh] gap-4 overflow-y-auto p-5 sm:max-w-md", siteFontClass(theme.font))}>
           <LoginHeader shopName={shopName} />
           {/* Mounted only while open, so the form starts empty every time. */}
-          {open ? <LoginForm slug={slug} onLoggedIn={onLoggedIn} onCancel={() => { setOpen(false); setPending(null); }} /> : null}
+          {open ? <LoginForm slug={slug} shopName={shopName} onLoggedIn={onLoggedIn} onCancel={() => { setOpen(false); setPending(null); }} /> : null}
         </DialogContent>
       </Dialog>
     </FavoritesContext.Provider>
@@ -77,7 +77,7 @@ const selectClass =
  * birth). Creating it merges into it the bookings that were made before with the same email, and the last step says how many. The builder preview (slug
  * "preview") has no server to ask, so it only logs in.
  */
-function LoginForm({ slug, onLoggedIn, onCancel }: { slug: string; onLoggedIn: (email: string) => void; onCancel: () => void }) {
+function LoginForm({ slug, shopName, onLoggedIn, onCancel }: { slug: string; shopName: string; onLoggedIn: (email: string) => void; onCancel: () => void }) {
   const t = useTranslations("site.favorites");
   const locale = useLocale();
   const [step, setStep] = useState<"email" | "code" | "profile" | "done">("email");
@@ -91,7 +91,8 @@ function LoginForm({ slug, onLoggedIn, onCancel }: { slug: string; onLoggedIn: (
   const [fullName, setFullName] = useState("");
   const [country, setCountry] = useState("");
   const [birthDate, setBirthDate] = useState("");
-  const [errors, setErrors] = useState<{ fullName?: boolean; country?: boolean; birthDate?: boolean }>({});
+  const [consent, setConsent] = useState(false);
+  const [errors, setErrors] = useState<{ fullName?: boolean; country?: boolean; birthDate?: boolean; consent?: boolean }>({});
   const [failed, setFailed] = useState(false);
   const [merged, setMerged] = useState(0);
   const locked = attempts >= OTP_MAX_ATTEMPTS;
@@ -138,15 +139,15 @@ function LoginForm({ slug, onLoggedIn, onCancel }: { slug: string; onLoggedIn: (
   }
 
   async function register() {
-    const next = { fullName: !fullName.trim(), country: !COUNTRY_CODES.includes(country), birthDate: !birthDate || birthDate > today || birthDate < "1900-01-01" };
+    const next = { fullName: !fullName.trim(), country: !COUNTRY_CODES.includes(country), birthDate: !birthDate || birthDate > today || birthDate < "1900-01-01", consent: !consent };
     setErrors(next);
     setFailed(false);
-    if (next.fullName || next.country || next.birthDate) return;
+    if (next.fullName || next.country || next.birthDate || next.consent) return;
     setBusy(true);
     try {
       const res = await fetch(base, {
         method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ email: clean, fullName: fullName.trim(), country, birthDate, locale }),
+        body: JSON.stringify({ email: clean, fullName: fullName.trim(), country, birthDate, locale, consent: true }),
       });
       if (res.status === 409) { onLoggedIn(clean); return; } // the email has an account after all
       if (!res.ok) { setFailed(true); return; }
@@ -208,6 +209,13 @@ function LoginForm({ slug, onLoggedIn, onCancel }: { slug: string; onLoggedIn: (
             </select>
           ))}
           {field("fav-birth", t("birthDateLabel"), errors.birthDate, <Input id="fav-birth" type="date" min="1900-01-01" max={today} className="h-11 text-base" value={birthDate} aria-required aria-invalid={errors.birthDate} onChange={(e) => setBirthDate(e.target.value)} />)}
+          <div className="space-y-1">
+            <label htmlFor="fav-consent" className="flex cursor-pointer items-start gap-2 text-sm">
+              <input id="fav-consent" type="checkbox" className="mt-0.5 size-4 shrink-0" checked={consent} aria-required aria-invalid={errors.consent} onChange={(e) => { setConsent(e.target.checked); setErrors((x) => ({ ...x, consent: false })); }} />
+              <span>{t("consentLabel", { shop: shopName })}</span>
+            </label>
+            {errors.consent ? <p role="alert" className="text-sm text-red-700">{t("consentRequired")}</p> : null}
+          </div>
           {failed ? <p role="alert" className="text-sm text-red-700">{t("registerFailed")}</p> : null}
         </div>
       ) : (
