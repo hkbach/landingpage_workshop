@@ -6,7 +6,7 @@ import type { Booking, PaymentEntry, Session } from "@/lib/types";
 import {
   canTransition, computePaymentStatus, netPaid, reservedSeats, seatDelta, targetStatus,
   type BlockedReason, type BookingAction } from "@/lib/booking-state";
-import { persistBookingStatus } from "@/lib/bookings-api";
+import { persistBookingStatus, persistPaid } from "@/lib/bookings-api";
 
 export interface BookingEvent { status: BookingStatus; at?: string; note?: string }
 
@@ -108,10 +108,14 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
       const net = netPaid(b.payments);
       if (paid) {
         if (b.paymentStatus === "PAID") return { ok: true };
-        return addPayment(bookingId, { type: "PAYMENT", amount: b.totalAmount - Math.max(0, net), method: "CASH", note: "Payment confirmed after the session" });
+        const res = addPayment(bookingId, { type: "PAYMENT", amount: b.totalAmount - Math.max(0, net), method: "CASH", note: "Payment confirmed after the session" });
+        if (res.ok) persistPaid(bookingId, true);
+        return res;
       }
       if (b.paymentStatus === "UNPAID") return { ok: true };
-      return addPayment(bookingId, { type: "REFUND", amount: net, method: "CASH", note: "Marked as unpaid" });
+      const res = addPayment(bookingId, { type: "REFUND", amount: net, method: "CASH", note: "Marked as unpaid" });
+      if (res.ok) persistPaid(bookingId, false);
+      return res;
     },
     [bookings, addPayment],
   );

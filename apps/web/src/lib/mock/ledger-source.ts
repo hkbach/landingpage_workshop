@@ -2,6 +2,7 @@
 // TODO(api): the backend joins the booking payments with the promotions kept on the booking (a snapshot, so a later edit of the promotion does
 // not change the history).
 import { discountAmount, priceBooking, type BookingPriceInfo, type PaymentSource } from "@workshop/shared";
+import { computePaymentStatus } from "@/lib/booking-state";
 import type { Booking } from "@/lib/types";
 import { paymentHistory } from "./data";
 import { allPromotions } from "./promotion-store";
@@ -27,11 +28,18 @@ export function bookingPrices(bookings: readonly Booking[]): Record<string, Book
   return Object.fromEntries(bookings.map((b) => [b.id, priceOf(b)]));
 }
 
+/**
+ * What the Income page and the Overview collect: only the bookings whose payment status is PAID (every payment and refund of such a booking). A booking
+ * that is Unpaid (never paid, paid in part, or paid and then given back) has no place in the figures. A booking of the demo history is Paid when what
+ * was paid, less the refunds, covers the price it was paid for.
+ */
 export function paymentSources(bookings: readonly Booking[]): PaymentSource[] {
   const priceOf = priceReader();
+  const historyPaid = (h: (typeof paymentHistory)[number]) =>
+    computePaymentStatus(h.payments.reduce((n, p) => (p.type === "PAYMENT" ? n + p.amount : n), 0), h.payments) === "PAID";
   return [
-    ...paymentHistory,
-    ...bookings.map((b): PaymentSource => ({
+    ...paymentHistory.filter(historyPaid),
+    ...bookings.filter((b) => b.paymentStatus === "PAID").map((b): PaymentSource => ({
       id: b.id, bookingCode: b.bookingCode, currency: b.currency, payments: b.payments,
       price: priceOf(b),
     })),

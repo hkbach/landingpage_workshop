@@ -2,8 +2,8 @@
 // (they start NOT_CONFIRMED and become CONFIRMED when the guest opens the link of the email), plus the status changes the ops screens make (cancel,
 // check-in, ...: they are sent here so they survive a reload and the promotion rules can see them). Lives on globalThis like the other mock stores.
 import { eligiblePromotions, isSessionFinished, nextBookingCode, priceBooking, type BookingStatus, type BookingUse } from "@workshop/shared";
-import { confirmation, reservedSeats, type PreCheckInStatus } from "@/lib/booking-state";
-import type { Booking, Customer } from "@/lib/types";
+import { computePaymentStatus, confirmation, netPaid, reservedSeats, type PreCheckInStatus } from "@/lib/booking-state";
+import type { Booking, Customer, PaymentEntry } from "@/lib/types";
 import { newUuid } from "@/lib/uuid";
 import { bookings as seed, currentShop, customers as seedCustomers, sessions, workshops } from "./data";
 import { queueBookingConfirmation } from "./outbox-store";
@@ -19,9 +19,15 @@ interface Store {
   tokens: Map<string, string>;
   /** Idempotency-Key -> the booking it made, so a repeated request gives the same booking (FR-BOOK-02). */
   keys: Map<string, string>;
+  /** The payments and refunds the shop recorded after the session (Confirm payment / Unpaid), added to the ones the booking already has. */
+  extra: Map<string, PaymentEntry[]>;
 }
 const g = globalThis as unknown as { __bookingStore?: Store };
-const store = (): Store => (g.__bookingStore ??= { changes: new Map(), made: [], madeCustomers: [], tokens: new Map(), keys: new Map() });
+const store = (): Store => {
+  const st = (g.__bookingStore ??= { changes: new Map(), made: [], madeCustomers: [], tokens: new Map(), keys: new Map(), extra: new Map() });
+  st.extra ??= new Map(); // a store made before this field existed (a dev server that reloaded its code)
+  return st;
+};
 const changes = () => store().changes;
 const allRows = (): Booking[] => [...seed, ...store().made];
 
@@ -46,10 +52,30 @@ export function liveBookings(): Booking[] {
     const status = c?.status ?? b.status;
     // The status before a check-in is only kept while the booking is checked in (CONFIRMED when it was never recorded).
     const before = status === "CHECKED_IN" ? (c?.statusBeforeCheckIn ?? b.statusBeforeCheckIn ?? "CONFIRMED") : undefined;
+    const extra = store().extra.get(b.id);
+    const payments = extra ? [...b.payments, ...extra] : b.payments;
     return {
-      ...rest, status, ...(c ? { cancelReason: c.cancelReason ?? b.cancelReason, checkedInAt: c.checkedInAt } : {}), ...(before ? { statusBeforeCheckIn: before } : {}),
+      ...rest, payments, paymentStatus: extra ? computePaymentStatus(b.totalAmount, payments) : b.paymentStatus, status, ...(c ? { cancelReason: c.cancelReason ?? b.cancelReason, checkedInAt: c.checkedInAt } : {}), ...(before ? { statusBeforeCheckIn: before } : {}),
     };
   });
+}
+
+/**
+ * The shop sets a booking Paid or Unpaid after the session. Paid records the missing amount as a cash payment; Unpaid gives back what was paid as a
+ * refund entry (entries are only added, never changed). False when the booking does not exist or has nothing to pay. TODO(api): in the transaction
+ * of the endpoint, with the audit log.
+ */
+export function recordPaid(id: string, paid: boolean, by: string, now: Date = new Date()): boolean {
+  const b = liveBookings().find((x) => x.id === id);
+  if (!b || b.totalAmount <= 0) return false;
+  const net = netPaid(b.payments);
+  if (paid ? b.paymentStatus === "PAID" : b.paymentStatus === "UNPAID") return true;
+  const entry: PaymentEntry = {
+    id: `pm-srv-${newUuid()}`, type: paid ? "PAYMENT" : "REFUND", amount: paid ? b.totalAmount - Math.max(0, net) : net, method: "CASH",
+    note: paid ? "Payment confirmed after the session" : "Marked as unpaid", recordedAt: now.toISOString(), recordedBy: by,
+  };
+  store().extra.set(id, [...(store().extra.get(id) ?? []), entry]);
+  return true;
 }
 
 /** The customers of the shop: the demo ones, and the ones guests became by booking. */
