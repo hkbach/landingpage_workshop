@@ -128,7 +128,7 @@
     "readOnly": "ショップが停止されているため、設定は閲覧専用です。",
     "sections": {
       "general": "ショップと連絡先",
-      "regional": "地域と予約ルール",
+      "regional": "地域と通貨",
       "regionalDesc": "セッションの時刻と料金に使用されます。",
       "languages": "言語",
       "languagesDesc": "公開ランディングページで提供する言語です。"

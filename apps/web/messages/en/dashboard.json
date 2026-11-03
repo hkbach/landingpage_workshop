@@ -128,7 +128,7 @@
     "readOnly": "Your shop is suspended, so settings are read-only.",
     "sections": {
       "general": "Shop and contact",
-      "regional": "Region and booking rules",
+      "regional": "Region and currency",
       "regionalDesc": "Used for session times and prices.",
       "languages": "Languages",
       "languagesDesc": "Languages offered on your public landing page."

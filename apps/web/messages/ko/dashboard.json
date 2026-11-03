@@ -128,7 +128,7 @@
     "readOnly": "샵이 정지되어 설정은 읽기 전용이에요.",
     "sections": {
       "general": "샵 및 연락처",
-      "regional": "지역 및 예약 규칙",
+      "regional": "지역 및 통화",
       "regionalDesc": "세션 시간과 가격에 사용돼요.",
       "languages": "언어",
       "languagesDesc": "공개 랜딩 페이지에서 제공하는 언어예요."

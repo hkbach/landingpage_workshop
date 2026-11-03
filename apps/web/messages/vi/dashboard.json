@@ -128,7 +128,7 @@
     "readOnly": "Cửa hàng của bạn đang bị tạm ngưng nên cài đặt ở chế độ chỉ xem.",
     "sections": {
       "general": "Cửa hàng và liên hệ",
-      "regional": "Khu vực và quy tắc đặt chỗ",
+      "regional": "Khu vực và tiền tệ",
       "regionalDesc": "Dùng cho giờ của buổi và giá.",
       "languages": "Ngôn ngữ",
       "languagesDesc": "Các ngôn ngữ cung cấp trên trang giới thiệu công khai của bạn."

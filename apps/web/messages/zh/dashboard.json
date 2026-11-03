@@ -128,7 +128,7 @@
     "readOnly": "您的店铺已被暂停，因此设置为只读。",
     "sections": {
       "general": "店铺与联系方式",
-      "regional": "地区与预订规则",
+      "regional": "地区与货币",
       "regionalDesc": "用于场次时间和价格。",
       "languages": "语言",
       "languagesDesc": "您的公开落地页提供的语言。"
