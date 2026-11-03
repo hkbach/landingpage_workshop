@@ -188,10 +188,10 @@ export function WorkshopForm({
           <Field id="ws-capacity" label={t("form.capacity")} required error={err("defaultCapacity")} hint={t("form.capacityHint", { max: MAX_CAPACITY })}>
             {(p) => <Input {...p} type="number" inputMode="numeric" min={1} max={MAX_CAPACITY} value={d.defaultCapacity} onChange={(e) => setField("defaultCapacity", e.target.value)} />}
           </Field>
-          <Field id="ws-max" label={t("form.maxPerBooking")} required error={err("maxPerBooking")}>
+          <Field id="ws-max" label={t("form.maxPerBooking")} required error={err("maxPerBooking")} hint={t("form.maxPerBookingHint")}>
             {(p) => <Input {...p} type="number" inputMode="numeric" min={1} max={MAX_CAPACITY} value={d.maxPerBooking} onChange={(e) => setField("maxPerBooking", e.target.value)} />}
           </Field>
-          <Field id="ws-sort" label={t("form.sortOrder")} error={err("sortOrder")}>
+          <Field id="ws-sort" label={t("form.sortOrder")} error={err("sortOrder")} hint={t("form.sortOrderHint")}>
             {(p) => <Input {...p} type="number" inputMode="numeric" value={d.sortOrder} onChange={(e) => setField("sortOrder", e.target.value)} />}
           </Field>
         </CardContent>
