@@ -62,6 +62,14 @@ describe("demo sessions: well formed", () => {
   it("a session closed for good (4 closes, in the future) to try the system administrator", () => {
     expect(sessions.some((s) => s.status === "CLOSED" && closedForGood(s) && new Date(s.startsAt) > new Date())).toBe(true);
   });
+  it("a session closed by a system administrator, and one opened again by an administrator after the owner used all 4 closes", () => {
+    const byAdmin = sessions.find((s) => s.status === "CLOSED" && s.notes?.at(-1)?.by === "ADMIN");
+    expect(byAdmin, "closed by an administrator").toBeDefined();
+    expect(byAdmin!.notes!.at(-1)).toMatchObject({ type: "CLOSED", reason: { code: "OTHER" } });
+    const reopened = sessions.find((s) => s.status === "OPEN" && s.notes?.at(-1)?.type === "REOPENED" && s.notes.at(-1)!.by === "ADMIN");
+    expect(reopened, "opened again by an administrator").toBeDefined();
+    expect(reopened!.notes!.filter((n) => n.type === "CLOSED" && n.by !== "ADMIN")).toHaveLength(4);
+  });
   it("a clone points at a session that exists, of the same workshop", () => {
     for (const s of sessions.filter((x) => x.clonedFrom)) {
       const source = sessions.find((x) => x.code === s.clonedFrom!.code);
@@ -141,5 +149,13 @@ describe("demo bookings of the sessions", () => {
   });
   it("a guest without an email (walk-in) and guests of different languages", () => {
     expect(bookings.some((b) => b.source === "WALK_IN")).toBe(true);
+  });
+  it("closed sessions with guests: one who gets an email, a walk-in without one, and one who cancelled (not emailed); also a session closed by the system", () => {
+    const closedWithGuests = shown.filter((s) => s.status === "CLOSED" && bookings.some((b) => b.sessionId === s.id));
+    const kinds = (s: (typeof shown)[number]) => bookings.filter((b) => b.sessionId === s.id);
+    expect(closedWithGuests.some((s) => kinds(s).some((b) => b.status === "CANCELLED") && kinds(s).some((b) => b.status !== "CANCELLED"))).toBe(true);
+    expect(closedWithGuests.some((s) => kinds(s).some((b) => b.source === "WALK_IN"))).toBe(true);
+    expect(closedWithGuests.some((s) => s.autoClosed)).toBe(true);
+    expect(closedWithGuests.some((s) => !s.autoClosed && closedForGood(s))).toBe(true);
   });
 });

@@ -115,13 +115,20 @@ export const sessions: Session[] = [
   { id: "se-14", code: "SES-0014", workshopId: "ws-2", startsAt: at(7, 14), endsAt: at(7, 15.5), capacity: 10, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, notes: [{ type: "RESCHEDULED", at: at(-4, 11), reason: { code: "VENUE_ISSUE" } }, { type: "CLOSED", at: at(-1, 11), reason: { code: "OTHER", note: "The glaze delivery is late." } }] },
   // Sold out: every seat is booked.
   { id: "se-15", code: "SES-0015", workshopId: "ws-1", startsAt: at(8, 10), endsAt: at(8, 12), capacity: 6, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 30, imageUrl: pic("plates") },
-  { id: "se-16", code: "SES-0016", workshopId: "ws-2", startsAt: at(9, 10), endsAt: at(9, 11.5), capacity: 12, reservedCount: 0, status: "OPEN", bookingCutoffMinutes: 240 },
+  // Closed by a system administrator (the note says so): the owner cannot re-open it, only an administrator can.
+  { id: "se-16", code: "SES-0016", workshopId: "ws-2", startsAt: at(9, 10), endsAt: at(9, 11.5), capacity: 12, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 240, notes: [{ type: "CLOSED", at: at(0, 7), by: "ADMIN", reason: { code: "OTHER", note: "Reported by guests: the venue is not safe." } }] },
   // Cloned from SES-0009.
   { id: "se-17", code: "SES-0017", workshopId: "ws-1", startsAt: at(10, 9), endsAt: at(10, 11), capacity: 8, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 1440, imageUrl: pic("pottery"), clonedFrom: { code: "SES-0009", workshopId: "ws-1" } },
   // Re-scheduled once already (it was moved from another day): its Re-schedule button is read-only.
   { id: "se-34", code: "SES-0034", workshopId: "ws-2", startsAt: at(12, 10), endsAt: at(12, 11.5), capacity: 10, reservedCount: 0, status: "PAUSED", bookingCutoffMinutes: 120, notes: [{ type: "RESCHEDULED", at: at(-1, 10), reason: { code: "SCHEDULE_CHANGE" } }] },
   // Three sessions on one day, in three situations.
-  { id: "se-38", code: "SES-0038", workshopId: "ws-1", startsAt: at(14, 9), endsAt: at(14, 11), capacity: 8, reservedCount: 0, status: "OPEN", bookingCutoffMinutes: 120 },
+  // Closed 4 times by the owner (the last one for good), then opened again by a system administrator: Open, and the owner can never close it again.
+  { id: "se-38", code: "SES-0038", workshopId: "ws-1", startsAt: at(14, 9), endsAt: at(14, 11), capacity: 8, reservedCount: 0, status: "OPEN", bookingCutoffMinutes: 120, notes: [
+    { type: "CLOSED", at: at(-8, 9), reason: { code: "NOT_ENOUGH_GUESTS" } }, { type: "REOPENED", at: at(-7, 9) },
+    { type: "CLOSED", at: at(-6, 9), reason: { code: "SCHEDULE_CHANGE" } }, { type: "REOPENED", at: at(-5, 9) },
+    { type: "CLOSED", at: at(-4, 9), reason: { code: "VENUE_ISSUE" } }, { type: "REOPENED", at: at(-3, 9) },
+    { type: "CLOSED", at: at(-2, 9), reason: { code: "NOT_ENOUGH_GUESTS" } }, { type: "REOPENED", at: at(-1, 9), by: "ADMIN" },
+  ] },
   { id: "se-39", code: "SES-0039", workshopId: "ws-2", startsAt: at(14, 13), endsAt: at(14, 14.5), capacity: 10, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 120 },
   { id: "se-40", code: "SES-0040", workshopId: "ws-1", startsAt: at(14, 17), endsAt: at(14, 19), capacity: 8, reservedCount: 0, status: "PAUSED", bookingCutoffMinutes: 120, notes: [{ type: "RESCHEDULED", at: at(-9, 15), reason: { code: "INSTRUCTOR_UNAVAILABLE" } }, { type: "RESCHEDULED", at: at(-5, 10), reason: { code: "SCHEDULE_CHANGE" } }, { type: "RESCHEDULED", at: at(-2, 15), reason: { code: "OTHER", note: "The studio is booked for a private event." } }] },
   // Cloned from SES-0034 (the clone is a new Open session).
@@ -218,6 +225,21 @@ export const bookings: Booking[] = [
   booking({ id: "bk-28", sessionId: "se-39", customerId: "cu-4", quantity: 3 }),
   // A guest of the session taking place who was late: the booking was released, and the guest can still be checked in while there is room.
   booking({ id: "bk-29", sessionId: "se-27", customerId: "cu-3", quantity: 1, source: "WALK_IN", status: "LATE_RELEASED" }),
+  // ---- Closed sessions: closing one emails every guest who booked it except the one who cancelled (the walk-in has no email) ----
+  // SES-0012 (closed for good by the owner).
+  booking({ id: "bk-30", sessionId: "se-12", customerId: "cu-1", quantity: 2 }),
+  booking({ id: "bk-31", sessionId: "se-12", customerId: "cu-2", quantity: 1 }),
+  booking({ id: "bk-32", sessionId: "se-12", customerId: "cu-4", quantity: 1, status: "CANCELLED", cancelReason: "The session was closed several times" }),
+  // SES-0013 (closed, re-opened and closed again) and SES-0016 (closed by a system administrator).
+  booking({ id: "bk-33", sessionId: "se-13", customerId: "cu-4", quantity: 2 }),
+  booking({ id: "bk-34", sessionId: "se-13", customerId: "cu-3", quantity: 1, source: "WALK_IN" }),
+  booking({ id: "bk-35", sessionId: "se-16", customerId: "cu-1", quantity: 2 }),
+  booking({ id: "bk-36", sessionId: "se-16", customerId: "cu-2", quantity: 2 }),
+  booking({ id: "bk-37", sessionId: "se-16", customerId: "cu-4", quantity: 1, status: "CANCELLED", cancelReason: "Guest changed plans" }),
+  // SES-0038 (opened again by an administrator) and SES-0022 (left Running when its time was over: the system closed it).
+  booking({ id: "bk-38", sessionId: "se-38", customerId: "cu-2", quantity: 1 }),
+  booking({ id: "bk-39", sessionId: "se-22", customerId: "cu-1", quantity: 2 }),
+  booking({ id: "bk-40", sessionId: "se-22", customerId: "cu-4", quantity: 1, status: "CANCELLED", cancelReason: "Could not come" }),
 ];
 
 // The seats a session has taken come from its bookings (a cancelled booking holds none).

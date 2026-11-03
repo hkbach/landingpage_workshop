@@ -513,7 +513,7 @@ Browser ────────────────────────
 **FR-ADM-07 – Thông tin liên hệ hỗ trợ của nền tảng (Should, phát triển sau)**
 - Admin cấu hình các kênh hỗ trợ của nền tảng: **WhatsApp, Phone, Zalo, Email** (giá trị toàn nền tảng, không theo shop; lưu trong `platform_settings`).
 - Đây là kênh để **shop owner liên hệ admin hệ thống khi cần hỗ trợ**. Hoàn toàn **không liên quan đến thông tin liên hệ của shop** (`contact_email`, `contact_phone`, `whatsapp` của organization, section `contact`) và **không bao giờ hiển thị trên landing page của shop** hay bất kỳ trang public nào; chỉ hiển thị trong khu vực `/shopowner`.
-- Shop owner thấy các kênh này trong khung **Publish** của trình dựng trang ("Need help?") ở mọi trạng thái shop. Chỉ hiển thị kênh đã nhập; liên kết được dựng ở phía ứng dụng sau khi kiểm tra định dạng (`wa.me`, `tel:`, `zalo.me`, `mailto:`), giá trị sai bị bỏ qua.
+- Shop owner thấy các kênh này trong khung **Publish** của trình dựng trang ("Need help?") và ở **cuối menu bên trái, dưới mục Settings** (cùng dữ liệu, dạng cột hẹp không có đoạn mô tả), ở mọi trạng thái shop. Chỉ hiển thị kênh đã nhập; liên kết được dựng ở phía ứng dụng sau khi kiểm tra định dạng (`wa.me`, `tel:`, `zalo.me`, `mailto:`), giá trị sai bị bỏ qua.
 - Hiện tại (MVP, chưa có trang admin này) dùng dữ liệu mock tại `apps/web/src/lib/mock/platform.ts`.
 
 ---

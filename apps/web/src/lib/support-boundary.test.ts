@@ -28,12 +28,14 @@ describe("platform support contact stays out of the public landing page", () => 
     expect(offenders).toEqual([]);
   });
 
-  it("only the shop owner builder (and its page) use it", () => {
+  it("only the shop owner builder, its page and the shop owner menu (sidebar) use it", () => {
     const users = all.filter((f) => SUPPORT_IDENTIFIERS.test(read(f))).map(rel).filter((f) => f !== "lib/support-contact.ts" && f !== "lib/mock/platform.ts");
     expect(users.sort()).toEqual([
+      "app/shopowner/[slug]/layout.tsx",
       "app/shopowner/[slug]/site/[pageId]/page.tsx",
       "components/builder/SiteBuilder.tsx",
       "components/builder/SupportContactBox.tsx",
+      "components/dashboard/shell/dashboard-shell.tsx",
     ]);
   });
 

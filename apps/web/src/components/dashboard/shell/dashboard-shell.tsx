@@ -13,12 +13,14 @@ import { NAV_ITEMS } from "./nav";
 import { statusBadgeVariant } from "./options";
 import { UserMenu } from "./user-menu";
 import { ShopLink, useShopHref } from "@/components/dashboard/shell/shop-link";
+import { SupportContactBox } from "@/components/builder/SupportContactBox";
+import type { SupportContact } from "@/lib/support-contact";
 
 export interface ShellShop {
   name: string; slug: string; status: OrgStatus; ownerName: string; ownerEmail: string;
 }
 
-export function DashboardShell({ shop, banner, children }: { shop: ShellShop; banner: ReactNode; children: ReactNode }) {
+export function DashboardShell({ shop, banner, support, children }: { shop: ShellShop; banner: ReactNode; support?: SupportContact; children: ReactNode }) {
   const t = useTranslations();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -82,6 +84,8 @@ export function DashboardShell({ shop, banner, children }: { shop: ShellShop; ba
             })}
           </ul>
         </nav>
+        {/* How to reach the platform admin team: the same contact as in the Publish card of the landing page builder. */}
+        {support ? <div className="border-t p-3"><SupportContactBox contact={support} variant="sidebar" /></div> : null}
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">

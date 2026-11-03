@@ -1,6 +1,7 @@
 
 import { notFound } from "next/navigation";
 import { currentShop } from "@/lib/mock/data";
+import { platformSupport } from "@/lib/mock/platform";
 import { DashboardShell } from "@/components/dashboard/shell/dashboard-shell";
 import { ShopStatusBanner } from "@/components/dashboard/shell/shop-status-banner";
 
@@ -13,6 +14,7 @@ export default async function DashboardLayout({ children, params }: LayoutProps<
     <DashboardShell
       shop={{ name: shop.name, slug: shop.slug, status: shop.status, ownerName: shop.ownerName, ownerEmail: shop.ownerEmail }}
       banner={<ShopStatusBanner status={shop.status} reason={shop.statusReason} />}
+      support={platformSupport}
     >
       {children}
     </DashboardShell>
