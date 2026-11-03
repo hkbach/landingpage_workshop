@@ -266,7 +266,11 @@
       "REFUND": "Hoàn tiền"
     },
     "amount": "Số tiền",
-    "empty": "Không có khoản thu nào trong kỳ này."
+    "empty": "Không có khoản thu nào trong kỳ này.",
+    "tipOriginal": "Giá gốc",
+    "tipTotal": "Tổng booking",
+    "tipPayment": "Khoản thanh toán này",
+    "tipRefund": "Khoản hoàn tiền này"
   },
   "promotions": {
     "title": "Quản lý khuyến mãi",

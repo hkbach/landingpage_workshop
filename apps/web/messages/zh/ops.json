@@ -266,7 +266,11 @@
       "REFUND": "退款"
     },
     "amount": "金额",
-    "empty": "此期间没有收款。"
+    "empty": "此期间没有收款。",
+    "tipOriginal": "原价",
+    "tipTotal": "预订合计",
+    "tipPayment": "本次收款",
+    "tipRefund": "本次退款"
   },
   "promotions": {
     "title": "促销管理",

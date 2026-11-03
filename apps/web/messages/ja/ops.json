@@ -266,7 +266,11 @@
       "REFUND": "返金"
     },
     "amount": "金額",
-    "empty": "この期間の支払いはありません。"
+    "empty": "この期間の支払いはありません。",
+    "tipOriginal": "元の価格",
+    "tipTotal": "予約の合計",
+    "tipPayment": "今回の支払い",
+    "tipRefund": "今回の返金"
   },
   "promotions": {
     "title": "プロモーション管理",

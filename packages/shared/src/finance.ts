@@ -6,10 +6,15 @@
 //  - Service fee: a percentage, set by the platform administrator, of the same income.
 // The rates are kept in basis points (1% = 100) so no amount is ever computed with a fractional percent.
 
+/** What a voucher (a promotion code) took off a booking, in minor units. */
+export interface VoucherDiscount { code: string; amount: number }
+/** The original price of a booking (unit price x quantity, before any voucher) and the vouchers used on it, each with its own discount. */
+export interface BookingPriceInfo { subtotal: number; discounts: VoucherDiscount[] }
+
 export interface PaymentSource {
   id: string; bookingCode: string; currency: string;
-  /** Codes of the vouchers (promotions) the booking used when it was paid. */
-  vouchers?: readonly string[];
+  /** The original price of the booking and what each voucher (promotion code) took off it, as they were when it was paid. */
+  price?: BookingPriceInfo;
   payments: { id: string; type: "PAYMENT" | "REFUND"; amount: number; recordedAt: string }[];
 }
 
@@ -48,8 +53,8 @@ export const feeOf = (amount: number, bps: number): number => Math.sign(amount) 
 /** One payment or refund of a booking with the fees taken from it. `amount` is signed: a refund is negative. */
 export interface LedgerRow {
   id: string; bookingCode: string; kind: "PAYMENT" | "REFUND"; currency: string;
-  /** Vouchers (promotion codes) the booking used when it was paid; empty when it used none. */
-  vouchers: string[];
+  /** The original price of the booking and the discount of each voucher it used (none when it used none). */
+  price: BookingPriceInfo;
   /** ISO UTC instant the payment was recorded. */
   occurredAt: string;
   amount: number; maintenanceFee: number; serviceFee: number;
@@ -63,7 +68,7 @@ export function ledgerFromPayments(bookings: readonly PaymentSource[], rates: Fe
       const amount = p.type === "PAYMENT" ? p.amount : -p.amount;
       const maintenanceFee = feeOf(amount, rates.maintenanceBps);
       const serviceFee = feeOf(amount, rates.serviceBps);
-      return { id: `pay-${p.id}`, bookingCode: b.bookingCode, kind: p.type, currency: b.currency, vouchers: [...(b.vouchers ?? [])], occurredAt: p.recordedAt, amount, maintenanceFee, serviceFee, profit: amount - maintenanceFee - serviceFee };
+      return { id: `pay-${p.id}`, bookingCode: b.bookingCode, kind: p.type, currency: b.currency, price: { subtotal: b.price?.subtotal ?? 0, discounts: (b.price?.discounts ?? []).map((d) => ({ ...d })) }, occurredAt: p.recordedAt, amount, maintenanceFee, serviceFee, profit: amount - maintenanceFee - serviceFee };
     }),
   );
 }

@@ -59,9 +59,12 @@ describe("ledgerFromPayments", () => {
       ["REFUND", -200_000, -4_000, -6_000, -190_000],
     ]);
   });
-  it("keeps the vouchers the booking used on each of its rows (none when it used none)", () => {
-    expect(ledgerFromPayments([{ ...src[0]!, vouchers: ["EARLY20", "NEWS5"] }], RATES).map((r) => r.vouchers)).toEqual([["EARLY20", "NEWS5"], ["EARLY20", "NEWS5"]]);
-    expect(ledgerFromPayments(src, RATES).map((r) => r.vouchers)).toEqual([[], []]);
+  it("keeps the original price and the discount of each voucher on every row of the booking (nothing when it used none)", () => {
+    const price = { subtotal: 1_300_000, discounts: [{ code: "EARLY20", amount: 260_000 }, { code: "NEWS5", amount: 65_000 }] };
+    const rows = ledgerFromPayments([{ ...src[0]!, price }], RATES);
+    expect(rows.map((r) => r.price)).toEqual([price, price]);
+    expect(rows[0]!.price).not.toBe(price); // a copy
+    expect(ledgerFromPayments(src, RATES).map((r) => r.price)).toEqual([{ subtotal: 0, discounts: [] }, { subtotal: 0, discounts: [] }]);
   });
   it("Profit = total income - maintenance fee - service fee", () => {
     const t = summarizeLedger(ledgerFromPayments(src, RATES));
@@ -88,7 +91,7 @@ describe("months", () => {
 describe("reports", () => {
   const row = (id: string, kind: LedgerRow["kind"], amount: number, occurredAt: string): LedgerRow => {
     const maintenanceFee = feeOf(amount, RATES.maintenanceBps), serviceFee = feeOf(amount, RATES.serviceBps);
-    return { id, bookingCode: id, kind, currency: "VND", vouchers: [], occurredAt, amount, maintenanceFee, serviceFee, profit: amount - maintenanceFee - serviceFee };
+    return { id, bookingCode: id, kind, currency: "VND", price: { subtotal: 0, discounts: [] }, occurredAt, amount, maintenanceFee, serviceFee, profit: amount - maintenanceFee - serviceFee };
   };
   const rows = [
     row("1", "PAYMENT", 1000, "2026-09-10T05:00:00Z"),
@@ -138,7 +141,7 @@ describe("date range", () => {
     expect(addDaysToKey("2026-12-30", 3)).toBe("2027-01-02");
     expect(addDaysToKey("2026-03-01", -1)).toBe("2026-02-28");
   });
-  const row = (id: string, amount: number, occurredAt: string): LedgerRow => ({ id, bookingCode: id, kind: amount < 0 ? "REFUND" : "PAYMENT", currency: "VND", vouchers: [], occurredAt, amount, maintenanceFee: 0, serviceFee: 0, profit: amount });
+  const row = (id: string, amount: number, occurredAt: string): LedgerRow => ({ id, bookingCode: id, kind: amount < 0 ? "REFUND" : "PAYMENT", currency: "VND", price: { subtotal: 0, discounts: [] }, occurredAt, amount, maintenanceFee: 0, serviceFee: 0, profit: amount });
   const rows = [row("1", 100, "2026-10-31T20:00:00Z"), row("2", 200, "2026-11-01T10:00:00Z"), row("3", -50, "2026-11-03T02:00:00Z"), row("4", 400, "2026-12-01T02:00:00Z")];
   it("filters by the shop-local day, both ends included, newest first", () => {
     // 2026-10-31T20:00Z is 1 Nov 03:00 in Ho Chi Minh

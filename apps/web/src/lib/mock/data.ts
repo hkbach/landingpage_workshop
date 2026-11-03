@@ -3,7 +3,7 @@ import type {
   AbuseReport, AuditEntry, Booking, Customer, PageContent, PageTheme, PaymentEntry, Session, Shop, Workshop,
 } from "../types";
 import { applyTemplate, themeForTemplate, type TemplateKey } from "@/components/sections/templates";
-import type { PaymentMethod } from "@workshop/shared";
+import { priceBooking, type BookingPriceInfo, type PaymentMethod } from "@workshop/shared";
 import { computePaymentStatus, reservedSeats } from "../booking-state";
 
 const TZ = "Asia/Ho_Chi_Minh"; // UTC+7
@@ -383,22 +383,22 @@ export const sitePage: { draft: PageContent; theme: PageTheme; template: Templat
  * a refund (a cancelled booking is refunded in full, one in eleven in half). Deterministic: the 3rd to the 26th of each month at noon UTC.
  */
 type HistoryPayment = { id: string; type: "PAYMENT" | "REFUND"; amount: number; recordedAt: string };
-export const paymentHistory: { id: string; bookingCode: string; currency: string; vouchers?: string[]; payments: HistoryPayment[] }[] = (() => {
+export const paymentHistory: { id: string; bookingCode: string; currency: string; price?: BookingPriceInfo; payments: HistoryPayment[] }[] = (() => {
   const now = new Date();
   const base = now.getUTCFullYear() * 12 + now.getUTCMonth();
   const prices = [650_000, 400_000, 500_000]; // the three workshops
   // Vouchers of this shop (codes as in the promotions): fixed amounts, and percentages of the price. Only combinations the promotions allow.
-  const combos: { codes: string[]; fixed: number; percent: number }[] = [
-    { codes: [], fixed: 0, percent: 0 },
-    { codes: ["EARLY20"], fixed: 0, percent: 20 },
-    { codes: [], fixed: 0, percent: 0 },
-    { codes: ["SPRING10"], fixed: 0, percent: 10 },
-    { codes: ["GROUP15", "NEWS5"], fixed: 0, percent: 20 },
-    { codes: ["MUG100"], fixed: 100_000, percent: 0 },
-    { codes: [], fixed: 0, percent: 0 },
-    { codes: ["COUPLE150", "NEWS5"], fixed: 150_000, percent: 5 },
-  ];
-  const out: { id: string; bookingCode: string; currency: string; vouchers?: string[]; payments: HistoryPayment[] }[] = [];
+  type Voucher = { id: string; discountType: "PERCENT" | "FIXED_AMOUNT"; discountValue: number; stacking: "SINGLE" | "MULTIPLE" };
+  const VOUCHERS: Record<string, Voucher> = {
+    EARLY20: { id: "EARLY20", discountType: "PERCENT", discountValue: 20, stacking: "SINGLE" },
+    SPRING10: { id: "SPRING10", discountType: "PERCENT", discountValue: 10, stacking: "SINGLE" },
+    MUG100: { id: "MUG100", discountType: "FIXED_AMOUNT", discountValue: 100_000, stacking: "SINGLE" },
+    GROUP15: { id: "GROUP15", discountType: "PERCENT", discountValue: 15, stacking: "MULTIPLE" },
+    NEWS5: { id: "NEWS5", discountType: "PERCENT", discountValue: 5, stacking: "MULTIPLE" },
+    COUPLE150: { id: "COUPLE150", discountType: "FIXED_AMOUNT", discountValue: 150_000, stacking: "MULTIPLE" },
+  };
+  const combos: string[][] = [[], ["EARLY20"], [], ["SPRING10"], ["GROUP15", "NEWS5"], ["MUG100"], [], ["COUPLE150", "NEWS5"]];
+  const out: { id: string; bookingCode: string; currency: string; price?: BookingPriceInfo; payments: HistoryPayment[] }[] = [];
   for (let back = 5; back >= 1; back--) {
     const idx = base - back;
     const count = 7 + ((5 - back) * 2) % 5 + (5 - back);
@@ -408,16 +408,17 @@ export const paymentHistory: { id: string; bookingCode: string; currency: string
       const price = prices[(n + back) % prices.length]!;
       const quantity = ((n * 5 + back) % 4) + 1;
       const combo = combos[(n * 3 + back) % combos.length]!;
-      const gross = price * quantity;
-      const discount = Math.min(gross, combo.fixed + Math.round((gross * combo.percent) / 100));
-      const total = gross - discount;
+      // Priced like a real booking: every voucher is worked out on the original price (see priceBooking).
+      const priced = priceBooking({ unitPrice: price, quantity, promotions: combo.map((c) => VOUCHERS[c]!) });
+      if (!priced.ok) throw new Error("the demo vouchers cannot be combined");
+      const total = priced.total;
       const sessionNo = 100 + (5 - back) * 20 + Math.floor(n / 3); // SES-0100... : sessions of past months, three bookings each
       const payments: HistoryPayment[] = [{ id: `ph-${back}-${n}`, type: "PAYMENT", amount: total, recordedAt: at(day) }];
       if (n % 9 === 4) payments.push({ id: `ph-${back}-${n}-r`, type: "REFUND", amount: total, recordedAt: at(day + 2) }); // cancelled: refunded in full
       else if (n % 11 === 6) payments.push({ id: `ph-${back}-${n}-r`, type: "REFUND", amount: Math.round(total / 2 / 1000) * 1000, recordedAt: at(day + 2) });
       out.push({
         id: `bk-his-${back}-${n}`, bookingCode: `SES-${String(sessionNo).padStart(4, "0")}-${String((n % 3) + 1).padStart(3, "0")}`, currency: "VND",
-        vouchers: combo.codes, payments,
+        price: { subtotal: priced.subtotal, discounts: priced.discounts.map((d) => ({ code: d.id, amount: d.amount })) }, payments,
       });
     }
   }

@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DateInput } from "@/components/ui/date-input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { NativeSelect } from "@/components/dashboard/shell/native-select";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -144,6 +145,7 @@ export function FinanceView({ rows, rates, currency, timezone }: Props) {
             <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">{t("empty")}</p>
           ) : (
             <div className="overflow-x-auto">
+              <TooltipProvider>
               <Table data-testid="ledger-table">
                 <TableHeader>
                   <TableRow>
@@ -162,13 +164,23 @@ export function FinanceView({ rows, rates, currency, timezone }: Props) {
                         <Badge className={r.kind === "PAYMENT" ? "bg-blue-100 text-blue-950" : "bg-orange-100 text-orange-950"}>{t(`kind.${r.kind}`)}</Badge>
                       </TableCell>
                       <TableCell data-testid="ledger-vouchers">
-                        {r.vouchers.length ? (
+                        {r.price.discounts.length ? (
                           <span className="flex flex-wrap gap-1">
-                            {r.vouchers.map((v) => <Badge key={v} variant="outline" className="font-mono">{v}</Badge>)}
+                            {r.price.discounts.map((d) => <Badge key={d.code} variant="outline" className="font-mono">{d.code}</Badge>)}
                           </span>
                         ) : <span className="text-muted-foreground" aria-label={t("noVoucher")}>—</span>}
                       </TableCell>
-                      <TableCell className="text-right tabular-nums">{signed(r.amount)}</TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {/* Hover or focus the amount: the original price of the booking and every voucher with what it took off. */}
+                        <Tooltip>
+                          <TooltipTrigger data-testid="ledger-amount" className="cursor-help rounded underline decoration-dotted decoration-muted-foreground underline-offset-4 outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
+                            {signed(r.amount)}
+                          </TooltipTrigger>
+                          <TooltipContent side="left" className="w-64" data-testid="ledger-amount-tip">
+                            <AmountTip row={r} money={money} t={t} />
+                          </TooltipContent>
+                        </Tooltip>
+                      </TableCell>
                       <TableCell className="text-right tabular-nums">{signed(-r.maintenanceFee)}</TableCell>
                       <TableCell className="text-right tabular-nums">{signed(-r.serviceFee)}</TableCell>
                       <TableCell className="text-right font-medium tabular-nums">{signed(r.profit)}</TableCell>
@@ -176,6 +188,7 @@ export function FinanceView({ rows, rates, currency, timezone }: Props) {
                   ))}
                 </TableBody>
               </Table>
+              </TooltipProvider>
             </div>
           )}
         </CardContent>
@@ -195,5 +208,28 @@ function SummaryCard({ label, value, accent, note, negative, testId }: { label: 
         </CardContent>
       </Card>
     </li>
+  );
+}
+
+/** What the tooltip of an amount says: the original price of the booking, each voucher with what it took off, the total of the booking, and this payment. */
+function AmountTip({ row, money, t }: { row: LedgerRow; money: (n: number) => string; t: (key: string) => string }) {
+  const { subtotal, discounts } = row.price;
+  const total = subtotal - discounts.reduce((n, d) => n + d.amount, 0);
+  return (
+    <div className="grid gap-1.5">
+      <p className="flex justify-between gap-3"><span className="text-muted-foreground">{t("tipOriginal")}</span><span className="font-medium tabular-nums">{money(subtotal)}</span></p>
+      {discounts.length ? (
+        <div className="grid gap-0.5 border-t pt-1.5">
+          <p className="text-muted-foreground">{t("vouchers")}</p>
+          {discounts.map((d) => (
+            <p key={d.code} className="flex justify-between gap-3"><span className="font-mono">{d.code}</span><span className="tabular-nums">−{money(d.amount)}</span></p>
+          ))}
+        </div>
+      ) : <p className="border-t pt-1.5 text-muted-foreground">{t("noVoucher")}</p>}
+      <p className="flex justify-between gap-3 border-t pt-1.5"><span className="text-muted-foreground">{t("tipTotal")}</span><span className="font-medium tabular-nums">{money(total)}</span></p>
+      {row.kind === "REFUND" || Math.abs(row.amount) !== total ? (
+        <p className="flex justify-between gap-3"><span className="text-muted-foreground">{t(row.kind === "PAYMENT" ? "tipPayment" : "tipRefund")}</span><span className="tabular-nums">{money(Math.abs(row.amount))}</span></p>
+      ) : null}
+    </div>
   );
 }

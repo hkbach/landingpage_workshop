@@ -266,7 +266,11 @@
       "REFUND": "Refund"
     },
     "amount": "Amount",
-    "empty": "No payments in this period."
+    "empty": "No payments in this period.",
+    "tipOriginal": "Original price",
+    "tipTotal": "Booking total",
+    "tipPayment": "This payment",
+    "tipRefund": "This refund"
   },
   "promotions": {
     "title": "Promotion management",

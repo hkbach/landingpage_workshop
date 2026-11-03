@@ -266,7 +266,11 @@
       "REFUND": "환불"
     },
     "amount": "금액",
-    "empty": "이 기간에 결제가 없습니다."
+    "empty": "이 기간에 결제가 없습니다.",
+    "tipOriginal": "정가",
+    "tipTotal": "예약 합계",
+    "tipPayment": "이번 결제",
+    "tipRefund": "이번 환불"
   },
   "promotions": {
     "title": "프로모션 관리",

@@ -57,9 +57,9 @@ describe("payment history of past months", () => {
     }
   });
   it("has vouchers (one and several), bookings without one, full and partial refunds", () => {
-    expect(paymentHistory.some((b) => b.vouchers?.length === 1)).toBe(true);
-    expect(paymentHistory.some((b) => (b.vouchers?.length ?? 0) >= 2)).toBe(true);
-    expect(paymentHistory.some((b) => !b.vouchers?.length)).toBe(true);
+    expect(paymentHistory.some((b) => b.price?.discounts.length === 1)).toBe(true);
+    expect(paymentHistory.some((b) => (b.price?.discounts.length ?? 0) >= 2)).toBe(true);
+    expect(paymentHistory.some((b) => !b.price?.discounts.length)).toBe(true);
     expect(paymentHistory.some((b) => b.payments[1] && b.payments[1].amount === b.payments[0]!.amount)).toBe(true);
     expect(paymentHistory.some((b) => b.payments[1] && b.payments[1].amount < b.payments[0]!.amount)).toBe(true);
   });
