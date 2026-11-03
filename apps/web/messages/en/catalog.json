@@ -219,6 +219,8 @@
     "noBookings": "No guests have booked this session.",
     "checkedInCount": "{checked} of {total} guests checked in",
     "checkInFailed": "This guest cannot be changed right now.",
-    "checkInDone": "Done"
+    "checkInDone": "Done",
+    "canceledBooking": "Canceled booking",
+    "colReason": "Reason"
   }
 }

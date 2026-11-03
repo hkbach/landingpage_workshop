@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { useTranslations } from "next-intl";
 import { ArrowLeft, CalendarClock, Check, Lock, LogIn, Undo2 } from "lucide-react";
 import { checkCloseReason, CLOSE_REASON_NOTE_MAX, SESSION_CLOSE_REASONS, type RescheduleError, type SessionCloseReason } from "@workshop/shared";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -150,7 +151,8 @@ export function CheckInDialog({ open, onOpenChange, session, bookings, customers
   const [failed, setFailed] = useState<string | null>(null);
   const rows = session ? bookings.filter((b) => b.sessionId === session.id).sort((a, b) => a.bookingCode.localeCompare(b.bookingCode)) : [];
   const nameOf = (b: Booking) => customers.find((c) => c.id === b.customerId)?.fullName ?? "";
-  const guests = rows.reduce((n, b) => n + b.quantity, 0);
+  // Guests expected: a cancelled booking is not counted (its guests do not come).
+  const guests = rows.reduce((n, b) => (b.status === "CANCELLED" ? n : n + b.quantity), 0);
   const checked = rows.filter((b) => b.status === "CHECKED_IN" || b.status === "COMPLETED").reduce((n, b) => n + b.quantity, 0);
 
   function run(b: Booking, action: BookingAction) {
@@ -180,6 +182,7 @@ export function CheckInDialog({ open, onOpenChange, session, bookings, customers
                         <th className="px-3 py-2 font-medium">{t("sessions.colGuest")}</th>
                         <th className="px-3 py-2 font-medium">{t("sessions.colSeats")}</th>
                         <th className="px-3 py-2 font-medium">{t("sessions.colStatus")}</th>
+                        <th className="px-3 py-2 font-medium">{t("sessions.colReason")}</th>
                         <th className="px-3 py-2"><span className="sr-only">{t("sessions.checkIn")}</span></th>
                       </tr>
                     </thead>
@@ -191,7 +194,14 @@ export function CheckInDialog({ open, onOpenChange, session, bookings, customers
                             <td className="px-3 py-2 font-mono">{b.bookingCode}</td>
                             <td className="px-3 py-2">{nameOf(b)}</td>
                             <td className="px-3 py-2 tabular-nums">{b.quantity}</td>
-                            <td className="px-3 py-2"><BookingStatusBadge status={b.status} /></td>
+                            <td className="px-3 py-2">
+                              {b.status === "CANCELLED" ? (
+                                <Badge variant="outline" className="border-transparent bg-red-100 text-red-900" data-testid="canceled-badge">{t("sessions.canceledBooking")}</Badge>
+                              ) : (
+                                <BookingStatusBadge status={b.status} />
+                              )}
+                            </td>
+                            <td className="px-3 py-2 text-muted-foreground" data-testid="checkin-reason">{b.status === "CANCELLED" ? (b.cancelReason || "—") : ""}</td>
                             <td className="px-3 py-2 text-right">
                               {state.CHECK_IN.allowed ? (
                                 <Button size="sm" onClick={() => run(b, "CHECK_IN")}><LogIn aria-hidden="true" />{t("sessions.checkInRow")}</Button>

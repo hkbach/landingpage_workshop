@@ -219,6 +219,8 @@
     "noBookings": "Chưa có khách nào đặt session này.",
     "checkedInCount": "Đã check-in {checked} trên {total} khách",
     "checkInFailed": "Hiện chưa thể thao tác với khách này.",
-    "checkInDone": "Xong"
+    "checkInDone": "Xong",
+    "canceledBooking": "Booking đã hủy",
+    "colReason": "Lý do"
   }
 }

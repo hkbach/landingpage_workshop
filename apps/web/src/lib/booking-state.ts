@@ -82,6 +82,14 @@ export function targetStatus(action: BookingAction): BookingStatus | undefined {
   return TARGET[action];
 }
 
+/**
+ * The seats a session has taken, counted from its bookings (BR-07: only CONFIRMED, CHECKED_IN and COMPLETED bookings hold seats). A booking
+ * that is cancelled stops counting at once, so "8 of 10 seats" becomes "7 of 10" the moment a guest cancels.
+ */
+export function reservedSeats(bookings: readonly { sessionId: string; status: BookingStatus; quantity: number }[], sessionId: string): number {
+  return bookings.reduce((n, b) => (b.sessionId === sessionId && holdsSeat(b.status) ? n + b.quantity : n), 0);
+}
+
 /** Seat delta for a status change on the session (BR-07). */
 export function seatDelta(from: BookingStatus, to: BookingStatus, quantity: number): number {
   return (holdsSeat(to) ? quantity : 0) - (holdsSeat(from) ? quantity : 0);

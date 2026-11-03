@@ -219,6 +219,8 @@
     "noBookings": "このセッションを予約したお客様はいません。",
     "checkedInCount": "{total}名中{checked}名がチェックイン済み",
     "checkInFailed": "現在このお客様は操作できません。",
-    "checkInDone": "完了"
+    "checkInDone": "完了",
+    "canceledBooking": "キャンセル済みの予約",
+    "colReason": "理由"
   }
 }

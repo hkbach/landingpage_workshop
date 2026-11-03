@@ -4,9 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { applySessionAction, checkCloseReason, checkReschedule, closeIfEnded, isValidBookingCutoff, nextSessionCode, closeWaitsForEnd, type BookingStatus, type PaymentMethod, type RescheduleError, type SessionAction, type SessionCloseReason } from "@workshop/shared";
 import type { Booking, PaymentEntry, Session } from "@/lib/types";
 import {
-  canTransition, computePaymentStatus, netPaid, seatDelta, targetStatus,
-  type BlockedReason, type BookingAction,
-} from "@/lib/booking-state";
+  canTransition, computePaymentStatus, netPaid, reservedSeats, seatDelta, targetStatus,
+  type BlockedReason, type BookingAction } from "@/lib/booking-state";
 import { persistBookingStatus } from "@/lib/bookings-api";
 
 export interface BookingEvent { status: BookingStatus; at?: string; note?: string }
@@ -25,7 +24,11 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
   const [history, setHistory] = useState<Record<string, BookingEvent[]>>({});
   const [now, setNow] = useState(() => new Date(init.nowIso));
   // A session whose time is over is closed by the system (shown as Closed with a note), whatever its stored status.
-  const sessions = useMemo(() => storedSessions.map((x) => closeIfEnded(x, now)), [storedSessions, now]);
+  // The seats taken are counted from the bookings, so cancelling a booking frees its seats at once.
+  const sessions = useMemo(
+    () => storedSessions.map((x) => ({ ...closeIfEnded(x, now), reservedCount: reservedSeats(bookings, x.id) })),
+    [storedSessions, bookings, now],
+  );
   const counter = useRef(0);
   const nextId = (p: string) => `${p}-local-${++counter.current}`;
 

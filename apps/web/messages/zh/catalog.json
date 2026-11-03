@@ -219,6 +219,8 @@
     "noBookings": "还没有客人预订该场次。",
     "checkedInCount": "{total} 位客人中已签到 {checked} 位",
     "checkInFailed": "目前无法操作该客人。",
-    "checkInDone": "完成"
+    "checkInDone": "完成",
+    "canceledBooking": "已取消的预订",
+    "colReason": "原因"
   }
 }

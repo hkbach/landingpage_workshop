@@ -134,6 +134,8 @@ export const bookings: Booking[] = [
   // Upcoming sessions: these keep their promotions in use whatever the time of day.
   booking({ id: "bk-6", sessionId: "se-3", customerId: "cu-2", quantity: 2, promotionIds: ["pr-1"], discountAmount: 260_000, totalAmount: 1_040_000 }),
   booking({ id: "bk-7", sessionId: "se-5", customerId: "cu-3", quantity: 2, promotionIds: ["pr-2"], discountAmount: 100_000, totalAmount: 700_000 }),
+  // A guest cancelled this booking of se-3: it no longer holds seats, and the check-in list shows why.
+  booking({ id: "bk-11", sessionId: "se-3", customerId: "cu-4", quantity: 3, status: "CANCELLED", cancelReason: "Guest is ill" }),
   // Fills the sold-out session se-15.
   booking({ id: "bk-8", sessionId: "se-15", customerId: "cu-4", quantity: 6 }),
   // Two guests of the paused session se-11 (re-scheduling it emails the guest who has an email; the walk-in has none).

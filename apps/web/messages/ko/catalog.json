@@ -219,6 +219,8 @@
     "noBookings": "이 세션을 예약한 손님이 없습니다.",
     "checkedInCount": "{total}명 중 {checked}명 체크인",
     "checkInFailed": "지금은 이 손님을 처리할 수 없습니다.",
-    "checkInDone": "완료"
+    "checkInDone": "완료",
+    "canceledBooking": "취소된 예약",
+    "colReason": "사유"
   }
 }
