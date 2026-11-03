@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { applySessionAction, canEditSession, checkCloseReason, isFutureStart, checkReschedule, closeIfEnded, isValidBookingCutoff, nextSessionCode, closeWaitsForEnd, type BookingStatus, type PaymentMethod, type RescheduleError, type SessionAction, type SessionCloseReason } from "@workshop/shared";
+import { applySessionAction, canEditSession, canReopenSession, checkCloseReason, isFutureStart, checkReschedule, closeIfEnded, isValidBookingCutoff, nextSessionCode, closeWaitsForEnd, type BookingStatus, type PaymentMethod, type RescheduleError, type SessionAction, type SessionCloseReason } from "@workshop/shared";
 import type { Booking, PaymentEntry, Session } from "@/lib/types";
 import {
   canTransition, computePaymentStatus, netPaid, reservedSeats, seatDelta, targetStatus,
@@ -132,6 +132,22 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
     [sessions, now],
   );
 
+  /** Re-opens a session the owner closed before it started: it is Open again, and the reason of the close is forgotten. False when it cannot be. */
+  const reopenSession = useCallback(
+    (id: string): boolean => {
+      const s = sessions.find((x) => x.id === id);
+      if (!s || !canReopenSession(s, now)) return false;
+      setSessions((list) => list.map((x) => {
+        if (x.id !== id) return x;
+        const { closeReason: _reason, closedAt: _at, ...rest } = x;
+        void _reason; void _at;
+        return { ...rest, status: "OPEN" };
+      }));
+      return true;
+    },
+    [sessions, now],
+  );
+
   /**
    * Moves a paused session to a new start (the length stays) and moves its bookings with it. The reason is required (a basic one, or Other with
    * a text). Returns why it was refused, or what changed: the session before and after, and the bookings that moved.
@@ -192,6 +208,6 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
 
   return {
     bookings, sessions, history, now, perform, addPayment, reschedule,
-    sessionAction, rescheduleSession, updateSession, addSession, addBooking,
+    sessionAction, reopenSession, rescheduleSession, updateSession, addSession, addBooking,
   };
 }

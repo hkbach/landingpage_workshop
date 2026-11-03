@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SESSION_STATUSES } from "./enums";
-import { allowedSessionActions, applySessionAction, canEditSession, checkCloseReason, isFutureStart, checkReschedule, nextSessionCode, SESSION_CODE_RE, CLOSE_REASON_NOTE_MAX, closeIfEnded, closeWaitsForEnd, DEFAULT_BOOKING_CUTOFF_MINUTES, isInSessionTime, isSessionBookable, isValidBookingCutoff, type SessionState } from "./session-rules";
+import { allowedSessionActions, applySessionAction, canEditSession, canReopenSession, checkCloseReason, isFutureStart, checkReschedule, nextSessionCode, SESSION_CODE_RE, CLOSE_REASON_NOTE_MAX, closeIfEnded, closeWaitsForEnd, DEFAULT_BOOKING_CUTOFF_MINUTES, isInSessionTime, isSessionBookable, isValidBookingCutoff, type SessionState } from "./session-rules";
 
 const s = (status: SessionState["status"]): SessionState => ({ status });
 
@@ -141,5 +141,19 @@ describe("isFutureStart", () => {
     expect(isFutureStart("2026-11-03T10:00:00Z", NOW)).toBe(false);
     expect(isFutureStart("2026-11-02T10:00:00Z", NOW)).toBe(false);
     expect(isFutureStart("nope", NOW)).toBe(false);
+  });
+});
+
+describe("canReopenSession", () => {
+  const NOW = new Date("2026-11-03T10:00:00Z");
+  const closed = { status: "CLOSED" as const, startsAt: "2026-11-05T09:00:00Z" };
+  it("a session the owner closed before it started can be re-opened", () => expect(canReopenSession(closed, NOW)).toBe(true));
+  it("not once it has started, and not when the system closed it", () => {
+    expect(canReopenSession({ ...closed, startsAt: "2026-11-03T09:00:00Z" }, NOW)).toBe(false);
+    expect(canReopenSession({ ...closed, startsAt: "2026-11-03T10:00:00Z" }, NOW)).toBe(false);
+    expect(canReopenSession({ ...closed, autoClosed: true }, NOW)).toBe(false);
+  });
+  it("only a closed session", () => {
+    for (const st of ["OPEN", "PAUSED", "RUNNING"] as const) expect(canReopenSession({ ...closed, status: st }, NOW), st).toBe(false);
   });
 });

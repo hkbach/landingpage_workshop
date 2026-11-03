@@ -163,7 +163,7 @@
     "allStatuses": "All statuses",
     "start": "Start",
     "pause": "Pause",
-    "statusNote": "New sessions are Open and can only be started. Start makes a session Running, so guests can book it. A running session can only be paused. From Paused you can start it again or close it for good.",
+    "statusNote": "New sessions are Open and can only be started. Start makes a session Running, so guests can book it. A running session can only be paused. From Paused you can start it again or close it for good. A session closed before it starts can be re-opened (back to Open).",
     "cutoff": "Booking cut-off (minutes before start)",
     "cutoffHint": "Online booking closes this many minutes before the session starts. Use 0 to close it when the session starts.",
     "cutoffInfo": "Booking closes {minutes, plural, one {# minute} other {# minutes}} before start",
@@ -224,6 +224,7 @@
     "canceledBooking": "Canceled booking",
     "colReason": "Reason",
     "colCheckedInAt": "Checked in at",
-    "checkInReadOnly": "This session is closed, so the list is read-only. Each booking shows the status it had when the session closed."
+    "checkInReadOnly": "This session is closed, so the list is read-only. Each booking shows the status it had when the session closed.",
+    "reopen": "Re-open"
   }
 }

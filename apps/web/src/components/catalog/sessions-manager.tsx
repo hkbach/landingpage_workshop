@@ -3,8 +3,8 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useDisplayLocale } from "@/lib/use-shop-language";
-import { ArrowLeft, CalendarClock, Copy, Lock, LogIn, Pause, Pencil, Play, Plus, Save } from "lucide-react";
-import { allowedSessionActions, canEditSession, closeWaitsForEnd, isFutureStart, type SessionCloseReason, DEFAULT_BOOKING_CUTOFF_MINUTES, isValidBookingCutoff, MAX_BOOKING_CUTOFF_MINUTES, pickLocalized, SESSION_STATUSES, type Locale, type SessionStatus } from "@workshop/shared";
+import { ArrowLeft, CalendarClock, Copy, Lock, LockOpen, LogIn, Pause, Pencil, Play, Plus, Save } from "lucide-react";
+import { allowedSessionActions, canEditSession, canReopenSession, closeWaitsForEnd, isFutureStart, type SessionCloseReason, DEFAULT_BOOKING_CUTOFF_MINUTES, isValidBookingCutoff, MAX_BOOKING_CUTOFF_MINUTES, pickLocalized, SESSION_STATUSES, type Locale, type SessionStatus } from "@workshop/shared";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -187,6 +187,11 @@ export function SessionsManager({
                             ) : (
                               <Button size="sm" variant="destructive" onClick={() => setDialog({ kind: "close", id: s.id })}><Lock aria-hidden="true" />{t("sessions.close")}</Button>
                             )
+                          ) : null}
+                          {canReopenSession(s, ops.now) ? (
+                            <Button size="sm" variant="outline" data-testid="reopen-button" onClick={() => ops.reopenSession(s.id)}>
+                              <LockOpen aria-hidden="true" />{t("sessions.reopen")}
+                            </Button>
                           ) : null}
                           {canEditSession(s.status) ? (
                             <Button size="sm" variant="outline" data-testid="edit-button" onClick={() => setDialog({ kind: "edit", id: s.id })}>

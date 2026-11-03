@@ -4,7 +4,8 @@ import type { SessionStatus } from "./enums";
 //   OPEN --start--> RUNNING --pause--> PAUSED --start--> RUNNING (again)
 //   PAUSED --close--> CLOSED
 // A new session is OPEN (created, not running yet): it can only be started. A RUNNING session can only be paused (it never goes to
-// another status directly). Only a RUNNING session can be booked by guests. CLOSED is final. There is no way to cancel a session.
+// another status directly). Only a RUNNING session can be booked by guests. CLOSED is final, except that a session the owner closed before
+// it started can be re-opened (back to OPEN, see canReopenSession). There is no way to cancel a session.
 // A session whose end time has passed is closed by the system (see closeIfEnded).
 
 /** Booking cut-off of a session: minutes before it starts at which online booking closes (0 = when it starts). */
@@ -123,3 +124,10 @@ export const isFutureStart = (startsAt: string, now: Date): boolean => {
   const t = Date.parse(startsAt);
   return !Number.isNaN(t) && t > now.getTime();
 };
+
+/**
+ * A session the owner closed can be re-opened (it goes back to OPEN) while it has not started. A session the system closed because its time
+ * was over (`autoClosed`), or one that has started, stays closed.
+ */
+export const canReopenSession = (s: { status: SessionStatus; startsAt: string; autoClosed?: boolean }, now: Date): boolean =>
+  s.status === "CLOSED" && !s.autoClosed && new Date(s.startsAt).getTime() > now.getTime();
