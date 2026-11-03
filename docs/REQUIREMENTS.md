@@ -345,7 +345,7 @@ Browser ────────────────────────
 
 **FR-WS-01 – Workshop (Must)**
 - Trường: title (localized), short description (localized), description (localized), duration (phút, 15–600), giá mỗi khách (`price_amount` minor units), currency (lấy theo shop, không sửa riêng), capacity mặc định mỗi session (1–50; giá trị tối đa đặt trong `PLAN_LIMITS`), số khách tối đa mỗi booking (mặc định 6), ảnh cover + tối đa 6 ảnh, những gì đã bao gồm (localized list), ghi chú/yêu cầu (localized), status `DRAFT | ACTIVE | ARCHIVED`, sort order.
-- Workshop đã có booking: không cho xóa. **Màn hình sửa workshop không có nút Archive** (workshop được bật / tắt bằng Activate / Deactivate ở danh sách); trạng thái `ARCHIVED` chỉ còn là dữ liệu có sẵn, chưa có thao tác nào trên giao diện đưa workshop vào trạng thái này (TODO: `POST /workshops/{id}/archive` ở backend nếu cần sau).
+- **Không xóa được workshop** (dù có booking hay chưa; không có nút Delete, không có `DELETE /workshops/{id}`). Muốn gỡ workshop khỏi landing page thì Deactivate ở danh sách. **Màn hình sửa workshop không có nút Archive**; trạng thái `ARCHIVED` chỉ còn là dữ liệu có sẵn, chưa có thao tác nào trên giao diện đưa workshop vào trạng thái này.
 - Đổi giá: chỉ áp dụng cho booking mới (booking cũ đã lưu snapshot giá).
 - **Danh sách workshop:** mỗi dòng có nút **Activate / Deactivate** và nút **Edit**. Workshop mới tạo luôn ở trạng thái Nháp (`DRAFT`, "deactivated"); Activate chuyển sang `ACTIVE` (hiện trên landing page, cho đặt chỗ), luôn cho phép với workshop Nháp. **Deactivate chỉ cho phép khi mọi session của workshop đều ở trạng thái Closed** (kể cả session tự đóng khi hết giờ và session admin đã đóng); còn session chưa đóng thì nút chỉ đọc kèm tooltip ghi số session còn lại, và backend từ chối `409 SESSIONS_OPEN`. Workshop chưa có session thì Deactivate được. **Chỉ workshop đã deactivate (Nháp) mới Edit được**; workshop đang Active thì nút Edit chỉ đọc kèm tooltip và trang sửa chỉ hiện thông báo. Workshop `ARCHIVED` không có nút Activate / Deactivate. Trạng thái không còn đổi trong form sửa (chỉ hiển thị). API: `POST /workshops/{id}/status` `{status: ACTIVE | DRAFT}` (OWNER / MANAGER, ghi audit).
 - **Thêm workshop** là popup trên trang danh sách (không còn trang riêng; địa chỉ cũ `/workshops/new` chuyển về danh sách); không có mục Hiển thị, lưu xong luôn là Nháp.
@@ -726,7 +726,7 @@ pg-boss tự tạo schema riêng `pgboss`.
 
 ### 8.7 Audit bắt buộc
 
-Ghi audit cho các action: đăng nhập thất bại nhiều lần, tạo/duyệt/từ chối/khóa shop, publish page, tạo/sửa/archive workshop, đổi giá, hủy session, tạo booking thủ công, check-in, late release, no-show, hủy booking, đổi session, ghi nhận payment/refund, xóa/ẩn danh customer.
+Ghi audit cho các action: đăng nhập thất bại nhiều lần, tạo/duyệt/từ chối/khóa shop, publish page, tạo/sửa/kích hoạt/ngừng kích hoạt workshop, đổi giá, hủy session, tạo booking thủ công, check-in, late release, no-show, hủy booking, đổi session, ghi nhận payment/refund, xóa/ẩn danh customer.
 
 ---
 
@@ -752,7 +752,7 @@ Prefix `/api/v1`. Auth: cookie session. `{org}` lấy từ session (active organ
 | GET/PUT | `/site/page` (draft) · POST `/site/page/submit-review` · POST `/site/page/publish` |
 | GET | `/site/page/versions` · POST `/site/page/rollback/{version}` (Should) |
 | POST | `/media/presign-upload` · POST `/media/{id}/complete` · GET `/media` · DELETE `/media/{id}` |
-| CRUD | `/workshops` · POST `/workshops/{id}/archive` |
+| GET, POST, PUT (không có DELETE: workshop không xóa được) | `/workshops` · POST `/workshops/{id}/status` |
 | CRUD | `/workshops/{id}/schedule-rules` |
 | GET | `/sessions?from=&to=&workshopId=` · POST `/sessions` · PATCH `/sessions/{id}` · POST `/sessions/{id}/cancel` |
 | GET | `/bookings?date=&sessionId=&status=&q=` · GET `/bookings/{id}` · POST `/bookings` (thủ công) |
