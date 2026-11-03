@@ -156,11 +156,11 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
     (id: string, newStartsAt: string, reason: { code: string; note?: string }):
       { ok: true; oldStartsAt: string; startsAt: string; endsAt: string; reason: SessionCloseReason; moved: Booking[] } | { ok: false; error: RescheduleError } => {
       const s = sessions.find((x) => x.id === id);
-      if (!s) return { ok: false, error: "NOT_PAUSED" };
+      if (!s) return { ok: false, error: "NOT_RESCHEDULABLE" };
       const checked = checkReschedule({ ...s, rescheduled: s.rescheduledAt !== undefined }, newStartsAt, now, sessions.filter((x) => x.workshopId === s.workshopId && x.id !== id).map((x) => x.startsAt));
       const why = checkCloseReason(reason.code, reason.note ?? "");
       if (!checked.ok) return { ok: false, error: checked.error };
-      if (!why.ok) return { ok: false, error: "NOT_PAUSED" };
+      if (!why.ok) return { ok: false, error: "NOT_RESCHEDULABLE" };
       setSessions((list) => list.map((x) => (x.id === id ? { ...x, startsAt: checked.startsAt, endsAt: checked.endsAt, rescheduleReason: why.reason, rescheduledAt: now.toISOString() } : x)));
       const moved = bookings.filter((b) => b.sessionId === id && b.status === "CONFIRMED");
       setBookings((list) => list.map((b) => (b.sessionId === id ? { ...b, startsAt: checked.startsAt, endsAt: checked.endsAt } : b)));

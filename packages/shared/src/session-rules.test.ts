@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SESSION_STATUSES } from "./enums";
-import { allowedSessionActions, applySessionAction, canEditSession, canReopenSession, checkCloseReason, isFutureStart, checkReschedule, nextSessionCode, SESSION_CODE_RE, CLOSE_REASON_NOTE_MAX, closeIfEnded, closeWaitsForEnd, DEFAULT_BOOKING_CUTOFF_MINUTES, isInSessionTime, isSessionBookable, isValidBookingCutoff, type SessionState } from "./session-rules";
+import { allowedSessionActions, applySessionAction, canEditSession, canRescheduleSession, canReopenSession, checkCloseReason, isFutureStart, checkReschedule, nextSessionCode, SESSION_CODE_RE, CLOSE_REASON_NOTE_MAX, closeIfEnded, closeWaitsForEnd, DEFAULT_BOOKING_CUTOFF_MINUTES, isInSessionTime, isSessionBookable, isValidBookingCutoff, type SessionState } from "./session-rules";
 
 const s = (status: SessionState["status"]): SessionState => ({ status });
 
@@ -91,8 +91,9 @@ describe("checkReschedule", () => {
   it("moves the start and keeps the length of the session", () => {
     expect(checkReschedule(paused, "2026-11-07T14:00:00Z", NOW, [])).toEqual({ ok: true, startsAt: "2026-11-07T14:00:00.000Z", endsAt: "2026-11-07T16:30:00.000Z" });
   });
-  it("only a paused session can be re-scheduled", () => {
-    for (const st of ["OPEN", "RUNNING", "CLOSED"] as const) expect(checkReschedule({ ...paused, status: st }, "2026-11-07T14:00:00Z", NOW, [])).toEqual({ ok: false, error: "NOT_PAUSED" });
+  it("an open or a paused session can be re-scheduled; a running or a closed one cannot", () => {
+    for (const st of ["OPEN", "PAUSED"] as const) expect(checkReschedule({ ...paused, status: st }, "2026-11-07T14:00:00Z", NOW, []).ok, st).toBe(true);
+    for (const st of ["RUNNING", "CLOSED"] as const) expect(checkReschedule({ ...paused, status: st }, "2026-11-07T14:00:00Z", NOW, [])).toEqual({ ok: false, error: "NOT_RESCHEDULABLE" });
   });
   it("refuses the same start, a start in the past, a start that is not a date and a start already used by another session", () => {
     expect(checkReschedule(paused, "2026-11-05T09:00:00Z", NOW, [])).toEqual({ ok: false, error: "SAME" });
@@ -156,4 +157,8 @@ describe("canReopenSession", () => {
   it("only a closed session", () => {
     for (const st of ["OPEN", "PAUSED", "RUNNING"] as const) expect(canReopenSession({ ...closed, status: st }, NOW), st).toBe(false);
   });
+});
+
+describe("canRescheduleSession", () => {
+  it("is true only for an open or a paused session", () => expect(SESSION_STATUSES.filter(canRescheduleSession)).toEqual(["OPEN", "PAUSED"]));
 });

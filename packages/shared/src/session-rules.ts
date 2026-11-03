@@ -84,10 +84,10 @@ export function checkCloseReason(code: string, note: string): { ok: true; reason
   return { ok: true, reason: { code: "OTHER", note: text } };
 }
 
-export type RescheduleError = "NOT_PAUSED" | "ALREADY_RESCHEDULED" | "ENDED" | "SAME" | "PAST" | "DUPLICATE";
+export type RescheduleError = "NOT_RESCHEDULABLE" | "ALREADY_RESCHEDULED" | "ENDED" | "SAME" | "PAST" | "DUPLICATE";
 
 /**
- * Re-scheduling a paused session to a new start (the length of the session stays). A session can be re-scheduled only once (`rescheduled`). The new start must differ from the current one, be in the
+ * Re-scheduling an open or paused session to a new start (the length of the session stays). A session can be re-scheduled only once (`rescheduled`). The new start must differ from the current one, be in the
  * future and not be the start of another session of the same workshop (`otherStarts`). Returns the new start and end.
  */
 export function checkReschedule(
@@ -96,7 +96,7 @@ export function checkReschedule(
   now: Date,
   otherStarts: readonly string[],
 ): { ok: true; startsAt: string; endsAt: string } | { ok: false; error: RescheduleError } {
-  if (s.status !== "PAUSED") return { ok: false, error: "NOT_PAUSED" };
+  if (!canRescheduleSession(s.status)) return { ok: false, error: "NOT_RESCHEDULABLE" };
   if (s.rescheduled) return { ok: false, error: "ALREADY_RESCHEDULED" };
   if (new Date(s.endsAt).getTime() <= now.getTime()) return { ok: false, error: "ENDED" };
   const next = new Date(newStartsAt).getTime();
@@ -131,3 +131,6 @@ export const isFutureStart = (startsAt: string, now: Date): boolean => {
  */
 export const canReopenSession = (s: { status: SessionStatus; startsAt: string; autoClosed?: boolean }, now: Date): boolean =>
   s.status === "CLOSED" && !s.autoClosed && new Date(s.startsAt).getTime() > now.getTime();
+
+/** An open or a paused session can be re-scheduled (once); a running one is paused first and a closed one is final. */
+export const canRescheduleSession = (status: SessionStatus): boolean => status === "OPEN" || status === "PAUSED";
