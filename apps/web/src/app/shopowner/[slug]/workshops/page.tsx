@@ -6,10 +6,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { NewWorkshopDialog } from "@/components/catalog/new-workshop-dialog";
 import { WorkshopRowActions } from "@/components/catalog/workshop-row-actions";
+import { WorkshopTitleButton } from "@/components/catalog/workshop-title-button";
 import { WorkshopStatusBadge } from "@/components/catalog/workshop-status-badge";
 import { currentShop, workshops } from "@/lib/mock/data";
 import { allPromotions, shopToday } from "@/lib/mock/promotion-store";
 import { ShopLink } from "@/components/dashboard/shell/shop-link";
+import { liveBookings } from "@/lib/mock/booking-store";
+import { scheduleRules } from "@/lib/mock/ops";
 import { withWorkshopStatus, workshopSessionStatuses } from "@/lib/mock/workshop-status-store";
 
 export default async function WorkshopsPage() {
@@ -20,6 +23,10 @@ export default async function WorkshopsPage() {
   // TODO(api): the promotions of this shop (organization_id), computed by the backend with the workshop list.
   const promotions = allPromotions();
   const today = shopToday();
+  const bookings = liveBookings();
+  const shop = { currency: currentShop.currency, timezone: currentShop.timezone, defaultLocale: currentShop.defaultLocale, enabledLocales: currentShop.enabledLocales };
+  /** What the popup of a workshop needs (its details, schedule rules and number of bookings). */
+  const editData = (w: (typeof rows)[number]) => ({ workshop: w, rules: scheduleRules.filter((r) => r.workshopId === w.id), bookingCount: bookings.filter((b) => b.workshopId === w.id).length, shop });
   const title = (p: { title: Parameters<typeof pickLocalized>[0] }) => pickLocalized(p.title, displayLocale, currentShop.defaultLocale);
   const percent = new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 1 });
   // Business dates of a promotion: shown as plain calendar days, whatever the timezone.
@@ -33,7 +40,7 @@ export default async function WorkshopsPage() {
             <Tag aria-hidden="true" />
             {t("list.managePromotions")}
           </ShopLink>
-          <NewWorkshopDialog shop={{ currency: currentShop.currency, timezone: currentShop.timezone, defaultLocale: currentShop.defaultLocale, enabledLocales: currentShop.enabledLocales }} />
+          <NewWorkshopDialog shop={shop} />
         </div>
       </div>
       {rows.length === 0 ? (
@@ -60,9 +67,7 @@ export default async function WorkshopsPage() {
                 return (
                   <TableRow key={w.id}>
                     <TableCell>
-                      <ShopLink href={`/shopowner/workshops/${w.id}`} className="font-medium underline-offset-4 hover:underline">
-                        {pickLocalized(w.title, displayLocale, currentShop.defaultLocale)}
-                      </ShopLink>
+                      <WorkshopTitleButton data={editData(w)} title={pickLocalized(w.title, displayLocale, currentShop.defaultLocale)} />
                     </TableCell>
                     <TableCell><WorkshopStatusBadge status={w.status} /></TableCell>
                     <TableCell>{formatMoney(w.priceAmount, w.currency, locale)}</TableCell>
@@ -123,7 +128,7 @@ export default async function WorkshopsPage() {
                       )}
                     </TableCell>
                     <TableCell className="min-w-56 whitespace-normal align-top">
-                      <WorkshopRowActions id={w.id} status={w.status} openSessions={openSessionCount(workshopSessionStatuses(w.id))} />
+                      <WorkshopRowActions id={w.id} status={w.status} openSessions={openSessionCount(workshopSessionStatuses(w.id))} edit={editData(w)} />
                     </TableCell>
                   </TableRow>
                 );

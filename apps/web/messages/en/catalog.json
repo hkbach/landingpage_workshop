@@ -47,7 +47,8 @@
     "deactivated": "Workshop deactivated: it no longer shows on your landing page.",
     "statusFailed": "The status could not be changed.",
     "newHint": "A new workshop is saved as a draft. Activate it from the list when it is ready.",
-    "createdSim": "Workshop created as a draft (demo mode: not persisted). Activate it from the list when it is ready."
+    "createdSim": "Workshop created as a draft (demo mode: not persisted). Activate it from the list when it is ready.",
+    "editHint": "Update the details and the schedule of this workshop. A workshop can only be edited while it is deactivated."
   },
   "detail": {
     "tabDetails": "Details",

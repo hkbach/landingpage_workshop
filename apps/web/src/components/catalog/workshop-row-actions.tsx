@@ -5,18 +5,19 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Pencil, Power, PowerOff } from "lucide-react";
 import { canEditWorkshop, type WorkshopStatus } from "@workshop/shared";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { ShopLink } from "@/components/dashboard/shell/shop-link";
+import { Button } from "@/components/ui/button";
+import { WorkshopEditDialog, type WorkshopEditData } from "./workshop-edit-dialog";
 
 /**
  * Buttons of one row of the workshop list: Activate / Deactivate and Edit. A workshop is only deactivated once every one of its sessions is
  * Closed (the button is read-only with a tooltip until then, and the server checks it again), and only a deactivated (draft) workshop can be edited.
  * An archived workshop has no Activate / Deactivate button.
  */
-export function WorkshopRowActions({ id, status, openSessions }: { id: string; status: WorkshopStatus; openSessions: number }) {
+export function WorkshopRowActions({ id, status, openSessions, edit }: { id: string; status: WorkshopStatus; openSessions: number; edit: WorkshopEditData }) {
   const t = useTranslations("catalog");
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [message, setMessage] = useState<{ text: string; tone: "ok" | "error" } | null>(null);
 
   async function switchTo(to: "ACTIVE" | "DRAFT") {
@@ -64,9 +65,9 @@ export function WorkshopRowActions({ id, status, openSessions }: { id: string; s
           )
         ) : null}
         {canEditWorkshop(status) ? (
-          <ShopLink href={`/shopowner/workshops/${id}`} data-testid="edit-workshop" className={buttonVariants({ size: "sm", variant: "outline" })}>
+          <Button size="sm" variant="outline" data-testid="edit-workshop" onClick={() => setEditing(true)}>
             <Pencil aria-hidden="true" />{t("list.edit")}
-          </ShopLink>
+          </Button>
         ) : (
           <span title={t("list.editLocked")} data-testid="edit-locked" className="inline-flex cursor-not-allowed">
             <Button size="sm" variant="outline" disabled aria-disabled="true" aria-label={`${t("list.edit")}: ${t("list.editLocked")}`}>
@@ -75,6 +76,7 @@ export function WorkshopRowActions({ id, status, openSessions }: { id: string; s
           </span>
         )}
       </div>
+      <WorkshopEditDialog data={edit} open={editing} onOpenChange={setEditing} />
       {message ? <p role="status" className={message.tone === "error" ? "text-xs font-medium text-destructive" : "text-xs font-medium text-emerald-800"}>{message.text}</p> : null}
     </div>
   );

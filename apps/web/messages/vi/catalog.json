@@ -47,7 +47,8 @@
     "deactivated": "Đã ngừng kích hoạt workshop: workshop không còn hiển thị trên landing page.",
     "statusFailed": "Không thể đổi trạng thái.",
     "newHint": "Workshop mới được lưu ở trạng thái Nháp. Hãy kích hoạt trong danh sách khi sẵn sàng.",
-    "createdSim": "Đã tạo workshop ở trạng thái Nháp (chế độ demo: không lưu lại). Hãy kích hoạt trong danh sách khi sẵn sàng."
+    "createdSim": "Đã tạo workshop ở trạng thái Nháp (chế độ demo: không lưu lại). Hãy kích hoạt trong danh sách khi sẵn sàng.",
+    "editHint": "Cập nhật thông tin và lịch của workshop. Chỉ sửa được workshop đã ngừng kích hoạt."
   },
   "detail": {
     "tabDetails": "Chi tiết",
