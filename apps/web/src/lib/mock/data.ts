@@ -4,6 +4,7 @@ import type {
 } from "../types";
 import type { FinanceEntry } from "@workshop/shared";
 import { applyTemplate, themeForTemplate, type TemplateKey } from "@/components/sections/templates";
+import { reservedSeats } from "../booking-state";
 
 const TZ = "Asia/Ho_Chi_Minh"; // UTC+7
 const DAY = 86_400_000;
@@ -63,35 +64,80 @@ export const workshops: Workshop[] = [
   },
 ];
 
+/** ISO UTC for `minutes` from now (negative: in the past). Used by the demo sessions that must be taking place, or about to start, when the page is opened. */
+function inMinutes(minutes: number): string {
+  return new Date(Date.now() + minutes * 60_000).toISOString();
+}
+
+const pic = (seed: string) => `https://picsum.photos/seed/session-${seed}/400/300`;
+
+// Demo sessions: every status, every situation of the Sessions page, in the past, today and the future.
+//   code          SES-0001 ... (the number is the number of the id, never changes)
+//   reservedCount is filled below from the bookings (a cancelled booking holds no seat)
+//   Open: new, never started. Running: bookable. Paused: stopped (Close / Re-schedule). Closed: by the owner (with a reason) or by the system.
 export const sessions: Session[] = [
-  { id: "se-1", code: "SES-0001", workshopId: "ws-1", startsAt: at(0, 9), endsAt: at(0, 11), capacity: 8, reservedCount: 5, status: "RUNNING", bookingCutoffMinutes: 120, imageUrl: "https://picsum.photos/seed/session-wheel/400/300" },
-  { id: "se-2", code: "SES-0002", workshopId: "ws-2", startsAt: at(0, 14), endsAt: at(0, 15.5), capacity: 10, reservedCount: 10, status: "RUNNING", bookingCutoffMinutes: 120 },
-  { id: "se-3", code: "SES-0003", workshopId: "ws-1", startsAt: at(1, 9), endsAt: at(1, 11), capacity: 8, reservedCount: 4, status: "RUNNING", bookingCutoffMinutes: 120, imageUrl: "https://picsum.photos/seed/session-glaze/400/300" },
-  { id: "se-4", code: "SES-0004", workshopId: "ws-1", startsAt: at(1, 14), endsAt: at(1, 16), capacity: 8, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120 },
-  { id: "se-5", code: "SES-0005", workshopId: "ws-2", startsAt: at(2, 10), endsAt: at(2, 11.5), capacity: 10, reservedCount: 2, status: "RUNNING", bookingCutoffMinutes: 180, imageUrl: "https://picsum.photos/seed/session-mug/400/300" },
-  { id: "se-6", code: "SES-0006", workshopId: "ws-1", startsAt: at(3, 9), endsAt: at(3, 11), capacity: 8, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120 },
-  // More demo sessions, one of each situation of the Sessions page: new (Open, never ran), Running without bookings (can be cancelled),
-  // Paused after it ran, Closed and a sold-out Running session with a booking.
+  // ---- TODAY (fixed hours: depending on the time of day they are over, taking place or still to come) ----
+  { id: "se-1", code: "SES-0001", workshopId: "ws-1", startsAt: at(0, 9), endsAt: at(0, 11), capacity: 8, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 120, imageUrl: pic("wheel") },
+  { id: "se-2", code: "SES-0002", workshopId: "ws-2", startsAt: at(0, 14), endsAt: at(0, 15.5), capacity: 10, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 120 },
+
+  // ---- RIGHT NOW (times relative to when the server started) ----
+  // Taking place: Running (can only be paused), with a guest who checked in and two who did not yet.
+  { id: "se-27", code: "SES-0027", workshopId: "ws-1", startsAt: inMinutes(-30), endsAt: inMinutes(90), capacity: 8, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 120, imageUrl: pic("live") },
+  // Taking place but Paused: Close is read-only until it ends, Re-schedule is possible.
+  { id: "se-28", code: "SES-0028", workshopId: "ws-2", startsAt: inMinutes(-20), endsAt: inMinutes(70), capacity: 10, reservedCount: 0, status: "PAUSED", bookingCutoffMinutes: 60 },
+  // Starts soon, inside its cut-off: guests see "Booking closed" (the owner can still check guests in).
+  { id: "se-29", code: "SES-0029", workshopId: "ws-1", startsAt: inMinutes(40), endsAt: inMinutes(160), capacity: 8, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 120 },
+  // Starts in a few hours with a short cut-off: bookable now.
+  { id: "se-30", code: "SES-0030", workshopId: "ws-2", startsAt: inMinutes(300), endsAt: inMinutes(390), capacity: 10, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 60 },
+  // Paused and not started: it can be closed (with a reason) or re-scheduled, and it has guests.
+  { id: "se-31", code: "SES-0031", workshopId: "ws-1", startsAt: inMinutes(180), endsAt: inMinutes(300), capacity: 8, reservedCount: 0, status: "PAUSED", bookingCutoffMinutes: 90 },
+
+  // ---- COMING DAYS ----
+  { id: "se-3", code: "SES-0003", workshopId: "ws-1", startsAt: at(1, 9), endsAt: at(1, 11), capacity: 8, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 120, imageUrl: pic("glaze") },
+  // Closed by the owner before it started, with a reason that is one of the basic ones.
+  { id: "se-4", code: "SES-0004", workshopId: "ws-1", startsAt: at(1, 14), endsAt: at(1, 16), capacity: 8, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, closedAt: at(-1, 16), closeReason: { code: "VENUE_ISSUE" } },
+  { id: "se-5", code: "SES-0005", workshopId: "ws-2", startsAt: at(2, 10), endsAt: at(2, 11.5), capacity: 10, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 180, imageUrl: pic("mug") },
+  { id: "se-41", code: "SES-0041", workshopId: "ws-1", startsAt: at(2, 16), endsAt: at(2, 18), capacity: 6, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 0 }, // closes when it starts
+  { id: "se-6", code: "SES-0006", workshopId: "ws-1", startsAt: at(3, 9), endsAt: at(3, 11), capacity: 8, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, closedAt: at(0, 8), closeReason: { code: "INSTRUCTOR_UNAVAILABLE" } },
   { id: "se-7", code: "SES-0007", workshopId: "ws-1", startsAt: at(4, 9), endsAt: at(4, 11), capacity: 8, reservedCount: 0, status: "OPEN", bookingCutoffMinutes: 60 },
   { id: "se-8", code: "SES-0008", workshopId: "ws-2", startsAt: at(4, 14), endsAt: at(4, 15.5), capacity: 10, reservedCount: 0, status: "OPEN", bookingCutoffMinutes: 120 },
-  { id: "se-9", code: "SES-0009", workshopId: "ws-1", startsAt: at(5, 9), endsAt: at(5, 11), capacity: 8, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 1440, imageUrl: "https://picsum.photos/seed/session-pottery/400/300" },
+  { id: "se-9", code: "SES-0009", workshopId: "ws-1", startsAt: at(5, 9), endsAt: at(5, 11), capacity: 8, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 1440, imageUrl: pic("pottery") },
   { id: "se-10", code: "SES-0010", workshopId: "ws-2", startsAt: at(5, 10), endsAt: at(5, 11.5), capacity: 10, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 120 },
-  { id: "se-11", code: "SES-0011", workshopId: "ws-1", startsAt: at(6, 14), endsAt: at(6, 16), capacity: 8, reservedCount: 3, status: "PAUSED", bookingCutoffMinutes: 120 },
-  { id: "se-12", code: "SES-0012", workshopId: "ws-2", startsAt: at(6, 9), endsAt: at(6, 10.5), capacity: 10, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120 },
-  { id: "se-13", code: "SES-0013", workshopId: "ws-1", startsAt: at(7, 9), endsAt: at(7, 11), capacity: 8, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120 },
-  { id: "se-14", code: "SES-0014", workshopId: "ws-2", startsAt: at(7, 14), endsAt: at(7, 15.5), capacity: 10, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120 },
-  { id: "se-15", code: "SES-0015", workshopId: "ws-1", startsAt: at(8, 10), endsAt: at(8, 12), capacity: 6, reservedCount: 6, status: "RUNNING", bookingCutoffMinutes: 30, imageUrl: "https://picsum.photos/seed/session-plates/400/300" },
+  // Paused with two guests: one has an email (re-scheduling emails them), the other is a walk-in.
+  { id: "se-11", code: "SES-0011", workshopId: "ws-1", startsAt: at(6, 14), endsAt: at(6, 16), capacity: 8, reservedCount: 0, status: "PAUSED", bookingCutoffMinutes: 120 },
+  { id: "se-12", code: "SES-0012", workshopId: "ws-2", startsAt: at(6, 9), endsAt: at(6, 10.5), capacity: 10, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, closedAt: at(0, 10), closeReason: { code: "SCHEDULE_CHANGE" } },
+  { id: "se-13", code: "SES-0013", workshopId: "ws-1", startsAt: at(7, 9), endsAt: at(7, 11), capacity: 8, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, closedAt: at(-1, 9), closeReason: { code: "NOT_ENOUGH_GUESTS" } },
+  { id: "se-14", code: "SES-0014", workshopId: "ws-2", startsAt: at(7, 14), endsAt: at(7, 15.5), capacity: 10, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, closedAt: at(-1, 11), closeReason: { code: "OTHER", note: "The glaze delivery is late." } },
+  // Sold out: every seat is booked.
+  { id: "se-15", code: "SES-0015", workshopId: "ws-1", startsAt: at(8, 10), endsAt: at(8, 12), capacity: 6, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 30, imageUrl: pic("plates") },
   { id: "se-16", code: "SES-0016", workshopId: "ws-2", startsAt: at(9, 10), endsAt: at(9, 11.5), capacity: 12, reservedCount: 0, status: "OPEN", bookingCutoffMinutes: 240 },
-  { id: "se-17", code: "SES-0017", workshopId: "ws-1", startsAt: at(10, 9), endsAt: at(10, 11), capacity: 8, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 120, imageUrl: "https://picsum.photos/seed/session-pottery/400/300", clonedFrom: { code: "SES-0009", workshopId: "ws-1" } },
-  // Its time is over while it was still Running: the system shows it as Closed (automatically).
+  // Cloned from SES-0009.
+  { id: "se-17", code: "SES-0017", workshopId: "ws-1", startsAt: at(10, 9), endsAt: at(10, 11), capacity: 8, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 1440, imageUrl: pic("pottery"), clonedFrom: { code: "SES-0009", workshopId: "ws-1" } },
+  // Re-scheduled once already (it was moved from another day): its Re-schedule button is read-only.
+  { id: "se-34", code: "SES-0034", workshopId: "ws-2", startsAt: at(12, 10), endsAt: at(12, 11.5), capacity: 10, reservedCount: 0, status: "PAUSED", bookingCutoffMinutes: 120, rescheduledAt: at(-1, 10), rescheduleReason: { code: "SCHEDULE_CHANGE" } },
+  // Three sessions on one day, in three situations.
+  { id: "se-38", code: "SES-0038", workshopId: "ws-1", startsAt: at(14, 9), endsAt: at(14, 11), capacity: 8, reservedCount: 0, status: "OPEN", bookingCutoffMinutes: 120 },
+  { id: "se-39", code: "SES-0039", workshopId: "ws-2", startsAt: at(14, 13), endsAt: at(14, 14.5), capacity: 10, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 120 },
+  { id: "se-40", code: "SES-0040", workshopId: "ws-1", startsAt: at(14, 17), endsAt: at(14, 19), capacity: 8, reservedCount: 0, status: "PAUSED", bookingCutoffMinutes: 120, rescheduledAt: at(-2, 15), rescheduleReason: { code: "OTHER", note: "The studio is booked for a private event." } },
+  // Cloned from SES-0034 (the clone is a new Open session).
+  { id: "se-35", code: "SES-0035", workshopId: "ws-2", startsAt: at(20, 10), endsAt: at(20, 11.5), capacity: 10, reservedCount: 0, status: "OPEN", bookingCutoffMinutes: 120, clonedFrom: { code: "SES-0034", workshopId: "ws-2" } },
+  // Far ahead: inside the 60 days of the default range, and beyond it (set the To date to see SES-0037).
+  { id: "se-36", code: "SES-0036", workshopId: "ws-1", startsAt: at(45, 9), endsAt: at(45, 11), capacity: 8, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 120 },
+  { id: "se-37", code: "SES-0037", workshopId: "ws-2", startsAt: at(75, 14), endsAt: at(75, 15.5), capacity: 10, reservedCount: 0, status: "OPEN", bookingCutoffMinutes: 120 },
+
+  // ---- PAST (the Sessions page shows them when From is set to an earlier day) ----
+  // Left Running with every kind of booking: the system shows it as Closed, and the check-in list shows each status.
+  { id: "se-32", code: "SES-0032", workshopId: "ws-2", startsAt: at(-1, 14), endsAt: at(-1, 15.5), capacity: 10, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 120, imageUrl: pic("past") },
   { id: "se-18", code: "SES-0018", workshopId: "ws-1", startsAt: at(-1, 9), endsAt: at(-1, 11), capacity: 8, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 120 },
-  // Sessions in the past (the Sessions page shows them when From is set to an earlier day). Closed by the owner before they started, with a reason:
+  // Closed by the owner before it started, with each kind of reason:
   { id: "se-19", code: "SES-0019", workshopId: "ws-1", startsAt: at(-2, 9), endsAt: at(-2, 11), capacity: 8, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, closedAt: at(-3, 10), closeReason: { code: "NOT_ENOUGH_GUESTS" } },
   { id: "se-20", code: "SES-0020", workshopId: "ws-2", startsAt: at(-2, 14), endsAt: at(-2, 15.5), capacity: 10, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 60, closedAt: at(-4, 15), closeReason: { code: "INSTRUCTOR_UNAVAILABLE" } },
   { id: "se-21", code: "SES-0021", workshopId: "ws-1", startsAt: at(-3, 14), endsAt: at(-3, 16), capacity: 8, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, closedAt: at(-5, 9), closeReason: { code: "OTHER", note: "The kiln needed an urgent repair." } },
   { id: "se-26", code: "SES-0026", workshopId: "ws-2", startsAt: at(-9, 10), endsAt: at(-9, 11.5), capacity: 10, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 180, closedAt: at(-11, 11), closeReason: { code: "SCHEDULE_CHANGE" } },
+  { id: "se-43", code: "SES-0043", workshopId: "ws-1", startsAt: at(-12, 9), endsAt: at(-12, 11), capacity: 8, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, closedAt: at(-14, 9), closeReason: { code: "VENUE_ISSUE" } },
   // Left Running, Paused or Open when their time was over: the system shows them as Closed automatically.
   { id: "se-22", code: "SES-0022", workshopId: "ws-2", startsAt: at(-4, 10), endsAt: at(-4, 11.5), capacity: 10, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 120 },
+  { id: "se-33", code: "SES-0033", workshopId: "ws-1", startsAt: at(-3, 9), endsAt: at(-3, 11), capacity: 8, reservedCount: 0, status: "PAUSED", bookingCutoffMinutes: 120, rescheduledAt: at(-6, 10), rescheduleReason: { code: "INSTRUCTOR_UNAVAILABLE" } },
   { id: "se-23", code: "SES-0023", workshopId: "ws-1", startsAt: at(-5, 9), endsAt: at(-5, 11), capacity: 8, reservedCount: 0, status: "PAUSED", bookingCutoffMinutes: 240 },
   { id: "se-24", code: "SES-0024", workshopId: "ws-2", startsAt: at(-6, 14), endsAt: at(-6, 15.5), capacity: 12, reservedCount: 0, status: "OPEN", bookingCutoffMinutes: 120 },
   { id: "se-25", code: "SES-0025", workshopId: "ws-1", startsAt: at(-7, 9), endsAt: at(-7, 11), capacity: 8, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 90 },
@@ -141,7 +187,36 @@ export const bookings: Booking[] = [
   // Two guests of the paused session se-11 (re-scheduling it emails the guest who has an email; the walk-in has none).
   booking({ id: "bk-9", sessionId: "se-11", customerId: "cu-1", quantity: 2 }),
   booking({ id: "bk-10", sessionId: "se-11", customerId: "cu-3", quantity: 1, source: "WALK_IN" }),
+  // ---- More guests, for the sessions above ----
+  // SES-0027 (taking place): one checked in and paid, two not yet.
+  booking({ id: "bk-12", sessionId: "se-27", customerId: "cu-1", quantity: 2, status: "CHECKED_IN", paymentStatus: "PAID",
+    payments: [{ id: "pm-2", type: "PAYMENT", amount: 1_300_000, method: "CARD", recordedAt: inMinutes(-25), recordedBy: "Linh Tran" }] }),
+  booking({ id: "bk-13", sessionId: "se-27", customerId: "cu-2", quantity: 1 }),
+  booking({ id: "bk-14", sessionId: "se-27", customerId: "cu-4", quantity: 2 }),
+  // SES-0028 (paused, taking place), SES-0029 (inside its cut-off), SES-0031 (paused, not started).
+  booking({ id: "bk-15", sessionId: "se-28", customerId: "cu-1", quantity: 1 }),
+  booking({ id: "bk-16", sessionId: "se-29", customerId: "cu-2", quantity: 2 }),
+  booking({ id: "bk-17", sessionId: "se-31", customerId: "cu-4", quantity: 1 }),
+  booking({ id: "bk-18", sessionId: "se-31", customerId: "cu-1", quantity: 2 }),
+  // SES-0032 (over): one booking in every status the check-in list can show. The confirmed ones become Session expired when the session ends.
+  booking({ id: "bk-19", sessionId: "se-32", customerId: "cu-1", quantity: 2, status: "COMPLETED", paymentStatus: "PAID",
+    payments: [{ id: "pm-3", type: "PAYMENT", amount: 800_000, method: "CASH", recordedAt: at(-1, 15), recordedBy: "Linh Tran" }] }),
+  booking({ id: "bk-20", sessionId: "se-32", customerId: "cu-2", quantity: 1, status: "NO_SHOW" }),
+  booking({ id: "bk-21", sessionId: "se-32", customerId: "cu-4", quantity: 2, status: "CHECKED_IN" }),
+  booking({ id: "bk-22", sessionId: "se-32", customerId: "cu-3", quantity: 1, source: "WALK_IN" }),
+  booking({ id: "bk-23", sessionId: "se-32", customerId: "cu-1", quantity: 1, status: "CANCELLED", cancelReason: "Schedule conflict" }),
+  booking({ id: "bk-24", sessionId: "se-32", customerId: "cu-2", quantity: 1, status: "LATE_RELEASED" }),
+  // SES-0033 (paused when its time was over) and SES-0034 / SES-0039 (to come).
+  booking({ id: "bk-25", sessionId: "se-33", customerId: "cu-4", quantity: 2 }),
+  booking({ id: "bk-26", sessionId: "se-34", customerId: "cu-2", quantity: 2 }),
+  booking({ id: "bk-27", sessionId: "se-34", customerId: "cu-1", quantity: 1 }),
+  booking({ id: "bk-28", sessionId: "se-39", customerId: "cu-4", quantity: 3 }),
+  // A guest of the session taking place who was late: the booking was released, and the guest can still be checked in while there is room.
+  booking({ id: "bk-29", sessionId: "se-27", customerId: "cu-3", quantity: 1, source: "WALK_IN", status: "LATE_RELEASED" }),
 ];
+
+// The seats a session has taken come from its bookings (a cancelled booking holds none).
+for (const session of sessions) session.reservedCount = reservedSeats(bookings, session.id);
 
 export const auditLogs: AuditEntry[] = [
   { id: "au-1", organizationId: "org-1", actor: "Linh Tran", action: "booking.check_in", entityType: "booking", entityId: "bk-2", createdAt: at(0, 9) },
