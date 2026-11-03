@@ -139,7 +139,8 @@
     "pendingText": "我们已向 {email} 发送了包含预订信息和链接的邮件。请打开链接确认预订；在此之前预订尚未确认。",
     "demoNote": "演示（此处没有邮箱）：",
     "demoLink": "打开邮件中的链接",
-    "confirmedNote": "您的预订已确认。"
+    "confirmedNote": "您的预订已确认。",
+    "demoEmail": "查看已发送的邮件"
   },
   "report": {
     "title": "举报此网站",
@@ -225,5 +226,24 @@
     "cancelledText": "此预订已取消，无法确认。请联系工作室。",
     "invalidTitle": "链接无效",
     "invalidText": "未找到与此链接对应的预订。请检查邮件中的链接，或联系工作室。"
+  },
+  "favorites": {
+    "add": "将{title}加入收藏",
+    "remove": "将{title}从收藏中移除",
+    "loginTitle": "登录后即可保存收藏",
+    "loginIntro": "输入您的邮箱，我们会发送验证码。您在 {shop} 收藏的工作坊将保存在此邮箱下。",
+    "emailLabel": "邮箱",
+    "emailInvalid": "请输入有效的邮箱地址。",
+    "sendCode": "发送验证码",
+    "sending": "发送中…",
+    "codeIntro": "我们已向 {email} 发送验证码。",
+    "codeLabel": "验证码",
+    "codeDemo": "演示：暂不发送真实邮件，请使用 {code}。",
+    "codeWrong": "验证码不正确。还剩 {left, plural, other {#次}}机会。",
+    "codeLocked": "错误次数过多。请关闭此窗口后重试。",
+    "resend": "重新发送验证码",
+    "resendIn": "{seconds} 秒后可重新发送",
+    "login": "登录",
+    "cancel": "取消"
   }
 }

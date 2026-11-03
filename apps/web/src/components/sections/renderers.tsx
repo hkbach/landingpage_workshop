@@ -6,6 +6,7 @@ import { formatMoney } from "@workshop/shared";
 import type { Workshop } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useBookingActions } from "./booking-context";
+import { FavoriteButton } from "./FavoriteButton";
 import type { AboutProps, GalleryProps, HeroProps, RenderContext, TeamProps, WorkshopsProps } from "./context";
 import {
   arr, box, card, focusRing, Heading, imageOf, Img, localizer, primaryButton, Section, str, type RenderProps,
@@ -149,15 +150,16 @@ export function WorkshopCard({ w, ctx, horizontal, featured, showBook = true }: 
   const { open } = useBookingActions();
   const cover = imageOf(ctx)(w.coverUrl);
   return (
-    <li className={cn("overflow-hidden", card, horizontal && "@xl:flex", featured && "@xl:col-span-2 @5xl:col-span-3")}>
+    <li className={cn("relative overflow-hidden", card, horizontal && "@xl:flex", featured && "@xl:col-span-2 @5xl:col-span-3")}>
       {cover ? (
         <Img
           src={cover}
           className={cn("aspect-[3/2] w-full object-cover", horizontal && "@xl:aspect-auto @xl:w-64 @xl:shrink-0", featured && "@xl:aspect-auto @xl:min-h-72 @xl:w-1/2")}
         />
       ) : null}
+      <FavoriteButton workshopId={w.id} title={L(w.title)} className="absolute end-3 top-3" />
       <div className={cn("flex flex-1 flex-col gap-2 p-4", featured && "@xl:justify-center @xl:p-8")}>
-        <h3 className={cn("font-semibold text-[var(--site-text)]", featured ? "text-2xl" : "text-lg")}>{L(w.title)}</h3>
+        <h3 className={cn("pe-10 font-semibold text-[var(--site-text)]", featured ? "text-2xl" : "text-lg")}>{L(w.title)}</h3>
         <p className="whitespace-pre-line text-sm text-[var(--site-muted)]">{L(w.shortDescription)}</p>
         <p className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[var(--site-text)]">
           <span className="inline-flex items-center gap-1"><Clock className="size-4" aria-hidden />{t("sections.duration", { minutes: w.durationMinutes })}</span>
@@ -199,16 +201,17 @@ function WorkshopLinkRow({ w, ctx, showBook }: { w: Workshop; ctx: RenderContext
   );
   // With the Book button turned off the row is plain information, not a control.
   return (
-    <li>
+    <li className="relative">
+      <FavoriteButton workshopId={w.id} title={L(w.title)} className={cn("absolute top-1/2 z-10 -translate-y-1/2", showBook ? "end-16" : "end-3")} />
       {showBook ? (
         <button
           type="button" onClick={() => open(w.id)} aria-label={t("sections.bookWorkshop", { title: L(w.title) })}
-          className={cn("flex min-h-20 w-full items-center gap-3 p-3 text-left transition hover:shadow-md", card, focusRing)}
+          className={cn("flex min-h-20 w-full items-center gap-3 p-3 pe-28 text-left transition hover:shadow-md", card, focusRing)}
         >
           {content}
         </button>
       ) : (
-        <div className={cn("flex min-h-20 w-full items-center gap-3 p-3 text-left", card)}>{content}</div>
+        <div className={cn("flex min-h-20 w-full items-center gap-3 p-3 pe-16 text-left", card)}>{content}</div>
       )}
     </li>
   );

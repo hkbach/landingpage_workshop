@@ -96,17 +96,18 @@
     "voucher": "Voucher",
     "summary": "Số booking theo trạng thái",
     "summaryTotal": "Tất cả booking",
-    "guestsCount": "{count, plural, other {# khách}}"
+    "guestsCount": "{count, plural, other {# khách}}",
+    "summaryHint": "Bấm vào một ô để chỉ xem các booking có trạng thái đó; bấm lại để xem tất cả."
   },
   "filters": {
     "date": "Ngày",
     "allDates": "Tất cả ngày",
     "session": "Buổi",
     "allSessions": "Tất cả buổi",
-    "status": "Trạng thái",
-    "allStatuses": "Tất cả trạng thái",
     "search": "Tìm kiếm",
-    "searchPlaceholder": "Mã, tên hoặc email"
+    "searchPlaceholder": "Mã, tên hoặc email",
+    "workshop": "Workshop",
+    "allWorkshops": "Tất cả workshop"
   },
   "payment": {
     "dialogTitle": "Ghi nhận thanh toán",

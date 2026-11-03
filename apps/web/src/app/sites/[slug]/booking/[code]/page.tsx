@@ -6,6 +6,7 @@ import { SiteIntlProvider } from "@/components/site/SiteIntlProvider";
 import { requireSite } from "@/components/site/resolve";
 import { getSiteBase } from "@/components/site/site-base";
 import { demoConfirmToken } from "@/lib/mock/booking-store";
+import { demoConfirmationEmailId } from "@/lib/mock/outbox-store";
 import { findBookingForLookup } from "@/lib/mock/site";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
@@ -20,6 +21,7 @@ export default async function BookingPage({ params, searchParams }: PageProps<"/
   const homeHref = base || "/";
   const found = findBookingForLookup(shop.id, code, email);
   const demoToken = found ? demoConfirmToken(found.booking.id) : undefined; // demo only: there is no mailbox in the prototype
+  const demoEmailId = found ? demoConfirmationEmailId(found.booking.bookingCode) : undefined;
   const shopInfo = { name: shop.name, address: shop.address, mapsUrl: shop.mapsUrl, contactEmail: shop.contactEmail, contactPhone: shop.contactPhone };
 
   return (
@@ -34,6 +36,7 @@ export default async function BookingPage({ params, searchParams }: PageProps<"/
                 startsAt: found.booking.startsAt, endsAt: found.booking.endsAt, timezone: found.booking.timezone,
                 quantity: found.booking.quantity, totalAmount: found.booking.totalAmount, currency: found.booking.currency,
                 status: found.booking.status, ...(demoToken ? { demoConfirmUrl: `${base}/booking/confirm/${demoToken}` } : {}),
+                ...(demoToken && demoEmailId ? { demoEmailUrl: `/api/v1/outbox/${demoEmailId}` } : {}),
               }}
             />
           ) : email && BOOKING_CODE_RE.test(code.toUpperCase()) ? (

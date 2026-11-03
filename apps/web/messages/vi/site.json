@@ -139,7 +139,8 @@
     "pendingText": "Chúng tôi đã gửi email đến {email} kèm thông tin booking và một đường link. Hãy bấm vào link để xác nhận booking; cho đến lúc đó booking chưa được xác nhận.",
     "demoNote": "Demo (ở đây không có hộp thư):",
     "demoLink": "mở link trong email",
-    "confirmedNote": "Booking của bạn đã được xác nhận."
+    "confirmedNote": "Booking của bạn đã được xác nhận.",
+    "demoEmail": "xem email đã gửi"
   },
   "report": {
     "title": "Báo cáo trang này",
@@ -225,5 +226,24 @@
     "cancelledText": "Booking này đã bị hủy nên không thể xác nhận. Vui lòng liên hệ studio.",
     "invalidTitle": "Link không hợp lệ",
     "invalidText": "Không tìm thấy booking nào với link này. Hãy kiểm tra lại link trong email hoặc liên hệ studio."
+  },
+  "favorites": {
+    "add": "Thêm {title} vào yêu thích",
+    "remove": "Bỏ {title} khỏi yêu thích",
+    "loginTitle": "Đăng nhập để lưu yêu thích",
+    "loginIntro": "Nhập email của bạn, chúng tôi sẽ gửi mã xác nhận. Các workshop bạn lưu tại {shop} sẽ được giữ theo email này.",
+    "emailLabel": "Email",
+    "emailInvalid": "Hãy nhập địa chỉ email hợp lệ.",
+    "sendCode": "Gửi mã",
+    "sending": "Đang gửi…",
+    "codeIntro": "Chúng tôi đã gửi mã đến {email}.",
+    "codeLabel": "Mã xác nhận",
+    "codeDemo": "Demo: chưa gửi email thật, hãy dùng {code}.",
+    "codeWrong": "Mã chưa đúng. Còn {left, plural, other {# lần thử}}.",
+    "codeLocked": "Nhập sai quá nhiều lần. Hãy đóng cửa sổ này và thử lại.",
+    "resend": "Gửi mã mới",
+    "resendIn": "Gửi mã mới sau {seconds}s",
+    "login": "Đăng nhập",
+    "cancel": "Hủy"
   }
 }

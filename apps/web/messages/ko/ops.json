@@ -96,17 +96,18 @@
     "voucher": "바우처",
     "summary": "상태별 예약",
     "summaryTotal": "전체 예약",
-    "guestsCount": "{count, plural, other {#명}}"
+    "guestsCount": "{count, plural, other {#명}}",
+    "summaryHint": "숫자를 누르면 해당 상태의 예약만 표시됩니다. 다시 누르면 전체가 표시됩니다."
   },
   "filters": {
     "date": "날짜",
     "allDates": "모든 날짜",
     "session": "세션",
     "allSessions": "모든 세션",
-    "status": "상태",
-    "allStatuses": "모든 상태",
     "search": "검색",
-    "searchPlaceholder": "코드, 이름 또는 이메일"
+    "searchPlaceholder": "코드, 이름 또는 이메일",
+    "workshop": "워크숍",
+    "allWorkshops": "모든 워크숍"
   },
   "payment": {
     "dialogTitle": "결제 기록",

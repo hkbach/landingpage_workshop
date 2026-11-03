@@ -1,0 +1,205 @@
+// The emails the platform sends to a guest. Every email holds the SAME message in six languages, one after the other (English, Vietnamese, Thai,
+// Chinese, Korean, Japanese): the reader scrolls to the language they read. Nothing is detected (no country, no browser language, no language saved on
+// the customer), so the email is the same for everybody. Pure: the same data always gives the same email. TODO(api): the worker renders these when it
+// sends the outbox event.
+import { formatMoney, type SessionCloseReason } from "@workshop/shared";
+
+export const EMAIL_LANGS = ["en", "vi", "th", "zh", "ko", "ja"] as const;
+export type EmailLang = (typeof EMAIL_LANGS)[number];
+
+/** The language names, each written in its own language (the headings of the sections). */
+export const EMAIL_LANG_NAMES: Record<EmailLang, string> = { en: "English", vi: "Tiếng Việt", th: "ภาษาไทย", zh: "中文", ko: "한국어", ja: "日本語" };
+
+// Locale tags used to write dates and money. Thai is written with the Gregorian year (the default Thai calendar would write 2569 for 2026).
+const TAG: Record<EmailLang, string> = { en: "en", vi: "vi", th: "th-u-ca-gregory", zh: "zh", ko: "ko", ja: "ja" };
+
+export interface RenderedEmail { subject: string; text: string; html: string }
+
+interface Row { label: string; value: string }
+interface Section { lang: EmailLang; subject: string; greeting: string; paragraphs: string[]; rows: Row[]; button?: { label: string; url: string }; fallback?: string; footer: string }
+
+const dateTime = (iso: string, timeZone: string, lang: EmailLang) => new Intl.DateTimeFormat(TAG[lang], { dateStyle: "full", timeStyle: "short", timeZone }).format(new Date(iso));
+const range = (a: string, b: string, timeZone: string, lang: EmailLang) =>
+  `${dateTime(a, timeZone, lang)} – ${new Intl.DateTimeFormat(TAG[lang], { timeStyle: "short", timeZone }).format(new Date(b))} (${timeZone})`;
+
+const fill = (text: string, vars: Record<string, string | number>) => text.replace(/\{(\w+)\}/g, (_, k: string) => String(vars[k] ?? ""));
+
+const esc = (v: string) => v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+
+// ---- the words, by language ----------------------------------------------------------------------------------------------------------
+
+type Words = Record<EmailLang, string>;
+const w = (en: string, vi: string, th: string, zh: string, ko: string, ja: string): Words => ({ en, vi, th, zh, ko, ja });
+
+const REASON: Record<Exclude<SessionCloseReason["code"], "OTHER">, Words> = {
+  NOT_ENOUGH_GUESTS: w("Not enough guests", "Chưa đủ khách", "ผู้เข้าร่วมไม่เพียงพอ", "报名人数不足", "인원 부족", "参加者が不足"),
+  INSTRUCTOR_UNAVAILABLE: w("The instructor is not available", "Giảng viên không thể tham gia", "ผู้สอนไม่สะดวก", "讲师无法到场", "강사 사정", "講師の都合"),
+  VENUE_ISSUE: w("Studio or venue problem", "Sự cố studio hoặc địa điểm", "ปัญหาของสตูดิโอหรือสถานที่", "工作室或场地出现问题", "스튜디오 또는 장소 문제", "スタジオまたは会場の問題"),
+  SCHEDULE_CHANGE: w("Schedule changed", "Lịch thay đổi", "ตารางเวลาเปลี่ยนแปลง", "日程变更", "일정 변경", "スケジュールの変更"),
+};
+/** The reason in a language; the explanation of "Other" is the text the shop typed, so it is not translated. */
+const reasonText = (reason: SessionCloseReason, lang: EmailLang) => (reason.code === "OTHER" ? (reason.note ?? "") : REASON[reason.code][lang]);
+
+const L = {
+  hello: w("Hello {name},", "Xin chào {name},", "สวัสดีคุณ {name}", "{name}，您好：", "{name}님, 안녕하세요.", "{name} 様"),
+  code: w("Booking code", "Mã booking", "รหัสการจอง", "预订编号", "예약 번호", "予約番号"),
+  workshop: w("Workshop", "Workshop", "เวิร์กช็อป", "工作坊", "워크숍", "ワークショップ"),
+  when: w("Date and time", "Ngày giờ", "วันและเวลา", "日期和时间", "날짜 및 시간", "日時"),
+  guests: w("Guests", "Số khách", "จำนวนผู้เข้าร่วม", "人数", "인원", "人数"),
+  total: w("Total (pay at the studio)", "Tổng tiền (thanh toán tại studio)", "ยอดรวม (ชำระที่สตูดิโอ)", "总价（到工作室支付）", "합계(스튜디오에서 결제)", "合計（スタジオでお支払い）"),
+  reason: w("Reason", "Lý do", "เหตุผล", "原因", "사유", "理由"),
+  languages: w("This email is written in six languages. Scroll down to read it in yours:", "Email này có sáu ngôn ngữ. Hãy cuộn xuống để đọc bằng ngôn ngữ của bạn:", "อีเมลนี้มีหกภาษา เลื่อนลงเพื่ออ่านในภาษาของคุณ:", "本邮件包含六种语言，请向下滚动阅读您的语言版本：", "이 이메일은 여섯 가지 언어로 작성되었습니다. 아래로 스크롤하여 원하는 언어로 읽어 보세요:", "このメールは6つの言語で書かれています。下へスクロールしてお読みください："),
+};
+
+// ---- the emails ------------------------------------------------------------------------------------------------------------------------
+
+export interface BookingConfirmationData {
+  guestName: string; shopName: string; bookingCode: string; workshopTitle: string; startsAt: string; endsAt: string; timezone: string;
+  quantity: number; totalAmount: number; currency: string; confirmUrl: string;
+}
+
+/** The email sent when a guest has booked: the booking and the link that confirms it. */
+export function renderBookingConfirmation(d: BookingConfirmationData): RenderedEmail {
+  const T = {
+    subject: w("Please confirm your booking {code}", "Vui lòng xác nhận booking {code}", "โปรดยืนยันการจอง {code}", "请确认您的预订 {code}", "예약 {code}을(를) 확인해 주세요", "ご予約 {code} の確認をお願いします"),
+    intro: w(
+      "Thank you for booking at {shop}. Please confirm your booking with the button below; until you do, it stays unconfirmed.",
+      "Cảm ơn bạn đã đặt chỗ tại {shop}. Vui lòng xác nhận booking bằng nút bên dưới; cho đến khi bạn xác nhận, booking vẫn ở trạng thái chưa xác nhận.",
+      "ขอบคุณที่จองกับ {shop} โปรดยืนยันการจองด้วยปุ่มด้านล่าง การจองจะยังไม่ได้รับการยืนยันจนกว่าคุณจะกดยืนยัน",
+      "感谢您在 {shop} 预订。请点击下方按钮确认预订；在您确认之前，预订处于未确认状态。",
+      "{shop}에 예약해 주셔서 감사합니다. 아래 버튼으로 예약을 확인해 주세요. 확인하기 전까지 예약은 확인되지 않은 상태로 유지됩니다.",
+      "{shop}にご予約いただきありがとうございます。下のボタンでご予約を確認してください。確認いただくまで、ご予約は未確認の状態です。",
+    ),
+    button: w("Confirm my booking", "Xác nhận booking", "ยืนยันการจองของฉัน", "确认我的预订", "내 예약 확인", "予約を確認する"),
+    fallback: w("If the button does not work, copy this link into your browser:", "Nếu nút không hoạt động, hãy sao chép đường link này vào trình duyệt:", "หากปุ่มใช้งานไม่ได้ ให้คัดลอกลิงก์นี้ไปวางในเบราว์เซอร์:", "如果按钮无法使用，请将此链接复制到浏览器中：", "버튼이 작동하지 않으면 이 링크를 브라우저에 복사해 붙여넣으세요:", "ボタンが使えない場合は、次のリンクをブラウザーにコピーしてください："),
+    footer: w("If you did not make this booking, you can ignore this email.", "Nếu bạn không thực hiện booking này, bạn có thể bỏ qua email này.", "หากคุณไม่ได้เป็นผู้จองนี้ สามารถละเว้นอีเมลฉบับนี้ได้", "如果这不是您本人的预订，请忽略此邮件。", "본인이 한 예약이 아니라면 이 이메일을 무시하셔도 됩니다.", "このご予約に心当たりがない場合は、このメールを無視してください。"),
+  };
+  return compose(EMAIL_LANGS.map((lang): Section => ({
+    lang, subject: fill(T.subject[lang], { code: d.bookingCode }),
+    greeting: fill(L.hello[lang], { name: d.guestName }),
+    paragraphs: [fill(T.intro[lang], { shop: d.shopName })],
+    rows: [
+      { label: L.code[lang], value: d.bookingCode }, { label: L.workshop[lang], value: d.workshopTitle },
+      { label: L.when[lang], value: range(d.startsAt, d.endsAt, d.timezone, lang) }, { label: L.guests[lang], value: String(d.quantity) },
+      { label: L.total[lang], value: formatMoney(d.totalAmount, d.currency, TAG[lang]) },
+    ],
+    button: { label: T.button[lang], url: d.confirmUrl }, fallback: T.fallback[lang], footer: T.footer[lang],
+  })));
+}
+
+export interface SessionRescheduledData {
+  guestName: string; shopName: string; bookingCode: string; workshopTitle: string; timezone: string;
+  oldStartsAt: string; newStartsAt: string; newEndsAt: string; reason: SessionCloseReason;
+}
+
+/** The email sent when the shop moves a session: the old and the new time, and why. */
+export function renderSessionRescheduled(d: SessionRescheduledData): RenderedEmail {
+  const T = {
+    subject: w("Your session has been rescheduled ({code})", "Session của bạn đã được đổi lịch ({code})", "เซสชันของคุณถูกเลื่อนเวลา ({code})", "您的场次已改期（{code}）", "세션 일정이 변경되었습니다 ({code})", "セッションの日程が変更されました（{code}）"),
+    intro: w(
+      "{shop} has moved your session. Your booking {code} for {workshop} now takes place at the new time below.",
+      "{shop} đã đổi lịch session của bạn. Booking {code} cho {workshop} sẽ diễn ra vào thời gian mới bên dưới.",
+      "{shop} ได้เปลี่ยนเวลาเซสชันของคุณ การจอง {code} สำหรับ {workshop} จะจัดขึ้นในเวลาใหม่ด้านล่าง",
+      "{shop} 已更改您的场次时间。您的预订 {code}（{workshop}）将在下方的新时间举行。",
+      "{shop}에서 세션 일정을 변경했습니다. {workshop} 예약 {code}은(는) 아래의 새 시간에 진행됩니다.",
+      "{shop}がセッションの日程を変更しました。{workshop}のご予約 {code} は、下記の新しい日時に開催されます。",
+    ),
+    before: w("Previous time", "Thời gian cũ", "เวลาเดิม", "原时间", "이전 일정", "変更前の日時"),
+    after: w("New time", "Thời gian mới", "เวลาใหม่", "新时间", "새 일정", "変更後の日時"),
+    footer: w("If the new time does not suit you, please contact the studio.", "Nếu thời gian mới không phù hợp, vui lòng liên hệ studio.", "หากเวลาใหม่ไม่สะดวก โปรดติดต่อสตูดิโอ", "如果新的时间不方便，请联系工作室。", "새 일정이 맞지 않으시면 스튜디오로 문의해 주세요.", "新しい日時が合わない場合は、スタジオまでご連絡ください。"),
+  };
+  return compose(EMAIL_LANGS.map((lang): Section => ({
+    lang, subject: fill(T.subject[lang], { code: d.bookingCode }), greeting: fill(L.hello[lang], { name: d.guestName }),
+    paragraphs: [fill(T.intro[lang], { shop: d.shopName, code: d.bookingCode, workshop: d.workshopTitle })],
+    rows: [
+      { label: T.before[lang], value: `${dateTime(d.oldStartsAt, d.timezone, lang)} (${d.timezone})` },
+      { label: T.after[lang], value: range(d.newStartsAt, d.newEndsAt, d.timezone, lang) },
+      { label: L.reason[lang], value: reasonText(d.reason, lang) },
+    ],
+    footer: T.footer[lang],
+  })));
+}
+
+export interface SessionClosedData {
+  guestName: string; shopName: string; bookingCode: string; workshopTitle: string; timezone: string; startsAt: string; endsAt: string;
+  /** Set when the owner or an administrator closed the session; missing when the system closed it because its time ended. */
+  reason?: SessionCloseReason;
+}
+
+/** The email sent when a session is closed (by the shop, an administrator or the system when its time ended). */
+export function renderSessionClosed(d: SessionClosedData): RenderedEmail {
+  const T = {
+    subject: w("Your session has been closed ({code})", "Session của bạn đã bị đóng ({code})", "เซสชันของคุณถูกปิด ({code})", "您的场次已关闭（{code}）", "세션이 닫혔습니다 ({code})", "セッションがクローズされました（{code}）"),
+    intro: w(
+      "{shop} has closed the session of your booking {code} for {workshop}. It will not take place.",
+      "{shop} đã đóng session của booking {code} cho {workshop}. Session sẽ không diễn ra.",
+      "{shop} ได้ปิดเซสชันของการจอง {code} สำหรับ {workshop} เซสชันนี้จะไม่จัดขึ้น",
+      "{shop} 已关闭您的预订 {code}（{workshop}）所属的场次，该场次将不会举行。",
+      "{shop}에서 {workshop} 예약 {code}의 세션을 닫았습니다. 이 세션은 진행되지 않습니다.",
+      "{shop}が{workshop}のご予約 {code} のセッションをクローズしました。このセッションは開催されません。",
+    ),
+    introAuto: w(
+      "The session of your booking {code} for {workshop} at {shop} has been closed because its time has ended.",
+      "Session của booking {code} cho {workshop} tại {shop} đã được đóng vì đã hết thời gian tổ chức.",
+      "เซสชันของการจอง {code} สำหรับ {workshop} ที่ {shop} ถูกปิดเนื่องจากหมดเวลาจัดกิจกรรมแล้ว",
+      "您在 {shop} 的预订 {code}（{workshop}）所属的场次因举办时间已结束而被关闭。",
+      "{shop}의 {workshop} 예약 {code}의 세션이 진행 시간이 끝나 닫혔습니다.",
+      "{shop}の{workshop}のご予約 {code} のセッションは、開催時間が終了したためクローズされました。",
+    ),
+    time: w("Session time", "Thời gian session", "เวลาเซสชัน", "场次时间", "세션 시간", "セッション時間"),
+    autoReason: w("The session time has ended.", "Session đã hết thời gian tổ chức.", "หมดเวลาจัดเซสชันแล้ว", "场次举办时间已结束。", "세션 진행 시간이 종료되었습니다.", "セッションの開催時間が終了しました。"),
+    footer: w("Please contact the studio if you have questions.", "Nếu có thắc mắc, vui lòng liên hệ studio.", "หากมีคำถาม โปรดติดต่อสตูดิโอ", "如有疑问，请联系工作室。", "문의 사항은 스튜디오로 연락해 주세요.", "ご不明な点はスタジオまでお問い合わせください。"),
+  };
+  return compose(EMAIL_LANGS.map((lang): Section => ({
+    lang, subject: fill(T.subject[lang], { code: d.bookingCode }), greeting: fill(L.hello[lang], { name: d.guestName }),
+    paragraphs: [fill((d.reason ? T.intro : T.introAuto)[lang], { shop: d.shopName, code: d.bookingCode, workshop: d.workshopTitle })],
+    rows: [
+      { label: T.time[lang], value: range(d.startsAt, d.endsAt, d.timezone, lang) },
+      { label: L.reason[lang], value: d.reason ? reasonText(d.reason, lang) : T.autoReason[lang] },
+    ],
+    footer: T.footer[lang],
+  })));
+}
+
+// ---- layout ---------------------------------------------------------------------------------------------------------------------------
+
+/** The six sections one after the other. The subject is the six subjects on one line. */
+function compose(sections: Section[]): RenderedEmail {
+  const subject = sections.map((s) => s.subject).join(" | ");
+  const names = EMAIL_LANGS.map((l) => EMAIL_LANG_NAMES[l]).join(" · ");
+
+  const text = [
+    `${L.languages.en} ${names}`, "",
+    ...sections.flatMap((s) => [
+      `==== ${EMAIL_LANG_NAMES[s.lang]} ====`, s.subject, "", s.greeting, "", ...s.paragraphs, "",
+      ...s.rows.map((r) => `${r.label}: ${r.value}`),
+      ...(s.button ? ["", `${s.button.label}: ${s.button.url}`] : []), "", s.footer, "",
+    ]),
+  ].join("\n");
+
+  const block = (s: Section) => `
+    <section lang="${s.lang === "zh" ? "zh-Hans" : s.lang}" id="lang-${s.lang}" style="margin:0 0 28px;padding:20px;border:1px solid #e4e4e7;border-radius:12px;background:#ffffff">
+      <p style="margin:0 0 12px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#52525b">${esc(EMAIL_LANG_NAMES[s.lang])}</p>
+      <h2 style="margin:0 0 12px;font-size:18px;line-height:1.35;color:#18181b">${esc(s.subject)}</h2>
+      <p style="margin:0 0 8px;font-size:15px;color:#27272a">${esc(s.greeting)}</p>
+      ${s.paragraphs.map((p) => `<p style="margin:0 0 14px;font-size:15px;line-height:1.55;color:#27272a">${esc(p)}</p>`).join("")}
+      <table role="presentation" style="width:100%;border-collapse:collapse;margin:0 0 16px;font-size:14px">
+        ${s.rows.map((r) => `<tr><td style="padding:6px 12px 6px 0;vertical-align:top;color:#52525b;white-space:nowrap">${esc(r.label)}</td><td style="padding:6px 0;color:#18181b;font-weight:600">${esc(r.value)}</td></tr>`).join("")}
+      </table>
+      ${s.button ? `<p style="margin:0 0 12px"><a href="${esc(s.button.url)}" style="display:inline-block;padding:12px 22px;border-radius:8px;background:#18181b;color:#ffffff;font-weight:700;text-decoration:none">${esc(s.button.label)}</a></p>
+      <p style="margin:0 0 14px;font-size:12px;color:#52525b;word-break:break-all">${esc(s.fallback ?? "")}<br><a href="${esc(s.button.url)}" style="color:#1d4ed8">${esc(s.button.url)}</a></p>` : ""}
+      <p style="margin:0;font-size:13px;color:#52525b">${esc(s.footer)}</p>
+    </section>`;
+
+  const html = `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(subject)}</title></head>
+<body style="margin:0;padding:24px 12px;background:#f4f4f5;font-family:-apple-system,'Segoe UI',Roboto,'Noto Sans','Noto Sans Thai','Noto Sans SC','Noto Sans KR','Noto Sans JP',Arial,sans-serif">
+  <div style="max-width:620px;margin:0 auto">
+    <p style="margin:0 0 20px;font-size:13px;line-height:1.6;color:#3f3f46">${EMAIL_LANGS.map((l) => esc(L.languages[l])).join("<br>")}<br>
+      ${EMAIL_LANGS.map((l) => `<a href="#lang-${l}" style="color:#1d4ed8">${esc(EMAIL_LANG_NAMES[l])}</a>`).join(" · ")}</p>
+    ${sections.map(block).join("\n")}
+  </div>
+</body></html>`;
+
+  return { subject, text, html };
+}

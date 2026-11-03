@@ -2,13 +2,16 @@
 // change and a worker sends the email in the language of the guest (REQUIREMENTS 5.7), so nothing is sent from a request handler.
 // Lives on globalThis like the other mock stores.
 import type { Locale, SessionCloseReason } from "@workshop/shared";
+import { renderBookingConfirmation, renderSessionClosed, renderSessionRescheduled, type RenderedEmail } from "@/lib/email/templates";
 import { newUuid } from "@/lib/uuid";
 
-interface EmailBase {
+interface EmailBase extends RenderedEmail {
   id: string;
   to: string;
-  /** Language of the email: the preferred language of the guest. */
+  /** The language the guest prefers. It does NOT choose the language of the email: every email holds the same message in six languages (see templates). */
   locale: Locale;
+  guestName: string;
+  shopName: string;
   bookingCode: string;
   workshopTitle: string;
   timezone: string;
@@ -49,25 +52,36 @@ export type OutboxEmail = SessionRescheduledEmail | SessionClosedEmail | Booking
 const g = globalThis as unknown as { __outbox?: OutboxEmail[] };
 const box = () => (g.__outbox ??= []);
 
-export function queueSessionRescheduled(email: Omit<SessionRescheduledEmail, "id" | "type" | "createdAt">): SessionRescheduledEmail {
-  const entry: SessionRescheduledEmail = { ...email, id: newUuid(), type: "SESSION_RESCHEDULED", createdAt: new Date().toISOString() };
+type Queued<T extends { type: string }> = Omit<T, "id" | "type" | "createdAt" | keyof RenderedEmail>;
+
+export function queueSessionRescheduled(email: Queued<SessionRescheduledEmail>): SessionRescheduledEmail {
+  const entry: SessionRescheduledEmail = { ...email, ...renderSessionRescheduled(email), id: newUuid(), type: "SESSION_RESCHEDULED", createdAt: new Date().toISOString() };
   box().push(entry);
   return entry;
 }
 
-export function queueSessionClosed(email: Omit<SessionClosedEmail, "id" | "type" | "createdAt">): SessionClosedEmail {
-  const entry: SessionClosedEmail = { ...email, id: newUuid(), type: "SESSION_CLOSED", createdAt: new Date().toISOString() };
+export function queueSessionClosed(email: Queued<SessionClosedEmail>): SessionClosedEmail {
+  const entry: SessionClosedEmail = { ...email, ...renderSessionClosed(email), id: newUuid(), type: "SESSION_CLOSED", createdAt: new Date().toISOString() };
   box().push(entry);
   return entry;
 }
 
-export function queueBookingConfirmation(email: Omit<BookingConfirmationEmail, "id" | "type" | "createdAt">): BookingConfirmationEmail {
-  const entry: BookingConfirmationEmail = { ...email, id: newUuid(), type: "BOOKING_CONFIRMATION", createdAt: new Date().toISOString() };
+export function queueBookingConfirmation(email: Queued<BookingConfirmationEmail>): BookingConfirmationEmail {
+  const entry: BookingConfirmationEmail = { ...email, ...renderBookingConfirmation(email), id: newUuid(), type: "BOOKING_CONFIRMATION", createdAt: new Date().toISOString() };
   box().push(entry);
   return entry;
 }
 
 export const outboxEmails = (): OutboxEmail[] => box().map((e) => ({ ...e }));
+
+/** One queued email (with its html), by id. */
+export const outboxEmail = (id: string): OutboxEmail | undefined => box().find((e) => e.id === id);
+
+/** Demo only: the id of the latest confirmation email of a booking, so the confirmation page can offer to open it (a real guest gets it by email). */
+export function demoConfirmationEmailId(bookingCode: string): string | undefined {
+  if (process.env.NODE_ENV === "production") return undefined;
+  return [...box()].reverse().find((e) => e.type === "BOOKING_CONFIRMATION" && e.bookingCode === bookingCode)?.id;
+}
 
 /** Test helper. */
 export function resetOutbox(): void {

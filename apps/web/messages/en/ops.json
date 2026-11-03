@@ -96,17 +96,18 @@
     "voucher": "Voucher",
     "summary": "Bookings by status",
     "summaryTotal": "All bookings",
-    "guestsCount": "{count, plural, one {# guest} other {# guests}}"
+    "guestsCount": "{count, plural, one {# guest} other {# guests}}",
+    "summaryHint": "Click a figure to show only the bookings of that status; click it again to show them all."
   },
   "filters": {
     "date": "Date",
     "allDates": "All dates",
     "session": "Session",
     "allSessions": "All sessions",
-    "status": "Status",
-    "allStatuses": "All statuses",
     "search": "Search",
-    "searchPlaceholder": "Code, name or email"
+    "searchPlaceholder": "Code, name or email",
+    "workshop": "Workshop",
+    "allWorkshops": "All workshops"
   },
   "payment": {
     "dialogTitle": "Record payment",

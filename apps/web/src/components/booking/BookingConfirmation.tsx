@@ -28,7 +28,8 @@ export function BookingConfirmation({ data, shop, locale, homeHref }: { data: Co
           {data.demoConfirmUrl ? (
             // Demo only: there is no mailbox in the prototype, so the link of the email is offered here.
             <p className="mt-2 text-xs"><span className="font-medium">{t("confirmation.demoNote")}</span>{" "}
-              <a href={data.demoConfirmUrl} data-testid="demo-confirm-link" className="underline underline-offset-4">{t("confirmation.demoLink")}</a></p>
+              <a href={data.demoConfirmUrl} data-testid="demo-confirm-link" className="underline underline-offset-4">{t("confirmation.demoLink")}</a>
+              {data.demoEmailUrl ? (<>{" · "}<a href={data.demoEmailUrl} target="_blank" rel="noopener noreferrer" data-testid="demo-email-link" className="underline underline-offset-4">{t("confirmation.demoEmail")}</a></>) : null}</p>
           ) : null}
         </section>
       ) : data.status ? (

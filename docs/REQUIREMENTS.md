@@ -400,12 +400,18 @@ Browser ────────────────────────
 - Sau khi đặt: hiển thị booking code, workshop, ngày giờ (timezone của shop), số khách, tổng tiền ("Pay at the studio"), địa chỉ + link bản đồ, chính sách đến trễ, thông tin liên hệ shop.
 - Không có nút hủy. Hướng dẫn: "To change or cancel, please contact the studio."
 
+**FR-BOOK-04 – Yêu thích workshop (Should)**
+- Mỗi thẻ workshop trên landing page (mọi template và kiểu hiển thị, kể cả dạng danh sách rút gọn) có **icon trái tim "Add to favorites"** (nút bật / tắt, `aria-pressed`, có tên truy cập "Add {tên} to favorites" / "Remove {tên} from favorites"; trái tim đặc khi đã yêu thích).
+- **Khách phải đăng nhập trước khi bấm lưu:** khi chưa đăng nhập, bấm trái tim mở popup đăng nhập (nhập email, rồi nhập mã xác nhận gửi về email đó; email được trim và đổi chữ thường, sai định dạng thì báo lỗi, nhập sai mã tối đa 5 lần); đăng nhập thành công thì popup đóng và **workshop vừa bấm được lưu luôn**. Hủy popup thì không lưu gì. Khi đã đăng nhập, bấm trái tim lưu hoặc bỏ lưu ngay, không hiện popup.
+- Danh sách yêu thích thuộc về từng khách (theo email) và từng shop; shop owner không dịch nội dung này (tên workshop là nội dung động của shop). Mọi text tĩnh có đủ 5 ngôn ngữ (BR-18).
+- MVP frontend: phiên khách và danh sách yêu thích lưu trong `localStorage` của trình duyệt (`lib/favorites.ts`), mã xác nhận demo dùng chung với form đặt chỗ; bản xem thử trong builder dùng cùng cơ chế. TODO(api): phiên khách là cookie, danh sách yêu thích là bảng riêng khóa theo khách + `organization_id` + workshop, mọi truy vấn lọc theo `organization_id` từ ngữ cảnh server.
+
 ### 5.6 Vận hành booking (dashboard shop)
 
 **FR-OPS-01 – Danh sách booking (Must)**
-- **Khu vực tổng hợp theo Booking Status** (cùng kiểu các ô số liệu của màn hình Today) nằm giữa bộ lọc và bảng: một ô **All bookings** và một ô cho từng trạng thái (Confirmed, Checked in, Completed, Late released, No-show, Cancelled, Session expired), mỗi ô có **số booking** (chữ lớn) và **số khách** của các booking đó. Số liệu tính trên các booking thỏa bộ lọc **ngày, session và ô tìm kiếm** nhưng **không** bị thu hẹp bởi bộ lọc Status (bộ lọc Status chỉ thu hẹp bảng), nên các trạng thái luôn cộng lại bằng ô All bookings.
+- **Khu vực tổng hợp theo Booking Status** (cùng kiểu các ô số liệu của màn hình Today) nằm giữa bộ lọc và bảng: một ô **All bookings** và một ô cho từng trạng thái (Not confirmed, Confirmed, Checked in, Cancelled), mỗi ô có **số booking** (chữ lớn) và **số khách** của các booking đó. Số liệu tính trên các booking thỏa bộ lọc **ngày, workshop, session và ô tìm kiếm**, nên các trạng thái luôn cộng lại bằng ô All bookings. **Mỗi ô là một nút bấm được (`aria-pressed`): bấm vào ô của một trạng thái thì bảng chỉ liệt kê các booking có trạng thái đó** (ô đang chọn được tô nổi; bấm lại ô đó, hoặc bấm ô All bookings, để xem tất cả). **Không còn bộ lọc Status dạng thả xuống**: trạng thái được lọc bằng chính các ô tổng hợp.
 - **Cột Voucher và tooltip ở cột Total của danh sách booking:** thêm cột **Voucher** (mã các voucher / khuyến mãi đã áp dụng cho booking, "—" nếu không dùng) đứng trước cột Total. Rê chuột hoặc focus bàn phím vào số tiền ở cột **Total** hiện tooltip: giá gốc của booking (đơn giá × số khách), từng voucher kèm số tiền đã giảm (mỗi voucher tính trên giá gốc) và tổng tiền sau giảm giá; booking không dùng voucher ghi "No voucher". Cùng thành phần tooltip với cột Amount của trang Income & expenses.
-- Xem theo ngày (mặc định hôm nay), theo session, theo trạng thái; tìm theo booking code, tên, email.
+- Xem theo ngày (mặc định hôm nay), theo **workshop** (bộ lọc thả xuống thay cho bộ lọc Status; chọn workshop thì danh sách session của bộ lọc Session chỉ còn các session của workshop đó), theo session; theo trạng thái bằng cách bấm vào các ô tổng hợp ở trên; tìm theo booking code, tên, email.
 - View "Today": danh sách session hôm nay, mỗi session hiển thị danh sách khách để check-in nhanh (tối ưu cho tablet/mobile).
 
 **FR-OPS-02 – Tạo booking thủ công (Must)**
@@ -482,11 +488,12 @@ Browser ────────────────────────
 |---|---|---|
 | Xác minh email, reset password | Shop owner | Ngôn ngữ UI của user (mặc định EN) |
 | Shop được duyệt / bị từ chối / bị khóa | Shop owner | Như trên |
-| `booking.confirmed` | Khách | Locale khách chọn khi đặt |
+| `booking.confirmed` | Khách | Cả 6 ngôn ngữ trong cùng một email (xem bên dưới) |
 | `booking.confirmed` (thông báo booking mới) | Email của shop | Ngôn ngữ của shop |
-| `booking.cancelled`, `booking.rescheduled`, `session.cancelled` | Khách | Locale của khách |
+| `booking.cancelled`, `booking.rescheduled`, `session.closed` | Khách | Cả 6 ngôn ngữ trong cùng một email |
 | Nhắc lịch 24 giờ trước (Should) | Khách | Locale của khách |
 
+- **Email gửi khách chứa cùng một nội dung bằng 6 ngôn ngữ, nối tiếp nhau: tiếng Anh, tiếng Việt, tiếng Thái, tiếng Trung, tiếng Hàn, tiếng Nhật.** Người đọc cuộn email để đọc phần ngôn ngữ của mình (đầu email có dòng giới thiệu sáu ngôn ngữ và các link nhảy tới từng phần). **Hệ thống không phát hiện quốc gia hay ngôn ngữ của khách** (không dùng quốc gia, ngôn ngữ trình duyệt hay ngôn ngữ đã lưu), nên mọi khách nhận cùng một email. Tiêu đề email gồm 6 tiêu đề ngăn bằng " | ". Ngày giờ và tiền được viết theo từng ngôn ngữ (tiếng Thái dùng năm dương lịch). Lý do đóng / đổi lịch do hệ thống định sẵn được dịch ra cả 6 ngôn ngữ; ô giải thích của lý do Other là chữ shop owner nhập nên giữ nguyên. Mọi giá trị chèn vào HTML đều được escape. (MVP frontend: `lib/email/templates.ts` là các hàm thuần, outbox mock lưu `subject`, `text`, `html`; trang xác nhận booking có link "view the email that was sent" mở `GET /api/v1/outbox/{id}`, chỉ có ở môi trường dev.)
 - Email gửi khách phải có: booking code, workshop, ngày giờ + timezone, địa chỉ, link bản đồ, tổng tiền "pay at studio", chính sách đến trễ (Mục 6, BR-09), liên hệ shop. Should: đính kèm file `.ics`.
 - Gửi qua **outbox + worker**; không gửi trong request handler. Retry tối đa 5 lần (backoff lũy thừa); lỗi cuối cùng ghi log + `outbox_events.status = FAILED`.
 - From: `"{Shop name} via {Platform}" <bookings@{PLATFORM_DOMAIN}>`, `Reply-To`: email của shop. Cấu hình SPF/DKIM/DMARC cho `{PLATFORM_DOMAIN}`.
@@ -875,7 +882,7 @@ Mục tiêu coverage: ≥ 80% cho `bookings`, `sessions`, `payments`, `auth`; c�
 | AC-01 | Shop tự đăng ký, xác minh email, hoàn tất onboarding và có subdomain riêng. |
 | AC-02 | Shop tạo landing page từ template, chỉnh section, preview đa ngôn ngữ mà không cần deploy code. |
 | AC-03 | Landing page chỉ public sau khi admin duyệt; shop bị khóa thì landing page trả 404. |
-| AC-04 | Khách đặt chỗ không cần tài khoản; nhận email xác nhận đúng ngôn ngữ đã chọn. |
+| AC-04 | Khách đặt chỗ không cần tài khoản; nhận email có đủ 6 ngôn ngữ (Anh, Việt, Thái, Trung, Hàn, Nhật) trong cùng một email, không phụ thuộc quốc gia của khách. |
 | AC-05 | Không overbooking khi có request đồng thời (có test chứng minh). |
 | AC-06 | Giá do backend tính; booking giữ snapshot khi workshop đổi giá. |
 | AC-07 | Shop tạo booking walk-in, check-in / uncheck-in, hủy, ghi nhận thanh toán; tất cả có audit log. Khách đặt thành công nhận email có link xác nhận; bấm link thì booking `CONFIRMED`. |

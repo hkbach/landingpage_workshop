@@ -126,7 +126,7 @@ export function createGuestBooking(input: GuestBookingInput, confirmUrlFor: (tok
   if (idempotencyKey) store().keys.set(idempotencyKey, booking.id);
   // The email goes to the person who booked, in their language, with the booking and the link that confirms it.
   queueBookingConfirmation({
-    to: email, locale: customer.preferredLocale, bookingCode: booking.bookingCode, workshopTitle: booking.workshopTitle, timezone: booking.timezone,
+    to: email, locale: customer.preferredLocale, guestName: customer.fullName, shopName: currentShop.name, bookingCode: booking.bookingCode, workshopTitle: booking.workshopTitle, timezone: booking.timezone,
     startsAt: booking.startsAt, endsAt: booking.endsAt, quantity: booking.quantity, totalAmount: booking.totalAmount, currency: booking.currency, confirmUrl: confirmUrlFor(token),
   });
   return { ok: true, booking, confirmToken: token, repeated: false };

@@ -18,8 +18,12 @@ import { NativeSelect } from "./native-select";
 import { BookingStatusBadge, PaymentStatusBadge } from "./status-badges";
 import { PriceTip } from "./price-tip";
 import { ShopLink } from "@/components/dashboard/shell/shop-link";
+import { cn } from "@/lib/utils";
 
-/** FR-OPS-01: filter by date / session / status, search by code, name, email. */
+/**
+ * FR-OPS-01: filter by date / session / workshop, search by code, name, email. The summary counts the bookings by status; a click on one of its figures
+ * shows only the bookings of that status (a click on the same figure, or on All bookings, shows them all again).
+ */
 export function BookingsList({
   bookings, prices, sessions, customers, workshops, timezone, defaultLocale, enabledLocales, nowIso,
 }: {
@@ -31,7 +35,8 @@ export function BookingsList({
   const locale = useLocale() as Locale;
   const [date, setDate] = useState(() => dayKey(nowIso, timezone)); // default: today (shop timezone)
   const [sessionId, setSessionId] = useState("");
-  const [status, setStatus] = useState<"" | BookingStatus>("");
+  const [workshopId, setWorkshopId] = useState("");
+  const [status, setStatus] = useState<"" | BookingStatus>(""); // set by a click on a figure of the summary
   const [query, setQuery] = useState("");
 
   const customerOf = (id: string) => customers.find((c) => c.id === id);
@@ -42,14 +47,16 @@ export function BookingsList({
     () =>
       sessions
         .filter((s) => !date || dayKey(s.startsAt, timezone) === date)
+        .filter((s) => !workshopId || s.workshopId === workshopId)
         .sort((a, b) => a.startsAt.localeCompare(b.startsAt)),
-    [sessions, date, timezone],
+    [sessions, date, workshopId, timezone],
   );
 
   const q = query.trim().toLowerCase();
-  // The bookings the date, the session and the search let through; the summary counts them by status, and the status filter then narrows the table.
+  // The bookings the date, the workshop, the session and the search let through; the summary counts them by status, and the status chosen in it narrows the table.
   const inScope = bookings
     .filter((b) => (!date || dayKey(b.startsAt, timezone) === date))
+    .filter((b) => !workshopId || b.workshopId === workshopId)
     .filter((b) => !sessionId || b.sessionId === sessionId)
     .filter((b) => {
       if (!q) return true;
@@ -95,10 +102,10 @@ export function BookingsList({
                   ]} />
               )}
             </Field>
-            <Field id="f-status" label={t("filters.status")}>
+            <Field id="f-workshop" label={t("filters.workshop")}>
               {(p) => (
-                <NativeSelect {...p} value={status} onChange={(e) => setStatus(e.target.value as "" | BookingStatus)}
-                  options={[{ value: "", label: t("filters.allStatuses") }, ...BOOKING_STATUSES.map((s) => ({ value: s, label: t(`bookingStatus.${s}`) }))]} />
+                <NativeSelect {...p} value={workshopId} onChange={(e) => { setWorkshopId(e.target.value); setSessionId(""); }}
+                  options={[{ value: "", label: t("filters.allWorkshops") }, ...workshops.map((w) => ({ value: w.id, label: wsTitle(w.id) }))]} />
               )}
             </Field>
             <Field id="f-q" label={t("filters.search")}>
@@ -113,13 +120,17 @@ export function BookingsList({
         </CardContent>
       </Card>
 
-      {/* The bookings of the date, session and search chosen above, counted by booking status. */}
-      <dl aria-label={t("bookings.summary")} data-testid="booking-summary" className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-8">
-        <SummaryStat testId="summary-total" label={t("bookings.summaryTotal")} value={totals.bookings} guests={t("bookings.guestsCount", { count: totals.guests })} />
+      {/* The bookings of the date, workshop, session and search chosen above, counted by booking status. A click on a figure filters the table. */}
+      <div role="group" aria-label={t("bookings.summary")} data-testid="booking-summary" className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
+        <SummaryStat testId="summary-total" label={t("bookings.summaryTotal")} value={totals.bookings} guests={t("bookings.guestsCount", { count: totals.guests })} active={status === ""} onClick={() => setStatus("")} />
         {byStatus.map((s) => (
-          <SummaryStat key={s.status} testId={`summary-${s.status}`} label={t(`bookingStatus.${s.status}`)} value={s.bookings} guests={t("bookings.guestsCount", { count: s.guests })} />
+          <SummaryStat
+            key={s.status} testId={`summary-${s.status}`} label={t(`bookingStatus.${s.status}`)} value={s.bookings} guests={t("bookings.guestsCount", { count: s.guests })}
+            active={status === s.status} onClick={() => setStatus(status === s.status ? "" : s.status)}
+          />
         ))}
-      </dl>
+      </div>
+      <p className="-mt-2 text-xs text-muted-foreground">{t("bookings.summaryHint")}</p>
 
       <p className="text-sm text-muted-foreground" role="status">{t("bookings.count", { count: rows.length })}</p>
 
@@ -184,13 +195,19 @@ export function BookingsList({
   );
 }
 
-/** One figure of the summary: how many bookings (big) and how many guests they hold (small), like the figures of the Today screen. */
-function SummaryStat({ label, value, guests, testId }: { label: string; value: number; guests: string; testId: string }) {
+/**
+ * One figure of the summary: how many bookings (big) and how many guests they hold (small), like the figures of the Today screen. It is a button:
+ * the figure of the status being shown is highlighted (`aria-pressed`), and a click shows only the bookings of that status.
+ */
+function SummaryStat({ label, value, guests, testId, active, onClick }: { label: string; value: number; guests: string; testId: string; active: boolean; onClick: () => void }) {
   return (
-    <div className="rounded-lg border bg-card p-3" data-testid={testId}>
-      <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd className="text-xl font-semibold" data-testid={`${testId}-count`}>{value}</dd>
-      <dd className="text-xs text-muted-foreground">{guests}</dd>
-    </div>
+    <button
+      type="button" data-testid={testId} aria-pressed={active} onClick={onClick}
+      className={cn("rounded-lg border bg-card p-3 text-left outline-none transition hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50", active && "border-primary ring-2 ring-primary/30")}
+    >
+      <span className="block text-xs text-muted-foreground">{label}</span>
+      <span className="block text-xl font-semibold" data-testid={`${testId}-count`}>{value}</span>
+      <span className="block text-xs text-muted-foreground">{guests}</span>
+    </button>
   );
 }

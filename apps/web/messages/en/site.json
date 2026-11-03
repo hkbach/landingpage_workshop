@@ -139,7 +139,8 @@
     "pendingText": "We sent an email to {email} with the details and a link. Open the link to confirm your booking; until then it is not confirmed.",
     "demoNote": "Demo (there is no mailbox here):",
     "demoLink": "open the link of the email",
-    "confirmedNote": "Your booking is confirmed."
+    "confirmedNote": "Your booking is confirmed.",
+    "demoEmail": "view the email that was sent"
   },
   "report": {
     "title": "Report this site",
@@ -225,5 +226,24 @@
     "cancelledText": "This booking was cancelled, so it cannot be confirmed. Please contact the studio.",
     "invalidTitle": "Link not valid",
     "invalidText": "We could not find a booking for this link. Check the link in your email, or contact the studio."
+  },
+  "favorites": {
+    "add": "Add {title} to favorites",
+    "remove": "Remove {title} from favorites",
+    "loginTitle": "Log in to save favorites",
+    "loginIntro": "Enter your email and we will send you a code. The workshops you save at {shop} are kept for this email.",
+    "emailLabel": "Email",
+    "emailInvalid": "Enter a valid email address.",
+    "sendCode": "Send code",
+    "sending": "Sending…",
+    "codeIntro": "We sent a code to {email}.",
+    "codeLabel": "Verification code",
+    "codeDemo": "Demo: nothing is emailed yet, use {code}.",
+    "codeWrong": "That code is not correct. {left, plural, one {# attempt} other {# attempts}} left.",
+    "codeLocked": "Too many wrong codes. Close this window and try again.",
+    "resend": "Send a new code",
+    "resendIn": "Send a new code in {seconds}s",
+    "login": "Log in",
+    "cancel": "Cancel"
   }
 }

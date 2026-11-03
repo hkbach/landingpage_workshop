@@ -21,6 +21,8 @@ export interface ConfirmationData {
   status?: BookingStatus;
   /** Demo only: the link of the email, so the page can offer it (a real guest only gets it by email). */
   demoConfirmUrl?: string;
+  /** Demo only: the page that shows the email as it arrived (six languages), since the prototype has no mailbox. */
+  demoEmailUrl?: string;
 }
 
 /** Why the server refused the booking: the session was filled or closed meanwhile, or something else went wrong. */

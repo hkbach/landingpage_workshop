@@ -139,7 +139,8 @@
     "pendingText": "{email}(으)로 예약 정보와 링크가 담긴 이메일을 보냈습니다. 링크를 열어 예약을 확인해 주세요. 그전까지는 확인되지 않은 상태입니다.",
     "demoNote": "데모(여기에는 메일함이 없습니다):",
     "demoLink": "이메일의 링크 열기",
-    "confirmedNote": "예약이 확인되었습니다."
+    "confirmedNote": "예약이 확인되었습니다.",
+    "demoEmail": "발송된 이메일 보기"
   },
   "report": {
     "title": "이 사이트 신고",
@@ -225,5 +226,24 @@
     "cancelledText": "이 예약은 취소되어 확인할 수 없습니다. 스튜디오에 문의해 주세요.",
     "invalidTitle": "유효하지 않은 링크",
     "invalidText": "이 링크에 해당하는 예약을 찾을 수 없습니다. 이메일의 링크를 확인하거나 스튜디오에 문의해 주세요."
+  },
+  "favorites": {
+    "add": "{title} 즐겨찾기에 추가",
+    "remove": "{title} 즐겨찾기에서 삭제",
+    "loginTitle": "즐겨찾기를 저장하려면 로그인하세요",
+    "loginIntro": "이메일을 입력하면 인증 코드를 보내 드립니다. {shop}에서 저장한 워크숍은 이 이메일로 보관됩니다.",
+    "emailLabel": "이메일",
+    "emailInvalid": "올바른 이메일 주소를 입력해 주세요.",
+    "sendCode": "코드 보내기",
+    "sending": "보내는 중…",
+    "codeIntro": "{email}(으)로 코드를 보냈습니다.",
+    "codeLabel": "인증 코드",
+    "codeDemo": "데모: 아직 이메일은 발송되지 않습니다. {code}을(를) 사용하세요.",
+    "codeWrong": "코드가 올바르지 않습니다. {left, plural, other {#번}} 남았습니다.",
+    "codeLocked": "잘못된 코드를 너무 많이 입력했습니다. 창을 닫고 다시 시도해 주세요.",
+    "resend": "새 코드 보내기",
+    "resendIn": "{seconds}초 후 새 코드 보내기",
+    "login": "로그인",
+    "cancel": "취소"
   }
 }

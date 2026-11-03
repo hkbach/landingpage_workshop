@@ -8,6 +8,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { PageRenderer } from "@/components/sections/PageRenderer";
 import { BookingProvider } from "@/components/booking/BookingProvider";
+import { FavoritesProvider } from "@/components/site/FavoritesProvider";
 import { ReportProvider } from "@/components/site/ReportProvider";
 import type { RenderContext } from "@/components/sections/context";
 import type { PageContent, PageTheme, Session, Shop, Workshop } from "@/lib/types";
@@ -132,9 +133,11 @@ export function SitePreview({ shop, initial, workshops, sessions = [], promotion
             <SiteChromeContext.Provider value={chrome}>
               {/* The report popup opens as on the public site, but nothing is ever sent from the preview. */}
               <BookingProvider shop={shop} workshops={workshops} sessions={sessions} theme={draft.theme} locale={lang} basePath="" promotions={promotions} preview>
-                <ReportProvider slug="preview" theme={draft.theme} preview>
-                  <PageRenderer content={draft.content} theme={draft.theme} ctx={ctx} />
-                </ReportProvider>
+                <FavoritesProvider slug="preview" shopName={shop.name} theme={draft.theme}>
+                  <ReportProvider slug="preview" theme={draft.theme} preview>
+                    <PageRenderer content={draft.content} theme={draft.theme} ctx={ctx} />
+                  </ReportProvider>
+                </FavoritesProvider>
               </BookingProvider>
             </SiteChromeContext.Provider>
           </NextIntlClientProvider>

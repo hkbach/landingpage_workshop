@@ -96,17 +96,18 @@
     "voucher": "バウチャー",
     "summary": "ステータス別の予約",
     "summaryTotal": "すべての予約",
-    "guestsCount": "{count, plural, other {#名}}"
+    "guestsCount": "{count, plural, other {#名}}",
+    "summaryHint": "数字をクリックすると、そのステータスの予約だけを表示します。もう一度クリックするとすべて表示します。"
   },
   "filters": {
     "date": "日付",
     "allDates": "すべての日付",
     "session": "セッション",
     "allSessions": "すべてのセッション",
-    "status": "ステータス",
-    "allStatuses": "すべてのステータス",
     "search": "検索",
-    "searchPlaceholder": "コード、名前、またはメールアドレス"
+    "searchPlaceholder": "コード、名前、またはメールアドレス",
+    "workshop": "ワークショップ",
+    "allWorkshops": "すべてのワークショップ"
   },
   "payment": {
     "dialogTitle": "支払いを記録",
