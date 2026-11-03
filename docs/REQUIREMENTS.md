@@ -403,6 +403,7 @@ Browser ────────────────────────
 ### 5.6 Vận hành booking (dashboard shop)
 
 **FR-OPS-01 – Danh sách booking (Must)**
+- **Khu vực tổng hợp theo Booking Status** (cùng kiểu các ô số liệu của màn hình Today) nằm giữa bộ lọc và bảng: một ô **All bookings** và một ô cho từng trạng thái (Confirmed, Checked in, Completed, Late released, No-show, Cancelled, Session expired), mỗi ô có **số booking** (chữ lớn) và **số khách** của các booking đó. Số liệu tính trên các booking thỏa bộ lọc **ngày, session và ô tìm kiếm** nhưng **không** bị thu hẹp bởi bộ lọc Status (bộ lọc Status chỉ thu hẹp bảng), nên các trạng thái luôn cộng lại bằng ô All bookings.
 - **Cột Voucher và tooltip ở cột Total của danh sách booking:** thêm cột **Voucher** (mã các voucher / khuyến mãi đã áp dụng cho booking, "—" nếu không dùng) đứng trước cột Total. Rê chuột hoặc focus bàn phím vào số tiền ở cột **Total** hiện tooltip: giá gốc của booking (đơn giá × số khách), từng voucher kèm số tiền đã giảm (mỗi voucher tính trên giá gốc) và tổng tiền sau giảm giá; booking không dùng voucher ghi "No voucher". Cùng thành phần tooltip với cột Amount của trang Income & expenses.
 - Xem theo ngày (mặc định hôm nay), theo session, theo trạng thái; tìm theo booking code, tên, email.
 - View "Today": danh sách session hôm nay, mỗi session hiển thị danh sách khách để check-in nhanh (tối ưu cho tablet/mobile).

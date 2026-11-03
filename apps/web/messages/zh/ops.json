@@ -102,7 +102,10 @@
     "status": "状态",
     "payment": "付款",
     "bookedOn": "预订日期",
-    "voucher": "优惠券"
+    "voucher": "优惠券",
+    "summary": "按状态统计的预订",
+    "summaryTotal": "全部预订",
+    "guestsCount": "{count, plural, other {# 位客人}}"
   },
   "filters": {
     "date": "日期",

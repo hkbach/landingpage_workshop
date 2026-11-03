@@ -47,16 +47,21 @@ export function BookingsList({
   );
 
   const q = query.trim().toLowerCase();
-  const rows = bookings
+  // The bookings the date, the session and the search let through; the summary counts them by status, and the status filter then narrows the table.
+  const inScope = bookings
     .filter((b) => (!date || dayKey(b.startsAt, timezone) === date))
     .filter((b) => !sessionId || b.sessionId === sessionId)
-    .filter((b) => !status || b.status === status)
     .filter((b) => {
       if (!q) return true;
       const c = customerOf(b.customerId);
       return [b.bookingCode, c?.fullName, c?.email].some((v) => v?.toLowerCase().includes(q));
-    })
-    .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+    });
+  const rows = inScope.filter((b) => !status || b.status === status).sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+  const byStatus = BOOKING_STATUSES.map((s) => {
+    const mine = inScope.filter((b) => b.status === s);
+    return { status: s, bookings: mine.length, guests: mine.reduce((n, b) => n + b.quantity, 0) };
+  });
+  const totals = { bookings: inScope.length, guests: inScope.reduce((n, b) => n + b.quantity, 0) };
 
   return (
     <div className="grid gap-4">
@@ -107,6 +112,14 @@ export function BookingsList({
           </form>
         </CardContent>
       </Card>
+
+      {/* The bookings of the date, session and search chosen above, counted by booking status. */}
+      <dl aria-label={t("bookings.summary")} data-testid="booking-summary" className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-8">
+        <SummaryStat testId="summary-total" label={t("bookings.summaryTotal")} value={totals.bookings} guests={t("bookings.guestsCount", { count: totals.guests })} />
+        {byStatus.map((s) => (
+          <SummaryStat key={s.status} testId={`summary-${s.status}`} label={t(`bookingStatus.${s.status}`)} value={s.bookings} guests={t("bookings.guestsCount", { count: s.guests })} />
+        ))}
+      </dl>
 
       <p className="text-sm text-muted-foreground" role="status">{t("bookings.count", { count: rows.length })}</p>
 
@@ -167,6 +180,17 @@ export function BookingsList({
           </TooltipProvider>
         </Card>
       )}
+    </div>
+  );
+}
+
+/** One figure of the summary: how many bookings (big) and how many guests they hold (small), like the figures of the Today screen. */
+function SummaryStat({ label, value, guests, testId }: { label: string; value: number; guests: string; testId: string }) {
+  return (
+    <div className="rounded-lg border bg-card p-3" data-testid={testId}>
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd className="text-xl font-semibold" data-testid={`${testId}-count`}>{value}</dd>
+      <dd className="text-xs text-muted-foreground">{guests}</dd>
     </div>
   );
 }

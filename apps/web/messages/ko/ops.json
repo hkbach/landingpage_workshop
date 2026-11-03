@@ -102,7 +102,10 @@
     "status": "상태",
     "payment": "결제",
     "bookedOn": "예약일",
-    "voucher": "바우처"
+    "voucher": "바우처",
+    "summary": "상태별 예약",
+    "summaryTotal": "전체 예약",
+    "guestsCount": "{count, plural, other {#명}}"
   },
   "filters": {
     "date": "날짜",
