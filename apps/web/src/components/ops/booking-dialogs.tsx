@@ -172,7 +172,7 @@ function RescheduleForm({
   const t = useTranslations("ops");
   const locale = useLocale();
   const candidates = sessions
-    .filter((s) => s.workshopId === booking.workshopId && s.id !== booking.sessionId && s.status !== "CANCELLED")
+    .filter((s) => s.workshopId === booking.workshopId && s.id !== booking.sessionId && s.status !== "CLOSED")
     .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
   const [target, setTarget] = useState("");
   const [error, setError] = useState<string>();

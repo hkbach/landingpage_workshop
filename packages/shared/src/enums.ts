@@ -10,7 +10,7 @@ export type OrgStatus = (typeof ORG_STATUSES)[number];
 export const WORKSHOP_STATUSES = ["DRAFT", "ACTIVE", "ARCHIVED"] as const;
 export type WorkshopStatus = (typeof WORKSHOP_STATUSES)[number];
 
-export const SESSION_STATUSES = ["OPEN", "PAUSED", "RUNNING", "CANCELLED", "CLOSED"] as const;
+export const SESSION_STATUSES = ["OPEN", "PAUSED", "RUNNING", "CLOSED"] as const;
 export type SessionStatus = (typeof SESSION_STATUSES)[number];
 
 export const BOOKING_STATUSES = [

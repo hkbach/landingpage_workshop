@@ -27,8 +27,7 @@
     "OPEN": "オープン",
     "PAUSED": "一時停止",
     "RUNNING": "実施中",
-    "CLOSED": "受付終了",
-    "CANCELLED": "キャンセル済み"
+    "CLOSED": "受付終了"
   },
   "paymentMethod": {
     "CASH": "現金",
@@ -54,7 +53,6 @@
   },
   "blocked": {
     "INVALID_STATE": "この操作は現在の予約ステータスでは利用できません。",
-    "SESSION_CANCELLED": "セッションはキャンセルされました。",
     "TOO_EARLY_LATE_RELEASE": "遅刻による解放は、セッション開始の30分後から利用できます。",
     "SESSION_NOT_ENDED": "無断欠席は、セッション終了後にのみ設定できます。",
     "SESSION_FULL": "セッションに、このお客様のための空席が足りません。",

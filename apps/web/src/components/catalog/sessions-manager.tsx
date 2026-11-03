@@ -3,13 +3,12 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useDisplayLocale } from "@/lib/use-shop-language";
-import { Ban, Lock, Pause, Pencil, Play, Plus } from "lucide-react";
+import { Lock, Pause, Pencil, Play, Plus } from "lucide-react";
 import { allowedSessionActions, DEFAULT_BOOKING_CUTOFF_MINUTES, isValidBookingCutoff, MAX_BOOKING_CUTOFF_MINUTES, pickLocalized, SESSION_STATUSES, type Locale, type SessionStatus } from "@workshop/shared";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { ReasonDialog } from "@/components/ops/booking-dialogs";
 import { CapacityBar } from "@/components/ops/capacity-bar";
 import { Field } from "@/components/ops/field";
 import { NativeSelect } from "@/components/ops/native-select";
@@ -34,7 +33,7 @@ export function SessionsManager({
   const [status, setStatus] = useState<"" | SessionStatus>("");
   const [from, setFrom] = useState(today);
   const [to, setTo] = useState(addDays(today, 60));
-  const [dialog, setDialog] = useState<{ kind: "add" } | { kind: "capacity" | "cancel"; id: string } | null>(null);
+  const [dialog, setDialog] = useState<{ kind: "add" } | { kind: "capacity"; id: string } | null>(null);
 
   const displayLocale = useDisplayLocale(shop);
   const title = (id: string) => pickLocalized(workshops.find((w) => w.id === id)?.title, displayLocale, shop.defaultLocale);
@@ -99,11 +98,10 @@ export function SessionsManager({
           <h2 id={`day-${day}`} className="text-sm font-semibold">{formatDayKey(day, locale)}{day === today ? ` (${t("sessions.today")})` : ""}</h2>
           <ul className="grid gap-2 md:grid-cols-2">
             {list.map((s) => {
-              const cancelled = s.status === "CANCELLED";
-              const actions = allowedSessionActions(s, ops.sessionHasBookings(s.id));
+              const actions = allowedSessionActions(s);
               return (
                 <li key={s.id}>
-                  <Card size="sm" className={cancelled ? "opacity-80" : ""}>
+                  <Card size="sm" className={s.status === "CLOSED" ? "opacity-80" : ""}>
                     <CardContent className="grid gap-2">
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <div>
@@ -116,8 +114,7 @@ export function SessionsManager({
                       </div>
                       <CapacityBar reserved={s.reservedCount} capacity={s.capacity} />
                       <p className="text-xs text-muted-foreground" data-testid="session-cutoff">{t("sessions.cutoffInfo", { minutes: s.bookingCutoffMinutes })}</p>
-                      {cancelled && s.cancelReason ? <p className="text-xs text-muted-foreground">{t("sessions.cancelReasonLabel")}: {s.cancelReason}</p> : null}
-                      {actions.length > 0 || s.status === "RUNNING" || s.status === "PAUSED" || s.status === "OPEN" ? (
+                      {s.status !== "CLOSED" ? (
                         <div className="flex flex-wrap gap-1.5">
                           {actions.includes("start") ? (
                             <Button size="sm" variant="outline" onClick={() => ops.sessionAction(s.id, "start")}><Play aria-hidden="true" />{t("sessions.start")}</Button>
@@ -131,11 +128,6 @@ export function SessionsManager({
                           <Button size="sm" variant="outline" onClick={() => setDialog({ kind: "capacity", id: s.id })}>
                             <Pencil aria-hidden="true" />{t("sessions.editCapacity")}
                           </Button>
-                          {actions.includes("cancel") ? (
-                            <Button size="sm" variant="destructive" onClick={() => setDialog({ kind: "cancel", id: s.id })}>
-                              <Ban aria-hidden="true" />{t("sessions.cancel")}
-                            </Button>
-                          ) : null}
                         </div>
                       ) : null}
                     </CardContent>
@@ -155,12 +147,6 @@ export function SessionsManager({
         key={target?.id ?? "none"} open={dialog?.kind === "capacity" && !!target} onOpenChange={(o) => !o && setDialog(null)} session={target}
         onSave={(n) => { if (target && ops.setSessionCapacity(target.id, n)) { setDialog(null); return true; } return false; }}
       />
-      <ReasonDialog
-        open={dialog?.kind === "cancel" && !!target} onOpenChange={(o) => !o && setDialog(null)}
-        title={t("sessions.cancelTitle")} description={t("sessions.cancelHint")} label={t("sessions.cancelReason")} confirmLabel={t("sessions.cancelConfirm")}
-        onConfirm={(reason) => { if (target && ops.cancelSession(target.id, reason)) setDialog(null); }}
-      >
-      </ReasonDialog>
     </div>
   );
 }
@@ -208,7 +194,7 @@ function AddSessionDialog({
   open, onOpenChange, workshops, shop, sessions, title, onAdd,
 }: {
   open: boolean; onOpenChange: (o: boolean) => void; workshops: Workshop[]; shop: ShopForCatalog; sessions: Session[];
-  title: (id: string) => string; onAdd: (s: Omit<Session, "id" | "reservedCount" | "status" | "hasRun">) => void;
+  title: (id: string) => string; onAdd: (s: Omit<Session, "id" | "reservedCount" | "status">) => void;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -223,7 +209,7 @@ function AddSessionForm({
   workshops, shop, sessions, title, onAdd, onCancel,
 }: {
   workshops: Workshop[]; shop: ShopForCatalog; sessions: Session[]; title: (id: string) => string;
-  onAdd: (s: Omit<Session, "id" | "reservedCount" | "status" | "hasRun">) => void; onCancel: () => void;
+  onAdd: (s: Omit<Session, "id" | "reservedCount" | "status">) => void; onCancel: () => void;
 }) {
   const t = useTranslations("catalog");
   const tops = useTranslations("ops");

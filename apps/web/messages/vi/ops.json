@@ -27,8 +27,7 @@
     "OPEN": "Mở",
     "PAUSED": "Tạm dừng",
     "RUNNING": "Đang chạy",
-    "CLOSED": "Đã đóng",
-    "CANCELLED": "Đã hủy"
+    "CLOSED": "Đã đóng"
   },
   "paymentMethod": {
     "CASH": "Tiền mặt",
@@ -54,7 +53,6 @@
   },
   "blocked": {
     "INVALID_STATE": "Thao tác này không khả dụng với trạng thái đặt chỗ hiện tại.",
-    "SESSION_CANCELLED": "Buổi này đã bị hủy.",
     "TOO_EARLY_LATE_RELEASE": "Chỉ có thể nhả chỗ do đến trễ sau khi buổi bắt đầu 30 phút.",
     "SESSION_NOT_ENDED": "Chỉ có thể đánh dấu vắng mặt sau khi buổi kết thúc.",
     "SESSION_FULL": "Buổi này không đủ chỗ trống cho khách này.",

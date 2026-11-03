@@ -11,7 +11,6 @@ export type BookingAction = "CHECK_IN" | "LATE_RELEASE" | "NO_SHOW" | "CANCEL" |
 
 export type BlockedReason =
   | "INVALID_STATE" // not allowed from the current status
-  | "SESSION_CANCELLED"
   | "TOO_EARLY_LATE_RELEASE" // now < starts + 30 min
   | "SESSION_NOT_ENDED" // now < ends
   | "SESSION_FULL"; // LATE_RELEASED -> CHECKED_IN needs room
@@ -40,16 +39,13 @@ export function canTransition(booking: StateBooking, session: StateSession, now:
   const t = now.getTime();
   const starts = new Date(session.startsAt).getTime();
   const ends = new Date(session.endsAt).getTime();
-  const cancelledSession = session.status === "CANCELLED";
   const s = booking.status;
 
   const checkIn: ActionState =
     s === "CONFIRMED"
-      ? cancelledSession ? no("SESSION_CANCELLED") : ok()
+      ? ok()
       : s === "LATE_RELEASED"
-        ? cancelledSession
-          ? no("SESSION_CANCELLED")
-          : session.capacity - session.reservedCount >= booking.quantity ? ok() : no("SESSION_FULL")
+        ? session.capacity - session.reservedCount >= booking.quantity ? ok() : no("SESSION_FULL")
         : no("INVALID_STATE");
 
   const lateRelease: ActionState =
@@ -63,9 +59,9 @@ export function canTransition(booking: StateBooking, session: StateSession, now:
 
   const cancel: ActionState = s === "CONFIRMED" ? ok({ requiresReason: true }) : no("INVALID_STATE");
   const complete: ActionState = s === "CHECKED_IN" ? ok() : no("INVALID_STATE");
-  // FR-OPS-07 (Should): only CONFIRMED bookings of a live session may move.
+  // FR-OPS-07 (Should): only CONFIRMED bookings may move.
   const reschedule: ActionState =
-    s !== "CONFIRMED" ? no("INVALID_STATE") : cancelledSession ? no("SESSION_CANCELLED") : ok();
+    s !== "CONFIRMED" ? no("INVALID_STATE") : ok();
 
   return { CHECK_IN: checkIn, LATE_RELEASE: lateRelease, NO_SHOW: noShow, CANCEL: cancel, COMPLETE: complete, RESCHEDULE: reschedule };
 }

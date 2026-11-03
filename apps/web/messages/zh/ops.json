@@ -27,8 +27,7 @@
     "OPEN": "开放",
     "PAUSED": "已暂停",
     "RUNNING": "进行中",
-    "CLOSED": "已关闭",
-    "CANCELLED": "已取消"
+    "CLOSED": "已关闭"
   },
   "paymentMethod": {
     "CASH": "现金",
@@ -54,7 +53,6 @@
   },
   "blocked": {
     "INVALID_STATE": "当前预订状态不支持此操作。",
-    "SESSION_CANCELLED": "该场次已取消。",
     "TOO_EARLY_LATE_RELEASE": "仅在场次开始 30 分钟后才能执行迟到释放。",
     "SESSION_NOT_ENDED": "场次结束后才能标记为未到场。",
     "SESSION_FULL": "该场次的空余座位不足以容纳此宾客。",

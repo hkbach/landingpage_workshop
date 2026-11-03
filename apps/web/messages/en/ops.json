@@ -27,8 +27,7 @@
     "OPEN": "Open",
     "PAUSED": "Paused",
     "RUNNING": "Running",
-    "CLOSED": "Closed",
-    "CANCELLED": "Cancelled"
+    "CLOSED": "Closed"
   },
   "paymentMethod": {
     "CASH": "Cash",
@@ -54,7 +53,6 @@
   },
   "blocked": {
     "INVALID_STATE": "This action is not available for the current booking status.",
-    "SESSION_CANCELLED": "The session has been cancelled.",
     "TOO_EARLY_LATE_RELEASE": "Late release is only available 30 minutes after the session starts.",
     "SESSION_NOT_ENDED": "No-show can only be marked after the session has ended.",
     "SESSION_FULL": "The session does not have enough free seats for this guest.",

@@ -89,7 +89,7 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
       const to = sessions.find((x) => x.id === targetSessionId);
       if (!b || !from || !to) return { ok: false, reason: "NOT_FOUND" };
       if (!canTransition(b, from, new Date()).RESCHEDULE.allowed) return { ok: false, reason: "INVALID_STATE" };
-      if (to.workshopId !== b.workshopId || to.status === "CANCELLED" || to.id === from.id) return { ok: false, reason: "INVALID_STATE" };
+      if (to.workshopId !== b.workshopId || to.status === "CLOSED" || to.id === from.id) return { ok: false, reason: "INVALID_STATE" };
       if (to.capacity - to.reservedCount < b.quantity) return { ok: false, reason: "NO_CAPACITY" };
       setBookings((list) => list.map((x) => (x.id === b.id ? { ...x, sessionId: to.id, startsAt: to.startsAt, endsAt: to.endsAt } : x)));
       setSessions((list) =>
@@ -104,22 +104,16 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
   );
 
   // ----- session operations (FR-SCHED-02/03) -----
-  /** A booking that is not cancelled exists for the session (a session with bookings cannot be cancelled). */
-  const sessionHasBookings = useCallback(
-    (id: string) => bookings.some((b) => b.sessionId === id && b.status !== "CANCELLED") || (sessions.find((x) => x.id === id)?.reservedCount ?? 0) > 0,
-    [bookings, sessions],
-  );
-
-  /** start / pause / close (cancel has its own function: it needs a reason). False when the action is not allowed now. */
+  /** start / pause / close. False when the action is not allowed now. */
   const sessionAction = useCallback(
-    (id: string, action: Exclude<SessionAction, "cancel">): boolean => {
+    (id: string, action: SessionAction): boolean => {
       const s = sessions.find((x) => x.id === id);
-      const next = s ? applySessionAction(s, action, sessionHasBookings(id)) : null;
-      if (!s || !next) return false;
+      const next = s ? applySessionAction(s, action) : null;
+      if (!next) return false;
       setSessions((list) => list.map((x) => (x.id === id ? { ...x, ...next } : x)));
       return true;
     },
-    [sessions, sessionHasBookings],
+    [sessions],
   );
 
   const setSessionCapacity = useCallback(
@@ -132,18 +126,8 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
     [sessions],
   );
 
-  // Only a session that has run and has no bookings can be cancelled (so no booking is ever cancelled by this).
-  const cancelSession = useCallback((id: string, reason: string) => {
-    const text = reason.trim();
-    const s = sessions.find((x) => x.id === id);
-    const next = s ? applySessionAction(s, "cancel", sessionHasBookings(id)) : null;
-    if (!text || !s || !next) return false;
-    setSessions((list) => list.map((x) => (x.id === id ? { ...x, ...next, cancelReason: text } : x)));
-    return true;
-  }, [sessions, sessionHasBookings]);
-
-  const addSession = useCallback((s: Omit<Session, "id" | "reservedCount" | "status" | "hasRun">) => {
-    setSessions((list) => [...list, { ...s, id: nextId("se"), reservedCount: 0, status: "OPEN", hasRun: false }]); // a new session is open (not running): Start makes it bookable
+  const addSession = useCallback((s: Omit<Session, "id" | "reservedCount" | "status">) => {
+    setSessions((list) => [...list, { ...s, id: nextId("se"), reservedCount: 0, status: "OPEN" }]); // a new session is open (not running): Start makes it bookable
   }, []);
 
   const addBooking = useCallback((b: Booking) => {
@@ -153,6 +137,6 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
 
   return {
     bookings, sessions, history, now, perform, addPayment, reschedule,
-    sessionAction, sessionHasBookings, setSessionCapacity, cancelSession, addSession, addBooking,
+    sessionAction, setSessionCapacity, addSession, addBooking,
   };
 }

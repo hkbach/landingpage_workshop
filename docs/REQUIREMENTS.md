@@ -355,12 +355,12 @@ Browser ────────────────────────
 
 **FR-SCHED-02 – Session thủ công (Must)**
 - Shop có thể thêm session lẻ (ngày giờ cụ thể) và sửa capacity của session (không được nhỏ hơn `reserved_count`).
-- **Trạng thái session và vòng đời** (trang `/shopowner/{slug}/sessions`): `OPEN` (Open), `PAUSED` (Paused), `RUNNING` (Running), `CANCELLED` (Cancelled), `CLOSED` (Closed). **Session mới tạo luôn ở `OPEN`** (đã tạo, chưa chạy, chưa nhận booking) và **chỉ có thể Start**. Nút **Start** chuyển `OPEN` sang `RUNNING` (chỉ session `RUNNING` khách mới đặt được và mới được tính là session sắp tới). **Một khi đã `RUNNING` thì chỉ có thể Pause** (không chuyển thẳng sang trạng thái nào khác, kể cả Close hay Cancel). Nút **Pause** chuyển `RUNNING` sang `PAUSED` (ngừng nhận booking mới). Từ `PAUSED` có thể **Start lại** (về `RUNNING`) hoặc **Close** (sang `CLOSED`, kết thúc, không thể mở lại). **Cancel session** chỉ dành cho session `PAUSED` **đã từng chạy (`has_run`) và chưa có booking nào** (không có booking chưa hủy, `reserved_count = 0`), kèm lý do. `CLOSED` và `CANCELLED` là trạng thái cuối. Các nút không hợp lệ được **ẩn**; backend kiểm tra lại mọi chuyển trạng thái.
-- **Bộ lọc theo trạng thái** trên trang Sessions: Open, Paused, Running, Cancelled, Closed (thêm vào bộ lọc workshop và khoảng ngày), kèm chú thích các quy tắc trên. Trên landing page khách chỉ thấy session `RUNNING` (đặt được) và `CLOSED` (hiển thị mờ, không chọn được); session `OPEN`, `PAUSED` và `CANCELLED` không hiển thị.
+- **Trạng thái session và vòng đời** (trang `/shopowner/{slug}/sessions`): `OPEN` (Open), `PAUSED` (Paused), `RUNNING` (Running), `CLOSED` (Closed). **Session mới tạo luôn ở `OPEN`** (đã tạo, chưa chạy, chưa nhận booking) và **chỉ có thể Start**. Nút **Start** chuyển `OPEN` sang `RUNNING` (chỉ session `RUNNING` khách mới đặt được và mới được tính là session sắp tới). **Một khi đã `RUNNING` thì chỉ có thể Pause** (không chuyển thẳng sang trạng thái nào khác). Nút **Pause** chuyển `RUNNING` sang `PAUSED` (ngừng nhận booking mới). Từ `PAUSED` có thể **Start lại** (về `RUNNING`) hoặc **Close** (sang `CLOSED`, kết thúc, không thể mở lại). `CLOSED` là trạng thái cuối. **Hệ thống không có chức năng hủy (cancel) session.** Các nút không hợp lệ được **ẩn**; backend kiểm tra lại mọi chuyển trạng thái.
+- **Bộ lọc theo trạng thái** trên trang Sessions: Open, Paused, Running, Closed (thêm vào bộ lọc workshop và khoảng ngày), kèm chú thích các quy tắc trên. Trên landing page khách chỉ thấy session `RUNNING` (đặt được) và `CLOSED` (hiển thị mờ, không chọn được); session `OPEN` và `PAUSED` không hiển thị.
 - MVP frontend: trạng thái session thay đổi ở màn hình Sessions chỉ lưu trong phiên làm việc (chưa lưu vào backend mock), nên chưa ảnh hưởng tới landing page.
 
-**FR-SCHED-03 – Hủy session (Must)**
-- Shop chỉ hủy được session **đang tạm dừng, đã chạy và chưa có booking** (xem FR-SCHED-02): nhập lý do; session chuyển sang `CANCELLED`. Vì session không có booking nên không có booking nào bị hủy và không phải gửi email cho khách. Session đã có booking không hủy được ở bước này (khách hủy booking trước, hoặc shop đóng session).
+**FR-SCHED-03 – Hủy session (đã bỏ)**
+- Hệ thống **không có chức năng hủy session**: không có nút, hộp thoại hay API hủy; không có trạng thái `CANCELLED` cho session. Session không dùng nữa thì Pause rồi Close.
 
 ### 5.5 Booking (phía khách)
 
@@ -698,7 +698,7 @@ Khi `schemaVersion` của một section type thay đổi, viết hàm migrate tr
 
 **schedule_rules**: `id`, `organization_id`, `workshop_id`, `weekdays smallint[]`, `start_times text[]` (`HH:mm`), `effective_from date`, `effective_to date` (nullable), `capacity_override` (nullable), `status` (`ACTIVE|INACTIVE`).
 
-**workshop_sessions**: `id`, `organization_id`, `workshop_id`, `schedule_rule_id` (nullable), `starts_at timestamptz`, `ends_at timestamptz`, `capacity`, `reserved_count` (mặc định 0), `status` (`OPEN|PAUSED|RUNNING|CANCELLED|CLOSED`, mặc định `OPEN`), `has_run boolean` (mặc định false; thành true khi session lần đầu `RUNNING`), `booking_cutoff_minutes int` (mặc định 120, 0 đến 10080), `cancel_reason`. `UNIQUE (organization_id, workshop_id, starts_at)`; `CHECK (reserved_count BETWEEN 0 AND capacity)`; index `(organization_id, starts_at, status)`.
+**workshop_sessions**: `id`, `organization_id`, `workshop_id`, `schedule_rule_id` (nullable), `starts_at timestamptz`, `ends_at timestamptz`, `capacity`, `reserved_count` (mặc định 0), `status` (`OPEN|PAUSED|RUNNING|CLOSED`, mặc định `OPEN`), `booking_cutoff_minutes int` (mặc định 120, 0 đến 10080), `UNIQUE (organization_id, workshop_id, starts_at)`; `CHECK (reserved_count BETWEEN 0 AND capacity)`; index `(organization_id, starts_at, status)`.
 
 ### 8.5 Customer, booking, payment
 

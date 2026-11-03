@@ -27,8 +27,7 @@
     "OPEN": "열림",
     "PAUSED": "일시중지",
     "RUNNING": "진행 중",
-    "CLOSED": "마감",
-    "CANCELLED": "취소됨"
+    "CLOSED": "마감"
   },
   "paymentMethod": {
     "CASH": "현금",
@@ -54,7 +53,6 @@
   },
   "blocked": {
     "INVALID_STATE": "현재 예약 상태에서는 사용할 수 없는 작업이에요.",
-    "SESSION_CANCELLED": "세션이 취소되었어요.",
     "TOO_EARLY_LATE_RELEASE": "지각 취소 처리는 세션 시작 30분 후부터 가능해요.",
     "SESSION_NOT_ENDED": "노쇼는 세션이 끝난 후에만 처리할 수 있어요.",
     "SESSION_FULL": "이 손님을 위한 빈 좌석이 세션에 부족해요.",
