@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useDisplayLocale } from "@/lib/use-shop-language";
 import { ArrowLeft, BadgeCheck, CalendarClock, CheckCheck, Copy, Eye, Lock, LockOpen, LogIn, Pause, Pencil, Play, Plus, Save } from "lucide-react";
-import { allowedSessionActions, closedForGood, isSessionFinished, isFinalClose, canEditSession, canRescheduleSession, canReopenSession, canCloseAgain, canRescheduleAgain, notesInOrder, closeWaitsForEnd, isFutureStart, type SessionCloseReason, DEFAULT_BOOKING_CUTOFF_MINUTES, isValidBookingCutoff, MAX_BOOKING_CUTOFF_MINUTES, pickLocalized, SESSION_STATUSES, type Locale, type SessionStatus } from "@workshop/shared";
+import { allowedSessionActions, closeReasonsFor, closedForGood, isSessionFinished, isFinalClose, canEditSession, canRescheduleSession, canReopenSession, canCloseAgain, canRescheduleAgain, notesInOrder, isFutureStart, type SessionCloseReason, DEFAULT_BOOKING_CUTOFF_MINUTES, isValidBookingCutoff, MAX_BOOKING_CUTOFF_MINUTES, pickLocalized, SESSION_STATUSES, type Locale, type SessionStatus } from "@workshop/shared";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -204,10 +204,10 @@ export function SessionsManager({
                             )
                           ) : null}
                           {actions.includes("close") ? (
-                            !canCloseAgain(s.notes) || closeWaitsForEnd(s, ops.now) ? (
-                              // Read-only while the session is taking place, or once it was closed 4 times: the span carries the tooltip (a disabled button does not).
-                              <span title={canCloseAgain(s.notes) ? t("sessions.closeWait") : t("sessions.closeLimit")} data-testid={canCloseAgain(s.notes) ? "close-wait" : "close-limit"} className="inline-flex cursor-not-allowed">
-                                <Button size="sm" variant="destructive" disabled aria-disabled="true" aria-label={`${t("sessions.close")}: ${canCloseAgain(s.notes) ? t("sessions.closeWait") : t("sessions.closeLimit")}`}>
+                            !canCloseAgain(s.notes) ? (
+                              // Read-only once it was closed 4 times: the span carries the tooltip (a disabled button does not).
+                              <span title={t("sessions.closeLimit")} data-testid="close-limit" className="inline-flex cursor-not-allowed">
+                                <Button size="sm" variant="destructive" disabled aria-disabled="true" aria-label={`${t("sessions.close")}: ${t("sessions.closeLimit")}`}>
                                   <Lock aria-hidden="true" />{t("sessions.close")}
                                 </Button>
                               </span>
@@ -291,7 +291,7 @@ export function SessionsManager({
       />
       <CloseSessionDialog
         key={`close-${target?.id ?? "none"}`} open={dialog?.kind === "close" && !!target} onOpenChange={(o) => !o && setDialog(null)}
-        final={isFinalClose(target?.notes)}
+        final={isFinalClose(target?.notes)} reasons={target ? closeReasonsFor(target, ops.now) : []}
         onConfirm={(reason) => { if (target && ops.sessionAction(target.id, "close", reason)) { setDialog(null); void notifyClosed(target, reason); } }}
       />
       <RescheduleSessionDialog

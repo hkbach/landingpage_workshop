@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { applySessionAction, canCompleteSession, canEditSession, isSessionFinished, canReopenSession, checkCloseReason, checkRescheduleReason, isFutureStart, checkReschedule, closeIfEnded, isValidBookingCutoff, nextSessionCode, rescheduleCount, canCloseAgain, withNote, closeWaitsForEnd, type BookingStatus, type PaymentMethod, type RescheduleError, type SessionAction, type SessionCloseReason } from "@workshop/shared";
+import { applySessionAction, canCompleteSession, canEditSession, isSessionFinished, canReopenSession, checkCloseReasonFor, checkRescheduleReason, isFutureStart, checkReschedule, closeIfEnded, isValidBookingCutoff, nextSessionCode, rescheduleCount, canCloseAgain, withNote, type BookingStatus, type PaymentMethod, type RescheduleError, type SessionAction, type SessionCloseReason } from "@workshop/shared";
 import type { Booking, PaymentEntry, Session } from "@/lib/types";
 import {
   canTransition, computePaymentStatus, netPaid, reservedSeats, seatDelta, targetStatus,
@@ -171,10 +171,9 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
       const s = sessions.find((x) => x.id === id);
       const next = s ? applySessionAction(s, action) : null;
       if (!s || !next) return false;
-      if (action === "close" && closeWaitsForEnd(s, now)) return false; // not while the session is taking place
       if (action === "close" && !canCloseAgain(s.notes)) return false; // at most 4 closes per session
-      // Closing before the start needs a reason: a basic one, or OTHER with a text.
-      const reason = action === "close" ? checkCloseReason(closeReason?.code ?? "", closeReason?.note ?? "") : null;
+      // A close needs a reason that fits the time: a basic one (or OTHER with a text) before the start, only that the workshop has been completed while it takes place.
+      const reason = action === "close" ? checkCloseReasonFor(s, now, closeReason?.code ?? "", closeReason?.note ?? "") : null;
       if (reason && !reason.ok) return false;
       setSessions((list) => list.map((x) => (x.id === id ? { ...x, ...next, ...(reason?.ok ? { notes: withNote(x.notes, { type: "CLOSED", at: now.toISOString(), reason: reason.reason }) } : {}) } : x)));
       return true;

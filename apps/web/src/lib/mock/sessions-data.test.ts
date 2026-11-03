@@ -31,12 +31,16 @@ describe("demo sessions: well formed", () => {
       expect(s.reservedCount, s.id).toBeLessThanOrEqual(s.capacity);
     }
   });
-  it("the notes of a session are in order; a close or a re-schedule has its reason (a text for Other only) and happens before the session starts", () => {
+  it("the notes of a session are in order; a close or a re-schedule has its reason (a text for Other only) and happens before the session starts (or, for a completed workshop, while it takes place)", () => {
     for (const s of sessions) {
       const notes = s.notes ?? [];
       expect(notes.map((n) => n.at), s.id).toEqual([...notes.map((n) => n.at)].sort());
       for (const n of notes) {
-        expect(new Date(n.at).getTime(), s.id).toBeLessThan(new Date(s.startsAt).getTime());
+        // A close or a re-schedule happens before the session starts, except the early close of a session that is taking place (the workshop has been completed).
+        if (n.reason?.code === "WORKSHOP_COMPLETED") {
+          expect(new Date(n.at).getTime(), s.id).toBeGreaterThanOrEqual(new Date(s.startsAt).getTime());
+          expect(new Date(n.at).getTime(), s.id).toBeLessThan(new Date(s.endsAt).getTime());
+        } else expect(new Date(n.at).getTime(), s.id).toBeLessThan(new Date(s.startsAt).getTime());
         if (n.type === "REOPENED") expect(n.reason, s.id).toBeUndefined();
         else {
           expect(n.reason, s.id).toBeDefined();

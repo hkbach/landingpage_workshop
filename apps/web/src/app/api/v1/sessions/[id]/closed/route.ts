@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { checkCloseReason } from "@workshop/shared";
+import { checkCloseReasonFor } from "@workshop/shared";
 import { apiError, fieldCodes } from "@/lib/api-error";
 import { mailSessionClosed } from "@/lib/mock/session-mail";
 
@@ -23,7 +23,7 @@ export async function POST(request: Request, ctx: RouteContext<"/api/v1/sessions
   }
   const parsed = bodySchema.safeParse(body);
   if (!parsed.success) return apiError(422, "VALIDATION", "Please check the highlighted fields.", { fields: fieldCodes(parsed.error.issues) });
-  const reason = checkCloseReason(parsed.data.reason.code, parsed.data.reason.note ?? "");
+  const reason = checkCloseReasonFor(parsed.data, new Date(), parsed.data.reason.code, parsed.data.reason.note ?? "");
   if (!reason.ok) return apiError(422, "VALIDATION", "A reason is required.", { fields: { reason: reason.error === "NOTE_REQUIRED" ? "noteRequired" : "required" } });
   return Response.json(mailSessionClosed(id, { startsAt: parsed.data.startsAt, endsAt: parsed.data.endsAt, reason: reason.reason }));
 }

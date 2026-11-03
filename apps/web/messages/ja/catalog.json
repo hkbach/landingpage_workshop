@@ -186,7 +186,6 @@
     "cutoffHint": "セッション開始のこの分数前にオンライン予約を締め切ります。0なら開始時刻に締め切ります。",
     "cutoffInfo": "開始の{minutes}分前に予約を締め切り",
     "autoClosedNote": "セッションの時間が終了したため、自動的に閉じられました。",
-    "closeWait": "セッションの時間が終了するまで閉じることはできません。",
     "closeTitle": "セッションを閉じる",
     "closeHint": "開始前にこのセッションを閉じる理由を選択してください。",
     "closeReasonLegend": "理由",
@@ -285,6 +284,7 @@
     "unsaved": "未保存",
     "completedDone": "セッション {code} を完了しました。",
     "paymentsSaved": "支払い{updated, plural, other {#件}}を保存しました。メール送信：{sent}。メールなし：{none}。失敗：{failed}。",
-    "cancelledNoPayment": "キャンセル済みの予約は支払いを受け付けません"
+    "cancelledNoPayment": "キャンセル済みの予約は支払いを受け付けません",
+    "closeInProgressHint": "セッションは開催中です。ワークショップが完了した場合にのみ、早めにクローズできます。"
   }
 }

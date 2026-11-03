@@ -186,7 +186,6 @@
     "cutoffHint": "在场次开始前这么多分钟停止在线预订。填 0 表示开始时停止。",
     "cutoffInfo": "开始前 {minutes} 分钟截止预订",
     "autoClosedNote": "场次时间已结束，已自动关闭。",
-    "closeWait": "需等场次时间结束后才能关闭。",
     "closeTitle": "关闭场次",
     "closeHint": "请选择开始前关闭该场次的原因。",
     "closeReasonLegend": "原因",
@@ -285,6 +284,7 @@
     "unsaved": "尚未保存",
     "completedDone": "场次 {code} 已完成。",
     "paymentsSaved": "已保存 {updated, plural, other {#笔支付}}。已发送邮件：{sent}。无邮箱：{none}。失败：{failed}。",
-    "cancelledNoPayment": "已取消的预订无需支付"
+    "cancelledNoPayment": "已取消的预订无需支付",
+    "closeInProgressHint": "场次正在进行。只有在工作坊已完成时，才能提前关闭。"
   }
 }

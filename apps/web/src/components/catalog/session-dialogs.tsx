@@ -20,15 +20,15 @@ import { BookingStatusBadge, PaymentStatusBadge } from "@/components/ops/status-
 import type { OpResult } from "@/components/ops/use-ops-state";
 
 /** The reason of a change to a session: a basic reason from the list, or Other with a text that explains it. Used by Close and Re-schedule. */
-function ReasonPicker({ prefix, code, onCode, note, onNote, error }: {
-  prefix: string; code: string; onCode: (c: string) => void; note: string; onNote: (n: string) => void; error?: string;
+function ReasonPicker({ prefix, reasons, code, onCode, note, onNote, error }: {
+  prefix: string; reasons?: readonly string[]; code: string; onCode: (c: string) => void; note: string; onNote: (n: string) => void; error?: string;
 }) {
   const t = useTranslations("catalog");
   return (
     <>
       <fieldset className="grid gap-2" data-testid={`${prefix}-reasons`}>
         <legend className="mb-1 text-sm font-medium">{t("sessions.closeReasonLegend")} <span aria-hidden className="text-destructive">*</span></legend>
-        {(prefix === "resched" ? RESCHEDULE_REASONS : SESSION_CLOSE_REASONS).map((r) => (
+        {(reasons ?? (prefix === "resched" ? RESCHEDULE_REASONS : SESSION_CLOSE_REASONS)).map((r) => (
           <label key={r} className="flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm has-[:checked]:border-primary has-[:checked]:bg-primary/5">
             <input type="radio" name={`${prefix}-reason`} value={r} checked={code === r} onChange={() => onCode(r)} />
             {t(`sessions.closeReasons.${r}`)}
@@ -44,11 +44,11 @@ function ReasonPicker({ prefix, code, onCode, note, onNote, error }: {
   );
 }
 
-/** Closing a session before it starts. */
-export function CloseSessionDialog({ open, onOpenChange, onConfirm, final = false }: { open: boolean; onOpenChange: (o: boolean) => void; onConfirm: (reason: SessionCloseReason) => void; final?: boolean }) {
+/** Closing a session: before it starts for a basic reason, while it is taking place only because the workshop has been completed (`reasons`). */
+export function CloseSessionDialog({ open, onOpenChange, onConfirm, reasons, final = false }: { open: boolean; onOpenChange: (o: boolean) => void; onConfirm: (reason: SessionCloseReason) => void; reasons: readonly string[]; final?: boolean }) {
   const t = useTranslations("catalog");
   const tops = useTranslations("ops");
-  const [code, setCode] = useState("");
+  const [code, setCode] = useState(reasons.length === 1 ? reasons[0]! : ""); // one reason only: it is chosen
   const [note, setNote] = useState("");
   const [error, setError] = useState<string>();
   const checked = checkCloseReason(code, note);
@@ -63,10 +63,10 @@ export function CloseSessionDialog({ open, onOpenChange, onConfirm, final = fals
         <form onSubmit={submit} noValidate className="grid gap-4">
           <DialogHeader>
             <DialogTitle>{t("sessions.closeTitle")}</DialogTitle>
-            <DialogDescription>{t("sessions.closeHint")}</DialogDescription>
+            <DialogDescription>{reasons.length === 1 ? t("sessions.closeInProgressHint") : t("sessions.closeHint")}</DialogDescription>
           </DialogHeader>
           {final ? <p role="alert" data-testid="close-final-warning" className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm font-medium text-destructive">{t("sessions.closeFinalWarning")}</p> : null}
-          <ReasonPicker prefix="close" code={code} onCode={(c) => { setCode(c); setError(undefined); }} note={note} onNote={(n) => { setNote(n); setError(undefined); }} error={error} />
+          <ReasonPicker prefix="close" reasons={reasons} code={code} onCode={(c) => { setCode(c); setError(undefined); }} note={note} onNote={(n) => { setNote(n); setError(undefined); }} error={error} />
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}><ArrowLeft aria-hidden="true" />{tops("common.back")}</Button>
             <Button type="submit" variant="destructive" disabled={code === ""}><Lock aria-hidden="true" />{t("sessions.closeConfirm")}</Button>

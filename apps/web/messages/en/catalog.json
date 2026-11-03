@@ -186,7 +186,6 @@
     "cutoffHint": "Online booking closes this many minutes before the session starts. Use 0 to close it when the session starts.",
     "cutoffInfo": "Booking closes {minutes, plural, one {# minute} other {# minutes}} before start",
     "autoClosedNote": "Automatically closed because the session time has ended.",
-    "closeWait": "Wait until the session time has ended before you can close it.",
     "closeTitle": "Close session",
     "closeHint": "Please tell us why you are closing this session before it starts.",
     "closeReasonLegend": "Reason",
@@ -285,6 +284,7 @@
     "unsaved": "Not saved yet",
     "completedDone": "Session {code} is Completed.",
     "paymentsSaved": "{updated, plural, one {# payment} other {# payments}} saved. Emails sent: {sent}. Without email: {none}. Failed: {failed}.",
-    "cancelledNoPayment": "No payment for a cancelled booking"
+    "cancelledNoPayment": "No payment for a cancelled booking",
+    "closeInProgressHint": "The session is taking place. You can close it early only because the workshop has been completed."
   }
 }

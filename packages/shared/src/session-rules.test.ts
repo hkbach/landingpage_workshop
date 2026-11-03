@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { SESSION_STATUSES } from "./enums";
 import { openSessionCount } from "./workshop-rules";
 import {
-  allowedSessionActions, applySessionAction, canEditSession, canRescheduleSession, canReopenSession, checkCloseReason, checkReschedule, CLOSE_REASON_NOTE_MAX, closeIfEnded, closeWaitsForEnd,
+  allowedSessionActions, applySessionAction, canEditSession, canRescheduleSession, canReopenSession, checkCloseReason, checkReschedule, CLOSE_REASON_NOTE_MAX, closeIfEnded, closeReasonsFor, checkCloseReasonFor,
   DEFAULT_BOOKING_CUTOFF_MINUTES, isFutureStart, isInSessionTime, isSessionBookable, isValidBookingCutoff, nextSessionCode, notesInOrder, SESSION_CODE_RE, wasRescheduled, withNote,
   canCompleteSession, isSessionFinished, RESCHEDULE_REASONS, SESSION_CLOSE_REASONS, checkRescheduleReason, canAdminClose, canAdminReopen, canCloseAgain, canRescheduleAgain, closeCount, closedForGood, isFinalClose, MAX_CLOSES, MAX_RESCHEDULES, rescheduleCount,
   type SessionNote, type SessionState,
@@ -71,9 +71,21 @@ describe("closing a session during its time", () => {
     expect(isInSessionTime(span("2026-11-03T09:00:00Z", "2026-11-03T10:00:00Z"), NOW)).toBe(false); // ends now
     expect(isInSessionTime(span("2026-11-03T10:00:01Z", "2026-11-03T12:00:00Z"), NOW)).toBe(false); // not started
   });
-  it("Close waits for the end only while the session is taking place", () => {
-    expect(closeWaitsForEnd(span("2026-11-03T09:00:00Z", "2026-11-03T11:00:00Z"), NOW)).toBe(true);
-    expect(closeWaitsForEnd(span("2026-11-04T09:00:00Z", "2026-11-04T11:00:00Z"), NOW)).toBe(false);
+  it("while the session is taking place it can only be closed because the workshop has been completed", () => {
+    expect(closeReasonsFor(span("2026-11-03T09:00:00Z", "2026-11-03T11:00:00Z"), NOW)).toEqual(["WORKSHOP_COMPLETED"]);
+  });
+  it("before it starts it is closed for a basic reason or Other, not because the workshop has been completed", () => {
+    expect(closeReasonsFor(span("2026-11-04T09:00:00Z", "2026-11-04T11:00:00Z"), NOW)).toEqual(["NOT_ENOUGH_GUESTS", "INSTRUCTOR_UNAVAILABLE", "VENUE_ISSUE", "SCHEDULE_CHANGE", "OTHER"]);
+  });
+  it("checkCloseReasonFor accepts a reason only at the time it is allowed", () => {
+    const now = span("2026-11-03T09:00:00Z", "2026-11-03T11:00:00Z");
+    const later = span("2026-11-04T09:00:00Z", "2026-11-04T11:00:00Z");
+    expect(checkCloseReasonFor(now, NOW, "WORKSHOP_COMPLETED", "")).toEqual({ ok: true, reason: { code: "WORKSHOP_COMPLETED" } });
+    expect(checkCloseReasonFor(now, NOW, "VENUE_ISSUE", "")).toEqual({ ok: false, error: "REQUIRED" });
+    expect(checkCloseReasonFor(now, NOW, "OTHER", "text")).toEqual({ ok: false, error: "REQUIRED" });
+    expect(checkCloseReasonFor(later, NOW, "WORKSHOP_COMPLETED", "")).toEqual({ ok: false, error: "REQUIRED" });
+    expect(checkCloseReasonFor(later, NOW, "VENUE_ISSUE", "")).toEqual({ ok: true, reason: { code: "VENUE_ISSUE" } });
+    expect(checkCloseReasonFor(later, NOW, "OTHER", "")).toEqual({ ok: false, error: "NOTE_REQUIRED" });
   });
 });
 

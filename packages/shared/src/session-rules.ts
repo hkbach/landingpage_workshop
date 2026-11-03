@@ -66,10 +66,11 @@ export function isInSessionTime(s: { startsAt: string; endsAt: string }, now: Da
 }
 
 /**
- * Close is not possible while the session is taking place: the owner has to wait until it ends (the system then closes it by itself,
- * see closeIfEnded). Before it starts, a paused session can be closed.
+ * Closing a session depends on the time. Before it starts the owner closes it for a basic reason (or Other with a text). While it is taking place it can only be
+ * closed early because the workshop has been completed. Once its time is over the system closes it (see closeIfEnded).
  */
-export const closeWaitsForEnd = (s: { startsAt: string; endsAt: string }, now: Date): boolean => isInSessionTime(s, now);
+export const closeReasonsFor = (s: { startsAt: string; endsAt: string }, now: Date): SessionCloseReasonCode[] =>
+  isInSessionTime(s, now) ? ["WORKSHOP_COMPLETED"] : SESSION_CLOSE_REASONS.filter((r) => r !== "WORKSHOP_COMPLETED");
 
 /**
  * Why the owner closes a session: a basic reason, or OTHER with a text that explains it. WORKSHOP_COMPLETED is for a session that took place: the workshop is
@@ -101,6 +102,11 @@ export const RESCHEDULE_REASONS = SESSION_CLOSE_REASONS.filter((r) => r !== "WOR
 /** The reason of a re-schedule as it will be stored, or the problem (the same as `checkCloseReason`, and a completed workshop is not a reason to re-schedule). */
 export function checkRescheduleReason(code: string, note: string): ReturnType<typeof checkCloseReason> {
   return code === "WORKSHOP_COMPLETED" ? { ok: false, error: "REQUIRED" } : checkCloseReason(code, note);
+}
+
+/** The reason of a close as it will be stored, or the problem: the reason must be one of those allowed at this time (`closeReasonsFor`), and Other needs a text. */
+export function checkCloseReasonFor(s: { startsAt: string; endsAt: string }, now: Date, code: string, note: string): ReturnType<typeof checkCloseReason> {
+  return (closeReasonsFor(s, now) as readonly string[]).includes(code) ? checkCloseReason(code, note) : { ok: false, error: "REQUIRED" };
 }
 
 export type RescheduleError = "NOT_RESCHEDULABLE" | "RESCHEDULE_LIMIT" | "ENDED" | "SAME" | "PAST" | "DUPLICATE";
