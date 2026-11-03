@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowLeft, BadgeCheck, CalendarClock, Check, CheckCheck, Lock, LogIn, Undo2 } from "lucide-react";
-import { checkCloseReason, CLOSE_REASON_NOTE_MAX, formatMoney, isSessionFinished, SESSION_CLOSE_REASONS, type RescheduleError, type SessionCloseReason } from "@workshop/shared";
+import { checkCloseReason, checkRescheduleReason, CLOSE_REASON_NOTE_MAX, formatMoney, isSessionFinished, RESCHEDULE_REASONS, SESSION_CLOSE_REASONS, type RescheduleError, type SessionCloseReason } from "@workshop/shared";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -28,7 +28,7 @@ function ReasonPicker({ prefix, code, onCode, note, onNote, error }: {
     <>
       <fieldset className="grid gap-2" data-testid={`${prefix}-reasons`}>
         <legend className="mb-1 text-sm font-medium">{t("sessions.closeReasonLegend")} <span aria-hidden className="text-destructive">*</span></legend>
-        {SESSION_CLOSE_REASONS.map((r) => (
+        {(prefix === "resched" ? RESCHEDULE_REASONS : SESSION_CLOSE_REASONS).map((r) => (
           <label key={r} className="flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm has-[:checked]:border-primary has-[:checked]:bg-primary/5">
             <input type="radio" name={`${prefix}-reason`} value={r} checked={code === r} onChange={() => onCode(r)} />
             {t(`sessions.closeReasons.${r}`)}
@@ -97,7 +97,7 @@ export function RescheduleSessionDialog({ open, onOpenChange, session, timezone,
   const [code, setCode] = useState("");
   const [note, setNote] = useState("");
   const [errors, setErrors] = useState<{ date?: string; time?: string; note?: string }>({});
-  const checked = checkCloseReason(code, note);
+  const checked = checkRescheduleReason(code, note);
 
   function submit(e: FormEvent) {
     e.preventDefault();

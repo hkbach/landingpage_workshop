@@ -4,7 +4,7 @@ import { openSessionCount } from "./workshop-rules";
 import {
   allowedSessionActions, applySessionAction, canEditSession, canRescheduleSession, canReopenSession, checkCloseReason, checkReschedule, CLOSE_REASON_NOTE_MAX, closeIfEnded, closeWaitsForEnd,
   DEFAULT_BOOKING_CUTOFF_MINUTES, isFutureStart, isInSessionTime, isSessionBookable, isValidBookingCutoff, nextSessionCode, notesInOrder, SESSION_CODE_RE, wasRescheduled, withNote,
-  canCompleteSession, isSessionFinished, canAdminClose, canAdminReopen, canCloseAgain, canRescheduleAgain, closeCount, closedForGood, isFinalClose, MAX_CLOSES, MAX_RESCHEDULES, rescheduleCount,
+  canCompleteSession, isSessionFinished, RESCHEDULE_REASONS, SESSION_CLOSE_REASONS, checkRescheduleReason, canAdminClose, canAdminReopen, canCloseAgain, canRescheduleAgain, closeCount, closedForGood, isFinalClose, MAX_CLOSES, MAX_RESCHEDULES, rescheduleCount,
   type SessionNote, type SessionState,
 } from "./session-rules";
 
@@ -276,5 +276,22 @@ describe("Completed", () => {
   it("a completed session is not an open one for the workshop", () => {
     expect(openSessionCount(["COMPLETED", "CLOSED"])).toBe(0);
     expect(openSessionCount(["COMPLETED", "RUNNING"])).toBe(1);
+  });
+});
+
+describe("the reason that the workshop has been completed", () => {
+  it("is one of the reasons of a close, before Other", () => {
+    expect([...SESSION_CLOSE_REASONS]).toEqual(["NOT_ENOUGH_GUESTS", "INSTRUCTOR_UNAVAILABLE", "VENUE_ISSUE", "SCHEDULE_CHANGE", "WORKSHOP_COMPLETED", "OTHER"]);
+    expect(checkCloseReason("WORKSHOP_COMPLETED", "")).toEqual({ ok: true, reason: { code: "WORKSHOP_COMPLETED" } });
+  });
+  it("needs no explanation and keeps none", () => {
+    expect(checkCloseReason("WORKSHOP_COMPLETED", "  anything  ")).toEqual({ ok: true, reason: { code: "WORKSHOP_COMPLETED" } });
+  });
+  it("is not a reason to re-schedule a session", () => {
+    expect(RESCHEDULE_REASONS).not.toContain("WORKSHOP_COMPLETED");
+    expect([...RESCHEDULE_REASONS]).toEqual(["NOT_ENOUGH_GUESTS", "INSTRUCTOR_UNAVAILABLE", "VENUE_ISSUE", "SCHEDULE_CHANGE", "OTHER"]);
+    expect(checkRescheduleReason("WORKSHOP_COMPLETED", "")).toEqual({ ok: false, error: "REQUIRED" });
+    expect(checkRescheduleReason("VENUE_ISSUE", "")).toEqual({ ok: true, reason: { code: "VENUE_ISSUE" } });
+    expect(checkRescheduleReason("OTHER", "")).toEqual({ ok: false, error: "NOTE_REQUIRED" });
   });
 });

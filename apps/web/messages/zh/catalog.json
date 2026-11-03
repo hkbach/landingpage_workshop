@@ -199,6 +199,7 @@
       "INSTRUCTOR_UNAVAILABLE": "讲师无法到场",
       "VENUE_ISSUE": "工作室或场地问题",
       "SCHEDULE_CHANGE": "日程变更",
+      "WORKSHOP_COMPLETED": "工作坊已完成",
       "OTHER": "其他"
     },
     "reschedule": "更改场次时间",

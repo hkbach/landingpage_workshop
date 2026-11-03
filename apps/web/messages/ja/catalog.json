@@ -199,6 +199,7 @@
       "INSTRUCTOR_UNAVAILABLE": "講師の都合がつかない",
       "VENUE_ISSUE": "スタジオまたは会場の問題",
       "SCHEDULE_CHANGE": "日程の変更",
+      "WORKSHOP_COMPLETED": "ワークショップが完了しました",
       "OTHER": "その他"
     },
     "reschedule": "セッションの日程変更",

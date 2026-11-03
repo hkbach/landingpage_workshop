@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import type { AuditEntry } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -8,9 +8,10 @@ import { DateInput } from "@/components/ui/date-input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { PaginationBar } from "@/components/ui/pagination-bar";
+import { usePagination } from "@/lib/pagination";
 import { fmt } from "./utils";
 
-const PAGE = 8;
 const ANY = "__any__";
 
 export function AuditTable({ entries, orgNames }: { entries: AuditEntry[]; orgNames: Record<string, string> }) {
@@ -20,13 +21,6 @@ export function AuditTable({ entries, orgNames }: { entries: AuditEntry[]; orgNa
   const [entity, setEntity] = useState(ANY);
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
-  const [visible, setVisible] = useState(PAGE); // simulated cursor: how many rows have been "fetched"
-  const [loading, setLoading] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => () => {
-    if (timer.current) clearTimeout(timer.current);
-  }, []);
 
   const actions = useMemo(() => [...new Set(entries.map((e) => e.action))].sort(), [entries]);
   const entities = useMemo(() => [...new Set(entries.map((e) => e.entityType))].sort(), [entries]);
@@ -44,20 +38,12 @@ export function AuditTable({ entries, orgNames }: { entries: AuditEntry[]; orgNa
       }),
     [entries, action, entity, from, to],
   );
-  const shown = filtered.slice(0, visible);
-  const hasMore = filtered.length > visible;
+  const pg = usePagination(filtered, `${action}|${entity}|${from}|${to}`);
+  const shown = pg.items;
 
+  // A change of a filter goes back to the first page (the key of the pagination).
   function change(fn: () => void) {
     fn();
-    setVisible(PAGE);
-  }
-
-  function loadMore() {
-    setLoading(true);
-    timer.current = setTimeout(() => {
-      setVisible((v) => v + PAGE);
-      setLoading(false);
-    }, 500);
   }
 
   const actionItems = [{ value: ANY, label: t("any") }, ...actions.map((a) => ({ value: a, label: a }))];
@@ -157,15 +143,7 @@ export function AuditTable({ entries, orgNames }: { entries: AuditEntry[]; orgNa
         </Table>
       </div>
 
-      <div className="flex items-center gap-3" aria-live="polite">
-        {hasMore ? (
-          <Button variant="secondary" onClick={loadMore} disabled={loading}>
-            {loading ? t("loading") : t("loadMore")}
-          </Button>
-        ) : (
-          shown.length > 0 && <p className="text-sm text-muted-foreground">{t("end")}</p>
-        )}
-      </div>
+      <PaginationBar {...pg.bar} />
     </div>
   );
 }

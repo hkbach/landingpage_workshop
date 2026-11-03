@@ -18,6 +18,8 @@ import { DateInput } from "@/components/ui/date-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { PaginationBar } from "@/components/ui/pagination-bar";
+import { usePagination } from "@/lib/pagination";
 import { Textarea } from "@/components/ui/textarea";
 import { NativeSelect } from "@/components/dashboard/shell/native-select";
 import { Field } from "@/components/ops/field";
@@ -108,6 +110,7 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
     [items, filters, today],
   );
   const filtered = JSON.stringify(filters) !== JSON.stringify(NO_FILTERS);
+  const pg = usePagination(rows, JSON.stringify(filters));
   const atLimit = limit > 0 && items.length >= limit;
   const money = (n: number) => formatMoney(n, shop.currency, locale);
   const nameOf = (id: string) => pickLocalized(workshops.find((w) => w.id === id)?.title ?? {}, locale as Locale, shop.defaultLocale);
@@ -267,7 +270,7 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.map((p) => {
+              {pg.items.map((p) => {
                 const status = promotionStatus(p, today);
                 const title = pickLocalized(p.title, locale as Locale, shop.defaultLocale);
                 return (
@@ -325,6 +328,7 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
               })}
             </TableBody>
           </Table>
+          <PaginationBar {...pg.bar} />
         </div>
       )}
 

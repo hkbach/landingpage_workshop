@@ -1,11 +1,8 @@
 import { notFound } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import { ArrowLeft } from "lucide-react";
-import { formatMoney } from "@workshop/shared";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { BookingStatusBadge, PaymentStatusBadge } from "@/components/ops/status-badges";
-import { formatDateTime } from "@/lib/format";
+import { CustomerBookingsTable } from "@/components/ops/customer-bookings-table";
 import { liveBookings, liveCustomers } from "@/lib/mock/booking-store";
 import { currentShop } from "@/lib/mock/data";
 import { ShopLink } from "@/components/dashboard/shell/shop-link";
@@ -50,30 +47,7 @@ export default async function CustomerDetailPage(props: PageProps<"/shopowner/[s
           {history.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t("customers.noHistory")}</p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t("bookings.code")}</TableHead>
-                  <TableHead>{t("bookings.workshop")}</TableHead>
-                  <TableHead>{t("bookings.session")}</TableHead>
-                  <TableHead>{t("bookings.status")}</TableHead>
-                  <TableHead>{t("bookings.payment")}</TableHead>
-                  <TableHead className="text-right">{t("payment.total")}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {history.map((b) => (
-                  <TableRow key={b.id}>
-                    <TableCell><ShopLink href={`/shopowner/bookings/${b.id}`} className="font-mono font-medium underline-offset-4 hover:underline">{b.bookingCode}</ShopLink></TableCell>
-                    <TableCell>{b.workshopTitle}</TableCell>
-                    <TableCell>{formatDateTime(b.startsAt, tz, locale)}</TableCell>
-                    <TableCell><BookingStatusBadge status={b.status} /></TableCell>
-                    <TableCell><PaymentStatusBadge status={b.paymentStatus} /></TableCell>
-                    <TableCell className="text-right">{formatMoney(b.totalAmount, b.currency, locale)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <CustomerBookingsTable bookings={history} timezone={tz} />
           )}
         </CardContent>
       </Card>

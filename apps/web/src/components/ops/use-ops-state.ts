@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { applySessionAction, canCompleteSession, canEditSession, isSessionFinished, canReopenSession, checkCloseReason, isFutureStart, checkReschedule, closeIfEnded, isValidBookingCutoff, nextSessionCode, rescheduleCount, canCloseAgain, withNote, closeWaitsForEnd, type BookingStatus, type PaymentMethod, type RescheduleError, type SessionAction, type SessionCloseReason } from "@workshop/shared";
+import { applySessionAction, canCompleteSession, canEditSession, isSessionFinished, canReopenSession, checkCloseReason, checkRescheduleReason, isFutureStart, checkReschedule, closeIfEnded, isValidBookingCutoff, nextSessionCode, rescheduleCount, canCloseAgain, withNote, closeWaitsForEnd, type BookingStatus, type PaymentMethod, type RescheduleError, type SessionAction, type SessionCloseReason } from "@workshop/shared";
 import type { Booking, PaymentEntry, Session } from "@/lib/types";
 import {
   canTransition, computePaymentStatus, netPaid, reservedSeats, seatDelta, targetStatus,
@@ -219,7 +219,7 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
       const s = sessions.find((x) => x.id === id);
       if (!s) return { ok: false, error: "NOT_RESCHEDULABLE" };
       const checked = checkReschedule({ ...s, reschedules: rescheduleCount(s.notes) }, newStartsAt, now, sessions.filter((x) => x.workshopId === s.workshopId && x.id !== id).map((x) => x.startsAt));
-      const why = checkCloseReason(reason.code, reason.note ?? "");
+      const why = checkRescheduleReason(reason.code, reason.note ?? "");
       if (!checked.ok) return { ok: false, error: checked.error };
       if (!why.ok) return { ok: false, error: "NOT_RESCHEDULABLE" };
       setSessions((list) => list.map((x) => (x.id === id ? { ...x, startsAt: checked.startsAt, endsAt: checked.endsAt, notes: withNote(x.notes, { type: "RESCHEDULED", at: now.toISOString(), reason: why.reason }) } : x)));

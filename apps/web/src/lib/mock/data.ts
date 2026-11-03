@@ -177,6 +177,8 @@ export const sessions: Session[] = [
   { id: "se-48", code: "SES-0048", workshopId: "ws-4", startsAt: at(3, 15), endsAt: at(3, 18), capacity: 8, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 120, imageUrl: pic("raku2") },
   { id: "se-49", code: "SES-0049", workshopId: "ws-4", startsAt: at(9, 15), endsAt: at(9, 18), capacity: 8, reservedCount: 0, status: "OPEN", bookingCutoffMinutes: 120 },
   { id: "se-50", code: "SES-0050", workshopId: "ws-4", startsAt: at(5, 16), endsAt: at(5, 19), capacity: 8, reservedCount: 0, status: "PAUSED", bookingCutoffMinutes: 120 },
+  // Closed by the owner because the workshop was completed (its guests are emailed that the workshop took place).
+  { id: "se-52", code: "SES-0052", workshopId: "ws-2", startsAt: at(11, 10), endsAt: at(11, 11.5), capacity: 10, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, notes: [{ type: "CLOSED", at: at(-1, 12), reason: { code: "WORKSHOP_COMPLETED" } }] },
   { id: "se-51", code: "SES-0051", workshopId: "ws-4", startsAt: at(4, 16), endsAt: at(4, 19), capacity: 8, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, notes: [{ type: "CLOSED", at: at(-1, 10), reason: { code: "NOT_ENOUGH_GUESTS" } }] },
 ];
 
@@ -369,6 +371,8 @@ export const bookings: Booking[] = [
   booking({ id: "bk-110", sessionId: "se-9", customerId: "cu-17", quantity: 1 }),
   booking({ id: "bk-111", sessionId: "se-45", customerId: "cu-18", quantity: 1, ...ci("se-45", 11) }),
   booking({ id: "bk-113", sessionId: "se-17", customerId: "cu-18", quantity: 1 }),
+  booking({ id: "bk-123", sessionId: "se-52", customerId: "cu-5", quantity: 2 }),
+  booking({ id: "bk-124", sessionId: "se-52", customerId: "cu-6", quantity: 1 }),
   // Guests of earlier sessions too, so every guest has bookings made on different days whatever time it is now.
   booking({ id: "bk-114", sessionId: "se-22", customerId: "cu-11", quantity: 1, ...ci("se-22", 7) }),
   booking({ id: "bk-115", sessionId: "se-22", customerId: "cu-12", quantity: 1, ...ci("se-22", 8) }),

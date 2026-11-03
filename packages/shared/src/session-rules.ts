@@ -71,8 +71,11 @@ export function isInSessionTime(s: { startsAt: string; endsAt: string }, now: Da
  */
 export const closeWaitsForEnd = (s: { startsAt: string; endsAt: string }, now: Date): boolean => isInSessionTime(s, now);
 
-/** Why the owner closes a session before it starts: a basic reason, or OTHER with a text that explains it. */
-export const SESSION_CLOSE_REASONS = ["NOT_ENOUGH_GUESTS", "INSTRUCTOR_UNAVAILABLE", "VENUE_ISSUE", "SCHEDULE_CHANGE", "OTHER"] as const;
+/**
+ * Why the owner closes a session: a basic reason, or OTHER with a text that explains it. WORKSHOP_COMPLETED is for a session that took place: the workshop is
+ * done (it is not a reason to re-schedule a session, see RESCHEDULE_REASONS).
+ */
+export const SESSION_CLOSE_REASONS = ["NOT_ENOUGH_GUESTS", "INSTRUCTOR_UNAVAILABLE", "VENUE_ISSUE", "SCHEDULE_CHANGE", "WORKSHOP_COMPLETED", "OTHER"] as const;
 export type SessionCloseReasonCode = (typeof SESSION_CLOSE_REASONS)[number];
 export const CLOSE_REASON_NOTE_MAX = 300;
 
@@ -90,6 +93,14 @@ export function checkCloseReason(code: string, note: string): { ok: true; reason
   if (text === "") return { ok: false, error: "NOTE_REQUIRED" };
   if (text.length > CLOSE_REASON_NOTE_MAX) return { ok: false, error: "NOTE_TOO_LONG" };
   return { ok: true, reason: { code: "OTHER", note: text } };
+}
+
+/** The reasons offered for a re-schedule: the reasons of a close, except that the workshop has been completed. */
+export const RESCHEDULE_REASONS = SESSION_CLOSE_REASONS.filter((r) => r !== "WORKSHOP_COMPLETED");
+
+/** The reason of a re-schedule as it will be stored, or the problem (the same as `checkCloseReason`, and a completed workshop is not a reason to re-schedule). */
+export function checkRescheduleReason(code: string, note: string): ReturnType<typeof checkCloseReason> {
+  return code === "WORKSHOP_COMPLETED" ? { ok: false, error: "REQUIRED" } : checkCloseReason(code, note);
 }
 
 export type RescheduleError = "NOT_RESCHEDULABLE" | "RESCHEDULE_LIMIT" | "ENDED" | "SAME" | "PAST" | "DUPLICATE";

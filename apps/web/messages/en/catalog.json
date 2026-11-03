@@ -199,6 +199,7 @@
       "INSTRUCTOR_UNAVAILABLE": "Instructor is not available",
       "VENUE_ISSUE": "Studio or venue problem",
       "SCHEDULE_CHANGE": "Schedule changed",
+      "WORKSHOP_COMPLETED": "The workshop has been completed",
       "OTHER": "Other"
     },
     "reschedule": "Re-schedule session",

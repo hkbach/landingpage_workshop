@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { PaginationBar } from "@/components/ui/pagination-bar";
+import { usePagination } from "@/lib/pagination";
 import { ReasonDialog } from "./reason-dialog";
 import { fmt } from "./utils";
 
@@ -52,6 +54,7 @@ export function AdminSessions() {
   }
 
   const upcoming = (items ?? []).filter((s) => new Date(s.endsAt) > now).sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+  const pg = usePagination(upcoming, "");
 
   return (
     <Card data-testid="admin-sessions">
@@ -77,7 +80,7 @@ export function AdminSessions() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {upcoming.map((s) => (
+              {pg.items.map((s) => (
                 <TableRow key={s.id} data-testid="admin-session-row">
                   <TableCell className="font-mono">{s.code}</TableCell>
                   <TableCell className="whitespace-nowrap">{fmt(s.startsAt, locale)}</TableCell>
@@ -99,6 +102,7 @@ export function AdminSessions() {
             </TableBody>
           </Table>
         )}
+        {items !== null && upcoming.length > 0 ? <PaginationBar {...pg.bar} /> : null}
       </CardContent>
 
       <ReasonDialog

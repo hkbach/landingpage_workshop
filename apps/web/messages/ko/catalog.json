@@ -199,6 +199,7 @@
       "INSTRUCTOR_UNAVAILABLE": "강사 불가",
       "VENUE_ISSUE": "공방 또는 장소 문제",
       "SCHEDULE_CHANGE": "일정 변경",
+      "WORKSHOP_COMPLETED": "워크숍이 완료되었습니다",
       "OTHER": "기타"
     },
     "reschedule": "세션 일정 변경",

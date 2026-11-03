@@ -8,6 +8,8 @@ import { ORG_STATUSES, type OrgStatus } from "@workshop/shared";
 import type { Shop } from "@/lib/types";
 import { buttonVariants } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { PaginationBar } from "@/components/ui/pagination-bar";
+import { usePagination } from "@/lib/pagination";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatusBadge } from "./status-badge";
 import { fmt, landingHost, landingUrl } from "./utils";
@@ -22,7 +24,9 @@ export function OrganizationsTable({ shops, stats }: { shops: Shop[]; stats: Sta
   const locale = useLocale();
   const [filter, setFilter] = useState<Filter>("ALL");
 
-  const rows = filter === "ALL" ? shops : shops.filter((s) => s.status === filter);
+  const filtered = filter === "ALL" ? shops : shops.filter((s) => s.status === filter);
+  const pg = usePagination(filtered, filter);
+  const rows = pg.items;
   const count = (f: Filter) => (f === "ALL" ? shops.length : shops.filter((s) => s.status === f).length);
 
   return (
@@ -107,6 +111,7 @@ export function OrganizationsTable({ shops, stats }: { shops: Shop[]; stats: Sta
           </TableBody>
         </Table>
       </div>
+      <PaginationBar {...pg.bar} />
       <p className="text-xs text-muted-foreground">{tc("utcNote")}</p>
     </div>
   );

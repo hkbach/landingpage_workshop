@@ -10,6 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DateInput } from "@/components/ui/date-input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { PaginationBar } from "@/components/ui/pagination-bar";
+import { usePagination } from "@/lib/pagination";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { PriceTip } from "@/components/ops/price-tip";
 import { NativeSelect } from "@/components/dashboard/shell/native-select";
@@ -63,6 +65,7 @@ export function FinanceView({ rows, rates, currency, timezone }: Props) {
   const totals = summarizeLedger(inRange);
   const chart = useMemo(() => ledgerSeries(rows, timezone, range.from, range.to), [rows, range, timezone]);
   const shown = useMemo(() => filterLedgerRange(rows, range.from, range.to, timezone, kind || undefined), [rows, range, timezone, kind]);
+  const pg = usePagination(shown, `${range.from}|${range.to}|${kind}`);
   const monthLabel = (key: string) => key.length === 7
     ? new Intl.DateTimeFormat(locale, { month: "short", year: "2-digit", timeZone: "UTC" }).format(new Date(`${key}-15T12:00:00Z`))
     : new Intl.DateTimeFormat(locale, { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${key}T12:00:00Z`));
@@ -157,7 +160,7 @@ export function FinanceView({ rows, rates, currency, timezone }: Props) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {shown.map((r) => (
+                  {pg.items.map((r) => (
                     <TableRow key={r.id} data-testid="ledger-row">
                       <TableCell className="whitespace-nowrap">{formatDate(r.occurredAt, timezone, locale)}</TableCell>
                       <TableCell className="font-mono">{r.bookingCode}</TableCell>
@@ -183,6 +186,7 @@ export function FinanceView({ rows, rates, currency, timezone }: Props) {
                 </TableBody>
               </Table>
               </TooltipProvider>
+              <PaginationBar {...pg.bar} />
             </div>
           )}
         </CardContent>

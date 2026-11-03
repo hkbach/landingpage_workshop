@@ -28,5 +28,13 @@
     "ascending": "đang sắp xếp tăng dần",
     "descending": "đang sắp xếp giảm dần",
     "none": "chưa sắp xếp"
+  },
+  "pagination": {
+    "label": "Phân trang",
+    "showing": "Hiển thị {from}–{to} / {total}",
+    "rowsPerPage": "Số dòng mỗi trang",
+    "previous": "Trang trước",
+    "next": "Trang sau",
+    "page": "Trang {page} / {pages}"
   }
 }

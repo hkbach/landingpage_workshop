@@ -6,6 +6,8 @@ import { ArrowLeft } from "lucide-react";
 import { formatMoney, type Locale } from "@workshop/shared";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { PaginationBar } from "@/components/ui/pagination-bar";
+import { usePagination } from "@/lib/pagination";
 import type { Booking, Customer, Session } from "@/lib/types";
 import { formatDateTime } from "@/lib/format";
 import { netPaid } from "@/lib/booking-state";
@@ -37,6 +39,7 @@ export function BookingDetail({
   const session = ops.sessions.find((s) => s.id === b.sessionId);
   const trail = [...trail0, ...(ops.history[b.id] ?? [])];
   const net = netPaid(b.payments);
+  const payPg = usePagination(b.payments, b.id);
   const fmt = (n: number) => formatMoney(n, b.currency, locale);
 
   return (
@@ -141,7 +144,7 @@ export function BookingDetail({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {b.payments.map((p) => (
+                {payPg.items.map((p) => (
                   <TableRow key={p.id}>
                     <TableCell>{formatDateTime(p.recordedAt, b.timezone, locale)}</TableCell>
                     <TableCell>{t(`payment.type${p.type}`)}</TableCell>
@@ -156,6 +159,7 @@ export function BookingDetail({
               </TableBody>
             </Table>
           )}
+          <PaginationBar {...payPg.bar} />
           <p className="text-xs text-muted-foreground">{t("payment.immutable")}</p>
         </CardContent>
       </Card>

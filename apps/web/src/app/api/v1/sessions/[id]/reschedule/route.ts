@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { checkCloseReason } from "@workshop/shared";
+import { checkRescheduleReason } from "@workshop/shared";
 import { apiError, fieldCodes } from "@/lib/api-error";
 import { mailSessionRescheduled } from "@/lib/mock/session-mail";
 
@@ -26,7 +26,7 @@ export async function POST(request: Request, ctx: RouteContext<"/api/v1/sessions
   const parsed = bodySchema.safeParse(body);
   if (!parsed.success) return apiError(422, "VALIDATION", "Please check the highlighted fields.", { fields: fieldCodes(parsed.error.issues) });
   if (Date.parse(parsed.data.newEndsAt) <= Date.parse(parsed.data.newStartsAt)) return apiError(422, "VALIDATION", "The session must end after it starts.", { fields: { newEndsAt: "endBeforeStart" } });
-  const reason = checkCloseReason(parsed.data.reason.code, parsed.data.reason.note ?? "");
+  const reason = checkRescheduleReason(parsed.data.reason.code, parsed.data.reason.note ?? "");
   if (!reason.ok) return apiError(422, "VALIDATION", "A reason is required.", { fields: { reason: reason.error === "NOTE_REQUIRED" ? "noteRequired" : "required" } });
 
   // Every guest who booked the session is told, except the ones who cancelled their booking (sessions made in the browser only have no bookings here).

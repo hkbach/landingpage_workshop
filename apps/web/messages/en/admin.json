@@ -225,9 +225,6 @@
       "org": "Organization"
     },
     "empty": "No audit entries match these filters.",
-    "loadMore": "Load more",
-    "loading": "Loading...",
-    "end": "End of log.",
     "platform": "Platform"
   },
   "sessions": {

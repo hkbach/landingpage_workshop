@@ -225,9 +225,6 @@
       "org": "Tổ chức"
     },
     "empty": "Không có mục kiểm toán nào khớp các bộ lọc này.",
-    "loadMore": "Tải thêm",
-    "loading": "Đang tải...",
-    "end": "Hết nhật ký.",
     "platform": "Nền tảng"
   },
   "sessions": {

@@ -6,6 +6,8 @@ import { WORKSHOP_STATUSES, type WorkshopStatus } from "@workshop/shared";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { PaginationBar } from "@/components/ui/pagination-bar";
+import { usePagination } from "@/lib/pagination";
 import { Field } from "@/components/ops/field";
 import { NativeSelect } from "@/components/ops/native-select";
 import { matchesSearch } from "@/lib/text-search";
@@ -18,7 +20,9 @@ export function WorkshopsTable({ items }: { items: WorkshopTableItem[] }) {
   const t = useTranslations("catalog");
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<"" | WorkshopStatus>("");
-  const shown = items.filter((i) => (!status || i.status === status) && matchesSearch(i.search, q));
+  const matched = items.filter((i) => (!status || i.status === status) && matchesSearch(i.search, q));
+  const pg = usePagination(matched, `${q}|${status}`);
+  const shown = pg.items;
 
   return (
     <div className="grid gap-3">
@@ -53,6 +57,7 @@ export function WorkshopsTable({ items }: { items: WorkshopTableItem[] }) {
             </TableHeader>
             <TableBody>{shown.map((i) => <Fragment key={i.id}>{i.row}</Fragment>)}</TableBody>
           </Table>
+          <PaginationBar {...pg.bar} />
         </Card>
       )}
     </div>

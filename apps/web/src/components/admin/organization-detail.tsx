@@ -9,6 +9,8 @@ import type { AuditEntry, Shop } from "@/lib/types";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { PaginationBar } from "@/components/ui/pagination-bar";
+import { usePagination } from "@/lib/pagination";
 import { ReasonDialog } from "./reason-dialog";
 import { StatusBadge } from "./status-badge";
 import { fmt, landingHost, landingUrl } from "./utils";
@@ -28,6 +30,7 @@ export function OrganizationDetail({
   const [entries, setEntries] = useState(audit);
   const [dialog, setDialog] = useState<"suspend" | "reactivate" | null>(null);
   const [message, setMessage] = useState("");
+  const auditPg = usePagination(entries, "");
 
   function apply(kind: "suspend" | "reactivate", why: string) {
     // Simulated state change (valid transitions only: ACTIVE <-> SUSPENDED); nothing is persisted.
@@ -150,7 +153,7 @@ export function OrganizationDetail({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {entries.map((a) => (
+                  {auditPg.items.map((a) => (
                     <TableRow key={a.id}>
                       <TableCell className="whitespace-nowrap">{fmt(a.createdAt, locale)}</TableCell>
                       <TableCell>{a.actor}</TableCell>
@@ -160,6 +163,7 @@ export function OrganizationDetail({
                 </TableBody>
               </Table>
             )}
+            <PaginationBar {...auditPg.bar} />
           </CardContent>
         </Card>
       </div>

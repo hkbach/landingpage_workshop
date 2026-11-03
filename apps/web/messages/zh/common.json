@@ -28,5 +28,13 @@
     "ascending": "已升序排列",
     "descending": "已降序排列",
     "none": "未排序"
+  },
+  "pagination": {
+    "label": "分页",
+    "showing": "显示第 {from}–{to} 条，共 {total} 条",
+    "rowsPerPage": "每页行数",
+    "previous": "上一页",
+    "next": "下一页",
+    "page": "第 {page} 页，共 {pages} 页"
   }
 }

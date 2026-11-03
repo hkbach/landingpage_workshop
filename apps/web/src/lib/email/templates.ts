@@ -36,6 +36,7 @@ const REASON: Record<Exclude<SessionCloseReason["code"], "OTHER">, Words> = {
   INSTRUCTOR_UNAVAILABLE: w("The instructor is not available", "Giảng viên không thể tham gia", "ผู้สอนไม่สะดวก", "讲师无法到场", "강사 사정", "講師の都合"),
   VENUE_ISSUE: w("Studio or venue problem", "Sự cố studio hoặc địa điểm", "ปัญหาของสตูดิโอหรือสถานที่", "工作室或场地出现问题", "스튜디오 또는 장소 문제", "スタジオまたは会場の問題"),
   SCHEDULE_CHANGE: w("Schedule changed", "Lịch thay đổi", "ตารางเวลาเปลี่ยนแปลง", "日程变更", "일정 변경", "スケジュールの変更"),
+  WORKSHOP_COMPLETED: w("The workshop has been completed", "Buổi workshop đã hoàn thành", "เวิร์กช็อปเสร็จสิ้นแล้ว", "工作坊已完成", "워크숍이 완료됨", "ワークショップが完了"),
 };
 /** The reason in a language; the explanation of "Other" is the text the shop typed, so it is not translated. */
 const reasonText = (reason: SessionCloseReason, lang: EmailLang) => (reason.code === "OTHER" ? (reason.note ?? "") : REASON[reason.code][lang]);
@@ -177,6 +178,14 @@ export function renderSessionClosed(d: SessionClosedData): RenderedEmail {
       "{shop}에서 {workshop} 예약 {code}의 세션을 닫았습니다. 이 세션은 진행되지 않습니다.",
       "{shop}が{workshop}のご予約 {code} のセッションをクローズしました。このセッションは開催されません。",
     ),
+    introDone: w(
+      "{shop} has closed the session of your booking {code} for {workshop}: the workshop has been completed. Thank you for joining us!",
+      "{shop} đã đóng session của booking {code} cho {workshop}: buổi workshop đã hoàn thành. Cảm ơn bạn đã tham gia!",
+      "{shop} ได้ปิดเซสชันของการจอง {code} สำหรับ {workshop} เนื่องจากเวิร์กช็อปเสร็จสิ้นแล้ว ขอบคุณที่เข้าร่วม",
+      "{shop} 已关闭您的预订 {code}（{workshop}）所属的场次：工作坊已完成。感谢您的参与！",
+      "{shop}에서 {workshop} 예약 {code}의 세션을 닫았습니다. 워크숍이 완료되었습니다. 참여해 주셔서 감사합니다!",
+      "{shop}が{workshop}のご予約 {code} のセッションをクローズしました。ワークショップは完了しました。ご参加ありがとうございました！",
+    ),
     introAuto: w(
       "The session of your booking {code} for {workshop} at {shop} has been closed because its time has ended.",
       "Session của booking {code} cho {workshop} tại {shop} đã được đóng vì đã hết thời gian tổ chức.",
@@ -191,7 +200,7 @@ export function renderSessionClosed(d: SessionClosedData): RenderedEmail {
   };
   return compose(EMAIL_LANGS.map((lang): Section => ({
     lang, subject: fill(T.subject[lang], { code: d.bookingCode }), greeting: fill(L.hello[lang], { name: d.guestName }),
-    paragraphs: [fill((d.reason ? T.intro : T.introAuto)[lang], { shop: d.shopName, code: d.bookingCode, workshop: d.workshopTitle })],
+    paragraphs: [fill((d.reason ? (d.reason.code === "WORKSHOP_COMPLETED" ? T.introDone : T.intro) : T.introAuto)[lang], { shop: d.shopName, code: d.bookingCode, workshop: d.workshopTitle })],
     rows: [
       { label: T.time[lang], value: range(d.startsAt, d.endsAt, d.timezone, lang) },
       { label: L.reason[lang], value: d.reason ? reasonText(d.reason, lang) : T.autoReason[lang] },

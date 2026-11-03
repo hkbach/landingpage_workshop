@@ -20,6 +20,8 @@ import type { Booking, Customer, Session, Workshop } from "@/lib/types";
 import { dayKey, formatTime } from "@/lib/format";
 import { MAX_CAPACITY, type ShopForCatalog } from "./workshop-form";
 import { CheckInDialog, CloseSessionDialog, dateAndTime, PaymentDialog, RescheduleSessionDialog } from "./session-dialogs";
+import { PaginationBar } from "@/components/ui/pagination-bar";
+import { usePagination } from "@/lib/pagination";
 import { notifyPaidRequest } from "@/lib/bookings-api";
 import { notifyAutoClosedRequest, notifyClosedRequest, notifyRescheduleRequest } from "@/lib/sessions-api";
 import { ImageUploadField } from "@/components/builder/ImageUploadField";
@@ -62,14 +64,15 @@ export function SessionsManager({
         .sort((a, b) => a.startsAt.localeCompare(b.startsAt)),
     [ops.sessions, workshopId, status, from, to, shop.timezone],
   );
-  const groups = useMemo(() => {
+  const pg = usePagination(filtered, `${workshopId}|${status}|${from}|${to}`);
+  const groups = (() => {
     const m = new Map<string, Session[]>();
-    for (const s of filtered) {
+    for (const s of pg.items) {
       const k = dayKey(s.startsAt, shop.timezone);
       m.set(k, [...(m.get(k) ?? []), s]);
     }
     return [...m.entries()];
-  }, [filtered, shop.timezone]);
+  })();
 
   async function notifyGuests(id: string, res: { oldStartsAt: string; startsAt: string; endsAt: string; reason: SessionCloseReason }) {
     try {
@@ -263,6 +266,7 @@ export function SessionsManager({
           </ul>
         </section>
       ))}
+      <PaginationBar {...pg.bar} />
 
       <AddSessionDialog
         key={dialog && dialog.kind !== "add" ? `form-${dialog.kind}-${dialog.id}` : "form-add"}

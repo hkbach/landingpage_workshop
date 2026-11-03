@@ -7,6 +7,8 @@ import { formatMoney, GENDERS } from "@workshop/shared";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { PaginationBar } from "@/components/ui/pagination-bar";
+import { usePagination } from "@/lib/pagination";
 import type { Booking, Customer } from "@/lib/types";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -60,7 +62,7 @@ export function CustomersList({ customers, bookings, timezone }: { customers: Cu
     .filter((r) => !country || countryKey(r.c) === country)
     .filter((r) => !gender || genderKey(r.c) === gender);
   // What each column is sorted by (a guest with no account has no country and no birth date: those rows go last).
-  const rows = sortRows(found, sort, (r, key) => {
+  const sorted = sortRows(found, sort, (r, key) => {
     switch (key) {
       case "name": return r.c.fullName;
       case "email": return r.c.email;
@@ -73,6 +75,8 @@ export function CustomersList({ customers, bookings, timezone }: { customers: Cu
       default: return null;
     }
   }, locale);
+  const pg = usePagination(sorted, [query, country, gender, JSON.stringify(sort)].join("|"));
+  const rows = pg.items;
 
   return (
     <div className="grid gap-4">
@@ -195,6 +199,7 @@ export function CustomersList({ customers, bookings, timezone }: { customers: Cu
               })}
             </TableBody>
           </Table>
+          <PaginationBar {...pg.bar} />
         </Card>
       )}
       {viewing ? (() => {

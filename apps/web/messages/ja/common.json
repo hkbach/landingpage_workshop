@@ -28,5 +28,13 @@
     "ascending": "昇順に並べ替え済み",
     "descending": "降順に並べ替え済み",
     "none": "並べ替えなし"
+  },
+  "pagination": {
+    "label": "ページネーション",
+    "showing": "{total}件中 {from}–{to}件を表示",
+    "rowsPerPage": "1ページあたりの行数",
+    "previous": "前のページ",
+    "next": "次のページ",
+    "page": "{page} / {pages} ページ"
   }
 }

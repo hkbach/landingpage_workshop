@@ -18,6 +18,8 @@ import { Field } from "./field";
 import { NativeSelect } from "./native-select";
 import { BookingStatusBadge, PaymentStatusBadge } from "./status-badges";
 import { PriceTip } from "./price-tip";
+import { PaginationBar } from "@/components/ui/pagination-bar";
+import { usePagination } from "@/lib/pagination";
 import { BookingsChart } from "./bookings-chart";
 import { addDays } from "./time";
 import { ShopLink } from "@/components/dashboard/shell/shop-link";
@@ -75,7 +77,9 @@ export function BookingsList({
       return [b.bookingCode, c?.fullName, c?.email].some((v) => v?.toLowerCase().includes(q));
     });
   const byPayment = base.filter((b) => !payment || b.paymentStatus === payment);
-  const rows = byPayment.filter((b) => !status || b.status === status).sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+  const matching = byPayment.filter((b) => !status || b.status === status).sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+  const pg = usePagination(matching, [from, to, sessionId, workshopId, payment, status, query].join("|"));
+  const rows = pg.items;
   const guestsOf = (list: Booking[]) => list.reduce((n, b) => n + b.quantity, 0);
   const byStatus = BOOKING_STATUSES.map((s) => { const mine = byPayment.filter((b) => b.status === s); return { status: s, bookings: mine.length, guests: guestsOf(mine) }; });
   const payments = PAYMENT_STATUSES.map((s) => {
@@ -182,7 +186,7 @@ export function BookingsList({
       {/* The bookings over time in the range, by the day of their session. */}
       <BookingsChart days={days} from={chartFrom} to={chartTo} />
 
-      <p className="text-sm text-muted-foreground" role="status">{t("bookings.count", { count: rows.length })}</p>
+      <p className="text-sm text-muted-foreground" role="status">{t("bookings.count", { count: matching.length })}</p>
 
       {rows.length === 0 ? (
         <Card><CardContent className="py-8 text-center text-muted-foreground">{t("bookings.empty")}</CardContent></Card>
@@ -240,6 +244,7 @@ export function BookingsList({
             </TableBody>
           </Table>
           </TooltipProvider>
+          <PaginationBar {...pg.bar} />
         </Card>
       )}
     </div>

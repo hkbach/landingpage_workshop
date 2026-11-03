@@ -28,5 +28,13 @@
     "ascending": "sorted ascending",
     "descending": "sorted descending",
     "none": "not sorted"
+  },
+  "pagination": {
+    "label": "Pagination",
+    "showing": "Showing {from}–{to} of {total}",
+    "rowsPerPage": "Rows per page",
+    "previous": "Previous page",
+    "next": "Next page",
+    "page": "Page {page} of {pages}"
   }
 }

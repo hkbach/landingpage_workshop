@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { formatMoney } from "@workshop/shared";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
+import { PaginationBar } from "@/components/ui/pagination-bar";
+import { usePagination } from "@/lib/pagination";
 import type { Booking } from "@/lib/types";
 import { formatDateTime } from "@/lib/format";
 import { nextSort, sortRows, type SortState } from "@/lib/table-sort";
@@ -21,7 +23,7 @@ export function CustomerBookingsTable({ bookings, timezone }: { bookings: Bookin
   const [sort, setSort] = useState<SortState>(null);
   const onSort = (k: string) => setSort((s) => nextSort(s, k));
   // The status and the payment are sorted by the words the person reads, in their language.
-  const rows = sortRows(bookings, sort, (b, key) => {
+  const sorted = sortRows(bookings, sort, (b, key) => {
     switch (key) {
       case "code": return b.bookingCode;
       case "booked": return b.createdAt;
@@ -33,6 +35,8 @@ export function CustomerBookingsTable({ bookings, timezone }: { bookings: Bookin
       default: return null;
     }
   }, locale);
+  const pg = usePagination(sorted, JSON.stringify(sort));
+  const rows = pg.items;
   return (
     <div className="overflow-x-auto rounded-lg border bg-background">
       <Table data-testid="customer-bookings-table">
@@ -61,6 +65,7 @@ export function CustomerBookingsTable({ bookings, timezone }: { bookings: Bookin
           ))}
         </TableBody>
       </Table>
+      <PaginationBar {...pg.bar} />
     </div>
   );
 }

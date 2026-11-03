@@ -28,5 +28,13 @@
     "ascending": "오름차순 정렬됨",
     "descending": "내림차순 정렬됨",
     "none": "정렬 안 됨"
+  },
+  "pagination": {
+    "label": "페이지 이동",
+    "showing": "총 {total}개 중 {from}–{to}개 표시",
+    "rowsPerPage": "페이지당 행 수",
+    "previous": "이전 페이지",
+    "next": "다음 페이지",
+    "page": "{pages}페이지 중 {page}페이지"
   }
 }

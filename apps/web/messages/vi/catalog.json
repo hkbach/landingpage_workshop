@@ -199,6 +199,7 @@
       "INSTRUCTOR_UNAVAILABLE": "Giảng viên không có mặt",
       "VENUE_ISSUE": "Sự cố về studio hoặc địa điểm",
       "SCHEDULE_CHANGE": "Thay đổi lịch",
+      "WORKSHOP_COMPLETED": "Buổi workshop đã hoàn thành",
       "OTHER": "Khác"
     },
     "reschedule": "Đổi lịch session",
