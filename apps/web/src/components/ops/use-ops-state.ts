@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { applySessionAction, closeIfEnded, type BookingStatus, type PaymentMethod, type SessionAction } from "@workshop/shared";
+import { applySessionAction, closeIfEnded, closeWaitsForEnd, type BookingStatus, type PaymentMethod, type SessionAction } from "@workshop/shared";
 import type { Booking, PaymentEntry, Session } from "@/lib/types";
 import {
   canTransition, computePaymentStatus, netPaid, seatDelta, targetStatus,
@@ -111,11 +111,12 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
     (id: string, action: SessionAction): boolean => {
       const s = sessions.find((x) => x.id === id);
       const next = s ? applySessionAction(s, action) : null;
-      if (!next) return false;
+      if (!s || !next) return false;
+      if (action === "close" && closeWaitsForEnd(s, now)) return false; // not while the session is taking place
       setSessions((list) => list.map((x) => (x.id === id ? { ...x, ...next } : x)));
       return true;
     },
-    [sessions],
+    [sessions, now],
   );
 
   const setSessionCapacity = useCallback(

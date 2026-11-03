@@ -169,6 +169,7 @@
     "cutoff": "预订截止时间（开始前多少分钟）",
     "cutoffHint": "在场次开始前这么多分钟停止在线预订。填 0 表示开始时停止。",
     "cutoffInfo": "开始前 {minutes} 分钟截止预订",
-    "autoClosedNote": "场次时间已结束，已自动关闭。"
+    "autoClosedNote": "场次时间已结束，已自动关闭。",
+    "closeWait": "需等场次时间结束后才能关闭。"
   }
 }

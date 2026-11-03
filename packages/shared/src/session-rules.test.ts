@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SESSION_STATUSES } from "./enums";
-import { allowedSessionActions, applySessionAction, closeIfEnded, DEFAULT_BOOKING_CUTOFF_MINUTES, isSessionBookable, isValidBookingCutoff, type SessionState } from "./session-rules";
+import { allowedSessionActions, applySessionAction, closeIfEnded, closeWaitsForEnd, DEFAULT_BOOKING_CUTOFF_MINUTES, isInSessionTime, isSessionBookable, isValidBookingCutoff, type SessionState } from "./session-rules";
 
 const s = (status: SessionState["status"]): SessionState => ({ status });
 
@@ -53,5 +53,20 @@ describe("closeIfEnded", () => {
     expect(closeIfEnded(live, NOW)).toBe(live);
     const closed = sess("CLOSED", "2026-11-01T10:00:00Z");
     expect(closeIfEnded(closed, NOW)).toBe(closed); // no autoClosed flag
+  });
+});
+
+describe("closing a session during its time", () => {
+  const NOW = new Date("2026-11-03T10:00:00Z");
+  const span = (a: string, b: string) => ({ startsAt: a, endsAt: b });
+  it("is in session time from the start until the end (end excluded)", () => {
+    expect(isInSessionTime(span("2026-11-03T09:00:00Z", "2026-11-03T11:00:00Z"), NOW)).toBe(true);
+    expect(isInSessionTime(span("2026-11-03T10:00:00Z", "2026-11-03T11:00:00Z"), NOW)).toBe(true); // starts now
+    expect(isInSessionTime(span("2026-11-03T09:00:00Z", "2026-11-03T10:00:00Z"), NOW)).toBe(false); // ends now
+    expect(isInSessionTime(span("2026-11-03T10:00:01Z", "2026-11-03T12:00:00Z"), NOW)).toBe(false); // not started
+  });
+  it("Close waits for the end only while the session is taking place", () => {
+    expect(closeWaitsForEnd(span("2026-11-03T09:00:00Z", "2026-11-03T11:00:00Z"), NOW)).toBe(true);
+    expect(closeWaitsForEnd(span("2026-11-04T09:00:00Z", "2026-11-04T11:00:00Z"), NOW)).toBe(false);
   });
 });

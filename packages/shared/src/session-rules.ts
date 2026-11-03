@@ -49,3 +49,15 @@ export function closeIfEnded<T extends { status: SessionStatus; endsAt: string; 
   if (s.status === "CLOSED" || new Date(s.endsAt).getTime() > now.getTime()) return s;
   return { ...s, status: "CLOSED", autoClosed: true };
 }
+
+/** True while the session is taking place (it has started and not ended yet). */
+export function isInSessionTime(s: { startsAt: string; endsAt: string }, now: Date): boolean {
+  const t = now.getTime();
+  return new Date(s.startsAt).getTime() <= t && t < new Date(s.endsAt).getTime();
+}
+
+/**
+ * Close is not possible while the session is taking place: the owner has to wait until it ends (the system then closes it by itself,
+ * see closeIfEnded). Before it starts, a paused session can be closed.
+ */
+export const closeWaitsForEnd = (s: { startsAt: string; endsAt: string }, now: Date): boolean => isInSessionTime(s, now);

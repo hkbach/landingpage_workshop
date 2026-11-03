@@ -4,7 +4,7 @@ import { useMemo, useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useDisplayLocale } from "@/lib/use-shop-language";
 import { Lock, Pause, Pencil, Play, Plus } from "lucide-react";
-import { allowedSessionActions, DEFAULT_BOOKING_CUTOFF_MINUTES, isValidBookingCutoff, MAX_BOOKING_CUTOFF_MINUTES, pickLocalized, SESSION_STATUSES, type Locale, type SessionStatus } from "@workshop/shared";
+import { allowedSessionActions, closeWaitsForEnd, DEFAULT_BOOKING_CUTOFF_MINUTES, isValidBookingCutoff, MAX_BOOKING_CUTOFF_MINUTES, pickLocalized, SESSION_STATUSES, type Locale, type SessionStatus } from "@workshop/shared";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -124,7 +124,16 @@ export function SessionsManager({
                             <Button size="sm" variant="outline" onClick={() => ops.sessionAction(s.id, "pause")}><Pause aria-hidden="true" />{t("sessions.pause")}</Button>
                           ) : null}
                           {actions.includes("close") ? (
-                            <Button size="sm" variant="outline" onClick={() => ops.sessionAction(s.id, "close")}><Lock aria-hidden="true" />{t("sessions.close")}</Button>
+                            closeWaitsForEnd(s, ops.now) ? (
+                              // Read-only while the session is taking place: the span carries the tooltip (a disabled button does not).
+                              <span title={t("sessions.closeWait")} data-testid="close-wait" className="inline-flex cursor-not-allowed">
+                                <Button size="sm" variant="outline" disabled aria-disabled="true" aria-label={`${t("sessions.close")}: ${t("sessions.closeWait")}`}>
+                                  <Lock aria-hidden="true" />{t("sessions.close")}
+                                </Button>
+                              </span>
+                            ) : (
+                              <Button size="sm" variant="outline" onClick={() => ops.sessionAction(s.id, "close")}><Lock aria-hidden="true" />{t("sessions.close")}</Button>
+                            )
                           ) : null}
                           <Button size="sm" variant="outline" onClick={() => setDialog({ kind: "capacity", id: s.id })}>
                             <Pencil aria-hidden="true" />{t("sessions.editCapacity")}

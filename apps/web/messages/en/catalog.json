@@ -169,6 +169,7 @@
     "cutoff": "Booking cut-off (minutes before start)",
     "cutoffHint": "Online booking closes this many minutes before the session starts. Use 0 to close it when the session starts.",
     "cutoffInfo": "Booking closes {minutes, plural, one {# minute} other {# minutes}} before start",
-    "autoClosedNote": "Automatically closed because the session time has ended."
+    "autoClosedNote": "Automatically closed because the session time has ended.",
+    "closeWait": "Wait until the session time has ended before you can close it."
   }
 }
