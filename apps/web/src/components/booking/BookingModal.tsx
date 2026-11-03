@@ -130,10 +130,10 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
   const [idempotencyKey] = useState(() => newUuid());
   const L = (v: Parameters<typeof pickLocalized>[0]) => pickLocalized(v, locale, shop.defaultLocale);
 
-  // Every session of the workshop that was not cancelled is listed; the ones in the past, closed, inside the booking cut-off or full are
+  // Every running or closed session of the workshop is listed (paused and cancelled ones are not offered); the ones in the past, closed, inside the booking cut-off or full are
   // shown but cannot be chosen (FR-BOOK-01).
   const listed = useMemo(
-    () => sessions.filter((x) => x.status !== "CANCELLED").sort((p, q) => p.startsAt.localeCompare(q.startsAt)),
+    () => sessions.filter((x) => x.status === "RUNNING" || x.status === "CLOSED").sort((p, q) => p.startsAt.localeCompare(q.startsAt)),
     [sessions],
   );
   const stateOf = (x: Session): SlotState => slotState(x, now, shop.bookingCutoffMinutes);

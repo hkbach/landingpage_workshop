@@ -24,7 +24,8 @@
     "PARTIALLY_REFUNDED": "Partially refunded"
   },
   "sessionStatus": {
-    "OPEN": "Open",
+    "PAUSED": "Paused",
+    "RUNNING": "Running",
     "CLOSED": "Closed",
     "CANCELLED": "Cancelled"
   },

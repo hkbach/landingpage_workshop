@@ -40,7 +40,7 @@ export function BookingForm({
 
   // Open sessions with room; already-started sessions are allowed for walk-ins (FR-OPS-02).
   const options = useMemo(
-    () => sessions.filter((s) => s.status === "OPEN" && s.capacity - s.reservedCount > 0).sort((a, b) => a.startsAt.localeCompare(b.startsAt)),
+    () => sessions.filter((s) => s.status === "RUNNING" && s.capacity - s.reservedCount > 0).sort((a, b) => a.startsAt.localeCompare(b.startsAt)),
     [sessions],
   );
   const [v, setV] = useState({

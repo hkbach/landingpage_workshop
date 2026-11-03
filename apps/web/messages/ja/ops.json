@@ -24,7 +24,8 @@
     "PARTIALLY_REFUNDED": "一部返金済み"
   },
   "sessionStatus": {
-    "OPEN": "受付中",
+    "PAUSED": "一時停止",
+    "RUNNING": "実施中",
     "CLOSED": "受付終了",
     "CANCELLED": "キャンセル済み"
   },

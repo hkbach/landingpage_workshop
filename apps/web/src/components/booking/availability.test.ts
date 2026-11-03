@@ -3,7 +3,7 @@ import { slotState } from "./availability";
 
 const NOW = Date.parse("2026-11-02T09:00:00Z");
 const at = (h: number) => new Date(NOW + h * 3_600_000).toISOString();
-const s = (over: Partial<Parameters<typeof slotState>[0]> = {}) => ({ status: "OPEN" as const, startsAt: at(5), capacity: 8, reservedCount: 2, ...over });
+const s = (over: Partial<Parameters<typeof slotState>[0]> = {}) => ({ status: "RUNNING" as const, startsAt: at(5), capacity: 8, reservedCount: 2, ...over });
 
 describe("slotState", () => {
   it("is OK for an open session in the future with a free spot", () => expect(slotState(s(), NOW, 60)).toBe("OK"));

@@ -151,14 +151,12 @@
     "today": "hôm nay",
     "cancelReasonLabel": "Lý do hủy",
     "close": "Đóng",
-    "open": "Mở lại",
     "editCapacity": "Sửa sức chứa",
     "cancel": "Hủy buổi",
     "cancelTitle": "Hủy buổi",
-    "cancelHint": "Tất cả đặt chỗ đã xác nhận sẽ bị hủy kèm lý do này và mỗi khách sẽ nhận email bằng ngôn ngữ của họ.",
+    "cancelHint": "Chỉ session đã chạy và chưa có booking mới được hủy. Vui lòng nhập lý do.",
     "cancelReason": "Lý do hủy",
     "cancelConfirm": "Hủy buổi",
-    "cancelImpact": "{count, plural, =0 {Không có đặt chỗ đã xác nhận nào bị hủy.} other {# đặt chỗ đã xác nhận ({guests} khách) sẽ bị hủy.}}",
     "capacityTitle": "Sửa sức chứa",
     "capacityHint": "Đã có {reserved} chỗ được đặt. Sức chứa không được thấp hơn mức đó.",
     "capacity": "Sức chứa",
@@ -167,6 +165,11 @@
     "addHint": "Ngày và giờ theo {tz}.",
     "date": "Ngày",
     "startTime": "Giờ bắt đầu",
-    "addConfirm": "Thêm buổi"
+    "addConfirm": "Thêm buổi",
+    "statusFilter": "Trạng thái",
+    "allStatuses": "Tất cả trạng thái",
+    "start": "Bắt đầu",
+    "pause": "Tạm dừng",
+    "statusNote": "Session mới ở trạng thái Tạm dừng. Bấm Bắt đầu để chuyển sang Đang chạy, khách mới đặt chỗ được. Tạm dừng sẽ ngừng nhận booking mới. Đóng (từ Tạm dừng) kết thúc session. Hủy chỉ dùng cho session đã chạy và chưa có booking."
   }
 }

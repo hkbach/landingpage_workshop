@@ -18,7 +18,7 @@ function computeOverview() {
   const today = dayKey(new Date(now).toISOString(), tz);
   const bookings = liveBookings();
   const live = bookings.filter((b) => b.status !== "CANCELLED");
-  const upcoming = sessions.filter((s) => s.status === "OPEN" && new Date(s.startsAt).getTime() > now);
+  const upcoming = sessions.filter((s) => s.status === "RUNNING" && new Date(s.startsAt).getTime() > now);
   const activeWorkshopIds = new Set(workshops.filter((w) => w.status === "ACTIVE").map((w) => w.id));
   // Every booking of the past year: the history plus the recent bookings of the mock shop.
   const points = [...bookingHistory, ...bookings.map((b) => ({ startsAt: b.startsAt, status: b.status, guests: b.quantity }))];

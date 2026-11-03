@@ -3,8 +3,8 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useDisplayLocale } from "@/lib/use-shop-language";
-import { Ban, Lock, LockOpen, Pencil, Plus } from "lucide-react";
-import { pickLocalized, type Locale } from "@workshop/shared";
+import { Ban, Lock, Pause, Pencil, Play, Plus } from "lucide-react";
+import { allowedSessionActions, pickLocalized, SESSION_STATUSES, type Locale, type SessionStatus } from "@workshop/shared";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -26,10 +26,12 @@ export function SessionsManager({
   sessions, bookings, workshops, shop, nowIso, actor,
 }: { sessions: Session[]; bookings: Booking[]; workshops: Workshop[]; shop: ShopForCatalog; nowIso: string; actor: string }) {
   const t = useTranslations("catalog");
+  const tops = useTranslations("ops");
   const locale = useLocale() as Locale;
   const ops = useOpsState({ bookings, sessions, nowIso, actor });
   const today = dayKey(nowIso, shop.timezone);
   const [workshopId, setWorkshopId] = useState("");
+  const [status, setStatus] = useState<"" | SessionStatus>("");
   const [from, setFrom] = useState(today);
   const [to, setTo] = useState(addDays(today, 60));
   const [dialog, setDialog] = useState<{ kind: "add" } | { kind: "capacity" | "cancel"; id: string } | null>(null);
@@ -40,12 +42,13 @@ export function SessionsManager({
     () =>
       ops.sessions
         .filter((s) => !workshopId || s.workshopId === workshopId)
+        .filter((s) => !status || s.status === status)
         .filter((s) => {
           const k = dayKey(s.startsAt, shop.timezone);
           return (!from || k >= from) && (!to || k <= to);
         })
         .sort((a, b) => a.startsAt.localeCompare(b.startsAt)),
-    [ops.sessions, workshopId, from, to, shop.timezone],
+    [ops.sessions, workshopId, status, from, to, shop.timezone],
   );
   const groups = useMemo(() => {
     const m = new Map<string, Session[]>();
@@ -57,7 +60,6 @@ export function SessionsManager({
   }, [filtered, shop.timezone]);
 
   const target = dialog && dialog.kind !== "add" ? ops.sessions.find((s) => s.id === dialog.id) : undefined;
-  const toCancel = target ? ops.bookings.filter((b) => b.sessionId === target.id && b.status === "CONFIRMED") : [];
 
   return (
     <div className="grid gap-4">
@@ -66,14 +68,21 @@ export function SessionsManager({
         <Button onClick={() => setDialog({ kind: "add" })}><Plus aria-hidden="true" />{t("sessions.add")}</Button>
       </div>
       <p className="text-sm text-muted-foreground">{t("sessions.tzNote", { tz: shop.timezone })}</p>
+      <p data-testid="status-note" className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">{t("sessions.statusNote")}</p>
 
       <Card>
         <CardContent>
-          <form role="search" className="grid gap-3 sm:grid-cols-3" onSubmit={(e) => e.preventDefault()}>
+          <form role="search" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" onSubmit={(e) => e.preventDefault()}>
             <Field id="s-ws" label={t("sessions.workshop")}>
               {(p) => (
                 <NativeSelect {...p} value={workshopId} onChange={(e) => setWorkshopId(e.target.value)}
                   options={[{ value: "", label: t("sessions.allWorkshops") }, ...workshops.map((w) => ({ value: w.id, label: title(w.id) }))]} />
+              )}
+            </Field>
+            <Field id="s-status" label={t("sessions.statusFilter")}>
+              {(p) => (
+                <NativeSelect {...p} value={status} onChange={(e) => setStatus(e.target.value as "" | SessionStatus)}
+                  options={[{ value: "", label: t("sessions.allStatuses") }, ...SESSION_STATUSES.map((v) => ({ value: v, label: tops(`sessionStatus.${v}`) }))]} />
               )}
             </Field>
             <Field id="s-from" label={t("sessions.from")}>{(p) => <Input {...p} type="date" value={from} onChange={(e) => setFrom(e.target.value)} />}</Field>
@@ -91,6 +100,7 @@ export function SessionsManager({
           <ul className="grid gap-2 md:grid-cols-2">
             {list.map((s) => {
               const cancelled = s.status === "CANCELLED";
+              const actions = allowedSessionActions(s, ops.sessionHasBookings(s.id));
               return (
                 <li key={s.id}>
                   <Card size="sm" className={cancelled ? "opacity-80" : ""}>
@@ -106,18 +116,25 @@ export function SessionsManager({
                       </div>
                       <CapacityBar reserved={s.reservedCount} capacity={s.capacity} />
                       {cancelled && s.cancelReason ? <p className="text-xs text-muted-foreground">{t("sessions.cancelReasonLabel")}: {s.cancelReason}</p> : null}
-                      {!cancelled ? (
+                      {actions.length > 0 || s.status === "RUNNING" || s.status === "PAUSED" ? (
                         <div className="flex flex-wrap gap-1.5">
-                          <Button size="sm" variant="outline" onClick={() => ops.setSessionStatus(s.id, s.status === "OPEN" ? "CLOSED" : "OPEN")}>
-                            {s.status === "OPEN" ? <Lock aria-hidden="true" /> : <LockOpen aria-hidden="true" />}
-                            {s.status === "OPEN" ? t("sessions.close") : t("sessions.open")}
-                          </Button>
+                          {actions.includes("start") ? (
+                            <Button size="sm" variant="outline" onClick={() => ops.sessionAction(s.id, "start")}><Play aria-hidden="true" />{t("sessions.start")}</Button>
+                          ) : null}
+                          {actions.includes("pause") ? (
+                            <Button size="sm" variant="outline" onClick={() => ops.sessionAction(s.id, "pause")}><Pause aria-hidden="true" />{t("sessions.pause")}</Button>
+                          ) : null}
+                          {actions.includes("close") ? (
+                            <Button size="sm" variant="outline" onClick={() => ops.sessionAction(s.id, "close")}><Lock aria-hidden="true" />{t("sessions.close")}</Button>
+                          ) : null}
                           <Button size="sm" variant="outline" onClick={() => setDialog({ kind: "capacity", id: s.id })}>
                             <Pencil aria-hidden="true" />{t("sessions.editCapacity")}
                           </Button>
-                          <Button size="sm" variant="destructive" onClick={() => setDialog({ kind: "cancel", id: s.id })}>
-                            <Ban aria-hidden="true" />{t("sessions.cancel")}
-                          </Button>
+                          {actions.includes("cancel") ? (
+                            <Button size="sm" variant="destructive" onClick={() => setDialog({ kind: "cancel", id: s.id })}>
+                              <Ban aria-hidden="true" />{t("sessions.cancel")}
+                            </Button>
+                          ) : null}
                         </div>
                       ) : null}
                     </CardContent>
@@ -142,9 +159,6 @@ export function SessionsManager({
         title={t("sessions.cancelTitle")} description={t("sessions.cancelHint")} label={t("sessions.cancelReason")} confirmLabel={t("sessions.cancelConfirm")}
         onConfirm={(reason) => { if (target && ops.cancelSession(target.id, reason)) setDialog(null); }}
       >
-        <p role="alert" className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
-          {t("sessions.cancelImpact", { count: toCancel.length, guests: toCancel.reduce((n, b) => n + b.quantity, 0) })}
-        </p>
       </ReasonDialog>
     </div>
   );
@@ -193,7 +207,7 @@ function AddSessionDialog({
   open, onOpenChange, workshops, shop, sessions, title, onAdd,
 }: {
   open: boolean; onOpenChange: (o: boolean) => void; workshops: Workshop[]; shop: ShopForCatalog; sessions: Session[];
-  title: (id: string) => string; onAdd: (s: Omit<Session, "id" | "reservedCount" | "status">) => void;
+  title: (id: string) => string; onAdd: (s: Omit<Session, "id" | "reservedCount" | "status" | "hasRun">) => void;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -208,7 +222,7 @@ function AddSessionForm({
   workshops, shop, sessions, title, onAdd, onCancel,
 }: {
   workshops: Workshop[]; shop: ShopForCatalog; sessions: Session[]; title: (id: string) => string;
-  onAdd: (s: Omit<Session, "id" | "reservedCount" | "status">) => void; onCancel: () => void;
+  onAdd: (s: Omit<Session, "id" | "reservedCount" | "status" | "hasRun">) => void; onCancel: () => void;
 }) {
   const t = useTranslations("catalog");
   const tops = useTranslations("ops");

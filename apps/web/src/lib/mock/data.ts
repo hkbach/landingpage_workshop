@@ -64,12 +64,12 @@ export const workshops: Workshop[] = [
 ];
 
 export const sessions: Session[] = [
-  { id: "se-1", workshopId: "ws-1", startsAt: at(0, 9), endsAt: at(0, 11), capacity: 8, reservedCount: 5, status: "OPEN" },
-  { id: "se-2", workshopId: "ws-2", startsAt: at(0, 14), endsAt: at(0, 15.5), capacity: 10, reservedCount: 10, status: "OPEN" },
-  { id: "se-3", workshopId: "ws-1", startsAt: at(1, 9), endsAt: at(1, 11), capacity: 8, reservedCount: 4, status: "OPEN" },
-  { id: "se-4", workshopId: "ws-1", startsAt: at(1, 14), endsAt: at(1, 16), capacity: 8, reservedCount: 0, status: "CLOSED" },
-  { id: "se-5", workshopId: "ws-2", startsAt: at(2, 10), endsAt: at(2, 11.5), capacity: 10, reservedCount: 2, status: "OPEN" },
-  { id: "se-6", workshopId: "ws-1", startsAt: at(3, 9), endsAt: at(3, 11), capacity: 8, reservedCount: 0, status: "CANCELLED", cancelReason: "Instructor unavailable" },
+  { id: "se-1", workshopId: "ws-1", startsAt: at(0, 9), endsAt: at(0, 11), capacity: 8, reservedCount: 5, status: "RUNNING", hasRun: true },
+  { id: "se-2", workshopId: "ws-2", startsAt: at(0, 14), endsAt: at(0, 15.5), capacity: 10, reservedCount: 10, status: "RUNNING", hasRun: true },
+  { id: "se-3", workshopId: "ws-1", startsAt: at(1, 9), endsAt: at(1, 11), capacity: 8, reservedCount: 4, status: "RUNNING", hasRun: true },
+  { id: "se-4", workshopId: "ws-1", startsAt: at(1, 14), endsAt: at(1, 16), capacity: 8, reservedCount: 0, status: "CLOSED", hasRun: true },
+  { id: "se-5", workshopId: "ws-2", startsAt: at(2, 10), endsAt: at(2, 11.5), capacity: 10, reservedCount: 2, status: "RUNNING", hasRun: true },
+  { id: "se-6", workshopId: "ws-1", startsAt: at(3, 9), endsAt: at(3, 11), capacity: 8, reservedCount: 0, status: "CANCELLED", hasRun: true, cancelReason: "Instructor unavailable" },
 ];
 
 export const customers: Customer[] = [

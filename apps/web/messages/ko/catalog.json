@@ -151,14 +151,12 @@
     "today": "오늘",
     "cancelReasonLabel": "취소 사유",
     "close": "마감",
-    "open": "다시 열기",
     "editCapacity": "정원 수정",
     "cancel": "세션 취소",
     "cancelTitle": "세션 취소",
-    "cancelHint": "확정된 모든 예약이 이 사유로 취소되며, 각 손님에게 해당 언어로 이메일이 발송돼요.",
+    "cancelHint": "진행한 적이 있고 예약이 없는 세션만 취소할 수 있습니다. 사유를 입력해 주세요.",
     "cancelReason": "취소 사유",
     "cancelConfirm": "세션 취소",
-    "cancelImpact": "{count, plural, =0 {취소되는 확정 예약이 없어요.} other {확정 예약 #건({guests}명)이 취소돼요.}}",
     "capacityTitle": "정원 수정",
     "capacityHint": "이미 {reserved}석이 예약되었어요. 정원은 그보다 적게 설정할 수 없어요.",
     "capacity": "정원",
@@ -167,6 +165,11 @@
     "addHint": "날짜와 시간은 {tz} 기준이에요.",
     "date": "날짜",
     "startTime": "시작 시간",
-    "addConfirm": "세션 추가"
+    "addConfirm": "세션 추가",
+    "statusFilter": "상태",
+    "allStatuses": "모든 상태",
+    "start": "시작",
+    "pause": "일시중지",
+    "statusNote": "새 세션은 일시중지 상태입니다. 시작을 누르면 진행 중이 되어 손님이 예약할 수 있습니다. 일시중지는 새 예약을 막습니다. 닫기(일시중지 상태에서)는 세션을 마감합니다. 취소는 진행한 적이 있고 예약이 없는 세션에만 가능합니다."
   }
 }

@@ -20,7 +20,8 @@ const PAYMENT: Record<PaymentStatus, string> = {
   PARTIALLY_REFUNDED: "bg-purple-100 text-purple-900",
 };
 const SESSION: Record<SessionStatus, string> = {
-  OPEN: "bg-emerald-100 text-emerald-900",
+  PAUSED: "bg-slate-100 text-slate-900",
+  RUNNING: "bg-emerald-100 text-emerald-900",
   CLOSED: "bg-amber-100 text-amber-950",
   CANCELLED: "bg-red-100 text-red-900",
 };

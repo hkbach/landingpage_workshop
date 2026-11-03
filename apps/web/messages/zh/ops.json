@@ -24,7 +24,8 @@
     "PARTIALLY_REFUNDED": "部分退款"
   },
   "sessionStatus": {
-    "OPEN": "开放",
+    "PAUSED": "已暂停",
+    "RUNNING": "进行中",
     "CLOSED": "已关闭",
     "CANCELLED": "已取消"
   },

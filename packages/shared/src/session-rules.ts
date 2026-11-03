@@ -1,0 +1,41 @@
+import type { SessionStatus } from "./enums";
+
+// Life cycle of a session (shop owner, Sessions page):
+//   PAUSED --start--> RUNNING --pause--> PAUSED --close--> CLOSED
+//   PAUSED or RUNNING --cancel--> CANCELLED, only for a session that has run and has no bookings.
+// A new session is PAUSED. Only a RUNNING session can be booked by guests. CLOSED and CANCELLED are final.
+
+export type SessionAction = "start" | "pause" | "close" | "cancel";
+
+export interface SessionState {
+  status: SessionStatus;
+  /** True once the session has been RUNNING at least once. */
+  hasRun: boolean;
+}
+
+/** The status each action leads to. */
+export const SESSION_ACTION_TARGET: Record<SessionAction, SessionStatus> = {
+  start: "RUNNING",
+  pause: "PAUSED",
+  close: "CLOSED",
+  cancel: "CANCELLED",
+};
+
+/** The actions the owner may take now. `hasBookings`: a booking that is not cancelled exists for the session. */
+export function allowedSessionActions(s: SessionState, hasBookings: boolean): SessionAction[] {
+  const out: SessionAction[] = [];
+  if (s.status === "PAUSED") out.push("start", "close");
+  if (s.status === "RUNNING") out.push("pause");
+  if ((s.status === "PAUSED" || s.status === "RUNNING") && s.hasRun && !hasBookings) out.push("cancel");
+  return out;
+}
+
+/** The session after an action, or null when the action is not allowed. */
+export function applySessionAction(s: SessionState, action: SessionAction, hasBookings: boolean): SessionState | null {
+  if (!allowedSessionActions(s, hasBookings).includes(action)) return null;
+  const status = SESSION_ACTION_TARGET[action];
+  return { status, hasRun: s.hasRun || status === "RUNNING" };
+}
+
+/** Guests can only book a RUNNING session. */
+export const isSessionBookable = (status: SessionStatus): boolean => status === "RUNNING";

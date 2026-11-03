@@ -23,6 +23,8 @@ export interface Workshop {
 export interface Session {
   id: string; workshopId: string; startsAt: string; endsAt: string;
   capacity: number; reservedCount: number; status: SessionStatus; cancelReason?: string;
+  /** True once the session has been Running at least once (only such a session can be cancelled, when it has no bookings). */
+  hasRun: boolean;
 }
 
 export interface Customer {

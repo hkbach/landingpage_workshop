@@ -24,7 +24,8 @@
     "PARTIALLY_REFUNDED": "Hoàn tiền một phần"
   },
   "sessionStatus": {
-    "OPEN": "Đang mở",
+    "PAUSED": "Tạm dừng",
+    "RUNNING": "Đang chạy",
     "CLOSED": "Đã đóng",
     "CANCELLED": "Đã hủy"
   },

@@ -151,14 +151,12 @@
     "today": "今日",
     "cancelReasonLabel": "キャンセルの理由",
     "close": "受付終了",
-    "open": "再開",
     "editCapacity": "定員を編集",
     "cancel": "セッションをキャンセル",
     "cancelTitle": "セッションのキャンセル",
-    "cancelHint": "確定済みのすべての予約がこの理由でキャンセルされ、各お客様にそれぞれの言語でメールが送信されます。",
+    "cancelHint": "実施済みで予約のないセッションのみキャンセルできます。理由を入力してください。",
     "cancelReason": "キャンセルの理由",
     "cancelConfirm": "セッションをキャンセル",
-    "cancelImpact": "{count, plural, =0 {キャンセルされる確定済みの予約はありません。} other {確定済みの予約#件（{guests}名）がキャンセルされます。}}",
     "capacityTitle": "定員を編集",
     "capacityHint": "すでに{reserved}席が予約されています。定員をそれ以下にすることはできません。",
     "capacity": "定員",
@@ -167,6 +165,11 @@
     "addHint": "日付と時刻は{tz}です。",
     "date": "日付",
     "startTime": "開始時刻",
-    "addConfirm": "セッションを追加"
+    "addConfirm": "セッションを追加",
+    "statusFilter": "ステータス",
+    "allStatuses": "すべてのステータス",
+    "start": "開始",
+    "pause": "一時停止",
+    "statusNote": "新しいセッションは一時停止の状態です。「開始」で実施中になり、お客様が予約できます。「一時停止」は新規予約を止めます。「閉じる」（一時停止中のみ）でセッションを締め切ります。キャンセルは、実施済みで予約のないセッションだけです。"
   }
 }

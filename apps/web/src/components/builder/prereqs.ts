@@ -4,6 +4,6 @@ import type { Session, Workshop } from "@/lib/types";
 export function countWorkshopsWithUpcomingSessions(workshops: Workshop[], sessions: Session[]): number {
   const now = Date.now();
   return workshops.filter(
-    (w) => w.status === "ACTIVE" && sessions.some((s) => s.workshopId === w.id && s.status === "OPEN" && new Date(s.startsAt).getTime() > now),
+    (w) => w.status === "ACTIVE" && sessions.some((s) => s.workshopId === w.id && s.status === "RUNNING" && new Date(s.startsAt).getTime() > now),
   ).length;
 }

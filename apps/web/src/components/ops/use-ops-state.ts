@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { BookingStatus, PaymentMethod } from "@workshop/shared";
+import { applySessionAction, type BookingStatus, type PaymentMethod, type SessionAction } from "@workshop/shared";
 import type { Booking, PaymentEntry, Session } from "@/lib/types";
 import {
   canTransition, computePaymentStatus, netPaid, seatDelta, targetStatus,
@@ -104,9 +104,23 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
   );
 
   // ----- session operations (FR-SCHED-02/03) -----
-  const setSessionStatus = useCallback((id: string, status: "OPEN" | "CLOSED") => {
-    setSessions((list) => list.map((s) => (s.id === id && s.status !== "CANCELLED" ? { ...s, status } : s)));
-  }, []);
+  /** A booking that is not cancelled exists for the session (a session with bookings cannot be cancelled). */
+  const sessionHasBookings = useCallback(
+    (id: string) => bookings.some((b) => b.sessionId === id && b.status !== "CANCELLED") || (sessions.find((x) => x.id === id)?.reservedCount ?? 0) > 0,
+    [bookings, sessions],
+  );
+
+  /** start / pause / close (cancel has its own function: it needs a reason). False when the action is not allowed now. */
+  const sessionAction = useCallback(
+    (id: string, action: Exclude<SessionAction, "cancel">): boolean => {
+      const s = sessions.find((x) => x.id === id);
+      const next = s ? applySessionAction(s, action, sessionHasBookings(id)) : null;
+      if (!s || !next) return false;
+      setSessions((list) => list.map((x) => (x.id === id ? { ...x, ...next } : x)));
+      return true;
+    },
+    [sessions, sessionHasBookings],
+  );
 
   const setSessionCapacity = useCallback(
     (id: string, capacity: number): boolean => {
@@ -118,19 +132,18 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
     [sessions],
   );
 
+  // Only a session that has run and has no bookings can be cancelled (so no booking is ever cancelled by this).
   const cancelSession = useCallback((id: string, reason: string) => {
     const text = reason.trim();
-    if (!text) return false;
-    for (const b of bookings) if (b.sessionId === id && b.status === "CONFIRMED") persistBookingStatus(b.id, "CANCELLED", text);
-    setSessions((list) => list.map((s) => (s.id === id ? { ...s, status: "CANCELLED", cancelReason: text, reservedCount: 0 } : s)));
-    setBookings((list) =>
-      list.map((b) => (b.sessionId === id && b.status === "CONFIRMED" ? { ...b, status: "CANCELLED", cancelReason: text } : b)),
-    );
+    const s = sessions.find((x) => x.id === id);
+    const next = s ? applySessionAction(s, "cancel", sessionHasBookings(id)) : null;
+    if (!text || !s || !next) return false;
+    setSessions((list) => list.map((x) => (x.id === id ? { ...x, ...next, cancelReason: text } : x)));
     return true;
-  }, [bookings]);
+  }, [sessions, sessionHasBookings]);
 
-  const addSession = useCallback((s: Omit<Session, "id" | "reservedCount" | "status">) => {
-    setSessions((list) => [...list, { ...s, id: nextId("se"), reservedCount: 0, status: "OPEN" }]);
+  const addSession = useCallback((s: Omit<Session, "id" | "reservedCount" | "status" | "hasRun">) => {
+    setSessions((list) => [...list, { ...s, id: nextId("se"), reservedCount: 0, status: "PAUSED", hasRun: false }]); // a new session is paused: Start makes it bookable
   }, []);
 
   const addBooking = useCallback((b: Booking) => {
@@ -140,6 +153,6 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
 
   return {
     bookings, sessions, history, now, perform, addPayment, reschedule,
-    setSessionStatus, setSessionCapacity, cancelSession, addSession, addBooking,
+    sessionAction, sessionHasBookings, setSessionCapacity, cancelSession, addSession, addBooking,
   };
 }

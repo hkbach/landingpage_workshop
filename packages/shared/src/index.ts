@@ -14,3 +14,4 @@ export * from "./media";
 export * from "./promotion-insights";
 export * from "./trim";
 export * from "./promotion-rules";
+export * from "./session-rules";

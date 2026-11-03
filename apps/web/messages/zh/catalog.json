@@ -151,14 +151,12 @@
     "today": "今天",
     "cancelReasonLabel": "取消原因",
     "close": "关闭",
-    "open": "重新开放",
     "editCapacity": "编辑容量",
     "cancel": "取消场次",
     "cancelTitle": "取消场次",
-    "cancelHint": "所有已确认的预订都将以此原因取消，并以各宾客的语言向其发送邮件。",
+    "cancelHint": "只有运行过且没有预订的场次才能取消，请填写原因。",
     "cancelReason": "取消原因",
     "cancelConfirm": "取消场次",
-    "cancelImpact": "{count, plural, =0 {不会取消任何已确认的预订。} other {将取消 # 个已确认的预订（{guests} 位宾客）。}}",
     "capacityTitle": "编辑容量",
     "capacityHint": "已预订 {reserved} 个座位。容量不能低于此数。",
     "capacity": "容量",
@@ -167,6 +165,11 @@
     "addHint": "日期和时间按 {tz}。",
     "date": "日期",
     "startTime": "开始时间",
-    "addConfirm": "添加场次"
+    "addConfirm": "添加场次",
+    "statusFilter": "状态",
+    "allStatuses": "全部状态",
+    "start": "开始",
+    "pause": "暂停",
+    "statusNote": "新场次为已暂停状态。点击“开始”后变为进行中，客人即可预订；“暂停”会停止新预订；“关闭”（仅限已暂停）会结束场次；“取消”仅适用于运行过且没有预订的场次。"
   }
 }

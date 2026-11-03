@@ -1,3 +1,4 @@
+import { isSessionBookable } from "@workshop/shared";
 import type { Session } from "@/lib/types";
 
 /** Why a session cannot be chosen in the booking form ("OK" when it can). The order is the order of the checks. */
@@ -10,7 +11,7 @@ export type SlotState = "OK" | "PAST" | "CLOSED" | "CUTOFF" | "FULL";
 export function slotState(s: Pick<Session, "status" | "startsAt" | "capacity" | "reservedCount">, nowMs: number, cutoffMinutes: number): SlotState {
   const start = new Date(s.startsAt).getTime();
   if (start <= nowMs) return "PAST";
-  if (s.status !== "OPEN") return "CLOSED";
+  if (!isSessionBookable(s.status)) return "CLOSED";
   if (start <= nowMs + cutoffMinutes * 60_000) return "CUTOFF";
   if (s.capacity - s.reservedCount <= 0) return "FULL";
   return "OK";
