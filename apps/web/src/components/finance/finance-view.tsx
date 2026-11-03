@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { NativeSelect } from "@/components/dashboard/shell/native-select";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { dateBounds } from "./date-bounds";
 import { CategoryBars, EXPENSE_COLOR, INCOME_COLOR, MonthlyChart } from "./charts";
 
 /** The range shown when the page opens: the last 180 days (about six months), today included. */
@@ -46,6 +47,11 @@ export function FinanceView({ rows, rates, currency, timezone }: Props) {
   const [typed, setTyped] = useState({ from: first, to: today });
   const [range, setRange] = useState({ from: first, to: today });
   const check = checkDateRange(typed.from, typed.to);
+  // The pickers only offer the days that make a valid range with the other end: no future day, never after To / before From, and never more than
+  // MAX_RANGE_DAYS apart (the other days are greyed out, like the future ones).
+  const bounds = dateBounds(typed.from, typed.to, today);
+  const fromBounds = bounds.from;
+  const toBounds = bounds.to;
   function change(next: { from: string; to: string }) {
     setTyped(next);
     if (checkDateRange(next.from, next.to) === "OK") setRange(next);
@@ -80,11 +86,11 @@ export function FinanceView({ rows, rates, currency, timezone }: Props) {
         <div className="grid max-w-md grid-cols-2 gap-3" role="group" aria-label={t("range")}>
           <div className="grid content-start gap-1.5">
             <Label htmlFor="fin-from">{t("from")}</Label>
-            <Input id="fin-from" type="date" max={today} value={typed.from} aria-invalid={rangeError ? true : undefined} aria-describedby="fin-range-note" onChange={(e) => change({ ...typed, from: e.target.value })} />
+            <Input id="fin-from" type="date" min={fromBounds.min} max={fromBounds.max} value={typed.from} aria-invalid={rangeError ? true : undefined} aria-describedby="fin-range-note" onChange={(e) => change({ ...typed, from: e.target.value })} />
           </div>
           <div className="grid content-start gap-1.5">
             <Label htmlFor="fin-to">{t("to")}</Label>
-            <Input id="fin-to" type="date" max={today} value={typed.to} aria-invalid={rangeError ? true : undefined} aria-describedby="fin-range-note" onChange={(e) => change({ ...typed, to: e.target.value })} />
+            <Input id="fin-to" type="date" min={toBounds.min} max={toBounds.max} value={typed.to} aria-invalid={rangeError ? true : undefined} aria-describedby="fin-range-note" onChange={(e) => change({ ...typed, to: e.target.value })} />
           </div>
         </div>
         <p id="fin-range-note" className="text-xs text-muted-foreground">{t("rangeHint", { max: MAX_RANGE_DAYS })}</p>
