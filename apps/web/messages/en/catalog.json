@@ -203,7 +203,6 @@
     "cloneHint": "A new session like {code}: same workshop, capacity, cut-off and image. Choose its date and time (times in {tz}).",
     "cloneConfirm": "Clone session",
     "clonedFrom": "Cloned from {code} - {workshop}",
-    "rescheduleOnce": "A session can only be re-scheduled once, and this session has already been re-scheduled.",
     "edit": "Edit",
     "editTitle": "Edit session",
     "editHint": "Change the details of {code}. The date and time cannot be changed here: use Re-schedule for a paused session.",
@@ -226,6 +225,8 @@
     "colCheckedInAt": "Checked in at",
     "checkInReadOnly": "This session is closed, so the list is read-only. Each booking shows the status it had when the session closed.",
     "reopen": "Re-open",
-    "reopenedNote": "Re-opened"
+    "reopenedNote": "Re-opened",
+    "rescheduleLimit": "A session can be re-scheduled at most 3 times, and this session has already been re-scheduled 3 times.",
+    "closeLimit": "A session can be closed at most 3 times, and this session has already been closed 3 times."
   }
 }

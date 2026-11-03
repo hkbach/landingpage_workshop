@@ -203,7 +203,6 @@
     "cloneHint": "创建一个与 {code} 相同的新场次：相同的工作坊、容量、预订截止时间和图片。请选择日期和时间（按 {tz} 时间）。",
     "cloneConfirm": "复制场次",
     "clonedFrom": "复制自 {code} - {workshop}",
-    "rescheduleOnce": "每个场次只能更改一次时间，该场次已经更改过。",
     "edit": "编辑",
     "editTitle": "编辑场次",
     "editHint": "修改 {code} 的信息。日期和时间不能在此更改：已暂停的场次请使用“更改场次时间”。",
@@ -226,6 +225,8 @@
     "colCheckedInAt": "签到时间",
     "checkInReadOnly": "该场次已关闭，名单仅供查看。每个预订显示场次关闭时的状态。",
     "reopen": "重新开放",
-    "reopenedNote": "已重新开放"
+    "reopenedNote": "已重新开放",
+    "rescheduleLimit": "每个场次最多可更改 3 次时间，该场次已更改 3 次。",
+    "closeLimit": "每个场次最多可关闭 3 次，该场次已关闭 3 次。"
   }
 }

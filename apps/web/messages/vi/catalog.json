@@ -203,7 +203,6 @@
     "cloneHint": "Tạo session mới giống {code}: cùng workshop, sức chứa, hạn chót đặt chỗ và ảnh. Hãy chọn ngày và giờ (giờ theo {tz}).",
     "cloneConfirm": "Nhân bản session",
     "clonedFrom": "Nhân bản từ {code} - {workshop}",
-    "rescheduleOnce": "Mỗi session chỉ được đổi lịch một lần và session này đã được đổi lịch rồi.",
     "edit": "Chỉnh sửa",
     "editTitle": "Chỉnh sửa session",
     "editHint": "Thay đổi thông tin của {code}. Không thể đổi ngày giờ tại đây: hãy dùng Đổi lịch session với session đang tạm dừng.",
@@ -226,6 +225,8 @@
     "colCheckedInAt": "Thời gian check-in",
     "checkInReadOnly": "Session đã đóng nên danh sách chỉ để xem. Mỗi booking hiển thị đúng trạng thái lúc session đóng.",
     "reopen": "Mở lại",
-    "reopenedNote": "Đã mở lại"
+    "reopenedNote": "Đã mở lại",
+    "rescheduleLimit": "Mỗi session chỉ được đổi lịch tối đa 3 lần và session này đã đổi lịch đủ 3 lần.",
+    "closeLimit": "Mỗi session chỉ được đóng tối đa 3 lần và session này đã đóng đủ 3 lần."
   }
 }

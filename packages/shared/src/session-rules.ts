@@ -46,9 +46,10 @@ export const isSessionBookable = (status: SessionStatus): boolean => status === 
  * The system closes a session once its time is over: any session that is not CLOSED yet and whose end time has passed is shown as CLOSED
  * with `autoClosed` set (so the screen can say it was closed automatically). A session the owner closed keeps no such flag.
  */
-export function closeIfEnded<T extends { status: SessionStatus; endsAt: string; autoClosed?: boolean }>(s: T, now: Date): T {
+export function closeIfEnded<T extends { status: SessionStatus; endsAt: string; autoClosed?: boolean; notes?: SessionNote[] }>(s: T, now: Date): T {
   if (s.status === "CLOSED" || new Date(s.endsAt).getTime() > now.getTime()) return s;
-  return { ...s, status: "CLOSED", autoClosed: true };
+  // The automatic close is one more note of the history of the session (at the time its time was over).
+  return { ...s, status: "CLOSED", autoClosed: true, notes: withNote(s.notes, { type: "AUTO_CLOSED", at: s.endsAt }) };
 }
 
 /** True while the session is taking place (it has started and not ended yet). */
@@ -84,20 +85,20 @@ export function checkCloseReason(code: string, note: string): { ok: true; reason
   return { ok: true, reason: { code: "OTHER", note: text } };
 }
 
-export type RescheduleError = "NOT_RESCHEDULABLE" | "ALREADY_RESCHEDULED" | "ENDED" | "SAME" | "PAST" | "DUPLICATE";
+export type RescheduleError = "NOT_RESCHEDULABLE" | "RESCHEDULE_LIMIT" | "ENDED" | "SAME" | "PAST" | "DUPLICATE";
 
 /**
- * Re-scheduling an open or paused session to a new start (the length of the session stays). A session can be re-scheduled only once (`rescheduled`). The new start must differ from the current one, be in the
+ * Re-scheduling an open or paused session to a new start (the length of the session stays). A session can be re-scheduled at most MAX_RESCHEDULES times (`reschedules` so far). The new start must differ from the current one, be in the
  * future and not be the start of another session of the same workshop (`otherStarts`). Returns the new start and end.
  */
 export function checkReschedule(
-  s: { status: SessionStatus; startsAt: string; endsAt: string; rescheduled?: boolean },
+  s: { status: SessionStatus; startsAt: string; endsAt: string; reschedules?: number },
   newStartsAt: string,
   now: Date,
   otherStarts: readonly string[],
 ): { ok: true; startsAt: string; endsAt: string } | { ok: false; error: RescheduleError } {
   if (!canRescheduleSession(s.status)) return { ok: false, error: "NOT_RESCHEDULABLE" };
-  if (s.rescheduled) return { ok: false, error: "ALREADY_RESCHEDULED" };
+  if ((s.reschedules ?? 0) >= MAX_RESCHEDULES) return { ok: false, error: "RESCHEDULE_LIMIT" };
   if (new Date(s.endsAt).getTime() <= now.getTime()) return { ok: false, error: "ENDED" };
   const next = new Date(newStartsAt).getTime();
   if (Number.isNaN(next) || next === new Date(s.startsAt).getTime()) return { ok: false, error: "SAME" };
@@ -139,17 +140,25 @@ export const canRescheduleSession = (status: SessionStatus): boolean => status =
  * What happened to a session, one note each time and never removed (tracking): the owner closed it (with the reason), re-scheduled it (with
  * the reason) or re-opened it. A note says when it happened.
  */
-export type SessionNoteType = "CLOSED" | "RESCHEDULED" | "REOPENED";
+export type SessionNoteType = "CLOSED" | "RESCHEDULED" | "REOPENED" | "AUTO_CLOSED";
 export interface SessionNote {
   type: SessionNoteType;
   /** When it happened (ISO). */
   at: string;
-  /** Why it was closed or re-scheduled (not for REOPENED). */
+  /** Why it was closed or re-scheduled (not for REOPENED or AUTO_CLOSED). */
   reason?: SessionCloseReason;
 }
 
-/** A session is re-scheduled only once: true when its notes already have a re-schedule. */
-export const wasRescheduled = (notes?: readonly SessionNote[]): boolean => notes?.some((n) => n.type === "RESCHEDULED") ?? false;
+/** A session can be re-scheduled at most 3 times and closed (by its owner) at most 3 times; every time is a note of its history. */
+export const MAX_RESCHEDULES = 3;
+export const MAX_CLOSES = 3;
+const countNotes = (notes: readonly SessionNote[] | undefined, type: SessionNoteType): number => notes?.filter((n) => n.type === type).length ?? 0;
+export const rescheduleCount = (notes?: readonly SessionNote[]): number => countNotes(notes, "RESCHEDULED");
+export const closeCount = (notes?: readonly SessionNote[]): number => countNotes(notes, "CLOSED");
+export const canRescheduleAgain = (notes?: readonly SessionNote[]): boolean => rescheduleCount(notes) < MAX_RESCHEDULES;
+export const canCloseAgain = (notes?: readonly SessionNote[]): boolean => closeCount(notes) < MAX_CLOSES;
+/** True when the session has been re-scheduled at least once. */
+export const wasRescheduled = (notes?: readonly SessionNote[]): boolean => rescheduleCount(notes) > 0;
 
 /** The notes in the order they happened (oldest first). */
 export const notesInOrder = (notes?: readonly SessionNote[]): SessionNote[] => [...(notes ?? [])].sort((a, b) => a.at.localeCompare(b.at));

@@ -45,15 +45,19 @@ describe("demo sessions: well formed", () => {
       }
     }
   });
-  it("a closed session was last closed by its owner (or by the system); a session has been re-scheduled at most once", () => {
+  it("a closed session was last closed by its owner (or by the system); a session has been re-scheduled and closed at most 3 times", () => {
     for (const s of sessions) {
-      expect(s.notes?.filter((n) => n.type === "RESCHEDULED").length ?? 0, s.id).toBeLessThanOrEqual(1);
+      expect(s.notes?.filter((n) => n.type === "RESCHEDULED").length ?? 0, s.id).toBeLessThanOrEqual(3);
+      expect(s.notes?.filter((n) => n.type === "CLOSED").length ?? 0, s.id).toBeLessThanOrEqual(3);
       if (s.status === "CLOSED" && s.notes?.length) expect(s.notes[s.notes.length - 1]!.type, s.id).toBe("CLOSED");
     }
   });
   it("a session with a history of several notes (closed, re-opened, closed again) and one re-scheduled before it was closed", () => {
     expect(sessions.some((s) => (s.notes ?? []).map((n) => n.type).join() === "CLOSED,REOPENED,CLOSED")).toBe(true);
     expect(sessions.some((s) => (s.notes ?? []).map((n) => n.type).join() === "RESCHEDULED,CLOSED")).toBe(true);
+  });
+  it("a session that used its three re-schedules (their button is read-only)", () => {
+    expect(sessions.some((s) => s.notes?.filter((n) => n.type === "RESCHEDULED").length === 3)).toBe(true);
   });
   it("a clone points at a session that exists, of the same workshop", () => {
     for (const s of sessions.filter((x) => x.clonedFrom)) {

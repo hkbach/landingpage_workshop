@@ -4,7 +4,7 @@ import { useMemo, useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useDisplayLocale } from "@/lib/use-shop-language";
 import { ArrowLeft, CalendarClock, Copy, Lock, LockOpen, LogIn, Pause, Pencil, Play, Plus, Save } from "lucide-react";
-import { allowedSessionActions, canEditSession, canRescheduleSession, canReopenSession, notesInOrder, wasRescheduled, closeWaitsForEnd, isFutureStart, type SessionCloseReason, DEFAULT_BOOKING_CUTOFF_MINUTES, isValidBookingCutoff, MAX_BOOKING_CUTOFF_MINUTES, pickLocalized, SESSION_STATUSES, type Locale, type SessionStatus } from "@workshop/shared";
+import { allowedSessionActions, canEditSession, canRescheduleSession, canReopenSession, canCloseAgain, canRescheduleAgain, notesInOrder, closeWaitsForEnd, isFutureStart, type SessionCloseReason, DEFAULT_BOOKING_CUTOFF_MINUTES, isValidBookingCutoff, MAX_BOOKING_CUTOFF_MINUTES, pickLocalized, SESSION_STATUSES, type Locale, type SessionStatus } from "@workshop/shared";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -45,8 +45,8 @@ export function SessionsManager({
   const [dialog, setDialog] = useState<{ kind: "add" } | { kind: "edit" | "close" | "reschedule" | "clone" | "checkin"; id: string } | null>(null);
 
   const displayLocale = useDisplayLocale(shop);
-  /** The date of a note ("Nov 12, 2026"), in the time zone of the shop. */
-  const dateText = (iso: string) => new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: shop.timezone }).format(new Date(iso));
+  /** The date and time of a note ("Nov 12, 2026, 2:06 PM"), in the time zone of the shop. */
+  const stampText = (iso: string) => new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short", timeZone: shop.timezone }).format(new Date(iso));
   const title = (id: string) => pickLocalized(workshops.find((w) => w.id === id)?.title, displayLocale, shop.defaultLocale);
   const filtered = useMemo(
     () =>
@@ -146,12 +146,13 @@ export function SessionsManager({
                       {s.clonedFrom ? (
                         <p className="text-xs text-muted-foreground" data-testid="cloned-note">{t("sessions.clonedFrom", { code: s.clonedFrom.code, workshop: title(s.clonedFrom.workshopId) })}</p>
                       ) : null}
-                      {s.autoClosed ? <p className="text-xs text-muted-foreground" data-testid="auto-closed-note">{dateText(s.endsAt)} - {t("sessions.autoClosedNote")}</p> : null}
                       {notesInOrder(s.notes).map((n, i) => (
                         <p key={`${n.type}-${n.at}-${i}`} className="text-xs text-muted-foreground" data-testid="session-note" data-note={n.type}>
-                          {dateText(n.at)} - {n.type === "REOPENED"
+                          {stampText(n.at)} - {n.type === "REOPENED"
                             ? t("sessions.reopenedNote")
-                            : `${t(n.type === "CLOSED" ? "sessions.closedBecause" : "sessions.rescheduledBecause")}: ${n.reason?.code === "OTHER" ? n.reason.note : n.reason ? t(`sessions.closeReasons.${n.reason.code}`) : ""}`}
+                            : n.type === "AUTO_CLOSED"
+                              ? t("sessions.autoClosedNote")
+                              : `${t(n.type === "CLOSED" ? "sessions.closedBecause" : "sessions.rescheduledBecause")}: ${n.reason?.code === "OTHER" ? n.reason.note : n.reason ? t(`sessions.closeReasons.${n.reason.code}`) : ""}`}
                         </p>
                       ))}
                       <div className="flex flex-wrap gap-1.5">
@@ -162,10 +163,10 @@ export function SessionsManager({
                             <Button size="sm" variant="outline" onClick={() => ops.sessionAction(s.id, "pause")}><Pause aria-hidden="true" />{t("sessions.pause")}</Button>
                           ) : null}
                           {canRescheduleSession(s.status) ? (
-                            wasRescheduled(s.notes) ? (
-                              // A session is re-scheduled once: read-only, the span carries the tooltip (a disabled button does not).
-                              <span title={t("sessions.rescheduleOnce")} data-testid="reschedule-once" className="inline-flex cursor-not-allowed">
-                                <Button size="sm" variant="outline" disabled aria-disabled="true" aria-label={`${t("sessions.reschedule")}: ${t("sessions.rescheduleOnce")}`}>
+                            !canRescheduleAgain(s.notes) ? (
+                              // A session is re-scheduled at most 3 times: read-only, the span carries the tooltip (a disabled button does not).
+                              <span title={t("sessions.rescheduleLimit")} data-testid="reschedule-once" className="inline-flex cursor-not-allowed">
+                                <Button size="sm" variant="outline" disabled aria-disabled="true" aria-label={`${t("sessions.reschedule")}: ${t("sessions.rescheduleLimit")}`}>
                                   <CalendarClock aria-hidden="true" />{t("sessions.reschedule")}
                                 </Button>
                               </span>
@@ -174,10 +175,10 @@ export function SessionsManager({
                             )
                           ) : null}
                           {actions.includes("close") ? (
-                            closeWaitsForEnd(s, ops.now) ? (
-                              // Read-only while the session is taking place: the span carries the tooltip (a disabled button does not).
-                              <span title={t("sessions.closeWait")} data-testid="close-wait" className="inline-flex cursor-not-allowed">
-                                <Button size="sm" variant="destructive" disabled aria-disabled="true" aria-label={`${t("sessions.close")}: ${t("sessions.closeWait")}`}>
+                            !canCloseAgain(s.notes) || closeWaitsForEnd(s, ops.now) ? (
+                              // Read-only while the session is taking place, or once it was closed 3 times: the span carries the tooltip (a disabled button does not).
+                              <span title={canCloseAgain(s.notes) ? t("sessions.closeWait") : t("sessions.closeLimit")} data-testid={canCloseAgain(s.notes) ? "close-wait" : "close-limit"} className="inline-flex cursor-not-allowed">
+                                <Button size="sm" variant="destructive" disabled aria-disabled="true" aria-label={`${t("sessions.close")}: ${canCloseAgain(s.notes) ? t("sessions.closeWait") : t("sessions.closeLimit")}`}>
                                   <Lock aria-hidden="true" />{t("sessions.close")}
                                 </Button>
                               </span>

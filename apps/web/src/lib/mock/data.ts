@@ -118,7 +118,7 @@ export const sessions: Session[] = [
   // Three sessions on one day, in three situations.
   { id: "se-38", code: "SES-0038", workshopId: "ws-1", startsAt: at(14, 9), endsAt: at(14, 11), capacity: 8, reservedCount: 0, status: "OPEN", bookingCutoffMinutes: 120 },
   { id: "se-39", code: "SES-0039", workshopId: "ws-2", startsAt: at(14, 13), endsAt: at(14, 14.5), capacity: 10, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 120 },
-  { id: "se-40", code: "SES-0040", workshopId: "ws-1", startsAt: at(14, 17), endsAt: at(14, 19), capacity: 8, reservedCount: 0, status: "PAUSED", bookingCutoffMinutes: 120, notes: [{ type: "RESCHEDULED", at: at(-2, 15), reason: { code: "OTHER", note: "The studio is booked for a private event." } }] },
+  { id: "se-40", code: "SES-0040", workshopId: "ws-1", startsAt: at(14, 17), endsAt: at(14, 19), capacity: 8, reservedCount: 0, status: "PAUSED", bookingCutoffMinutes: 120, notes: [{ type: "RESCHEDULED", at: at(-9, 15), reason: { code: "INSTRUCTOR_UNAVAILABLE" } }, { type: "RESCHEDULED", at: at(-5, 10), reason: { code: "SCHEDULE_CHANGE" } }, { type: "RESCHEDULED", at: at(-2, 15), reason: { code: "OTHER", note: "The studio is booked for a private event." } }] },
   // Cloned from SES-0034 (the clone is a new Open session).
   { id: "se-35", code: "SES-0035", workshopId: "ws-2", startsAt: at(20, 10), endsAt: at(20, 11.5), capacity: 10, reservedCount: 0, status: "OPEN", bookingCutoffMinutes: 120, clonedFrom: { code: "SES-0034", workshopId: "ws-2" } },
   // Far ahead: inside the 60 days of the default range, and beyond it (set the To date to see SES-0037).

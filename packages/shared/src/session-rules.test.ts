@@ -3,6 +3,7 @@ import { SESSION_STATUSES } from "./enums";
 import {
   allowedSessionActions, applySessionAction, canEditSession, canRescheduleSession, canReopenSession, checkCloseReason, checkReschedule, CLOSE_REASON_NOTE_MAX, closeIfEnded, closeWaitsForEnd,
   DEFAULT_BOOKING_CUTOFF_MINUTES, isFutureStart, isInSessionTime, isSessionBookable, isValidBookingCutoff, nextSessionCode, notesInOrder, SESSION_CODE_RE, wasRescheduled, withNote,
+  canCloseAgain, canRescheduleAgain, closeCount, MAX_CLOSES, MAX_RESCHEDULES, rescheduleCount,
   type SessionNote, type SessionState,
 } from "./session-rules";
 
@@ -49,7 +50,7 @@ describe("closeIfEnded", () => {
   const NOW = new Date("2026-11-03T10:00:00Z");
   const sess = (status: SessionState["status"], endsAt: string) => ({ status, endsAt });
   it("closes an open, running or paused session whose end time has passed, and marks it as closed automatically", () => {
-    for (const st of ["OPEN", "RUNNING", "PAUSED"] as const) expect(closeIfEnded(sess(st, "2026-11-03T09:59:00Z"), NOW)).toEqual({ status: "CLOSED", endsAt: "2026-11-03T09:59:00Z", autoClosed: true });
+    for (const st of ["OPEN", "RUNNING", "PAUSED"] as const) expect(closeIfEnded(sess(st, "2026-11-03T09:59:00Z"), NOW)).toEqual({ status: "CLOSED", endsAt: "2026-11-03T09:59:00Z", autoClosed: true, notes: [{ type: "AUTO_CLOSED", at: "2026-11-03T09:59:00Z" }] });
     expect(closeIfEnded(sess("RUNNING", "2026-11-03T10:00:00Z"), NOW).status).toBe("CLOSED"); // ends exactly now
   });
   it("leaves a session that has not ended, and a session the owner already closed, as they are", () => {
@@ -114,9 +115,9 @@ describe("checkReschedule", () => {
 describe("one re-schedule per session", () => {
   const NOW = new Date("2026-11-03T10:00:00Z");
   const paused = { status: "PAUSED" as const, startsAt: "2026-11-05T09:00:00Z", endsAt: "2026-11-05T11:00:00Z" };
-  it("a session that was re-scheduled once cannot be re-scheduled again", () => {
-    expect(checkReschedule({ ...paused, rescheduled: true }, "2026-11-07T14:00:00Z", NOW, [])).toEqual({ ok: false, error: "ALREADY_RESCHEDULED" });
-    expect(checkReschedule({ ...paused, rescheduled: false }, "2026-11-07T14:00:00Z", NOW, []).ok).toBe(true);
+  it("a session can be re-scheduled 3 times and not a fourth", () => {
+    for (const n of [0, 1, 2]) expect(checkReschedule({ ...paused, reschedules: n }, "2026-11-07T14:00:00Z", NOW, []).ok, String(n)).toBe(true);
+    expect(checkReschedule({ ...paused, reschedules: 3 }, "2026-11-07T14:00:00Z", NOW, [])).toEqual({ ok: false, error: "RESCHEDULE_LIMIT" });
   });
 });
 
@@ -165,6 +166,29 @@ describe("canReopenSession", () => {
 
 describe("canRescheduleSession", () => {
   it("is true only for an open or a paused session", () => expect(SESSION_STATUSES.filter(canRescheduleSession)).toEqual(["OPEN", "PAUSED"]));
+});
+
+describe("3 re-schedules and 3 closes per session", () => {
+  const note = (type: SessionNote["type"], day: number): SessionNote => ({ type, at: `2026-11-0${day}T09:00:00Z`, ...(type === "CLOSED" || type === "RESCHEDULED" ? { reason: { code: "SCHEDULE_CHANGE" as const } } : {}) });
+  it("the limits are 3", () => expect([MAX_RESCHEDULES, MAX_CLOSES]).toEqual([3, 3]));
+  it("count the re-schedules and the closes of the notes, and nothing else", () => {
+    const notes = [note("CLOSED", 1), note("REOPENED", 2), note("RESCHEDULED", 3), note("CLOSED", 4), note("AUTO_CLOSED", 5)];
+    expect(rescheduleCount(notes)).toBe(1);
+    expect(closeCount(notes)).toBe(2);
+  });
+  it("allow a session until the third time", () => {
+    expect(canRescheduleAgain([note("RESCHEDULED", 1), note("RESCHEDULED", 2)])).toBe(true);
+    expect(canRescheduleAgain([note("RESCHEDULED", 1), note("RESCHEDULED", 2), note("RESCHEDULED", 3)])).toBe(false);
+    expect(canCloseAgain([note("CLOSED", 1), note("CLOSED", 2)])).toBe(true);
+    expect(canCloseAgain([note("CLOSED", 1), note("CLOSED", 2), note("CLOSED", 3)])).toBe(false);
+    expect(canCloseAgain(undefined)).toBe(true);
+  });
+  it("the automatic close is a note of the history and does not count as a close of the owner", () => {
+    const ended = closeIfEnded({ status: "RUNNING" as const, endsAt: "2026-11-01T11:00:00Z", notes: [note("CLOSED", 1)] }, new Date("2026-11-03T10:00:00Z"));
+    expect(ended.notes!.map((n) => n.type)).toEqual(["CLOSED", "AUTO_CLOSED"]);
+    expect(ended.notes![1]!.at).toBe("2026-11-01T11:00:00Z");
+    expect(closeCount(ended.notes)).toBe(1);
+  });
 });
 
 describe("the notes of a session", () => {

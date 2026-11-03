@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { applySessionAction, canEditSession, canReopenSession, checkCloseReason, isFutureStart, checkReschedule, closeIfEnded, isValidBookingCutoff, nextSessionCode, wasRescheduled, withNote, closeWaitsForEnd, type BookingStatus, type PaymentMethod, type RescheduleError, type SessionAction, type SessionCloseReason } from "@workshop/shared";
+import { applySessionAction, canEditSession, canReopenSession, checkCloseReason, isFutureStart, checkReschedule, closeIfEnded, isValidBookingCutoff, nextSessionCode, rescheduleCount, canCloseAgain, withNote, closeWaitsForEnd, type BookingStatus, type PaymentMethod, type RescheduleError, type SessionAction, type SessionCloseReason } from "@workshop/shared";
 import type { Booking, PaymentEntry, Session } from "@/lib/types";
 import {
   canTransition, computePaymentStatus, netPaid, reservedSeats, seatDelta, targetStatus,
@@ -123,6 +123,7 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
       const next = s ? applySessionAction(s, action) : null;
       if (!s || !next) return false;
       if (action === "close" && closeWaitsForEnd(s, now)) return false; // not while the session is taking place
+      if (action === "close" && !canCloseAgain(s.notes)) return false; // at most 3 closes per session
       // Closing before the start needs a reason: a basic one, or OTHER with a text.
       const reason = action === "close" ? checkCloseReason(closeReason?.code ?? "", closeReason?.note ?? "") : null;
       if (reason && !reason.ok) return false;
@@ -156,7 +157,7 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
       { ok: true; oldStartsAt: string; startsAt: string; endsAt: string; reason: SessionCloseReason; moved: Booking[] } | { ok: false; error: RescheduleError } => {
       const s = sessions.find((x) => x.id === id);
       if (!s) return { ok: false, error: "NOT_RESCHEDULABLE" };
-      const checked = checkReschedule({ ...s, rescheduled: wasRescheduled(s.notes) }, newStartsAt, now, sessions.filter((x) => x.workshopId === s.workshopId && x.id !== id).map((x) => x.startsAt));
+      const checked = checkReschedule({ ...s, reschedules: rescheduleCount(s.notes) }, newStartsAt, now, sessions.filter((x) => x.workshopId === s.workshopId && x.id !== id).map((x) => x.startsAt));
       const why = checkCloseReason(reason.code, reason.note ?? "");
       if (!checked.ok) return { ok: false, error: checked.error };
       if (!why.ok) return { ok: false, error: "NOT_RESCHEDULABLE" };
