@@ -170,7 +170,7 @@ export const bookings: Booking[] = [
   // Bookings that used promotions: 20% off 1,300,000; 150,000 + 15% + 5% off 1,950,000; 100,000 off 4,000,000; 5% off 1,200,000 (cancelled).
   booking({ id: "bk-1", sessionId: "se-1", customerId: "cu-1", quantity: 2, specialRequest: "Vegetarian snacks please",
     promotionIds: ["pr-1"], discountAmount: 260_000, totalAmount: 1_040_000 }),
-  booking({ id: "bk-2", sessionId: "se-1", customerId: "cu-2", quantity: 3, status: "CHECKED_IN",
+  booking({ id: "bk-2", sessionId: "se-1", customerId: "cu-2", quantity: 3, status: "CHECKED_IN", checkedInAt: at(0, 9.1),
     promotionIds: ["pr-5", "pr-6", "pr-7"], discountAmount: 540_000, totalAmount: 1_410_000,
     paymentStatus: "PAID", payments: [{ id: "pm-1", type: "PAYMENT", amount: 1_410_000, method: "CASH", recordedAt: at(0, 9), recordedBy: "Linh Tran" }] }),
   booking({ id: "bk-3", sessionId: "se-2", customerId: "cu-4", quantity: 10, promotionIds: ["pr-2"], discountAmount: 100_000, totalAmount: 3_900_000 }),
@@ -189,7 +189,7 @@ export const bookings: Booking[] = [
   booking({ id: "bk-10", sessionId: "se-11", customerId: "cu-3", quantity: 1, source: "WALK_IN" }),
   // ---- More guests, for the sessions above ----
   // SES-0027 (taking place): one checked in and paid, two not yet.
-  booking({ id: "bk-12", sessionId: "se-27", customerId: "cu-1", quantity: 2, status: "CHECKED_IN", paymentStatus: "PAID",
+  booking({ id: "bk-12", sessionId: "se-27", customerId: "cu-1", quantity: 2, status: "CHECKED_IN", checkedInAt: inMinutes(-25), paymentStatus: "PAID",
     payments: [{ id: "pm-2", type: "PAYMENT", amount: 1_300_000, method: "CARD", recordedAt: inMinutes(-25), recordedBy: "Linh Tran" }] }),
   booking({ id: "bk-13", sessionId: "se-27", customerId: "cu-2", quantity: 1 }),
   booking({ id: "bk-14", sessionId: "se-27", customerId: "cu-4", quantity: 2 }),
@@ -199,10 +199,10 @@ export const bookings: Booking[] = [
   booking({ id: "bk-17", sessionId: "se-31", customerId: "cu-4", quantity: 1 }),
   booking({ id: "bk-18", sessionId: "se-31", customerId: "cu-1", quantity: 2 }),
   // SES-0032 (over): one booking in every status the check-in list can show. The confirmed ones become Session expired when the session ends.
-  booking({ id: "bk-19", sessionId: "se-32", customerId: "cu-1", quantity: 2, status: "COMPLETED", paymentStatus: "PAID",
+  booking({ id: "bk-19", sessionId: "se-32", customerId: "cu-1", quantity: 2, status: "COMPLETED", checkedInAt: at(-1, 14.05), paymentStatus: "PAID",
     payments: [{ id: "pm-3", type: "PAYMENT", amount: 800_000, method: "CASH", recordedAt: at(-1, 15), recordedBy: "Linh Tran" }] }),
   booking({ id: "bk-20", sessionId: "se-32", customerId: "cu-2", quantity: 1, status: "NO_SHOW" }),
-  booking({ id: "bk-21", sessionId: "se-32", customerId: "cu-4", quantity: 2, status: "CHECKED_IN" }),
+  booking({ id: "bk-21", sessionId: "se-32", customerId: "cu-4", quantity: 2, status: "CHECKED_IN", checkedInAt: at(-1, 14.1) }),
   booking({ id: "bk-22", sessionId: "se-32", customerId: "cu-3", quantity: 1, source: "WALK_IN" }),
   booking({ id: "bk-23", sessionId: "se-32", customerId: "cu-1", quantity: 1, status: "CANCELLED", cancelReason: "Schedule conflict" }),
   booking({ id: "bk-24", sessionId: "se-32", customerId: "cu-2", quantity: 1, status: "LATE_RELEASED" }),

@@ -220,7 +220,7 @@ export function SessionsManager({
       />
       <CheckInDialog
         key={`guests-${target?.id ?? "none"}`} open={dialog?.kind === "checkin" && !!target} onOpenChange={(o) => !o && setDialog(null)}
-        session={target} bookings={ops.bookings} customers={customers} now={ops.now} perform={ops.perform}
+        session={target} bookings={ops.bookings} customers={customers} now={ops.now} timezone={shop.timezone} perform={ops.perform}
       />
       <CloseSessionDialog
         key={`close-${target?.id ?? "none"}`} open={dialog?.kind === "close" && !!target} onOpenChange={(o) => !o && setDialog(null)}

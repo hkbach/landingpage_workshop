@@ -6,7 +6,7 @@ import { expiredStatus } from "@/lib/booking-state";
 import type { Booking } from "@/lib/types";
 import { bookings as seed, sessions } from "./data";
 
-interface Change { status: BookingStatus; cancelReason?: string }
+interface Change { status: BookingStatus; cancelReason?: string; checkedInAt?: string }
 const g = globalThis as unknown as { __bookingChanges?: Map<string, Change> };
 const changes = () => (g.__bookingChanges ??= new Map<string, Change>());
 
@@ -21,9 +21,12 @@ export function releaseAllBookings(): void {
 }
 
 /** Records a status change of a booking; false when the booking does not exist. */
-export function setBookingStatus(id: string, status: BookingStatus, cancelReason?: string): boolean {
-  if (!seed.some((b) => b.id === id)) return false;
-  changes().set(id, { status, ...(cancelReason ? { cancelReason } : {}) });
+export function setBookingStatus(id: string, status: BookingStatus, cancelReason?: string, checkedInAt?: string): boolean {
+  const base = seed.find((b) => b.id === id);
+  if (!base) return false;
+  // The time of the check-in is kept while the booking is checked in or completed; any other status (an uncheck-in, a cancel) drops it.
+  const keep = status === "CHECKED_IN" || status === "COMPLETED" ? (checkedInAt ?? changes().get(id)?.checkedInAt ?? base.checkedInAt) : undefined;
+  changes().set(id, { status, ...(cancelReason ? { cancelReason } : {}), ...(keep ? { checkedInAt: keep } : {}) });
   return true;
 }
 
@@ -31,7 +34,7 @@ export function setBookingStatus(id: string, status: BookingStatus, cancelReason
 export function liveBookings(now: Date = new Date()): Booking[] {
   return seed.map((b) => {
     const c = changes().get(b.id);
-    const current = c ? { ...b, status: c.status, cancelReason: c.cancelReason ?? b.cancelReason } : b;
+    const current = c ? { ...b, status: c.status, cancelReason: c.cancelReason ?? b.cancelReason, checkedInAt: c.checkedInAt } : b;
     const session = sessions.find((s) => s.id === b.sessionId);
     return session ? { ...current, status: expiredStatus(current.status, session, now) } : current;
   });

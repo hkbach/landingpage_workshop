@@ -52,3 +52,16 @@ describe("reservedSeats", () => {
     expect(reservedSeats([eight[0]!, { ...eight[1]!, status: "CANCELLED" as const, quantity: 1 }], "a")).toBe(5);
   });
 });
+
+describe("a closed session", () => {
+  const closed = { startsAt: "2026-11-05T09:00:00Z", endsAt: "2026-11-05T11:00:00Z", status: "CLOSED" as const, capacity: 8, reservedCount: 3 };
+  const now = new Date("2026-11-04T09:00:00Z");
+  it("checks nobody in and unchecks nobody: its list is read-only", () => {
+    expect(canTransition({ status: "CONFIRMED", quantity: 2 }, closed, now).CHECK_IN.allowed).toBe(false);
+    expect(canTransition({ status: "LATE_RELEASED", quantity: 1 }, closed, now).CHECK_IN.allowed).toBe(false);
+    expect(canTransition({ status: "CHECKED_IN", quantity: 2 }, closed, now).UNDO_CHECK_IN.allowed).toBe(false);
+  });
+  it("does not stop the others", () => {
+    expect(canTransition({ status: "CHECKED_IN", quantity: 2 }, closed, now).COMPLETE.allowed).toBe(true);
+  });
+});

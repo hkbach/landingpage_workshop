@@ -41,15 +41,19 @@ export function canTransition(booking: StateBooking, session: StateSession, now:
   const ends = new Date(session.endsAt).getTime();
   const s = booking.status;
 
+  // A closed session is final: nobody is checked in or unchecked any more (its list is read-only).
+  const closed = session.status === "CLOSED";
+
   const checkIn: ActionState =
-    s === "CONFIRMED"
+    closed ? no("INVALID_STATE")
+    : s === "CONFIRMED"
       ? ok()
       : s === "LATE_RELEASED"
         ? session.capacity - session.reservedCount >= booking.quantity ? ok() : no("SESSION_FULL")
         : no("INVALID_STATE");
 
   // Uncheck-in: a check-in made by mistake goes back to CONFIRMED (only before the booking is completed).
-  const undoCheckIn: ActionState = s === "CHECKED_IN" ? ok() : no("INVALID_STATE");
+  const undoCheckIn: ActionState = s === "CHECKED_IN" && !closed ? ok() : no("INVALID_STATE");
 
   const lateRelease: ActionState =
     s !== "CONFIRMED" ? no("INVALID_STATE")

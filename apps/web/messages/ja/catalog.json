@@ -222,6 +222,8 @@
     "checkInFailed": "現在このお客様は操作できません。",
     "checkInDone": "完了",
     "canceledBooking": "キャンセル済みの予約",
-    "colReason": "理由"
+    "colReason": "理由",
+    "colCheckedInAt": "チェックイン日時",
+    "checkInReadOnly": "このセッションは終了しているため、一覧は閲覧専用です。各予約はセッション終了時の状態で表示されます。"
   }
 }

@@ -222,6 +222,8 @@
     "checkInFailed": "지금은 이 손님을 처리할 수 없습니다.",
     "checkInDone": "완료",
     "canceledBooking": "취소된 예약",
-    "colReason": "사유"
+    "colReason": "사유",
+    "colCheckedInAt": "체크인 시각",
+    "checkInReadOnly": "닫힌 세션이므로 목록은 읽기 전용입니다. 각 예약은 세션이 닫힐 때의 상태로 표시됩니다."
   }
 }

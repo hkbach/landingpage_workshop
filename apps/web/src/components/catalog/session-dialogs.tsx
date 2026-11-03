@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { ArrowLeft, CalendarClock, Check, Lock, LogIn, Undo2 } from "lucide-react";
 import { checkCloseReason, CLOSE_REASON_NOTE_MAX, SESSION_CLOSE_REASONS, type RescheduleError, type SessionCloseReason } from "@workshop/shared";
 import { Badge } from "@/components/ui/badge";
@@ -143,12 +143,15 @@ export function RescheduleSessionDialog({ open, onOpenChange, session, timezone,
  * The guests who booked a session, each with Check-in or Uncheck-in (undo a mistake). Only a confirmed (or late-released) booking can be checked
  * in and only a checked-in one can be unchecked; the other statuses are shown without a button. The rules are the booking state machine.
  */
-export function CheckInDialog({ open, onOpenChange, session, bookings, customers, now, perform }: {
-  open: boolean; onOpenChange: (o: boolean) => void; session?: Session; bookings: Booking[]; customers: Customer[]; now: Date;
+export function CheckInDialog({ open, onOpenChange, session, bookings, customers, now, timezone, perform }: {
+  open: boolean; onOpenChange: (o: boolean) => void; session?: Session; bookings: Booking[]; customers: Customer[]; now: Date; timezone: string;
   perform: (bookingId: string, action: BookingAction) => OpResult;
 }) {
   const t = useTranslations("catalog");
+  const locale = useLocale();
   const [failed, setFailed] = useState<string | null>(null);
+  const readOnly = session?.status === "CLOSED"; // a closed session: the list is for viewing
+  const stamp = (iso: string) => new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short", timeZone: timezone }).format(new Date(iso));
   const rows = session ? bookings.filter((b) => b.sessionId === session.id).sort((a, b) => a.bookingCode.localeCompare(b.bookingCode)) : [];
   const nameOf = (b: Booking) => customers.find((c) => c.id === b.customerId)?.fullName ?? "";
   // Guests expected: a cancelled booking is not counted (its guests do not come).
@@ -167,7 +170,7 @@ export function CheckInDialog({ open, onOpenChange, session, bookings, customers
           <div className="grid gap-4">
             <DialogHeader>
               <DialogTitle>{t("sessions.checkInTitle", { code: session.code })}</DialogTitle>
-              <DialogDescription>{t("sessions.checkInHint")}</DialogDescription>
+              <DialogDescription>{readOnly ? t("sessions.checkInReadOnly") : t("sessions.checkInHint")}</DialogDescription>
             </DialogHeader>
             {rows.length === 0 ? (
               <p role="status" data-testid="checkin-empty" className="rounded-lg bg-muted/50 p-4 text-sm text-muted-foreground">{t("sessions.noBookings")}</p>
@@ -182,6 +185,7 @@ export function CheckInDialog({ open, onOpenChange, session, bookings, customers
                         <th className="px-3 py-2 font-medium">{t("sessions.colGuest")}</th>
                         <th className="px-3 py-2 font-medium">{t("sessions.colSeats")}</th>
                         <th className="px-3 py-2 font-medium">{t("sessions.colStatus")}</th>
+                        <th className="px-3 py-2 font-medium">{t("sessions.colCheckedInAt")}</th>
                         <th className="px-3 py-2 font-medium">{t("sessions.colReason")}</th>
                         <th className="px-3 py-2"><span className="sr-only">{t("sessions.checkIn")}</span></th>
                       </tr>
@@ -201,9 +205,10 @@ export function CheckInDialog({ open, onOpenChange, session, bookings, customers
                                 <BookingStatusBadge status={b.status} />
                               )}
                             </td>
+                            <td className="whitespace-nowrap px-3 py-2 text-muted-foreground" data-testid="checkin-at">{b.checkedInAt && (b.status === "CHECKED_IN" || b.status === "COMPLETED") ? stamp(b.checkedInAt) : "—"}</td>
                             <td className="px-3 py-2 text-muted-foreground" data-testid="checkin-reason">{b.status === "CANCELLED" ? (b.cancelReason || "—") : ""}</td>
                             <td className="px-3 py-2 text-right">
-                              {state.CHECK_IN.allowed ? (
+                              {readOnly ? null : state.CHECK_IN.allowed ? (
                                 <Button size="sm" onClick={() => run(b, "CHECK_IN")}><LogIn aria-hidden="true" />{t("sessions.checkInRow")}</Button>
                               ) : state.UNDO_CHECK_IN.allowed ? (
                                 <Button size="sm" variant="outline" onClick={() => run(b, "UNDO_CHECK_IN")}><Undo2 aria-hidden="true" />{t("sessions.uncheckInRow")}</Button>

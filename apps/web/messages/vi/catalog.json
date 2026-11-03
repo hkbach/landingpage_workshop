@@ -222,6 +222,8 @@
     "checkInFailed": "Hiện chưa thể thao tác với khách này.",
     "checkInDone": "Xong",
     "canceledBooking": "Booking đã hủy",
-    "colReason": "Lý do"
+    "colReason": "Lý do",
+    "colCheckedInAt": "Thời gian check-in",
+    "checkInReadOnly": "Session đã đóng nên danh sách chỉ để xem. Mỗi booking hiển thị đúng trạng thái lúc session đóng."
   }
 }

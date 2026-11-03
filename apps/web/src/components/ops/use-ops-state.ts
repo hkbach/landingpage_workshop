@@ -55,11 +55,18 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
       if (!to) return { ok: false, reason: "INVALID_STATE" };
       const at = new Date().toISOString();
       setBookings((list) =>
-        list.map((x) => (x.id === b.id ? { ...x, status: to, cancelReason: action === "CANCEL" ? reason!.trim() : x.cancelReason } : x)),
+        list.map((x) => {
+          if (x.id !== b.id) return x;
+          // The time of a check-in is kept for tracking; an uncheck-in (or a cancel) clears it.
+          const { checkedInAt: _was, ...rest } = x;
+          void _was;
+          const checkedInAt = action === "CHECK_IN" ? at : to === "COMPLETED" ? x.checkedInAt : undefined;
+          return { ...rest, status: to, cancelReason: action === "CANCEL" ? reason!.trim() : x.cancelReason, ...(checkedInAt ? { checkedInAt } : {}) };
+        }),
       );
       adjustSeats(s.id, seatDelta(b.status, to, b.quantity));
       pushEvent(b.id, { status: to, at, note: action === "CANCEL" ? reason!.trim() : undefined });
-      persistBookingStatus(b.id, to, action === "CANCEL" ? reason!.trim() : undefined);
+      persistBookingStatus(b.id, to, action === "CANCEL" ? reason!.trim() : undefined, action === "CHECK_IN" ? at : undefined);
       return { ok: true };
     },
     [bookings, sessions],

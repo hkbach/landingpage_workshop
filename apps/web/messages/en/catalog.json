@@ -222,6 +222,8 @@
     "checkInFailed": "This guest cannot be changed right now.",
     "checkInDone": "Done",
     "canceledBooking": "Canceled booking",
-    "colReason": "Reason"
+    "colReason": "Reason",
+    "colCheckedInAt": "Checked in at",
+    "checkInReadOnly": "This session is closed, so the list is read-only. Each booking shows the status it had when the session closed."
   }
 }

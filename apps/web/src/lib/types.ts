@@ -59,6 +59,8 @@ export interface Booking {
   specialRequest?: string; cancelReason?: string; createdAt: string; payments: PaymentEntry[];
   /** Promotions the guest used on this booking (a snapshot: the booking keeps them if the promotion is later deleted) and what they took off. */
   promotionIds?: string[]; discountAmount?: number;
+  /** When the guest was checked in (set by Check-in, cleared by Uncheck-in), for tracking. */
+  checkedInAt?: string;
 }
 
 /** Per-section colour overrides (hex only, #RGB or #RRGGBB). Rendered only via CSS custom properties. */
