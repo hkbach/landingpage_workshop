@@ -3,10 +3,11 @@
 import { useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import {
-  feeShares, filterLedger, formatMoney, lastMonthKeys, monthlyLedger, summarizeLedger, type FeeKind, type FeeRates, type LedgerRow,
+  addDaysToKey, checkDateRange, dayKeyOf, feeShares, filterLedgerRange, formatMoney, ledgerSeries, MAX_RANGE_DAYS, summarizeLedger, type FeeKind, type FeeRates, type LedgerRow,
 } from "@workshop/shared";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { NativeSelect } from "@/components/dashboard/shell/native-select";
@@ -14,8 +15,8 @@ import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { CategoryBars, EXPENSE_COLOR, INCOME_COLOR, MonthlyChart } from "./charts";
 
-const PERIODS = [3, 6, 12] as const;
-type Period = (typeof PERIODS)[number];
+/** The range shown when the page opens: the last 180 days (about six months), today included. */
+const DEFAULT_RANGE_DAYS = 180;
 
 interface Props {
   /** Every payment and refund of the bookings with the fees taken from it (see `ledgerFromPayments`). */
@@ -37,16 +38,28 @@ export function FinanceView({ rows, rates, currency, timezone }: Props) {
   const rate = (bps: number) => new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 2 }).format(bps / 10_000);
   /** A signed amount for the table: "+" adds to the shop, "−" takes from it. */
   const signed = (n: number) => (n < 0 ? `−${money(-n)}` : `+${money(n)}`);
-  const [period, setPeriod] = useState<Period>(6);
   const [kind, setKind] = useState<"" | LedgerRow["kind"]>("");
   const [now] = useState(() => new Date());
+  // The range of days shown: what is typed, and the last range that was valid (the page keeps showing it while the typed one is wrong).
+  const today = dayKeyOf(now.toISOString(), timezone);
+  const first = addDaysToKey(today, -(DEFAULT_RANGE_DAYS - 1));
+  const [typed, setTyped] = useState({ from: first, to: today });
+  const [range, setRange] = useState({ from: first, to: today });
+  const check = checkDateRange(typed.from, typed.to);
+  function change(next: { from: string; to: string }) {
+    setTyped(next);
+    if (checkDateRange(next.from, next.to) === "OK") setRange(next);
+  }
 
-  const months = useMemo(() => lastMonthKeys(now, timezone, period), [now, timezone, period]);
-  const inPeriod = useMemo(() => filterLedger(rows, months, timezone), [rows, months, timezone]);
-  const totals = summarizeLedger(inPeriod);
-  const series = useMemo(() => monthlyLedger(rows, timezone, months), [rows, timezone, months]);
-  const shown = useMemo(() => filterLedger(rows, months, timezone, kind || undefined), [rows, months, timezone, kind]);
-  const monthLabel = (key: string) => new Intl.DateTimeFormat(locale, { month: "short", year: "2-digit", timeZone: "UTC" }).format(new Date(`${key}-15T12:00:00Z`));
+  const inRange = useMemo(() => filterLedgerRange(rows, range.from, range.to, timezone), [rows, range, timezone]);
+  const totals = summarizeLedger(inRange);
+  const chart = useMemo(() => ledgerSeries(rows, timezone, range.from, range.to), [rows, range, timezone]);
+  const shown = useMemo(() => filterLedgerRange(rows, range.from, range.to, timezone, kind || undefined), [rows, range, timezone, kind]);
+  const monthLabel = (key: string) => key.length === 7
+    ? new Intl.DateTimeFormat(locale, { month: "short", year: "2-digit", timeZone: "UTC" }).format(new Date(`${key}-15T12:00:00Z`))
+    : new Intl.DateTimeFormat(locale, { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${key}T12:00:00Z`));
+  const dayLabel = (key: string) => new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${key}T12:00:00Z`));
+  const rangeError = check === "OK" ? null : check === "REQUIRED" ? t("rangeRequired") : check === "ORDER" ? t("rangeOrder") : check === "TOO_LONG" ? t("rangeTooLong", { max: MAX_RANGE_DAYS }) : t("rangeInvalid");
   const maintenance = rate(rates.maintenanceBps);
   const service = rate(rates.serviceBps);
   const feeLabel = (k: FeeKind) => (k === "MAINTENANCE" ? t("maintenanceFee", { rate: maintenance }) : t("serviceFee", { rate: service }));
@@ -63,11 +76,19 @@ export function FinanceView({ rows, rates, currency, timezone }: Props) {
         <span className="mt-1 block text-xs text-muted-foreground">{t("ratesNote")}</span>
       </p>
 
-      <div className="grid content-start gap-1.5 sm:w-56">
-        <Label htmlFor="fin-period">{t("period")}</Label>
-        <NativeSelect id="fin-period" value={period} onChange={(e) => setPeriod(Number(e.target.value) as Period)}>
-          {PERIODS.map((p) => <option key={p} value={p}>{t("lastMonths", { count: p })}</option>)}
-        </NativeSelect>
+      <div className="grid gap-1.5">
+        <div className="grid max-w-md grid-cols-2 gap-3" role="group" aria-label={t("range")}>
+          <div className="grid content-start gap-1.5">
+            <Label htmlFor="fin-from">{t("from")}</Label>
+            <Input id="fin-from" type="date" max={today} value={typed.from} aria-invalid={rangeError ? true : undefined} aria-describedby="fin-range-note" onChange={(e) => change({ ...typed, from: e.target.value })} />
+          </div>
+          <div className="grid content-start gap-1.5">
+            <Label htmlFor="fin-to">{t("to")}</Label>
+            <Input id="fin-to" type="date" max={today} value={typed.to} aria-invalid={rangeError ? true : undefined} aria-describedby="fin-range-note" onChange={(e) => change({ ...typed, to: e.target.value })} />
+          </div>
+        </div>
+        <p id="fin-range-note" className="text-xs text-muted-foreground">{t("rangeHint", { max: MAX_RANGE_DAYS })}</p>
+        {rangeError ? <p role="alert" data-testid="range-error" className="text-sm font-medium text-destructive">{rangeError}</p> : null}
       </div>
 
       <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-label={t("summary")}>
@@ -84,10 +105,10 @@ export function FinanceView({ rows, rates, currency, timezone }: Props) {
         <CardHeader><CardTitle>{t("monthlyTitle")}</CardTitle></CardHeader>
         <CardContent>
           <MonthlyChart
-            series={series} currency={currency} locale={locale}
+            series={chart.points} currency={currency} locale={locale}
             labels={{
-              title: t("showTable"), income: t("income"), expense: t("fees"), net: t("profit"), month: t("month"), format: money, monthLabel,
-              summary: t("chartSummary", { from: monthLabel(months[0]!), to: monthLabel(months[months.length - 1]!), income: money(totals.income), fees: money(totals.fees), profit: money(totals.profit) }),
+              title: t("showTable"), income: t("income"), expense: t("fees"), net: t("profit"), month: chart.unit === "day" ? t("date") : t("month"), format: money, monthLabel,
+              summary: t("chartSummary", { from: dayLabel(range.from), to: dayLabel(range.to), income: money(totals.income), fees: money(totals.fees), profit: money(totals.profit) }),
             }}
           />
         </CardContent>

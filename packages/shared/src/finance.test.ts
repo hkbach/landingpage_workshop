@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  bpsToPercent, checkFeeRates, DEFAULT_FEE_RATES, feeOf, feeShares, filterLedger, lastMonthKeys, ledgerFromPayments, monthKey, monthlyLedger,
+  addDaysToKey, bpsToPercent, checkDateRange, checkFeeRates, daysInRange, filterLedgerRange, ledgerSeries, DEFAULT_FEE_RATES, feeOf, feeShares, filterLedger, lastMonthKeys, ledgerFromPayments, monthKey, monthlyLedger,
   niceScale, percentToBps, summarizeLedger, type FeeRates, type LedgerRow,
 } from "./finance";
 
@@ -115,6 +115,51 @@ describe("reports", () => {
     expect(shares.map((s) => s.category)).toEqual(["SERVICE", "MAINTENANCE"]);
     expect(shares.reduce((n, s) => n + s.share, 0)).toBeCloseTo(1);
     expect(feeShares(summarizeLedger([]))).toEqual([]);
+  });
+});
+
+describe("date range", () => {
+  it("is at most 365 days, both ends included", () => {
+    expect(checkDateRange("2026-01-01", "2026-12-31")).toBe("OK"); // 365 days
+    expect(checkDateRange("2026-01-01", "2027-01-01")).toBe("TOO_LONG"); // 366 days
+    expect(checkDateRange("2024-01-01", "2024-12-30")).toBe("OK"); // 365 days in a leap year
+    expect(checkDateRange("2024-01-01", "2024-12-31")).toBe("TOO_LONG"); // 366 days
+    expect(checkDateRange("2026-05-05", "2026-05-05")).toBe("OK"); // one day
+    expect(daysInRange("2026-01-01", "2026-12-31")).toBe(365);
+  });
+  it("needs both days, real dates, in order", () => {
+    expect(checkDateRange("", "2026-05-05")).toBe("REQUIRED");
+    expect(checkDateRange("2026-05-05", "")).toBe("REQUIRED");
+    expect(checkDateRange("2026-02-30", "2026-03-05")).toBe("INVALID");
+    expect(checkDateRange("05/05/2026", "2026-05-06")).toBe("INVALID");
+    expect(checkDateRange("2026-05-06", "2026-05-05")).toBe("ORDER");
+  });
+  it("adds days across a month and a year", () => {
+    expect(addDaysToKey("2026-12-30", 3)).toBe("2027-01-02");
+    expect(addDaysToKey("2026-03-01", -1)).toBe("2026-02-28");
+  });
+  const row = (id: string, amount: number, occurredAt: string): LedgerRow => ({ id, bookingCode: id, kind: amount < 0 ? "REFUND" : "PAYMENT", currency: "VND", vouchers: [], occurredAt, amount, maintenanceFee: 0, serviceFee: 0, profit: amount });
+  const rows = [row("1", 100, "2026-10-31T20:00:00Z"), row("2", 200, "2026-11-01T10:00:00Z"), row("3", -50, "2026-11-03T02:00:00Z"), row("4", 400, "2026-12-01T02:00:00Z")];
+  it("filters by the shop-local day, both ends included, newest first", () => {
+    // 2026-10-31T20:00Z is 1 Nov 03:00 in Ho Chi Minh
+    expect(filterLedgerRange(rows, "2026-11-01", "2026-11-03", TZ).map((r) => r.id)).toEqual(["3", "2", "1"]);
+    expect(filterLedgerRange(rows, "2026-11-02", "2026-11-02", TZ)).toEqual([]);
+    expect(filterLedgerRange(rows, "2026-11-01", "2026-11-03", TZ, "REFUND").map((r) => r.id)).toEqual(["3"]);
+  });
+  it("draws a short range day by day, with a point for every day", () => {
+    const s = ledgerSeries(rows, TZ, "2026-11-01", "2026-11-04");
+    expect(s.unit).toBe("day");
+    expect(s.points.map((p) => [p.key, p.income])).toEqual([["2026-11-01", 300], ["2026-11-02", 0], ["2026-11-03", -50], ["2026-11-04", 0]]);
+  });
+  it("draws a long range month by month, across a year change, counting only the days inside the range", () => {
+    const s = ledgerSeries(rows, TZ, "2026-11-03", "2027-01-15");
+    expect(s.unit).toBe("month");
+    expect(s.points.map((p) => p.key)).toEqual(["2026-11", "2026-12", "2027-01"]);
+    expect(s.points.map((p) => p.income)).toEqual([-50, 400, 0]);
+  });
+  it("31 days are still drawn by day, 32 by month", () => {
+    expect(ledgerSeries([], TZ, "2026-11-01", "2026-12-01").unit).toBe("day");
+    expect(ledgerSeries([], TZ, "2026-11-01", "2026-12-02").unit).toBe("month");
   });
 });
 

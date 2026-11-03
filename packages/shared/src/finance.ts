@@ -108,6 +108,61 @@ export function monthlyLedger(rows: readonly LedgerRow[], timeZone: string, keys
   return keys.map((key) => { const t = summarizeLedger(by.get(key) ?? []); return { key, income: t.income, expense: t.fees, net: t.profit }; });
 }
 
+// ---- date range --------------------------------------------------------------------------------------------------------------
+
+/** The Income page shows one range of days at a time, at most this many days (both ends included). */
+export const MAX_RANGE_DAYS = 365;
+/** A range of this many days or fewer is drawn day by day, a longer one month by month. */
+export const DAILY_CHART_MAX_DAYS = 31;
+
+const DAY_MS = 86_400_000;
+const dayMs = (d: string) => Date.parse(`${d}T00:00:00Z`);
+/** "YYYY-MM-DD" that is a real calendar day. */
+export const isDayKey = (d: string): boolean => /^\d{4}-\d{2}-\d{2}$/.test(d) && !Number.isNaN(dayMs(d)) && new Date(dayMs(d)).toISOString().startsWith(d);
+
+/** "YYYY-MM-DD" of an instant in the shop timezone. */
+export const dayKeyOf = (iso: string, timeZone: string): string => new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(iso));
+
+/** The day `days` after (or before, when negative) a "YYYY-MM-DD" day. */
+export const addDaysToKey = (d: string, days: number): string => new Date(dayMs(d) + days * DAY_MS).toISOString().slice(0, 10);
+
+/** How many days a range holds, both ends included. */
+export const daysInRange = (from: string, to: string): number => Math.round((dayMs(to) - dayMs(from)) / DAY_MS) + 1;
+
+/** Why a range cannot be shown: a day is missing or not a real date, From is after To, or it is longer than MAX_RANGE_DAYS. */
+export function checkDateRange(from: string, to: string): "OK" | "REQUIRED" | "INVALID" | "ORDER" | "TOO_LONG" {
+  if (!from || !to) return "REQUIRED";
+  if (!isDayKey(from) || !isDayKey(to)) return "INVALID";
+  if (from > to) return "ORDER";
+  return daysInRange(from, to) > MAX_RANGE_DAYS ? "TOO_LONG" : "OK";
+}
+
+/** The rows paid on the days from `from` to `to` (shop timezone, both included), newest first. */
+export function filterLedgerRange(rows: readonly LedgerRow[], from: string, to: string, timeZone: string, kind?: LedgerRow["kind"]): LedgerRow[] {
+  return rows
+    .filter((r) => { const d = dayKeyOf(r.occurredAt, timeZone); return d >= from && d <= to && (!kind || r.kind === kind); })
+    .sort((a, b) => b.occurredAt.localeCompare(a.occurredAt) || a.id.localeCompare(b.id));
+}
+
+export interface LedgerSeries { unit: "day" | "month"; points: MonthPoint[] }
+/** The chart of a range: one point for every day when the range is short, for every month otherwise (zero where nothing happened). */
+export function ledgerSeries(rows: readonly LedgerRow[], timeZone: string, from: string, to: string): LedgerSeries {
+  const inRange = filterLedgerRange(rows, from, to, timeZone);
+  if (daysInRange(from, to) <= DAILY_CHART_MAX_DAYS) {
+    const keys = Array.from({ length: daysInRange(from, to) }, (_, i) => addDaysToKey(from, i));
+    const by = new Map<string, LedgerRow[]>(keys.map((k) => [k, []]));
+    for (const r of inRange) by.get(dayKeyOf(r.occurredAt, timeZone))?.push(r);
+    return { unit: "day", points: keys.map((key) => { const t = summarizeLedger(by.get(key) ?? []); return { key, income: t.income, expense: t.fees, net: t.profit }; }) };
+  }
+  const months: string[] = [];
+  let [y, m] = from.slice(0, 7).split("-").map(Number) as [number, number];
+  while (`${y}-${String(m).padStart(2, "0")}` <= to.slice(0, 7)) {
+    months.push(`${y}-${String(m).padStart(2, "0")}`);
+    if (m === 12) { y++; m = 1; } else m++;
+  }
+  return { unit: "month", points: monthlyLedger(inRange, timeZone, months) };
+}
+
 export type FeeKind = "MAINTENANCE" | "SERVICE";
 export interface FeeShare { category: FeeKind; amount: number; share: number }
 /** What each fee takes, biggest first; `share` is 0..1 of all the fees. Empty when no fee was taken. */

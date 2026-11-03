@@ -30,6 +30,7 @@ export function MonthlyChart({ series, currency, locale, labels }: { series: Mon
   const y = (v: number) => TOP + ((top - v) / range) * PLOT_H;
   const group = PLOT_W / Math.max(series.length, 1);
   const barW = Math.min(9, group * 0.22);
+  const every = Math.ceil(series.length / 8); // at most about eight labels under the bars, so a range of 31 days stays readable
   const ticks = Array.from({ length: Math.round(range / step) + 1 }, (_, i) => bottom + step * i);
   const cx = (i: number) => LEFT + group * i + group / 2;
   const net = series.map((p, i) => `${cx(i)},${y(p.net)}`).join(" ");
@@ -55,7 +56,7 @@ export function MonthlyChart({ series, currency, locale, labels }: { series: Mon
               <rect x={cx(i) + 1} y={fee.y} width={barW} height={fee.h} fill={EXPENSE_COLOR} rx={barW / 2.5}>
                 <title>{`${labels.monthLabel(p.key)}: ${labels.expense} ${labels.format(p.expense)}`}</title>
               </rect>
-              <text x={cx(i)} y={H - 8} textAnchor="middle" fontSize="10" fill="currentColor">{labels.monthLabel(p.key)}</text>
+              {i % every === 0 ? <text x={cx(i)} y={H - 8} textAnchor="middle" fontSize="10" fill="currentColor">{labels.monthLabel(p.key)}</text> : null}
             </g>
           );
         })}
