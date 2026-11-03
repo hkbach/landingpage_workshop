@@ -6,6 +6,7 @@ import { Plus, Search } from "lucide-react";
 import { BOOKING_STATUSES, formatMoney, pickLocalized, resolveShopLocale, type BookingStatus, type Locale } from "@workshop/shared";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { DateInput } from "@/components/ui/date-input";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { Booking, Customer, Session, Workshop } from "@/lib/types";
@@ -69,7 +70,7 @@ export function BookingsList({
             <Field id="f-date" label={t("filters.date")} hint={t("common.tzNote", { tz: timezone })}>
               {(p) => (
                 <div className="flex gap-2">
-                  <Input {...p} type="date" value={date} onChange={(e) => { setDate(e.target.value); setSessionId(""); }} />
+                  <DateInput {...p} value={date} onChange={(day) => { setDate(day); setSessionId(""); }} />
                   <Button type="button" variant="outline" disabled={!date} onClick={() => { setDate(""); setSessionId(""); }}>
                     {t("filters.allDates")}
                   </Button>

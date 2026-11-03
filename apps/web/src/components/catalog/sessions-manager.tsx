@@ -8,6 +8,7 @@ import { allowedSessionActions, closedForGood, isFinalClose, canEditSession, can
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DateInput } from "@/components/ui/date-input";
 import { Input } from "@/components/ui/input";
 import { CapacityBar } from "@/components/ops/capacity-bar";
 import { Field } from "@/components/ops/field";
@@ -126,8 +127,8 @@ export function SessionsManager({
                   options={[{ value: "", label: t("sessions.allStatuses") }, ...SESSION_STATUSES.map((v) => ({ value: v, label: tops(`sessionStatus.${v}`) }))]} />
               )}
             </Field>
-            <Field id="s-from" label={t("sessions.from")}>{(p) => <Input {...p} type="date" value={from} onChange={(e) => setFrom(e.target.value)} />}</Field>
-            <Field id="s-to" label={t("sessions.to")}>{(p) => <Input {...p} type="date" value={to} onChange={(e) => setTo(e.target.value)} />}</Field>
+            <Field id="s-from" label={t("sessions.from")}>{(p) => <DateInput {...p} value={from} onChange={setFrom} />}</Field>
+            <Field id="s-to" label={t("sessions.to")}>{(p) => <DateInput {...p} value={to} onChange={setTo} />}</Field>
           </form>
         </CardContent>
       </Card>
@@ -358,7 +359,7 @@ function AddSessionForm({
       {editing ? null : (
         <div className="grid gap-3 sm:grid-cols-2">
           <Field id="add-date" label={t("sessions.date")} required error={err("date")}>
-            {(p) => <Input {...p} type="date" min={today} value={date} onChange={(e) => setDate(e.target.value)} />}
+            {(p) => <DateInput {...p} min={today} lenient value={date} onChange={setDate} />}
           </Field>
           <Field id="add-time" label={t("sessions.startTime")} required error={err("time")}>
             {(p) => <Input {...p} type="time" value={time} onChange={(e) => setTime(e.target.value)} />}

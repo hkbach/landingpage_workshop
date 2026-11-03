@@ -7,7 +7,7 @@ import {
 } from "@workshop/shared";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { DateInput } from "@/components/ui/date-input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { NativeSelect } from "@/components/dashboard/shell/native-select";
@@ -86,11 +86,11 @@ export function FinanceView({ rows, rates, currency, timezone }: Props) {
         <div className="grid max-w-md grid-cols-2 gap-3" role="group" aria-label={t("range")}>
           <div className="grid content-start gap-1.5">
             <Label htmlFor="fin-from">{t("from")}</Label>
-            <Input id="fin-from" type="date" min={fromBounds.min} max={fromBounds.max} value={typed.from} aria-invalid={rangeError ? true : undefined} aria-describedby="fin-range-note" onChange={(e) => change({ ...typed, from: e.target.value })} />
+            <DateInput id="fin-from" min={fromBounds.min} max={fromBounds.max} value={typed.from} aria-invalid={rangeError ? true : undefined} aria-describedby="fin-range-note" onChange={(day) => change({ ...typed, from: day })} />
           </div>
           <div className="grid content-start gap-1.5">
             <Label htmlFor="fin-to">{t("to")}</Label>
-            <Input id="fin-to" type="date" min={toBounds.min} max={toBounds.max} value={typed.to} aria-invalid={rangeError ? true : undefined} aria-describedby="fin-range-note" onChange={(e) => change({ ...typed, to: e.target.value })} />
+            <DateInput id="fin-to" min={toBounds.min} max={toBounds.max} value={typed.to} aria-invalid={rangeError ? true : undefined} aria-describedby="fin-range-note" onChange={(day) => change({ ...typed, to: day })} />
           </div>
         </div>
         <p id="fin-range-note" className="text-xs text-muted-foreground">{t("rangeHint", { max: MAX_RANGE_DAYS })}</p>

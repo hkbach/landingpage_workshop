@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import type { AuditEntry } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { DateInput } from "@/components/ui/date-input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -99,11 +99,11 @@ export function AuditTable({ entries, orgNames }: { entries: AuditEntry[]; orgNa
         </div>
         <div className="grid content-start gap-1.5">
           <Label htmlFor="audit-from">{t("from")}</Label>
-          <Input id="audit-from" type="date" value={from} max={to || undefined} onChange={(e) => change(() => setFrom(e.target.value))} />
+          <DateInput id="audit-from" lenient value={from} max={to || undefined} onChange={(day) => change(() => setFrom(day))} />
         </div>
         <div className="grid content-start gap-1.5">
           <Label htmlFor="audit-to">{t("to")}</Label>
-          <Input id="audit-to" type="date" value={to} min={from || undefined} onChange={(e) => change(() => setTo(e.target.value))} />
+          <DateInput id="audit-to" lenient value={to} min={from || undefined} onChange={(day) => change(() => setTo(day))} />
         </div>
         <Button
           variant="outline"

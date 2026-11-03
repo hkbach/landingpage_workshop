@@ -18,5 +18,9 @@
     "PENDING_REVIEW": "Chờ duyệt",
     "ACTIVE": "Đang hoạt động",
     "SUSPENDED": "Bị tạm ngưng"
+  },
+  "dateInput": {
+    "placeholder": "ngày/tháng/năm",
+    "openCalendar": "Mở lịch"
   }
 }

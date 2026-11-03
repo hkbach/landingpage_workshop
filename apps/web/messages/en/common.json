@@ -18,5 +18,9 @@
     "PENDING_REVIEW": "Pending review",
     "ACTIVE": "Active",
     "SUSPENDED": "Suspended"
+  },
+  "dateInput": {
+    "placeholder": "mm/dd/yyyy",
+    "openCalendar": "Open the calendar"
   }
 }

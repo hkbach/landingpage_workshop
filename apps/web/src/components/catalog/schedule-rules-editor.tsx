@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DateInput } from "@/components/ui/date-input";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ops/field";
 import { NativeSelect } from "@/components/ops/native-select";
@@ -185,10 +186,10 @@ function RuleForm({
 
       <div className="grid gap-3 sm:grid-cols-2">
         <Field id="rule-from" label={t("rules.from")} required error={err("from")}>
-          {(p) => <Input {...p} type="date" value={from} onChange={(e) => setFrom(e.target.value)} />}
+          {(p) => <DateInput {...p} value={from} onChange={setFrom} />}
         </Field>
         <Field id="rule-to" label={t("rules.to")} error={err("to")} hint={t("rules.toHint")}>
-          {(p) => <Input {...p} type="date" value={to} onChange={(e) => setTo(e.target.value)} />}
+          {(p) => <DateInput {...p} value={to} onChange={setTo} />}
         </Field>
         <Field id="rule-cap" label={t("rules.capacityOverride")} error={err("cap")} hint={t("rules.capacityOverrideHint")}>
           {(p) => <Input {...p} type="number" inputMode="numeric" min={1} max={MAX_CAPACITY} value={cap} onChange={(e) => setCap(e.target.value)} />}

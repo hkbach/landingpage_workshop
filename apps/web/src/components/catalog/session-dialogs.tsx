@@ -7,6 +7,7 @@ import { checkCloseReason, CLOSE_REASON_NOTE_MAX, SESSION_CLOSE_REASONS, type Re
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DateInput } from "@/components/ui/date-input";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Field } from "@/components/ops/field";
@@ -121,7 +122,7 @@ export function RescheduleSessionDialog({ open, onOpenChange, session, timezone,
             </DialogHeader>
             <div className="grid gap-3 sm:grid-cols-2">
               <Field id="rs-date" label={t("sessions.newDate")} required error={errors.date}>
-                {(p) => <Input {...p} type="date" value={date} onChange={(e) => { setDate(e.target.value); setErrors({}); }} />}
+                {(p) => <DateInput {...p} value={date} onChange={(day) => { setDate(day); setErrors({}); }} />}
               </Field>
               <Field id="rs-time" label={t("sessions.newTime")} required error={errors.time}>
                 {(p) => <Input {...p} type="time" value={time} onChange={(e) => { setTime(e.target.value); setErrors({}); }} />}

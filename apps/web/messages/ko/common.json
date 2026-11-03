@@ -18,5 +18,9 @@
     "PENDING_REVIEW": "검토 대기 중",
     "ACTIVE": "활성",
     "SUSPENDED": "정지됨"
+  },
+  "dateInput": {
+    "placeholder": "연. 월. 일.",
+    "openCalendar": "달력 열기"
   }
 }

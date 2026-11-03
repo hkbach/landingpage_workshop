@@ -18,5 +18,9 @@
     "PENDING_REVIEW": "審査待ち",
     "ACTIVE": "有効",
     "SUSPENDED": "停止中"
+  },
+  "dateInput": {
+    "placeholder": "年/月/日",
+    "openCalendar": "カレンダーを開く"
   }
 }

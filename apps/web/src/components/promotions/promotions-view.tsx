@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DateInput } from "@/components/ui/date-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -208,11 +209,11 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
             </div>
             <div className="grid content-start gap-1.5">
               <Label htmlFor="fl-from">{t("periodFrom")}</Label>
-              <Input id="fl-from" type="date" value={filters.from} onChange={(e) => setFilter("from", e.target.value)} />
+              <DateInput id="fl-from" value={filters.from} onChange={(day) => setFilter("from", day)} />
             </div>
             <div className="grid content-start gap-1.5">
               <Label htmlFor="fl-to">{t("periodTo")}</Label>
-              <Input id="fl-to" type="date" value={filters.to} onChange={(e) => setFilter("to", e.target.value)} />
+              <DateInput id="fl-to" value={filters.to} onChange={(day) => setFilter("to", day)} />
             </div>
             <div className="grid content-start gap-1.5">
               <Label htmlFor="fl-workshop">{t("workshopFilter")}</Label>
@@ -541,10 +542,10 @@ function PromotionDialog({ form, setForm, today, shop, workshops, others, money,
               </fieldset>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field id="pr-start" label={t("fieldStart")} required error={errors.startDate} hint={renewing ? t("renewHint") : undefined}>
-                  {(p) => <Input {...p} type="date" className={renewing ? "border-amber-500 ring-2 ring-amber-400" : undefined} value={form.startDate} onChange={(e) => set({ startDate: e.target.value })} />}
+                  {(p) => <DateInput {...p} className={renewing ? "border-amber-500 ring-2 ring-amber-400" : undefined} value={form.startDate} onChange={(day) => set({ startDate: day })} />}
                 </Field>
                 <Field id="pr-end" label={t("fieldEnd")} required error={errors.endDate}>
-                  {(p) => <Input {...p} type="date" value={form.endDate} onChange={(e) => set({ endDate: e.target.value })} />}
+                  {(p) => <DateInput {...p} value={form.endDate} onChange={(day) => set({ endDate: day })} />}
                 </Field>
               </div>
               {example ? <p className="rounded-lg bg-muted/50 p-3 text-sm">{t("example", example)}</p> : null}

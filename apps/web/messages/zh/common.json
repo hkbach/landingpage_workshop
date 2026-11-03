@@ -18,5 +18,9 @@
     "PENDING_REVIEW": "待审核",
     "ACTIVE": "已启用",
     "SUSPENDED": "已暂停"
+  },
+  "dateInput": {
+    "placeholder": "年/月/日",
+    "openCalendar": "打开日历"
   }
 }
