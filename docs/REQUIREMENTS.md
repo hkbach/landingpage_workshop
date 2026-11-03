@@ -365,13 +365,13 @@ Browser ────────────────────────
 ### 5.5 Booking (phía khách)
 
 **FR-BOOK-01 – Xem lịch còn chỗ (Must)**
-- `GET /public/sites/{slug}/workshops/{id}/availability?from=&to=` trả về các session `RUNNING`, `starts_at` > now + `booking_cutoff` (mặc định 2 giờ, cấu hình theo shop), kèm `remaining = capacity - reserved_count`.
+- `GET /public/sites/{slug}/workshops/{id}/availability?from=&to=` trả về các session `RUNNING`, `starts_at` > now + `booking_cutoff_minutes` **của chính session đó** (mặc định 120 phút, cấu hình khi tạo session), kèm `remaining = capacity - reserved_count`.
 - Hiển thị giờ theo **timezone của shop**, ghi rõ tên timezone (ví dụ "Times shown in Asia/Ho_Chi_Minh"). Session hết chỗ hiển thị "Sold out".
 
 **FR-BOOK-02 – Đặt chỗ instant (Must)**
 - Booking modal gồm 5 bước: (1) **ngày và giờ** (gộp trong một bước) → (2) số khách (kèm khuyến mãi và bill) → (3) thông tin liên hệ → (4) xác nhận (hiển thị lại **bill chi tiết** như bước 2: tạm tính, từng khuyến mãi, tổng) → (5) **xác minh email bằng OTP**.
 - **Bước 1:** chọn workshop; liệt kê **toàn bộ ngày có session** của workshop đó (không tính session đã hủy). Ngày mà mọi session đều không chọn được (đã qua, đã đóng, trong cutoff hoặc hết chỗ) hiển thị mờ, ghi "Not available" và **không chọn được**. Chọn ngày xong, **giờ của ngày đó hiện ngay bên dưới**; giờ đã bắt đầu / đã qua, trong cutoff, đã đóng hoặc hết chỗ vẫn hiển thị nhưng **không chọn được** (ghi lý do: Already started, Booking closed, Closed, Sold out).
-- **Booking cut-off theo Settings:** số phút cut-off lấy từ cấu hình **Booking cut-off** của shop trong Settings (`bookingCutoffMinutes`, 0 đến 10080; lưu qua `PATCH /api/v1/settings/booking`, trang public và trang xem trước đọc giá trị đã lưu). Session có `starts_at` ≤ now + cut-off hiển thị "Booking closed" và không chọn được; ngay dưới tiêu đề danh sách giờ có câu "Online booking closes N minutes before a session starts.". Vì khách có thể mở form lâu, **khi nhập đúng OTP hệ thống kiểm tra lại cut-off** (backend thật cũng kiểm tra khi tạo booking): nếu session đã quá cut-off thì quay về bước 1, hiển thị thông báo và không tạo booking. MVP frontend mock chỉ lưu giá trị cut-off; các trường khác của Settings vẫn chưa được lưu.
+- **Booking cut-off theo từng session:** cut-off **không còn là cấu hình của shop trong Settings** mà được đặt **cho từng session khi tạo session mới** (form Add session, trường "Booking cut-off (minutes before start)", số nguyên 0 đến 10080, mặc định 120; 0 = đóng đặt chỗ đúng giờ bắt đầu; mỗi session lưu `booking_cutoff_minutes`). Session có `starts_at` ≤ now + cut-off của chính nó hiển thị "Booking closed" và không chọn được; mỗi giờ trong danh sách ghi "Online booking closes N minutes before a session starts." theo cut-off của session đó, và thẻ session trong trang Sessions của shop owner cũng ghi cut-off. Vì khách có thể mở form lâu, **khi nhập đúng OTP hệ thống kiểm tra lại cut-off** của session (backend thật cũng kiểm tra khi tạo booking): nếu đã quá cut-off thì quay về bước 1, hiển thị thông báo và không tạo booking. Màn hình Settings không còn trường này. MVP frontend: cut-off chỉ đặt lúc tạo session (chưa có màn hình sửa).
 - **Lưu ý trên nút Next:** ở các bước có nút Next (1 đến 3), ngay phía trên nút hiển thị câu lưu ý: khách phải chọn đúng workshop và điền đúng số lượng người; shop không chịu trách nhiệm khi thông tin booking hoặc số người sai lệch.
 - **Bước 5 (OTP):** bấm Confirm booking thì hệ thống gửi mã **6 chữ số** tới email khách; khách nhập mã để hoàn tất (booking chỉ được tạo sau khi mã đúng). Sai tối đa **5 lần** (sau đó phải xác nhận lại để nhận mã mới); nút gửi lại mã có đếm ngược 30 giây. MVP frontend giả lập: chưa gửi email, mã demo `123456` hiển thị trong môi trường dev; backend thật gửi qua outbox + worker, chỉ lưu hash mã kèm hạn dùng, giới hạn số lần gửi và thử theo email và IP.
 - Field: họ tên (bắt buộc), email (bắt buộc), quốc gia (bắt buộc, chọn từ danh sách ISO), phone/WhatsApp (**bắt buộc**), special request (tùy chọn, tối đa 500 ký tự), checkbox đồng ý chính sách (bao gồm chính sách đến trễ), Turnstile token.
@@ -595,7 +595,7 @@ FROM workshop_sessions
 WHERE id = :session_id AND organization_id = :org_id
 FOR UPDATE;
 
--- validate: status = 'OPEN', starts_at > now() + cutoff (với booking online),
+-- validate: status = 'RUNNING', starts_at > now() + booking_cutoff_minutes của session (với booking online),
 --           reserved_count + :qty <= capacity
 
 INSERT INTO bookings (...) VALUES (...);
@@ -660,7 +660,7 @@ Quy ước: PK `uuid` (UUIDv7 sinh ở app nếu có, không thì `gen_random_uu
 
 **user_tokens**: `id`, `user_id`, `type` (`EMAIL_VERIFY|PASSWORD_RESET`), `token_hash` (unique), `expires_at`, `used_at`.
 
-**organizations**: `id`, `name`, `slug` (unique, **bất biến**: trigger / API từ chối mọi cập nhật, kể cả admin), `status` (`DRAFT|PENDING_REVIEW|ACTIVE|SUSPENDED`), `status_reason`, `country`, `timezone`, `currency`, `default_locale`, `enabled_locales text[]`, `plan` (`FREE` mặc định), `contact_email`, `contact_phone`, `whatsapp`, `address`, `maps_url`, `booking_cutoff_minutes` (mặc định 120), `approved_at`, `approved_by`.
+**organizations**: `id`, `name`, `slug` (unique, **bất biến**: trigger / API từ chối mọi cập nhật, kể cả admin), `status` (`DRAFT|PENDING_REVIEW|ACTIVE|SUSPENDED`), `status_reason`, `country`, `timezone`, `currency`, `default_locale`, `enabled_locales text[]`, `plan` (`FREE` mặc định), `contact_email`, `contact_phone`, `whatsapp`, `address`, `maps_url`, (mặc định 120), `approved_at`, `approved_by`.
 
 **organization_members**: `organization_id`, `user_id`, `role` (`OWNER`), `status`. PK `(organization_id, user_id)`.
 
@@ -698,7 +698,7 @@ Khi `schemaVersion` của một section type thay đổi, viết hàm migrate tr
 
 **schedule_rules**: `id`, `organization_id`, `workshop_id`, `weekdays smallint[]`, `start_times text[]` (`HH:mm`), `effective_from date`, `effective_to date` (nullable), `capacity_override` (nullable), `status` (`ACTIVE|INACTIVE`).
 
-**workshop_sessions**: `id`, `organization_id`, `workshop_id`, `schedule_rule_id` (nullable), `starts_at timestamptz`, `ends_at timestamptz`, `capacity`, `reserved_count` (mặc định 0), `status` (`PAUSED|RUNNING|CANCELLED|CLOSED`, mặc định `PAUSED`), `has_run boolean` (mặc định false; thành true khi session lần đầu `RUNNING`), `cancel_reason`. `UNIQUE (organization_id, workshop_id, starts_at)`; `CHECK (reserved_count BETWEEN 0 AND capacity)`; index `(organization_id, starts_at, status)`.
+**workshop_sessions**: `id`, `organization_id`, `workshop_id`, `schedule_rule_id` (nullable), `starts_at timestamptz`, `ends_at timestamptz`, `capacity`, `reserved_count` (mặc định 0), `status` (`PAUSED|RUNNING|CANCELLED|CLOSED`, mặc định `PAUSED`), `has_run boolean` (mặc định false; thành true khi session lần đầu `RUNNING`), `booking_cutoff_minutes int` (mặc định 120, 0 đến 10080), `cancel_reason`. `UNIQUE (organization_id, workshop_id, starts_at)`; `CHECK (reserved_count BETWEEN 0 AND capacity)`; index `(organization_id, starts_at, status)`.
 
 ### 8.5 Customer, booking, payment
 
@@ -973,7 +973,7 @@ Mỗi milestone: code → test → `pnpm lint && pnpm typecheck && pnpm test` pa
 | Q1 | Thanh toán online ở phase nào? Mô hình (Stripe Connect, cổng nội địa…)? | Chưa làm (A1) |
 | Q2 | Tên nền tảng và domain chính thức? | `{PLATFORM_DOMAIN}` |
 | Q3 | Giá trị plan limits và giá gói? | Placeholder Mục 7.4 |
-| Q4 | Booking cutoff mặc định (2 giờ) có phù hợp? | 120 phút, shop cấu hình được |
+| Q4 | Booking cutoff mặc định (2 giờ) có phù hợp? | 120 phút mặc định; **cấu hình theo từng session khi tạo session** (không còn theo shop) |
 | Q5 | Số khách tối đa mỗi booking mặc định? | 6 |
 | Q6 | Nội dung Terms, Privacy Policy và nghĩa vụ pháp lý về dữ liệu cá nhân? | Pháp chế cung cấp |
 | Q7 | RPO/RTO chính thức? | Backup daily, giữ 14 bản |

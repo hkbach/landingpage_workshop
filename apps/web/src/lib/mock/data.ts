@@ -20,19 +20,19 @@ export const shops: Shop[] = [
     id: "org-1", name: "Clay & Co Studio", slug: "clayco", status: "ACTIVE", country: "VN", timezone: TZ, currency: "VND",
     defaultLocale: "en", enabledLocales: ["en", "vi", "ko", "ja", "zh"], contactEmail: "hello@clayco.example", contactPhone: "+84 90 000 0000",
     whatsapp: "+84 90 000 0000", address: "12 Nguyen Hue, District 1, Ho Chi Minh City", mapsUrl: "https://maps.app.goo.gl/example",
-    bookingCutoffMinutes: 120, plan: "FREE", ownerName: "Linh Tran", ownerEmail: "linh@clayco.example", createdAt: at(-60, 9),
+    plan: "FREE", ownerName: "Linh Tran", ownerEmail: "linh@clayco.example", createdAt: at(-60, 9),
   },
   {
     id: "org-2", name: "Wax & Wick", slug: "waxwick", status: "PENDING_REVIEW", country: "VN", timezone: TZ, currency: "VND",
     defaultLocale: "en", enabledLocales: ["en", "ja"], contactEmail: "hi@waxwick.example", contactPhone: "+84 91 111 1111",
     address: "5 Le Loi, Hoi An", mapsUrl: "https://maps.app.goo.gl/example2",
-    bookingCutoffMinutes: 120, plan: "FREE", ownerName: "Minh Pham", ownerEmail: "minh@waxwick.example", createdAt: at(-3, 10),
+    plan: "FREE", ownerName: "Minh Pham", ownerEmail: "minh@waxwick.example", createdAt: at(-3, 10),
   },
   {
     id: "org-3", name: "Silver Thread", slug: "silverthread", status: "SUSPENDED", statusReason: "Reported as misleading", country: "VN", timezone: TZ, currency: "USD",
     defaultLocale: "en", enabledLocales: ["en"], contactEmail: "contact@silver.example", contactPhone: "+84 92 222 2222",
     address: "88 Hang Bac, Hanoi", mapsUrl: "https://maps.app.goo.gl/example3",
-    bookingCutoffMinutes: 120, plan: "PRO", ownerName: "An Nguyen", ownerEmail: "an@silver.example", createdAt: at(-120, 10),
+    plan: "PRO", ownerName: "An Nguyen", ownerEmail: "an@silver.example", createdAt: at(-120, 10),
   },
 ];
 
@@ -64,25 +64,25 @@ export const workshops: Workshop[] = [
 ];
 
 export const sessions: Session[] = [
-  { id: "se-1", workshopId: "ws-1", startsAt: at(0, 9), endsAt: at(0, 11), capacity: 8, reservedCount: 5, status: "RUNNING", hasRun: true },
-  { id: "se-2", workshopId: "ws-2", startsAt: at(0, 14), endsAt: at(0, 15.5), capacity: 10, reservedCount: 10, status: "RUNNING", hasRun: true },
-  { id: "se-3", workshopId: "ws-1", startsAt: at(1, 9), endsAt: at(1, 11), capacity: 8, reservedCount: 4, status: "RUNNING", hasRun: true },
-  { id: "se-4", workshopId: "ws-1", startsAt: at(1, 14), endsAt: at(1, 16), capacity: 8, reservedCount: 0, status: "CLOSED", hasRun: true },
-  { id: "se-5", workshopId: "ws-2", startsAt: at(2, 10), endsAt: at(2, 11.5), capacity: 10, reservedCount: 2, status: "RUNNING", hasRun: true },
-  { id: "se-6", workshopId: "ws-1", startsAt: at(3, 9), endsAt: at(3, 11), capacity: 8, reservedCount: 0, status: "CANCELLED", hasRun: true, cancelReason: "Instructor unavailable" },
+  { id: "se-1", workshopId: "ws-1", startsAt: at(0, 9), endsAt: at(0, 11), capacity: 8, reservedCount: 5, status: "RUNNING", hasRun: true, bookingCutoffMinutes: 120 },
+  { id: "se-2", workshopId: "ws-2", startsAt: at(0, 14), endsAt: at(0, 15.5), capacity: 10, reservedCount: 10, status: "RUNNING", hasRun: true, bookingCutoffMinutes: 120 },
+  { id: "se-3", workshopId: "ws-1", startsAt: at(1, 9), endsAt: at(1, 11), capacity: 8, reservedCount: 4, status: "RUNNING", hasRun: true, bookingCutoffMinutes: 120 },
+  { id: "se-4", workshopId: "ws-1", startsAt: at(1, 14), endsAt: at(1, 16), capacity: 8, reservedCount: 0, status: "CLOSED", hasRun: true, bookingCutoffMinutes: 120 },
+  { id: "se-5", workshopId: "ws-2", startsAt: at(2, 10), endsAt: at(2, 11.5), capacity: 10, reservedCount: 2, status: "RUNNING", hasRun: true, bookingCutoffMinutes: 180 },
+  { id: "se-6", workshopId: "ws-1", startsAt: at(3, 9), endsAt: at(3, 11), capacity: 8, reservedCount: 0, status: "CANCELLED", hasRun: true, bookingCutoffMinutes: 120, cancelReason: "Instructor unavailable" },
   // More demo sessions, one of each situation of the Sessions page: new (Paused, never ran), Running without bookings (can be cancelled),
   // Paused after it ran, Closed, Cancelled and a sold-out Running session with a booking.
-  { id: "se-7", workshopId: "ws-1", startsAt: at(4, 9), endsAt: at(4, 11), capacity: 8, reservedCount: 0, status: "PAUSED", hasRun: false },
-  { id: "se-8", workshopId: "ws-2", startsAt: at(4, 14), endsAt: at(4, 15.5), capacity: 10, reservedCount: 0, status: "PAUSED", hasRun: false },
-  { id: "se-9", workshopId: "ws-1", startsAt: at(5, 9), endsAt: at(5, 11), capacity: 8, reservedCount: 0, status: "RUNNING", hasRun: true },
-  { id: "se-10", workshopId: "ws-2", startsAt: at(5, 10), endsAt: at(5, 11.5), capacity: 10, reservedCount: 0, status: "RUNNING", hasRun: true },
-  { id: "se-11", workshopId: "ws-1", startsAt: at(6, 14), endsAt: at(6, 16), capacity: 8, reservedCount: 0, status: "PAUSED", hasRun: true },
-  { id: "se-12", workshopId: "ws-2", startsAt: at(6, 9), endsAt: at(6, 10.5), capacity: 10, reservedCount: 0, status: "CLOSED", hasRun: true },
-  { id: "se-13", workshopId: "ws-1", startsAt: at(7, 9), endsAt: at(7, 11), capacity: 8, reservedCount: 0, status: "CANCELLED", hasRun: true, cancelReason: "Studio maintenance" },
-  { id: "se-14", workshopId: "ws-2", startsAt: at(7, 14), endsAt: at(7, 15.5), capacity: 10, reservedCount: 0, status: "CANCELLED", hasRun: true, cancelReason: "Not enough guests" },
-  { id: "se-15", workshopId: "ws-1", startsAt: at(8, 10), endsAt: at(8, 12), capacity: 6, reservedCount: 6, status: "RUNNING", hasRun: true },
-  { id: "se-16", workshopId: "ws-2", startsAt: at(9, 10), endsAt: at(9, 11.5), capacity: 12, reservedCount: 0, status: "PAUSED", hasRun: false },
-  { id: "se-17", workshopId: "ws-1", startsAt: at(10, 9), endsAt: at(10, 11), capacity: 8, reservedCount: 0, status: "RUNNING", hasRun: true },
+  { id: "se-7", workshopId: "ws-1", startsAt: at(4, 9), endsAt: at(4, 11), capacity: 8, reservedCount: 0, status: "PAUSED", hasRun: false, bookingCutoffMinutes: 60 },
+  { id: "se-8", workshopId: "ws-2", startsAt: at(4, 14), endsAt: at(4, 15.5), capacity: 10, reservedCount: 0, status: "PAUSED", hasRun: false, bookingCutoffMinutes: 120 },
+  { id: "se-9", workshopId: "ws-1", startsAt: at(5, 9), endsAt: at(5, 11), capacity: 8, reservedCount: 0, status: "RUNNING", hasRun: true, bookingCutoffMinutes: 1440 },
+  { id: "se-10", workshopId: "ws-2", startsAt: at(5, 10), endsAt: at(5, 11.5), capacity: 10, reservedCount: 0, status: "RUNNING", hasRun: true, bookingCutoffMinutes: 120 },
+  { id: "se-11", workshopId: "ws-1", startsAt: at(6, 14), endsAt: at(6, 16), capacity: 8, reservedCount: 0, status: "PAUSED", hasRun: true, bookingCutoffMinutes: 120 },
+  { id: "se-12", workshopId: "ws-2", startsAt: at(6, 9), endsAt: at(6, 10.5), capacity: 10, reservedCount: 0, status: "CLOSED", hasRun: true, bookingCutoffMinutes: 120 },
+  { id: "se-13", workshopId: "ws-1", startsAt: at(7, 9), endsAt: at(7, 11), capacity: 8, reservedCount: 0, status: "CANCELLED", hasRun: true, bookingCutoffMinutes: 120, cancelReason: "Studio maintenance" },
+  { id: "se-14", workshopId: "ws-2", startsAt: at(7, 14), endsAt: at(7, 15.5), capacity: 10, reservedCount: 0, status: "CANCELLED", hasRun: true, bookingCutoffMinutes: 120, cancelReason: "Not enough guests" },
+  { id: "se-15", workshopId: "ws-1", startsAt: at(8, 10), endsAt: at(8, 12), capacity: 6, reservedCount: 6, status: "RUNNING", hasRun: true, bookingCutoffMinutes: 30 },
+  { id: "se-16", workshopId: "ws-2", startsAt: at(9, 10), endsAt: at(9, 11.5), capacity: 12, reservedCount: 0, status: "PAUSED", hasRun: false, bookingCutoffMinutes: 240 },
+  { id: "se-17", workshopId: "ws-1", startsAt: at(10, 9), endsAt: at(10, 11), capacity: 8, reservedCount: 0, status: "RUNNING", hasRun: true, bookingCutoffMinutes: 120 },
 ];
 
 export const customers: Customer[] = [

@@ -9,7 +9,7 @@ export interface Shop {
   country: string; timezone: string; currency: string;
   defaultLocale: Locale; enabledLocales: Locale[];
   contactEmail: string; contactPhone: string; whatsapp?: string; address: string; mapsUrl: string;
-  bookingCutoffMinutes: number; plan: "FREE" | "PRO"; ownerName: string; ownerEmail: string; createdAt: string;
+  plan: "FREE" | "PRO"; ownerName: string; ownerEmail: string; createdAt: string;
 }
 
 export interface Workshop {
@@ -25,6 +25,8 @@ export interface Session {
   capacity: number; reservedCount: number; status: SessionStatus; cancelReason?: string;
   /** True once the session has been Running at least once (only such a session can be cancelled, when it has no bookings). */
   hasRun: boolean;
+  /** Minutes before the session starts at which online booking closes (set per session when it is created). */
+  bookingCutoffMinutes: number;
 }
 
 export interface Customer {

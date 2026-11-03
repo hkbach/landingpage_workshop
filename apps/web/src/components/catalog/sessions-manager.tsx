@@ -4,7 +4,7 @@ import { useMemo, useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useDisplayLocale } from "@/lib/use-shop-language";
 import { Ban, Lock, Pause, Pencil, Play, Plus } from "lucide-react";
-import { allowedSessionActions, pickLocalized, SESSION_STATUSES, type Locale, type SessionStatus } from "@workshop/shared";
+import { allowedSessionActions, DEFAULT_BOOKING_CUTOFF_MINUTES, isValidBookingCutoff, MAX_BOOKING_CUTOFF_MINUTES, pickLocalized, SESSION_STATUSES, type Locale, type SessionStatus } from "@workshop/shared";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -115,6 +115,7 @@ export function SessionsManager({
                         <SessionStatusBadge status={s.status} />
                       </div>
                       <CapacityBar reserved={s.reservedCount} capacity={s.capacity} />
+                      <p className="text-xs text-muted-foreground" data-testid="session-cutoff">{t("sessions.cutoffInfo", { minutes: s.bookingCutoffMinutes })}</p>
                       {cancelled && s.cancelReason ? <p className="text-xs text-muted-foreground">{t("sessions.cancelReasonLabel")}: {s.cancelReason}</p> : null}
                       {actions.length > 0 || s.status === "RUNNING" || s.status === "PAUSED" ? (
                         <div className="flex flex-wrap gap-1.5">
@@ -231,8 +232,9 @@ function AddSessionForm({
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [cap, setCap] = useState(String(choices[0]?.defaultCapacity ?? 8));
+  const [cutoff, setCutoff] = useState(String(DEFAULT_BOOKING_CUTOFF_MINUTES));
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const dirty = useDirty({ wsId, date, time, cap }, "add");
+  const dirty = useDirty({ wsId, date, time, cap, cutoff }, "add");
 
   function submit(e: FormEvent) {
     e.preventDefault();
@@ -243,6 +245,8 @@ function AddSessionForm({
     if (!time) errs.time = "errors.required";
     const n = Number(cap);
     if (!Number.isInteger(n) || n < 1 || n > MAX_CAPACITY) errs.cap = "errors.capacityRange";
+    const cutoffMinutes = cutoff.trim() === "" ? Number.NaN : Number(cutoff);
+    if (!isValidBookingCutoff(cutoffMinutes)) errs.cutoff = "errors.cutoffInvalid";
     let startsAt = "";
     if (w && date && time) {
       startsAt = zonedToUtcIso(date, time, shop.timezone);
@@ -250,7 +254,7 @@ function AddSessionForm({
     }
     setErrors(errs);
     if (Object.keys(errs).length > 0 || !w) return;
-    onAdd({ workshopId: w.id, startsAt, endsAt: new Date(new Date(startsAt).getTime() + w.durationMinutes * 60_000).toISOString(), capacity: n });
+    onAdd({ workshopId: w.id, startsAt, endsAt: new Date(new Date(startsAt).getTime() + w.durationMinutes * 60_000).toISOString(), capacity: n, bookingCutoffMinutes: cutoffMinutes });
   }
   const err = (k: string) => (errors[k] ? t(errors[k]) : undefined);
 
@@ -277,6 +281,9 @@ function AddSessionForm({
       </div>
       <Field id="add-cap" label={t("sessions.capacity")} required error={err("cap")}>
         {(p) => <Input {...p} type="number" inputMode="numeric" min={1} max={MAX_CAPACITY} value={cap} onChange={(e) => setCap(e.target.value)} />}
+      </Field>
+      <Field id="add-cutoff" label={t("sessions.cutoff")} hint={t("sessions.cutoffHint")} required error={err("cutoff")}>
+        {(p) => <Input {...p} type="number" inputMode="numeric" min={0} max={MAX_BOOKING_CUTOFF_MINUTES} value={cutoff} onChange={(e) => setCutoff(e.target.value)} />}
       </Field>
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onCancel}>{tops("common.back")}</Button>

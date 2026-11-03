@@ -5,6 +5,11 @@ import type { SessionStatus } from "./enums";
 //   PAUSED or RUNNING --cancel--> CANCELLED, only for a session that has run and has no bookings.
 // A new session is PAUSED. Only a RUNNING session can be booked by guests. CLOSED and CANCELLED are final.
 
+/** Booking cut-off of a session: minutes before it starts at which online booking closes (0 = when it starts). */
+export const DEFAULT_BOOKING_CUTOFF_MINUTES = 120;
+export const MAX_BOOKING_CUTOFF_MINUTES = 10_080;
+export const isValidBookingCutoff = (n: number): boolean => Number.isInteger(n) && n >= 0 && n <= MAX_BOOKING_CUTOFF_MINUTES;
+
 export type SessionAction = "start" | "pause" | "close" | "cancel";
 
 export interface SessionState {

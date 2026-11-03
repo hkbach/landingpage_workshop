@@ -129,7 +129,7 @@
     "sections": {
       "general": "Shop and contact",
       "regional": "Region and booking rules",
-      "regionalDesc": "Used for session times, prices and cut-off rules.",
+      "regionalDesc": "Used for session times and prices.",
       "languages": "Languages",
       "languagesDesc": "Languages offered on your public landing page."
     },
@@ -143,21 +143,18 @@
       "country": "Country",
       "timezone": "Timezone",
       "currency": "Currency",
-      "bookingCutoff": "Booking cut-off (minutes before start)",
       "defaultLocale": "Default language",
       "enabledLocales": "Enabled languages",
       "enabledLocalesHint": "Text already written in a language you turn off is kept, but it is not shown or edited."
     },
     "hints": {
-      "mapsUrl": "Must start with https://",
-      "bookingCutoff": "Online bookings close this many minutes before a session starts."
+      "mapsUrl": "Must start with https://"
     },
     "warning": {
       "regional": "Changing the timezone or currency does not convert existing bookings, sessions or prices. Existing data keeps its original values."
     },
     "default": "default",
     "saved": "Settings saved.",
-    "saveFailed": "The settings could not be saved. Please try again.",
     "errors": {
       "nameRequired": "Enter a shop name.",
       "emailRequired": "Enter a contact email.",
@@ -166,7 +163,6 @@
       "addressRequired": "Enter an address.",
       "urlInvalid": "Enter a URL starting with https://",
       "required": "This field is required.",
-      "cutoffInvalid": "Enter a whole number between 0 and 10080.",
       "defaultMustBeEnabled": "The default language must be enabled."
     }
   },

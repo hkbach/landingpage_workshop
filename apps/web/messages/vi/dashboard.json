@@ -129,7 +129,7 @@
     "sections": {
       "general": "Cửa hàng và liên hệ",
       "regional": "Khu vực và quy tắc đặt chỗ",
-      "regionalDesc": "Dùng cho giờ của buổi, giá và quy tắc đóng đặt chỗ.",
+      "regionalDesc": "Dùng cho giờ của buổi và giá.",
       "languages": "Ngôn ngữ",
       "languagesDesc": "Các ngôn ngữ cung cấp trên trang giới thiệu công khai của bạn."
     },
@@ -143,21 +143,18 @@
       "country": "Quốc gia",
       "timezone": "Múi giờ",
       "currency": "Tiền tệ",
-      "bookingCutoff": "Thời hạn đóng đặt chỗ (số phút trước giờ bắt đầu)",
       "defaultLocale": "Ngôn ngữ mặc định",
       "enabledLocales": "Ngôn ngữ đã bật",
       "enabledLocalesHint": "Nội dung đã nhập bằng một ngôn ngữ bạn tắt vẫn được giữ lại, nhưng sẽ không được hiển thị hay chỉnh sửa."
     },
     "hints": {
-      "mapsUrl": "Phải bắt đầu bằng https://",
-      "bookingCutoff": "Đặt chỗ trực tuyến đóng trước giờ bắt đầu buổi chừng này phút."
+      "mapsUrl": "Phải bắt đầu bằng https://"
     },
     "warning": {
       "regional": "Thay đổi múi giờ hoặc tiền tệ không chuyển đổi các đặt chỗ, buổi hoặc giá hiện có. Dữ liệu hiện có giữ nguyên giá trị ban đầu."
     },
     "default": "mặc định",
     "saved": "Đã lưu cài đặt.",
-    "saveFailed": "Không thể lưu cài đặt. Vui lòng thử lại.",
     "errors": {
       "nameRequired": "Vui lòng nhập tên cửa hàng.",
       "emailRequired": "Vui lòng nhập email liên hệ.",
@@ -166,7 +163,6 @@
       "addressRequired": "Vui lòng nhập địa chỉ.",
       "urlInvalid": "Vui lòng nhập URL bắt đầu bằng https://",
       "required": "Trường này là bắt buộc.",
-      "cutoffInvalid": "Vui lòng nhập số nguyên từ 0 đến 10080.",
       "defaultMustBeEnabled": "Ngôn ngữ mặc định phải được bật."
     }
   },

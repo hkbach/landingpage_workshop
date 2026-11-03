@@ -18,7 +18,7 @@ import { draftKeyFor, MAIN_PAGE_ID, parseDraft } from "./draft-store";
 import { PAGES_KEY, parsePages, starterFor } from "./pages-store";
 import { ShopLink } from "@/components/dashboard/shell/shop-link";
 
-type PreviewShop = Pick<Shop, "name" | "slug" | "defaultLocale" | "enabledLocales" | "timezone" | "currency" | "bookingCutoffMinutes">;
+type PreviewShop = Pick<Shop, "name" | "slug" | "defaultLocale" | "enabledLocales" | "timezone" | "currency">;
 
 function subscribe(cb: () => void) {
   window.addEventListener("storage", cb);

@@ -11,7 +11,6 @@ import type { PageContent } from "@/lib/types";
 import type { RenderContext } from "@/components/sections/context";
 import { currentShop } from "@/lib/mock/data";
 import { publicPromotions } from "@/lib/mock/promotion-store";
-import { bookingCutoffMinutes } from "@/lib/mock/shop-settings-store";
 
 function heroImage(content: PageContent): string | undefined {
   const hero = content.sections.find((s) => s.type === "hero" && s.enabled);
@@ -67,7 +66,7 @@ export default async function SitePage({ params }: PageProps<"/sites/[slug]/[[..
         {/* Header, navigation and language switch are part of the page frame (PageRenderer). */}
         <SiteBody
           content={content} theme={theme} ctx={ctx} workshops={workshops} sessions={sessions} locale={locale} basePath={base} promotions={promotions}
-          shop={{ name: shop.name, slug: shop.slug, timezone: shop.timezone, currency: shop.currency, defaultLocale: shop.defaultLocale, bookingCutoffMinutes: slug === currentShop.slug ? bookingCutoffMinutes() : shop.bookingCutoffMinutes }}
+          shop={{ name: shop.name, slug: shop.slug, timezone: shop.timezone, currency: shop.currency, defaultLocale: shop.defaultLocale }}
         />
       </SiteFrame>
     </SiteIntlProvider>

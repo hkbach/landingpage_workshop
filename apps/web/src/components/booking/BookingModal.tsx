@@ -22,7 +22,7 @@ import { cleanOtp, DEMO_OTP, isOtpComplete, OTP_LENGTH, OTP_MAX_ATTEMPTS, OTP_RE
 import { simulateBooking } from "./simulate";
 import { newUuid } from "@/lib/uuid";
 
-export type BookingShop = Pick<Shop, "name" | "slug" | "timezone" | "currency" | "defaultLocale" | "bookingCutoffMinutes">;
+export type BookingShop = Pick<Shop, "name" | "slug" | "timezone" | "currency" | "defaultLocale">;
 
 interface Props {
   open: boolean;
@@ -136,7 +136,7 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
     () => sessions.filter((x) => x.status === "RUNNING" || x.status === "CLOSED").sort((p, q) => p.startsAt.localeCompare(q.startsAt)),
     [sessions],
   );
-  const stateOf = (x: Session): SlotState => slotState(x, now, shop.bookingCutoffMinutes);
+  const stateOf = (x: Session): SlotState => slotState(x, now);
 
   const [step, setStep] = useState<Step>("datetime");
   const [workshopId, setWorkshopId] = useState(initialWorkshopId ?? workshops[0]?.id ?? "");
@@ -148,6 +148,8 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
   const [previewDone, setPreviewDone] = useState(false);
   /** The chosen session stopped being bookable while the form was open (the booking cut-off passed). */
   const [slotGone, setSlotGone] = useState(false);
+  /** The cut-off of the session that stopped being bookable (shown in the notice). */
+  const [goneCutoff, setGoneCutoff] = useState(0);
 
   const workshop = workshops.find((w) => w.id === workshopId);
   const wsSessions = listed.filter((x) => x.workshopId === workshopId);
@@ -265,8 +267,8 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
         return;
       }
       // Time passed while the guest filled in the form: check the booking cut-off again (the real API checks it too, FR-BOOK-02).
-      if (slotState(session, clock(), shop.bookingCutoffMinutes) !== "OK") {
-        setSlotGone(true); setSessionId(""); setDate(""); setStep("datetime"); setSubmitting(false);
+      if (slotState(session, clock()) !== "OK") {
+        setSlotGone(true); setGoneCutoff(session.bookingCutoffMinutes); setSessionId(""); setDate(""); setStep("datetime"); setSubmitting(false);
         return;
       }
       if (preview) { setPreviewDone(true); setSubmitting(false); return; } // nothing is created from the builder
@@ -325,7 +327,7 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
             <p role="status" className="rounded-lg bg-[var(--site-surface)] p-3 text-sm">{t("noAvailability")}</p>
           ) : (
             <>
-              {slotGone ? <p role="alert" data-testid="slot-gone" className="rounded-lg bg-red-50 p-3 text-sm text-red-800">{t("slotGone", { minutes: shop.bookingCutoffMinutes })}</p> : null}
+              {slotGone ? <p role="alert" data-testid="slot-gone" className="rounded-lg bg-red-50 p-3 text-sm text-red-800">{t("slotGone", { minutes: goneCutoff })}</p> : null}
               {!dates.some(dateOpen) ? <p role="status" className="rounded-lg bg-[var(--site-surface)] p-3 text-sm">{t("noneSelectable")}</p> : null}
               <ChoiceGroup legend={t("chooseDate")} className="sm:grid-cols-2">
                 {dates.map((d) => (
@@ -337,13 +339,15 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
               </ChoiceGroup>
               {date ? (
                 <ChoiceGroup legend={t("chooseTime")}>
-                  <p className="text-xs text-[var(--site-muted)]" data-testid="cutoff-note">{t("cutoffNote", { minutes: shop.bookingCutoffMinutes })}</p>
                   {daySessions.map((x) => {
                     const left = x.capacity - x.reservedCount;
                     const state = stateOf(x);
                     return (
                       <Choice key={x.id} name="bk-time" checked={sessionId === x.id} disabled={state !== "OK"} onSelect={() => { setSessionId(x.id); setQuantity(1); }}>
-                        <span className="font-medium">{formatTime(x.startsAt, shop.timezone, locale)} – {formatTime(x.endsAt, shop.timezone, locale)}</span>
+                        <span className="grid">
+                          <span className="font-medium">{formatTime(x.startsAt, shop.timezone, locale)} – {formatTime(x.endsAt, shop.timezone, locale)}</span>
+                          <span className="text-xs text-[var(--site-muted)]" data-testid="cutoff-note">{t("cutoffNote", { minutes: x.bookingCutoffMinutes })}</span>
+                        </span>
                         <span className={cn("text-xs", state === "FULL" ? "font-semibold text-red-700" : "text-[var(--site-muted)]")}>
                           {state === "OK" ? t("spotsLeft", { count: left }) : t(`slot.${state}`)}
                         </span>

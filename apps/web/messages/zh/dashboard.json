@@ -129,7 +129,7 @@
     "sections": {
       "general": "店铺与联系方式",
       "regional": "地区与预订规则",
-      "regionalDesc": "用于场次时间、价格和截止规则。",
+      "regionalDesc": "用于场次时间和价格。",
       "languages": "语言",
       "languagesDesc": "您的公开落地页提供的语言。"
     },
@@ -143,21 +143,18 @@
       "country": "国家/地区",
       "timezone": "时区",
       "currency": "货币",
-      "bookingCutoff": "预订截止（开始前多少分钟）",
       "defaultLocale": "默认语言",
       "enabledLocales": "已启用的语言",
       "enabledLocalesHint": "已用被关闭语言写好的文字会保留，但不会显示或编辑。"
     },
     "hints": {
-      "mapsUrl": "必须以 https:// 开头",
-      "bookingCutoff": "在线预订将在场次开始前这么多分钟截止。"
+      "mapsUrl": "必须以 https:// 开头"
     },
     "warning": {
       "regional": "更改时区或货币不会转换现有的预订、场次或价格。现有数据保持其原始值。"
     },
     "default": "默认",
     "saved": "设置已保存。",
-    "saveFailed": "无法保存设置。请重试。",
     "errors": {
       "nameRequired": "请输入店铺名称。",
       "emailRequired": "请输入联系邮箱。",
@@ -166,7 +163,6 @@
       "addressRequired": "请输入地址。",
       "urlInvalid": "请输入以 https:// 开头的网址",
       "required": "此项为必填项。",
-      "cutoffInvalid": "请输入0到10080之间的整数。",
       "defaultMustBeEnabled": "默认语言必须处于启用状态。"
     }
   },

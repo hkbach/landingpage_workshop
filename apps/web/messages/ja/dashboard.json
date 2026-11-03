@@ -129,7 +129,7 @@
     "sections": {
       "general": "ショップと連絡先",
       "regional": "地域と予約ルール",
-      "regionalDesc": "セッションの時刻、料金、締切ルールに使用されます。",
+      "regionalDesc": "セッションの時刻と料金に使用されます。",
       "languages": "言語",
       "languagesDesc": "公開ランディングページで提供する言語です。"
     },
@@ -143,21 +143,18 @@
       "country": "国",
       "timezone": "タイムゾーン",
       "currency": "通貨",
-      "bookingCutoff": "予約締切（開始前の分数）",
       "defaultLocale": "デフォルト言語",
       "enabledLocales": "有効な言語",
       "enabledLocalesHint": "オフにした言語で入力済みのテキストは保持されますが、表示や編集はされません。"
     },
     "hints": {
-      "mapsUrl": "https:// で始まる必要があります",
-      "bookingCutoff": "オンライン予約は、セッション開始のこの分数前に締め切られます。"
+      "mapsUrl": "https:// で始まる必要があります"
     },
     "warning": {
       "regional": "タイムゾーンや通貨を変更しても、既存の予約、セッション、料金は換算されません。既存のデータは元の値のままです。"
     },
     "default": "デフォルト",
     "saved": "設定を保存しました。",
-    "saveFailed": "設定を保存できませんでした。もう一度お試しください。",
     "errors": {
       "nameRequired": "ショップ名を入力してください。",
       "emailRequired": "連絡先メールアドレスを入力してください。",
@@ -166,7 +163,6 @@
       "addressRequired": "住所を入力してください。",
       "urlInvalid": "https:// で始まる URL を入力してください",
       "required": "この項目は必須です。",
-      "cutoffInvalid": "0〜10080の整数を入力してください。",
       "defaultMustBeEnabled": "デフォルト言語は有効にする必要があります。"
     }
   },

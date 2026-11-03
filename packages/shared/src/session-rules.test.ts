@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SESSION_STATUSES } from "./enums";
-import { allowedSessionActions, applySessionAction, isSessionBookable, type SessionState } from "./session-rules";
+import { allowedSessionActions, applySessionAction, DEFAULT_BOOKING_CUTOFF_MINUTES, isSessionBookable, isValidBookingCutoff, type SessionState } from "./session-rules";
 
 const s = (status: SessionState["status"], hasRun = true): SessionState => ({ status, hasRun });
 
@@ -41,5 +41,13 @@ describe("applySessionAction", () => {
 describe("isSessionBookable", () => {
   it("is true only for RUNNING", () => {
     expect(SESSION_STATUSES.filter(isSessionBookable)).toEqual(["RUNNING"]);
+  });
+});
+
+describe("booking cut-off of a session", () => {
+  it("is a whole number of minutes from 0 to a week, 120 by default", () => {
+    expect(DEFAULT_BOOKING_CUTOFF_MINUTES).toBe(120);
+    for (const ok of [0, 1, 120, 10_080]) expect(isValidBookingCutoff(ok), String(ok)).toBe(true);
+    for (const bad of [-1, 10_081, 1.5, Number.NaN]) expect(isValidBookingCutoff(bad), String(bad)).toBe(false);
   });
 });
