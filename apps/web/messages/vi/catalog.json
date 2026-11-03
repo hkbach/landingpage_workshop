@@ -18,9 +18,6 @@
     "title": "Workshop",
     "new": "Workshop mới",
     "empty": "Chưa có workshop nào.",
-    "price": "Giá mỗi khách",
-    "duration": "Thời lượng",
-    "capacity": "Sức chứa",
     "minutes": "{n} phút",
     "promotions": "Khuyến mãi có thể áp dụng",
     "maxDiscount": "Mức giảm tối đa",
@@ -47,7 +44,12 @@
     "statusFailed": "Không thể đổi trạng thái.",
     "newHint": "Workshop mới được lưu ở trạng thái Nháp. Hãy kích hoạt trong danh sách khi sẵn sàng.",
     "createdSim": "Đã tạo workshop ở trạng thái Nháp (chế độ demo: không lưu lại). Hãy kích hoạt trong danh sách khi sẵn sàng.",
-    "editHint": "Cập nhật thông tin và lịch của workshop. Chỉ sửa được workshop đã ngừng kích hoạt."
+    "editHint": "Cập nhật thông tin và lịch của workshop. Chỉ sửa được workshop đã ngừng kích hoạt.",
+    "workshop": "Workshop",
+    "activeSessions": "Sessions đang hoạt động",
+    "ofTotal": "trên {total}",
+    "pricePerGuest": "{price} mỗi khách",
+    "seats": "{count, plural, other {# chỗ}}"
   },
   "detail": {
     "tabDetails": "Chi tiết",

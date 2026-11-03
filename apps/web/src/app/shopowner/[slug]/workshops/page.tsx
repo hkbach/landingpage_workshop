@@ -50,11 +50,9 @@ export default async function WorkshopsPage() {
           <Table data-testid="workshops-table">
             <TableHeader>
               <TableRow>
-                <TableHead>{t("form.title")}</TableHead>
+                <TableHead>{t("list.workshop")}</TableHead>
                 <TableHead>{t("form.status")}</TableHead>
-                <TableHead>{t("list.price")}</TableHead>
-                <TableHead>{t("list.duration")}</TableHead>
-                <TableHead>{t("list.capacity")}</TableHead>
+                <TableHead>{t("list.activeSessions")}</TableHead>
                 <TableHead>{t("list.promotions")}</TableHead>
                 <TableHead title={t("list.maxDiscountHint")}>{t("list.maxDiscount")}</TableHead>
                 <TableHead>{t("list.actions")}</TableHead>
@@ -64,15 +62,21 @@ export default async function WorkshopsPage() {
               {rows.map((w) => {
                 const promo = workshopPromotions(w, promotions, today);
                 const money = (n: number) => formatMoney(n, w.currency, locale);
+                const states = workshopSessionStatuses(w.id);
+                const activeSessions = openSessionCount(states);
                 return (
                   <TableRow key={w.id}>
                     <TableCell>
                       <WorkshopTitleButton data={editData(w)} title={pickLocalized(w.title, displayLocale, currentShop.defaultLocale)} />
+                      {/* Price, duration and capacity under the name of the workshop. */}
+                      <p className="mt-0.5 text-xs text-muted-foreground" data-testid="workshop-facts">
+                        {t("list.pricePerGuest", { price: money(w.priceAmount) })} · {t("list.minutes", { n: w.durationMinutes })} · {t("list.seats", { count: w.defaultCapacity })}
+                      </p>
                     </TableCell>
                     <TableCell><WorkshopStatusBadge status={w.status} /></TableCell>
-                    <TableCell>{formatMoney(w.priceAmount, w.currency, locale)}</TableCell>
-                    <TableCell>{t("list.minutes", { n: w.durationMinutes })}</TableCell>
-                    <TableCell>{w.defaultCapacity}</TableCell>
+                    <TableCell className="whitespace-nowrap tabular-nums" data-testid="workshop-active-sessions">
+                      <span className="font-medium">{activeSessions}</span> <span className="text-xs text-muted-foreground">{t("list.ofTotal", { total: states.length })}</span>
+                    </TableCell>
                     <TableCell className="min-w-64 whitespace-normal" data-testid="workshop-promotions">
                       {promo.applicable.length === 0 ? (
                         <span className="text-sm text-muted-foreground">{t("list.noPromotions")}</span>
@@ -128,7 +132,7 @@ export default async function WorkshopsPage() {
                       )}
                     </TableCell>
                     <TableCell className="min-w-56 whitespace-normal align-top">
-                      <WorkshopRowActions id={w.id} status={w.status} openSessions={openSessionCount(workshopSessionStatuses(w.id))} edit={editData(w)} />
+                      <WorkshopRowActions id={w.id} status={w.status} openSessions={activeSessions} edit={editData(w)} />
                     </TableCell>
                   </TableRow>
                 );

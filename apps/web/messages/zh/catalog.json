@@ -18,9 +18,6 @@
     "title": "Workshop",
     "new": "新建 Workshop",
     "empty": "暂无 Workshop。",
-    "price": "每位宾客价格",
-    "duration": "时长",
-    "capacity": "容量",
     "minutes": "{n} 分钟",
     "promotions": "可使用的促销",
     "maxDiscount": "最大折扣",
@@ -47,7 +44,12 @@
     "statusFailed": "无法更改状态。",
     "newHint": "新工作坊会保存为草稿。准备好后请在列表中启用。",
     "createdSim": "工作坊已创建为草稿（演示模式：不会保存）。准备好后请在列表中启用。",
-    "editHint": "更新此工作坊的信息和日程。只有已停用的工作坊才能编辑。"
+    "editHint": "更新此工作坊的信息和日程。只有已停用的工作坊才能编辑。",
+    "workshop": "工作坊",
+    "activeSessions": "进行中的场次",
+    "ofTotal": "共 {total} 个",
+    "pricePerGuest": "每位 {price}",
+    "seats": "{count, plural, other {# 个座位}}"
   },
   "detail": {
     "tabDetails": "详情",

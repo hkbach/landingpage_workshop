@@ -18,9 +18,6 @@
     "title": "워크숍",
     "new": "새 워크숍",
     "empty": "아직 워크숍이 없어요.",
-    "price": "1인당 가격",
-    "duration": "소요 시간",
-    "capacity": "정원",
     "minutes": "{n}분",
     "promotions": "적용 가능한 프로모션",
     "maxDiscount": "최대 할인",
@@ -47,7 +44,12 @@
     "statusFailed": "상태를 변경할 수 없습니다.",
     "newHint": "새 워크숍은 초안으로 저장됩니다. 준비되면 목록에서 활성화하세요.",
     "createdSim": "워크숍이 초안으로 생성되었습니다(데모 모드: 저장되지 않음). 준비되면 목록에서 활성화하세요.",
-    "editHint": "워크숍의 정보와 일정을 수정합니다. 비활성화된 워크숍만 편집할 수 있습니다."
+    "editHint": "워크숍의 정보와 일정을 수정합니다. 비활성화된 워크숍만 편집할 수 있습니다.",
+    "workshop": "워크숍",
+    "activeSessions": "진행 중인 세션",
+    "ofTotal": "전체 {total}개 중",
+    "pricePerGuest": "1인 {price}",
+    "seats": "{count, plural, other {#석}}"
   },
   "detail": {
     "tabDetails": "상세",
