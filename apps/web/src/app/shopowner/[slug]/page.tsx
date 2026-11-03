@@ -113,7 +113,7 @@ export default async function OverviewPage() {
             rows={[{ label: ts("customers.total"), value: num(o.customers.total) }, { label: ts("customers.repeat"), value: num(o.customers.repeat) }]}
           />
           <LiveSummary
-            rows={ledgerFromPayments(bookings, getFeeRates())} currency={currentShop.currency} timezone={currentShop.timezone}
+            rows={ledgerFromPayments(bookings, getFeeRates(currentShop.id))} currency={currentShop.currency} timezone={currentShop.timezone}
             mainPage={{ name: currentShop.name, template: sitePage.template, seed: mockLandingPages }} shopStatus={currentShop.status}
           />
         </ul>

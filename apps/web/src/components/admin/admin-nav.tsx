@@ -3,16 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Building2, ClipboardCheck, Flag, ScrollText, Settings } from "lucide-react";
+import { Building2, ClipboardCheck, Flag, ScrollText } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ITEMS = [
   { href: "/systemadmin/organizations", key: "organizations", Icon: Building2 },
   { href: "/systemadmin/reviews", key: "reviews", Icon: ClipboardCheck },
   { href: "/systemadmin/reports", key: "reports", Icon: Flag },
-  { href: "/systemadmin/audit-logs", key: "auditLogs", Icon: ScrollText },
-  { href: "/systemadmin/settings", key: "settings", Icon: Settings },
-] as const;
+  { href: "/systemadmin/audit-logs", key: "auditLogs", Icon: ScrollText },] as const;
 
 export function AdminNav() {
   const t = useTranslations("admin");

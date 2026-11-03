@@ -11,10 +11,10 @@ import { Field } from "@/components/ops/field";
 import { useDirty } from "@/lib/use-dirty";
 
 /**
- * The fees the platform takes from the income of every shop: Profit = total income - maintenance fee (a % of each booking) - service fee (a %).
+ * The fees the platform takes from the income of ONE shop (each shop has its own rates): Profit = total income - maintenance fee (a % of each booking) - service fee (a %).
  * Save stays disabled until a rate changes (BR-17); the texts are trimmed (BR-16).
  */
-export function PlatformFeesForm({ initial }: { initial: FeeRates }) {
+export function PlatformFeesForm({ organizationId, initial }: { organizationId: string; initial: FeeRates }) {
   const t = useTranslations("admin.fees");
   const [saved, setSaved] = useState(initial);
   const [maintenance, setMaintenance] = useState(bpsToPercent(initial.maintenanceBps));
@@ -37,7 +37,7 @@ export function PlatformFeesForm({ initial }: { initial: FeeRates }) {
     if (maintenanceBps === null || serviceBps === null || next.service) return;
     setBusy(true);
     try {
-      const res = await fetch("/api/v1/admin/finance-settings", {
+      const res = await fetch(`/api/v1/admin/organizations/${encodeURIComponent(organizationId)}/finance-settings`, {
         method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ maintenanceBps, serviceBps }),
       });
       if (!res.ok) throw new Error(String(res.status));

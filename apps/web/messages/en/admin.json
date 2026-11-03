@@ -15,8 +15,7 @@
     "organizations": "Organizations",
     "reviews": "Review queue",
     "reports": "Report management",
-    "auditLogs": "Audit logs",
-    "settings": "Settings"
+    "auditLogs": "Audit logs"
   },
   "guard": {
     "mockNotice": "Prototype: the role check is simulated. Real authentication is added later.",
@@ -257,16 +256,14 @@
     "failed": "The session could not be changed."
   },
   "fees": {
-    "title": "Platform settings",
-    "description": "The fees the platform takes from the income of every shop.",
-    "cardTitle": "Fees on shop income",
-    "formula": "Profit of a shop = total income − maintenance fee − service fee.",
+    "cardTitle": "Fees for this shop",
+    "formula": "Each shop has its own rates. Profit of this shop = total income − maintenance fee − service fee.",
     "maintenance": "Maintenance fee (%)",
     "maintenanceHint": "Taken from every booking: a percentage of what the booking paid.",
     "service": "Service fee (%)",
     "serviceHint": "A percentage of the income of the shop.",
     "save": "Save",
-    "saved": "Fees saved. The Income page of every shop uses the new rates.",
+    "saved": "Fees saved. The Income page of this shop uses the new rates.",
     "saveFailed": "The fees could not be saved.",
     "errors": {
       "invalid": "Enter a percentage from 0 to 100 with at most 2 decimals.",

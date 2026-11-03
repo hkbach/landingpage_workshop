@@ -5,7 +5,9 @@ import { ArrowLeft } from "lucide-react";
 import { OrganizationDetail } from "@/components/admin/organization-detail";
 import { adminAuditLogs, orgStats } from "@/lib/mock/admin";
 import { AdminSessions } from "@/components/admin/admin-sessions";
+import { PlatformFeesForm } from "@/components/admin/platform-fees-form";
 import { currentShop, shops } from "@/lib/mock/data";
+import { getFeeRates } from "@/lib/mock/fee-rates-store";
 
 export default async function OrganizationDetailPage({ params }: PageProps<"/systemadmin/organizations/[id]">) {
   const { id } = await params;
@@ -24,6 +26,8 @@ export default async function OrganizationDetailPage({ params }: PageProps<"/sys
         <h1 className="text-2xl font-semibold">{shop.name}</h1>
       </header>
       <OrganizationDetail shop={shop} stats={orgStats[shop.id] ?? { workshops: 0, bookings30d: 0 }} audit={audit} />
+      {/* The fee rates of this shop (every shop has its own). */}
+      <PlatformFeesForm organizationId={shop.id} initial={getFeeRates(shop.id)} />
       {/* Mock: only the demo shop has sessions. */}
       {shop.id === currentShop.id ? <AdminSessions /> : null}
     </div>

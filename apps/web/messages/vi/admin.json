@@ -15,8 +15,7 @@
     "organizations": "Tổ chức",
     "reviews": "Hàng chờ duyệt",
     "reports": "Quản lý báo cáo",
-    "auditLogs": "Nhật ký kiểm toán",
-    "settings": "Cài đặt"
+    "auditLogs": "Nhật ký kiểm toán"
   },
   "guard": {
     "mockNotice": "Bản thử nghiệm: việc kiểm tra vai trò chỉ là giả lập. Xác thực thật sẽ được thêm sau.",
@@ -257,16 +256,14 @@
     "failed": "Không thể thay đổi session."
   },
   "fees": {
-    "title": "Cài đặt nền tảng",
-    "description": "Các khoản phí nền tảng thu trên thu nhập của mọi shop.",
-    "cardTitle": "Phí trên thu nhập của shop",
-    "formula": "Lợi nhuận của shop = tổng thu − phí duy trì hệ thống − phí dịch vụ.",
+    "cardTitle": "Phí của shop này",
+    "formula": "Mỗi shop có tỷ lệ riêng. Lợi nhuận của shop này = tổng thu − phí duy trì hệ thống − phí dịch vụ.",
     "maintenance": "Phí duy trì hệ thống (%)",
     "maintenanceHint": "Tính trên từng booking: một phần trăm số tiền booking đã thanh toán.",
     "service": "Phí dịch vụ (%)",
     "serviceHint": "Một phần trăm trên tổng thu của shop.",
     "save": "Lưu",
-    "saved": "Đã lưu phí. Trang Income của mọi shop dùng tỷ lệ mới.",
+    "saved": "Đã lưu phí. Trang Income của shop này dùng tỷ lệ mới.",
     "saveFailed": "Không thể lưu phí.",
     "errors": {
       "invalid": "Nhập tỷ lệ từ 0 đến 100, tối đa 2 chữ số thập phân.",
