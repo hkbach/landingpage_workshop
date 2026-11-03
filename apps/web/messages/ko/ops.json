@@ -127,7 +127,8 @@
       "paidRate": "결제율",
       "empty": "이 기간에 예약이 없습니다.",
       "summary": "{from}~{to} 예약: {total}건, {guests}명."
-    }
+    },
+    "action": "작업"
   },
   "filters": {
     "allDates": "모든 날짜",

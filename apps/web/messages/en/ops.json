@@ -127,7 +127,8 @@
       "paidRate": "Paid rate",
       "empty": "No bookings in this period.",
       "summary": "Bookings from {from} to {to}: {total} bookings, {guests} guests."
-    }
+    },
+    "action": "Action"
   },
   "filters": {
     "allDates": "All dates",

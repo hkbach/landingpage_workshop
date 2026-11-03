@@ -16,7 +16,9 @@ import { dayKey, formatDateTime } from "@/lib/format";
 import { dayStatsOf } from "@/lib/bookings-chart";
 import { Field } from "./field";
 import { NativeSelect } from "./native-select";
+import { BookingActions } from "./booking-actions";
 import { BookingStatusBadge, PaymentStatusBadge } from "./status-badges";
+import { useOpsState } from "./use-ops-state";
 import { PriceTip } from "./price-tip";
 import { PaginationBar } from "@/components/ui/pagination-bar";
 import { usePagination } from "@/lib/pagination";
@@ -31,11 +33,11 @@ import { cn } from "@/lib/utils";
  * The chart shows the bookings of the same range over time.
  */
 export function BookingsList({
-  bookings, prices, currency, sessions, customers, workshops, timezone, defaultLocale, enabledLocales, nowIso,
+  bookings: initialBookings, prices, currency, sessions, customers, workshops, actor, timezone, defaultLocale, enabledLocales, nowIso,
 }: {
   bookings: Booking[]; /** The original price of each booking and its vouchers, by booking id. */ prices: Record<string, BookingPriceInfo>;
   currency: string; sessions: Session[]; customers: Customer[]; workshops: Workshop[];
-  timezone: string; defaultLocale: Locale; enabledLocales: Locale[]; nowIso: string;
+  /** The shop owner, who is recorded as the one who checked a guest in. */ actor: string; timezone: string; defaultLocale: Locale; enabledLocales: Locale[]; nowIso: string;
 }) {
   const t = useTranslations("ops");
   const tf = useTranslations("ops.finance");
@@ -51,6 +53,9 @@ export function BookingsList({
 
   const customerOf = (id: string) => customers.find((c) => c.id === id);
   const displayLocale = resolveShopLocale(locale, enabledLocales, defaultLocale);
+  // Check-in, uncheck-in and cancel are done in the list: the bookings are the ones of the screen (the server keeps each change).
+  const ops = useOpsState({ bookings: initialBookings, sessions, nowIso, actor });
+  const bookings = ops.bookings;
   const wsTitle = (id: string) => pickLocalized(workshops.find((w) => w.id === id)?.title, displayLocale, defaultLocale);
   const inRange = (iso: string) => { const d = dayKey(iso, timezone); return (!from || d >= from) && (!to || d <= to); };
   const presets = [{ key: "last3m", days: 90 }, { key: "last6m", days: 182 }, { key: "last1y", days: 365 }] as const;
@@ -194,17 +199,18 @@ export function BookingsList({
         <Card>
           <TooltipProvider>
           {/* Fixed layout: the columns keep their width whatever the rows hold (a filter must not make them jump). */}
-          <Table className="table-fixed min-w-[60rem]" data-testid="bookings-table">
+          <Table className="table-fixed min-w-[68rem]" data-testid="bookings-table">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[8.5rem]">{t("bookings.code")}</TableHead>
+                <TableHead className="w-[8rem]">{t("bookings.code")}</TableHead>
                 <TableHead>{t("bookings.guest")}</TableHead>
+                <TableHead className="w-[10rem]">{t("bookings.action")}</TableHead>
                 <TableHead>{t("bookings.session")}</TableHead>
-                <TableHead className="w-[4.5rem]">{t("common.guestsLabel")}</TableHead>
-                <TableHead className="w-[6.5rem]">{t("bookings.status")}</TableHead>
-                <TableHead className="w-[5.5rem]">{t("bookings.payment")}</TableHead>
-                <TableHead className="w-[7rem]">{t("bookings.voucher")}</TableHead>
-                <TableHead className="w-[7rem] text-right">{t("payment.total")}</TableHead>
+                <TableHead className="w-[4rem]">{t("common.guestsLabel")}</TableHead>
+                <TableHead className="w-[6rem]">{t("bookings.status")}</TableHead>
+                <TableHead className="w-[5rem]">{t("bookings.payment")}</TableHead>
+                <TableHead className="w-[6.5rem]">{t("bookings.voucher")}</TableHead>
+                <TableHead className="w-[6.5rem] text-right">{t("payment.total")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -219,6 +225,12 @@ export function BookingsList({
                     <TableCell className="whitespace-normal break-words">
                       <div className="font-medium">{b.guestName ?? c?.fullName ?? "-"}</div>
                       <div className="text-xs text-muted-foreground">{c?.email ?? t("common.noEmail")}</div>
+                    </TableCell>
+                    <TableCell className="whitespace-normal" data-testid="booking-actions-cell">
+                      {(() => {
+                        const session = ops.sessions.find((x) => x.id === b.sessionId);
+                        return session ? <BookingActions booking={b} session={session} ops={ops} timezone={timezone} compact /> : null;
+                      })()}
                     </TableCell>
                     <TableCell className="whitespace-normal break-words">
                       <div>{wsTitle(b.workshopId)}</div>

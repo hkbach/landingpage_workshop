@@ -8,7 +8,7 @@ export default function BookingsPage() {
   return (
     <BookingsList
       bookings={bookings} prices={bookingPrices(bookings)} currency={currentShop.currency} sessions={sessions} customers={liveCustomers()} workshops={workshops}
-      timezone={currentShop.timezone} defaultLocale={currentShop.defaultLocale} enabledLocales={currentShop.enabledLocales} nowIso={new Date().toISOString()}
+      actor={currentShop.ownerName} timezone={currentShop.timezone} defaultLocale={currentShop.defaultLocale} enabledLocales={currentShop.enabledLocales} nowIso={new Date().toISOString()}
     />
   );
 }

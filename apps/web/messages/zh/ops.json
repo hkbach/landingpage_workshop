@@ -127,7 +127,8 @@
       "paidRate": "支付率",
       "empty": "该时间段没有预订。",
       "summary": "{from} 至 {to} 的预订：共 {total} 个，{guests} 人。"
-    }
+    },
+    "action": "操作"
   },
   "filters": {
     "allDates": "所有日期",

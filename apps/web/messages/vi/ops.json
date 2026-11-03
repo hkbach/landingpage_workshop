@@ -127,7 +127,8 @@
       "paidRate": "Tỷ lệ thanh toán",
       "empty": "Không có booking trong khoảng thời gian này.",
       "summary": "Booking từ {from} đến {to}: {total} booking, {guests} khách."
-    }
+    },
+    "action": "Thao tác"
   },
   "filters": {
     "allDates": "Tất cả ngày",

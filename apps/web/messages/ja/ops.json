@@ -127,7 +127,8 @@
       "paidRate": "支払い率",
       "empty": "この期間の予約はありません。",
       "summary": "{from}〜{to}の予約：{total}件、{guests}名。"
-    }
+    },
+    "action": "操作"
   },
   "filters": {
     "allDates": "すべての日付",
