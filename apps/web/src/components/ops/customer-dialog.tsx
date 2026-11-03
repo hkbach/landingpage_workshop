@@ -10,7 +10,7 @@ import { CustomerBookingsTable } from "./customer-bookings-table";
 
 /**
  * The details of one customer as a popup over the customers list: who they are (email, phone, country and birth date from their account, language),
- * how much they booked and paid, and every booking they have made (newest first, cancelled ones too).
+ * how much they booked and paid, and every booking they have made (the one made most recently first, cancelled ones too).
  */
 export function CustomerDialog({ customer, bookings, timezone, open, onOpenChange }: {
   customer: Customer; bookings: Booking[]; timezone: string; open: boolean; onOpenChange: (open: boolean) => void;
@@ -59,7 +59,7 @@ function Content({ customer, bookings, timezone }: { customer: Customer; booking
           <dd data-testid="dialog-gender">{customer.account?.gender ? t(`customers.genders.${customer.account.gender}`) : "-"}</dd>
           <dt className="text-muted-foreground">{t("customers.locale")}</dt><dd>{language.of(customer.preferredLocale) ?? customer.preferredLocale}</dd>
           <dt className="text-muted-foreground">{t("customers.bookings")}</dt>
-          <dd>{bookings.length}{first ? <span className="text-muted-foreground"> · {t("customers.firstBooking", { date: formatDate(first.startsAt, timezone, locale) })}</span> : null}</dd>
+          <dd>{bookings.length}{first ? <span className="text-muted-foreground"> · {t("customers.firstBooking", { date: formatDate(first.createdAt, timezone, locale) })}</span> : null}</dd>
           <dt className="text-muted-foreground">{t("customers.paid")}</dt><dd>{currency ? formatMoney(paid, currency, locale) : "-"}</dd>
           <dt className="text-muted-foreground">{t("customers.socials")}</dt>
           <dd className="sm:col-span-3" data-testid="dialog-socials">

@@ -100,7 +100,8 @@
     "session": "Buổi",
     "workshop": "Workshop",
     "status": "Trạng thái",
-    "payment": "Thanh toán"
+    "payment": "Thanh toán",
+    "bookedOn": "Ngày booking"
   },
   "filters": {
     "date": "Ngày",
@@ -163,7 +164,7 @@
   "customers": {
     "title": "Khách hàng",
     "perShop": "Khách hàng chỉ thuộc về cửa hàng này và được nhận diện bằng email.",
-    "searchPlaceholder": "Tên hoặc email",
+    "searchPlaceholder": "Tên, email, giới tính hoặc quốc gia",
     "count": "{count, plural, other {# khách hàng}}",
     "empty": "Không tìm thấy khách hàng.",
     "name": "Tên",

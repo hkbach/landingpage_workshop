@@ -21,3 +21,20 @@ describe("demo customers", () => {
     for (const c of customers) expect(bookings.some((b) => b.customerId === c.id), c.id).toBe(true);
   });
 });
+
+describe("when the demo bookings were made", () => {
+  it("every booking was made before its session starts, not in the future, and before its first payment", () => {
+    const now = Date.now();
+    for (const b of bookings) {
+      expect(Date.parse(b.createdAt), b.id).toBeLessThanOrEqual(Date.parse(b.startsAt));
+      expect(Date.parse(b.createdAt), b.id).toBeLessThanOrEqual(now);
+      const first = b.payments.map((p) => p.recordedAt).sort()[0];
+      if (first) expect(b.createdAt <= first, b.id).toBe(true);
+    }
+  });
+  it("the bookings were made on many different days, and a customer has bookings made on different days", () => {
+    expect(new Set(bookings.map((b) => b.createdAt.slice(0, 10))).size).toBeGreaterThanOrEqual(8);
+    for (const c of customers) expect(new Set(bookings.filter((b) => b.customerId === c.id).map((b) => b.createdAt.slice(0, 10))).size, c.id).toBeGreaterThanOrEqual(3);
+  });
+});
+

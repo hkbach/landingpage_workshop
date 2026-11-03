@@ -13,7 +13,7 @@ import { ShopLink } from "@/components/dashboard/shell/shop-link";
 
 /**
  * Every booking a customer has made as a small table: code (a link to the booking), workshop, session, status, payment, total. It comes in the order
- * of `bookings` (the caller puts the newest first); a click on a header sorts it by that column (and again for the other way, and again to go back).
+ * of `bookings` (the caller puts the booking made most recently first); a click on a header sorts it by that column (and again for the other way, and again to go back).
  */
 export function CustomerBookingsTable({ bookings, timezone }: { bookings: Booking[]; timezone: string }) {
   const t = useTranslations("ops");
@@ -24,6 +24,7 @@ export function CustomerBookingsTable({ bookings, timezone }: { bookings: Bookin
   const rows = sortRows(bookings, sort, (b, key) => {
     switch (key) {
       case "code": return b.bookingCode;
+      case "booked": return b.createdAt;
       case "workshop": return b.workshopTitle;
       case "session": return b.startsAt;
       case "status": return t(`bookingStatus.${b.status}`);
@@ -38,6 +39,7 @@ export function CustomerBookingsTable({ bookings, timezone }: { bookings: Bookin
         <TableHeader>
           <TableRow>
             <SortableHead label={t("bookings.code")} sortKey="code" sort={sort} onSort={onSort} />
+            <SortableHead label={t("bookings.bookedOn")} sortKey="booked" sort={sort} onSort={onSort} />
             <SortableHead label={t("bookings.workshop")} sortKey="workshop" sort={sort} onSort={onSort} />
             <SortableHead label={t("bookings.session")} sortKey="session" sort={sort} onSort={onSort} />
             <SortableHead label={t("bookings.status")} sortKey="status" sort={sort} onSort={onSort} />
@@ -49,6 +51,7 @@ export function CustomerBookingsTable({ bookings, timezone }: { bookings: Bookin
           {rows.map((b) => (
             <TableRow key={b.id} data-testid="customer-booking">
               <TableCell><ShopLink href={`/shopowner/bookings/${b.id}`} className="font-mono font-medium underline-offset-4 hover:underline">{b.bookingCode}</ShopLink></TableCell>
+              <TableCell className="whitespace-nowrap" data-testid="booked-on">{formatDateTime(b.createdAt, timezone, locale)}</TableCell>
               <TableCell>{b.workshopTitle}</TableCell>
               <TableCell className="whitespace-nowrap">{formatDateTime(b.startsAt, timezone, locale)}</TableCell>
               <TableCell><BookingStatusBadge status={b.status} /></TableCell>

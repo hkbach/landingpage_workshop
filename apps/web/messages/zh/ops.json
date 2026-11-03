@@ -100,7 +100,8 @@
     "session": "场次",
     "workshop": "Workshop",
     "status": "状态",
-    "payment": "付款"
+    "payment": "付款",
+    "bookedOn": "预订日期"
   },
   "filters": {
     "date": "日期",
@@ -163,7 +164,7 @@
   "customers": {
     "title": "客户",
     "perShop": "客户仅属于本店铺，并以邮箱作为标识。",
-    "searchPlaceholder": "姓名或邮箱",
+    "searchPlaceholder": "姓名、邮箱、性别或国家",
     "count": "{count, plural, other {# 位客户}}",
     "empty": "未找到客户。",
     "name": "姓名",

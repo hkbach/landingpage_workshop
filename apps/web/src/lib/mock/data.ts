@@ -165,6 +165,16 @@ export const customers: Customer[] = [
 // The booking code is "<session code>-<3 digits>", counted per session in the order the demo bookings are listed.
 const bookingsOfSession = new Map<string, number>();
 
+/**
+ * When a demo booking was made: 1 to 14 days before its session (a different time for each booking), and never later than a few hours ago, so the
+ * customers list and the booking lists have bookings made on different days.
+ */
+function bookedAt(id: string, startsAt: string): string {
+  const n = Number(id.replace(/\D/g, "")) || 1;
+  const before = Date.parse(startsAt) - (1 + ((n * 7) % 14)) * DAY - (n % 7) * 3_600_000;
+  return new Date(Math.min(before, Date.now() - (2 + (n % 20)) * 3_600_000)).toISOString();
+}
+
 function booking(p: Partial<Booking> & Pick<Booking, "id" | "sessionId" | "customerId" | "quantity">): Booking {
   const s = sessions.find((x) => x.id === p.sessionId)!;
   const n = (bookingsOfSession.get(s.id) ?? 0) + 1;
@@ -173,7 +183,7 @@ function booking(p: Partial<Booking> & Pick<Booking, "id" | "sessionId" | "custo
   return {
     workshopId: w.id, source: "ONLINE", status: "CONFIRMED", paymentStatus: "UNPAID", unitPriceAmount: w.priceAmount,
     totalAmount: w.priceAmount * p.quantity, currency: w.currency, workshopTitle: w.title.en ?? "", startsAt: s.startsAt,
-    endsAt: s.endsAt, timezone: TZ, createdAt: at(-1, 12), payments: [], ...p,
+    endsAt: s.endsAt, timezone: TZ, createdAt: bookedAt(p.id, s.startsAt), payments: [], ...p,
     bookingCode: `${s.code}-${String(n).padStart(3, "0")}`,
   };
 }
@@ -278,6 +288,11 @@ export const bookings: Booking[] = [
     }
     b.payments = entries;
     b.paymentStatus = computePaymentStatus(b.totalAmount, entries);
+  }
+  // A booking is made before it is paid: no booking is dated after its first payment.
+  for (const b of bookings) {
+    const first = b.payments.map((x) => x.recordedAt).sort()[0];
+    if (first && b.createdAt > first) b.createdAt = new Date(Date.parse(first) - 30 * 60_000).toISOString();
   }
 }
 

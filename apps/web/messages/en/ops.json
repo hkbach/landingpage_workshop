@@ -100,7 +100,8 @@
     "session": "Session",
     "workshop": "Workshop",
     "status": "Status",
-    "payment": "Payment"
+    "payment": "Payment",
+    "bookedOn": "Booked on"
   },
   "filters": {
     "date": "Date",
@@ -163,7 +164,7 @@
   "customers": {
     "title": "Customers",
     "perShop": "Customers belong to this shop only and are identified by email.",
-    "searchPlaceholder": "Name or email",
+    "searchPlaceholder": "Name, email, gender or country",
     "count": "{count, plural, one {# customer} other {# customers}}",
     "empty": "No customers found.",
     "name": "Name",

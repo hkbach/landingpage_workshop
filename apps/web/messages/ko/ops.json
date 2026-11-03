@@ -100,7 +100,8 @@
     "session": "세션",
     "workshop": "워크숍",
     "status": "상태",
-    "payment": "결제"
+    "payment": "결제",
+    "bookedOn": "예약일"
   },
   "filters": {
     "date": "날짜",
@@ -163,7 +164,7 @@
   "customers": {
     "title": "고객",
     "perShop": "고객은 이 매장에만 속하며 이메일로 구분돼요.",
-    "searchPlaceholder": "이름 또는 이메일",
+    "searchPlaceholder": "이름, 이메일, 성별 또는 국가",
     "count": "{count, plural, other {고객 #명}}",
     "empty": "고객을 찾을 수 없어요.",
     "name": "이름",

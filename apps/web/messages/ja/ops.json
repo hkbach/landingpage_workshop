@@ -100,7 +100,8 @@
     "session": "セッション",
     "workshop": "ワークショップ",
     "status": "ステータス",
-    "payment": "支払い"
+    "payment": "支払い",
+    "bookedOn": "予約日"
   },
   "filters": {
     "date": "日付",
@@ -163,7 +164,7 @@
   "customers": {
     "title": "顧客",
     "perShop": "顧客はこのショップのみに属し、メールアドレスで識別されます。",
-    "searchPlaceholder": "名前またはメールアドレス",
+    "searchPlaceholder": "名前、メール、性別、または国",
     "count": "{count, plural, other {#名の顧客}}",
     "empty": "顧客が見つかりません。",
     "name": "名前",

@@ -16,11 +16,13 @@ import { CustomerBookingsTable } from "./customer-bookings-table";
 import { CustomerDialog } from "./customer-dialog";
 import { SortableHead } from "./sortable-head";
 import { nextSort, sortRows, type SortState } from "@/lib/table-sort";
+import { matchesSearch } from "@/lib/text-search";
 import { ShopLink } from "@/components/dashboard/shell/shop-link";
 
 /**
  * FR-CUST-01: the customers of the shop are the guests of its bookings (a person with no booking is not listed), searched by name / email. A click on
- * a row opens the list of every booking that customer has made (cancelled ones too), newest first.
+ * a row opens the list of every booking that customer has made (cancelled ones too), the one made most recently first. The search looks in the
+ * name, the email, the gender and the country.
  */
 export function CustomersList({ customers, bookings, timezone }: { customers: Customer[]; bookings: Booking[]; timezone: string }) {
   const t = useTranslations("ops");
@@ -32,26 +34,30 @@ export function CustomersList({ customers, bookings, timezone }: { customers: Cu
   const [open, setOpen] = useState<ReadonlySet<string>>(new Set());
   const [viewing, setViewing] = useState<string | null>(null); // the customer whose popup is open
   const [sort, setSort] = useState<SortState>(null); // none: the most recent booking first
-  const q = query.trim().toLowerCase();
   const toggle = (id: string) => setOpen((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   const all = customers
     .map((c) => {
-      const mine = bookings.filter((b) => b.customerId === c.id).sort((a, b) => b.startsAt.localeCompare(a.startsAt));
+      // The bookings of the customer, the one made most recently first.
+      const mine = bookings.filter((b) => b.customerId === c.id).sort((a, b) => b.createdAt.localeCompare(a.createdAt) || a.id.localeCompare(b.id));
       const spent = mine.reduce((n, b) => n + b.payments.reduce((m, p) => m + (p.type === "PAYMENT" ? p.amount : -p.amount), 0), 0);
       return { c, mine, count: mine.length, last: mine[0], spent, currency: mine[0]?.currency };
     })
     .filter((r) => r.count > 0)
-    .sort((a, b) => b.last!.startsAt.localeCompare(a.last!.startsAt) || a.c.fullName.localeCompare(b.c.fullName));
-  const found = all.filter((r) => !q || r.c.fullName.toLowerCase().includes(q) || r.c.email?.toLowerCase().includes(q));
+    .sort((a, b) => b.last!.createdAt.localeCompare(a.last!.createdAt) || a.c.fullName.localeCompare(b.c.fullName));
+  // What the customer is shown as (the search looks in it): the gender and the country are the words of the language of the page.
+  const genderOf = (c: Customer) => (c.account?.gender ? t(`customers.genders.${c.account.gender}`) : null);
+  const countryOf = (c: Customer) => (c.account ? regionName.of(c.account.country) ?? c.account.country : t("customers.guest"));
+  const found = all.filter((r) => matchesSearch([r.c.fullName, r.c.email ?? "", genderOf(r.c) ?? "", countryOf(r.c)].join(" "), query));
   // What each column is sorted by (a guest with no account has no country and no birth date: those rows go last).
   const rows = sortRows(found, sort, (r, key) => {
     switch (key) {
       case "name": return r.c.fullName;
       case "email": return r.c.email;
-      case "country": return r.c.account ? regionName.of(r.c.account.country) ?? r.c.account.country : null;
+      case "country": return r.c.account ? countryOf(r.c) : null;
+      case "gender": return genderOf(r.c);
       case "birth": return r.c.account?.birthDate;
       case "bookings": return r.count;
-      case "last": return r.last?.startsAt;
+      case "last": return r.last?.createdAt;
       case "paid": return r.spent;
       default: return null;
     }
@@ -89,6 +95,7 @@ export function CustomersList({ customers, bookings, timezone }: { customers: Cu
                 <SortableHead label={t("customers.email")} sortKey="email" sort={sort} onSort={(k) => setSort((s) => nextSort(s, k))} />
                 <SortableHead label={t("customers.country")} sortKey="country" sort={sort} onSort={(k) => setSort((s) => nextSort(s, k))} />
                 <SortableHead label={t("customers.birthDate")} sortKey="birth" sort={sort} onSort={(k) => setSort((s) => nextSort(s, k))} />
+                <SortableHead label={t("customers.gender")} sortKey="gender" sort={sort} onSort={(k) => setSort((s) => nextSort(s, k))} />
                 <SortableHead label={t("customers.bookings")} sortKey="bookings" sort={sort} onSort={(k) => setSort((s) => nextSort(s, k))} />
                 <SortableHead label={t("customers.lastBooking")} sortKey="last" sort={sort} onSort={(k) => setSort((s) => nextSort(s, k))} />
                 <SortableHead label={t("customers.paid")} sortKey="paid" align="right" sort={sort} onSort={(k) => setSort((s) => nextSort(s, k))} />
@@ -124,8 +131,9 @@ export function CustomersList({ customers, bookings, timezone }: { customers: Cu
                       <TableCell>{c.email ?? t("common.noEmail")}</TableCell>
                       <TableCell data-testid="customer-country">{c.account ? regionName.of(c.account.country) ?? c.account.country : t("customers.guest")}</TableCell>
                       <TableCell data-testid="customer-birth">{c.account ? birthDay(c.account.birthDate) : "-"}</TableCell>
+                      <TableCell data-testid="customer-gender">{genderOf(c) ?? "-"}</TableCell>
                       <TableCell>{count}</TableCell>
-                      <TableCell>{formatDate(last!.startsAt, timezone, locale)}</TableCell>
+                      <TableCell>{formatDate(last!.createdAt, timezone, locale)}</TableCell>
                       <TableCell className="text-right">{currency ? formatMoney(spent, currency, locale) : "-"}</TableCell>
                       <TableCell>
                         <button
@@ -140,7 +148,7 @@ export function CustomersList({ customers, bookings, timezone }: { customers: Cu
                     {isOpen ? (
                       <TableRow data-testid="customer-bookings" className="bg-muted/20 hover:bg-muted/20">
                         <TableCell />
-                        <TableCell colSpan={8} className="whitespace-normal py-3">
+                        <TableCell colSpan={9} className="whitespace-normal py-3">
                           <div id={panelId} className="grid gap-2">
                             <div className="flex flex-wrap items-center justify-between gap-2">
                               <p className="text-sm font-medium">{t("customers.history")} · {t("customers.count2", { count })}</p>
