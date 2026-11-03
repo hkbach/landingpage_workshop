@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useDisplayLocale } from "@/lib/use-shop-language";
 import { ArrowLeft, BadgeCheck, CalendarClock, CheckCheck, Copy, Eye, Lock, LockOpen, LogIn, Pause, Pencil, Play, Plus, Save } from "lucide-react";
-import { allowedSessionActions, canCompleteSession, closedForGood, isSessionFinished, isFinalClose, canEditSession, canRescheduleSession, canReopenSession, canCloseAgain, canRescheduleAgain, notesInOrder, closeWaitsForEnd, isFutureStart, type SessionCloseReason, DEFAULT_BOOKING_CUTOFF_MINUTES, isValidBookingCutoff, MAX_BOOKING_CUTOFF_MINUTES, pickLocalized, SESSION_STATUSES, type Locale, type SessionStatus } from "@workshop/shared";
+import { allowedSessionActions, closedForGood, isSessionFinished, isFinalClose, canEditSession, canRescheduleSession, canReopenSession, canCloseAgain, canRescheduleAgain, notesInOrder, closeWaitsForEnd, isFutureStart, type SessionCloseReason, DEFAULT_BOOKING_CUTOFF_MINUTES, isValidBookingCutoff, MAX_BOOKING_CUTOFF_MINUTES, pickLocalized, SESSION_STATUSES, type Locale, type SessionStatus } from "@workshop/shared";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -44,7 +44,7 @@ export function SessionsManager({
   const [from, setFrom] = useState(today);
   const [to, setTo] = useState(addDays(today, 60));
   const [notice, setNotice] = useState<{ text: string; tone: "ok" | "error" } | null>(null);
-  const [dialog, setDialog] = useState<{ kind: "add" } | { kind: "edit" | "close" | "reschedule" | "clone" | "checkin" | "payment"; id: string } | null>(null);
+  const [dialog, setDialog] = useState<{ kind: "add" } | { kind: "edit" | "close" | "reschedule" | "clone" | "checkin" | "payment" | "complete" | "completed"; id: string } | null>(null);
 
   const displayLocale = useDisplayLocale(shop);
   /** The date and time of a note ("Nov 12, 2026, 2:06 PM"), in the time zone of the shop. */
@@ -222,31 +222,36 @@ export function SessionsManager({
                               <Pencil aria-hidden="true" />{t("sessions.edit")}
                             </Button>
                           ) : null}
-                          {canCompleteSession(s, ops.now) || s.status === "COMPLETED" ? (
-                            // The session took place and ended: nobody can be checked in any more, so the list is only viewed. Completed marks the session
-                            // completed and opens the payments; once it is Completed the payments can be opened again.
+                          {s.status === "CLOSED" || s.status === "COMPLETED" ? (
+                            // Nobody can be checked in after the session is closed, so the list is only viewed. A closed session has its payments confirmed
+                            // (Confirm payment) and is then marked Completed (the Completed button shows the same list with a submit that locks the session).
+                            // A Completed session no longer changes: View booking, and the Completed button that shows its payments.
                             <>
                               <Button size="sm" variant="outline" data-testid="view-bookings-button" onClick={() => setDialog({ kind: "checkin", id: s.id })}>
                                 <Eye aria-hidden="true" />{t("sessions.viewBooking")}
                               </Button>
-                              {s.status === "COMPLETED" ? (
+                              {s.status === "CLOSED" ? (
                                 <Button size="sm" data-testid="payment-button" onClick={() => setDialog({ kind: "payment", id: s.id })}>
                                   <BadgeCheck aria-hidden="true" />{t("sessions.confirmPayment")}
                                 </Button>
-                              ) : (
-                                <Button size="sm" data-testid="complete-button" className="bg-emerald-600 text-white hover:bg-emerald-700 focus-visible:ring-emerald-600/40" onClick={() => { if (ops.completeSession(s.id)) setDialog({ kind: "payment", id: s.id }); }}>
-                                  <CheckCheck aria-hidden="true" />{t("sessions.complete")}
-                                </Button>
-                              )}
+                              ) : null}
+                              <Button
+                                size="sm" data-testid="complete-button" className="bg-emerald-600 text-white hover:bg-emerald-700 focus-visible:ring-emerald-600/40"
+                                onClick={() => setDialog({ kind: s.status === "CLOSED" ? "complete" : "completed", id: s.id })}
+                              >
+                                <CheckCheck aria-hidden="true" />{t("sessions.complete")}
+                              </Button>
                             </>
                           ) : (
                             <Button size="sm" variant="outline" data-testid="checkin-button" onClick={() => setDialog({ kind: "checkin", id: s.id })}>
                               <LogIn aria-hidden="true" />{t("sessions.checkIn")}
                             </Button>
                           )}
-                          <Button size="sm" variant="outline" data-testid="clone-button" onClick={() => setDialog({ kind: "clone", id: s.id })}>
-                            <Copy aria-hidden="true" />{t("sessions.clone")}
-                          </Button>
+                          {s.status === "COMPLETED" ? null : (
+                            <Button size="sm" variant="outline" data-testid="clone-button" onClick={() => setDialog({ kind: "clone", id: s.id })}>
+                              <Copy aria-hidden="true" />{t("sessions.clone")}
+                            </Button>
+                          )}
                       </div>
                     </CardContent>
                   </Card>
@@ -271,7 +276,9 @@ export function SessionsManager({
         session={target} bookings={ops.bookings} customers={customers} now={ops.now} timezone={shop.timezone} perform={ops.perform}
       />
       <PaymentDialog
-        key={`pay-${target?.id ?? "none"}`} open={dialog?.kind === "payment" && !!target} onOpenChange={(o) => !o && setDialog(null)}
+        key={`pay-${dialog?.kind ?? "none"}-${target?.id ?? "none"}`} open={(dialog?.kind === "payment" || dialog?.kind === "complete" || dialog?.kind === "completed") && !!target} onOpenChange={(o) => !o && setDialog(null)}
+        mode={dialog?.kind === "complete" ? "complete" : dialog?.kind === "completed" ? "view" : "payment"}
+        onComplete={() => { if (target && ops.completeSession(target.id)) setDialog(null); }}
         session={target} bookings={ops.bookings} customers={customers} setPaid={ops.setPaid}
         notifyPaid={async (id) => (await notifyPaidRequest(id)).notified}
       />

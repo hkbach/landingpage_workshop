@@ -254,26 +254,16 @@ describe("what a system administrator can do", () => {
 describe("Completed", () => {
   const NOW = new Date("2026-11-10T12:00:00Z");
   const ended = { endsAt: "2026-11-10T10:00:00Z" };
-  const notFinished = { endsAt: "2026-11-10T14:00:00Z" };
   it("CLOSED and COMPLETED are both finished; the others are not", () => {
     expect(isSessionFinished("CLOSED")).toBe(true);
     expect(isSessionFinished("COMPLETED")).toBe(true);
     for (const s of ["OPEN", "PAUSED", "RUNNING"] as const) expect(isSessionFinished(s)).toBe(false);
   });
-  it("a closed session whose time is over can be completed", () => {
-    expect(canCompleteSession({ status: "CLOSED", ...ended }, NOW)).toBe(true);
-    expect(canCompleteSession({ status: "CLOSED", ...ended, notes: [{ type: "AUTO_CLOSED", at: ended.endsAt }] }, NOW)).toBe(true);
+  it("every closed session can be completed, whatever closed it and whether its time is over", () => {
+    expect(canCompleteSession({ status: "CLOSED" })).toBe(true);
   });
-  it("not before its time is over, and not from any other status", () => {
-    expect(canCompleteSession({ status: "CLOSED", ...notFinished }, NOW)).toBe(false);
-    for (const s of ["OPEN", "PAUSED", "RUNNING", "COMPLETED"] as const) expect(canCompleteSession({ status: s, ...ended }, NOW), s).toBe(false);
-  });
-  it("not a session a person closed and did not re-open: it never took place", () => {
-    expect(canCompleteSession({ status: "CLOSED", ...ended, notes: [{ type: "CLOSED", at: "2026-11-08T09:00:00Z", reason: { code: "VENUE_ISSUE" } }] }, NOW)).toBe(false);
-    expect(canCompleteSession({ status: "CLOSED", ...ended, notes: [{ type: "CLOSED", at: "2026-11-08T09:00:00Z", by: "ADMIN", reason: { code: "OTHER", note: "x" } }] }, NOW)).toBe(false);
-  });
-  it("but a session closed and then re-opened can be, once it has taken place", () => {
-    expect(canCompleteSession({ status: "CLOSED", ...ended, notes: [{ type: "CLOSED", at: "2026-11-08T09:00:00Z", reason: { code: "VENUE_ISSUE" } }, { type: "REOPENED", at: "2026-11-08T10:00:00Z" }] }, NOW)).toBe(true);
+  it("no other status can", () => {
+    for (const st of ["OPEN", "PAUSED", "RUNNING", "COMPLETED"] as const) expect(canCompleteSession({ status: st }), st).toBe(false);
   });
   it("a completed session stays completed: the system does not close it again, and nothing can be done to it", () => {
     const s = { status: "COMPLETED" as const, ...ended };

@@ -77,6 +77,7 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
     (bookingId: string, input: PaymentInput): OpResult => {
       const b = bookings.find((x) => x.id === bookingId);
       if (!b) return { ok: false, reason: "NOT_FOUND" };
+      if (sessions.find((x) => x.id === b.sessionId)?.status === "COMPLETED") return { ok: false, reason: "INVALID_STATE" }; // a completed session no longer changes
       if (!Number.isFinite(input.amount) || input.amount <= 0) return { ok: false, reason: "INVALID_AMOUNT" };
       if (input.type === "REFUND" && input.amount > netPaid(b.payments)) return { ok: false, reason: "INVALID_AMOUNT" };
       const entry: PaymentEntry = {
@@ -92,7 +93,7 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
       );
       return { ok: true };
     },
-    [bookings, init.actor],
+    [bookings, sessions, init.actor],
   );
 
   /**
@@ -158,7 +159,7 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
   const completeSession = useCallback(
     (id: string): boolean => {
       const s = sessions.find((x) => x.id === id);
-      if (!s || !canCompleteSession(s, now)) return false;
+      if (!s || !canCompleteSession(s)) return false;
       // The displayed session (closed by the system when its time ended) becomes the stored one, so its history is kept.
       setSessions((list) => list.map((x) => (x.id === id ? { ...closeIfEnded(x, now), status: "COMPLETED" } : x)));
       return true;

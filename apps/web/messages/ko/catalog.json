@@ -269,6 +269,14 @@
     "partCancelled": "취소됨",
     "paymentMailed": "결제 완료 이메일을 보냈습니다.",
     "paymentMailNone": "이 손님은 이메일이 없어 발송하지 않았습니다.",
-    "paymentMailFailed": "이메일을 보내지 못했습니다."
+    "paymentMailFailed": "이메일을 보내지 못했습니다.",
+    "completeTitle": "세션 {code} 완료",
+    "completeHint": "모든 예약의 결제를 확인한 다음 완료를 눌러 세션을 마무리하세요.",
+    "completedTitle": "{code} 결제 내역(완료)",
+    "completedHint": "이 세션은 완료되었습니다. 세션과 결제 정보는 더 이상 변경할 수 없습니다.",
+    "completeConfirmTitle": "{code}을(를) 완료 처리할까요?",
+    "completeConfirmText": "세션이 완료되면 세션과 예약, 결제 정보를 더 이상 변경할 수 없습니다. 결제 정보는 통계와 시스템 수수료로 지불해야 할 총액 확인에 사용됩니다.",
+    "completeBack": "뒤로",
+    "completeConfirmButton": "예, 완료합니다"
   }
 }

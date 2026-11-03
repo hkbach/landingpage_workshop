@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { ArrowLeft, BadgeCheck, CalendarClock, Check, Lock, LogIn, Undo2 } from "lucide-react";
+import { ArrowLeft, BadgeCheck, CalendarClock, Check, CheckCheck, Lock, LogIn, Undo2 } from "lucide-react";
 import { checkCloseReason, CLOSE_REASON_NOTE_MAX, formatMoney, isSessionFinished, SESSION_CLOSE_REASONS, type RescheduleError, type SessionCloseReason } from "@workshop/shared";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -238,11 +238,15 @@ export function CheckInDialog({ open, onOpenChange, session, bookings, customers
 }
 
 /**
- * After a session has ended: the bookings of the session in three parts, the guests who checked in, the ones who did not, and the cancelled ones. Each
- * row has Confirm payment (the guest paid at the studio: the booking becomes Paid and the guest is emailed) or, once it is Paid, Unpaid (to undo a mistake).
+ * The payments of the bookings of a session, in three parts: the guests who checked in, the ones who did not, and the cancelled ones. Each row has
+ * Confirm payment (the guest paid at the studio: the booking becomes Paid and the guest is emailed) or, once it is Paid, Unpaid (to undo a mistake).
+ * `mode`: "payment" (Confirm payment button of a closed session), "complete" (the same list with a Completed button at the end: after a confirmation the
+ * session is Completed and nothing about it changes any more) or "view" (a Completed session: the payments are only shown).
  */
-export function PaymentDialog({ open, onOpenChange, session, bookings, customers, setPaid, notifyPaid }: {
-  open: boolean; onOpenChange: (o: boolean) => void; session?: Session; bookings: Booking[]; customers: Customer[];
+export function PaymentDialog({ open, onOpenChange, session, bookings, customers, setPaid, notifyPaid, mode, onComplete }: {
+  open: boolean; onOpenChange: (o: boolean) => void; session?: Session; bookings: Booking[]; customers: Customer[]; mode: "payment" | "complete" | "view";
+  /** Called once the owner has confirmed that the session is Completed. */
+  onComplete?: () => void;
   setPaid: (bookingId: string, paid: boolean) => OpResult;
   /** Tells the server a booking became Paid so the guest is emailed; resolves with the number of emails queued (0: the guest left no email). */
   notifyPaid: (bookingId: string) => Promise<number>;
@@ -251,6 +255,7 @@ export function PaymentDialog({ open, onOpenChange, session, bookings, customers
   const locale = useLocale();
   const [failed, setFailed] = useState<string | null>(null);
   const [mail, setMail] = useState<{ code: string; state: "sent" | "none" | "failed" } | null>(null);
+  const [confirming, setConfirming] = useState(false);
   const rows = session ? bookings.filter((b) => b.sessionId === session.id).sort((a, b) => a.bookingCode.localeCompare(b.bookingCode)) : [];
   const nameOf = (b: Booking) => customers.find((c) => c.id === b.customerId)?.fullName ?? "";
   const parts = [
@@ -273,13 +278,14 @@ export function PaymentDialog({ open, onOpenChange, session, bookings, customers
   }
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o) { setFailed(null); setMail(null); } onOpenChange(o); }}>
+    <>
+    <Dialog open={open} onOpenChange={(o) => { if (!o) { setFailed(null); setMail(null); setConfirming(false); } onOpenChange(o); }}>
       <DialogContent className="max-h-[92dvh] overflow-y-auto sm:max-w-2xl">
         {session ? (
           <div className="grid gap-4">
             <DialogHeader>
-              <DialogTitle>{t("sessions.paymentTitle", { code: session.code })}</DialogTitle>
-              <DialogDescription>{t("sessions.paymentHint")}</DialogDescription>
+              <DialogTitle>{t(mode === "complete" ? "sessions.completeTitle" : mode === "view" ? "sessions.completedTitle" : "sessions.paymentTitle", { code: session.code })}</DialogTitle>
+              <DialogDescription>{t(mode === "complete" ? "sessions.completeHint" : mode === "view" ? "sessions.completedHint" : "sessions.paymentHint")}</DialogDescription>
             </DialogHeader>
             {rows.length === 0 ? (
               <p role="status" data-testid="payment-empty" className="rounded-lg bg-muted/50 p-4 text-sm text-muted-foreground">{t("sessions.noBookings")}</p>
@@ -305,7 +311,7 @@ export function PaymentDialog({ open, onOpenChange, session, bookings, customers
                               <span data-testid="payment-status"><PaymentStatusBadge status={b.paymentStatus} /></span>
                               {b.totalAmount <= 0 ? (
                                 <span className="text-xs text-muted-foreground">{t("sessions.nothingToPay")}</span>
-                              ) : b.paymentStatus === "PAID" ? (
+                              ) : mode === "view" ? null : b.paymentStatus === "PAID" ? (
                                 <Button size="sm" variant="outline" data-testid="payment-unpaid" onClick={() => undo(b)}><Undo2 aria-hidden="true" />{t("sessions.markUnpaid")}</Button>
                               ) : (
                                 <Button size="sm" data-testid="payment-confirm" onClick={() => confirm(b)}><BadgeCheck aria-hidden="true" />{t("sessions.confirmPayment")}</Button>
@@ -327,10 +333,30 @@ export function PaymentDialog({ open, onOpenChange, session, bookings, customers
             )}
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}><Check aria-hidden="true" />{t("sessions.checkInDone")}</Button>
+              {mode === "complete" ? (
+                <Button type="button" data-testid="complete-submit" className="bg-emerald-600 text-white hover:bg-emerald-700 focus-visible:ring-emerald-600/40" onClick={() => setConfirming(true)}>
+                  <CheckCheck aria-hidden="true" />{t("sessions.complete")}
+                </Button>
+              ) : null}
             </DialogFooter>
           </div>
         ) : null}
       </DialogContent>
     </Dialog>
+    <Dialog open={confirming && mode === "complete"} onOpenChange={setConfirming}>
+      <DialogContent className="sm:max-w-md" data-testid="complete-confirm">
+        <DialogHeader>
+          <DialogTitle>{t("sessions.completeConfirmTitle", { code: session?.code ?? "" })}</DialogTitle>
+          <DialogDescription>{t("sessions.completeConfirmText")}</DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={() => setConfirming(false)}><ArrowLeft aria-hidden="true" />{t("sessions.completeBack")}</Button>
+          <Button type="button" data-testid="complete-confirm-button" className="bg-emerald-600 text-white hover:bg-emerald-700 focus-visible:ring-emerald-600/40" onClick={() => { setConfirming(false); onComplete?.(); }}>
+            <CheckCheck aria-hidden="true" />{t("sessions.completeConfirmButton")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }

@@ -269,6 +269,14 @@
     "partCancelled": "已取消",
     "paymentMailed": "已发送付款确认邮件。",
     "paymentMailNone": "该客人没有邮箱，未发送邮件。",
-    "paymentMailFailed": "邮件发送失败。"
+    "paymentMailFailed": "邮件发送失败。",
+    "completeTitle": "完成场次 {code}",
+    "completeHint": "确认每个预订的支付情况，然后点击“已完成”结束场次。",
+    "completedTitle": "{code} 的支付（已完成）",
+    "completedHint": "该场次已完成，场次及其支付信息不能再更改。",
+    "completeConfirmTitle": "确认将 {code} 标记为已完成？",
+    "completeConfirmText": "场次完成后，场次及其预订和支付信息将不能再更改。支付信息将用于统计，并用于确认需向平台支付的系统费用总额。",
+    "completeBack": "返回",
+    "completeConfirmButton": "确认完成"
   }
 }

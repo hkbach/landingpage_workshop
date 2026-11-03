@@ -269,6 +269,14 @@
     "partCancelled": "キャンセル済み",
     "paymentMailed": "お支払い確認のメールを送信しました。",
     "paymentMailNone": "このお客様はメールアドレスがないため送信していません。",
-    "paymentMailFailed": "メールを送信できませんでした。"
+    "paymentMailFailed": "メールを送信できませんでした。",
+    "completeTitle": "セッション {code} を完了",
+    "completeHint": "すべての予約の支払いを確認してから、「完了」を押してセッションを終了してください。",
+    "completedTitle": "{code} の支払い（完了）",
+    "completedHint": "このセッションは完了しました。セッションと支払い情報は変更できません。",
+    "completeConfirmTitle": "{code} を完了にしますか？",
+    "completeConfirmText": "セッションを完了すると、セッション、予約、支払い情報は変更できなくなります。支払い情報は、統計およびシステム利用料として支払う合計金額の確認に使用されます。",
+    "completeBack": "戻る",
+    "completeConfirmButton": "はい、完了にします"
   }
 }

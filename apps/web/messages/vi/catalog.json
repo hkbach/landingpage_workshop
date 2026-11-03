@@ -269,6 +269,14 @@
     "partCancelled": "Đã hủy",
     "paymentMailed": "Đã gửi email báo đã nhận thanh toán.",
     "paymentMailNone": "Khách này không có email nên chưa gửi gì.",
-    "paymentMailFailed": "Không gửi được email."
+    "paymentMailFailed": "Không gửi được email.",
+    "completeTitle": "Hoàn thành session {code}",
+    "completeHint": "Kiểm tra thanh toán của từng booking, rồi bấm Hoàn thành để kết thúc session.",
+    "completedTitle": "Thanh toán của {code} (Hoàn thành)",
+    "completedHint": "Session đã Hoàn thành: session và các thanh toán không thể thay đổi nữa.",
+    "completeConfirmTitle": "Xác nhận Hoàn thành session {code}?",
+    "completeConfirmText": "Khi session Hoàn thành, session cùng các booking và thanh toán của nó sẽ không thể thay đổi nữa. Thông tin thanh toán sẽ được dùng để thống kê và xác nhận tổng số tiền phải thanh toán cho chi phí hệ thống.",
+    "completeBack": "Quay lại",
+    "completeConfirmButton": "Xác nhận Hoàn thành"
   }
 }

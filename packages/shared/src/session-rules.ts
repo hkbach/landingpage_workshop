@@ -6,8 +6,8 @@ import type { SessionStatus } from "./enums";
 // A new session is OPEN (created, not running yet): it can only be started. A RUNNING session can only be paused (it never goes to
 // another status directly). Only a RUNNING session can be booked by guests. CLOSED is final, except that a session the owner closed before
 // it started can be re-opened (back to OPEN, see canReopenSession). There is no way to cancel a session.
-// A session whose end time has passed is closed by the system (see closeIfEnded). The owner then marks a session that took place COMPLETED
-// (CLOSED --complete--> COMPLETED, see canCompleteSession); COMPLETED is final.
+// A session whose end time has passed is closed by the system (see closeIfEnded). The owner then marks a closed session COMPLETED
+// (CLOSED --complete--> COMPLETED, see canCompleteSession); COMPLETED is final: the session, its bookings and their payments no longer change.
 
 /** Booking cut-off of a session: minutes before it starts at which online booking closes (0 = when it starts). */
 export const DEFAULT_BOOKING_CUTOFF_MINUTES = 120;
@@ -56,15 +56,8 @@ export function closeIfEnded<T extends { status: SessionStatus; endsAt: string; 
 /** CLOSED and COMPLETED are the end of the life of a session: it cannot be booked, changed or re-scheduled any more. */
 export const isSessionFinished = (status: SessionStatus): boolean => status === "CLOSED" || status === "COMPLETED";
 
-/**
- * The owner can mark a session COMPLETED when it is CLOSED, its time is over and it was not held closed by a person (a session the owner or an
- * administrator closed before it started did not take place: its last close is not followed by a re-open).
- */
-export function canCompleteSession(s: { status: SessionStatus; endsAt: string; notes?: readonly SessionNote[] }, now: Date): boolean {
-  if (s.status !== "CLOSED" || new Date(s.endsAt).getTime() > now.getTime()) return false;
-  const last = notesInOrder(s.notes).filter((n) => n.type === "CLOSED" || n.type === "REOPENED").at(-1);
-  return last?.type !== "CLOSED";
-}
+/** The owner can mark any CLOSED session COMPLETED (after checking the payments); COMPLETED is final. */
+export const canCompleteSession = (s: { status: SessionStatus }): boolean => s.status === "CLOSED";
 
 /** True while the session is taking place (it has started and not ended yet). */
 export function isInSessionTime(s: { startsAt: string; endsAt: string }, now: Date): boolean {
