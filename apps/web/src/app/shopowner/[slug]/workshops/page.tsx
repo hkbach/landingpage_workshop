@@ -8,6 +8,7 @@ import { NewWorkshopDialog } from "@/components/catalog/new-workshop-dialog";
 import { WorkshopRowActions } from "@/components/catalog/workshop-row-actions";
 import { WorkshopTitleButton } from "@/components/catalog/workshop-title-button";
 import { WorkshopStatusBadge } from "@/components/catalog/workshop-status-badge";
+import { safeImage } from "@/components/sections/safe-url";
 import { currentShop, workshops } from "@/lib/mock/data";
 import { allPromotions, shopToday } from "@/lib/mock/promotion-store";
 import { ShopLink } from "@/components/dashboard/shell/shop-link";
@@ -51,7 +52,6 @@ export default async function WorkshopsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>{t("list.workshop")}</TableHead>
-                <TableHead>{t("form.status")}</TableHead>
                 <TableHead>{t("list.activeSessions")}</TableHead>
                 <TableHead>{t("list.promotions")}</TableHead>
                 <TableHead title={t("list.maxDiscountHint")}>{t("list.maxDiscount")}</TableHead>
@@ -72,8 +72,13 @@ export default async function WorkshopsPage() {
                       <p className="mt-0.5 text-xs text-muted-foreground" data-testid="workshop-facts">
                         {t("list.pricePerGuest", { price: money(w.priceAmount) })} · {t("list.minutes", { n: w.durationMinutes })} · {t("list.seats", { count: w.defaultCapacity })}
                       </p>
+                      <div className="mt-1.5"><WorkshopStatusBadge status={w.status} /></div>
+                      {/* The thumbnail of the workshop (its cover image) closes the cell. */}
+                      {safeImage(w.coverUrl) ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={safeImage(w.coverUrl)} alt="" data-testid="workshop-thumbnail" loading="lazy" className="mt-2 aspect-[3/2] w-32 rounded-md object-cover" />
+                      ) : null}
                     </TableCell>
-                    <TableCell><WorkshopStatusBadge status={w.status} /></TableCell>
                     <TableCell className="whitespace-nowrap tabular-nums" data-testid="workshop-active-sessions">
                       <span className="font-medium">{activeSessions}</span> <span className="text-xs text-muted-foreground">{t("list.ofTotal", { total: states.length })}</span>
                     </TableCell>
