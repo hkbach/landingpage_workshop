@@ -92,7 +92,8 @@ export function BookingDetail({
                 </Row>
                 <Row label={t("customers.email")}>{customer.email ?? t("common.noEmail")}</Row>
                 <Row label={t("customers.phone")}>{customer.phone ?? "-"}</Row>
-                <Row label={t("customers.country")}>{customer.country}</Row>
+                <Row label={t("customers.country")}>{customer.account ? new Intl.DisplayNames([locale], { type: "region" }).of(customer.account.country) ?? customer.account.country : t("customers.guest")}</Row>
+                <Row label={t("customers.birthDate")}>{customer.account ? new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${customer.account.birthDate}T12:00:00Z`)) : "-"}</Row>
               </dl>
             ) : <p className="text-sm text-muted-foreground">-</p>}
           </CardContent>

@@ -180,7 +180,10 @@
     "showBookings": "显示 {name} 的预订",
     "hideBookings": "隐藏 {name} 的预订",
     "viewCustomer": "打开客户页面",
-    "count2": "{count, plural, other {# 个预订}}"
+    "count2": "{count, plural, other {# 个预订}}",
+    "guest": "访客",
+    "birthDate": "出生日期",
+    "guestHint": "国家和出生日期来自客户注册的账户。仅预订、没有账户的访客，国家显示为“访客”，出生日期显示为“-”。"
   },
   "newBooking": {
     "title": "新建预订",

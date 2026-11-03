@@ -180,7 +180,10 @@
     "showBookings": "{name}님의 예약 보기",
     "hideBookings": "{name}님의 예약 숨기기",
     "viewCustomer": "고객 페이지 열기",
-    "count2": "{count, plural, other {예약 #건}}"
+    "count2": "{count, plural, other {예약 #건}}",
+    "guest": "비회원",
+    "birthDate": "생년월일",
+    "guestHint": "국가와 생년월일은 고객이 가입한 계정에서 가져옵니다. 예약만 한 고객은 계정이 없으므로 국가는 \"비회원\", 생년월일은 \"-\"로 표시됩니다."
   },
   "newBooking": {
     "title": "새 예약",

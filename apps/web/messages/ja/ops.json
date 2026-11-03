@@ -180,7 +180,10 @@
     "showBookings": "{name}様の予約を表示",
     "hideBookings": "{name}様の予約を非表示",
     "viewCustomer": "顧客ページを開く",
-    "count2": "{count, plural, other {予約#件}}"
+    "count2": "{count, plural, other {予約#件}}",
+    "guest": "ゲスト",
+    "birthDate": "生年月日",
+    "guestHint": "国と生年月日は、お客様が登録したアカウントから取得します。予約のみのお客様はアカウントがないため、国は「ゲスト」、生年月日は「-」と表示されます。"
   },
   "newBooking": {
     "title": "新規予約",

@@ -21,6 +21,9 @@ import { ShopLink } from "@/components/dashboard/shell/shop-link";
 export function CustomersList({ customers, bookings, timezone }: { customers: Customer[]; bookings: Booking[]; timezone: string }) {
   const t = useTranslations("ops");
   const locale = useLocale();
+  // Country and birth date come from the account of the customer; a guest who only booked has no account (the country reads "Guest", the date "-").
+  const regionName = new Intl.DisplayNames([locale], { type: "region" });
+  const birthDay = (d: string) => new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${d}T12:00:00Z`));
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState<ReadonlySet<string>>(new Set());
   const q = query.trim().toLowerCase();
@@ -39,6 +42,7 @@ export function CustomersList({ customers, bookings, timezone }: { customers: Cu
     <div className="grid gap-4">
       <h1 className="text-xl font-semibold sm:text-2xl">{t("customers.title")}</h1>
       <p className="text-sm text-muted-foreground">{t("customers.perShop")}</p>
+      <p className="text-sm text-muted-foreground" data-testid="customers-guest-hint">{t("customers.guestHint")}</p>
       <Card>
         <CardContent>
           <form role="search" onSubmit={(e) => e.preventDefault()} className="max-w-md">
@@ -65,6 +69,7 @@ export function CustomersList({ customers, bookings, timezone }: { customers: Cu
                 <TableHead>{t("customers.name")}</TableHead>
                 <TableHead>{t("customers.email")}</TableHead>
                 <TableHead>{t("customers.country")}</TableHead>
+                <TableHead>{t("customers.birthDate")}</TableHead>
                 <TableHead>{t("customers.bookings")}</TableHead>
                 <TableHead>{t("customers.lastBooking")}</TableHead>
                 <TableHead className="text-right">{t("customers.paid")}</TableHead>
@@ -92,7 +97,8 @@ export function CustomersList({ customers, bookings, timezone }: { customers: Cu
                       </TableCell>
                       <TableCell className="font-medium">{c.fullName}</TableCell>
                       <TableCell>{c.email ?? t("common.noEmail")}</TableCell>
-                      <TableCell>{c.country}</TableCell>
+                      <TableCell data-testid="customer-country">{c.account ? regionName.of(c.account.country) ?? c.account.country : t("customers.guest")}</TableCell>
+                      <TableCell data-testid="customer-birth">{c.account ? birthDay(c.account.birthDate) : "-"}</TableCell>
                       <TableCell>{count}</TableCell>
                       <TableCell>{formatDate(last!.startsAt, timezone, locale)}</TableCell>
                       <TableCell className="text-right">{currency ? formatMoney(spent, currency, locale) : "-"}</TableCell>
@@ -100,7 +106,7 @@ export function CustomersList({ customers, bookings, timezone }: { customers: Cu
                     {isOpen ? (
                       <TableRow data-testid="customer-bookings" className="bg-muted/20 hover:bg-muted/20">
                         <TableCell />
-                        <TableCell colSpan={6} className="whitespace-normal py-3">
+                        <TableCell colSpan={7} className="whitespace-normal py-3">
                           <div id={panelId} className="grid gap-2">
                             <div className="flex flex-wrap items-center justify-between gap-2">
                               <p className="text-sm font-medium">{t("customers.history")} · {t("customers.count2", { count })}</p>

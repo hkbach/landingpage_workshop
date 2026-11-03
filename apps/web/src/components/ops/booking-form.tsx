@@ -9,7 +9,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { Booking, Customer, Session, Workshop } from "@/lib/types";
-import { COUNTRY_CODES } from "@/lib/mock/ops";
 import { formatDateTime } from "@/lib/format";
 import { Field } from "./field";
 import { NativeSelect } from "./native-select";
@@ -43,7 +42,7 @@ export function BookingForm({
   );
   const [v, setV] = useState({
     sessionId: options.some((s) => s.id === initialSessionId) ? (initialSessionId as string) : "",
-    quantity: "1", source: "WALK_IN" as ManualSource, fullName: "", email: "", phone: "", country: "VN", specialRequest: "",
+    quantity: "1", source: "WALK_IN" as ManualSource, fullName: "", email: "", phone: "", specialRequest: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const dirty = useDirty(v, "new");
@@ -65,7 +64,6 @@ export function BookingForm({
       fullName: z.string().trim().min(1, "errors.required").max(120, "errors.tooLong"),
       email: z.string().trim().max(254, "errors.tooLong"),
       phone: z.string().trim().max(40, "errors.tooLong"),
-      country: z.string().min(1, "errors.required"),
       specialRequest: z.string().trim().max(500, "errors.tooLong"),
     }).superRefine((d, ctx) => {
       const email = d.email.trim();
@@ -78,7 +76,7 @@ export function BookingForm({
     const now = new Date().toISOString();
     const customer: Customer = {
       id: `cu-local-${++seq.current}`, fullName: d.fullName, email: d.email.trim().toLowerCase() || undefined,
-      phone: d.phone || undefined, country: d.country, preferredLocale: shop.defaultLocale,
+      phone: d.phone || undefined, preferredLocale: shop.defaultLocale, // no account: the shop knows neither the country nor the birth date
     };
     const booking: Booking = {
       id: `bk-local-${++seq.current}`, bookingCode: nextBookingCode(session.code, [...bookingCodes, ...given.current], session.reservedCount + 1), sessionId: session.id, workshopId: workshop.id, customerId: customer.id,
@@ -92,7 +90,6 @@ export function BookingForm({
   }
 
   const err = (k: string) => (errors[k] ? t(errors[k]) : undefined);
-  const countryNames = useMemo(() => new Intl.DisplayNames([locale], { type: "region" }), [locale]);
   const started = session ? new Date(session.startsAt).getTime() <= new Date(nowIso).getTime() : false;
 
   if (created) {
@@ -168,12 +165,6 @@ export function BookingForm({
             </Field>
             <Field id="nb-phone" label={t("customers.phone")}>
               {(p) => <Input {...p} type="tel" autoComplete="off" value={v.phone} onChange={(e) => set("phone", e.target.value)} />}
-            </Field>
-            <Field id="nb-country" label={t("customers.country")} required>
-              {(p) => (
-                <NativeSelect {...p} value={v.country} onChange={(e) => set("country", e.target.value)}
-                  options={COUNTRY_CODES.map((c) => ({ value: c, label: `${countryNames.of(c) ?? c} (${c})` }))} />
-              )}
             </Field>
             <Field id="nb-req" label={t("common.request")} error={err("specialRequest")} className="sm:col-span-2">
               {(p) => <Textarea {...p} maxLength={500} value={v.specialRequest} onChange={(e) => set("specialRequest", e.target.value)} />}

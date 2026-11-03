@@ -40,7 +40,12 @@ export interface Session {
 }
 
 export interface Customer {
-  id: string; fullName: string; email?: string; country: string; phone?: string; preferredLocale: Locale;
+  id: string; fullName: string; email?: string; phone?: string; preferredLocale: Locale;
+  /**
+   * Set only for a guest who registered an account: the country they live in and their birth date ("YYYY-MM-DD"), both given at registration. A guest who
+   * only booked has no account, so the shop knows neither.
+   */
+  account?: { country: string; birthDate: string };
 }
 
 export interface PaymentEntry {

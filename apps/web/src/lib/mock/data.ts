@@ -156,10 +156,10 @@ export const sessions: Session[] = [
 ];
 
 export const customers: Customer[] = [
-  { id: "cu-1", fullName: "Emma Johnson", email: "emma@example.com", country: "GB", phone: "+44 7000 000000", preferredLocale: "en" },
-  { id: "cu-2", fullName: "Kim Min-jun", email: "minjun@example.com", country: "KR", preferredLocale: "ko" },
-  { id: "cu-3", fullName: "Walk-in guest", country: "VN", preferredLocale: "en" },
-  { id: "cu-4", fullName: "Nguyen Thu", email: "thu@example.com", country: "VN", phone: "+84 90 123 4567", preferredLocale: "vi" },
+  { id: "cu-1", fullName: "Emma Johnson", email: "emma@example.com", phone: "+44 7000 000000", preferredLocale: "en", account: { country: "GB", birthDate: "1990-04-12" } },
+  { id: "cu-2", fullName: "Kim Min-jun", email: "minjun@example.com", preferredLocale: "ko" }, // booked without an account
+  { id: "cu-3", fullName: "Walk-in guest", preferredLocale: "en" },
+  { id: "cu-4", fullName: "Nguyen Thu", email: "thu@example.com", phone: "+84 90 123 4567", preferredLocale: "vi", account: { country: "VN", birthDate: "1995-09-30" } },
 ];
 
 // The booking code is "<session code>-<3 digits>", counted per session in the order the demo bookings are listed.
