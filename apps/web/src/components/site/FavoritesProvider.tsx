@@ -94,6 +94,8 @@ function LoginForm({ slug, shopName, onLoggedIn, onCancel }: { slug: string; sho
   const [consent, setConsent] = useState(false);
   const [errors, setErrors] = useState<{ fullName?: boolean; country?: boolean; birthDate?: boolean; consent?: boolean }>({});
   const [failed, setFailed] = useState(false);
+  /** Sending or checking the code failed (network, too many requests): the guest is told and can try again. */
+  const [otpFailed, setOtpFailed] = useState(false);
   const [merged, setMerged] = useState(0);
   const locked = attempts >= OTP_MAX_ATTEMPTS;
   const clean = normalizeGuestEmail(email);
@@ -109,9 +111,12 @@ function LoginForm({ slug, shopName, onLoggedIn, onCancel }: { slug: string; sho
   async function send() {
     if (!EMAIL_RE.test(clean)) { setEmailError(true); return; }
     setBusy(true);
+    setOtpFailed(false);
     try {
       await sendOtp(clean);
       setCode(""); setWrong(false); setAttempts(0); setCooldown(OTP_RESEND_SECONDS); setStep("code");
+    } catch {
+      setOtpFailed(true);
     } finally {
       setBusy(false);
     }
@@ -120,6 +125,7 @@ function LoginForm({ slug, shopName, onLoggedIn, onCancel }: { slug: string; sho
   async function verify() {
     if (!isOtpComplete(code) || locked) return;
     setBusy(true);
+    setOtpFailed(false);
     try {
       if (!(await verifyOtp(clean, code))) { setAttempts((a) => a + 1); setWrong(true); setCode(""); return; }
       if (slug === "preview") { onLoggedIn(clean); return; }
@@ -133,6 +139,8 @@ function LoginForm({ slug, shopName, onLoggedIn, onCancel }: { slug: string; sho
       }
       if (registered) onLoggedIn(clean);
       else setStep("profile");
+    } catch {
+      setOtpFailed(true);
     } finally {
       setBusy(false);
     }
@@ -173,6 +181,7 @@ function LoginForm({ slug, shopName, onLoggedIn, onCancel }: { slug: string; sho
       onSubmit={(e) => { e.preventDefault(); void (step === "email" ? send() : step === "code" ? verify() : step === "profile" ? register() : onLoggedIn(clean)); }}
       noValidate className="space-y-4" data-testid="favorites-login"
     >
+      {otpFailed ? <p role="alert" className="text-sm text-red-700" data-testid="favorites-otp-failed">{t("otpFailed")}</p> : null}
       {step === "email" ? (
         <div className="space-y-1.5">
           <label htmlFor="fav-email" className="text-sm font-medium">{t("emailLabel")} <span aria-hidden>*</span></label>

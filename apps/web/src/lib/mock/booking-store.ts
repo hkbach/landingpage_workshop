@@ -1,7 +1,7 @@
 // SERVER-ONLY: the bookings as the mock backend knows them, until apps/api exists. The demo rows, plus the bookings guests make on the landing page
 // (they start NOT_CONFIRMED and become CONFIRMED when the guest opens the link of the email), plus the status changes the ops screens make (cancel,
 // check-in, ...: they are sent here so they survive a reload and the promotion rules can see them). Lives on globalThis like the other mock stores.
-import { closeIfEnded, eligiblePromotions, isSessionBookable, isSessionFinished, nextBookingCode, priceBooking, type BookingStatus, type BookingUse } from "@workshop/shared";
+import { closeIfEnded, eligiblePromotions, pickLocalized, isSessionBookable, isSessionFinished, nextBookingCode, priceBooking, type BookingStatus, type BookingUse } from "@workshop/shared";
 import { computePaymentStatus, confirmation, netPaid, reservedSeats, type PreCheckInStatus } from "@/lib/booking-state";
 import type { Booking, Customer, PaymentEntry, Session } from "@/lib/types";
 import { newUuid } from "@/lib/uuid";
@@ -195,7 +195,7 @@ export function createManualBooking(input: ManualBookingInput, now: Date = new D
   const booking: Booking = {
     id: `bk-${newUuid().slice(0, 8)}`, bookingCode: nextBookingCode(session.code, live.map((b) => b.bookingCode)), sessionId: session.id, workshopId: workshop.id,
     customerId: customer.id, guestName: name, source: input.source, quantity: input.quantity, status: "CONFIRMED", paymentStatus: "UNPAID", unitPriceAmount: workshop.priceAmount,
-    totalAmount: workshop.priceAmount * input.quantity, currency: workshop.currency, workshopTitle: workshop.title.en ?? "", startsAt: session.startsAt, endsAt: session.endsAt,
+    totalAmount: workshop.priceAmount * input.quantity, currency: workshop.currency, workshopTitle: pickLocalized(workshop.title, currentShop.defaultLocale, currentShop.defaultLocale), startsAt: session.startsAt, endsAt: session.endsAt,
     timezone: currentShop.timezone, createdAt: now.toISOString(), payments: [],
     ...(input.specialRequest?.trim() ? { specialRequest: input.specialRequest.trim() } : {}),
   };
@@ -258,12 +258,12 @@ export function createGuestBooking(input: GuestBookingInput, confirmUrlFor: (tok
   const booking: Booking = {
     id: `bk-${newUuid().slice(0, 8)}`, bookingCode: nextBookingCode(session.code, live.map((b) => b.bookingCode)), sessionId: session.id, workshopId: workshop.id,
     customerId: customer.id, guestName: input.fullName.trim(), source: "ONLINE", quantity: input.quantity, status: "NOT_CONFIRMED", paymentStatus: "UNPAID", unitPriceAmount: workshop.priceAmount,
-    totalAmount: priced.total, currency: workshop.currency, workshopTitle: workshop.title.en ?? "", startsAt: session.startsAt, endsAt: session.endsAt,
+    totalAmount: priced.total, currency: workshop.currency, workshopTitle: pickLocalized(workshop.title, input.locale ?? currentShop.defaultLocale, currentShop.defaultLocale), startsAt: session.startsAt, endsAt: session.endsAt,
     timezone: currentShop.timezone, createdAt: now.toISOString(), payments: [],
     ...(input.specialRequest?.trim() ? { specialRequest: input.specialRequest.trim() } : {}),
     ...(used.length ? { promotionIds: used.map((p) => p.id), discountAmount: priced.discount } : {}),
   };
-  store().made.push(booking);
+  store().made.push(booking); // its workshop title is in the language the guest booked in
   const token = newUuid();
   store().tokens.set(token, booking.id);
   if (key) store().keys.set(key, booking.id);

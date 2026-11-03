@@ -54,6 +54,7 @@
     "dateUnavailable": "Not available",
     "cutoffNote": "Online booking closes {minutes, plural, one {# minute} other {# minutes}} before a session starts.",
     "slotGone": "That session can no longer be booked: online booking closes {minutes, plural, one {# minute} other {# minutes}} before it starts. Please choose another time.",
+    "slotFull": "The last seats of that session were just taken. Please choose another time.",
     "noneSelectable": "Every session of this workshop is full or has already passed.",
     "slot": {
       "PAST": "Already started",
@@ -273,6 +274,7 @@
     "accountMerged": "{merged, plural, =0 {No earlier booking was found with this email.} one {# earlier booking made with this email was added to your account.} other {# earlier bookings made with this email were added to your account.}}",
     "proceed": "Continue",
     "consentLabel": "I agree that {shop} keeps my country and date of birth to know its guests and plan offers. I can ask the studio to delete them.",
-    "consentRequired": "Please tick the box to create your account."
+    "consentRequired": "Please tick the box to create your account.",
+    "otpFailed": "Something went wrong. Please try again."
   }
 }

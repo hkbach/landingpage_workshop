@@ -54,6 +54,7 @@
     "dateUnavailable": "不可预订",
     "cutoffNote": "在线预订于场次开始前 {minutes, plural, other {# 分钟}}截止。",
     "slotGone": "该场次已无法预订：在线预订于开始前 {minutes, plural, other {# 分钟}}截止。请选择其他时间。",
+    "slotFull": "该场次的最后名额刚刚被预订。请选择其他时间。",
     "noneSelectable": "此工作坊的所有场次均已满员或已结束。",
     "slot": {
       "PAST": "已开始",
@@ -273,6 +274,7 @@
     "accountMerged": "{merged, plural, =0 {未找到使用此邮箱的历史预订。} other {已将使用此邮箱的 # 个历史预订添加到您的账户。}}",
     "proceed": "继续",
     "consentLabel": "我同意 {shop} 保存我的国家/地区和出生日期，用于了解客人和策划优惠。我可以要求工作室删除这些信息。",
-    "consentRequired": "请勾选同意框以创建账户。"
+    "consentRequired": "请勾选同意框以创建账户。",
+    "otpFailed": "出现问题，请重试。"
   }
 }

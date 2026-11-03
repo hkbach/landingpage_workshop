@@ -28,9 +28,9 @@ export interface ConfirmationData {
   demoEmailUrl?: string;
 }
 
-/** Why the server refused the booking: the session was filled or closed meanwhile, or something else went wrong. */
+/** Why the server refused the booking: the seats were taken (FULL) or the session closed (GONE) meanwhile, or something else went wrong. */
 export class BookingRefused extends Error {
-  constructor(readonly reason: "GONE" | "OTHER") { super(reason); }
+  constructor(readonly reason: "GONE" | "FULL" | "OTHER") { super(reason); }
 }
 
 export interface BookingRequest {
@@ -49,7 +49,10 @@ export async function submitBooking(req: BookingRequest, display: Omit<Confirmat
   const res = await fetch(`/api/v1/public/sites/${encodeURIComponent(slug)}/bookings`, {
     method: "POST", headers: { "content-type": "application/json", "idempotency-key": idempotencyKey }, body: JSON.stringify(body),
   });
-  if (res.status === 409) throw new BookingRefused("GONE");
+  if (res.status === 409) {
+    const code = ((await res.json().catch(() => null)) as { error?: { code?: string } } | null)?.error?.code;
+    throw new BookingRefused(code === "SESSION_FULL" ? "FULL" : "GONE");
+  }
   if (!res.ok) throw new BookingRefused("OTHER");
   const made = (await res.json()) as { code: string; status: BookingStatus; totalAmount: number; demoConfirmUrl?: string };
   const result: ConfirmationData = { ...display, code: made.code, status: made.status, totalAmount: made.totalAmount, ...(made.demoConfirmUrl ? { demoConfirmUrl: made.demoConfirmUrl } : {}) };

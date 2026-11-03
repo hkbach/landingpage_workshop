@@ -54,6 +54,7 @@
     "dateUnavailable": "이용 불가",
     "cutoffNote": "온라인 예약은 세션 시작 {minutes, plural, other {#분}} 전에 마감됩니다.",
     "slotGone": "이 세션은 더 이상 예약할 수 없습니다. 온라인 예약은 시작 {minutes, plural, other {#분}} 전에 마감됩니다. 다른 시간을 선택해 주세요.",
+    "slotFull": "방금 이 세션의 마지막 자리가 예약되었습니다. 다른 시간을 선택해 주세요.",
     "noneSelectable": "이 워크숍의 모든 세션이 마감되었거나 이미 지났습니다.",
     "slot": {
       "PAST": "이미 시작됨",
@@ -273,6 +274,7 @@
     "accountMerged": "{merged, plural, =0 {이 이메일로 한 이전 예약이 없습니다.} other {이 이메일로 한 이전 예약 #건이 계정에 추가되었습니다.}}",
     "proceed": "계속",
     "consentLabel": "{shop}이(가) 고객을 이해하고 혜택을 기획하기 위해 내 국가와 생년월일을 보관하는 데 동의합니다. 스튜디오에 삭제를 요청할 수 있습니다.",
-    "consentRequired": "계정을 만들려면 동의란에 체크해 주세요."
+    "consentRequired": "계정을 만들려면 동의란에 체크해 주세요.",
+    "otpFailed": "문제가 발생했습니다. 다시 시도해 주세요."
   }
 }

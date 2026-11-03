@@ -12,16 +12,16 @@ export function proxy(request: NextRequest) {
     url.pathname = `/shopowner/${DEMO_SHOP_SLUG}/${legacy![1]}${legacy![2] ?? ""}`; // TODO(api): the slug of the session's organization
     return NextResponse.redirect(url);
   }
-  // The system admin area has its own set of languages: the i18n request config reads this header (see i18n/request.ts).
-  if (request.nextUrl.pathname === "/systemadmin" || request.nextUrl.pathname.startsWith("/systemadmin/")) {
+  const host = (request.headers.get("host") ?? "").split(":")[0]!.toLowerCase();
+  const platformHost = host === PLATFORM_DOMAIN || host === `app.${PLATFORM_DOMAIN}` || !host.endsWith(`.${PLATFORM_DOMAIN}`);
+  // The system admin area has its own set of languages: the i18n request config reads this header (see i18n/request.ts). It is only served on the
+  // platform's own hosts: on a shop's host the path is a page of the shop site (so a 404), never the admin area on the shop's origin.
+  if (platformHost && (request.nextUrl.pathname === "/systemadmin" || request.nextUrl.pathname.startsWith("/systemadmin/"))) {
     const headers = new Headers(request.headers);
     headers.set("x-ui-area", "systemadmin");
     return NextResponse.next({ request: { headers } });
   }
-  const host = (request.headers.get("host") ?? "").split(":")[0]!.toLowerCase();
-  if (host === PLATFORM_DOMAIN || host === `app.${PLATFORM_DOMAIN}` || !host.endsWith(`.${PLATFORM_DOMAIN}`)) {
-    return NextResponse.next();
-  }
+  if (platformHost) return NextResponse.next();
   const slug = host.slice(0, -(PLATFORM_DOMAIN.length + 1));
   if (!slug || slug.includes(".")) return NextResponse.next();
 

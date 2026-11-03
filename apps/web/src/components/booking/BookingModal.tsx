@@ -137,7 +137,9 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
     () => sessions.filter((x) => x.status === "RUNNING" || x.status === "CLOSED").sort((p, q) => p.startsAt.localeCompare(q.startsAt)),
     [sessions],
   );
-  const stateOf = (x: Session): SlotState => slotState(x, now);
+  /** Sessions the server refused while the form was open (their seats were taken, or they closed): not offered again. */
+  const [refused, setRefused] = useState<Record<string, SlotState>>({});
+  const stateOf = (x: Session): SlotState => refused[x.id] ?? slotState(x, now);
 
   const [step, setStep] = useState<Step>("datetime");
   const [workshopId, setWorkshopId] = useState(initialWorkshopId ?? workshops[0]?.id ?? "");
@@ -151,6 +153,8 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
   const [slotGone, setSlotGone] = useState(false);
   /** The cut-off of the session that stopped being bookable (shown in the notice). */
   const [goneCutoff, setGoneCutoff] = useState(0);
+  /** The session stopped being bookable because its last seats were taken (another notice than the cut-off). */
+  const [goneFull, setGoneFull] = useState(false);
 
   const workshop = workshops.find((w) => w.id === workshopId);
   const wsSessions = listed.filter((x) => x.workshopId === workshopId);
@@ -269,7 +273,7 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
       }
       // Time passed while the guest filled in the form: check the booking cut-off again (the real API checks it too, FR-BOOK-02).
       if (slotState(session, clock()) !== "OK") {
-        setSlotGone(true); setGoneCutoff(session.bookingCutoffMinutes); setSessionId(""); setDate(""); setStep("datetime"); setSubmitting(false);
+        setSlotGone(true); setGoneFull(false); setGoneCutoff(session.bookingCutoffMinutes); setSessionId(""); setDate(""); setStep("datetime"); setSubmitting(false);
         return;
       }
       if (preview) { setPreviewDone(true); setSubmitting(false); return; } // nothing is created from the builder
@@ -290,9 +294,10 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
       onOpenChange(false);
       router.push(`${basePath}/booking/${result.code}?email=${encodeURIComponent(result.email)}`);
     } catch (e) {
-      if (e instanceof BookingRefused && e.reason === "GONE") {
-        // The seats were taken, or the session closed, while the form was open.
-        setSlotGone(true); setGoneCutoff(session.bookingCutoffMinutes); setSessionId(""); setDate(""); setStep("datetime"); setSubmitting(false);
+      if (e instanceof BookingRefused && (e.reason === "GONE" || e.reason === "FULL")) {
+        // The seats were taken, or the session closed, while the form was open: it is not offered again.
+        setRefused((r) => ({ ...r, [session.id]: e.reason === "FULL" ? "FULL" : "CLOSED" }));
+        setSlotGone(true); setGoneFull(e.reason === "FULL"); setGoneCutoff(session.bookingCutoffMinutes); setSessionId(""); setDate(""); setStep("datetime"); setSubmitting(false);
         return;
       }
       setSubmitError(true);
@@ -338,7 +343,7 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
             <p role="status" className="rounded-lg bg-[var(--site-surface)] p-3 text-sm">{t("noAvailability")}</p>
           ) : (
             <>
-              {slotGone ? <p role="alert" data-testid="slot-gone" className="rounded-lg bg-red-50 p-3 text-sm text-red-800">{t("slotGone", { minutes: goneCutoff })}</p> : null}
+              {slotGone ? <p role="alert" data-testid="slot-gone" className="rounded-lg bg-red-50 p-3 text-sm text-red-800">{goneFull ? t("slotFull") : t("slotGone", { minutes: goneCutoff })}</p> : null}
               {!dates.some(dateOpen) ? <p role="status" className="rounded-lg bg-[var(--site-surface)] p-3 text-sm">{t("noneSelectable")}</p> : null}
               <ChoiceGroup legend={t("chooseDate")} className="sm:grid-cols-2">
                 {dates.map((d) => (
