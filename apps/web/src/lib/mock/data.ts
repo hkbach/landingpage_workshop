@@ -95,30 +95,30 @@ export const sessions: Session[] = [
   // ---- COMING DAYS ----
   { id: "se-3", code: "SES-0003", workshopId: "ws-1", startsAt: at(1, 9), endsAt: at(1, 11), capacity: 8, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 120, imageUrl: pic("glaze") },
   // Closed by the owner before it started, with a reason that is one of the basic ones.
-  { id: "se-4", code: "SES-0004", workshopId: "ws-1", startsAt: at(1, 14), endsAt: at(1, 16), capacity: 8, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, closedAt: at(-1, 16), closeReason: { code: "VENUE_ISSUE" } },
+  { id: "se-4", code: "SES-0004", workshopId: "ws-1", startsAt: at(1, 14), endsAt: at(1, 16), capacity: 8, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, notes: [{ type: "CLOSED", at: at(-1, 16), reason: { code: "VENUE_ISSUE" } }] },
   { id: "se-5", code: "SES-0005", workshopId: "ws-2", startsAt: at(2, 10), endsAt: at(2, 11.5), capacity: 10, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 180, imageUrl: pic("mug") },
   { id: "se-41", code: "SES-0041", workshopId: "ws-1", startsAt: at(2, 16), endsAt: at(2, 18), capacity: 6, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 0 }, // closes when it starts
-  { id: "se-6", code: "SES-0006", workshopId: "ws-1", startsAt: at(3, 9), endsAt: at(3, 11), capacity: 8, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, closedAt: at(0, 8), closeReason: { code: "INSTRUCTOR_UNAVAILABLE" } },
+  { id: "se-6", code: "SES-0006", workshopId: "ws-1", startsAt: at(3, 9), endsAt: at(3, 11), capacity: 8, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, notes: [{ type: "CLOSED", at: at(0, 8), reason: { code: "INSTRUCTOR_UNAVAILABLE" } }] },
   { id: "se-7", code: "SES-0007", workshopId: "ws-1", startsAt: at(4, 9), endsAt: at(4, 11), capacity: 8, reservedCount: 0, status: "OPEN", bookingCutoffMinutes: 60 },
   { id: "se-8", code: "SES-0008", workshopId: "ws-2", startsAt: at(4, 14), endsAt: at(4, 15.5), capacity: 10, reservedCount: 0, status: "OPEN", bookingCutoffMinutes: 120 },
   { id: "se-9", code: "SES-0009", workshopId: "ws-1", startsAt: at(5, 9), endsAt: at(5, 11), capacity: 8, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 1440, imageUrl: pic("pottery") },
   { id: "se-10", code: "SES-0010", workshopId: "ws-2", startsAt: at(5, 10), endsAt: at(5, 11.5), capacity: 10, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 120 },
   // Paused with two guests: one has an email (re-scheduling emails them), the other is a walk-in.
   { id: "se-11", code: "SES-0011", workshopId: "ws-1", startsAt: at(6, 14), endsAt: at(6, 16), capacity: 8, reservedCount: 0, status: "PAUSED", bookingCutoffMinutes: 120 },
-  { id: "se-12", code: "SES-0012", workshopId: "ws-2", startsAt: at(6, 9), endsAt: at(6, 10.5), capacity: 10, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, closedAt: at(0, 10), closeReason: { code: "SCHEDULE_CHANGE" } },
-  { id: "se-13", code: "SES-0013", workshopId: "ws-1", startsAt: at(7, 9), endsAt: at(7, 11), capacity: 8, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, closedAt: at(-1, 9), closeReason: { code: "NOT_ENOUGH_GUESTS" } },
-  { id: "se-14", code: "SES-0014", workshopId: "ws-2", startsAt: at(7, 14), endsAt: at(7, 15.5), capacity: 10, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, closedAt: at(-1, 11), closeReason: { code: "OTHER", note: "The glaze delivery is late." } },
+  { id: "se-12", code: "SES-0012", workshopId: "ws-2", startsAt: at(6, 9), endsAt: at(6, 10.5), capacity: 10, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, notes: [{ type: "CLOSED", at: at(0, 10), reason: { code: "SCHEDULE_CHANGE" } }] },
+  { id: "se-13", code: "SES-0013", workshopId: "ws-1", startsAt: at(7, 9), endsAt: at(7, 11), capacity: 8, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, notes: [{ type: "CLOSED", at: at(-3, 10), reason: { code: "NOT_ENOUGH_GUESTS" } }, { type: "REOPENED", at: at(-2, 9) }, { type: "CLOSED", at: at(-1, 9), reason: { code: "NOT_ENOUGH_GUESTS" } }] },
+  { id: "se-14", code: "SES-0014", workshopId: "ws-2", startsAt: at(7, 14), endsAt: at(7, 15.5), capacity: 10, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, notes: [{ type: "RESCHEDULED", at: at(-4, 11), reason: { code: "VENUE_ISSUE" } }, { type: "CLOSED", at: at(-1, 11), reason: { code: "OTHER", note: "The glaze delivery is late." } }] },
   // Sold out: every seat is booked.
   { id: "se-15", code: "SES-0015", workshopId: "ws-1", startsAt: at(8, 10), endsAt: at(8, 12), capacity: 6, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 30, imageUrl: pic("plates") },
   { id: "se-16", code: "SES-0016", workshopId: "ws-2", startsAt: at(9, 10), endsAt: at(9, 11.5), capacity: 12, reservedCount: 0, status: "OPEN", bookingCutoffMinutes: 240 },
   // Cloned from SES-0009.
   { id: "se-17", code: "SES-0017", workshopId: "ws-1", startsAt: at(10, 9), endsAt: at(10, 11), capacity: 8, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 1440, imageUrl: pic("pottery"), clonedFrom: { code: "SES-0009", workshopId: "ws-1" } },
   // Re-scheduled once already (it was moved from another day): its Re-schedule button is read-only.
-  { id: "se-34", code: "SES-0034", workshopId: "ws-2", startsAt: at(12, 10), endsAt: at(12, 11.5), capacity: 10, reservedCount: 0, status: "PAUSED", bookingCutoffMinutes: 120, rescheduledAt: at(-1, 10), rescheduleReason: { code: "SCHEDULE_CHANGE" } },
+  { id: "se-34", code: "SES-0034", workshopId: "ws-2", startsAt: at(12, 10), endsAt: at(12, 11.5), capacity: 10, reservedCount: 0, status: "PAUSED", bookingCutoffMinutes: 120, notes: [{ type: "RESCHEDULED", at: at(-1, 10), reason: { code: "SCHEDULE_CHANGE" } }] },
   // Three sessions on one day, in three situations.
   { id: "se-38", code: "SES-0038", workshopId: "ws-1", startsAt: at(14, 9), endsAt: at(14, 11), capacity: 8, reservedCount: 0, status: "OPEN", bookingCutoffMinutes: 120 },
   { id: "se-39", code: "SES-0039", workshopId: "ws-2", startsAt: at(14, 13), endsAt: at(14, 14.5), capacity: 10, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 120 },
-  { id: "se-40", code: "SES-0040", workshopId: "ws-1", startsAt: at(14, 17), endsAt: at(14, 19), capacity: 8, reservedCount: 0, status: "PAUSED", bookingCutoffMinutes: 120, rescheduledAt: at(-2, 15), rescheduleReason: { code: "OTHER", note: "The studio is booked for a private event." } },
+  { id: "se-40", code: "SES-0040", workshopId: "ws-1", startsAt: at(14, 17), endsAt: at(14, 19), capacity: 8, reservedCount: 0, status: "PAUSED", bookingCutoffMinutes: 120, notes: [{ type: "RESCHEDULED", at: at(-2, 15), reason: { code: "OTHER", note: "The studio is booked for a private event." } }] },
   // Cloned from SES-0034 (the clone is a new Open session).
   { id: "se-35", code: "SES-0035", workshopId: "ws-2", startsAt: at(20, 10), endsAt: at(20, 11.5), capacity: 10, reservedCount: 0, status: "OPEN", bookingCutoffMinutes: 120, clonedFrom: { code: "SES-0034", workshopId: "ws-2" } },
   // Far ahead: inside the 60 days of the default range, and beyond it (set the To date to see SES-0037).
@@ -130,14 +130,14 @@ export const sessions: Session[] = [
   { id: "se-32", code: "SES-0032", workshopId: "ws-2", startsAt: at(-1, 14), endsAt: at(-1, 15.5), capacity: 10, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 120, imageUrl: pic("past") },
   { id: "se-18", code: "SES-0018", workshopId: "ws-1", startsAt: at(-1, 9), endsAt: at(-1, 11), capacity: 8, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 120 },
   // Closed by the owner before it started, with each kind of reason:
-  { id: "se-19", code: "SES-0019", workshopId: "ws-1", startsAt: at(-2, 9), endsAt: at(-2, 11), capacity: 8, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, closedAt: at(-3, 10), closeReason: { code: "NOT_ENOUGH_GUESTS" } },
-  { id: "se-20", code: "SES-0020", workshopId: "ws-2", startsAt: at(-2, 14), endsAt: at(-2, 15.5), capacity: 10, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 60, closedAt: at(-4, 15), closeReason: { code: "INSTRUCTOR_UNAVAILABLE" } },
-  { id: "se-21", code: "SES-0021", workshopId: "ws-1", startsAt: at(-3, 14), endsAt: at(-3, 16), capacity: 8, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, closedAt: at(-5, 9), closeReason: { code: "OTHER", note: "The kiln needed an urgent repair." } },
-  { id: "se-26", code: "SES-0026", workshopId: "ws-2", startsAt: at(-9, 10), endsAt: at(-9, 11.5), capacity: 10, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 180, closedAt: at(-11, 11), closeReason: { code: "SCHEDULE_CHANGE" } },
-  { id: "se-43", code: "SES-0043", workshopId: "ws-1", startsAt: at(-12, 9), endsAt: at(-12, 11), capacity: 8, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, closedAt: at(-14, 9), closeReason: { code: "VENUE_ISSUE" } },
+  { id: "se-19", code: "SES-0019", workshopId: "ws-1", startsAt: at(-2, 9), endsAt: at(-2, 11), capacity: 8, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, notes: [{ type: "CLOSED", at: at(-3, 10), reason: { code: "NOT_ENOUGH_GUESTS" } }] },
+  { id: "se-20", code: "SES-0020", workshopId: "ws-2", startsAt: at(-2, 14), endsAt: at(-2, 15.5), capacity: 10, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 60, notes: [{ type: "CLOSED", at: at(-4, 15), reason: { code: "INSTRUCTOR_UNAVAILABLE" } }] },
+  { id: "se-21", code: "SES-0021", workshopId: "ws-1", startsAt: at(-3, 14), endsAt: at(-3, 16), capacity: 8, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, notes: [{ type: "CLOSED", at: at(-5, 9), reason: { code: "OTHER", note: "The kiln needed an urgent repair." } }] },
+  { id: "se-26", code: "SES-0026", workshopId: "ws-2", startsAt: at(-9, 10), endsAt: at(-9, 11.5), capacity: 10, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 180, notes: [{ type: "CLOSED", at: at(-11, 11), reason: { code: "SCHEDULE_CHANGE" } }] },
+  { id: "se-43", code: "SES-0043", workshopId: "ws-1", startsAt: at(-12, 9), endsAt: at(-12, 11), capacity: 8, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, notes: [{ type: "CLOSED", at: at(-14, 9), reason: { code: "VENUE_ISSUE" } }] },
   // Left Running, Paused or Open when their time was over: the system shows them as Closed automatically.
   { id: "se-22", code: "SES-0022", workshopId: "ws-2", startsAt: at(-4, 10), endsAt: at(-4, 11.5), capacity: 10, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 120 },
-  { id: "se-33", code: "SES-0033", workshopId: "ws-1", startsAt: at(-3, 9), endsAt: at(-3, 11), capacity: 8, reservedCount: 0, status: "PAUSED", bookingCutoffMinutes: 120, rescheduledAt: at(-6, 10), rescheduleReason: { code: "INSTRUCTOR_UNAVAILABLE" } },
+  { id: "se-33", code: "SES-0033", workshopId: "ws-1", startsAt: at(-3, 9), endsAt: at(-3, 11), capacity: 8, reservedCount: 0, status: "PAUSED", bookingCutoffMinutes: 120, notes: [{ type: "RESCHEDULED", at: at(-6, 10), reason: { code: "INSTRUCTOR_UNAVAILABLE" } }] },
   { id: "se-23", code: "SES-0023", workshopId: "ws-1", startsAt: at(-5, 9), endsAt: at(-5, 11), capacity: 8, reservedCount: 0, status: "PAUSED", bookingCutoffMinutes: 240 },
   { id: "se-24", code: "SES-0024", workshopId: "ws-2", startsAt: at(-6, 14), endsAt: at(-6, 15.5), capacity: 12, reservedCount: 0, status: "OPEN", bookingCutoffMinutes: 120 },
   { id: "se-25", code: "SES-0025", workshopId: "ws-1", startsAt: at(-7, 9), endsAt: at(-7, 11), capacity: 8, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 90 },

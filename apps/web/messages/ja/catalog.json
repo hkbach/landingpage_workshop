@@ -225,6 +225,7 @@
     "colReason": "理由",
     "colCheckedInAt": "チェックイン日時",
     "checkInReadOnly": "このセッションは終了しているため、一覧は閲覧専用です。各予約はセッション終了時の状態で表示されます。",
-    "reopen": "再オープン"
+    "reopen": "再オープン",
+    "reopenedNote": "再オープン"
   }
 }

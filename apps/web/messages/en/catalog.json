@@ -225,6 +225,7 @@
     "colReason": "Reason",
     "colCheckedInAt": "Checked in at",
     "checkInReadOnly": "This session is closed, so the list is read-only. Each booking shows the status it had when the session closed.",
-    "reopen": "Re-open"
+    "reopen": "Re-open",
+    "reopenedNote": "Re-opened"
   }
 }

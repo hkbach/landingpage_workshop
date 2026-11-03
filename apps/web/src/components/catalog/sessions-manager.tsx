@@ -4,7 +4,7 @@ import { useMemo, useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useDisplayLocale } from "@/lib/use-shop-language";
 import { ArrowLeft, CalendarClock, Copy, Lock, LockOpen, LogIn, Pause, Pencil, Play, Plus, Save } from "lucide-react";
-import { allowedSessionActions, canEditSession, canRescheduleSession, canReopenSession, closeWaitsForEnd, isFutureStart, type SessionCloseReason, DEFAULT_BOOKING_CUTOFF_MINUTES, isValidBookingCutoff, MAX_BOOKING_CUTOFF_MINUTES, pickLocalized, SESSION_STATUSES, type Locale, type SessionStatus } from "@workshop/shared";
+import { allowedSessionActions, canEditSession, canRescheduleSession, canReopenSession, notesInOrder, wasRescheduled, closeWaitsForEnd, isFutureStart, type SessionCloseReason, DEFAULT_BOOKING_CUTOFF_MINUTES, isValidBookingCutoff, MAX_BOOKING_CUTOFF_MINUTES, pickLocalized, SESSION_STATUSES, type Locale, type SessionStatus } from "@workshop/shared";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -147,16 +147,13 @@ export function SessionsManager({
                         <p className="text-xs text-muted-foreground" data-testid="cloned-note">{t("sessions.clonedFrom", { code: s.clonedFrom.code, workshop: title(s.clonedFrom.workshopId) })}</p>
                       ) : null}
                       {s.autoClosed ? <p className="text-xs text-muted-foreground" data-testid="auto-closed-note">{dateText(s.endsAt)} - {t("sessions.autoClosedNote")}</p> : null}
-                      {s.rescheduleReason ? (
-                        <p className="text-xs text-muted-foreground" data-testid="reschedule-reason">
-                          {s.rescheduledAt ? `${dateText(s.rescheduledAt)} - ` : ""}{t("sessions.rescheduledBecause")}: {s.rescheduleReason.code === "OTHER" ? s.rescheduleReason.note : t(`sessions.closeReasons.${s.rescheduleReason.code}`)}
+                      {notesInOrder(s.notes).map((n, i) => (
+                        <p key={`${n.type}-${n.at}-${i}`} className="text-xs text-muted-foreground" data-testid="session-note" data-note={n.type}>
+                          {dateText(n.at)} - {n.type === "REOPENED"
+                            ? t("sessions.reopenedNote")
+                            : `${t(n.type === "CLOSED" ? "sessions.closedBecause" : "sessions.rescheduledBecause")}: ${n.reason?.code === "OTHER" ? n.reason.note : n.reason ? t(`sessions.closeReasons.${n.reason.code}`) : ""}`}
                         </p>
-                      ) : null}
-                      {s.closeReason ? (
-                        <p className="text-xs text-muted-foreground" data-testid="close-reason">
-                          {s.closedAt ? `${dateText(s.closedAt)} - ` : ""}{t("sessions.closedBecause")}: {s.closeReason.code === "OTHER" ? s.closeReason.note : t(`sessions.closeReasons.${s.closeReason.code}`)}
-                        </p>
-                      ) : null}
+                      ))}
                       <div className="flex flex-wrap gap-1.5">
                           {actions.includes("start") ? (
                             <Button size="sm" variant="outline" onClick={() => ops.sessionAction(s.id, "start")}><Play aria-hidden="true" />{t("sessions.start")}</Button>
@@ -165,7 +162,7 @@ export function SessionsManager({
                             <Button size="sm" variant="outline" onClick={() => ops.sessionAction(s.id, "pause")}><Pause aria-hidden="true" />{t("sessions.pause")}</Button>
                           ) : null}
                           {canRescheduleSession(s.status) ? (
-                            s.rescheduledAt ? (
+                            wasRescheduled(s.notes) ? (
                               // A session is re-scheduled once: read-only, the span carries the tooltip (a disabled button does not).
                               <span title={t("sessions.rescheduleOnce")} data-testid="reschedule-once" className="inline-flex cursor-not-allowed">
                                 <Button size="sm" variant="outline" disabled aria-disabled="true" aria-label={`${t("sessions.reschedule")}: ${t("sessions.rescheduleOnce")}`}>

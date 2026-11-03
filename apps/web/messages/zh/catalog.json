@@ -225,6 +225,7 @@
     "colReason": "原因",
     "colCheckedInAt": "签到时间",
     "checkInReadOnly": "该场次已关闭，名单仅供查看。每个预订显示场次关闭时的状态。",
-    "reopen": "重新开放"
+    "reopen": "重新开放",
+    "reopenedNote": "已重新开放"
   }
 }

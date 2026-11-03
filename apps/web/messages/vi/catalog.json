@@ -225,6 +225,7 @@
     "colReason": "Lý do",
     "colCheckedInAt": "Thời gian check-in",
     "checkInReadOnly": "Session đã đóng nên danh sách chỉ để xem. Mỗi booking hiển thị đúng trạng thái lúc session đóng.",
-    "reopen": "Mở lại"
+    "reopen": "Mở lại",
+    "reopenedNote": "Đã mở lại"
   }
 }

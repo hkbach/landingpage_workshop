@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { SESSION_STATUSES } from "./enums";
-import { allowedSessionActions, applySessionAction, canEditSession, canRescheduleSession, canReopenSession, checkCloseReason, isFutureStart, checkReschedule, nextSessionCode, SESSION_CODE_RE, CLOSE_REASON_NOTE_MAX, closeIfEnded, closeWaitsForEnd, DEFAULT_BOOKING_CUTOFF_MINUTES, isInSessionTime, isSessionBookable, isValidBookingCutoff, type SessionState } from "./session-rules";
+import {
+  allowedSessionActions, applySessionAction, canEditSession, canRescheduleSession, canReopenSession, checkCloseReason, checkReschedule, CLOSE_REASON_NOTE_MAX, closeIfEnded, closeWaitsForEnd,
+  DEFAULT_BOOKING_CUTOFF_MINUTES, isFutureStart, isInSessionTime, isSessionBookable, isValidBookingCutoff, nextSessionCode, notesInOrder, SESSION_CODE_RE, wasRescheduled, withNote,
+  type SessionNote, type SessionState,
+} from "./session-rules";
 
 const s = (status: SessionState["status"]): SessionState => ({ status });
 
@@ -161,4 +165,24 @@ describe("canReopenSession", () => {
 
 describe("canRescheduleSession", () => {
   it("is true only for an open or a paused session", () => expect(SESSION_STATUSES.filter(canRescheduleSession)).toEqual(["OPEN", "PAUSED"]));
+});
+
+describe("the notes of a session", () => {
+  const closed: SessionNote = { type: "CLOSED", at: "2026-11-03T10:00:00Z", reason: { code: "NOT_ENOUGH_GUESTS" } };
+  const reopened: SessionNote = { type: "REOPENED", at: "2026-11-04T09:00:00Z" };
+  const moved: SessionNote = { type: "RESCHEDULED", at: "2026-11-02T09:00:00Z", reason: { code: "SCHEDULE_CHANGE" } };
+  it("add one more each time and keep the earlier ones", () => {
+    const one = withNote(undefined, closed);
+    const two = withNote(one, reopened);
+    const three = withNote(two, { ...closed, at: "2026-11-05T10:00:00Z" });
+    expect(three).toHaveLength(3);
+    expect(three.slice(0, 2)).toEqual([closed, reopened]);
+    expect(one).toHaveLength(1); // the list that was given is not changed
+  });
+  it("are listed in the order they happened", () => expect(notesInOrder([reopened, closed, moved]).map((n) => n.type)).toEqual(["RESCHEDULED", "CLOSED", "REOPENED"]));
+  it("know when a session was re-scheduled", () => {
+    expect(wasRescheduled(undefined)).toBe(false);
+    expect(wasRescheduled([closed, reopened])).toBe(false);
+    expect(wasRescheduled([closed, moved])).toBe(true);
+  });
 });

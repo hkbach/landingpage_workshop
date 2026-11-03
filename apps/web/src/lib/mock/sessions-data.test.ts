@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BOOKING_CODE_RE, SESSION_CLOSE_REASONS, SESSION_CODE_RE, SESSION_STATUSES, closeIfEnded, isInSessionTime, isValidBookingCutoff } from "@workshop/shared";
+import { BOOKING_CODE_RE, SESSION_CLOSE_REASONS, wasRescheduled, SESSION_CODE_RE, SESSION_STATUSES, closeIfEnded, isInSessionTime, isValidBookingCutoff } from "@workshop/shared";
 import { reservedSeats } from "@/lib/booking-state";
 import { bookings, sessions, workshops } from "./data";
 
@@ -31,16 +31,29 @@ describe("demo sessions: well formed", () => {
       expect(s.reservedCount, s.id).toBeLessThanOrEqual(s.capacity);
     }
   });
-  it("a closed-by-owner session has a reason and the date it was closed (before it started); a note goes with Other only", () => {
-    for (const s of sessions.filter((x) => x.closeReason)) {
-      expect(s.status, s.id).toBe("CLOSED");
-      expect(s.closedAt, s.id).toBeDefined();
-      expect(new Date(s.closedAt!).getTime(), s.id).toBeLessThan(new Date(s.startsAt).getTime());
-      expect(Boolean(s.closeReason!.note), s.id).toBe(s.closeReason!.code === "OTHER");
+  it("the notes of a session are in order; a close or a re-schedule has its reason (a text for Other only) and happens before the session starts", () => {
+    for (const s of sessions) {
+      const notes = s.notes ?? [];
+      expect(notes.map((n) => n.at), s.id).toEqual([...notes.map((n) => n.at)].sort());
+      for (const n of notes) {
+        expect(new Date(n.at).getTime(), s.id).toBeLessThan(new Date(s.startsAt).getTime());
+        if (n.type === "REOPENED") expect(n.reason, s.id).toBeUndefined();
+        else {
+          expect(n.reason, s.id).toBeDefined();
+          expect(Boolean(n.reason!.note), s.id).toBe(n.reason!.code === "OTHER");
+        }
+      }
     }
   });
-  it("a re-scheduled session has its reason and date together", () => {
-    for (const s of sessions) expect(Boolean(s.rescheduledAt), s.id).toBe(Boolean(s.rescheduleReason));
+  it("a closed session was last closed by its owner (or by the system); a session has been re-scheduled at most once", () => {
+    for (const s of sessions) {
+      expect(s.notes?.filter((n) => n.type === "RESCHEDULED").length ?? 0, s.id).toBeLessThanOrEqual(1);
+      if (s.status === "CLOSED" && s.notes?.length) expect(s.notes[s.notes.length - 1]!.type, s.id).toBe("CLOSED");
+    }
+  });
+  it("a session with a history of several notes (closed, re-opened, closed again) and one re-scheduled before it was closed", () => {
+    expect(sessions.some((s) => (s.notes ?? []).map((n) => n.type).join() === "CLOSED,REOPENED,CLOSED")).toBe(true);
+    expect(sessions.some((s) => (s.notes ?? []).map((n) => n.type).join() === "RESCHEDULED,CLOSED")).toBe(true);
   });
   it("a clone points at a session that exists, of the same workshop", () => {
     for (const s of sessions.filter((x) => x.clonedFrom)) {
@@ -73,8 +86,8 @@ describe("demo sessions: every case", () => {
     expect(shown.some((s) => s.status === "PAUSED" && isInSessionTime(s, NOW))).toBe(true);
   });
   it("Paused and not started yet (it can be closed and re-scheduled), also one that was already re-scheduled", () => {
-    expect(shown.some((s) => s.status === "PAUSED" && new Date(s.startsAt) > NOW && !s.rescheduledAt)).toBe(true);
-    expect(shown.some((s) => s.status === "PAUSED" && new Date(s.startsAt) > NOW && s.rescheduledAt)).toBe(true);
+    expect(shown.some((s) => s.status === "PAUSED" && new Date(s.startsAt) > NOW && !wasRescheduled(s.notes))).toBe(true);
+    expect(shown.some((s) => s.status === "PAUSED" && new Date(s.startsAt) > NOW && wasRescheduled(s.notes))).toBe(true);
   });
   it("inside its booking cut-off, with a cut-off of 0, and with different cut-offs", () => {
     expect(shown.some((s) => s.status === "RUNNING" && new Date(s.startsAt) > NOW && new Date(s.startsAt).getTime() - NOW.getTime() <= s.bookingCutoffMinutes * 60_000)).toBe(true);
@@ -93,7 +106,7 @@ describe("demo sessions: every case", () => {
     expect(new Set(sessions.map((s) => s.workshopId)).size).toBe(2);
   });
   it("every reason of closing, and Other with its explanation", () => {
-    for (const r of SESSION_CLOSE_REASONS) expect(has((s) => s.closeReason?.code === r), r).toBe(true);
+    for (const r of SESSION_CLOSE_REASONS) expect(has((s) => (s.notes ?? []).some((n) => n.type === "CLOSED" && n.reason?.code === r)), r).toBe(true);
   });
   it("several sessions on one day", () => {
     const perDay = new Map<string, number>();

@@ -134,3 +134,25 @@ export const canReopenSession = (s: { status: SessionStatus; startsAt: string; a
 
 /** An open or a paused session can be re-scheduled (once); a running one is paused first and a closed one is final. */
 export const canRescheduleSession = (status: SessionStatus): boolean => status === "OPEN" || status === "PAUSED";
+
+/**
+ * What happened to a session, one note each time and never removed (tracking): the owner closed it (with the reason), re-scheduled it (with
+ * the reason) or re-opened it. A note says when it happened.
+ */
+export type SessionNoteType = "CLOSED" | "RESCHEDULED" | "REOPENED";
+export interface SessionNote {
+  type: SessionNoteType;
+  /** When it happened (ISO). */
+  at: string;
+  /** Why it was closed or re-scheduled (not for REOPENED). */
+  reason?: SessionCloseReason;
+}
+
+/** A session is re-scheduled only once: true when its notes already have a re-schedule. */
+export const wasRescheduled = (notes?: readonly SessionNote[]): boolean => notes?.some((n) => n.type === "RESCHEDULED") ?? false;
+
+/** The notes in the order they happened (oldest first). */
+export const notesInOrder = (notes?: readonly SessionNote[]): SessionNote[] => [...(notes ?? [])].sort((a, b) => a.at.localeCompare(b.at));
+
+/** The notes with one more at the end: the earlier ones are kept. */
+export const withNote = (notes: readonly SessionNote[] | undefined, note: SessionNote): SessionNote[] => [...(notes ?? []), note];

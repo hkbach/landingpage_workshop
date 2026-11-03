@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { applySessionAction, canEditSession, canReopenSession, checkCloseReason, isFutureStart, checkReschedule, closeIfEnded, isValidBookingCutoff, nextSessionCode, closeWaitsForEnd, type BookingStatus, type PaymentMethod, type RescheduleError, type SessionAction, type SessionCloseReason } from "@workshop/shared";
+import { applySessionAction, canEditSession, canReopenSession, checkCloseReason, isFutureStart, checkReschedule, closeIfEnded, isValidBookingCutoff, nextSessionCode, wasRescheduled, withNote, closeWaitsForEnd, type BookingStatus, type PaymentMethod, type RescheduleError, type SessionAction, type SessionCloseReason } from "@workshop/shared";
 import type { Booking, PaymentEntry, Session } from "@/lib/types";
 import {
   canTransition, computePaymentStatus, netPaid, reservedSeats, seatDelta, targetStatus,
@@ -126,7 +126,7 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
       // Closing before the start needs a reason: a basic one, or OTHER with a text.
       const reason = action === "close" ? checkCloseReason(closeReason?.code ?? "", closeReason?.note ?? "") : null;
       if (reason && !reason.ok) return false;
-      setSessions((list) => list.map((x) => (x.id === id ? { ...x, ...next, ...(reason?.ok ? { closeReason: reason.reason, closedAt: now.toISOString() } : {}) } : x)));
+      setSessions((list) => list.map((x) => (x.id === id ? { ...x, ...next, ...(reason?.ok ? { notes: withNote(x.notes, { type: "CLOSED", at: now.toISOString(), reason: reason.reason }) } : {}) } : x)));
       return true;
     },
     [sessions, now],
@@ -139,9 +139,8 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
       if (!s || !canReopenSession(s, now)) return false;
       setSessions((list) => list.map((x) => {
         if (x.id !== id) return x;
-        const { closeReason: _reason, closedAt: _at, ...rest } = x;
-        void _reason; void _at;
-        return { ...rest, status: "OPEN" };
+        // The notes are kept: the close stays in the history, and the re-open is added to it.
+        return { ...x, status: "OPEN", notes: withNote(x.notes, { type: "REOPENED", at: now.toISOString() }) };
       }));
       return true;
     },
@@ -157,11 +156,11 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
       { ok: true; oldStartsAt: string; startsAt: string; endsAt: string; reason: SessionCloseReason; moved: Booking[] } | { ok: false; error: RescheduleError } => {
       const s = sessions.find((x) => x.id === id);
       if (!s) return { ok: false, error: "NOT_RESCHEDULABLE" };
-      const checked = checkReschedule({ ...s, rescheduled: s.rescheduledAt !== undefined }, newStartsAt, now, sessions.filter((x) => x.workshopId === s.workshopId && x.id !== id).map((x) => x.startsAt));
+      const checked = checkReschedule({ ...s, rescheduled: wasRescheduled(s.notes) }, newStartsAt, now, sessions.filter((x) => x.workshopId === s.workshopId && x.id !== id).map((x) => x.startsAt));
       const why = checkCloseReason(reason.code, reason.note ?? "");
       if (!checked.ok) return { ok: false, error: checked.error };
       if (!why.ok) return { ok: false, error: "NOT_RESCHEDULABLE" };
-      setSessions((list) => list.map((x) => (x.id === id ? { ...x, startsAt: checked.startsAt, endsAt: checked.endsAt, rescheduleReason: why.reason, rescheduledAt: now.toISOString() } : x)));
+      setSessions((list) => list.map((x) => (x.id === id ? { ...x, startsAt: checked.startsAt, endsAt: checked.endsAt, notes: withNote(x.notes, { type: "RESCHEDULED", at: now.toISOString(), reason: why.reason }) } : x)));
       const moved = bookings.filter((b) => b.sessionId === id && b.status === "CONFIRMED");
       setBookings((list) => list.map((b) => (b.sessionId === id ? { ...b, startsAt: checked.startsAt, endsAt: checked.endsAt } : b)));
       return { ok: true, oldStartsAt: s.startsAt, startsAt: checked.startsAt, endsAt: checked.endsAt, reason: why.reason, moved };

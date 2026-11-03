@@ -1,6 +1,6 @@
 import type {
   BookingSource, BookingStatus, Localized, Locale, OrgStatus, PaymentMethod,
-  PaymentStatus, ReportRecord, SectionType, SessionCloseReason, SessionStatus, WorkshopStatus
+  PaymentStatus, ReportRecord, SectionType, SessionNote, SessionStatus, WorkshopStatus
 } from "@workshop/shared";
 
 // UI-side view models. Money is minor units (number here; bigint is serialized by the API). Times are ISO UTC strings.
@@ -27,14 +27,8 @@ export interface Session {
   capacity: number; reservedCount: number; status: SessionStatus;
   /** Set when the system closed the session because its time was over (an owner's Close does not set it). */
   autoClosed?: boolean;
-  /** Why the owner closed the session before it started (not set for a session closed by the system). */
-  closeReason?: SessionCloseReason;
-  /** When the owner closed the session (shown with the reason). */
-  closedAt?: string;
-  /** Why the owner last re-scheduled the session. */
-  rescheduleReason?: SessionCloseReason;
-  /** When the owner last re-scheduled the session (shown with the reason). */
-  rescheduledAt?: string;
+  /** What happened to the session, one note each time (closed, re-scheduled, re-opened) and never removed: the history shown on its card. */
+  notes?: SessionNote[];
   /** Minutes before the session starts at which online booking closes (set per session when it is created). */
   bookingCutoffMinutes: number;
   /** One picture for the session (https URL or a platform media path); guests see it when they choose a time. */
