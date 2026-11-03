@@ -244,6 +244,20 @@
     "resend": "Gửi mã mới",
     "resendIn": "Gửi mã mới sau {seconds}s",
     "login": "Đăng nhập",
-    "cancel": "Hủy"
+    "cancel": "Hủy",
+    "registerTitle": "Tạo tài khoản",
+    "registerIntro": "Chưa có tài khoản cho {email}. Hãy tạo tài khoản để tiếp tục: các booking đã đặt bằng email này sẽ được thêm vào tài khoản.",
+    "fullNameLabel": "Họ và tên",
+    "countryLabel": "Quốc gia",
+    "countryPlaceholder": "Chọn quốc gia",
+    "birthDateLabel": "Ngày sinh",
+    "createAccount": "Tạo tài khoản",
+    "creating": "Đang tạo…",
+    "fieldRequired": "Vui lòng nhập thông tin này.",
+    "birthDateInvalid": "Hãy nhập ngày sinh hợp lệ.",
+    "registerFailed": "Không tạo được tài khoản. Vui lòng thử lại.",
+    "accountCreated": "Đã tạo tài khoản",
+    "accountMerged": "{merged, plural, =0 {Không tìm thấy booking nào trước đó với email này.} other {Đã thêm # booking trước đó đặt bằng email này vào tài khoản của bạn.}}",
+    "proceed": "Tiếp tục"
   }
 }

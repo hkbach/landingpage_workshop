@@ -244,6 +244,20 @@
     "resend": "重新发送验证码",
     "resendIn": "{seconds} 秒后可重新发送",
     "login": "登录",
-    "cancel": "取消"
+    "cancel": "取消",
+    "registerTitle": "创建账户",
+    "registerIntro": "{email} 还没有账户。请创建账户以继续：使用此邮箱的预订会添加到账户中。",
+    "fullNameLabel": "姓名",
+    "countryLabel": "国家/地区",
+    "countryPlaceholder": "选择国家/地区",
+    "birthDateLabel": "出生日期",
+    "createAccount": "创建账户",
+    "creating": "创建中…",
+    "fieldRequired": "请填写此项。",
+    "birthDateInvalid": "请输入有效的出生日期。",
+    "registerFailed": "无法创建账户，请重试。",
+    "accountCreated": "账户已创建",
+    "accountMerged": "{merged, plural, =0 {未找到使用此邮箱的历史预订。} other {已将使用此邮箱的 # 个历史预订添加到您的账户。}}",
+    "proceed": "继续"
   }
 }

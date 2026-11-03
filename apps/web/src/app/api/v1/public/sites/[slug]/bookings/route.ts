@@ -13,7 +13,7 @@ const bodySchema = z.object({
   sessionId: z.string().min(1, "required"),
   quantity: z.number({ error: "required" }).int("invalid"),
   fullName: z.string().trim().min(1, "required").max(120, "tooLong"),
-  email: z.email("invalid").max(254, "tooLong"),
+  email: z.string().trim().max(254, "tooLong").pipe(z.email("invalid")),
   phone: z.string().trim().max(40, "tooLong").optional(),
   specialRequest: z.string().trim().max(500, "tooLong").optional(),
   promotionIds: z.array(z.string()).max(10).optional(),

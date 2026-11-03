@@ -244,6 +244,20 @@
     "resend": "새 코드 보내기",
     "resendIn": "{seconds}초 후 새 코드 보내기",
     "login": "로그인",
-    "cancel": "취소"
+    "cancel": "취소",
+    "registerTitle": "계정 만들기",
+    "registerIntro": "{email}에 해당하는 계정이 아직 없습니다. 계정을 만들어 계속하세요. 이 이메일로 한 예약은 계정에 추가됩니다.",
+    "fullNameLabel": "이름",
+    "countryLabel": "국가",
+    "countryPlaceholder": "국가 선택",
+    "birthDateLabel": "생년월일",
+    "createAccount": "계정 만들기",
+    "creating": "만드는 중…",
+    "fieldRequired": "이 항목을 입력해 주세요.",
+    "birthDateInvalid": "올바른 생년월일을 입력해 주세요.",
+    "registerFailed": "계정을 만들지 못했습니다. 다시 시도해 주세요.",
+    "accountCreated": "계정이 만들어졌습니다",
+    "accountMerged": "{merged, plural, =0 {이 이메일로 한 이전 예약이 없습니다.} other {이 이메일로 한 이전 예약 #건이 계정에 추가되었습니다.}}",
+    "proceed": "계속"
   }
 }

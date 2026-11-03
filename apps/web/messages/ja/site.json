@@ -244,6 +244,20 @@
     "resend": "新しいコードを送信",
     "resendIn": "{seconds}秒後に新しいコードを送信",
     "login": "ログイン",
-    "cancel": "キャンセル"
+    "cancel": "キャンセル",
+    "registerTitle": "アカウントを作成",
+    "registerIntro": "{email} のアカウントはまだありません。アカウントを作成して続けてください。このメールアドレスでの予約はアカウントに追加されます。",
+    "fullNameLabel": "氏名",
+    "countryLabel": "国",
+    "countryPlaceholder": "国を選択",
+    "birthDateLabel": "生年月日",
+    "createAccount": "アカウントを作成",
+    "creating": "作成中…",
+    "fieldRequired": "この項目を入力してください。",
+    "birthDateInvalid": "有効な生年月日を入力してください。",
+    "registerFailed": "アカウントを作成できませんでした。もう一度お試しください。",
+    "accountCreated": "アカウントを作成しました",
+    "accountMerged": "{merged, plural, =0 {このメールアドレスでの以前の予約は見つかりませんでした。} other {このメールアドレスでの以前の予約#件をアカウントに追加しました。}}",
+    "proceed": "続ける"
   }
 }

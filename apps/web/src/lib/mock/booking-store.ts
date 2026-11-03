@@ -21,11 +21,14 @@ interface Store {
   keys: Map<string, string>;
   /** The payments and refunds the shop recorded after the session (Confirm payment / Unpaid), added to the ones the booking already has. */
   extra: Map<string, PaymentEntry[]>;
+  /** The account a guest registered, by customer id: the name and phone they gave and their profile (it is added to a customer who booked before). */
+  accounts: Map<string, { fullName: string; phone?: string; account: NonNullable<Customer["account"]> }>;
 }
 const g = globalThis as unknown as { __bookingStore?: Store };
 const store = (): Store => {
-  const st = (g.__bookingStore ??= { changes: new Map(), made: [], madeCustomers: [], tokens: new Map(), keys: new Map(), extra: new Map() });
-  st.extra ??= new Map(); // a store made before this field existed (a dev server that reloaded its code)
+  const st = (g.__bookingStore ??= { changes: new Map(), made: [], madeCustomers: [], tokens: new Map(), keys: new Map(), extra: new Map(), accounts: new Map() });
+  st.extra ??= new Map(); // a store made before these fields existed (a dev server that reloaded its code)
+  st.accounts ??= new Map();
   return st;
 };
 const changes = () => store().changes;
@@ -83,8 +86,49 @@ export function recordPaid(id: string, paid: boolean, by: string, now: Date = ne
   return true;
 }
 
-/** The customers of the shop: the demo ones, and the ones guests became by booking. */
-export const liveCustomers = (): Customer[] => [...seedCustomers, ...store().madeCustomers];
+/** The customers of the shop: the demo ones, and the ones guests became by booking, with the account a guest registered. */
+export const liveCustomers = (): Customer[] =>
+  [...seedCustomers, ...store().madeCustomers]
+    .map((c) => {
+      const a = store().accounts.get(c.id);
+      return a ? { ...c, fullName: a.fullName, ...(a.phone ? { phone: a.phone } : {}), account: a.account } : c;
+    });
+
+const normalizeEmail = (email: string) => email.trim().toLowerCase();
+/** The customers who have this email, those with an account first (so a booking goes to the account of the email when it has one). */
+const customersWithEmail = (email: string): Customer[] =>
+  liveCustomers().filter((c) => c.email && normalizeEmail(c.email) === normalizeEmail(email)).sort((a, b) => Number(Boolean(b.account)) - Number(Boolean(a.account)));
+
+/** Whether an email has an account, and how many bookings were made with it (as a guest or with the account). */
+export function guestAccountStatus(email: string): { registered: boolean; bookings: number } {
+  const mine = customersWithEmail(email);
+  const ids = new Set(mine.map((c) => c.id));
+  return { registered: mine.some((c) => c.account), bookings: liveBookings().filter((b) => ids.has(b.customerId)).length };
+}
+
+export type RegisterResult = { ok: true; customerId: string; created: boolean; merged: number } | { ok: false; code: "ALREADY_REGISTERED" };
+
+/**
+ * A guest registers an account. The bookings made before with the same email (a guest who booked without an account) are merged into it: the customer who
+ * booked becomes the account, so every booking of that email is in it (a new customer is made only when the email never booked). `merged` is how many
+ * bookings the account got that way. Refused when the email has an account already.
+ */
+export function registerGuestAccount(input: { email: string; fullName: string; country: string; birthDate: string; phone?: string; locale?: Customer["preferredLocale"] }): RegisterResult {
+  const email = normalizeEmail(input.email);
+  const matches = customersWithEmail(email);
+  if (matches.some((c) => c.account)) return { ok: false, code: "ALREADY_REGISTERED" };
+  const account = { country: input.country, birthDate: input.birthDate };
+  const phone = input.phone?.trim() || undefined;
+  if (matches.length === 0) {
+    const customer: Customer = { id: `cu-${newUuid().slice(0, 8)}`, fullName: input.fullName.trim(), email, ...(phone ? { phone } : {}), preferredLocale: input.locale ?? currentShop.defaultLocale, account };
+    store().madeCustomers.push(customer);
+    return { ok: true, customerId: customer.id, created: true, merged: 0 };
+  }
+  const primary = matches[0]!;
+  const merged = liveBookings().filter((b) => b.customerId === primary.id).length;
+  store().accounts.set(primary.id, { fullName: input.fullName.trim(), ...((phone ?? primary.phone) ? { phone: phone ?? primary.phone } : {}), account });
+  return { ok: true, customerId: primary.id, created: false, merged };
+}
 
 /**
  * Records a status change of a booking; false when the booking does not exist. A check-in remembers the status the booking had (`before`, or the
@@ -138,7 +182,8 @@ export function createGuestBooking(input: GuestBookingInput, confirmUrlFor: (tok
   if (!priced.ok) return { ok: false, code: "NOT_COMBINABLE" };
 
   const email = input.email.trim().toLowerCase();
-  let customer = liveCustomers().find((c) => c.email?.trim().toLowerCase() === email);
+  // A guest who booked before with this email is the same customer; when the email has an account the booking is counted in the account.
+  let customer = customersWithEmail(email)[0];
   if (!customer) {
     customer = { id: `cu-${newUuid().slice(0, 8)}`, fullName: input.fullName.trim(), email, ...(input.phone?.trim() ? { phone: input.phone.trim() } : {}), preferredLocale: input.locale ?? currentShop.defaultLocale };
     store().madeCustomers.push(customer);

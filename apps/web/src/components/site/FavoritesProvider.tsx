@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { COUNTRY_CODES, countryName } from "@/components/booking/countries";
 import { cleanOtp, DEMO_OTP, isOtpComplete, OTP_LENGTH, OTP_MAX_ATTEMPTS, OTP_RESEND_SECONDS, sendOtp, verifyOtp } from "@/components/booking/otp";
 import { FavoritesContext } from "@/components/sections/favorites-context";
 import { siteFontClass } from "@/components/sections/site-fonts";
@@ -51,7 +52,7 @@ export function FavoritesProvider({ slug, shopName, theme, children }: { slug: s
         <DialogContent style={modalThemeStyle(theme)} className={cn("max-h-[92dvh] gap-4 overflow-y-auto p-5 sm:max-w-md", siteFontClass(theme.font))}>
           <LoginHeader shopName={shopName} />
           {/* Mounted only while open, so the form starts empty every time. */}
-          {open ? <LoginForm onLoggedIn={onLoggedIn} onCancel={() => { setOpen(false); setPending(null); }} /> : null}
+          {open ? <LoginForm slug={slug} onLoggedIn={onLoggedIn} onCancel={() => { setOpen(false); setPending(null); }} /> : null}
         </DialogContent>
       </Dialog>
     </FavoritesContext.Provider>
@@ -68,10 +69,18 @@ function LoginHeader({ shopName }: { shopName: string }) {
   );
 }
 
-/** Two steps: the email, then the code that was sent to it. */
-function LoginForm({ onLoggedIn, onCancel }: { onLoggedIn: (email: string) => void; onCancel: () => void }) {
+const selectClass =
+  "h-11 w-full rounded-lg border border-input bg-white px-2.5 text-base text-[var(--site-text)] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
+
+/**
+ * The steps of the login: the email, the code that was sent to it and, for an email that has no account yet, the account to create (name, country, date of
+ * birth). Creating it merges into it the bookings that were made before with the same email, and the last step says how many. The builder preview (slug
+ * "preview") has no server to ask, so it only logs in.
+ */
+function LoginForm({ slug, onLoggedIn, onCancel }: { slug: string; onLoggedIn: (email: string) => void; onCancel: () => void }) {
   const t = useTranslations("site.favorites");
-  const [step, setStep] = useState<"email" | "code">("email");
+  const locale = useLocale();
+  const [step, setStep] = useState<"email" | "code" | "profile" | "done">("email");
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState(false);
   const [code, setCode] = useState("");
@@ -79,8 +88,16 @@ function LoginForm({ onLoggedIn, onCancel }: { onLoggedIn: (email: string) => vo
   const [attempts, setAttempts] = useState(0);
   const [cooldown, setCooldown] = useState(0);
   const [busy, setBusy] = useState(false);
+  const [fullName, setFullName] = useState("");
+  const [country, setCountry] = useState("");
+  const [birthDate, setBirthDate] = useState("");
+  const [errors, setErrors] = useState<{ fullName?: boolean; country?: boolean; birthDate?: boolean }>({});
+  const [failed, setFailed] = useState(false);
+  const [merged, setMerged] = useState(0);
   const locked = attempts >= OTP_MAX_ATTEMPTS;
   const clean = normalizeGuestEmail(email);
+  const base = `/api/v1/public/sites/${encodeURIComponent(slug)}/accounts`;
+  const today = new Date().toISOString().slice(0, 10);
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -103,15 +120,58 @@ function LoginForm({ onLoggedIn, onCancel }: { onLoggedIn: (email: string) => vo
     if (!isOtpComplete(code) || locked) return;
     setBusy(true);
     try {
-      if (await verifyOtp(clean, code)) { onLoggedIn(clean); return; }
-      setAttempts((a) => a + 1); setWrong(true); setCode("");
+      if (!(await verifyOtp(clean, code))) { setAttempts((a) => a + 1); setWrong(true); setCode(""); return; }
+      if (slug === "preview") { onLoggedIn(clean); return; }
+      // The email is proved. Has it an account? If not, the guest creates one (and the bookings made with this email join it).
+      let registered = true;
+      try {
+        const res = await fetch(`${base}/lookup`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: clean }) });
+        if (res.ok) registered = ((await res.json()) as { registered: boolean }).registered;
+      } catch {
+        /* the server cannot be asked: the guest is simply logged in */
+      }
+      if (registered) onLoggedIn(clean);
+      else setStep("profile");
     } finally {
       setBusy(false);
     }
   }
 
+  async function register() {
+    const next = { fullName: !fullName.trim(), country: !COUNTRY_CODES.includes(country), birthDate: !birthDate || birthDate > today || birthDate < "1900-01-01" };
+    setErrors(next);
+    setFailed(false);
+    if (next.fullName || next.country || next.birthDate) return;
+    setBusy(true);
+    try {
+      const res = await fetch(base, {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email: clean, fullName: fullName.trim(), country, birthDate, locale }),
+      });
+      if (res.status === 409) { onLoggedIn(clean); return; } // the email has an account after all
+      if (!res.ok) { setFailed(true); return; }
+      setMerged(((await res.json()) as { merged: number }).merged);
+      setStep("done");
+    } catch {
+      setFailed(true);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const field = (id: string, label: string, error: boolean | undefined, control: ReactNode) => (
+    <div className="space-y-1.5">
+      <label htmlFor={id} className="text-sm font-medium">{label} <span aria-hidden>*</span></label>
+      {control}
+      {error ? <p role="alert" className="text-sm text-red-700">{t(id === "fav-birth" ? "birthDateInvalid" : "fieldRequired")}</p> : null}
+    </div>
+  );
+
   return (
-    <form onSubmit={(e) => { e.preventDefault(); void (step === "email" ? send() : verify()); }} noValidate className="space-y-4" data-testid="favorites-login">
+    <form
+      onSubmit={(e) => { e.preventDefault(); void (step === "email" ? send() : step === "code" ? verify() : step === "profile" ? register() : onLoggedIn(clean)); }}
+      noValidate className="space-y-4" data-testid="favorites-login"
+    >
       {step === "email" ? (
         <div className="space-y-1.5">
           <label htmlFor="fav-email" className="text-sm font-medium">{t("emailLabel")} <span aria-hidden>*</span></label>
@@ -121,7 +181,7 @@ function LoginForm({ onLoggedIn, onCancel }: { onLoggedIn: (email: string) => vo
           />
           {emailError ? <p id="fav-email-error" role="alert" className="text-sm text-red-700">{t("emailInvalid")}</p> : null}
         </div>
-      ) : (
+      ) : step === "code" ? (
         <div className="space-y-1.5" data-testid="favorites-code-step">
           <p className="text-sm">{t("codeIntro", { email: clean })}</p>
           <label htmlFor="fav-code" className="text-sm font-medium">{t("codeLabel")} <span aria-hidden>*</span></label>
@@ -136,13 +196,36 @@ function LoginForm({ onLoggedIn, onCancel }: { onLoggedIn: (email: string) => vo
             {cooldown > 0 ? t("resendIn", { seconds: cooldown }) : t("resend")}
           </button>
         </div>
+      ) : step === "profile" ? (
+        <div className="space-y-3" data-testid="favorites-register-step">
+          <h3 className="text-base font-semibold">{t("registerTitle")}</h3>
+          <p className="text-sm">{t("registerIntro", { email: clean })}</p>
+          {field("fav-name", t("fullNameLabel"), errors.fullName, <Input id="fav-name" autoComplete="name" className="h-11 text-base" value={fullName} aria-required aria-invalid={errors.fullName} onChange={(e) => setFullName(e.target.value)} />)}
+          {field("fav-country", t("countryLabel"), errors.country, (
+            <select id="fav-country" className={selectClass} value={country} aria-required aria-invalid={errors.country} onChange={(e) => setCountry(e.target.value)}>
+              <option value="">{t("countryPlaceholder")}</option>
+              {COUNTRY_CODES.map((c) => ({ c, n: countryName(c, locale) })).sort((a, b) => a.n.localeCompare(b.n, locale)).map(({ c, n }) => <option key={c} value={c}>{n}</option>)}
+            </select>
+          ))}
+          {field("fav-birth", t("birthDateLabel"), errors.birthDate, <Input id="fav-birth" type="date" min="1900-01-01" max={today} className="h-11 text-base" value={birthDate} aria-required aria-invalid={errors.birthDate} onChange={(e) => setBirthDate(e.target.value)} />)}
+          {failed ? <p role="alert" className="text-sm text-red-700">{t("registerFailed")}</p> : null}
+        </div>
+      ) : (
+        <div className="space-y-2" data-testid="favorites-registered-step">
+          <h3 className="text-base font-semibold">{t("accountCreated")}</h3>
+          <p role="status" data-testid="favorites-merged" className="text-sm">{t("accountMerged", { merged })}</p>
+        </div>
       )}
       <div className="flex flex-wrap justify-end gap-2">
-        <button type="button" className={secondaryBtn} onClick={onCancel}>{t("cancel")}</button>
+        {step === "done" ? null : <button type="button" className={secondaryBtn} onClick={onCancel}>{t("cancel")}</button>}
         {step === "email" ? (
           <button type="submit" className={primaryBtn} disabled={busy || !clean}>{busy ? t("sending") : t("sendCode")}</button>
-        ) : (
+        ) : step === "code" ? (
           <button type="submit" className={primaryBtn} disabled={busy || locked || !isOtpComplete(code)}>{t("login")}</button>
+        ) : step === "profile" ? (
+          <button type="submit" className={primaryBtn} disabled={busy}>{busy ? t("creating") : t("createAccount")}</button>
+        ) : (
+          <button type="submit" className={primaryBtn}>{t("proceed")}</button>
         )}
       </div>
     </form>

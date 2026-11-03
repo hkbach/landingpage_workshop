@@ -244,6 +244,20 @@
     "resend": "Send a new code",
     "resendIn": "Send a new code in {seconds}s",
     "login": "Log in",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "registerTitle": "Create your account",
+    "registerIntro": "There is no account for {email} yet. Create one to continue: the bookings made with this email are added to it.",
+    "fullNameLabel": "Full name",
+    "countryLabel": "Country",
+    "countryPlaceholder": "Choose a country",
+    "birthDateLabel": "Date of birth",
+    "createAccount": "Create account",
+    "creating": "Creating…",
+    "fieldRequired": "Please fill in this field.",
+    "birthDateInvalid": "Enter a valid date of birth.",
+    "registerFailed": "We could not create the account. Please try again.",
+    "accountCreated": "Account created",
+    "accountMerged": "{merged, plural, =0 {No earlier booking was found with this email.} one {# earlier booking made with this email was added to your account.} other {# earlier bookings made with this email were added to your account.}}",
+    "proceed": "Continue"
   }
 }
