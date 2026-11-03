@@ -62,6 +62,8 @@ export interface Booking {
   promotionIds?: string[]; discountAmount?: number;
   /** When the guest was checked in (set by Check-in, cleared by Uncheck-in), for tracking. */
   checkedInAt?: string;
+  /** The status the booking had before the check-in (NOT_CONFIRMED or CONFIRMED), kept while it is checked in: an uncheck-in goes back to it. */
+  statusBeforeCheckIn?: "NOT_CONFIRMED" | "CONFIRMED";
 }
 
 /** Per-section colour overrides (hex only, #RGB or #RRGGBB). Rendered only via CSS custom properties. */

@@ -1,19 +1,16 @@
 import type { BookingStatus, PaymentStatus, SessionStatus } from "@workshop/shared";
 
 /**
- * Booking state machine (REQUIREMENTS 6.1). Pure; mirrors the future backend `bookings/booking-state.ts`.
- * Booking status and payment status are independent (BR-06).
+ * Booking state machine. Pure; mirrors the future backend `bookings/booking-state.ts`. Booking status and payment status are independent (BR-06).
+ *
+ *   NOT_CONFIRMED --(the guest opens the link of the email)--> CONFIRMED
+ *   NOT_CONFIRMED | CONFIRMED --(check-in)--> CHECKED_IN --(uncheck-in)--> the status it had before the check-in
+ *   NOT_CONFIRMED | CONFIRMED --(cancel)--> CANCELLED
  */
 
-export const LATE_RELEASE_AFTER_MINUTES = 30;
+export type BookingAction = "CHECK_IN" | "UNDO_CHECK_IN" | "CANCEL" | "RESCHEDULE";
 
-export type BookingAction = "CHECK_IN" | "UNDO_CHECK_IN" | "LATE_RELEASE" | "NO_SHOW" | "CANCEL" | "COMPLETE" | "RESCHEDULE";
-
-export type BlockedReason =
-  | "INVALID_STATE" // not allowed from the current status
-  | "TOO_EARLY_LATE_RELEASE" // now < starts + 30 min
-  | "SESSION_NOT_ENDED" // now < ends
-  | "SESSION_FULL"; // LATE_RELEASED -> CHECKED_IN needs room
+export type BlockedReason = "INVALID_STATE"; // not allowed from the current status (or the session is closed)
 
 export interface ActionState {
   allowed: boolean;
@@ -22,7 +19,10 @@ export interface ActionState {
   requiresReason?: boolean;
 }
 
-export interface StateBooking { status: BookingStatus; quantity: number }
+/** The statuses a booking can have before it is checked in: an uncheck-in goes back to one of them. */
+export type PreCheckInStatus = Extract<BookingStatus, "NOT_CONFIRMED" | "CONFIRMED">;
+
+export interface StateBooking { status: BookingStatus; quantity: number; statusBeforeCheckIn?: PreCheckInStatus }
 export interface StateSession {
   startsAt: string; endsAt: string; status: SessionStatus; capacity: number; reservedCount: number;
 }
@@ -30,47 +30,29 @@ export interface StateSession {
 const ok = (extra?: Partial<ActionState>): ActionState => ({ allowed: true, ...extra });
 const no = (reason: BlockedReason): ActionState => ({ allowed: false, reason });
 
-/** Status that holds seats (BR-07). */
+/** Status that holds seats (BR-07): every booking but a cancelled one. */
 export function holdsSeat(status: BookingStatus): boolean {
-  return status === "CONFIRMED" || status === "CHECKED_IN" || status === "COMPLETED";
+  return status !== "CANCELLED";
 }
 
-export function canTransition(booking: StateBooking, session: StateSession, now: Date): Record<BookingAction, ActionState> {
-  const t = now.getTime();
-  const starts = new Date(session.startsAt).getTime();
-  const ends = new Date(session.endsAt).getTime();
-  const s = booking.status;
+/** A booking that has not been checked in or cancelled yet. */
+const isOpen = (s: BookingStatus): s is PreCheckInStatus => s === "NOT_CONFIRMED" || s === "CONFIRMED";
 
+export function canTransition(booking: StateBooking, session: StateSession, _now: Date): Record<BookingAction, ActionState> {
+  void _now;
+  const s = booking.status;
   // A closed session is final: nobody is checked in or unchecked any more (its list is read-only).
   const closed = session.status === "CLOSED";
 
-  const checkIn: ActionState =
-    closed ? no("INVALID_STATE")
-    : s === "CONFIRMED"
-      ? ok()
-      : s === "LATE_RELEASED"
-        ? session.capacity - session.reservedCount >= booking.quantity ? ok() : no("SESSION_FULL")
-        : no("INVALID_STATE");
-
-  // Uncheck-in: a check-in made by mistake goes back to CONFIRMED (only before the booking is completed).
+  // Check-in works from both NOT_CONFIRMED and CONFIRMED: a guest who has not opened the link yet can still arrive.
+  const checkIn: ActionState = !closed && isOpen(s) ? ok() : no("INVALID_STATE");
+  // Uncheck-in: a check-in made by mistake goes back to the status the booking had before it.
   const undoCheckIn: ActionState = s === "CHECKED_IN" && !closed ? ok() : no("INVALID_STATE");
+  const cancel: ActionState = isOpen(s) ? ok({ requiresReason: true }) : no("INVALID_STATE");
+  // FR-OPS-07 (Should): only a booking not checked in or cancelled may move.
+  const reschedule: ActionState = isOpen(s) ? ok() : no("INVALID_STATE");
 
-  const lateRelease: ActionState =
-    s !== "CONFIRMED" ? no("INVALID_STATE")
-      : t >= starts + LATE_RELEASE_AFTER_MINUTES * 60_000 ? ok() : no("TOO_EARLY_LATE_RELEASE");
-
-  // A guest who did not check in is marked SESSION_EXPIRED by the system when the session ends; the shop can then confirm the no-show.
-  const noShow: ActionState =
-    s === "SESSION_EXPIRED" ? ok()
-      : s !== "CONFIRMED" ? no("INVALID_STATE") : t >= ends ? ok() : no("SESSION_NOT_ENDED");
-
-  const cancel: ActionState = s === "CONFIRMED" ? ok({ requiresReason: true }) : no("INVALID_STATE");
-  const complete: ActionState = s === "CHECKED_IN" ? ok() : no("INVALID_STATE");
-  // FR-OPS-07 (Should): only CONFIRMED bookings may move.
-  const reschedule: ActionState =
-    s !== "CONFIRMED" ? no("INVALID_STATE") : ok();
-
-  return { CHECK_IN: checkIn, UNDO_CHECK_IN: undoCheckIn, LATE_RELEASE: lateRelease, NO_SHOW: noShow, CANCEL: cancel, COMPLETE: complete, RESCHEDULE: reschedule };
+  return { CHECK_IN: checkIn, UNDO_CHECK_IN: undoCheckIn, CANCEL: cancel, RESCHEDULE: reschedule };
 }
 
 export function allowedActions(booking: StateBooking, session: StateSession, now: Date): BookingAction[] {
@@ -78,17 +60,33 @@ export function allowedActions(booking: StateBooking, session: StateSession, now
   return (Object.keys(states) as BookingAction[]).filter((a) => states[a].allowed);
 }
 
-const TARGET: Partial<Record<BookingAction, BookingStatus>> = {
-  CHECK_IN: "CHECKED_IN", UNDO_CHECK_IN: "CONFIRMED", LATE_RELEASE: "LATE_RELEASED", NO_SHOW: "NO_SHOW", CANCEL: "CANCELLED", COMPLETE: "COMPLETED",
-};
-
-export function targetStatus(action: BookingAction): BookingStatus | undefined {
-  return TARGET[action];
+/**
+ * The status an action leads to. An uncheck-in goes back to the status the booking had before the check-in (NOT_CONFIRMED or CONFIRMED; CONFIRMED when
+ * it is not known).
+ */
+export function targetStatus(action: BookingAction, booking?: Pick<StateBooking, "statusBeforeCheckIn">): BookingStatus | undefined {
+  switch (action) {
+    case "CHECK_IN": return "CHECKED_IN";
+    case "UNDO_CHECK_IN": return booking?.statusBeforeCheckIn ?? "CONFIRMED";
+    case "CANCEL": return "CANCELLED";
+    default: return undefined;
+  }
 }
 
 /**
- * The seats a session has taken, counted from its bookings (BR-07: only CONFIRMED, CHECKED_IN and COMPLETED bookings hold seats). A booking
- * that is cancelled stops counting at once, so "8 of 10 seats" becomes "7 of 10" the moment a guest cancels.
+ * What the booking becomes when the guest opens the link of the confirmation email: NOT_CONFIRMED turns CONFIRMED; a booking already checked in
+ * stays checked in but will go back to CONFIRMED (not NOT_CONFIRMED) if the check-in is undone. null when there is nothing to confirm (already
+ * confirmed, or cancelled).
+ */
+export function confirmation(booking: Pick<StateBooking, "status" | "statusBeforeCheckIn">): { status: BookingStatus; statusBeforeCheckIn?: PreCheckInStatus } | null {
+  if (booking.status === "NOT_CONFIRMED") return { status: "CONFIRMED" };
+  if (booking.status === "CHECKED_IN" && booking.statusBeforeCheckIn === "NOT_CONFIRMED") return { status: "CHECKED_IN", statusBeforeCheckIn: "CONFIRMED" };
+  return null;
+}
+
+/**
+ * The seats a session has taken, counted from its bookings (BR-07: every booking that is not cancelled holds its seats). A booking that is
+ * cancelled stops counting at once, so "8 of 10 seats" becomes "7 of 10" the moment a guest cancels.
  */
 export function reservedSeats(bookings: readonly { sessionId: string; status: BookingStatus; quantity: number }[], sessionId: string): number {
   return bookings.reduce((n, b) => (b.sessionId === sessionId && holdsSeat(b.status) ? n + b.quantity : n), 0);
@@ -120,13 +118,4 @@ export function computePaymentStatus(totalAmount: number, entries: readonly Paym
 
 export function netPaid(entries: readonly PaymentLike[]): number {
   return entries.reduce((n, e) => n + (e.type === "PAYMENT" ? e.amount : -e.amount), 0);
-}
-
-/**
- * The system step at the end of a session: every booking that was not checked in (confirmed, or released for being late) becomes
- * SESSION_EXPIRED. Checked-in, completed, cancelled and no-show bookings keep their status.
- */
-export function expiredStatus(status: BookingStatus, session: Pick<StateSession, "endsAt">, now: Date): BookingStatus {
-  const notCheckedIn = status === "CONFIRMED" || status === "LATE_RELEASED";
-  return notCheckedIn && new Date(session.endsAt).getTime() <= now.getTime() ? "SESSION_EXPIRED" : status;
 }

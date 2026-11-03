@@ -8,10 +8,10 @@ import { LiveSummary } from "@/components/dashboard/live-summary";
 import { SummaryCard } from "@/components/dashboard/summary-card";
 import { ShopLink } from "@/components/dashboard/shell/shop-link";
 import { dayKey } from "@/lib/format";
-import { liveBookings } from "@/lib/mock/booking-store";
+import { liveBookings, liveCustomers } from "@/lib/mock/booking-store";
 import { getFeeRates } from "@/lib/mock/fee-rates-store";
 import { paymentSources } from "@/lib/mock/ledger-source";
-import { bookingHistory, currentShop, customers, mockLandingPages, sessions, sitePage, workshops } from "@/lib/mock/data";
+import { bookingHistory, currentShop, mockLandingPages, sessions, sitePage, workshops } from "@/lib/mock/data";
 
 // Computed outside the component: depends on the current time.
 function computeOverview() {
@@ -35,7 +35,7 @@ function computeOverview() {
     month: { total: month.total, guests: month.guests, lostRate: month.total ? month.lost / month.total : 0 },
     workshops: { active: workshops.filter((w) => w.status === "ACTIVE").length, draft: workshops.filter((w) => w.status === "DRAFT").length },
     sessions: { upcoming: upcoming.length, fill: seatsOpen ? seatsTaken / seatsOpen : 0 },
-    customers: { total: customers.length, repeat: customers.filter((c) => bookingCount(c.id) >= 2).length },
+    customers: { total: liveCustomers().length, repeat: liveCustomers().filter((c) => bookingCount(c.id) >= 2).length },
     todayBookings: live.filter((b) => dayKey(b.startsAt, tz) === today).length,
     upcomingSessions: upcoming.length,
     unpaid: live.filter((b) => b.paymentStatus === "UNPAID").length,

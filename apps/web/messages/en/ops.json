@@ -8,13 +8,10 @@
     "noEmail": "No email"
   },
   "bookingStatus": {
+    "NOT_CONFIRMED": "Not confirmed",
     "CONFIRMED": "Confirmed",
     "CHECKED_IN": "Checked in",
-    "COMPLETED": "Completed",
-    "LATE_RELEASED": "Late released",
-    "NO_SHOW": "No-show",
-    "CANCELLED": "Cancelled",
-    "SESSION_EXPIRED": "Session expired"
+    "CANCELLED": "Cancelled"
   },
   "paymentStatus": {
     "UNPAID": "Unpaid",
@@ -44,18 +41,13 @@
   },
   "action": {
     "CHECK_IN": "Check in",
-    "LATE_RELEASE": "Late release",
-    "NO_SHOW": "No-show",
     "CANCEL": "Cancel booking",
-    "COMPLETE": "Complete",
     "RESCHEDULE": "Change session",
-    "RECORD_PAYMENT": "Record payment"
+    "RECORD_PAYMENT": "Record payment",
+    "UNDO_CHECK_IN": "Undo check-in"
   },
   "blocked": {
     "INVALID_STATE": "This action is not available for the current booking status.",
-    "TOO_EARLY_LATE_RELEASE": "Late release is only available 30 minutes after the session starts.",
-    "SESSION_NOT_ENDED": "No-show can only be marked after the session has ended.",
-    "SESSION_FULL": "The session does not have enough free seats for this guest.",
     "REASON_REQUIRED": "A reason is required.",
     "NOT_FOUND": "Booking or session not found.",
     "INVALID_AMOUNT": "The amount is not valid.",
@@ -87,7 +79,6 @@
     "arrived": "Arrived",
     "empty": "There are no sessions scheduled for today.",
     "noGuests": "No bookings for this session yet.",
-    "completeAll": "Complete all checked-in ({count})",
     "addWalkIn": "Add walk-in"
   },
   "bookings": {

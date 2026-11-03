@@ -3,13 +3,13 @@ import { bookingSeries, isDailyPeriod, lastDayKeys, outcomeGroup, trendKeys, tre
 
 const TZ = "Asia/Ho_Chi_Minh";
 const NOW = new Date("2026-11-01T05:00:00Z"); // 12:00 on 1 Nov in Ho Chi Minh
-const p = (startsAt: string, status = "COMPLETED", guests = 2): BookingPoint => ({ startsAt, status, guests });
+const p = (startsAt: string, status = "CHECKED_IN", guests = 2): BookingPoint => ({ startsAt, status, guests });
 
 describe("outcomeGroup", () => {
   it("groups the booking statuses", () => {
-    expect(["CHECKED_IN", "COMPLETED"].map(outcomeGroup)).toEqual(["attended", "attended"]);
-    expect(outcomeGroup("CONFIRMED")).toBe("upcoming");
-    expect(["CANCELLED", "NO_SHOW", "LATE_RELEASED"].map(outcomeGroup)).toEqual(["lost", "lost", "lost"]);
+    expect(outcomeGroup("CHECKED_IN")).toBe("attended");
+    expect(["CONFIRMED", "NOT_CONFIRMED"].map(outcomeGroup)).toEqual(["upcoming", "upcoming"]);
+    expect(outcomeGroup("CANCELLED")).toBe("lost");
   });
 });
 
@@ -40,8 +40,8 @@ describe("bookingSeries", () => {
     p("2026-11-01T02:00:00Z", "CHECKED_IN", 3),
     p("2026-11-01T08:00:00Z", "CONFIRMED", 1),
     p("2026-10-31T03:00:00Z", "CANCELLED", 2),
-    p("2026-10-10T03:00:00Z", "NO_SHOW", 4),
-    p("2026-09-05T03:00:00Z", "COMPLETED", 2),
+    p("2026-10-10T03:00:00Z", "CANCELLED", 4),
+    p("2026-09-05T03:00:00Z", "CHECKED_IN", 2),
     p("2025-01-05T03:00:00Z"), // outside every period
   ];
   it("counts per day for one month, with a bucket for every day", () => {

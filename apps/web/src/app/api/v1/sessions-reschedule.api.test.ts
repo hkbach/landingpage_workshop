@@ -27,7 +27,7 @@ describe("POST /sessions/{id}/reschedule", () => {
   });
   it("keeps the explanation of the reason Other", async () => {
     await call("se-11", { ...GOOD, reason: { code: "OTHER", note: "The kiln broke" } });
-    expect(outboxEmails()[0]?.reason).toEqual({ code: "OTHER", note: "The kiln broke" });
+    expect(outboxEmails()[0]).toMatchObject({ reason: { code: "OTHER", note: "The kiln broke" } });
   });
   it("refuses a missing reason, Other without a text, and bad dates", async () => {
     expect((await call("se-11", { ...GOOD, reason: { code: "" } })).status).toBe(422);

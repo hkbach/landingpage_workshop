@@ -6,13 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BookingStatusBadge, PaymentStatusBadge } from "@/components/ops/status-badges";
 import { formatDateTime } from "@/lib/format";
-import { liveBookings } from "@/lib/mock/booking-store";
-import { currentShop, customers } from "@/lib/mock/data";
+import { liveBookings, liveCustomers } from "@/lib/mock/booking-store";
+import { currentShop } from "@/lib/mock/data";
 import { ShopLink } from "@/components/dashboard/shell/shop-link";
 
 export default async function CustomerDetailPage(props: PageProps<"/shopowner/[slug]/customers/[id]">) {
   const { id } = await props.params;
-  const customer = customers.find((c) => c.id === id);
+  const customer = liveCustomers().find((c) => c.id === id);
   if (!customer) notFound();
   const t = await getTranslations("ops");
   const locale = await getLocale();

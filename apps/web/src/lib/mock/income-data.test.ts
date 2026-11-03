@@ -20,14 +20,16 @@ describe("payments of the demo bookings", () => {
   it("the total of a booking is the price of its seats minus its discount", () => {
     for (const b of bookings) expect(b.totalAmount, b.id).toBe(b.unitPriceAmount * b.quantity - (b.discountAmount ?? 0));
   });
-  it("a cancelled booking that had paid was refunded, all or part of it; a no-show keeps its payment", () => {
+  it("a cancelled booking that had paid was refunded, all or part of it; a guest who never came keeps the payment", () => {
     const cancelledPaid = bookings.filter((b) => b.status === "CANCELLED" && b.payments.some((p) => p.type === "PAYMENT"));
     expect(cancelledPaid.length).toBeGreaterThan(0);
     for (const b of cancelledPaid) expect(b.payments.some((p) => p.type === "REFUND"), b.id).toBe(true);
     expect(cancelledPaid.some((b) => b.paymentStatus === "REFUNDED")).toBe(true);
     expect(cancelledPaid.some((b) => b.paymentStatus === "PARTIALLY_REFUNDED")).toBe(true);
-    const noShow = bookings.find((b) => b.status === "NO_SHOW")!;
-    expect(netPaid(noShow.payments)).toBe(noShow.totalAmount);
+    // A guest who booked, paid and never came is still CONFIRMED (there is no no-show status) and keeps the payment.
+    const kept = bookings.find((b) => b.id === "bk-20")!;
+    expect(kept.status).toBe("CONFIRMED");
+    expect(netPaid(kept.payments)).toBe(kept.totalAmount);
   });
   it("every payment status is covered, and a booking of a closed session is paid, unpaid or refunded", () => {
     for (const st of ["UNPAID", "PARTIALLY_PAID", "PAID", "REFUNDED", "PARTIALLY_REFUNDED"] as const) expect(bookings.some((b) => b.paymentStatus === st), st).toBe(true);

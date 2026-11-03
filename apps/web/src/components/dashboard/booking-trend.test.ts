@@ -38,7 +38,7 @@ describe("mock booking history", () => {
     expect(series["12m"].every((b, i, a) => b.total > 0 || i === a.length - 1)).toBe(true);
     expect(bookingHistory.every((b) => new Date(b.startsAt).getTime() < NOW.getTime())).toBe(true);
   });
-  it("has the three kinds of outcome", () => {
-    expect(new Set(bookingHistory.map((b) => b.status))).toEqual(new Set(["COMPLETED", "CANCELLED", "NO_SHOW"]));
+  it("has the two kinds of outcome of a past booking: checked in and cancelled", () => {
+    expect(new Set(bookingHistory.map((b) => b.status))).toEqual(new Set(["CHECKED_IN", "CANCELLED"]));
   });
 });

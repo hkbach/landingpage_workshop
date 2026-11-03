@@ -13,16 +13,11 @@ export type WorkshopStatus = (typeof WORKSHOP_STATUSES)[number];
 export const SESSION_STATUSES = ["OPEN", "PAUSED", "RUNNING", "CLOSED"] as const;
 export type SessionStatus = (typeof SESSION_STATUSES)[number];
 
-export const BOOKING_STATUSES = [
-  "CONFIRMED",
-  "CHECKED_IN",
-  "COMPLETED",
-  "LATE_RELEASED",
-  "NO_SHOW",
-  "CANCELLED",
-  /** The session ended and the guest had not checked in (set by the system, never by hand). */
-  "SESSION_EXPIRED",
-] as const;
+/**
+ * A new booking is NOT_CONFIRMED until the guest opens the link in the email sent to them (then CONFIRMED). The shop owner checks a guest in
+ * (CHECKED_IN, from either status) and can undo it (back to the status the booking had before). A booking can be cancelled.
+ */
+export const BOOKING_STATUSES = ["NOT_CONFIRMED", "CONFIRMED", "CHECKED_IN", "CANCELLED"] as const;
 export type BookingStatus = (typeof BOOKING_STATUSES)[number];
 
 export const PAYMENT_STATUSES = [

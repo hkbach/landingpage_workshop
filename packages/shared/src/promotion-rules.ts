@@ -3,7 +3,7 @@ import { promotionStatus, type PromotionRecord, type PromotionStatus } from "./p
 // Rules that tie promotions to the bookings that used them and to the other promotions of the shop.
 
 /** Booking statuses in which a booking is still "using" its promotions (the guest has not been given the session yet). */
-const LIVE_BOOKING_STATUSES: readonly string[] = ["CONFIRMED", "CHECKED_IN"];
+const LIVE_BOOKING_STATUSES: readonly string[] = ["NOT_CONFIRMED", "CONFIRMED", "CHECKED_IN"];
 
 /** What the pause rule needs to know about a booking: its promotions, its status and when its session ends. */
 export interface BookingUse {
@@ -17,8 +17,8 @@ export interface BookingUse {
 
 /**
  * The bookings that stop a promotion from being paused: the promotion was applied to the booking, the booking is still live
- * (confirmed or checked in) and its session has not ended. A promotion can be paused again once those bookings are cancelled
- * or their sessions are over (a booking not checked in then becomes SESSION_EXPIRED). Sessions that were cancelled do not count.
+ * (not confirmed yet, confirmed or checked in) and its session has not ended. A promotion can be paused again once those bookings are
+ * cancelled or their sessions are over. Sessions that were cancelled do not count.
  */
 export function bookingsBlockingPause(promotionId: string, bookings: readonly BookingUse[], now: Date): BookingUse[] {
   return bookings.filter(

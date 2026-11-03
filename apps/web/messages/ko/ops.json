@@ -8,13 +8,10 @@
     "noEmail": "이메일 없음"
   },
   "bookingStatus": {
+    "NOT_CONFIRMED": "확인 대기",
     "CONFIRMED": "확정",
     "CHECKED_IN": "체크인 완료",
-    "COMPLETED": "완료",
-    "LATE_RELEASED": "지각 취소",
-    "NO_SHOW": "노쇼",
-    "CANCELLED": "취소됨",
-    "SESSION_EXPIRED": "세션 만료"
+    "CANCELLED": "취소됨"
   },
   "paymentStatus": {
     "UNPAID": "미결제",
@@ -44,18 +41,13 @@
   },
   "action": {
     "CHECK_IN": "체크인",
-    "LATE_RELEASE": "지각 취소 처리",
-    "NO_SHOW": "노쇼",
     "CANCEL": "예약 취소",
-    "COMPLETE": "완료 처리",
     "RESCHEDULE": "세션 변경",
-    "RECORD_PAYMENT": "결제 기록"
+    "RECORD_PAYMENT": "결제 기록",
+    "UNDO_CHECK_IN": "체크인 취소"
   },
   "blocked": {
     "INVALID_STATE": "현재 예약 상태에서는 사용할 수 없는 작업이에요.",
-    "TOO_EARLY_LATE_RELEASE": "지각 취소 처리는 세션 시작 30분 후부터 가능해요.",
-    "SESSION_NOT_ENDED": "노쇼는 세션이 끝난 후에만 처리할 수 있어요.",
-    "SESSION_FULL": "이 손님을 위한 빈 좌석이 세션에 부족해요.",
     "REASON_REQUIRED": "사유를 입력해 주세요.",
     "NOT_FOUND": "예약 또는 세션을 찾을 수 없어요.",
     "INVALID_AMOUNT": "금액이 올바르지 않아요.",
@@ -87,7 +79,6 @@
     "arrived": "도착",
     "empty": "오늘 예정된 세션이 없어요.",
     "noGuests": "이 세션에는 아직 예약이 없어요.",
-    "completeAll": "체크인한 예약 모두 완료 처리 ({count})",
     "addWalkIn": "현장 방문 추가"
   },
   "bookings": {

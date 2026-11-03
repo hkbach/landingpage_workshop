@@ -3,8 +3,8 @@
 // transaction of the change, through the outbox.
 import type { SessionCloseReason } from "@workshop/shared";
 import type { Booking, Customer } from "@/lib/types";
-import { liveBookings } from "./booking-store";
-import { customers, sessions } from "./data";
+import { liveBookings, liveCustomers } from "./booking-store";
+import { sessions } from "./data";
 import { queueSessionClosed, queueSessionRescheduled } from "./outbox-store";
 
 export interface MailResult { notified: number; withoutEmail: number }
@@ -14,7 +14,7 @@ export function bookingsToTell(sessionId: string): { booking: Booking; guest: Cu
   if (!sessions.some((s) => s.id === sessionId)) return [];
   return liveBookings()
     .filter((b) => b.sessionId === sessionId && b.status !== "CANCELLED")
-    .map((booking) => ({ booking, guest: customers.find((c) => c.id === booking.customerId) }));
+    .map((booking) => ({ booking, guest: liveCustomers().find((c) => c.id === booking.customerId) }));
 }
 
 export function mailSessionRescheduled(sessionId: string, change: { oldStartsAt: string; newStartsAt: string; newEndsAt: string; reason: SessionCloseReason }): MailResult {

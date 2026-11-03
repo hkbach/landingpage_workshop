@@ -119,7 +119,7 @@
     "promotionAloneActive": "“{pick}” is used on its own and cannot be combined with other promotions. Choose another promotion to switch."
   },
   "confirmation": {
-    "title": "Booking confirmed",
+    "title": "Booking received",
     "intro": "Thank you! Your spot at {shop} is reserved.",
     "code": "Booking code",
     "workshop": "Workshop",
@@ -134,7 +134,12 @@
     "notFoundTitle": "Booking not found",
     "notFoundText": "We could not find a booking with these details. Check the link in your confirmation email.",
     "promotions": "Promotions used",
-    "saved": "you save {amount}"
+    "saved": "you save {amount}",
+    "pendingTitle": "Please confirm your booking",
+    "pendingText": "We sent an email to {email} with the details and a link. Open the link to confirm your booking; until then it is not confirmed.",
+    "demoNote": "Demo (there is no mailbox here):",
+    "demoLink": "open the link of the email",
+    "confirmedNote": "Your booking is confirmed."
   },
   "report": {
     "title": "Report this site",
@@ -210,5 +215,15 @@
     "choose": "Choose a workshop",
     "duration": "Duration",
     "price": "Price"
+  },
+  "confirmLink": {
+    "confirmedTitle": "Booking confirmed",
+    "confirmedText": "Thank you! Your booking is now confirmed. See you at the studio.",
+    "alreadyTitle": "Already confirmed",
+    "alreadyText": "This booking was already confirmed. Nothing else to do.",
+    "cancelledTitle": "Booking cancelled",
+    "cancelledText": "This booking was cancelled, so it cannot be confirmed. Please contact the studio.",
+    "invalidTitle": "Link not valid",
+    "invalidText": "We could not find a booking for this link. Check the link in your email, or contact the studio."
   }
 }

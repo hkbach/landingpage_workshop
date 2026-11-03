@@ -20,7 +20,7 @@ import { bookingContactSchema, type BookingFormValues } from "./schema";
 import { slotState, type SlotState } from "./availability";
 import { safeImage } from "@/components/sections/safe-url";
 import { cleanOtp, DEMO_OTP, isOtpComplete, OTP_LENGTH, OTP_MAX_ATTEMPTS, OTP_RESEND_SECONDS, sendOtp, verifyOtp } from "./otp";
-import { simulateBooking } from "./simulate";
+import { BookingRefused, submitBooking } from "./simulate";
 import { newUuid } from "@/lib/uuid";
 
 export type BookingShop = Pick<Shop, "name" | "slug" | "timezone" | "currency" | "defaultLocale">;
@@ -273,19 +273,28 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
         return;
       }
       if (preview) { setPreviewDone(true); setSubmitting(false); return; } // nothing is created from the builder
-      // Simulated POST with the Idempotency-Key; the real API verifies Turnstile and the OTP, and recomputes the price.
-      const result = await simulateBooking(
+      // POST with the Idempotency-Key: the server makes the booking NOT_CONFIRMED, recomputes the price, checks the seats and emails the guest the link that
+      // confirms it (the real API also verifies Turnstile and the OTP).
+      const result = await submitBooking(
+        {
+          slug: shop.slug, sessionId: session.id, quantity, fullName: values.fullName.trim(), email, phone: values.phone.trim() || undefined,
+          specialRequest: (values.specialRequest ?? "").trim() || undefined, promotionIds: chosen.map((p) => p.id), locale,
+        },
         {
           email, workshopTitle: L(workshop.title), startsAt: session.startsAt, endsAt: session.endsAt,
           timezone: shop.timezone, quantity, totalAmount: total, currency: workshop.currency,
           promotions: chosen.map((p) => L(p.title)), discountAmount: price?.ok ? price.discount : 0,
         },
         idempotencyKey,
-        { id: session.id, code: session.code, reservedCount: session.reservedCount },
       );
       onOpenChange(false);
       router.push(`${basePath}/booking/${result.code}?email=${encodeURIComponent(result.email)}`);
-    } catch {
+    } catch (e) {
+      if (e instanceof BookingRefused && e.reason === "GONE") {
+        // The seats were taken, or the session closed, while the form was open.
+        setSlotGone(true); setGoneCutoff(session.bookingCutoffMinutes); setSessionId(""); setDate(""); setStep("datetime"); setSubmitting(false);
+        return;
+      }
       setSubmitError(true);
       setSubmitting(false);
     }

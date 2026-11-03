@@ -21,6 +21,22 @@ export function BookingConfirmation({ data, shop, locale, homeHref }: { data: Co
         <p className="text-[var(--site-muted)]">{t("confirmation.intro", { shop: shop.name })}</p>
       </header>
 
+      {data.status === "NOT_CONFIRMED" ? (
+        <section role="status" data-testid="booking-pending" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">
+          <h2 className="font-semibold">{t("confirmation.pendingTitle")}</h2>
+          <p className="mt-1">{t("confirmation.pendingText", { email: data.email })}</p>
+          {data.demoConfirmUrl ? (
+            // Demo only: there is no mailbox in the prototype, so the link of the email is offered here.
+            <p className="mt-2 text-xs"><span className="font-medium">{t("confirmation.demoNote")}</span>{" "}
+              <a href={data.demoConfirmUrl} data-testid="demo-confirm-link" className="underline underline-offset-4">{t("confirmation.demoLink")}</a></p>
+          ) : null}
+        </section>
+      ) : data.status ? (
+        <section role="status" data-testid="booking-confirmed" className="rounded-xl border border-emerald-300 bg-emerald-50 p-4 text-sm text-emerald-950">
+          <p className="font-semibold">{t("confirmation.confirmedNote")}</p>
+        </section>
+      ) : null}
+
       <section aria-labelledby="bk-code-label" className="rounded-xl border-2 border-[var(--site-primary)] bg-[var(--site-surface)] p-4 text-center">
         <p id="bk-code-label" className="text-sm text-[var(--site-muted)]">{t("confirmation.code")}</p>
         <p className="mt-1 font-mono text-3xl font-bold tracking-widest">{data.code}</p>
@@ -97,4 +113,18 @@ export function SimulatedBookingConfirmation({ code, email, shop, locale, homeHr
   }
   if (!data || data.email !== email.trim().toLowerCase()) return <BookingNotFound homeHref={homeHref} />;
   return <BookingConfirmation data={data} shop={shop} locale={locale} homeHref={homeHref} />;
+}
+
+/** What the guest sees after opening the link of the confirmation email: confirmed, already confirmed, cancelled, or a link that is not valid. */
+export function BookingLinkResult({ kind, code, homeHref }: { kind: "confirmed" | "already" | "cancelled" | "invalid"; code?: string; homeHref: string }) {
+  const t = useTranslations("site");
+  const ok = kind === "confirmed" || kind === "already";
+  return (
+    <div className="mx-auto w-full max-w-xl space-y-4 px-4 py-16 text-center" data-testid={`link-${kind}`}>
+      <h1 className="text-2xl font-bold">{t(`confirmLink.${kind}Title`)}</h1>
+      <p className="text-[var(--site-muted)]">{t(`confirmLink.${kind}Text`)}</p>
+      {ok && code ? <p className="font-mono text-2xl font-bold tracking-widest">{code}</p> : null}
+      <a href={homeHref} className="inline-flex min-h-11 items-center rounded-lg border border-black/20 bg-white px-5 py-2 text-sm font-medium text-zinc-900">{t("confirmation.backToSite")}</a>
+    </div>
+  );
 }

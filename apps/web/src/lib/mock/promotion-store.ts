@@ -142,7 +142,7 @@ export type SaveResult =
 /** The booking codes that stop a promotion from being paused now (empty when it can be paused). */
 function pauseBlockers(promotionId: string): string[] {
   const now = new Date();
-  return bookingsBlockingPause(promotionId, bookingUses(now), now).map((b) => b.bookingCode);
+  return bookingsBlockingPause(promotionId, bookingUses(), now).map((b) => b.bookingCode);
 }
 
 /** Workshops a promotion would make free (empty when it is fine). */

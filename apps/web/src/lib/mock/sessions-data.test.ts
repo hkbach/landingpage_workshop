@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BOOKING_CODE_RE, closedForGood, SESSION_CLOSE_REASONS, wasRescheduled, SESSION_CODE_RE, SESSION_STATUSES, closeIfEnded, isInSessionTime, isValidBookingCutoff } from "@workshop/shared";
+import { BOOKING_CODE_RE, BOOKING_STATUSES, closedForGood, SESSION_CLOSE_REASONS, wasRescheduled, SESSION_CODE_RE, SESSION_STATUSES, closeIfEnded, isInSessionTime, isValidBookingCutoff } from "@workshop/shared";
 import { reservedSeats } from "@/lib/booking-state";
 import { bookings, sessions, workshops } from "./data";
 
@@ -144,7 +144,7 @@ describe("demo bookings of the sessions", () => {
     }
   });
   it("every status the check-in list shows, and a cancelled booking always has its reason", () => {
-    for (const st of ["CONFIRMED", "CHECKED_IN", "COMPLETED", "NO_SHOW", "CANCELLED", "LATE_RELEASED"] as const) expect(bookings.some((b) => b.status === st), st).toBe(true);
+    for (const st of BOOKING_STATUSES) expect(bookings.some((b) => b.status === st), st).toBe(true);
     for (const b of bookings.filter((x) => x.status === "CANCELLED")) expect(b.cancelReason, b.id).toBeTruthy();
   });
   it("a guest without an email (walk-in) and guests of different languages", () => {

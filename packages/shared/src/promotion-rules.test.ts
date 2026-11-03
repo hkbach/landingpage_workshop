@@ -20,10 +20,11 @@ describe("bookingsBlockingPause", () => {
   it("is free once the session has ended, even for a guest who never checked in", () => {
     expect(bookingsBlockingPause("pr-1", [use({ id: "a", sessionEndsAt: "2026-11-10T10:00:00Z" }), use({ id: "b", sessionEndsAt: "2026-11-09T12:00:00Z" })], NOW)).toEqual([]);
   });
-  it("is free once the booking is cancelled, expired, a no-show, released or completed", () => {
-    for (const status of ["CANCELLED", "SESSION_EXPIRED", "NO_SHOW", "LATE_RELEASED", "COMPLETED"]) {
-      expect(bookingsBlockingPause("pr-1", [use({ id: "a", status })], NOW), status).toEqual([]);
-    }
+  it("is free once the booking is cancelled", () => {
+    expect(bookingsBlockingPause("pr-1", [use({ id: "a", status: "CANCELLED" })], NOW)).toEqual([]);
+  });
+  it("blocks while the booking is not confirmed yet, confirmed or checked in", () => {
+    for (const status of ["NOT_CONFIRMED", "CONFIRMED", "CHECKED_IN"]) expect(bookingsBlockingPause("pr-1", [use({ id: "a", status })], NOW).length, status).toBe(1);
   });
   it("a cancelled session does not block", () => {
     expect(bookingsBlockingPause("pr-1", [use({ id: "a", sessionStatus: "CANCELLED" })], NOW)).toEqual([]);

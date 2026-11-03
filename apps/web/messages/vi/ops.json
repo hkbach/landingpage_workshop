@@ -8,13 +8,10 @@
     "noEmail": "Không có email"
   },
   "bookingStatus": {
+    "NOT_CONFIRMED": "Chưa xác nhận",
     "CONFIRMED": "Đã xác nhận",
     "CHECKED_IN": "Đã check-in",
-    "COMPLETED": "Hoàn thành",
-    "LATE_RELEASED": "Đã nhả chỗ do đến trễ",
-    "NO_SHOW": "Vắng mặt",
-    "CANCELLED": "Đã hủy",
-    "SESSION_EXPIRED": "Buổi đã hết hạn"
+    "CANCELLED": "Đã hủy"
   },
   "paymentStatus": {
     "UNPAID": "Chưa thanh toán",
@@ -44,18 +41,13 @@
   },
   "action": {
     "CHECK_IN": "Check-in",
-    "LATE_RELEASE": "Nhả chỗ do đến trễ",
-    "NO_SHOW": "Vắng mặt",
     "CANCEL": "Hủy đặt chỗ",
-    "COMPLETE": "Hoàn thành",
     "RESCHEDULE": "Đổi buổi",
-    "RECORD_PAYMENT": "Ghi nhận thanh toán"
+    "RECORD_PAYMENT": "Ghi nhận thanh toán",
+    "UNDO_CHECK_IN": "Hủy check-in"
   },
   "blocked": {
     "INVALID_STATE": "Thao tác này không khả dụng với trạng thái đặt chỗ hiện tại.",
-    "TOO_EARLY_LATE_RELEASE": "Chỉ có thể nhả chỗ do đến trễ sau khi buổi bắt đầu 30 phút.",
-    "SESSION_NOT_ENDED": "Chỉ có thể đánh dấu vắng mặt sau khi buổi kết thúc.",
-    "SESSION_FULL": "Buổi này không đủ chỗ trống cho khách này.",
     "REASON_REQUIRED": "Vui lòng nhập lý do.",
     "NOT_FOUND": "Không tìm thấy đặt chỗ hoặc buổi.",
     "INVALID_AMOUNT": "Số tiền không hợp lệ.",
@@ -87,7 +79,6 @@
     "arrived": "Đã đến",
     "empty": "Hôm nay chưa có buổi nào được lên lịch.",
     "noGuests": "Buổi này chưa có đặt chỗ nào.",
-    "completeAll": "Hoàn thành tất cả đã check-in ({count})",
     "addWalkIn": "Thêm khách vãng lai"
   },
   "bookings": {

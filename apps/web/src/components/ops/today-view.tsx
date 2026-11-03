@@ -1,9 +1,8 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { CheckCheck, Clock, Users } from "lucide-react";
+import { Clock, Users } from "lucide-react";
 import { formatMoney, pickLocalized, resolveShopLocale, type Locale } from "@workshop/shared";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Booking, Customer, Session, Workshop } from "@/lib/types";
 import { dayKey, formatTime } from "@/lib/format";
@@ -33,7 +32,7 @@ export function TodayView({
 
   const live = ops.bookings.filter((b) => todays.some((s) => s.id === b.sessionId));
   const expected = live.filter((b) => holdsSeat(b.status)).reduce((n, b) => n + b.quantity, 0);
-  const arrived = live.filter((b) => b.status === "CHECKED_IN" || b.status === "COMPLETED").reduce((n, b) => n + b.quantity, 0);
+  const arrived = live.filter((b) => b.status === "CHECKED_IN").reduce((n, b) => n + b.quantity, 0);
 
   return (
     <div className="grid gap-4">
@@ -59,7 +58,6 @@ export function TodayView({
       {todays.map((s) => {
         const w = workshopOf(s.workshopId);
         const list = ops.bookings.filter((b) => b.sessionId === s.id).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
-        const checkedIn = list.filter((b) => b.status === "CHECKED_IN");
         const title = w ? pickLocalized(w.title, resolveShopLocale(locale, shop.enabledLocales, shop.defaultLocale), shop.defaultLocale) : "";
         return (
           <Card key={s.id}>
@@ -76,13 +74,6 @@ export function TodayView({
               </div>
               <CapacityBar reserved={s.reservedCount} capacity={s.capacity} />
               <div className="flex flex-wrap gap-2">
-                <Button
-                  size="sm" variant="outline" disabled={checkedIn.length === 0}
-                  onClick={() => checkedIn.forEach((b) => ops.perform(b.id, "COMPLETE"))}
-                >
-                  <CheckCheck aria-hidden="true" />
-                  {t("today.completeAll", { count: checkedIn.length })}
-                </Button>
                 <ShopLink
                   href={`/shopowner/bookings/new?session=${s.id}`}
                   className="inline-flex h-7 items-center rounded-lg border border-border px-2.5 text-[0.8rem] font-medium hover:bg-muted"
@@ -96,7 +87,7 @@ export function TodayView({
               <ul className="grid gap-3">
                 {list.map((b) => {
                   const c = customerOf(b.customerId);
-                  const inactive = b.status === "CANCELLED" || b.status === "LATE_RELEASED" || b.status === "NO_SHOW";
+                  const inactive = b.status === "CANCELLED";
                   const balance = Math.max(0, b.totalAmount - netPaid(b.payments));
                   return (
                     <li key={b.id} className={`grid gap-2 rounded-lg border p-3 ${inactive ? "bg-muted/40" : ""}`}>

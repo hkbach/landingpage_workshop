@@ -8,13 +8,10 @@
     "noEmail": "无邮箱"
   },
   "bookingStatus": {
+    "NOT_CONFIRMED": "未确认",
     "CONFIRMED": "已确认",
     "CHECKED_IN": "已签到",
-    "COMPLETED": "已完成",
-    "LATE_RELEASED": "迟到释放",
-    "NO_SHOW": "未到场",
-    "CANCELLED": "已取消",
-    "SESSION_EXPIRED": "场次已过期"
+    "CANCELLED": "已取消"
   },
   "paymentStatus": {
     "UNPAID": "未支付",
@@ -44,18 +41,13 @@
   },
   "action": {
     "CHECK_IN": "签到",
-    "LATE_RELEASE": "迟到释放",
-    "NO_SHOW": "未到场",
     "CANCEL": "取消预订",
-    "COMPLETE": "完成",
     "RESCHEDULE": "更换场次",
-    "RECORD_PAYMENT": "记录付款"
+    "RECORD_PAYMENT": "记录付款",
+    "UNDO_CHECK_IN": "撤销签到"
   },
   "blocked": {
     "INVALID_STATE": "当前预订状态不支持此操作。",
-    "TOO_EARLY_LATE_RELEASE": "仅在场次开始 30 分钟后才能执行迟到释放。",
-    "SESSION_NOT_ENDED": "场次结束后才能标记为未到场。",
-    "SESSION_FULL": "该场次的空余座位不足以容纳此宾客。",
     "REASON_REQUIRED": "必须填写原因。",
     "NOT_FOUND": "未找到预订或场次。",
     "INVALID_AMOUNT": "金额无效。",
@@ -87,7 +79,6 @@
     "arrived": "已到场",
     "empty": "今天没有安排场次。",
     "noGuests": "该场次暂无预订。",
-    "completeAll": "全部已签到完成（{count}）",
     "addWalkIn": "添加现场散客"
   },
   "bookings": {

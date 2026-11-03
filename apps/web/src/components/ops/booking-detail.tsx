@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowLeft } from "lucide-react";
-import { formatMoney, type BookingStatus, type Locale } from "@workshop/shared";
+import { formatMoney, type Locale } from "@workshop/shared";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { Booking, Customer, Session } from "@/lib/types";
@@ -14,12 +14,14 @@ import { BookingStatusBadge, PaymentStatusBadge } from "./status-badges";
 import { useOpsState, type BookingEvent } from "./use-ops-state";
 import { ShopLink } from "@/components/dashboard/shell/shop-link";
 
-/** Statuses already passed when the booking was loaded (mock data has no history; times unknown). */
-function initialTrail(status: BookingStatus, createdAt: string): BookingEvent[] {
-  const trail: BookingEvent[] = [{ status: "CONFIRMED", at: createdAt }];
-  if (status === "CHECKED_IN" || status === "COMPLETED") trail.push({ status: "CHECKED_IN" });
-  if (status === "COMPLETED") trail.push({ status: "COMPLETED" });
-  if (status === "LATE_RELEASED" || status === "NO_SHOW" || status === "CANCELLED") trail.push({ status });
+/** Statuses already passed when the booking was loaded (mock data has no history; times unknown). A booking starts NOT_CONFIRMED. */
+function initialTrail(booking: Pick<Booking, "status" | "createdAt" | "statusBeforeCheckIn">): BookingEvent[] {
+  const { status, createdAt, statusBeforeCheckIn } = booking;
+  const trail: BookingEvent[] = [{ status: "NOT_CONFIRMED", at: createdAt }];
+  // Confirmed (the guest opened the link), unless it was checked in without ever being confirmed.
+  if (status === "CONFIRMED" || (status === "CHECKED_IN" && statusBeforeCheckIn !== "NOT_CONFIRMED")) trail.push({ status: "CONFIRMED" });
+  if (status === "CHECKED_IN") trail.push({ status: "CHECKED_IN" });
+  if (status === "CANCELLED") trail.push({ status });
   return trail;
 }
 
@@ -30,7 +32,7 @@ export function BookingDetail({
   const t = useTranslations("ops");
   const locale = useLocale() as Locale;
   const ops = useOpsState({ bookings: [booking], sessions, nowIso, actor });
-  const [trail0] = useState(() => initialTrail(booking.status, booking.createdAt));
+  const [trail0] = useState(() => initialTrail(booking));
   const b = ops.bookings[0] ?? booking;
   const session = ops.sessions.find((s) => s.id === b.sessionId);
   const trail = [...trail0, ...(ops.history[b.id] ?? [])];

@@ -51,22 +51,23 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
       const state = canTransition(b, s, new Date())[action];
       if (!state.allowed) return { ok: false, reason: state.reason ?? "INVALID_STATE" };
       if (state.requiresReason && !reason?.trim()) return { ok: false, reason: "REASON_REQUIRED" };
-      const to = targetStatus(action);
+      const to = targetStatus(action, b);
       if (!to) return { ok: false, reason: "INVALID_STATE" };
       const at = new Date().toISOString();
       setBookings((list) =>
         list.map((x) => {
           if (x.id !== b.id) return x;
           // The time of a check-in is kept for tracking; an uncheck-in (or a cancel) clears it.
-          const { checkedInAt: _was, ...rest } = x;
-          void _was;
-          const checkedInAt = action === "CHECK_IN" ? at : to === "COMPLETED" ? x.checkedInAt : undefined;
-          return { ...rest, status: to, cancelReason: action === "CANCEL" ? reason!.trim() : x.cancelReason, ...(checkedInAt ? { checkedInAt } : {}) };
+          const { checkedInAt: _was, statusBeforeCheckIn: _before, ...rest } = x;
+          void _was; void _before;
+          // A check-in remembers the status the booking had (not confirmed or confirmed): the uncheck-in goes back to it.
+          const before = action === "CHECK_IN" && (b.status === "NOT_CONFIRMED" || b.status === "CONFIRMED") ? b.status : undefined;
+          return { ...rest, status: to, cancelReason: action === "CANCEL" ? reason!.trim() : x.cancelReason, ...(action === "CHECK_IN" ? { checkedInAt: at } : {}), ...(before ? { statusBeforeCheckIn: before } : {}) };
         }),
       );
       adjustSeats(s.id, seatDelta(b.status, to, b.quantity));
       pushEvent(b.id, { status: to, at, note: action === "CANCEL" ? reason!.trim() : undefined });
-      persistBookingStatus(b.id, to, action === "CANCEL" ? reason!.trim() : undefined, action === "CHECK_IN" ? at : undefined);
+      persistBookingStatus(b.id, to, action === "CANCEL" ? reason!.trim() : undefined, action === "CHECK_IN" ? at : undefined, action === "CHECK_IN" && (b.status === "NOT_CONFIRMED" || b.status === "CONFIRMED") ? b.status : undefined);
       return { ok: true };
     },
     [bookings, sessions],

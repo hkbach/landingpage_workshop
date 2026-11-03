@@ -200,8 +200,8 @@ export const bookings: Booking[] = [
   booking({ id: "bk-5", sessionId: "se-5", customerId: "cu-1", quantity: 3, status: "CANCELLED", cancelReason: "Guest changed plans",
     promotionIds: ["pr-7"], discountAmount: 60_000, totalAmount: 1_140_000 }),
   // Upcoming sessions: these keep their promotions in use whatever the time of day.
-  booking({ id: "bk-6", sessionId: "se-3", customerId: "cu-2", quantity: 2, promotionIds: ["pr-1"], discountAmount: 260_000, totalAmount: 1_040_000 }),
-  booking({ id: "bk-7", sessionId: "se-5", customerId: "cu-3", quantity: 2, promotionIds: ["pr-2"], discountAmount: 100_000, totalAmount: 700_000 }),
+  booking({ id: "bk-6", status: "NOT_CONFIRMED", sessionId: "se-3", customerId: "cu-2", quantity: 2, promotionIds: ["pr-1"], discountAmount: 260_000, totalAmount: 1_040_000 }),
+  booking({ id: "bk-7", status: "NOT_CONFIRMED", sessionId: "se-5", customerId: "cu-3", quantity: 2, promotionIds: ["pr-2"], discountAmount: 100_000, totalAmount: 700_000 }),
   // A guest cancelled this booking of se-3: it no longer holds seats, and the check-in list shows why.
   booking({ id: "bk-11", sessionId: "se-3", customerId: "cu-4", quantity: 3, status: "CANCELLED", cancelReason: "Guest is ill" }),
   // Fills the sold-out session se-15.
@@ -214,27 +214,27 @@ export const bookings: Booking[] = [
   booking({ id: "bk-12", sessionId: "se-27", customerId: "cu-1", quantity: 2, status: "CHECKED_IN", checkedInAt: inMinutes(-25), paymentStatus: "PAID",
     payments: [{ id: "pm-2", type: "PAYMENT", amount: 1_300_000, method: "CARD", recordedAt: inMinutes(-25), recordedBy: "Linh Tran" }] }),
   booking({ id: "bk-13", sessionId: "se-27", customerId: "cu-2", quantity: 1 }),
-  booking({ id: "bk-14", sessionId: "se-27", customerId: "cu-4", quantity: 2 }),
+  booking({ id: "bk-14", status: "NOT_CONFIRMED", sessionId: "se-27", customerId: "cu-4", quantity: 2 }),
   // SES-0028 (paused, taking place), SES-0029 (inside its cut-off), SES-0031 (paused, not started).
   booking({ id: "bk-15", sessionId: "se-28", customerId: "cu-1", quantity: 1 }),
-  booking({ id: "bk-16", sessionId: "se-29", customerId: "cu-2", quantity: 2 }),
+  booking({ id: "bk-16", status: "NOT_CONFIRMED", sessionId: "se-29", customerId: "cu-2", quantity: 2 }),
   booking({ id: "bk-17", sessionId: "se-31", customerId: "cu-4", quantity: 1 }),
-  booking({ id: "bk-18", sessionId: "se-31", customerId: "cu-1", quantity: 2 }),
+  booking({ id: "bk-18", status: "NOT_CONFIRMED", sessionId: "se-31", customerId: "cu-1", quantity: 2 }),
   // SES-0032 (over): one booking in every status the check-in list can show. The confirmed ones become Session expired when the session ends.
-  booking({ id: "bk-19", sessionId: "se-32", customerId: "cu-1", quantity: 2, status: "COMPLETED", checkedInAt: at(-1, 14.05), paymentStatus: "PAID",
+  booking({ id: "bk-19", sessionId: "se-32", customerId: "cu-1", quantity: 2, status: "CHECKED_IN", checkedInAt: at(-1, 14.05), paymentStatus: "PAID",
     payments: [{ id: "pm-3", type: "PAYMENT", amount: 800_000, method: "CASH", recordedAt: at(-1, 15), recordedBy: "Linh Tran" }] }),
-  booking({ id: "bk-20", sessionId: "se-32", customerId: "cu-2", quantity: 1, status: "NO_SHOW" }),
-  booking({ id: "bk-21", sessionId: "se-32", customerId: "cu-4", quantity: 2, status: "CHECKED_IN", checkedInAt: at(-1, 14.1) }),
+  booking({ id: "bk-20", sessionId: "se-32", customerId: "cu-2", quantity: 1 }), // confirmed, never came
+  booking({ id: "bk-21", sessionId: "se-32", customerId: "cu-4", quantity: 2, status: "CHECKED_IN", checkedInAt: at(-1, 14.1), statusBeforeCheckIn: "NOT_CONFIRMED" }),
   booking({ id: "bk-22", sessionId: "se-32", customerId: "cu-3", quantity: 1, source: "WALK_IN" }),
   booking({ id: "bk-23", sessionId: "se-32", customerId: "cu-1", quantity: 1, status: "CANCELLED", cancelReason: "Schedule conflict" }),
-  booking({ id: "bk-24", sessionId: "se-32", customerId: "cu-2", quantity: 1, status: "LATE_RELEASED" }),
+  booking({ id: "bk-24", sessionId: "se-32", customerId: "cu-2", quantity: 1 }),
   // SES-0033 (paused when its time was over) and SES-0034 / SES-0039 (to come).
   booking({ id: "bk-25", sessionId: "se-33", customerId: "cu-4", quantity: 2 }),
-  booking({ id: "bk-26", sessionId: "se-34", customerId: "cu-2", quantity: 2 }),
+  booking({ id: "bk-26", status: "NOT_CONFIRMED", sessionId: "se-34", customerId: "cu-2", quantity: 2 }),
   booking({ id: "bk-27", sessionId: "se-34", customerId: "cu-1", quantity: 1 }),
-  booking({ id: "bk-28", sessionId: "se-39", customerId: "cu-4", quantity: 3 }),
+  booking({ id: "bk-28", status: "NOT_CONFIRMED", sessionId: "se-39", customerId: "cu-4", quantity: 3 }),
   // A guest of the session taking place who was late: the booking was released, and the guest can still be checked in while there is room.
-  booking({ id: "bk-29", sessionId: "se-27", customerId: "cu-3", quantity: 1, source: "WALK_IN", status: "LATE_RELEASED" }),
+  booking({ id: "bk-29", sessionId: "se-27", customerId: "cu-3", quantity: 1, source: "WALK_IN" }),
   // ---- Closed sessions: closing one emails every guest who booked it except the one who cancelled (the walk-in has no email) ----
   // SES-0012 (closed for good by the owner).
   booking({ id: "bk-30", sessionId: "se-12", customerId: "cu-1", quantity: 2 }),
@@ -439,7 +439,7 @@ export const bookingHistory: { startsAt: string; status: string; guests: number 
     const n = Math.floor(rand() * 2.2 + growth + (weekday === 0 || weekday === 6 ? 1.2 : 0));
     for (let i = 0; i < n; i++) {
       const r = rand();
-      out.push({ startsAt: at(-d, i % 2 ? 14 : 9), status: r < 0.76 ? "COMPLETED" : r < 0.9 ? "CANCELLED" : "NO_SHOW", guests: 1 + Math.floor(rand() * 4) });
+      out.push({ startsAt: at(-d, i % 2 ? 14 : 9), status: r < 0.84 ? "CHECKED_IN" : "CANCELLED", guests: 1 + Math.floor(rand() * 4) });
     }
   }
   return out;

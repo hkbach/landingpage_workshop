@@ -32,7 +32,19 @@ export interface SessionClosedEmail extends EmailBase {
   reason?: SessionCloseReason;
 }
 
-export type OutboxEmail = SessionRescheduledEmail | SessionClosedEmail;
+/** A guest made a booking: the email with the booking and the link that confirms it (the booking is NOT_CONFIRMED until the link is opened). */
+export interface BookingConfirmationEmail extends EmailBase {
+  type: "BOOKING_CONFIRMATION";
+  startsAt: string;
+  endsAt: string;
+  quantity: number;
+  totalAmount: number;
+  currency: string;
+  /** The link that confirms the booking (a secret: only the guest gets it, by email). */
+  confirmUrl: string;
+}
+
+export type OutboxEmail = SessionRescheduledEmail | SessionClosedEmail | BookingConfirmationEmail;
 
 const g = globalThis as unknown as { __outbox?: OutboxEmail[] };
 const box = () => (g.__outbox ??= []);
@@ -45,6 +57,12 @@ export function queueSessionRescheduled(email: Omit<SessionRescheduledEmail, "id
 
 export function queueSessionClosed(email: Omit<SessionClosedEmail, "id" | "type" | "createdAt">): SessionClosedEmail {
   const entry: SessionClosedEmail = { ...email, id: newUuid(), type: "SESSION_CLOSED", createdAt: new Date().toISOString() };
+  box().push(entry);
+  return entry;
+}
+
+export function queueBookingConfirmation(email: Omit<BookingConfirmationEmail, "id" | "type" | "createdAt">): BookingConfirmationEmail {
+  const entry: BookingConfirmationEmail = { ...email, id: newUuid(), type: "BOOKING_CONFIRMATION", createdAt: new Date().toISOString() };
   box().push(entry);
   return entry;
 }

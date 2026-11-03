@@ -16,9 +16,8 @@ describe("the time of a check-in", () => {
     expect((await patch("bk-13", { status: "CONFIRMED" })).status).toBe(200);
     expect(at("bk-13")).toBeUndefined();
   });
-  it("stays when the booking is completed, and is dropped by a cancel", async () => {
+  it("is dropped by a cancel", async () => {
     await patch("bk-14", { status: "CHECKED_IN", checkedInAt: "2026-11-03T09:10:00.000Z" });
-    await patch("bk-14", { status: "COMPLETED" });
     expect(at("bk-14")).toBe("2026-11-03T09:10:00.000Z");
     await patch("bk-14", { status: "CANCELLED", cancelReason: "x" });
     expect(at("bk-14")).toBeUndefined();

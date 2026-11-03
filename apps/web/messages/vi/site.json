@@ -119,7 +119,7 @@
     "promotionAloneActive": "“{pick}” được dùng riêng và không thể kết hợp với khuyến mãi khác. Hãy chọn khuyến mãi khác để chuyển đổi."
   },
   "confirmation": {
-    "title": "Đã xác nhận đặt chỗ",
+    "title": "Đã nhận đặt chỗ",
     "intro": "Cảm ơn bạn! Chỗ của bạn tại {shop} đã được giữ.",
     "code": "Mã đặt chỗ",
     "workshop": "Workshop",
@@ -134,7 +134,12 @@
     "notFoundTitle": "Không tìm thấy đặt chỗ",
     "notFoundText": "Chúng tôi không tìm thấy đặt chỗ với thông tin này. Hãy kiểm tra liên kết trong email xác nhận của bạn.",
     "promotions": "Khuyến mãi đã dùng",
-    "saved": "bạn tiết kiệm {amount}"
+    "saved": "bạn tiết kiệm {amount}",
+    "pendingTitle": "Vui lòng xác nhận booking",
+    "pendingText": "Chúng tôi đã gửi email đến {email} kèm thông tin booking và một đường link. Hãy bấm vào link để xác nhận booking; cho đến lúc đó booking chưa được xác nhận.",
+    "demoNote": "Demo (ở đây không có hộp thư):",
+    "demoLink": "mở link trong email",
+    "confirmedNote": "Booking của bạn đã được xác nhận."
   },
   "report": {
     "title": "Báo cáo trang này",
@@ -210,5 +215,15 @@
     "choose": "Chọn workshop",
     "duration": "Thời lượng",
     "price": "Giá"
+  },
+  "confirmLink": {
+    "confirmedTitle": "Đã xác nhận booking",
+    "confirmedText": "Cảm ơn bạn! Booking đã được xác nhận. Hẹn gặp bạn tại studio.",
+    "alreadyTitle": "Đã xác nhận trước đó",
+    "alreadyText": "Booking này đã được xác nhận trước đó. Bạn không cần làm gì thêm.",
+    "cancelledTitle": "Booking đã bị hủy",
+    "cancelledText": "Booking này đã bị hủy nên không thể xác nhận. Vui lòng liên hệ studio.",
+    "invalidTitle": "Link không hợp lệ",
+    "invalidText": "Không tìm thấy booking nào với link này. Hãy kiểm tra lại link trong email hoặc liên hệ studio."
   }
 }

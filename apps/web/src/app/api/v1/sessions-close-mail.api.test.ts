@@ -63,7 +63,7 @@ describe("POST /sessions/auto-closed", () => {
     const first = (await (await autoClosed(json({ sessions: [ended("se-3")] }))).json()) as { mailed: { id: string; notified: number }[] };
     expect(first.mailed).toHaveLength(1);
     expect(outboxEmails()[0]).toMatchObject({ type: "SESSION_CLOSED", auto: true });
-    expect(outboxEmails()[0]!.reason).toBeUndefined();
+    expect("reason" in outboxEmails()[0]!).toBe(false);
     expect(sentTo("SESSION_CLOSED").every((c) => live("se-3").includes(c))).toBe(true);
     const again = (await (await autoClosed(json({ sessions: [ended("se-3")] }))).json()) as { mailed: unknown[] };
     expect(again.mailed).toHaveLength(0);

@@ -158,7 +158,7 @@ export function CheckInDialog({ open, onOpenChange, session, bookings, customers
   const nameOf = (b: Booking) => customers.find((c) => c.id === b.customerId)?.fullName ?? "";
   // Guests expected: a cancelled booking is not counted (its guests do not come).
   const guests = rows.reduce((n, b) => (b.status === "CANCELLED" ? n : n + b.quantity), 0);
-  const checked = rows.filter((b) => b.status === "CHECKED_IN" || b.status === "COMPLETED").reduce((n, b) => n + b.quantity, 0);
+  const checked = rows.filter((b) => b.status === "CHECKED_IN").reduce((n, b) => n + b.quantity, 0);
 
   function run(b: Booking, action: BookingAction) {
     const res = perform(b.id, action);
@@ -173,6 +173,7 @@ export function CheckInDialog({ open, onOpenChange, session, bookings, customers
             <DialogHeader>
               <DialogTitle>{t("sessions.checkInTitle", { code: session.code })}</DialogTitle>
               <DialogDescription>{readOnly ? t("sessions.checkInReadOnly") : t("sessions.checkInHint")}</DialogDescription>
+              {readOnly ? null : <p data-testid="checkin-rules" className="text-xs text-muted-foreground">{t("sessions.checkInRules")}</p>}
             </DialogHeader>
             {rows.length === 0 ? (
               <p role="status" data-testid="checkin-empty" className="rounded-lg bg-muted/50 p-4 text-sm text-muted-foreground">{t("sessions.noBookings")}</p>
@@ -208,7 +209,7 @@ export function CheckInDialog({ open, onOpenChange, session, bookings, customers
                                 <BookingStatusBadge status={b.status} />
                               )}
                             </td>
-                            <td className="whitespace-nowrap px-3 py-2 text-muted-foreground" data-testid="checkin-at">{b.checkedInAt && (b.status === "CHECKED_IN" || b.status === "COMPLETED") ? stamp(b.checkedInAt) : "—"}</td>
+                            <td className="whitespace-nowrap px-3 py-2 text-muted-foreground" data-testid="checkin-at">{b.checkedInAt && b.status === "CHECKED_IN" ? stamp(b.checkedInAt) : "—"}</td>
                             <td className="px-3 py-2 text-muted-foreground" data-testid="checkin-reason">{b.status === "CANCELLED" ? (b.cancelReason || "—") : ""}</td>
                             <td className="px-3 py-2 text-right">
                               {readOnly ? null : state.CHECK_IN.allowed ? (

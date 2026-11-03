@@ -8,13 +8,10 @@
     "noEmail": "メールなし"
   },
   "bookingStatus": {
+    "NOT_CONFIRMED": "未確認",
     "CONFIRMED": "確定",
     "CHECKED_IN": "チェックイン済み",
-    "COMPLETED": "完了",
-    "LATE_RELEASED": "遅刻により解放",
-    "NO_SHOW": "無断欠席",
-    "CANCELLED": "キャンセル済み",
-    "SESSION_EXPIRED": "セッション終了"
+    "CANCELLED": "キャンセル済み"
   },
   "paymentStatus": {
     "UNPAID": "未払い",
@@ -44,18 +41,13 @@
   },
   "action": {
     "CHECK_IN": "チェックイン",
-    "LATE_RELEASE": "遅刻により解放",
-    "NO_SHOW": "無断欠席",
     "CANCEL": "予約をキャンセル",
-    "COMPLETE": "完了",
     "RESCHEDULE": "セッションを変更",
-    "RECORD_PAYMENT": "支払いを記録"
+    "RECORD_PAYMENT": "支払いを記録",
+    "UNDO_CHECK_IN": "チェックイン取消"
   },
   "blocked": {
     "INVALID_STATE": "この操作は現在の予約ステータスでは利用できません。",
-    "TOO_EARLY_LATE_RELEASE": "遅刻による解放は、セッション開始の30分後から利用できます。",
-    "SESSION_NOT_ENDED": "無断欠席は、セッション終了後にのみ設定できます。",
-    "SESSION_FULL": "セッションに、このお客様のための空席が足りません。",
     "REASON_REQUIRED": "理由は必須です。",
     "NOT_FOUND": "予約またはセッションが見つかりません。",
     "INVALID_AMOUNT": "金額が正しくありません。",
@@ -87,7 +79,6 @@
     "arrived": "到着済み",
     "empty": "今日予定されているセッションはありません。",
     "noGuests": "このセッションの予約はまだありません。",
-    "completeAll": "チェックイン済みをすべて完了（{count}）",
     "addWalkIn": "飛び込みを追加"
   },
   "bookings": {

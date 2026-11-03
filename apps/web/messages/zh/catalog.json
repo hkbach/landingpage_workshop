@@ -252,6 +252,7 @@
     "guestCount": "{count, plural, other {# 位}}",
     "closedNotified": "场次已关闭。{count, plural, =0 {没有需要发送邮件的客人。} other {已向 # 位客人发送邮件。}}",
     "closeMailFailed": "场次已关闭，但无法将发给客人的邮件加入队列。请自行联系客人。",
-    "autoClosedNotified": "场次因时间结束已自动关闭。{count, plural, other {已向 # 位客人发送邮件。}}"
+    "autoClosedNotified": "场次因时间结束已自动关闭。{count, plural, other {已向 # 位客人发送邮件。}}",
+    "checkInRules": "尚未通过邮件确认预订的客人也可以签到。撤销签到会将预订恢复为签到之前的状态。"
   }
 }

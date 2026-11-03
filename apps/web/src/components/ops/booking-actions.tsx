@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { Ban, CalendarClock, CheckCheck, CircleDollarSign, Clock, LogIn, Undo2, UserX } from "lucide-react";
+import { Ban, CalendarClock, CircleDollarSign, LogIn, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Booking, Session } from "@/lib/types";
 import { canTransition, type BookingAction } from "@/lib/booking-state";
@@ -17,8 +17,8 @@ export interface BookingOps {
   reschedule: (bookingId: string, targetSessionId: string) => OpResult;
 }
 
-const ICONS = { CHECK_IN: LogIn, UNDO_CHECK_IN: Undo2, LATE_RELEASE: Clock, NO_SHOW: UserX, CANCEL: Ban, COMPLETE: CheckCheck, RESCHEDULE: CalendarClock } as const;
-const PRIMARY: BookingAction[] = ["CHECK_IN", "COMPLETE", "LATE_RELEASE", "NO_SHOW", "CANCEL"];
+const ICONS = { CHECK_IN: LogIn, UNDO_CHECK_IN: Undo2, CANCEL: Ban, RESCHEDULE: CalendarClock } as const;
+const PRIMARY: BookingAction[] = ["CHECK_IN", "UNDO_CHECK_IN", "CANCEL"];
 
 /**
  * Quick actions for one booking. Enablement comes from the pure state machine (`canTransition`).
@@ -39,14 +39,11 @@ export function BookingActions({
   }
 
   const actions: BookingAction[] = (showReschedule ? [...PRIMARY, "RESCHEDULE" as const] : PRIMARY).filter((a) => {
-    // Hide actions that can never apply from the current status; time-gated ones stay visible but disabled.
-    if (a === "CHECK_IN") return booking.status === "CONFIRMED" || booking.status === "LATE_RELEASED";
-    if (a === "COMPLETE") return booking.status === "CHECKED_IN";
-    return booking.status === "CONFIRMED";
+    // Hide actions that can never apply from the current status: check-in, cancel and re-schedule while the booking is open (not confirmed or
+    // confirmed), uncheck-in once it is checked in.
+    if (a === "UNDO_CHECK_IN") return booking.status === "CHECKED_IN";
+    return booking.status === "NOT_CONFIRMED" || booking.status === "CONFIRMED";
   });
-  const timeHint =
-    booking.status === "CONFIRMED" && !states.LATE_RELEASE.allowed && states.LATE_RELEASE.reason === "TOO_EARLY_LATE_RELEASE"
-      ? t("blocked.TOO_EARLY_LATE_RELEASE") : undefined;
   const size = compact ? "sm" : "default";
 
   return (
@@ -76,7 +73,6 @@ export function BookingActions({
           {t("action.RECORD_PAYMENT")}
         </Button>
       </div>
-      {timeHint && !compact ? <p className="text-xs text-muted-foreground">{timeHint}</p> : null}
       <p role="status" className="text-xs text-destructive empty:hidden">{message}</p>
 
       <ReasonDialog

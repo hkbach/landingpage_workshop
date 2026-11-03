@@ -56,7 +56,7 @@ Giá trị cốt lõi:
 - Landing page builder theo **template + section** (không cho viết HTML/JS tùy ý), preview desktop/mobile theo từng ngôn ngữ, gửi duyệt, publish.
 - Quản lý workshop, schedule rule (lịch cố định), session, capacity.
 - Trang public: render landing page, xem lịch còn chỗ, đặt chỗ instant, email xác nhận.
-- Dashboard shop: danh sách booking, tạo booking thủ công (walk-in/điện thoại), check-in, late release, no-show, hủy có lý do, đổi session, ghi nhận thanh toán, hủy session hàng loạt.
+- Dashboard shop: danh sách booking, tạo booking thủ công (walk-in/điện thoại), check-in / uncheck-in, hủy có lý do, đổi session, ghi nhận thanh toán, hủy session hàng loạt.
 - Admin: duyệt/khóa shop, xem danh sách shop, xử lý báo cáo vi phạm, audit log.
 - Anti-spam: Cloudflare Turnstile và rate limit.
 
@@ -388,8 +388,8 @@ Browser ────────────────────────
   4. **Tính giá ở backend**: `total = price_amount × quantity`. Bỏ qua mọi giá client gửi.
   5. Transaction chống overbooking (Mục 7.1).
   6. Upsert customer theo `(organization_id, email_normalized)`. Khách cũ đặt lại: cập nhật name/phone/country/locale theo lần đặt mới nhất.
-  7. Tạo booking `CONFIRMED`, `payment_status = UNPAID`, `booking_code` (**`<mã session>-<3 số>`**, ví dụ `SES-0003-042`: 3 số đếm các booking của session đó theo thứ tự 001, 002…, tăng bên trong transaction giữ chỗ nên unique trong shop), snapshot giá.
-  8. Ghi outbox event `booking.confirmed` (email cho khách + email thông báo cho shop).
+  7. Tạo booking **`NOT_CONFIRMED`** (chưa xác nhận), `payment_status = UNPAID`, `booking_code` (**`<mã session>-<3 số>`**, ví dụ `SES-0003-042`: 3 số đếm các booking của session đó theo thứ tự 001, 002…, tăng bên trong transaction giữ chỗ nên unique trong shop), snapshot giá.
+  8. Ghi outbox event `booking.created`: **email cho người đặt, kèm thông tin booking và link xác nhận booking** (link chứa token bí mật; token lưu dạng hash, có hạn dùng) + email thông báo cho shop. Khách bấm link thì booking chuyển `CONFIRMED` (mở lại link: không đổi gì; booking đã hủy: báo không xác nhận được). Booking chiếm chỗ ngay từ lúc tạo, kể cả khi chưa xác nhận.
 - Cùng `Idempotency-Key` gửi lại: trả về đúng booking đã tạo (HTTP 200), không tạo booking mới.
 - Lỗi hết chỗ: HTTP 409, code `SESSION_FULL`, UI yêu cầu chọn giờ khác.
 - AC: 2 khách tranh chỗ cuối cùng thì chỉ 1 người thành công (có test concurrency).
@@ -414,26 +414,19 @@ Browser ────────────────────────
 - Cho phép tạo cho session đã bắt đầu (walk-in) nếu còn chỗ.
 
 **FR-OPS-03 – Check-in (Must)**
-- `CONFIRMED → CHECKED_IN`. Ghi `checked_in_at`, `checked_in_by`. Check-in nhầm có thể hoàn tác (`CHECKED_IN → CONFIRMED`, xóa `checked_in_at`) khi booking chưa `COMPLETED`.
+- Shop owner bấm **Check-in**: `NOT_CONFIRMED | CONFIRMED → CHECKED_IN` (khách chưa bấm link xác nhận vẫn check-in được). Ghi `checked_in_at`, `checked_in_by` và **trạng thái trước khi check-in** (`status_before_check_in`).
+- **Uncheck-in** hoàn tác check-in: `CHECKED_IN →` **đúng trạng thái trước đó** (`NOT_CONFIRMED` hoặc `CONFIRMED`), xóa `checked_in_at`; không đổi số chỗ. Nếu khách bấm link xác nhận trong lúc booking đang `CHECKED_IN`, trạng thái trước đó trở thành `CONFIRMED`.
+- Session đã `CLOSED`: danh sách check-in chỉ đọc (không check-in, không uncheck-in). Màn hình check-in (Sessions) hiển thị trạng thái `Not confirmed / Confirmed / Checked in / Cancelled` và có ghi chú quy tắc này.
 - Check-in và thanh toán là **hai thao tác riêng**.
-
-**FR-OPS-04 – Late release (Must)**
-- Chỉ cho phép khi `now ≥ session.starts_at + 30 phút` và booking đang `CONFIRMED`.
-- `CONFIRMED → LATE_RELEASED`; giảm `reserved_count` theo quantity; bắt buộc ghi audit.
-- **Không có job tự động** late release.
-- Khách đến trễ sau khi đã bị release: nếu session còn đủ chỗ thì cho phép `LATE_RELEASED → CHECKED_IN` (tăng lại `reserved_count` trong transaction có lock); nếu hết chỗ thì từ chối và hiển thị thông báo.
-
-**FR-OPS-05 – No-show (Must)**
-- Sau khi session kết thúc, shop đánh dấu `CONFIRMED → NO_SHOW`. Không thay đổi `reserved_count` (session đã qua).
+- Các trạng thái và thao tác **Completed, Late released, No-show, Session expired** (hoàn tất, late release, no-show, tự hết hạn khi session kết thúc) **không còn**; khách đã đặt mà không đến chỉ ở nguyên trạng thái (`CONFIRMED` hoặc `NOT_CONFIRMED`).
 
 **FR-OPS-06 – Hủy booking (Must)**
-- Shop hủy: bắt buộc nhập lý do; `CONFIRMED → CANCELLED`; giảm `reserved_count`; gửi email cho khách (nếu có email); ghi audit.
+- Shop hủy: bắt buộc nhập lý do; `NOT_CONFIRMED | CONFIRMED → CANCELLED`; giảm `reserved_count`; gửi email cho khách (nếu có email); ghi audit.
 
 **FR-OPS-07 – Đổi session (Should)**
-- Chuyển booking `CONFIRMED` sang session khác cùng workshop: transaction lock **cả hai** session (lock theo thứ tự `id` tăng dần để tránh deadlock), kiểm tra chỗ ở session mới, cập nhật `reserved_count` hai bên. Giữ nguyên snapshot giá. Gửi email cập nhật.
+- Chuyển booking `NOT_CONFIRMED | CONFIRMED` sang session khác cùng workshop: transaction lock **cả hai** session (lock theo thứ tự `id` tăng dần để tránh deadlock), kiểm tra chỗ ở session mới, cập nhật `reserved_count` hai bên. Giữ nguyên snapshot giá. Gửi email cập nhật.
 
-**FR-OPS-08 – Hoàn tất (Must)**
-- Shop có thể đánh dấu `CHECKED_IN → COMPLETED` thủ công hoặc hàng loạt cho cả session. Should: job tự chuyển `CHECKED_IN → COMPLETED` sau khi session kết thúc 12 giờ.
+**FR-OPS-08 – (đã bỏ)** Không còn bước "hoàn tất" (`COMPLETED`): booking đã check-in giữ nguyên trạng thái `CHECKED_IN`.
 
 **FR-PAY-01 – Ghi nhận thanh toán tại shop (Must)**
 - Thêm payment entry: amount, method (`CASH | CARD | BANK_TRANSFER | E_WALLET | OTHER`), type (`PAYMENT | REFUND`), note. Ghi `recorded_by`, `recorded_at`.
@@ -447,7 +440,7 @@ Browser ────────────────────────
 
 **FR-PAY-03 – Tổng quan của shop owner / Overview (Could)**
 - Trang `/shopowner` có: các số liệu chính (booking hôm nay, session sắp tới, booking chưa thanh toán); **thẻ summary cho từng phần** của shop, mỗi thẻ dẫn tới trang tương ứng: Bookings (tháng này: số booking, số khách, tỷ lệ hủy / no-show), Workshops (active / draft), Sessions (sắp tới, tỷ lệ ghế đã đặt), Customers (tổng, khách quay lại), Income & expenses (thu, chi, lãi / lỗ của tháng này), Landing pages (số page / 2, page đang public); **biểu đồ tình hình booking** theo 1 tháng (theo ngày), 3 tháng, 6 tháng và 1 năm (theo tháng); và checklist chuẩn bị publish.
-- Biểu đồ cột chồng theo kết quả: đã tham dự (`CHECKED_IN`, `COMPLETED`), sắp tới (`CONFIRMED`), hủy / no-show (`CANCELLED`, `NO_SHOW`, `LATE_RELEASED`); booking tính theo ngày của session, theo timezone của shop. Kèm tổng booking, số khách, số đã tham dự, tỷ lệ hủy / no-show của kỳ. Có bảng số liệu thay thế; vẽ bằng SVG, không thêm thư viện.
+- Biểu đồ cột chồng theo kết quả: đã tham dự (`CHECKED_IN`), sắp tới (`NOT_CONFIRMED`, `CONFIRMED`), hủy (`CANCELLED`); booking tính theo ngày của session, theo timezone của shop. Kèm tổng booking, số khách, số đã tham dự, tỷ lệ hủy / no-show của kỳ. Có bảng số liệu thay thế; vẽ bằng SVG, không thêm thư viện.
 - API dự kiến: `GET /dashboard/summary` và `GET /dashboard/booking-stats?period=1m|3m|6m|12m`, lọc theo `organization_id`, tổng hợp ở backend.
 
 **FR-PROMO-01 – Quản lý khuyến mãi / Promotion management (Could)**
@@ -539,9 +532,9 @@ Browser ────────────────────────
 | BR-03 | Không được vượt capacity, kể cả khi có request đồng thời; kiểm tra bằng transaction + row lock. |
 | BR-04 | Backend tính giá; không tin giá/discount/status từ client. |
 | BR-05 | Booking lưu snapshot: `unit_price_amount`, `quantity`, `total_amount`, `currency`, tên workshop, `starts_at`, timezone. Lịch sử không bị tính lại khi workshop đổi giá. |
-| BR-06 | `booking.status` và `payment_status` độc lập; `CONFIRMED` không có nghĩa là đã trả tiền. |
-| BR-07 | Các status chiếm chỗ: `CONFIRMED`, `CHECKED_IN`, `COMPLETED`. Chuyển sang `CANCELLED` hoặc `LATE_RELEASED` thì giải phóng chỗ. `NO_SHOW` không thay đổi `reserved_count`. |
-| BR-08 | Late release chỉ làm thủ công, sau 30 phút kể từ giờ bắt đầu; luôn có audit. |
+| BR-06 | `booking.status` và `payment_status` độc lập; `CONFIRMED` (khách đã bấm link trong email) không có nghĩa là đã trả tiền. |
+| BR-07 | Mọi booking chiếm chỗ (`NOT_CONFIRMED`, `CONFIRMED`, `CHECKED_IN`) trừ `CANCELLED`: chuyển sang `CANCELLED` thì giải phóng chỗ; check-in và uncheck-in không đổi chỗ. |
+| BR-08 | (đã bỏ) Không còn late release / no-show; booking chỉ có 4 trạng thái `NOT_CONFIRMED`, `CONFIRMED`, `CHECKED_IN`, `CANCELLED`. |
 | BR-09 | Thông báo chính sách đến trễ (hiển thị ở booking modal, trang xác nhận, email): *"Please arrive on time for your workshop. If you arrive more than 30 minutes late, your booking may be released and your reserved spot may be offered to walk-in guests. If there are still available spots when you arrive, you may still be able to join."* Cần bản dịch VI/KO/JA/ZH/ZH-TW trong `messages/*.json`. |
 | BR-10 | Customer nhận diện bằng `email_normalized` (trim + lowercase) trong một organization; không tự gộp theo tên/phone. |
 | BR-11 | Khách không tự hủy; mọi thao tác hủy/đổi do shop thực hiện và ghi lý do. |
@@ -560,30 +553,26 @@ Browser ────────────────────────
 ### 6.1 State machine booking
 
 ```
-                ┌──────────────► CANCELLED (shop, có lý do)        [giải phóng chỗ]
-                │
-  (tạo) ──► CONFIRMED ──► CHECKED_IN ──► COMPLETED
-                │   ▲          ▲
-                │   │          │ (khách trễ đến, còn chỗ → chiếm lại chỗ)
-                │   │          │
-                ├───┼──► LATE_RELEASED  (≥ start + 30 phút)          [giải phóng chỗ]
-                │   │
-                └───┴──► NO_SHOW        (sau khi session kết thúc)
+  (khách đặt thành công, qua OTP)
+        │
+        ▼
+  NOT_CONFIRMED ──(khách bấm link trong email)──► CONFIRMED
+        │                                            │
+        └──────────────(shop check-in)───────────────┤
+                                                     ▼
+                                              CHECKED_IN ──(shop uncheck-in)──► về trạng thái trước check-in
+  NOT_CONFIRMED | CONFIRMED ──(shop hủy, có lý do)──► CANCELLED   [giải phóng chỗ]
 ```
 
 Chuyển trạng thái hợp lệ (mọi chuyển khác → HTTP 409 `INVALID_TRANSITION`):
 
 | Từ | Sang | Điều kiện |
 |---|---|---|
-| CONFIRMED | CHECKED_IN | Session chưa bị hủy |
-| CONFIRMED | LATE_RELEASED | now ≥ starts_at + 30 phút |
-| CONFIRMED | NO_SHOW | now ≥ ends_at |
-| CONFIRMED, LATE_RELEASED | SESSION_EXPIRED | **Tự động (hệ thống)** khi session kết thúc (now ≥ ends_at) mà khách chưa check-in |
-| SESSION_EXPIRED | NO_SHOW | Shop xác nhận khách không đến |
-| CONFIRMED | CANCELLED | Có lý do |
-| LATE_RELEASED | CHECKED_IN | Session còn đủ chỗ (lock) |
-| CHECKED_IN | COMPLETED | — |
-| CHECKED_IN | CONFIRMED | Uncheck-in: hoàn tác check-in nhầm (chưa `COMPLETED`); không đổi số chỗ |
+| (tạo) | NOT_CONFIRMED | Khách đặt thành công sau khi nhập đúng OTP; email có link xác nhận gửi cho người đặt |
+| NOT_CONFIRMED | CONFIRMED | **Khách bấm link xác nhận** trong email (mở lại link: không đổi gì) |
+| NOT_CONFIRMED, CONFIRMED | CHECKED_IN | Shop check-in; session chưa `CLOSED`; lưu trạng thái trước đó |
+| CHECKED_IN | NOT_CONFIRMED hoặc CONFIRMED | Shop uncheck-in: về **đúng trạng thái trước khi check-in**; session chưa `CLOSED`; không đổi số chỗ |
+| NOT_CONFIRMED, CONFIRMED | CANCELLED | Shop hủy, có lý do |
 
 Implement state machine trong **một chỗ** (`bookings/booking-state.ts`) và có unit test đầy đủ.
 
@@ -624,7 +613,7 @@ COMMIT;
 ```
 
 - Thêm `CHECK (reserved_count >= 0 AND reserved_count <= capacity)` trên `workshop_sessions` làm lớp bảo vệ cuối.
-- Mọi thao tác thay đổi `reserved_count` (tạo, hủy, late release, check-in lại, đổi session) phải đi qua `SessionCapacityService` và dùng mẫu lock trên.
+- Mọi thao tác thay đổi `reserved_count` (tạo, hủy, đổi session) phải đi qua `SessionCapacityService` và dùng mẫu lock trên.
 - Job đối soát hằng ngày (Should): so sánh `reserved_count` với tổng quantity của các booking đang chiếm chỗ; lệch thì log cảnh báo.
 
 ### 7.2 Idempotency
@@ -766,7 +755,7 @@ Prefix `/api/v1`. Auth: cookie session. `{org}` lấy từ session (active organ
 | CRUD | `/workshops/{id}/schedule-rules` |
 | GET | `/sessions?from=&to=&workshopId=` · POST `/sessions` · PATCH `/sessions/{id}` · POST `/sessions/{id}/cancel` |
 | GET | `/bookings?date=&sessionId=&status=&q=` · GET `/bookings/{id}` · POST `/bookings` (thủ công) |
-| POST | `/bookings/{id}/check-in` · `/late-release` · `/no-show` · `/cancel` · `/complete` · `/reschedule` |
+| POST | `/bookings/{id}/check-in` · `/uncheck-in` · `/cancel` · `/reschedule` |
 | POST | `/bookings/{id}/payments` |
 | GET | `/customers` · GET `/customers/{id}` |
 | GET | `/audit-logs` (Should) |
@@ -889,7 +878,7 @@ Mục tiêu coverage: ≥ 80% cho `bookings`, `sessions`, `payments`, `auth`; c�
 | AC-04 | Khách đặt chỗ không cần tài khoản; nhận email xác nhận đúng ngôn ngữ đã chọn. |
 | AC-05 | Không overbooking khi có request đồng thời (có test chứng minh). |
 | AC-06 | Giá do backend tính; booking giữ snapshot khi workshop đổi giá. |
-| AC-07 | Shop tạo booking walk-in, check-in, late release, no-show, hủy, ghi nhận thanh toán; tất cả có audit log. |
+| AC-07 | Shop tạo booking walk-in, check-in / uncheck-in, hủy, ghi nhận thanh toán; tất cả có audit log. Khách đặt thành công nhận email có link xác nhận; bấm link thì booking `CONFIRMED`. |
 | AC-08 | Hủy session thì toàn bộ booking liên quan bị hủy và khách nhận email. |
 | AC-09 | Dữ liệu và quyền được cô lập giữa các shop (có test cho mọi module). |
 | AC-10 | Landing page có hreflang, sitemap, meta/OG đúng theo từng ngôn ngữ. |

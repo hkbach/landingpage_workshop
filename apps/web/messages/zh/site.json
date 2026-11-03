@@ -119,7 +119,7 @@
     "promotionAloneActive": "“{pick}”单独使用，不可与其他优惠叠加。请选择其他优惠以切换。"
   },
   "confirmation": {
-    "title": "预订已确认",
+    "title": "已收到预订",
     "intro": "谢谢！您在 {shop} 的名额已预留。",
     "code": "预订编号",
     "workshop": "工作坊",
@@ -134,7 +134,12 @@
     "notFoundTitle": "未找到预订",
     "notFoundText": "我们找不到与这些信息匹配的预订。请检查确认邮件中的链接。",
     "promotions": "已使用的优惠",
-    "saved": "为您节省 {amount}"
+    "saved": "为您节省 {amount}",
+    "pendingTitle": "请确认您的预订",
+    "pendingText": "我们已向 {email} 发送了包含预订信息和链接的邮件。请打开链接确认预订；在此之前预订尚未确认。",
+    "demoNote": "演示（此处没有邮箱）：",
+    "demoLink": "打开邮件中的链接",
+    "confirmedNote": "您的预订已确认。"
   },
   "report": {
     "title": "举报此网站",
@@ -210,5 +215,15 @@
     "choose": "选择工作坊",
     "duration": "时长",
     "price": "价格"
+  },
+  "confirmLink": {
+    "confirmedTitle": "预订已确认",
+    "confirmedText": "谢谢！您的预订已确认，期待在工作室见到您。",
+    "alreadyTitle": "已确认",
+    "alreadyText": "此预订已确认，无需其他操作。",
+    "cancelledTitle": "预订已取消",
+    "cancelledText": "此预订已取消，无法确认。请联系工作室。",
+    "invalidTitle": "链接无效",
+    "invalidText": "未找到与此链接对应的预订。请检查邮件中的链接，或联系工作室。"
   }
 }
