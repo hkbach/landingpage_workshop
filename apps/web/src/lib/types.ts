@@ -27,6 +27,8 @@ export interface Session {
   autoClosed?: boolean;
   /** Why the owner closed the session before it started (not set for a session closed by the system). */
   closeReason?: SessionCloseReason;
+  /** Why the owner last re-scheduled the session. */
+  rescheduleReason?: SessionCloseReason;
   /** Minutes before the session starts at which online booking closes (set per session when it is created). */
   bookingCutoffMinutes: number;
 }

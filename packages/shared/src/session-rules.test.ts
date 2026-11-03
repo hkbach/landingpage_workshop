@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SESSION_STATUSES } from "./enums";
-import { allowedSessionActions, applySessionAction, checkCloseReason, CLOSE_REASON_NOTE_MAX, closeIfEnded, closeWaitsForEnd, DEFAULT_BOOKING_CUTOFF_MINUTES, isInSessionTime, isSessionBookable, isValidBookingCutoff, type SessionState } from "./session-rules";
+import { allowedSessionActions, applySessionAction, checkCloseReason, checkReschedule, CLOSE_REASON_NOTE_MAX, closeIfEnded, closeWaitsForEnd, DEFAULT_BOOKING_CUTOFF_MINUTES, isInSessionTime, isSessionBookable, isValidBookingCutoff, type SessionState } from "./session-rules";
 
 const s = (status: SessionState["status"]): SessionState => ({ status });
 
@@ -82,5 +82,26 @@ describe("checkCloseReason", () => {
   it("refuses an unknown or missing reason", () => {
     expect(checkCloseReason("", "")).toEqual({ ok: false, error: "REQUIRED" });
     expect(checkCloseReason("BORED", "")).toEqual({ ok: false, error: "REQUIRED" });
+  });
+});
+
+describe("checkReschedule", () => {
+  const NOW = new Date("2026-11-03T10:00:00Z");
+  const paused = { status: "PAUSED" as const, startsAt: "2026-11-05T09:00:00Z", endsAt: "2026-11-05T11:30:00Z" };
+  it("moves the start and keeps the length of the session", () => {
+    expect(checkReschedule(paused, "2026-11-07T14:00:00Z", NOW, [])).toEqual({ ok: true, startsAt: "2026-11-07T14:00:00.000Z", endsAt: "2026-11-07T16:30:00.000Z" });
+  });
+  it("only a paused session can be re-scheduled", () => {
+    for (const st of ["OPEN", "RUNNING", "CLOSED"] as const) expect(checkReschedule({ ...paused, status: st }, "2026-11-07T14:00:00Z", NOW, [])).toEqual({ ok: false, error: "NOT_PAUSED" });
+  });
+  it("refuses the same start, a start in the past, a start that is not a date and a start already used by another session", () => {
+    expect(checkReschedule(paused, "2026-11-05T09:00:00Z", NOW, [])).toEqual({ ok: false, error: "SAME" });
+    expect(checkReschedule(paused, "nope", NOW, [])).toEqual({ ok: false, error: "SAME" });
+    expect(checkReschedule(paused, "2026-11-03T09:00:00Z", NOW, [])).toEqual({ ok: false, error: "PAST" });
+    expect(checkReschedule(paused, "2026-11-03T10:00:00Z", NOW, [])).toEqual({ ok: false, error: "PAST" });
+    expect(checkReschedule(paused, "2026-11-07T14:00:00Z", NOW, ["2026-11-07T14:00:00Z"])).toEqual({ ok: false, error: "DUPLICATE" });
+  });
+  it("a session that has already ended cannot be re-scheduled", () => {
+    expect(checkReschedule({ ...paused, startsAt: "2026-11-01T09:00:00Z", endsAt: "2026-11-01T11:00:00Z" }, "2026-11-07T14:00:00Z", NOW, [])).toEqual({ ok: false, error: "ENDED" });
   });
 });

@@ -184,6 +184,18 @@
       "VENUE_ISSUE": "Sự cố về studio hoặc địa điểm",
       "SCHEDULE_CHANGE": "Thay đổi lịch",
       "OTHER": "Khác"
-    }
+    },
+    "reschedule": "Đổi lịch session",
+    "rescheduleTitle": "Đổi lịch session",
+    "rescheduleHint": "Chọn ngày và giờ mới (giờ theo {tz}). Thời lượng của session giữ nguyên.",
+    "newDate": "Ngày mới",
+    "newTime": "Giờ bắt đầu mới",
+    "rescheduleBookings": "{count, plural, =0 {Chưa có khách nào đặt session này.} other {# booking sẽ chuyển sang thời gian mới và khách sẽ nhận email thông báo.}}",
+    "rescheduleConfirm": "Đổi lịch session",
+    "rescheduled": "Đã đổi lịch session. {count, plural, =0 {Không có khách nào cần gửi email.} other {Đã gửi email cho # khách.}}",
+    "rescheduleMailFailed": "Đã đổi lịch session nhưng không thể xếp hàng gửi email cho khách. Vui lòng tự liên hệ với khách.",
+    "rescheduledBecause": "Đổi lịch vì",
+    "rescheduleSame": "Hãy chọn ngày hoặc giờ khác.",
+    "reschedulePast": "Giờ bắt đầu mới phải ở tương lai."
   }
 }

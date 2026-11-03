@@ -184,6 +184,18 @@
       "VENUE_ISSUE": "工作室或场地问题",
       "SCHEDULE_CHANGE": "日程变更",
       "OTHER": "其他"
-    }
+    },
+    "reschedule": "更改场次时间",
+    "rescheduleTitle": "更改场次时间",
+    "rescheduleHint": "请选择新的日期和时间（按 {tz} 时间）。场次时长保持不变。",
+    "newDate": "新日期",
+    "newTime": "新开始时间",
+    "rescheduleBookings": "{count, plural, =0 {还没有客人预订该场次。} other {#个预订将移到新时间，并向客人发送邮件通知。}}",
+    "rescheduleConfirm": "更改时间",
+    "rescheduled": "已更改场次时间。{count, plural, =0 {无需向客人发送邮件。} other {已向 # 位客人发送邮件。}}",
+    "rescheduleMailFailed": "场次时间已更改，但无法将邮件加入发送队列。请自行联系客人。",
+    "rescheduledBecause": "更改原因",
+    "rescheduleSame": "请选择不同的日期或时间。",
+    "reschedulePast": "新的开始时间必须在将来。"
   }
 }

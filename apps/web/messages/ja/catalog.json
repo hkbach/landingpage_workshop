@@ -184,6 +184,18 @@
       "VENUE_ISSUE": "スタジオまたは会場の問題",
       "SCHEDULE_CHANGE": "日程の変更",
       "OTHER": "その他"
-    }
+    },
+    "reschedule": "セッションの日程変更",
+    "rescheduleTitle": "セッションの日程変更",
+    "rescheduleHint": "新しい日付と時刻を選択してください（{tz}の時刻）。セッションの長さは変わりません。",
+    "newDate": "新しい日付",
+    "newTime": "新しい開始時刻",
+    "rescheduleBookings": "{count, plural, =0 {このセッションを予約したお客様はいません。} other {予約#件が新しい時間に移動し、お客様にメールが送信されます。}}",
+    "rescheduleConfirm": "日程を変更する",
+    "rescheduled": "セッションの日程を変更しました。{count, plural, =0 {メールを送るお客様はいません。} other {お客様#名にメールを送信しました。}}",
+    "rescheduleMailFailed": "セッションの日程は変更されましたが、お客様へのメールを登録できませんでした。お客様に直接ご連絡ください。",
+    "rescheduledBecause": "日程変更の理由",
+    "rescheduleSame": "別の日付または時刻を選択してください。",
+    "reschedulePast": "新しい開始時刻は未来である必要があります。"
   }
 }

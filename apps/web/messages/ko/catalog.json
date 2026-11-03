@@ -184,6 +184,18 @@
       "VENUE_ISSUE": "공방 또는 장소 문제",
       "SCHEDULE_CHANGE": "일정 변경",
       "OTHER": "기타"
-    }
+    },
+    "reschedule": "세션 일정 변경",
+    "rescheduleTitle": "세션 일정 변경",
+    "rescheduleHint": "새 날짜와 시간을 선택하세요({tz} 기준). 세션 길이는 그대로입니다.",
+    "newDate": "새 날짜",
+    "newTime": "새 시작 시간",
+    "rescheduleBookings": "{count, plural, =0 {이 세션을 예약한 손님이 없습니다.} other {예약 #건이 새 시간으로 이동하고 손님에게 이메일이 발송됩니다.}}",
+    "rescheduleConfirm": "세션 일정 변경",
+    "rescheduled": "세션 일정이 변경되었습니다. {count, plural, =0 {이메일을 보낼 손님이 없습니다.} other {손님 #명에게 이메일을 보냈습니다.}}",
+    "rescheduleMailFailed": "세션 일정은 변경되었지만 손님에게 보낼 이메일을 등록하지 못했습니다. 손님에게 직접 연락해 주세요.",
+    "rescheduledBecause": "일정 변경 이유",
+    "rescheduleSame": "다른 날짜나 시간을 선택하세요.",
+    "reschedulePast": "새 시작 시간은 미래여야 합니다."
   }
 }

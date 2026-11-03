@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { applySessionAction, checkCloseReason, closeIfEnded, closeWaitsForEnd, type BookingStatus, type PaymentMethod, type SessionAction } from "@workshop/shared";
+import { applySessionAction, checkCloseReason, checkReschedule, closeIfEnded, closeWaitsForEnd, type BookingStatus, type PaymentMethod, type RescheduleError, type SessionAction, type SessionCloseReason } from "@workshop/shared";
 import type { Booking, PaymentEntry, Session } from "@/lib/types";
 import {
   canTransition, computePaymentStatus, netPaid, seatDelta, targetStatus,
@@ -122,6 +122,27 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
     [sessions, now],
   );
 
+  /**
+   * Moves a paused session to a new start (the length stays) and moves its bookings with it. The reason is required (a basic one, or Other with
+   * a text). Returns why it was refused, or what changed: the session before and after, and the bookings that moved.
+   */
+  const rescheduleSession = useCallback(
+    (id: string, newStartsAt: string, reason: { code: string; note?: string }):
+      { ok: true; oldStartsAt: string; startsAt: string; endsAt: string; reason: SessionCloseReason; moved: Booking[] } | { ok: false; error: RescheduleError } => {
+      const s = sessions.find((x) => x.id === id);
+      if (!s) return { ok: false, error: "NOT_PAUSED" };
+      const checked = checkReschedule(s, newStartsAt, now, sessions.filter((x) => x.workshopId === s.workshopId && x.id !== id).map((x) => x.startsAt));
+      const why = checkCloseReason(reason.code, reason.note ?? "");
+      if (!checked.ok) return { ok: false, error: checked.error };
+      if (!why.ok) return { ok: false, error: "NOT_PAUSED" };
+      setSessions((list) => list.map((x) => (x.id === id ? { ...x, startsAt: checked.startsAt, endsAt: checked.endsAt, rescheduleReason: why.reason } : x)));
+      const moved = bookings.filter((b) => b.sessionId === id && b.status === "CONFIRMED");
+      setBookings((list) => list.map((b) => (b.sessionId === id ? { ...b, startsAt: checked.startsAt, endsAt: checked.endsAt } : b)));
+      return { ok: true, oldStartsAt: s.startsAt, startsAt: checked.startsAt, endsAt: checked.endsAt, reason: why.reason, moved };
+    },
+    [sessions, bookings, now],
+  );
+
   const setSessionCapacity = useCallback(
     (id: string, capacity: number): boolean => {
       const s = sessions.find((x) => x.id === id);
@@ -143,6 +164,6 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
 
   return {
     bookings, sessions, history, now, perform, addPayment, reschedule,
-    sessionAction, setSessionCapacity, addSession, addBooking,
+    sessionAction, rescheduleSession, setSessionCapacity, addSession, addBooking,
   };
 }

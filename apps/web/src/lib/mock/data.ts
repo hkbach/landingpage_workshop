@@ -76,7 +76,7 @@ export const sessions: Session[] = [
   { id: "se-8", workshopId: "ws-2", startsAt: at(4, 14), endsAt: at(4, 15.5), capacity: 10, reservedCount: 0, status: "OPEN", bookingCutoffMinutes: 120 },
   { id: "se-9", workshopId: "ws-1", startsAt: at(5, 9), endsAt: at(5, 11), capacity: 8, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 1440 },
   { id: "se-10", workshopId: "ws-2", startsAt: at(5, 10), endsAt: at(5, 11.5), capacity: 10, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 120 },
-  { id: "se-11", workshopId: "ws-1", startsAt: at(6, 14), endsAt: at(6, 16), capacity: 8, reservedCount: 0, status: "PAUSED", bookingCutoffMinutes: 120 },
+  { id: "se-11", workshopId: "ws-1", startsAt: at(6, 14), endsAt: at(6, 16), capacity: 8, reservedCount: 3, status: "PAUSED", bookingCutoffMinutes: 120 },
   { id: "se-12", workshopId: "ws-2", startsAt: at(6, 9), endsAt: at(6, 10.5), capacity: 10, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120 },
   { id: "se-13", workshopId: "ws-1", startsAt: at(7, 9), endsAt: at(7, 11), capacity: 8, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120 },
   { id: "se-14", workshopId: "ws-2", startsAt: at(7, 14), endsAt: at(7, 15.5), capacity: 10, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120 },
@@ -130,6 +130,9 @@ export const bookings: Booking[] = [
   booking({ id: "bk-7", bookingCode: "M7P3T9XB", sessionId: "se-5", customerId: "cu-3", quantity: 2, promotionIds: ["pr-2"], discountAmount: 100_000, totalAmount: 700_000 }),
   // Fills the sold-out session se-15.
   booking({ id: "bk-8", bookingCode: "N4Q8V2ZC", sessionId: "se-15", customerId: "cu-4", quantity: 6 }),
+  // Two guests of the paused session se-11 (re-scheduling it emails the guest who has an email; the walk-in has none).
+  booking({ id: "bk-9", bookingCode: "P8R2T6WD", sessionId: "se-11", customerId: "cu-1", quantity: 2 }),
+  booking({ id: "bk-10", bookingCode: "Q3S7V9XF", sessionId: "se-11", customerId: "cu-3", quantity: 1, source: "WALK_IN" }),
 ];
 
 export const auditLogs: AuditEntry[] = [

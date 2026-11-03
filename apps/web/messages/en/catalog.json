@@ -184,6 +184,18 @@
       "VENUE_ISSUE": "Studio or venue problem",
       "SCHEDULE_CHANGE": "Schedule changed",
       "OTHER": "Other"
-    }
+    },
+    "reschedule": "Re-schedule session",
+    "rescheduleTitle": "Re-schedule session",
+    "rescheduleHint": "Choose the new date and time (times in {tz}). The length of the session stays the same.",
+    "newDate": "New date",
+    "newTime": "New start time",
+    "rescheduleBookings": "{count, plural, =0 {No guests have booked this session.} one {# booking will move to the new time and its guest will get an email.} other {# bookings will move to the new time and their guests will get an email.}}",
+    "rescheduleConfirm": "Re-schedule session",
+    "rescheduled": "Session re-scheduled. {count, plural, =0 {No guest needed an email.} one {# guest was emailed.} other {# guests were emailed.}}",
+    "rescheduleMailFailed": "The session was re-scheduled, but the emails to the guests could not be queued. Please contact the guests yourself.",
+    "rescheduledBecause": "Re-scheduled because",
+    "rescheduleSame": "Choose a different date or time.",
+    "reschedulePast": "The new start must be in the future."
   }
 }
