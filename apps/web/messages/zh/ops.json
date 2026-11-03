@@ -99,10 +99,35 @@
     "summary": "按状态统计的预订",
     "summaryTotal": "全部预订",
     "guestsCount": "{count, plural, other {# 位客人}}",
-    "summaryHint": "点击数字，仅显示该状态的预订；再次点击显示全部。"
+    "summaryHint": "点击数字，仅显示该状态或支付状态的预订；再次点击显示全部。",
+    "summaryPayment": "按支付状态的预订",
+    "chart": {
+      "title": "预订趋势",
+      "unit": {
+        "day": "按日",
+        "week": "按周",
+        "month": "按月"
+      },
+      "view": {
+        "booking": "预订状态",
+        "payment": "支付状态"
+      },
+      "viewLabel": "显示方式",
+      "totalsLabel": "期间合计",
+      "bookings": "预订",
+      "guests": "人数",
+      "attended": "已签到",
+      "upcoming": "待进行",
+      "lost": "已取消",
+      "lostRate": "取消率",
+      "paid": "已支付",
+      "unpaid": "未支付",
+      "paidRate": "支付率",
+      "empty": "该时间段没有预订。",
+      "summary": "{from} 至 {to} 的预订：共 {total} 个，{guests} 人。"
+    }
   },
   "filters": {
-    "date": "日期",
     "allDates": "所有日期",
     "session": "场次",
     "allSessions": "所有场次",
@@ -111,7 +136,13 @@
     "workshop": "工作坊",
     "allWorkshops": "所有工作坊",
     "payment": "支付",
-    "allPayments": "全部支付状态"
+    "allPayments": "全部支付状态",
+    "from": "开始日期",
+    "to": "结束日期",
+    "presets": "快捷时间段",
+    "last3m": "最近3个月",
+    "last6m": "最近6个月",
+    "last1y": "最近1年"
   },
   "payment": {
     "dialogTitle": "记录付款",

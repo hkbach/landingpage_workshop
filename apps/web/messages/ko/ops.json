@@ -99,10 +99,35 @@
     "summary": "상태별 예약",
     "summaryTotal": "전체 예약",
     "guestsCount": "{count, plural, other {#명}}",
-    "summaryHint": "숫자를 누르면 해당 상태의 예약만 표시됩니다. 다시 누르면 전체가 표시됩니다."
+    "summaryHint": "숫자를 누르면 해당 상태 또는 결제 상태의 예약만 표시됩니다. 다시 누르면 전체가 표시됩니다.",
+    "summaryPayment": "결제 상태별 예약",
+    "chart": {
+      "title": "시간별 예약",
+      "unit": {
+        "day": "일별",
+        "week": "주별",
+        "month": "월별"
+      },
+      "view": {
+        "booking": "예약 상태",
+        "payment": "결제 상태"
+      },
+      "viewLabel": "보기 방식",
+      "totalsLabel": "기간 합계",
+      "bookings": "예약",
+      "guests": "인원",
+      "attended": "체크인",
+      "upcoming": "예정",
+      "lost": "취소됨",
+      "lostRate": "취소율",
+      "paid": "결제 완료",
+      "unpaid": "미결제",
+      "paidRate": "결제율",
+      "empty": "이 기간에 예약이 없습니다.",
+      "summary": "{from}~{to} 예약: {total}건, {guests}명."
+    }
   },
   "filters": {
-    "date": "날짜",
     "allDates": "모든 날짜",
     "session": "세션",
     "allSessions": "모든 세션",
@@ -111,7 +136,13 @@
     "workshop": "워크숍",
     "allWorkshops": "모든 워크숍",
     "payment": "결제",
-    "allPayments": "모든 결제"
+    "allPayments": "모든 결제",
+    "from": "시작일",
+    "to": "종료일",
+    "presets": "빠른 기간 선택",
+    "last3m": "최근 3개월",
+    "last6m": "최근 6개월",
+    "last1y": "최근 1년"
   },
   "payment": {
     "dialogTitle": "결제 기록",

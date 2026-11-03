@@ -99,10 +99,35 @@
     "summary": "Bookings by status",
     "summaryTotal": "All bookings",
     "guestsCount": "{count, plural, one {# guest} other {# guests}}",
-    "summaryHint": "Click a figure to show only the bookings of that status; click it again to show them all."
+    "summaryHint": "Click a figure to show only the bookings of that status or payment status; click it again to show them all.",
+    "summaryPayment": "Bookings by payment status",
+    "chart": {
+      "title": "Bookings over time",
+      "unit": {
+        "day": "by day",
+        "week": "by week",
+        "month": "by month"
+      },
+      "view": {
+        "booking": "Booking status",
+        "payment": "Payment status"
+      },
+      "viewLabel": "View",
+      "totalsLabel": "Totals for the period",
+      "bookings": "Bookings",
+      "guests": "Guests",
+      "attended": "Checked in",
+      "upcoming": "Upcoming",
+      "lost": "Cancelled",
+      "lostRate": "Cancellation rate",
+      "paid": "Paid",
+      "unpaid": "Unpaid",
+      "paidRate": "Paid rate",
+      "empty": "No bookings in this period.",
+      "summary": "Bookings from {from} to {to}: {total} bookings, {guests} guests."
+    }
   },
   "filters": {
-    "date": "Date",
     "allDates": "All dates",
     "session": "Session",
     "allSessions": "All sessions",
@@ -111,7 +136,13 @@
     "workshop": "Workshop",
     "allWorkshops": "All workshops",
     "payment": "Payment",
-    "allPayments": "All payments"
+    "allPayments": "All payments",
+    "from": "From",
+    "to": "To",
+    "presets": "Quick ranges",
+    "last3m": "Last 3 months",
+    "last6m": "Last 6 months",
+    "last1y": "Last year"
   },
   "payment": {
     "dialogTitle": "Record payment",

@@ -99,10 +99,35 @@
     "summary": "ステータス別の予約",
     "summaryTotal": "すべての予約",
     "guestsCount": "{count, plural, other {#名}}",
-    "summaryHint": "数字をクリックすると、そのステータスの予約だけを表示します。もう一度クリックするとすべて表示します。"
+    "summaryHint": "数字をクリックすると、そのステータスまたは支払いステータスの予約だけを表示します。もう一度クリックするとすべて表示します。",
+    "summaryPayment": "支払いステータス別の予約",
+    "chart": {
+      "title": "予約の推移",
+      "unit": {
+        "day": "日別",
+        "week": "週別",
+        "month": "月別"
+      },
+      "view": {
+        "booking": "予約ステータス",
+        "payment": "支払いステータス"
+      },
+      "viewLabel": "表示方法",
+      "totalsLabel": "期間の合計",
+      "bookings": "予約",
+      "guests": "人数",
+      "attended": "チェックイン済み",
+      "upcoming": "今後",
+      "lost": "キャンセル",
+      "lostRate": "キャンセル率",
+      "paid": "支払い済み",
+      "unpaid": "未払い",
+      "paidRate": "支払い率",
+      "empty": "この期間の予約はありません。",
+      "summary": "{from}〜{to}の予約：{total}件、{guests}名。"
+    }
   },
   "filters": {
-    "date": "日付",
     "allDates": "すべての日付",
     "session": "セッション",
     "allSessions": "すべてのセッション",
@@ -111,7 +136,13 @@
     "workshop": "ワークショップ",
     "allWorkshops": "すべてのワークショップ",
     "payment": "支払い",
-    "allPayments": "すべての支払い"
+    "allPayments": "すべての支払い",
+    "from": "開始日",
+    "to": "終了日",
+    "presets": "期間のクイック選択",
+    "last3m": "直近3か月",
+    "last6m": "直近6か月",
+    "last1y": "直近1年"
   },
   "payment": {
     "dialogTitle": "支払いを記録",

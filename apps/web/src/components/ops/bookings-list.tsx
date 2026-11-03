@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Plus, Search } from "lucide-react";
-import { BOOKING_STATUSES, formatMoney, PAYMENT_STATUSES, pickLocalized, resolveShopLocale, type BookingPriceInfo, type BookingStatus, type Locale, type PaymentStatus, type TrendBucket, type TrendPeriod } from "@workshop/shared";
+import { BOOKING_STATUSES, formatMoney, PAYMENT_STATUSES, pickLocalized, resolveShopLocale, type BookingPriceInfo, type BookingStatus, type Locale, type PaymentStatus } from "@workshop/shared";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DateInput } from "@/components/ui/date-input";
@@ -13,65 +13,83 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { TooltipProvider } from "@/components/ui/tooltip";
 import type { Booking, Customer, Session, Workshop } from "@/lib/types";
 import { dayKey, formatDateTime } from "@/lib/format";
+import { dayStatsOf } from "@/lib/bookings-chart";
 import { Field } from "./field";
 import { NativeSelect } from "./native-select";
 import { BookingStatusBadge, PaymentStatusBadge } from "./status-badges";
 import { PriceTip } from "./price-tip";
-import { BookingTrend } from "@/components/dashboard/booking-trend";
+import { BookingsChart } from "./bookings-chart";
+import { addDays } from "./time";
 import { ShopLink } from "@/components/dashboard/shell/shop-link";
 import { cn } from "@/lib/utils";
 
 /**
- * FR-OPS-01: filter by date / session / workshop / payment status, search by code, name, email. The summary counts the bookings by status; a click on one of its figures
- * shows only the bookings of that status (a click on the same figure, or on All bookings, shows them all again).
+ * FR-OPS-01: filter by a range of dates (From - To) / session / workshop / payment status, search by code, name, email. The figures at the top count the bookings of
+ * the range by booking status and by payment status; a click on one shows only the bookings of that status (a click on it again, or on All bookings, shows them all).
+ * The chart shows the bookings of the same range over time.
  */
 export function BookingsList({
-  bookings, prices, trend, sessions, customers, workshops, timezone, defaultLocale, enabledLocales, nowIso,
+  bookings, prices, currency, sessions, customers, workshops, timezone, defaultLocale, enabledLocales, nowIso,
 }: {
-  bookings: Booking[]; /** The original price of each booking and its vouchers, by booking id. */ prices: Record<string, BookingPriceInfo>; /** The bookings over time, by period (the chart above the table). */ trend: Record<TrendPeriod, TrendBucket[]>; sessions: Session[]; customers: Customer[]; workshops: Workshop[];
+  bookings: Booking[]; /** The original price of each booking and its vouchers, by booking id. */ prices: Record<string, BookingPriceInfo>;
+  currency: string; sessions: Session[]; customers: Customer[]; workshops: Workshop[];
   timezone: string; defaultLocale: Locale; enabledLocales: Locale[]; nowIso: string;
 }) {
   const t = useTranslations("ops");
   const tf = useTranslations("ops.finance");
   const locale = useLocale() as Locale;
-  const [date, setDate] = useState(() => dayKey(nowIso, timezone)); // default: today (shop timezone)
+  const today = dayKey(nowIso, timezone);
+  const [from, setFrom] = useState(() => addDays(today, -30)); // default: a month before and a month after today (shop timezone)
+  const [to, setTo] = useState(() => addDays(today, 30));
   const [sessionId, setSessionId] = useState("");
   const [workshopId, setWorkshopId] = useState("");
-  const [payment, setPayment] = useState<"" | PaymentStatus>("");
+  const [payment, setPayment] = useState<"" | PaymentStatus>(""); // the select, or a click on a payment figure
   const [status, setStatus] = useState<"" | BookingStatus>(""); // set by a click on a figure of the summary
   const [query, setQuery] = useState("");
 
   const customerOf = (id: string) => customers.find((c) => c.id === id);
   const displayLocale = resolveShopLocale(locale, enabledLocales, defaultLocale);
   const wsTitle = (id: string) => pickLocalized(workshops.find((w) => w.id === id)?.title, displayLocale, defaultLocale);
+  const inRange = (iso: string) => { const d = dayKey(iso, timezone); return (!from || d >= from) && (!to || d <= to); };
+  const presets = [{ key: "last3m", days: 90 }, { key: "last6m", days: 182 }, { key: "last1y", days: 365 }] as const;
 
   const sessionOptions = useMemo(
     () =>
       sessions
-        .filter((s) => !date || dayKey(s.startsAt, timezone) === date)
+        .filter((s) => { const d = dayKey(s.startsAt, timezone); return (!from || d >= from) && (!to || d <= to); })
         .filter((s) => !workshopId || s.workshopId === workshopId)
         .sort((a, b) => a.startsAt.localeCompare(b.startsAt)),
-    [sessions, date, workshopId, timezone],
+    [sessions, from, to, workshopId, timezone],
   );
 
   const q = query.trim().toLowerCase();
-  // The bookings the date, the workshop, the payment status, the session and the search let through; the summary counts them by status, and the status chosen in it narrows the table.
-  const inScope = bookings
-    .filter((b) => (!date || dayKey(b.startsAt, timezone) === date))
+  // The bookings of the range, the workshop, the session and the search. The booking status figures also follow the payment status chosen, and the payment
+  // figures follow the booking status chosen, so each row of figures can be used while the other one is.
+  const base = bookings
+    .filter((b) => inRange(b.startsAt))
     .filter((b) => !workshopId || b.workshopId === workshopId)
-    .filter((b) => !payment || b.paymentStatus === payment)
     .filter((b) => !sessionId || b.sessionId === sessionId)
     .filter((b) => {
       if (!q) return true;
       const c = customerOf(b.customerId);
       return [b.bookingCode, c?.fullName, c?.email].some((v) => v?.toLowerCase().includes(q));
     });
-  const rows = inScope.filter((b) => !status || b.status === status).sort((a, b) => a.startsAt.localeCompare(b.startsAt));
-  const byStatus = BOOKING_STATUSES.map((s) => {
-    const mine = inScope.filter((b) => b.status === s);
-    return { status: s, bookings: mine.length, guests: mine.reduce((n, b) => n + b.quantity, 0) };
+  const byPayment = base.filter((b) => !payment || b.paymentStatus === payment);
+  const rows = byPayment.filter((b) => !status || b.status === status).sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+  const guestsOf = (list: Booking[]) => list.reduce((n, b) => n + b.quantity, 0);
+  const byStatus = BOOKING_STATUSES.map((s) => { const mine = byPayment.filter((b) => b.status === s); return { status: s, bookings: mine.length, guests: guestsOf(mine) }; });
+  const payments = PAYMENT_STATUSES.map((s) => {
+    const mine = base.filter((b) => b.paymentStatus === s && (!status || b.status === status));
+    return { status: s, bookings: mine.length, guests: guestsOf(mine), amount: mine.reduce((n, b) => n + b.totalAmount, 0) };
   });
-  const totals = { bookings: inScope.length, guests: inScope.reduce((n, b) => n + b.quantity, 0) };
+  const totals = { bookings: byPayment.length, guests: guestsOf(byPayment) };
+
+  // The chart counts the same bookings as the figures (the range, workshop, session and search; its own view splits them by status or by payment); an empty
+  // end of the range is the first or the last day with a booking.
+  const days = dayStatsOf(base, timezone);
+  const known = bookings.map((b) => dayKey(b.startsAt, timezone)).sort();
+  const chartFrom = from || known[0] || today;
+  const chartTo = to || known.at(-1) || today;
 
   return (
     <div className="grid gap-4">
@@ -84,17 +102,13 @@ export function BookingsList({
       </div>
 
       <Card>
-        <CardContent>
-          <form role="search" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5" onSubmit={(e) => e.preventDefault()}>
-            <Field id="f-date" label={t("filters.date")} hint={t("common.tzNote", { tz: timezone })}>
-              {(p) => (
-                <div className="flex gap-2">
-                  <DateInput {...p} value={date} onChange={(day) => { setDate(day); setSessionId(""); }} />
-                  <Button type="button" variant="outline" disabled={!date} onClick={() => { setDate(""); setSessionId(""); }}>
-                    {t("filters.allDates")}
-                  </Button>
-                </div>
-              )}
+        <CardContent className="grid gap-3">
+          <form role="search" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6" onSubmit={(e) => e.preventDefault()}>
+            <Field id="f-from" label={t("filters.from")}>
+              {(p) => <DateInput {...p} value={from} max={to || undefined} onChange={(day) => { setFrom(day); setSessionId(""); }} />}
+            </Field>
+            <Field id="f-to" label={t("filters.to")}>
+              {(p) => <DateInput {...p} value={to} min={from || undefined} onChange={(day) => { setTo(day); setSessionId(""); }} />}
             </Field>
             <Field id="f-session" label={t("filters.session")}>
               {(p) => (
@@ -126,23 +140,47 @@ export function BookingsList({
               )}
             </Field>
           </form>
+          {/* Quick ranges, ending today. */}
+          <div className="flex flex-wrap items-center gap-2" role="group" aria-label={t("filters.presets")}>
+            {presets.map((r) => (
+              <Button
+                key={r.key} type="button" size="sm" variant={from === addDays(today, -r.days) && to === today ? "default" : "outline"} data-testid={`preset-${r.key}`}
+                onClick={() => { setFrom(addDays(today, -r.days)); setTo(today); setSessionId(""); }}
+              >
+                {t(`filters.${r.key}`)}
+              </Button>
+            ))}
+            <Button type="button" size="sm" variant={!from && !to ? "default" : "outline"} data-testid="preset-all" onClick={() => { setFrom(""); setTo(""); setSessionId(""); }}>{t("filters.allDates")}</Button>
+            <span className="text-xs text-muted-foreground">{t("common.tzNote", { tz: timezone })}</span>
+          </div>
         </CardContent>
       </Card>
 
-      {/* The bookings of the date, workshop, session and search chosen above, counted by booking status. A click on a figure filters the table. */}
-      <div role="group" aria-label={t("bookings.summary")} data-testid="booking-summary" className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
-        <SummaryStat testId="summary-total" label={t("bookings.summaryTotal")} value={totals.bookings} guests={t("bookings.guestsCount", { count: totals.guests })} active={status === ""} onClick={() => setStatus("")} />
-        {byStatus.map((s) => (
-          <SummaryStat
-            key={s.status} testId={`summary-${s.status}`} label={t(`bookingStatus.${s.status}`)} value={s.bookings} guests={t("bookings.guestsCount", { count: s.guests })}
-            active={status === s.status} onClick={() => setStatus(status === s.status ? "" : s.status)}
-          />
-        ))}
+      {/* The bookings of the range counted by booking status and by payment status. A click on a figure filters the table. */}
+      <div data-testid="booking-summary" className="flex flex-col gap-2 lg:flex-row lg:items-stretch">
+        <div role="group" aria-label={t("bookings.summary")} className="grid flex-[5] grid-cols-2 gap-2 sm:grid-cols-5">
+          <SummaryStat testId="summary-total" accent="#64748b" label={t("bookings.summaryTotal")} value={totals.bookings} sub={t("bookings.guestsCount", { count: totals.guests })} active={status === ""} onClick={() => setStatus("")} />
+          {byStatus.map((s) => (
+            <SummaryStat
+              key={s.status} testId={`summary-${s.status}`} accent={STATUS_ACCENT[s.status]} label={t(`bookingStatus.${s.status}`)} value={s.bookings} sub={t("bookings.guestsCount", { count: s.guests })}
+              active={status === s.status} onClick={() => setStatus(status === s.status ? "" : s.status)}
+            />
+          ))}
+        </div>
+        <div role="group" aria-label={t("bookings.summaryPayment")} className="grid flex-[3] grid-cols-2 gap-2 border-t pt-2 lg:border-l lg:border-t-0 lg:pl-2 lg:pt-0">
+          {payments.map((p) => (
+            <SummaryStat
+              key={p.status} testId={`summary-${p.status}`} accent={p.status === "PAID" ? "#16a34a" : "#94a3b8"} label={t(`paymentStatus.${p.status}`)} value={p.bookings}
+              sub={`${t("bookings.guestsCount", { count: p.guests })} · ${formatMoney(p.amount, currency, locale)}`}
+              active={payment === p.status} onClick={() => setPayment(payment === p.status ? "" : p.status)}
+            />
+          ))}
+        </div>
       </div>
       <p className="-mt-2 text-xs text-muted-foreground">{t("bookings.summaryHint")}</p>
 
-      {/* The bookings over time (by the date of their session): the last 3 months, 6 months or year. */}
-      <BookingTrend series={trend} periods={["3m", "6m", "12m"]} />
+      {/* The bookings over time in the range, by the day of their session. */}
+      <BookingsChart days={days} from={chartFrom} to={chartTo} />
 
       <p className="text-sm text-muted-foreground" role="status">{t("bookings.count", { count: rows.length })}</p>
 
@@ -207,19 +245,21 @@ export function BookingsList({
   );
 }
 
+const STATUS_ACCENT: Record<BookingStatus, string> = { NOT_CONFIRMED: "#f59e0b", CONFIRMED: "#3b82f6", CHECKED_IN: "#10b981", CANCELLED: "#ef4444" };
+
 /**
- * One figure of the summary: how many bookings (big) and how many guests they hold (small), like the figures of the Today screen. It is a button:
- * the figure of the status being shown is highlighted (`aria-pressed`), and a click shows only the bookings of that status.
+ * One figure of the summary: how many bookings (big) and how many guests they hold (small, with the amount for the payment figures). It is a button:
+ * the figure being shown is highlighted (`aria-pressed`), and a click shows only the bookings of that status.
  */
-function SummaryStat({ label, value, guests, testId, active, onClick }: { label: string; value: number; guests: string; testId: string; active: boolean; onClick: () => void }) {
+function SummaryStat({ label, value, sub, testId, accent, active, onClick }: { label: string; value: number; sub: string; testId: string; accent: string; active: boolean; onClick: () => void }) {
   return (
     <button
-      type="button" data-testid={testId} aria-pressed={active} onClick={onClick}
-      className={cn("rounded-lg border bg-card p-3 text-left outline-none transition hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50", active && "border-primary ring-2 ring-primary/30")}
+      type="button" data-testid={testId} aria-pressed={active} onClick={onClick} style={{ borderLeftColor: accent }}
+      className={cn("rounded-lg border border-l-4 bg-card px-2.5 py-1.5 text-left outline-none transition hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50", active && "border-y-primary border-r-primary bg-primary/5 ring-2 ring-primary/30")}
     >
-      <span className="block text-xs text-muted-foreground">{label}</span>
-      <span className="block text-xl font-semibold" data-testid={`${testId}-count`}>{value}</span>
-      <span className="block text-xs text-muted-foreground">{guests}</span>
+      <span className="block truncate text-[11px] text-muted-foreground">{label}</span>
+      <span className="block text-lg font-semibold leading-tight tabular-nums" data-testid={`${testId}-count`}>{value}</span>
+      <span className="block text-[11px] leading-tight text-muted-foreground">{sub}</span>
     </button>
   );
 }
