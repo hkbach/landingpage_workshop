@@ -98,7 +98,8 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
 
   /**
    * Sets a booking Paid or Unpaid after the session (the shop owner confirms the payment received at the studio). Paid records the missing
-   * amount as a cash payment; Unpaid gives back what was recorded as a refund entry (entries are never edited or deleted). A free booking has nothing to pay.
+   * amount as a cash payment and checks the booking in (Not confirmed / Confirmed only); Unpaid gives back what was recorded as a refund entry (entries
+   * are never edited or deleted) and leaves the status. A free booking has nothing to pay.
    */
   const setPaid = useCallback(
     (bookingId: string, paid: boolean): OpResult => {
@@ -109,7 +110,16 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
       if (paid) {
         if (b.paymentStatus === "PAID") return { ok: true };
         const res = addPayment(bookingId, { type: "PAYMENT", amount: b.totalAmount - Math.max(0, net), method: "CASH", note: "Payment confirmed after the session" });
-        if (res.ok) persistPaid(bookingId, true);
+        if (res.ok) {
+          persistPaid(bookingId, true); // the server sets the status too (recordPaid)
+          // A booking that becomes Paid is also Checked in, from Not confirmed or Confirmed (the status before is kept for an uncheck-in).
+          if (b.status === "NOT_CONFIRMED" || b.status === "CONFIRMED") {
+            const at = new Date().toISOString();
+            const before = b.status;
+            setBookings((list) => list.map((x) => (x.id === b.id ? { ...x, status: "CHECKED_IN", checkedInAt: at, statusBeforeCheckIn: before } : x)));
+            pushEvent(b.id, { status: "CHECKED_IN", at });
+          }
+        }
         return res;
       }
       if (b.paymentStatus === "UNPAID") return { ok: true };

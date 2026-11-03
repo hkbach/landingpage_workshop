@@ -58,6 +58,23 @@ describe("a booking the shop sets Paid or Unpaid (recordPaid)", () => {
     expect(now.payments.map((p) => p.type)).toEqual(["PAYMENT", "REFUND"]);
     expect(codes().has(b.bookingCode)).toBe(false);
   });
+  it("checks the booking in when it becomes Paid (Not confirmed or Confirmed), keeping the status before; Unpaid leaves the status", () => {
+    for (const status of ["NOT_CONFIRMED", "CONFIRMED"] as const) {
+      resetBookingStore();
+      const b = liveBookings().find((x) => x.status === status && x.paymentStatus === "UNPAID" && x.totalAmount > 0 && x.payments.length === 0);
+      if (!b) continue;
+      recordPaid(b.id, true, "x", new Date("2026-11-05T10:00:00Z"));
+      expect(liveBookings().find((x) => x.id === b.id)).toMatchObject({ status: "CHECKED_IN", statusBeforeCheckIn: status, checkedInAt: "2026-11-05T10:00:00.000Z" });
+      recordPaid(b.id, false, "x");
+      expect(liveBookings().find((x) => x.id === b.id)!.status).toBe("CHECKED_IN");
+    }
+  });
+  it("a cancelled booking keeps its status when it becomes Paid", () => {
+    const b = liveBookings().find((x) => x.status === "CANCELLED" && x.paymentStatus === "UNPAID" && x.totalAmount > 0)!;
+    expect(b).toBeDefined();
+    recordPaid(b.id, true, "x");
+    expect(liveBookings().find((x) => x.id === b.id)).toMatchObject({ status: "CANCELLED", paymentStatus: "PAID" });
+  });
   it("does nothing twice, and refuses an unknown booking", () => {
     const b = unpaid();
     recordPaid(b.id, true, "x");

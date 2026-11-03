@@ -62,7 +62,7 @@ export function liveBookings(): Booking[] {
 
 /**
  * The shop sets a booking Paid or Unpaid after the session. Paid records the missing amount as a cash payment; Unpaid gives back what was paid as a
- * refund entry (entries are only added, never changed). False when the booking does not exist or has nothing to pay. TODO(api): in the transaction
+ * refund entry (entries are only added, never changed); a booking that becomes Paid is also set to Checked in. False when the booking does not exist or has nothing to pay. TODO(api): in the transaction
  * of the endpoint, with the audit log.
  */
 export function recordPaid(id: string, paid: boolean, by: string, now: Date = new Date()): boolean {
@@ -75,6 +75,9 @@ export function recordPaid(id: string, paid: boolean, by: string, now: Date = ne
     note: paid ? "Payment confirmed after the session" : "Marked as unpaid", recordedAt: now.toISOString(), recordedBy: by,
   };
   store().extra.set(id, [...(store().extra.get(id) ?? []), entry]);
+  // A booking that becomes Paid is also Checked in (the guest came and paid): from Not confirmed or Confirmed, the status before is kept. A cancelled
+  // or already checked in booking keeps its status, and Unpaid leaves the status as it is.
+  if (paid && isOpen(b.status)) setBookingStatus(id, "CHECKED_IN", undefined, now.toISOString(), b.status);
   return true;
 }
 
