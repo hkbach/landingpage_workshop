@@ -18,16 +18,18 @@ export interface PaymentInput { type: "PAYMENT" | "REFUND"; amount: number; meth
  * Client-side simulation of booking/session operations (optimistic local state; nothing is persisted).
  * The authoritative rules live in `@/lib/booking-state` and will be enforced again by the backend.
  */
-export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; nowIso: string; actor: string }) {
+/** `otherBookings`: bookings the screen does not change but whose seats count (the other bookings of the workshop, on the detail of one booking). */
+export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; nowIso: string; actor: string; otherBookings?: Booking[] }) {
   const [bookings, setBookings] = useState<Booking[]>(init.bookings);
   const [storedSessions, setSessions] = useState<Session[]>(init.sessions);
   const [history, setHistory] = useState<Record<string, BookingEvent[]>>({});
   const [now, setNow] = useState(() => new Date(init.nowIso));
   // A session whose time is over is closed by the system (shown as Closed with a note), whatever its stored status.
   // The seats taken are counted from the bookings, so cancelling a booking frees its seats at once.
+  const [others] = useState<Booking[]>(init.otherBookings ?? []);
   const sessions = useMemo(
-    () => storedSessions.map((x) => ({ ...closeIfEnded(x, now), reservedCount: reservedSeats(bookings, x.id) })),
-    [storedSessions, bookings, now],
+    () => storedSessions.map((x) => ({ ...closeIfEnded(x, now), reservedCount: reservedSeats(bookings, x.id) + reservedSeats(others, x.id) })),
+    [storedSessions, bookings, others, now],
   );
   const counter = useRef(0);
   const nextId = (p: string) => `${p}-local-${++counter.current}`;
@@ -239,10 +241,8 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
       const s = sessions.find((x) => x.id === id);
       if (!s || !canEditSession(s.status)) return false; // a running session is not edited: pause it first
       const hasBookings = s.reservedCount > 0 || bookings.some((b) => b.sessionId === id && b.status !== "CANCELLED");
-      if (patch.workshopId !== s.workshopId) {
-        if (hasBookings) return false;
-        if (sessions.some((x) => x.id !== id && x.workshopId === patch.workshopId && x.startsAt === s.startsAt)) return false;
-      }
+      // Another session may start at the same time, even of the same workshop: only a workshop with bookings cannot change.
+      if (patch.workshopId !== s.workshopId && hasBookings) return false;
       if (!Number.isInteger(patch.capacity) || patch.capacity < 1 || patch.capacity < s.reservedCount || !isValidBookingCutoff(patch.bookingCutoffMinutes)) return false;
       setSessions((list) => list.map((x) => {
         if (x.id !== id) return x;

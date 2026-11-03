@@ -8,11 +8,12 @@ import { LiveSummary } from "@/components/dashboard/live-summary";
 import { SummaryCard } from "@/components/dashboard/summary-card";
 import { ShopLink } from "@/components/dashboard/shell/shop-link";
 import { dayKey } from "@/lib/format";
-import { liveBookings, liveCustomers } from "@/lib/mock/booking-store";
+import { liveBookings, liveCustomers, shopSessions } from "@/lib/mock/booking-store";
+import { withWorkshopStatus } from "@/lib/mock/workshop-status-store";
 import { getFeeRates } from "@/lib/mock/fee-rates-store";
 import { paymentSources } from "@/lib/mock/ledger-source";
 import { bookingTrend } from "@/lib/mock/trend";
-import { currentShop, mockLandingPages, sessions, sitePage, workshops } from "@/lib/mock/data";
+import { currentShop, mockLandingPages, sitePage, workshops as seedWorkshops } from "@/lib/mock/data";
 
 // Computed outside the component: depends on the current time.
 function computeOverview() {
@@ -20,6 +21,9 @@ function computeOverview() {
   const tz = currentShop.timezone;
   const today = dayKey(new Date(now).toISOString(), tz);
   const bookings = liveBookings();
+  // An administrator's close and the live seats count; a workshop the owner switched keeps its new status.
+  const sessions = shopSessions();
+  const workshops = withWorkshopStatus(seedWorkshops);
   const live = bookings.filter((b) => b.status !== "CANCELLED");
   const upcoming = sessions.filter((s) => s.status === "RUNNING" && new Date(s.startsAt).getTime() > now);
   const activeWorkshopIds = new Set(workshops.filter((w) => w.status === "ACTIVE").map((w) => w.id));

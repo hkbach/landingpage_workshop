@@ -29,11 +29,11 @@ function initialTrail(booking: Pick<Booking, "status" | "createdAt" | "statusBef
 
 /** FR-OPS-01/03..08 + FR-PAY-01 detail: summary, status timeline, actions and append-only payment entries. */
 export function BookingDetail({
-  booking, customer, sessions, nowIso, actor,
-}: { booking: Booking; customer?: Customer; sessions: Session[]; nowIso: string; actor: string }) {
+  booking, customer, sessions, otherBookings, nowIso, actor,
+}: { booking: Booking; customer?: Customer; sessions: Session[]; otherBookings?: Booking[]; nowIso: string; actor: string }) {
   const t = useTranslations("ops");
   const locale = useLocale() as Locale;
-  const ops = useOpsState({ bookings: [booking], sessions, nowIso, actor });
+  const ops = useOpsState({ bookings: [booking], otherBookings, sessions, nowIso, actor });
   const [trail0] = useState(() => initialTrail(booking));
   const b = ops.bookings[0] ?? booking;
   const session = ops.sessions.find((s) => s.id === b.sessionId);

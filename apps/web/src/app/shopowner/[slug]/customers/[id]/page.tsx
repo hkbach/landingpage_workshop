@@ -13,9 +13,10 @@ export default async function CustomerDetailPage(props: PageProps<"/shopowner/[s
   if (!customer) notFound();
   const t = await getTranslations("ops");
   const locale = await getLocale();
-  const history = liveBookings().filter((b) => b.customerId === customer.id).sort((a, b) => b.startsAt.localeCompare(a.startsAt));
+  const history = liveBookings().filter((b) => b.customerId === customer.id).sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)); // newest booking first (FR-CUST-01)
   const tz = currentShop.timezone;
   const regionName = new Intl.DisplayNames([locale], { type: "region" });
+  const languageName = new Intl.DisplayNames([locale], { type: "language" });
 
   return (
     <div className="grid gap-4">
@@ -33,7 +34,7 @@ export default async function CustomerDetailPage(props: PageProps<"/shopowner/[s
             <dt className="text-muted-foreground">{t("customers.country")}</dt><dd>{customer.account ? regionName.of(customer.account.country) ?? customer.account.country : t("customers.guest")}</dd>
             <dt className="text-muted-foreground">{t("customers.birthDate")}</dt>
             <dd>{customer.account ? new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${customer.account.birthDate}T12:00:00Z`)) : "-"}</dd>
-            <dt className="text-muted-foreground">{t("customers.locale")}</dt><dd>{customer.preferredLocale}</dd>
+            <dt className="text-muted-foreground">{t("customers.locale")}</dt><dd>{languageName.of(customer.preferredLocale) ?? customer.preferredLocale}</dd>
           </dl>
           <p className="mt-3 text-xs text-muted-foreground">{t("customers.perShop")}</p>
         </CardContent>

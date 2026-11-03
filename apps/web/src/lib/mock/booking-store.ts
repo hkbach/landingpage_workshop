@@ -11,6 +11,12 @@ import { allPromotions, shopToday } from "./promotion-store";
 import { withAdminChanges } from "./session-admin-store";
 import { withWorkshopStatus } from "./workshop-status-store";
 
+/** The sessions as the shop-owner screens show them: an administrator's close or reopen counts, and the seats taken are counted from the live bookings. */
+export function shopSessions(): Session[] {
+  const live = liveBookings();
+  return withAdminChanges(sessions).map((s) => ({ ...s, reservedCount: reservedSeats(live, s.id) }));
+}
+
 /** A session as the server knows it now: an administrator's close or reopen counts, and a session whose time is over is Closed. */
 export function liveSession(id: string, now: Date = new Date()): Session | undefined {
   const s = withAdminChanges(sessions).find((x) => x.id === id);

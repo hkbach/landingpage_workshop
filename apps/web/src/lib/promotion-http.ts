@@ -8,7 +8,7 @@ export function saveFailure(res: Extract<SaveResult, { ok: false }>): Response {
     case "NOT_FOUND":
       return apiError(404, "NOT_FOUND", "Promotion not found.");
     case "LIMIT":
-      return apiError(409, "LIMIT_REACHED", `A shop can have at most ${MAX_PROMOTIONS_PER_SHOP} promotions.`);
+      return apiError(409, "LIMIT_REACHED", `A shop can have at most ${MAX_PROMOTIONS_PER_SHOP} promotions.`, { max: MAX_PROMOTIONS_PER_SHOP });
     case "CONCURRENT_LIMIT":
       return apiError(409, "CONCURRENT_LIMIT", `At most ${MAX_CONCURRENT_PROMOTIONS} promotions can run at the same time.`, { date: res.date, max: MAX_CONCURRENT_PROMOTIONS });
     case "FULL_DISCOUNT":

@@ -78,7 +78,8 @@ export function TodayView({
                 <SessionStatusBadge status={s.status} />
               </div>
               <CapacityBar reserved={s.reservedCount} capacity={s.capacity} />
-              {isSessionFinished(s.status) ? null : (
+              {/* A walk-in can be added to a running session that still has seats (the form offers only those). */}
+              {isSessionFinished(s.status) || s.status !== "RUNNING" || s.capacity - s.reservedCount <= 0 ? null : (
                 <div className="flex flex-wrap gap-2">
                   <ShopLink
                     href={`/shopowner/bookings/new?session=${s.id}`}

@@ -60,7 +60,7 @@ function limitNotice(e: unknown, t: T, day: (d: string) => string): Notice | nul
   if (e.code === "CONCURRENT_LIMIT") {
     return { title: t("concurrentTitle"), body: t("concurrentLimit", { max: Number(e.details.max ?? 5), date: day(String(e.details.date ?? "")) }) };
   }
-  return { title: t("limitTitle"), body: t("limitReached", { max: 20 }) };
+  return { title: t("limitTitle"), body: t("limitReached", { max: Number(e.details.max ?? 20) }) };
 }
 
 /** The pop-up for a promotion that cannot be paused because guests are using it in bookings of sessions that have not ended. */

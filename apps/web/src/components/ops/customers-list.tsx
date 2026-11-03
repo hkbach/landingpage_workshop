@@ -117,7 +117,7 @@ export function CustomersList({ customers, bookings, timezone }: { customers: Cu
           </form>
         </CardContent>
       </Card>
-      <p className="text-sm text-muted-foreground" role="status">{t("customers.count", { count: rows.length })}</p>
+      <p className="text-sm text-muted-foreground" role="status">{t("customers.count", { count: sorted.length })}</p>
       {rows.length === 0 ? (
         <Card><CardContent className="py-8 text-center text-muted-foreground">{t("customers.empty")}</CardContent></Card>
       ) : (
