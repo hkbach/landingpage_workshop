@@ -281,6 +281,7 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
           promotions: chosen.map((p) => L(p.title)), discountAmount: price?.ok ? price.discount : 0,
         },
         idempotencyKey,
+        { id: session.id, code: session.code, reservedCount: session.reservedCount },
       );
       onOpenChange(false);
       router.push(`${basePath}/booking/${result.code}?email=${encodeURIComponent(result.email)}`);

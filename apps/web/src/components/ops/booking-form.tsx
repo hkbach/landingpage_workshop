@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { z } from "zod";
-import { BOOKING_SOURCES, formatMoney, pickLocalized, resolveShopLocale, type Locale } from "@workshop/shared";
+import { BOOKING_SOURCES, formatMoney, pickLocalized, resolveShopLocale, type Locale, nextBookingCode } from "@workshop/shared";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -17,25 +17,23 @@ import { issuesToErrors } from "./validation";
 import { useDirty } from "@/lib/use-dirty";
 import { ShopLink } from "@/components/dashboard/shell/shop-link";
 
-const CROCKFORD = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
-function demoCode(): string {
-  return Array.from({ length: 8 }, () => CROCKFORD[Math.floor(Math.random() * CROCKFORD.length)]).join("");
-}
-
 type ManualSource = "WALK_IN" | "PHONE" | "OTHER";
 const MANUAL_SOURCES = BOOKING_SOURCES.filter((s): s is ManualSource => s !== "ONLINE");
 
 /** FR-OPS-02: manual booking (walk-in / phone / other). Email optional for WALK_IN. Price is shown as an estimate only. */
 export function BookingForm({
-  sessions, workshops, shop, initialSessionId, nowIso,
+  sessions, workshops, shop, initialSessionId, nowIso, bookingCodes,
 }: {
   nowIso: string;
   sessions: Session[]; workshops: Workshop[]; shop: { timezone: string; defaultLocale: Locale; enabledLocales: Locale[] };
   initialSessionId?: string;
+  /** The booking codes already given, so the next one of a session follows them. */
+  bookingCodes: string[];
 }) {
   const t = useTranslations("ops");
   const locale = useLocale() as Locale;
   const seq = useRef(0);
+  const given = useRef<string[]>([]); // the codes this form has given
   const wsOf = (id: string) => workshops.find((w) => w.id === id);
 
   // Open sessions with room; already-started sessions are allowed for walk-ins (FR-OPS-02).
@@ -83,12 +81,13 @@ export function BookingForm({
       phone: d.phone || undefined, country: d.country, preferredLocale: shop.defaultLocale,
     };
     const booking: Booking = {
-      id: `bk-local-${++seq.current}`, bookingCode: demoCode(), sessionId: session.id, workshopId: workshop.id, customerId: customer.id,
+      id: `bk-local-${++seq.current}`, bookingCode: nextBookingCode(session.code, [...bookingCodes, ...given.current], session.reservedCount + 1), sessionId: session.id, workshopId: workshop.id, customerId: customer.id,
       source: d.source, quantity: d.quantity, status: "CONFIRMED", paymentStatus: "UNPAID", unitPriceAmount: workshop.priceAmount,
       totalAmount: workshop.priceAmount * d.quantity, currency: workshop.currency,
       workshopTitle: pickLocalized(workshop.title, shop.defaultLocale, shop.defaultLocale), startsAt: session.startsAt, endsAt: session.endsAt,
       timezone: shop.timezone, specialRequest: d.specialRequest || undefined, createdAt: now, payments: [],
     };
+    given.current.push(booking.bookingCode);
     setCreated({ code: booking.bookingCode, booking, customer });
   }
 

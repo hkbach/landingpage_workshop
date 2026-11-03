@@ -1,3 +1,4 @@
+import { BOOKING_CODE_RE } from "@workshop/shared";
 import type { Metadata } from "next";
 import { BookingConfirmation, BookingNotFound, SimulatedBookingConfirmation } from "@/components/booking/BookingConfirmation";
 import { SiteFrame } from "@/components/site/SiteFrame";
@@ -32,7 +33,7 @@ export default async function BookingPage({ params, searchParams }: PageProps<"/
                 quantity: found.booking.quantity, totalAmount: found.booking.totalAmount, currency: found.booking.currency,
               }}
             />
-          ) : email && /^[A-Za-z0-9]{8}$/.test(code) ? (
+          ) : email && BOOKING_CODE_RE.test(code.toUpperCase()) ? (
             <SimulatedBookingConfirmation code={code.toUpperCase()} email={email} shop={shopInfo} locale={shop.defaultLocale} homeHref={homeHref} />
           ) : (
             <BookingNotFound homeHref={homeHref} />

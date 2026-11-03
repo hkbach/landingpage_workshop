@@ -41,7 +41,7 @@ describe("pausing a promotion that guests use", () => {
     const err = await errorOf(res);
     expect(err.error.code).toBe("PROMOTION_IN_USE");
     expect(err.error.details.count).toBe(2);
-    expect(err.error.details.bookingCodes).toEqual(expect.arrayContaining(["7K3M9QX2", "K5N2Q8RD"]));
+    expect(err.error.details.bookingCodes).toEqual(expect.arrayContaining(["SES-0001-001", "SES-0003-002"]));
     expect(allPromotions().find((p) => p.id === "pr-1")?.enabled).toBe(true);
   });
   it("is refused through PUT as well", async () => {
@@ -59,7 +59,7 @@ describe("pausing a promotion that guests use", () => {
   it("after the session only the bookings of later sessions still block", async () => {
     vi.setSystemTime(hours(se1.endsAt, 1));
     const err = await errorOf(await pause("pr-1"));
-    expect(err.error.details.bookingCodes).toEqual(["K5N2Q8RD"]);
+    expect(err.error.details.bookingCodes).toEqual(["SES-0003-002"]);
   });
   it("is allowed once the guests cancel their bookings", async () => {
     expect((await pause("pr-1")).status).toBe(409);

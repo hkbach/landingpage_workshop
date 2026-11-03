@@ -1,3 +1,5 @@
+import { nextBookingCode } from "@workshop/shared";
+
 // Frontend-only simulation of POST /public/sites/{slug}/bookings (no API in this milestone).
 // The real backend recomputes price, checks capacity (SessionCapacityService) and verifies Turnstile.
 export interface ConfirmationData {
@@ -16,20 +18,26 @@ export interface ConfirmationData {
   discountAmount?: number;
 }
 
-const CROCKFORD = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+const SEQ_PREFIX = "bkseq:";
 const KEY_PREFIX = "booking:";
 const IDEM_PREFIX = "idem:";
 
-function newCode(): string {
-  const bytes = crypto.getRandomValues(new Uint8Array(8));
-  return Array.from(bytes, (b) => CROCKFORD[b % 32]).join("");
+/**
+ * "<session code>-<3 digits>": the digits count the bookings of the session. The mock does not know the bookings made elsewhere, so it starts after
+ * the seats already reserved (there are never more bookings than seats) and after the codes this browser already gave.
+ */
+function newCode(session: { id: string; code: string; reservedCount: number }): string {
+  const last = Number(sessionStorage.getItem(SEQ_PREFIX + session.id) ?? 0);
+  const code = nextBookingCode(session.code, [], Math.max(session.reservedCount, last) + 1);
+  sessionStorage.setItem(SEQ_PREFIX + session.id, String(Number(code.slice(session.code.length + 1))));
+  return code;
 }
 
-export async function simulateBooking(data: Omit<ConfirmationData, "code">, idempotencyKey: string): Promise<ConfirmationData> {
+export async function simulateBooking(data: Omit<ConfirmationData, "code">, idempotencyKey: string, session: { id: string; code: string; reservedCount: number }): Promise<ConfirmationData> {
   await new Promise((r) => setTimeout(r, 600));
   // Same Idempotency-Key returns the same booking (FR-BOOK-02).
   const existing = sessionStorage.getItem(IDEM_PREFIX + idempotencyKey);
-  const code = existing ?? newCode();
+  const code = existing ?? newCode(session);
   const result: ConfirmationData = { ...data, code };
   sessionStorage.setItem(IDEM_PREFIX + idempotencyKey, code);
   sessionStorage.setItem(KEY_PREFIX + code, JSON.stringify(result));
