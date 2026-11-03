@@ -164,7 +164,7 @@
   "customers": {
     "title": "Customers",
     "perShop": "Customers belong to this shop only and are identified by email.",
-    "searchPlaceholder": "Name, email, gender or country",
+    "searchPlaceholder": "Name or email",
     "count": "{count, plural, one {# customer} other {# customers}}",
     "empty": "No customers found.",
     "name": "Name",
@@ -205,7 +205,10 @@
       "WECHAT": "WeChat",
       "TELEGRAM": "Telegram",
       "X": "X"
-    }
+    },
+    "allCountries": "All countries",
+    "allGenders": "All genders",
+    "genderNone": "Not provided"
   },
   "newBooking": {
     "title": "New booking",

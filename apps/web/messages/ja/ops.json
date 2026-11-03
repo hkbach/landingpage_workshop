@@ -164,7 +164,7 @@
   "customers": {
     "title": "顧客",
     "perShop": "顧客はこのショップのみに属し、メールアドレスで識別されます。",
-    "searchPlaceholder": "名前、メール、性別、または国",
+    "searchPlaceholder": "名前またはメールアドレス",
     "count": "{count, plural, other {#名の顧客}}",
     "empty": "顧客が見つかりません。",
     "name": "名前",
@@ -205,7 +205,10 @@
       "WECHAT": "WeChat",
       "TELEGRAM": "Telegram",
       "X": "X"
-    }
+    },
+    "allCountries": "すべての国",
+    "allGenders": "すべての性別",
+    "genderNone": "未入力"
   },
   "newBooking": {
     "title": "新規予約",

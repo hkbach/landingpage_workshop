@@ -164,7 +164,7 @@
   "customers": {
     "title": "客户",
     "perShop": "客户仅属于本店铺，并以邮箱作为标识。",
-    "searchPlaceholder": "姓名、邮箱、性别或国家",
+    "searchPlaceholder": "姓名或邮箱",
     "count": "{count, plural, other {# 位客户}}",
     "empty": "未找到客户。",
     "name": "姓名",
@@ -205,7 +205,10 @@
       "WECHAT": "微信",
       "TELEGRAM": "Telegram",
       "X": "X"
-    }
+    },
+    "allCountries": "所有国家",
+    "allGenders": "所有性别",
+    "genderNone": "未提供"
   },
   "newBooking": {
     "title": "新建预订",

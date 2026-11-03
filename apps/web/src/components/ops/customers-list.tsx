@@ -3,7 +3,7 @@
 import { Fragment, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { ChevronDown, ChevronRight, Eye, Search } from "lucide-react";
-import { formatMoney } from "@workshop/shared";
+import { formatMoney, GENDERS } from "@workshop/shared";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -11,6 +11,7 @@ import type { Booking, Customer } from "@/lib/types";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Field } from "./field";
+import { NativeSelect } from "./native-select";
 import { CustomerAvatar } from "./customer-avatar";
 import { CustomerBookingsTable } from "./customer-bookings-table";
 import { CustomerDialog } from "./customer-dialog";
@@ -22,7 +23,7 @@ import { ShopLink } from "@/components/dashboard/shell/shop-link";
 /**
  * FR-CUST-01: the customers of the shop are the guests of its bookings (a person with no booking is not listed), searched by name / email. A click on
  * a row opens the list of every booking that customer has made (cancelled ones too), the one made most recently first. The search looks in the
- * name, the email, the gender and the country.
+ * name and the email; two filters narrow the list to a country (or Guest: no account) and to a gender (or not provided).
  */
 export function CustomersList({ customers, bookings, timezone }: { customers: Customer[]; bookings: Booking[]; timezone: string }) {
   const t = useTranslations("ops");
@@ -31,6 +32,8 @@ export function CustomersList({ customers, bookings, timezone }: { customers: Cu
   const regionName = new Intl.DisplayNames([locale], { type: "region" });
   const birthDay = (d: string) => new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${d}T12:00:00Z`));
   const [query, setQuery] = useState("");
+  const [country, setCountry] = useState(""); // "": every country; GUEST: customers with no account; otherwise a country code
+  const [gender, setGender] = useState(""); // "": every gender; NONE: not given; otherwise a gender
   const [open, setOpen] = useState<ReadonlySet<string>>(new Set());
   const [viewing, setViewing] = useState<string | null>(null); // the customer whose popup is open
   const [sort, setSort] = useState<SortState>(null); // none: the most recent booking first
@@ -47,7 +50,15 @@ export function CustomersList({ customers, bookings, timezone }: { customers: Cu
   // What the customer is shown as (the search looks in it): the gender and the country are the words of the language of the page.
   const genderOf = (c: Customer) => (c.account?.gender ? t(`customers.genders.${c.account.gender}`) : null);
   const countryOf = (c: Customer) => (c.account ? regionName.of(c.account.country) ?? c.account.country : t("customers.guest"));
-  const found = all.filter((r) => matchesSearch([r.c.fullName, r.c.email ?? "", genderOf(r.c) ?? "", countryOf(r.c)].join(" "), query));
+  // The country filter offers the countries of the customers (and Guest when some have no account); the gender filter the genders and "not provided".
+  const countryCodes = [...new Set(all.flatMap((r) => (r.c.account ? [r.c.account.country] : [])))].sort((a, b) => (regionName.of(a) ?? a).localeCompare(regionName.of(b) ?? b, locale));
+  const hasGuests = all.some((r) => !r.c.account);
+  const countryKey = (c: Customer) => (c.account ? c.account.country : "GUEST");
+  const genderKey = (c: Customer) => c.account?.gender ?? "NONE";
+  const found = all
+    .filter((r) => matchesSearch(`${r.c.fullName} ${r.c.email ?? ""}`, query))
+    .filter((r) => !country || countryKey(r.c) === country)
+    .filter((r) => !gender || genderKey(r.c) === gender);
   // What each column is sorted by (a guest with no account has no country and no birth date: those rows go last).
   const rows = sortRows(found, sort, (r, key) => {
     switch (key) {
@@ -70,13 +81,33 @@ export function CustomersList({ customers, bookings, timezone }: { customers: Cu
       <p className="text-sm text-muted-foreground" data-testid="customers-guest-hint">{t("customers.guestHint")}</p>
       <Card>
         <CardContent>
-          <form role="search" onSubmit={(e) => e.preventDefault()} className="max-w-md">
+          <form role="search" onSubmit={(e) => e.preventDefault()} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <Field id="c-q" label={t("filters.search")}>
               {(p) => (
                 <div className="relative">
                   <Search className="pointer-events-none absolute left-2.5 top-2.5 size-4 text-muted-foreground" aria-hidden="true" />
                   <Input {...p} type="search" className="h-9 pl-8" placeholder={t("customers.searchPlaceholder")} value={query} onChange={(e) => setQuery(e.target.value)} />
                 </div>
+              )}
+            </Field>
+            <Field id="c-country" label={t("customers.country")}>
+              {(p) => (
+                <NativeSelect {...p} value={country} onChange={(e) => setCountry(e.target.value)}
+                  options={[
+                    { value: "", label: t("customers.allCountries") },
+                    ...countryCodes.map((code) => ({ value: code, label: regionName.of(code) ?? code })),
+                    ...(hasGuests ? [{ value: "GUEST", label: t("customers.guest") }] : []),
+                  ]} />
+              )}
+            </Field>
+            <Field id="c-gender" label={t("customers.gender")}>
+              {(p) => (
+                <NativeSelect {...p} value={gender} onChange={(e) => setGender(e.target.value)}
+                  options={[
+                    { value: "", label: t("customers.allGenders") },
+                    ...GENDERS.map((g) => ({ value: g, label: t(`customers.genders.${g}`) })),
+                    { value: "NONE", label: t("customers.genderNone") },
+                  ]} />
               )}
             </Field>
           </form>

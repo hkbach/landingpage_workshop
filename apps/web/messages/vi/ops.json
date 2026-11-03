@@ -164,7 +164,7 @@
   "customers": {
     "title": "Khách hàng",
     "perShop": "Khách hàng chỉ thuộc về cửa hàng này và được nhận diện bằng email.",
-    "searchPlaceholder": "Tên, email, giới tính hoặc quốc gia",
+    "searchPlaceholder": "Tên hoặc email",
     "count": "{count, plural, other {# khách hàng}}",
     "empty": "Không tìm thấy khách hàng.",
     "name": "Tên",
@@ -205,7 +205,10 @@
       "WECHAT": "WeChat",
       "TELEGRAM": "Telegram",
       "X": "X"
-    }
+    },
+    "allCountries": "Tất cả quốc gia",
+    "allGenders": "Tất cả giới tính",
+    "genderNone": "Chưa cung cấp"
   },
   "newBooking": {
     "title": "Đặt chỗ mới",
