@@ -7,7 +7,7 @@ export const ADMIN_LOCALES = ["en", "vi"] as const satisfies readonly Locale[];
 export const ORG_STATUSES = ["DRAFT", "PENDING_REVIEW", "ACTIVE", "SUSPENDED"] as const;
 export type OrgStatus = (typeof ORG_STATUSES)[number];
 
-export const WORKSHOP_STATUSES = ["DRAFT", "ACTIVE", "ARCHIVED"] as const;
+export const WORKSHOP_STATUSES = ["DRAFT", "ACTIVE"] as const;
 export type WorkshopStatus = (typeof WORKSHOP_STATUSES)[number];
 
 export const SESSION_STATUSES = ["OPEN", "PAUSED", "RUNNING", "CLOSED"] as const;

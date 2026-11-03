@@ -11,7 +11,6 @@ import { WorkshopEditDialog, type WorkshopEditData } from "./workshop-edit-dialo
 /**
  * Buttons of one row of the workshop list: Activate / Deactivate and Edit. A workshop is only deactivated once every one of its sessions is
  * Closed (the button is read-only with a tooltip until then, and the server checks it again), and only a deactivated (draft) workshop can be edited.
- * An archived workshop has no Activate / Deactivate button.
  */
 export function WorkshopRowActions({ id, status, openSessions, edit }: { id: string; status: WorkshopStatus; openSessions: number; edit: WorkshopEditData }) {
   const t = useTranslations("catalog");

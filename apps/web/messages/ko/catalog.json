@@ -12,8 +12,7 @@
   },
   "status": {
     "DRAFT": "초안",
-    "ACTIVE": "활성",
-    "ARCHIVED": "보관됨"
+    "ACTIVE": "활성"
   },
   "list": {
     "title": "워크숍",

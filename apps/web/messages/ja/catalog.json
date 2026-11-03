@@ -12,8 +12,7 @@
   },
   "status": {
     "DRAFT": "下書き",
-    "ACTIVE": "有効",
-    "ARCHIVED": "アーカイブ済み"
+    "ACTIVE": "有効"
   },
   "list": {
     "title": "ワークショップ",

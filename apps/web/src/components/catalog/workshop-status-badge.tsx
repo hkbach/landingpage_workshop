@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils";
 const STYLES: Record<WorkshopStatus, string> = {
   ACTIVE: "bg-emerald-100 text-emerald-900",
   DRAFT: "bg-slate-100 text-slate-900",
-  ARCHIVED: "bg-amber-100 text-amber-950",
 };
 
 export function WorkshopStatusBadge({ status }: { status: WorkshopStatus }) {

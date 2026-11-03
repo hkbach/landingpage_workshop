@@ -7,7 +7,7 @@ import { switchWorkshop } from "@/lib/mock/workshop-status-store";
 
 const bodySchema = z.object({ status: z.enum(["ACTIVE", "DRAFT"], { error: "invalid" }) });
 
-/** POST { status: "ACTIVE" | "DRAFT" } -> 200 { workshop }. 404 unknown workshop; 409 STATUS (archived, or already in that status) or SESSIONS_OPEN (a workshop is
+/** POST { status: "ACTIVE" | "DRAFT" } -> 200 { workshop }. 404 unknown workshop; 409 STATUS (already in that status) or SESSIONS_OPEN (a workshop is
  * only deactivated when all its sessions are Closed; `details.open` says how many are not). */
 export async function POST(request: Request, ctx: RouteContext<"/api/v1/workshops/[id]/status">) {
   const { id } = await ctx.params;

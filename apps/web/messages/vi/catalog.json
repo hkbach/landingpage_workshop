@@ -12,8 +12,7 @@
   },
   "status": {
     "DRAFT": "Bản nháp",
-    "ACTIVE": "Đang hoạt động",
-    "ARCHIVED": "Đã lưu trữ"
+    "ACTIVE": "Đang hoạt động"
   },
   "list": {
     "title": "Workshop",

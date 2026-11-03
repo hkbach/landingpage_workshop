@@ -12,8 +12,7 @@
   },
   "status": {
     "DRAFT": "草稿",
-    "ACTIVE": "进行中",
-    "ARCHIVED": "已归档"
+    "ACTIVE": "进行中"
   },
   "list": {
     "title": "Workshop",

@@ -17,7 +17,7 @@ export interface WorkshopEditData { workshop: Workshop; rules: ScheduleRule[]; b
 
 /**
  * A workshop as a popup over the list: its details (FR-WS-01) and its schedule rules (FR-SCHED-01). Only a deactivated (draft) workshop can be edited:
- * an active or archived one shows a note instead of the form, and is switched off in the list first (its schedule can still be read and changed).
+ * an active one shows a note instead of the form, and is switched off in the list first (its schedule can still be read and changed).
  */
 export function WorkshopEditDialog({ data, open, onOpenChange }: { data: WorkshopEditData; open: boolean; onOpenChange: (open: boolean) => void }) {
   return (

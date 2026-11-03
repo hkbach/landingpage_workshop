@@ -295,7 +295,7 @@ function AddSessionForm({
 }) {
   const t = useTranslations("catalog");
   const tops = useTranslations("ops");
-  const choices = workshops.filter((w) => w.status !== "ARCHIVED");
+  const choices = workshops;
   const start = editing ? dateAndTime(editing.startsAt, shop.timezone) : { date: "", time: "" };
   const base = editing ?? source;
   const [wsId, setWsId] = useState(base?.workshopId ?? choices[0]?.id ?? "");

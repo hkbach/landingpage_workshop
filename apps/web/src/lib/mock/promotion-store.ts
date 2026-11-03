@@ -145,9 +145,9 @@ function pauseBlockers(promotionId: string): string[] {
   return bookingsBlockingPause(promotionId, bookingUses(now), now).map((b) => b.bookingCode);
 }
 
-/** Workshops a promotion would make free (empty when it is fine). Archived workshops cannot be booked, so they do not count. */
+/** Workshops a promotion would make free (empty when it is fine). */
 function freeWorkshops(candidate: PromotionRecord, others: readonly PromotionRecord[]): string[] {
-  return fullDiscountWorkshops(candidate, others, workshops.filter((w) => w.status !== "ARCHIVED")).map((r) => r.workshopId);
+  return fullDiscountWorkshops(candidate, others, workshops).map((r) => r.workshopId);
 }
 
 /** A platform image must exist (it was uploaded); an https URL or no image is always fine. */

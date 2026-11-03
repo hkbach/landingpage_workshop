@@ -6,7 +6,7 @@ export default function PromotionsPage() {
   return (
     <PromotionsView
       shop={{ defaultLocale: currentShop.defaultLocale, enabledLocales: currentShop.enabledLocales, currency: currentShop.currency }}
-      workshops={workshops.filter((w) => w.status !== "ARCHIVED").map((w) => ({ id: w.id, title: w.title, priceAmount: w.priceAmount }))}
+      workshops={workshops.map((w) => ({ id: w.id, title: w.title, priceAmount: w.priceAmount }))}
     />
   );
 }

@@ -50,15 +50,13 @@ describe("POST /workshops/{id}/status", () => {
     expect((await call(DRAFT_WITHOUT_SESSIONS, { status: "DRAFT" })).status).toBe(200);
     expect(statusOf(DRAFT_WITHOUT_SESSIONS)).toBe("DRAFT");
   });
-  it("refuses a switch to the status it already has, and an archived workshop", async () => {
+  it("refuses a switch to the status it already has", async () => {
     expect((await code(await call(ACTIVE_WITH_OPEN_SESSIONS, { status: "ACTIVE" }))).code).toBe("STATUS");
     expect((await code(await call(DRAFT_WITHOUT_SESSIONS, { status: "DRAFT" }))).code).toBe("STATUS");
-    const archived = workshops.find((w) => w.status === "ARCHIVED");
-    if (archived) expect((await code(await call(archived.id, { status: "ACTIVE" }))).code).toBe("STATUS");
   });
   it("refuses an unknown workshop, a wrong status and a body that is not JSON", async () => {
     expect((await call("ws-nope", { status: "ACTIVE" })).status).toBe(404);
-    expect((await call(DRAFT_WITHOUT_SESSIONS, { status: "ARCHIVED" })).status).toBe(422);
+    expect((await call(DRAFT_WITHOUT_SESSIONS, { status: "ARCHIVED" })).status).toBe(422) // there is no such status any more;
     expect((await call(DRAFT_WITHOUT_SESSIONS, {})).status).toBe(422);
     expect((await POST(new Request("http://x", { method: "POST", body: "nope" }), ctx(DRAFT_WITHOUT_SESSIONS))).status).toBe(400);
   });

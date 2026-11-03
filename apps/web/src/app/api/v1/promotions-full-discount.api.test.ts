@@ -114,7 +114,7 @@ describe("paused and resumed promotions", () => {
 describe("the demo promotions", () => {
   it("never let a guest get a workshop for nothing", () => {
     const all = allPromotions();
-    const shopWorkshops = workshops.filter((w) => w.status !== "ARCHIVED");
+    const shopWorkshops = workshops;
     for (const p of all) expect(fullDiscountWorkshops(p, all.filter((o) => o.id !== p.id), shopWorkshops), p.id).toEqual([]);
   });
 });

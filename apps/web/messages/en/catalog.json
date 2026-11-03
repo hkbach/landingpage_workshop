@@ -12,8 +12,7 @@
   },
   "status": {
     "DRAFT": "Draft",
-    "ACTIVE": "Active",
-    "ARCHIVED": "Archived"
+    "ACTIVE": "Active"
   },
   "list": {
     "title": "Workshops",
