@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { applySessionAction, type BookingStatus, type PaymentMethod, type SessionAction } from "@workshop/shared";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { applySessionAction, closeIfEnded, type BookingStatus, type PaymentMethod, type SessionAction } from "@workshop/shared";
 import type { Booking, PaymentEntry, Session } from "@/lib/types";
 import {
   canTransition, computePaymentStatus, netPaid, seatDelta, targetStatus,
@@ -21,9 +21,11 @@ export interface PaymentInput { type: "PAYMENT" | "REFUND"; amount: number; meth
  */
 export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; nowIso: string; actor: string }) {
   const [bookings, setBookings] = useState<Booking[]>(init.bookings);
-  const [sessions, setSessions] = useState<Session[]>(init.sessions);
+  const [storedSessions, setSessions] = useState<Session[]>(init.sessions);
   const [history, setHistory] = useState<Record<string, BookingEvent[]>>({});
   const [now, setNow] = useState(() => new Date(init.nowIso));
+  // A session whose time is over is closed by the system (shown as Closed with a note), whatever its stored status.
+  const sessions = useMemo(() => storedSessions.map((x) => closeIfEnded(x, now)), [storedSessions, now]);
   const counter = useRef(0);
   const nextId = (p: string) => `${p}-local-${++counter.current}`;
 

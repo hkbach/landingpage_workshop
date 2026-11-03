@@ -168,6 +168,7 @@
     "statusNote": "Session mới ở trạng thái Mở và chỉ có thể Bắt đầu. Bắt đầu chuyển session sang Đang chạy, khách mới đặt chỗ được. Session đang chạy chỉ có thể Tạm dừng. Từ Tạm dừng bạn có thể Bắt đầu lại hoặc Đóng hẳn.",
     "cutoff": "Hạn chót đặt chỗ (số phút trước giờ bắt đầu)",
     "cutoffHint": "Đặt chỗ online đóng trước giờ bắt đầu số phút này. Nhập 0 để đóng đúng giờ bắt đầu.",
-    "cutoffInfo": "Đóng đặt chỗ trước giờ bắt đầu {minutes} phút"
+    "cutoffInfo": "Đóng đặt chỗ trước giờ bắt đầu {minutes} phút",
+    "autoClosedNote": "Tự động chuyển sang Đóng do đã hết thời gian tổ chức."
   }
 }

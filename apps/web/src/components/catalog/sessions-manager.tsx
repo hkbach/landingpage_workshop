@@ -114,6 +114,7 @@ export function SessionsManager({
                       </div>
                       <CapacityBar reserved={s.reservedCount} capacity={s.capacity} />
                       <p className="text-xs text-muted-foreground" data-testid="session-cutoff">{t("sessions.cutoffInfo", { minutes: s.bookingCutoffMinutes })}</p>
+                      {s.autoClosed ? <p className="text-xs text-muted-foreground" data-testid="auto-closed-note">{t("sessions.autoClosedNote")}</p> : null}
                       {s.status !== "CLOSED" ? (
                         <div className="flex flex-wrap gap-1.5">
                           {actions.includes("start") ? (

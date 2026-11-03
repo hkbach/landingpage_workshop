@@ -23,6 +23,8 @@ export interface Workshop {
 export interface Session {
   id: string; workshopId: string; startsAt: string; endsAt: string;
   capacity: number; reservedCount: number; status: SessionStatus;
+  /** Set when the system closed the session because its time was over (an owner's Close does not set it). */
+  autoClosed?: boolean;
   /** Minutes before the session starts at which online booking closes (set per session when it is created). */
   bookingCutoffMinutes: number;
 }

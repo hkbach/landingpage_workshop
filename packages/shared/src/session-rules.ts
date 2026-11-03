@@ -5,6 +5,7 @@ import type { SessionStatus } from "./enums";
 //   PAUSED --close--> CLOSED
 // A new session is OPEN (created, not running yet): it can only be started. A RUNNING session can only be paused (it never goes to
 // another status directly). Only a RUNNING session can be booked by guests. CLOSED is final. There is no way to cancel a session.
+// A session whose end time has passed is closed by the system (see closeIfEnded).
 
 /** Booking cut-off of a session: minutes before it starts at which online booking closes (0 = when it starts). */
 export const DEFAULT_BOOKING_CUTOFF_MINUTES = 120;
@@ -39,3 +40,12 @@ export function applySessionAction(s: SessionState, action: SessionAction): Sess
 
 /** Guests can only book a RUNNING session. */
 export const isSessionBookable = (status: SessionStatus): boolean => status === "RUNNING";
+
+/**
+ * The system closes a session once its time is over: any session that is not CLOSED yet and whose end time has passed is shown as CLOSED
+ * with `autoClosed` set (so the screen can say it was closed automatically). A session the owner closed keeps no such flag.
+ */
+export function closeIfEnded<T extends { status: SessionStatus; endsAt: string; autoClosed?: boolean }>(s: T, now: Date): T {
+  if (s.status === "CLOSED" || new Date(s.endsAt).getTime() > now.getTime()) return s;
+  return { ...s, status: "CLOSED", autoClosed: true };
+}

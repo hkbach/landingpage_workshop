@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SESSION_STATUSES } from "./enums";
-import { allowedSessionActions, applySessionAction, DEFAULT_BOOKING_CUTOFF_MINUTES, isSessionBookable, isValidBookingCutoff, type SessionState } from "./session-rules";
+import { allowedSessionActions, applySessionAction, closeIfEnded, DEFAULT_BOOKING_CUTOFF_MINUTES, isSessionBookable, isValidBookingCutoff, type SessionState } from "./session-rules";
 
 const s = (status: SessionState["status"]): SessionState => ({ status });
 
@@ -38,5 +38,20 @@ describe("booking cut-off of a session", () => {
     expect(DEFAULT_BOOKING_CUTOFF_MINUTES).toBe(120);
     for (const ok of [0, 1, 120, 10_080]) expect(isValidBookingCutoff(ok), String(ok)).toBe(true);
     for (const bad of [-1, 10_081, 1.5, Number.NaN]) expect(isValidBookingCutoff(bad), String(bad)).toBe(false);
+  });
+});
+
+describe("closeIfEnded", () => {
+  const NOW = new Date("2026-11-03T10:00:00Z");
+  const sess = (status: SessionState["status"], endsAt: string) => ({ status, endsAt });
+  it("closes an open, running or paused session whose end time has passed, and marks it as closed automatically", () => {
+    for (const st of ["OPEN", "RUNNING", "PAUSED"] as const) expect(closeIfEnded(sess(st, "2026-11-03T09:59:00Z"), NOW)).toEqual({ status: "CLOSED", endsAt: "2026-11-03T09:59:00Z", autoClosed: true });
+    expect(closeIfEnded(sess("RUNNING", "2026-11-03T10:00:00Z"), NOW).status).toBe("CLOSED"); // ends exactly now
+  });
+  it("leaves a session that has not ended, and a session the owner already closed, as they are", () => {
+    const live = sess("RUNNING", "2026-11-03T10:00:01Z");
+    expect(closeIfEnded(live, NOW)).toBe(live);
+    const closed = sess("CLOSED", "2026-11-01T10:00:00Z");
+    expect(closeIfEnded(closed, NOW)).toBe(closed); // no autoClosed flag
   });
 });

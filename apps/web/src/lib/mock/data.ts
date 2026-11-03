@@ -83,6 +83,8 @@ export const sessions: Session[] = [
   { id: "se-15", workshopId: "ws-1", startsAt: at(8, 10), endsAt: at(8, 12), capacity: 6, reservedCount: 6, status: "RUNNING", bookingCutoffMinutes: 30 },
   { id: "se-16", workshopId: "ws-2", startsAt: at(9, 10), endsAt: at(9, 11.5), capacity: 12, reservedCount: 0, status: "OPEN", bookingCutoffMinutes: 240 },
   { id: "se-17", workshopId: "ws-1", startsAt: at(10, 9), endsAt: at(10, 11), capacity: 8, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 120 },
+  // Its time is over while it was still Running: the system shows it as Closed (automatically).
+  { id: "se-18", workshopId: "ws-1", startsAt: at(-1, 9), endsAt: at(-1, 11), capacity: 8, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 120 },
 ];
 
 export const customers: Customer[] = [
