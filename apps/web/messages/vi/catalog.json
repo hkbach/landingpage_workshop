@@ -49,7 +49,12 @@
     "activeSessions": "Sessions đang hoạt động",
     "ofTotal": "trên {total}",
     "pricePerGuest": "{price} mỗi khách",
-    "seats": "{count, plural, other {# chỗ}}"
+    "seats": "{count, plural, other {# chỗ}}",
+    "created": "Ngày tạo: {date}",
+    "searchLabel": "Tìm kiếm",
+    "searchPlaceholder": "Tên workshop",
+    "allStatuses": "Tất cả trạng thái",
+    "noMatch": "Không có workshop nào khớp với tìm kiếm hoặc bộ lọc."
   },
   "detail": {
     "tabDetails": "Chi tiết",

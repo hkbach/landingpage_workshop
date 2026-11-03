@@ -18,6 +18,8 @@ export interface Workshop {
   durationMinutes: number; priceAmount: number; currency: string;
   defaultCapacity: number; maxPerBooking: number; coverUrl: string; galleryUrls: string[];
   status: WorkshopStatus; sortOrder: number;
+  /** ISO UTC instant the workshop was created. */
+  createdAt: string;
 }
 
 export interface Session {

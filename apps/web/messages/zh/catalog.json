@@ -49,7 +49,12 @@
     "activeSessions": "进行中的场次",
     "ofTotal": "共 {total} 个",
     "pricePerGuest": "每位 {price}",
-    "seats": "{count, plural, other {# 个座位}}"
+    "seats": "{count, plural, other {# 个座位}}",
+    "created": "创建于 {date}",
+    "searchLabel": "搜索",
+    "searchPlaceholder": "工作坊名称",
+    "allStatuses": "所有状态",
+    "noMatch": "没有符合搜索或筛选条件的工作坊。"
   },
   "detail": {
     "tabDetails": "详情",

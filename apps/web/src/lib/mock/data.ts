@@ -48,19 +48,19 @@ export const workshops: Workshop[] = [
     includes: { en: ["All materials", "Apron", "Tea and snacks"] }, notes: { en: "Wear clothes you do not mind getting dirty." },
     durationMinutes: 120, priceAmount: 650_000, currency: "VND", defaultCapacity: 8, maxPerBooking: 6,
     coverUrl: "https://picsum.photos/seed/pottery/1200/800", galleryUrls: ["https://picsum.photos/seed/p1/800/600", "https://picsum.photos/seed/p2/800/600"],
-    status: "ACTIVE", sortOrder: 1,
+    status: "ACTIVE", sortOrder: 1, createdAt: at(-120, 9),
   },
   {
     id: "ws-2", title: { en: "Glaze & Paint Your Mug", vi: "Vẽ men lên cốc" },
     shortDescription: { en: "Decorate a ready-made mug." }, description: { en: "Pick colours and patterns; we fire it for pickup in 5 days." },
     includes: { en: ["Mug", "Glazes"] }, notes: {},
     durationMinutes: 90, priceAmount: 400_000, currency: "VND", defaultCapacity: 10, maxPerBooking: 6,
-    coverUrl: "https://picsum.photos/seed/mug/1200/800", galleryUrls: [], status: "ACTIVE", sortOrder: 2,
+    coverUrl: "https://picsum.photos/seed/mug/1200/800", galleryUrls: [], status: "ACTIVE", sortOrder: 2, createdAt: at(-75, 14),
   },
   {
     id: "ws-3", title: { en: "Hand-building Plates" }, shortDescription: { en: "Coil and slab techniques." }, description: { en: "Draft." },
     includes: {}, notes: {}, durationMinutes: 150, priceAmount: 500_000, currency: "VND", defaultCapacity: 6, maxPerBooking: 4,
-    coverUrl: "https://picsum.photos/seed/plates/1200/800", galleryUrls: [], status: "DRAFT", sortOrder: 3,
+    coverUrl: "https://picsum.photos/seed/plates/1200/800", galleryUrls: [], status: "DRAFT", sortOrder: 3, createdAt: at(-6, 10.5),
   },
 ];
 

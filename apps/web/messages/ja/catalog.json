@@ -49,7 +49,12 @@
     "activeSessions": "稼働中のセッション",
     "ofTotal": "全{total}件中",
     "pricePerGuest": "1名あたり{price}",
-    "seats": "{count, plural, other {#席}}"
+    "seats": "{count, plural, other {#席}}",
+    "created": "作成日：{date}",
+    "searchLabel": "検索",
+    "searchPlaceholder": "ワークショップ名",
+    "allStatuses": "すべてのステータス",
+    "noMatch": "検索条件に一致するワークショップがありません。"
   },
   "detail": {
     "tabDetails": "詳細",

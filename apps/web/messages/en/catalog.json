@@ -49,7 +49,12 @@
     "activeSessions": "Active sessions",
     "ofTotal": "of {total}",
     "pricePerGuest": "{price} per guest",
-    "seats": "{count, plural, one {# seat} other {# seats}}"
+    "seats": "{count, plural, one {# seat} other {# seats}}",
+    "created": "Created {date}",
+    "searchLabel": "Search",
+    "searchPlaceholder": "Workshop name",
+    "allStatuses": "All statuses",
+    "noMatch": "No workshops match your search or filter."
   },
   "detail": {
     "tabDetails": "Details",

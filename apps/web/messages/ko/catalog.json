@@ -49,7 +49,12 @@
     "activeSessions": "진행 중인 세션",
     "ofTotal": "전체 {total}개 중",
     "pricePerGuest": "1인 {price}",
-    "seats": "{count, plural, other {#석}}"
+    "seats": "{count, plural, other {#석}}",
+    "created": "생성일: {date}",
+    "searchLabel": "검색",
+    "searchPlaceholder": "워크숍 이름",
+    "allStatuses": "모든 상태",
+    "noMatch": "검색 또는 필터에 맞는 워크숍이 없습니다."
   },
   "detail": {
     "tabDetails": "상세",
