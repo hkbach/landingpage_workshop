@@ -101,7 +101,8 @@
     "workshop": "워크숍",
     "status": "상태",
     "payment": "결제",
-    "bookedOn": "예약일"
+    "bookedOn": "예약일",
+    "voucher": "바우처"
   },
   "filters": {
     "date": "날짜",

@@ -101,7 +101,8 @@
     "workshop": "Workshop",
     "status": "Trạng thái",
     "payment": "Thanh toán",
-    "bookedOn": "Ngày booking"
+    "bookedOn": "Ngày booking",
+    "voucher": "Voucher"
   },
   "filters": {
     "date": "Ngày",

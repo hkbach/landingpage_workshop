@@ -3,27 +3,31 @@
 import { useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Plus, Search } from "lucide-react";
-import { BOOKING_STATUSES, formatMoney, pickLocalized, resolveShopLocale, type BookingStatus, type Locale } from "@workshop/shared";
+import { BOOKING_STATUSES, formatMoney, pickLocalized, resolveShopLocale, type BookingPriceInfo, type BookingStatus, type Locale } from "@workshop/shared";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DateInput } from "@/components/ui/date-input";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import type { Booking, Customer, Session, Workshop } from "@/lib/types";
 import { dayKey, formatDateTime } from "@/lib/format";
 import { Field } from "./field";
 import { NativeSelect } from "./native-select";
 import { BookingStatusBadge, PaymentStatusBadge } from "./status-badges";
+import { PriceTip } from "./price-tip";
 import { ShopLink } from "@/components/dashboard/shell/shop-link";
 
 /** FR-OPS-01: filter by date / session / status, search by code, name, email. */
 export function BookingsList({
-  bookings, sessions, customers, workshops, timezone, defaultLocale, enabledLocales, nowIso,
+  bookings, prices, sessions, customers, workshops, timezone, defaultLocale, enabledLocales, nowIso,
 }: {
-  bookings: Booking[]; sessions: Session[]; customers: Customer[]; workshops: Workshop[];
+  bookings: Booking[]; /** The original price of each booking and its vouchers, by booking id. */ prices: Record<string, BookingPriceInfo>; sessions: Session[]; customers: Customer[]; workshops: Workshop[];
   timezone: string; defaultLocale: Locale; enabledLocales: Locale[]; nowIso: string;
 }) {
   const t = useTranslations("ops");
+  const tf = useTranslations("ops.finance");
   const locale = useLocale() as Locale;
   const [date, setDate] = useState(() => dayKey(nowIso, timezone)); // default: today (shop timezone)
   const [sessionId, setSessionId] = useState("");
@@ -110,6 +114,7 @@ export function BookingsList({
         <Card><CardContent className="py-8 text-center text-muted-foreground">{t("bookings.empty")}</CardContent></Card>
       ) : (
         <Card>
+          <TooltipProvider>
           <Table>
             <TableHeader>
               <TableRow>
@@ -119,12 +124,14 @@ export function BookingsList({
                 <TableHead>{t("common.guestsLabel")}</TableHead>
                 <TableHead>{t("bookings.status")}</TableHead>
                 <TableHead>{t("bookings.payment")}</TableHead>
+                <TableHead>{t("bookings.voucher")}</TableHead>
                 <TableHead className="text-right">{t("payment.total")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {rows.map((b) => {
                 const c = customerOf(b.customerId);
+                const price = prices[b.id] ?? { subtotal: b.unitPriceAmount * b.quantity, discounts: [] };
                 return (
                   <TableRow key={b.id}>
                     <TableCell>
@@ -141,12 +148,23 @@ export function BookingsList({
                     <TableCell>{b.quantity}</TableCell>
                     <TableCell><BookingStatusBadge status={b.status} /></TableCell>
                     <TableCell><PaymentStatusBadge status={b.paymentStatus} /></TableCell>
-                    <TableCell className="text-right">{formatMoney(b.totalAmount, b.currency, locale)}</TableCell>
+                    <TableCell data-testid="booking-voucher">
+                      {price.discounts.length ? (
+                        <span className="flex flex-wrap gap-1">
+                          {price.discounts.map((d) => <Badge key={d.code} variant="outline" className="font-mono">{d.code}</Badge>)}
+                        </span>
+                      ) : <span className="text-muted-foreground" aria-label={tf("noVoucher")}>—</span>}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {/* Hover or focus the total: the original price and each voucher with what it took off. */}
+                      <PriceTip testId="booking-total" text={formatMoney(b.totalAmount, b.currency, locale)} price={price} total={b.totalAmount} money={(n) => formatMoney(n, b.currency, locale)} />
+                    </TableCell>
                   </TableRow>
                 );
               })}
             </TableBody>
           </Table>
+          </TooltipProvider>
         </Card>
       )}
     </div>

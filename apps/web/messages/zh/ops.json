@@ -101,7 +101,8 @@
     "workshop": "Workshop",
     "status": "状态",
     "payment": "付款",
-    "bookedOn": "预订日期"
+    "bookedOn": "预订日期",
+    "voucher": "优惠券"
   },
   "filters": {
     "date": "日期",

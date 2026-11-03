@@ -101,7 +101,8 @@
     "workshop": "ワークショップ",
     "status": "ステータス",
     "payment": "支払い",
-    "bookedOn": "予約日"
+    "bookedOn": "予約日",
+    "voucher": "バウチャー"
   },
   "filters": {
     "date": "日付",

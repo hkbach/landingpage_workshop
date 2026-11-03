@@ -101,7 +101,8 @@
     "workshop": "Workshop",
     "status": "Status",
     "payment": "Payment",
-    "bookedOn": "Booked on"
+    "bookedOn": "Booked on",
+    "voucher": "Voucher"
   },
   "filters": {
     "date": "Date",
