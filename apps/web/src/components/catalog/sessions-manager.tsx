@@ -239,7 +239,7 @@ export function SessionsManager({
       <AddSessionDialog
         key={dialog && dialog.kind !== "add" ? `form-${dialog.kind}-${dialog.id}` : "form-add"}
         open={dialog?.kind === "add" || ((dialog?.kind === "clone" || dialog?.kind === "edit") && !!target)} onOpenChange={(o) => !o && setDialog(null)}
-        workshops={workshops} shop={shop} sessions={ops.sessions} title={title}
+        workshops={workshops} shop={shop} title={title}
         source={dialog?.kind === "clone" ? target : undefined} editing={dialog?.kind === "edit" ? target : undefined}
         hasBookings={target ? target.reservedCount > 0 || ops.bookings.some((b) => b.sessionId === target.id && b.status !== "CANCELLED") : false}
         today={today} onAdd={(s) => { if (ops.addSession(s)) setDialog(null); }}
@@ -268,9 +268,9 @@ export function SessionsManager({
  * except the date and time, which only Re-schedule changes).
  */
 function AddSessionDialog({
-  open, onOpenChange, workshops, shop, sessions, title, onAdd, source, editing, hasBookings, onUpdate, today,
+  open, onOpenChange, workshops, shop, title, onAdd, source, editing, hasBookings, onUpdate, today,
 }: {
-  open: boolean; onOpenChange: (o: boolean) => void; workshops: Workshop[]; shop: ShopForCatalog; sessions: Session[];
+  open: boolean; onOpenChange: (o: boolean) => void; workshops: Workshop[]; shop: ShopForCatalog;
   title: (id: string) => string; onAdd: (s: Omit<Session, "id" | "code" | "reservedCount" | "status">) => void; source?: Session;
   editing?: Session; hasBookings: boolean; today: string;
   onUpdate: (id: string, patch: { workshopId: string; capacity: number; bookingCutoffMinutes: number; imageUrl?: string; endsAt: string }) => void;
@@ -278,16 +278,16 @@ function AddSessionDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        {open ? <AddSessionForm workshops={workshops} shop={shop} sessions={sessions} title={title} source={source} editing={editing} hasBookings={hasBookings} today={today} onAdd={onAdd} onUpdate={onUpdate} onCancel={() => onOpenChange(false)} /> : null}
+        {open ? <AddSessionForm workshops={workshops} shop={shop} title={title} source={source} editing={editing} hasBookings={hasBookings} today={today} onAdd={onAdd} onUpdate={onUpdate} onCancel={() => onOpenChange(false)} /> : null}
       </DialogContent>
     </Dialog>
   );
 }
 
 function AddSessionForm({
-  workshops, shop, sessions, title, onAdd, onCancel, source, editing, hasBookings, onUpdate, today,
+  workshops, shop, title, onAdd, onCancel, source, editing, hasBookings, onUpdate, today,
 }: {
-  workshops: Workshop[]; shop: ShopForCatalog; sessions: Session[]; title: (id: string) => string;
+  workshops: Workshop[]; shop: ShopForCatalog; title: (id: string) => string;
   onAdd: (s: Omit<Session, "id" | "code" | "reservedCount" | "status">) => void; onCancel: () => void; source?: Session;
   editing?: Session; hasBookings: boolean; today: string;
   onUpdate: (id: string, patch: { workshopId: string; capacity: number; bookingCutoffMinutes: number; imageUrl?: string; endsAt: string }) => void;
@@ -319,14 +319,12 @@ function AddSessionForm({
     const cutoffMinutes = cutoff.trim() === "" ? Number.NaN : Number(cutoff);
     if (!isValidBookingCutoff(cutoffMinutes)) errs.cutoff = "errors.cutoffInvalid";
     let startsAt = "";
+    // Several sessions may start at the same time, even of the same workshop: nothing is checked against the other sessions.
     if (editing && w) {
-      // The date and time stay as they are; a new workshop must not already have a session that starts at that time.
-      startsAt = editing.startsAt;
-      if (sessions.some((x) => x.id !== editing.id && x.workshopId === w.id && x.startsAt === startsAt)) errs.ws = "errors.duplicateSession";
+      startsAt = editing.startsAt; // the date and time stay as they are
     } else if (w && date && time) {
       startsAt = zonedToUtcIso(date, time, shop.timezone);
       if (!isFutureStart(startsAt, clock())) errs.date = "errors.pastStart"; // no session in the past
-      else if (sessions.some((s) => s.workshopId === w.id && s.startsAt === startsAt)) errs.time = "errors.duplicateSession";
     }
     setErrors(errs);
     if (Object.keys(errs).length > 0 || !w) return;
