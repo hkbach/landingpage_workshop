@@ -55,6 +55,8 @@ export interface PaymentEntry {
 export interface Booking {
   id: string; bookingCode: string; sessionId: string; workshopId: string; customerId: string;
   source: BookingSource; quantity: number; status: BookingStatus; paymentStatus: PaymentStatus;
+  /** Set while the booking is Checked in because it became Paid (not because the owner checked the guest in): setting it Unpaid again brings back the status before. */
+  checkedInByPayment?: boolean;
   unitPriceAmount: number; totalAmount: number; currency: string;
   workshopTitle: string; startsAt: string; endsAt: string; timezone: string;
   specialRequest?: string; cancelReason?: string; createdAt: string; payments: PaymentEntry[];

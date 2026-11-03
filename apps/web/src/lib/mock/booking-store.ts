@@ -9,7 +9,7 @@ import { bookings as seed, currentShop, customers as seedCustomers, sessions, wo
 import { queueBookingConfirmation } from "./outbox-store";
 import { allPromotions, shopToday } from "./promotion-store";
 
-interface Change { status: BookingStatus; cancelReason?: string; checkedInAt?: string; statusBeforeCheckIn?: PreCheckInStatus }
+interface Change { status: BookingStatus; cancelReason?: string; checkedInAt?: string; statusBeforeCheckIn?: PreCheckInStatus; /** Checked in because the booking became Paid. */ byPayment?: boolean }
 interface Store {
   changes: Map<string, Change>;
   /** Bookings guests made on the landing page, and the customers they created. */
@@ -56,13 +56,15 @@ export function liveBookings(): Booking[] {
     const payments = extra ? [...b.payments, ...extra] : b.payments;
     return {
       ...rest, payments, paymentStatus: extra ? computePaymentStatus(b.totalAmount, payments) : b.paymentStatus, status, ...(c ? { cancelReason: c.cancelReason ?? b.cancelReason, checkedInAt: c.checkedInAt } : {}), ...(before ? { statusBeforeCheckIn: before } : {}),
+      ...(status === "CHECKED_IN" && c?.byPayment ? { checkedInByPayment: true } : {}),
     };
   });
 }
 
 /**
  * The shop sets a booking Paid or Unpaid after the session. Paid records the missing amount as a cash payment; Unpaid gives back what was paid as a
- * refund entry (entries are only added, never changed); a booking that becomes Paid is also set to Checked in. False when the booking does not exist or has nothing to pay. TODO(api): in the transaction
+ * refund entry (entries are only added, never changed); a booking that becomes Paid is also set to Checked in, and Unpaid brings back the status it
+ * had when that is why it was checked in (a guest checked in by the owner stays checked in). False when the booking does not exist or has nothing to pay. TODO(api): in the transaction
  * of the endpoint, with the audit log.
  */
 export function recordPaid(id: string, paid: boolean, by: string, now: Date = new Date()): boolean {
@@ -76,8 +78,13 @@ export function recordPaid(id: string, paid: boolean, by: string, now: Date = ne
   };
   store().extra.set(id, [...(store().extra.get(id) ?? []), entry]);
   // A booking that becomes Paid is also Checked in (the guest came and paid): from Not confirmed or Confirmed, the status before is kept. A cancelled
-  // or already checked in booking keeps its status, and Unpaid leaves the status as it is.
-  if (paid && isOpen(b.status)) setBookingStatus(id, "CHECKED_IN", undefined, now.toISOString(), b.status);
+  // or already checked in booking keeps its status.
+  if (paid && isOpen(b.status)) {
+    setBookingStatus(id, "CHECKED_IN", undefined, now.toISOString(), b.status);
+    changes().set(id, { ...changes().get(id)!, byPayment: true }); // remembered: Unpaid brings the status back
+  } else if (!paid && b.status === "CHECKED_IN" && b.checkedInByPayment) {
+    setBookingStatus(id, b.statusBeforeCheckIn ?? "CONFIRMED"); // it was checked in by the payment: back to the status it had
+  }
   return true;
 }
 
