@@ -105,7 +105,7 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
     (bookingId: string, paid: boolean): OpResult => {
       const b = bookings.find((x) => x.id === bookingId);
       if (!b) return { ok: false, reason: "NOT_FOUND" };
-      if (b.totalAmount <= 0) return { ok: false, reason: "INVALID_STATE" };
+      if (b.status === "CANCELLED" || b.totalAmount <= 0) return { ok: false, reason: "INVALID_STATE" }; // a cancelled booking takes no payment, a free one has none to take
       const net = netPaid(b.payments);
       if (paid) {
         if (b.paymentStatus === "PAID") return { ok: true };

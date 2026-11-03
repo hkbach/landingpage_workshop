@@ -283,6 +283,7 @@
     "paymentCancel": "Hủy",
     "unsaved": "Chưa lưu",
     "completedDone": "Session {code} đã Hoàn thành.",
-    "paymentsSaved": "Đã lưu {updated, plural, other {# thanh toán}}. Email đã gửi: {sent}. Không có email: {none}. Lỗi: {failed}."
+    "paymentsSaved": "Đã lưu {updated, plural, other {# thanh toán}}. Email đã gửi: {sent}. Không có email: {none}. Lỗi: {failed}.",
+    "cancelledNoPayment": "Booking đã hủy không có thanh toán"
   }
 }

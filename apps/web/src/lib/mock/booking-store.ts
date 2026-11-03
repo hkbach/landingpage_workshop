@@ -64,11 +64,11 @@ export function liveBookings(): Booking[] {
  * The shop sets a booking Paid or Unpaid after the session. Paid records the missing amount as a cash payment; Unpaid gives back what was paid as a
  * refund entry (entries are only added, never changed); a booking that becomes Paid is also set to Checked in, and a Checked in booking set to Unpaid goes
  * back to the status it had before the check-in (however it was checked in). False when the booking does not exist or has nothing to pay. TODO(api): in the transaction
- * of the endpoint, with the audit log.
+ * of the endpoint, with the audit log. A cancelled booking takes no payment.
  */
 export function recordPaid(id: string, paid: boolean, by: string, now: Date = new Date()): boolean {
   const b = liveBookings().find((x) => x.id === id);
-  if (!b || b.totalAmount <= 0) return false;
+  if (!b || b.totalAmount <= 0 || b.status === "CANCELLED") return false; // a cancelled booking takes no payment
   const net = netPaid(b.payments);
   if (paid ? b.paymentStatus === "PAID" : b.paymentStatus === "UNPAID") return true;
   const entry: PaymentEntry = {

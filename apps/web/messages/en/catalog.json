@@ -283,6 +283,7 @@
     "paymentCancel": "Cancel",
     "unsaved": "Not saved yet",
     "completedDone": "Session {code} is Completed.",
-    "paymentsSaved": "{updated, plural, one {# payment} other {# payments}} saved. Emails sent: {sent}. Without email: {none}. Failed: {failed}."
+    "paymentsSaved": "{updated, plural, one {# payment} other {# payments}} saved. Emails sent: {sent}. Without email: {none}. Failed: {failed}.",
+    "cancelledNoPayment": "No payment for a cancelled booking"
   }
 }

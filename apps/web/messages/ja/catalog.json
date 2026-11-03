@@ -283,6 +283,7 @@
     "paymentCancel": "キャンセル",
     "unsaved": "未保存",
     "completedDone": "セッション {code} を完了しました。",
-    "paymentsSaved": "支払い{updated, plural, other {#件}}を保存しました。メール送信：{sent}。メールなし：{none}。失敗：{failed}。"
+    "paymentsSaved": "支払い{updated, plural, other {#件}}を保存しました。メール送信：{sent}。メールなし：{none}。失敗：{failed}。",
+    "cancelledNoPayment": "キャンセル済みの予約は支払いを受け付けません"
   }
 }

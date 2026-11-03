@@ -273,14 +273,17 @@ export function PaymentDialog({ open, onOpenChange, session, bookings, customers
     { key: "notCheckedIn", title: t("sessions.partNotCheckedIn"), list: rows.filter((b) => b.status !== "CHECKED_IN" && b.status !== "CANCELLED") },
     { key: "cancelled", title: t("sessions.partCancelled"), list: rows.filter((b) => b.status === "CANCELLED") },
   ];
-  const paid = rows.filter((b) => draftPaid(b, draft)).length;
+  // A cancelled booking is listed but takes no payment: it is not counted in "X of Y paid".
+  const payable = rows.filter((b) => b.status !== "CANCELLED");
+  const paid = payable.filter((b) => draftPaid(b, draft)).length;
   const changes = draftChanges(draft);
 
   const reset = () => { setDraft(new Map()); setSelected(new Set()); setConfirming(false); setBusy(false); };
   const choose = (b: Booking, value: boolean) => setDraft((d) => withChoice(d, b, value));
 
-  // A booking can be ticked while it is Unpaid as the popup shows it and has something to pay (a Completed session only shows its payments).
-  const tickable = (b: Booking) => mode !== "view" && b.totalAmount > 0 && !draftPaid(b, draft);
+  // A booking can be ticked while it is Unpaid as the popup shows it and has something to pay (a Completed session only shows its payments, and a cancelled
+  // booking takes no payment).
+  const tickable = (b: Booking) => mode !== "view" && b.status !== "CANCELLED" && b.totalAmount > 0 && !draftPaid(b, draft);
   const toggleOne = (id: string) => setSelected((prev) => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   /** Select all of a part: ticks every tickable booking of it, or unticks them when they are all ticked already. */
   const toggleAll = (list: Booking[]) => {
@@ -339,7 +342,7 @@ export function PaymentDialog({ open, onOpenChange, session, bookings, customers
               <p role="status" data-testid="payment-empty" className="rounded-lg bg-muted/50 p-4 text-sm text-muted-foreground">{t("sessions.noBookings")}</p>
             ) : (
               <>
-                <p role="status" data-testid="payment-count" className="text-sm font-medium">{t("sessions.paidCount", { paid, total: rows.length })}</p>
+                <p role="status" data-testid="payment-count" className="text-sm font-medium">{t("sessions.paidCount", { paid, total: payable.length })}</p>
                 {parts.map((part) => (
                   <section key={part.key} aria-labelledby={`pay-${part.key}`} data-testid={`payment-part-${part.key}`} className="grid gap-2">
                     <div className="flex flex-wrap items-center justify-between gap-2">
@@ -391,7 +394,9 @@ export function PaymentDialog({ open, onOpenChange, session, bookings, customers
                               <div className="flex items-center gap-2">
                                 {draft.has(b.id) ? <span className="text-xs text-amber-800" data-testid="payment-unsaved">{t("sessions.unsaved")}</span> : null}
                                 <span data-testid="payment-status"><PaymentStatusBadge status={isPaid ? "PAID" : "UNPAID"} /></span>
-                                {b.totalAmount <= 0 ? (
+                                {b.status === "CANCELLED" ? (
+                                  <span className="text-xs text-muted-foreground" data-testid="payment-cancelled-note">{t("sessions.cancelledNoPayment")}</span>
+                                ) : b.totalAmount <= 0 ? (
                                   <span className="text-xs text-muted-foreground">{t("sessions.nothingToPay")}</span>
                                 ) : mode === "view" ? null : isPaid ? (
                                   <Button size="sm" variant="outline" data-testid="payment-unpaid" onClick={() => choose(b, false)}><Undo2 aria-hidden="true" />{t("sessions.markUnpaid")}</Button>

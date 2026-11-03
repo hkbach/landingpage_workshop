@@ -283,6 +283,7 @@
     "paymentCancel": "取消",
     "unsaved": "尚未保存",
     "completedDone": "场次 {code} 已完成。",
-    "paymentsSaved": "已保存 {updated, plural, other {#笔支付}}。已发送邮件：{sent}。无邮箱：{none}。失败：{failed}。"
+    "paymentsSaved": "已保存 {updated, plural, other {#笔支付}}。已发送邮件：{sent}。无邮箱：{none}。失败：{failed}。",
+    "cancelledNoPayment": "已取消的预订无需支付"
   }
 }
