@@ -1,6 +1,9 @@
-import { CustomerBlankPage } from "@/components/customer/customer-shell";
+import { CustomerWorkshops } from "@/components/customer/customer-workshops";
+import { listedShops } from "@/lib/mock/customer-listing";
 
-// No content yet: the page is there so the menu works; it will be defined later.
+// The workshops of every shop the platform administrator chose to list (see listedShops). Read per request: the seats and the promotions depend on the time.
+export const dynamic = "force-dynamic";
+
 export default function CustomerWorkshopsPage() {
-  return <CustomerBlankPage menu="workshops" />;
+  return <CustomerWorkshops shops={listedShops()} />;
 }

@@ -143,7 +143,7 @@ export function CustomerShell({ accountId, shop, theme, loginRequired, children 
 }
 
 /** A page of the guest area that has no content yet: its title only. */
-export function CustomerBlankPage({ menu }: { menu: "today" | "bookings" | "favorites" | "workshops" }) {
+export function CustomerBlankPage({ menu }: { menu: "today" | "bookings" | "favorites" }) {
   const t = useTranslations("customer.menu");
   return <h1 className="text-2xl font-semibold">{t(menu)}</h1>;
 }

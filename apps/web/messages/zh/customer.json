@@ -56,5 +56,9 @@
       "invalid": "出生日期无效。",
       "urlInvalid": "请输入以 https:// 开头的链接。"
     }
+  },
+  "workshops": {
+    "empty": "暂无可显示的工作坊。",
+    "visitSite": "访问 {shop} 的网站"
   }
 }

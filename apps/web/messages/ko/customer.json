@@ -56,5 +56,9 @@
       "invalid": "올바른 생년월일이 아닙니다.",
       "urlInvalid": "https://로 시작하는 링크를 입력하세요."
     }
+  },
+  "workshops": {
+    "empty": "아직 표시할 워크숍이 없습니다.",
+    "visitSite": "{shop} 사이트 방문"
   }
 }

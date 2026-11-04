@@ -10,6 +10,11 @@ export interface Shop {
   defaultLocale: Locale; enabledLocales: Locale[];
   contactEmail: string; contactPhone: string; whatsapp?: string; address: string; mapsUrl: string;
   plan: "FREE" | "PRO"; ownerName: string; ownerEmail: string; createdAt: string;
+  /**
+   * Set by the platform administrator: the workshops of this shop are listed on the Workshops page of the guest area (/customer/{id}/workshops). Only an ACTIVE
+   * shop that was chosen appears there. TODO(site admin): the setting that changes it; for now it is data of the mock.
+   */
+  showOnCustomerPage?: boolean;
 }
 
 export interface Workshop {

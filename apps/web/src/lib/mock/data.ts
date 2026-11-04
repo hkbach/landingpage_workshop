@@ -21,7 +21,7 @@ export const shops: Shop[] = [
     id: "org-1", name: "Whisk & Ladle Kitchen", slug: "whiskladle", status: "ACTIVE", country: "VN", timezone: TZ, currency: "VND",
     defaultLocale: "en", enabledLocales: ["en", "vi", "ko", "ja", "zh"], contactEmail: "hello@whiskladle.example", contactPhone: "+84 90 000 0000",
     whatsapp: "+84 90 000 0000", address: "12 Nguyen Hue, District 1, Ho Chi Minh City", mapsUrl: "https://maps.app.goo.gl/example",
-    plan: "FREE", ownerName: "Linh Tran", ownerEmail: "linh@whiskladle.example", createdAt: at(-60, 9),
+    plan: "FREE", ownerName: "Linh Tran", ownerEmail: "linh@whiskladle.example", createdAt: at(-60, 9), showOnCustomerPage: true,
   },
   {
     id: "org-2", name: "Sugar & Sift Bakery", slug: "sugarsift", status: "PENDING_REVIEW", country: "VN", timezone: TZ, currency: "VND",

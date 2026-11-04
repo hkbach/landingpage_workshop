@@ -56,5 +56,9 @@
       "invalid": "Ngày sinh không hợp lệ.",
       "urlInvalid": "Nhập liên kết bắt đầu bằng https://."
     }
+  },
+  "workshops": {
+    "empty": "Chưa có workshop nào để hiển thị.",
+    "visitSite": "Xem trang của {shop}"
   }
 }

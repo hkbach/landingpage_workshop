@@ -56,5 +56,9 @@
       "invalid": "This is not a valid date of birth.",
       "urlInvalid": "Enter a link that starts with https://."
     }
+  },
+  "workshops": {
+    "empty": "No workshops to show yet.",
+    "visitSite": "Visit the site of {shop}"
   }
 }
