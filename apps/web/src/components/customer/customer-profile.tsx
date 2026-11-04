@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { GENDERS, LOCALES, SOCIAL_PLATFORMS, type Gender, type Locale, type SocialPlatform } from "@workshop/shared";
+import { FAVORITE_CATEGORY_COUNT, GENDERS, LOCALES, SOCIAL_PLATFORMS, WORKSHOP_CATEGORIES, toggleCategory, type Gender, type Locale, type SocialPlatform } from "@workshop/shared";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DateInput } from "@/components/ui/date-input";
@@ -15,6 +15,7 @@ import { LOCALE_NAMES } from "@/components/site/locale-names";
 import { CustomerApiError, saveCustomerProfile } from "@/lib/customer-api";
 import { AVATAR_MAX, NAME_MAX, PHONE_MAX, SOCIAL_MAX, toDraft, toInput, trimDraft, validateDraft, type ProfileDraft } from "@/lib/customer-profile-form";
 import { useDirty } from "@/lib/use-dirty";
+import { cn } from "@/lib/utils";
 import { useCustomer } from "./customer-shell";
 
 /** Brand names: written the same in every language. */
@@ -28,6 +29,7 @@ const SOCIAL_NAMES: Record<SocialPlatform, string> = {
  */
 export function CustomerProfileView() {
   const t = useTranslations("customer.profile");
+  const tc = useTranslations("site.categories");
   const locale = useLocale();
   const { accountId, email, shop, profile, setProfile } = useCustomer();
   const [draft, setDraft] = useState<ProfileDraft>(() => toDraft(profile));
@@ -115,6 +117,29 @@ export function CustomerProfileView() {
           <Field htmlFor="cp-avatar" label={t("avatar")} hint={t("avatarHint")} error={err("avatarUrl")}>
             <Input id="cp-avatar" type="text" inputMode="url" value={draft.avatarUrl} maxLength={AVATAR_MAX + 20} aria-invalid={Boolean(errors.avatarUrl)} autoComplete="off" onChange={(e) => set("avatarUrl", e.target.value)} />
           </Field>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle id="cp-categories-title">{t("categories")}</CardTitle>
+          <p className="text-sm text-muted-foreground">{t("categoriesHint")}</p>
+        </CardHeader>
+        <CardContent className="grid gap-2">
+          <div role="group" aria-labelledby="cp-categories-title" className="flex flex-wrap gap-2" data-testid="customer-profile-categories">
+            {WORKSHOP_CATEGORIES.map((c) => {
+              const on = draft.favoriteCategories.includes(c);
+              // A fourth one is not taken: one has to be taken out first.
+              const full = !on && draft.favoriteCategories.length >= FAVORITE_CATEGORY_COUNT;
+              return (
+                <label key={c} className={cn("relative inline-flex min-h-9 cursor-pointer items-center rounded-full border px-3 py-1 text-sm has-[:focus-visible]:ring-3 has-[:focus-visible]:ring-ring/50", on ? "border-primary bg-primary text-primary-foreground" : "bg-background", full && "cursor-not-allowed opacity-50")}>
+                  <input type="checkbox" className="sr-only" value={c} checked={on} disabled={full} onChange={() => set("favoriteCategories", toggleCategory(draft.favoriteCategories, c))} />
+                  {tc(c)}
+                </label>
+              );
+            })}
+          </div>
+          <p className="text-xs text-muted-foreground" aria-live="polite">{t("categoriesCount", { count: draft.favoriteCategories.length, max: FAVORITE_CATEGORY_COUNT })}</p>
+          {errors.categories ? <p role="alert" className="text-xs text-destructive">{err("categories")}</p> : null}
         </CardContent>
       </Card>
       <Card>

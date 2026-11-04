@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { GENDERS, LOCALES, SOCIAL_PLATFORMS } from "@workshop/shared";
+import { GENDERS, isFavoriteCategories, LOCALES, SOCIAL_PLATFORMS, WORKSHOP_CATEGORIES } from "@workshop/shared";
 import { apiError, fieldCodes } from "@/lib/api-error";
 import { COUNTRY_CODES } from "@/components/booking/countries";
 import { isHttpsUrl } from "@/components/sections/safe-url";
@@ -22,7 +22,7 @@ function profileOf(c: Customer): CustomerProfile {
   const a = c.account!;
   return {
     id: c.id, fullName: c.fullName, email: c.email!, ...(c.phone ? { phone: c.phone } : {}), preferredLocale: c.preferredLocale,
-    account: { country: a.country, birthDate: a.birthDate, ...(a.gender ? { gender: a.gender } : {}), ...(a.socials ? { socials: a.socials } : {}), ...(a.avatarUrl ? { avatarUrl: a.avatarUrl } : {}) },
+    account: { country: a.country, birthDate: a.birthDate, favoriteCategories: a.favoriteCategories ?? [], ...(a.gender ? { gender: a.gender } : {}), ...(a.socials ? { socials: a.socials } : {}), ...(a.avatarUrl ? { avatarUrl: a.avatarUrl } : {}) },
   };
 }
 
@@ -33,6 +33,8 @@ const bodySchema = z.object({
   preferredLocale: z.enum(LOCALES, { error: "required" }),
   country: z.string().refine((c) => COUNTRY_CODES.includes(c), "required"),
   birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "invalid").refine((d) => !Number.isNaN(Date.parse(`${d}T00:00:00Z`)) && d >= "1900-01-01" && d <= today(), "invalid"),
+  /** The three fields of workshops the guest likes (exactly three different ones). */
+  favoriteCategories: z.array(z.enum(WORKSHOP_CATEGORIES, "categories"), "categories").refine((c) => isFavoriteCategories(c), "categories"),
   gender: z.enum(GENDERS).optional(),
   socials: z.partialRecord(z.enum(SOCIAL_PLATFORMS), z.string().trim().max(100, "tooLong")).optional(),
   avatarUrl: z.string().trim().max(500, "tooLong").refine((v) => v === "" || isHttpsUrl(v), "urlInvalid").optional(),

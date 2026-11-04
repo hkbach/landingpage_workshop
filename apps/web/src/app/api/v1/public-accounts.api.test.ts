@@ -15,7 +15,7 @@ const post = (route: (request: Request, ctx: never) => Promise<Response>, body: 
   route(new Request("http://whiskladle.localtest.me:3000/x", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }), ctx);
 const FREE = sessions.find((s) => s.status === "RUNNING" && Date.parse(s.startsAt) > Date.now() + 86_400_000 && s.capacity - s.reservedCount >= 4 && workshops.find((w) => w.id === s.workshopId)?.status === "ACTIVE")!;
 const guest = (email: string, fullName = "Someone") => ({ sessionId: FREE.id, quantity: 1, fullName, email, phone: "+84 90 111 2222" });
-const PROFILE = { fullName: "Tran Binh", country: "VN", birthDate: "1995-05-20", consent: true };
+const PROFILE = { fullName: "Tran Binh", country: "VN", birthDate: "1995-05-20", categories: ["COOKING", "BAKING", "COFFEE_TEA"], consent: true };
 
 beforeEach(() => { resetBookingStore(); resetOutbox(); });
 
@@ -72,7 +72,7 @@ describe("a guest registers an account", () => {
   it("merges the bookings of a customer who booked in the demo data too, and a later booking goes to the account", async () => {
     const old = customers.find((c) => c.email === "minjun@example.com")!;
     const count = liveBookings().filter((b) => b.customerId === old.id).length;
-    const res = await post(register, { email: "minjun@example.com", fullName: "Kim Min-jun", country: "KR", birthDate: "1993-03-03", consent: true });
+    const res = await post(register, { email: "minjun@example.com", fullName: "Kim Min-jun", country: "KR", birthDate: "1993-03-03", categories: ["ART", "CRAFTS", "POTTERY"], consent: true });
     expect(await res.json()).toMatchObject({ customerId: old.id, created: false, merged: count });
     expect(liveCustomers().find((c) => c.id === old.id)!.account).toMatchObject({ country: "KR" });
     await post(book, guest("MINJUN@example.com"));
@@ -83,7 +83,7 @@ describe("a guest registers an account", () => {
     expect(res.status).toBe(201);
     const body = (await res.json()) as { customerId: string; created: boolean; merged: number };
     expect(body).toMatchObject({ created: true, merged: 0 });
-    expect(liveCustomers().find((c) => c.id === body.customerId)).toMatchObject({ email: "fresh@example.com", account: { country: "VN" } });
+    expect(liveCustomers().find((c) => c.id === body.customerId)).toMatchObject({ email: "fresh@example.com", account: { country: "VN", favoriteCategories: ["COOKING", "BAKING", "COFFEE_TEA"] } }); // the three fields the guest picked are kept
   });
   it("an email that has an account is refused, and the guest logs in instead", async () => {
     const res = await post(register, { email: "emma@example.com", ...PROFILE });
@@ -100,6 +100,12 @@ describe("a guest registers an account", () => {
     expect((await post(register, { email: "a@example.com", ...PROFILE, country: "ZZ" })).status).toBe(422);
     expect((await post(register, { email: "a@example.com", ...PROFILE, birthDate: "2999-01-01" })).status).toBe(422);
     expect((await post(register, { email: "a@example.com", ...PROFILE, birthDate: "not a date" })).status).toBe(422);
+    // exactly three different categories of workshops
+    for (const categories of [undefined, [], ["ART", "CRAFTS"], ["ART", "CRAFTS", "ART"], ["ART", "CRAFTS", "POTTERY", "FLORAL"], ["ART", "CRAFTS", "NOPE"], "ART"]) {
+      const res = await post(register, { email: "a@example.com", ...PROFILE, categories });
+      expect(res.status, JSON.stringify(categories)).toBe(422);
+      expect(((await res.json()) as { error: { details: { fields: Record<string, string> } } }).error.details.fields).toEqual({ categories: "categories" });
+    }
     expect(liveCustomers().some((c) => c.email === "a@example.com")).toBe(false);
   });
   it("needs the consent of the guest, and keeps when it was given", async () => {
@@ -128,7 +134,7 @@ describe("does an email have an account", () => {
     expect(await (await post(lookup, { email: "nobody@example.com" })).json()).toEqual({ registered: false, bookings: 0 });
   });
   it("is registered after the account was made", async () => {
-    await post(register, { email: "minjun@example.com", fullName: "Kim", country: "KR", birthDate: "1993-03-03", consent: true });
+    await post(register, { email: "minjun@example.com", fullName: "Kim", country: "KR", birthDate: "1993-03-03", categories: ["ART", "CRAFTS", "POTTERY"], consent: true });
     expect(await (await post(lookup, { email: "minjun@example.com" })).json()).toMatchObject({ registered: true });
   });
   it("422 for an email that is not one", async () => {

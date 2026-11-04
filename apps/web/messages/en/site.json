@@ -276,6 +276,27 @@
     "proceed": "Continue",
     "consentLabel": "I agree that {shop} keeps my country and date of birth to know its guests and plan offers. I can ask the studio to delete them.",
     "consentRequired": "Please tick the box to create your account.",
-    "otpFailed": "Something went wrong. Please try again."
+    "otpFailed": "Something went wrong. Please try again.",
+    "categoriesTitle": "Pick 3 categories you like",
+    "categoriesHint": "We will use them to suggest workshops later. Choose exactly 3.",
+    "categoriesCount": "{count} of {max} chosen",
+    "categoriesInvalid": "Choose exactly 3 categories."
+  },
+  "categories": {
+    "COOKING": "Cooking",
+    "BAKING": "Baking & pastry",
+    "COFFEE_TEA": "Coffee & tea",
+    "DRINKS": "Drinks & cocktails",
+    "POTTERY": "Pottery & ceramics",
+    "CANDLES": "Candles & fragrance",
+    "FLORAL": "Flowers & plants",
+    "ART": "Painting & drawing",
+    "CRAFTS": "Crafts & DIY",
+    "JEWELRY": "Jewelry & metalwork",
+    "TEXTILE": "Sewing & textiles",
+    "PHOTOGRAPHY": "Photography & film",
+    "MUSIC_DANCE": "Music & dance",
+    "WELLNESS": "Wellness & mindfulness",
+    "OTHER": "Other"
   }
 }

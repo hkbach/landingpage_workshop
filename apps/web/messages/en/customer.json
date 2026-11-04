@@ -54,12 +54,22 @@
       "required": "This field is required.",
       "tooLong": "This text is too long.",
       "invalid": "This is not a valid date of birth.",
-      "urlInvalid": "Enter a link that starts with https://."
-    }
+      "urlInvalid": "Enter a link that starts with https://.",
+      "categories": "Choose exactly 3 categories."
+    },
+    "categories": "Favorite categories",
+    "categoriesHint": "Choose exactly 3 categories of workshops you like.",
+    "categoriesCount": "{count} of {max} chosen"
   },
   "workshops": {
-    "empty": "No workshops to show yet.",
-    "visitSite": "Visit the site of {shop}",
-    "demoOnly": "Demo shop: the booking steps work, but no booking is created."
+    "shopLine": "Shop: {shop}",
+    "ratingLabel": "Rated {average} out of 5, {count, plural, one {# rating} other {# ratings}}",
+    "noRating": "No ratings yet",
+    "searchLabel": "Search workshops",
+    "searchPlaceholder": "Workshop or shop name",
+    "noResults": "No workshop matches “{query}”.",
+    "count": "{count, plural, one {# workshop} other {# workshops}}",
+    "demoOnly": "Some shops are demo shops: their booking steps work, but no booking is created.",
+    "empty": "No workshops to show yet."
   }
 }

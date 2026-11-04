@@ -1,4 +1,4 @@
-import { SOCIAL_PLATFORMS, type Gender, type Locale, type SocialPlatform, type Socials } from "@workshop/shared";
+import { isFavoriteCategories, SOCIAL_PLATFORMS, type Gender, type Locale, type SocialPlatform, type Socials, type WorkshopCategory } from "@workshop/shared";
 import { COUNTRY_CODES } from "@/components/booking/countries";
 import { isHttpsUrl } from "@/components/sections/safe-url";
 import type { CustomerProfile, CustomerProfileInput } from "./customer-api";
@@ -6,7 +6,7 @@ import type { CustomerProfile, CustomerProfileInput } from "./customer-api";
 // The form of My Profile: what the guest types, what is sent, and what is refused. Pure, so it can be tested (BR-16: every text is trimmed).
 
 export interface ProfileDraft {
-  fullName: string; phone: string; preferredLocale: Locale; country: string; birthDate: string; gender: Gender | "";
+  fullName: string; phone: string; preferredLocale: Locale; country: string; birthDate: string; favoriteCategories: WorkshopCategory[]; gender: Gender | "";
   socials: Record<SocialPlatform, string>; avatarUrl: string;
 }
 
@@ -18,7 +18,7 @@ export const AVATAR_MAX = 500;
 /** The form as the profile fills it in (empty texts for what the guest never gave). */
 export function toDraft(p: CustomerProfile): ProfileDraft {
   return {
-    fullName: p.fullName, phone: p.phone ?? "", preferredLocale: p.preferredLocale, country: p.account.country, birthDate: p.account.birthDate, gender: p.account.gender ?? "",
+    fullName: p.fullName, phone: p.phone ?? "", preferredLocale: p.preferredLocale, country: p.account.country, birthDate: p.account.birthDate, favoriteCategories: [...p.account.favoriteCategories], gender: p.account.gender ?? "",
     socials: Object.fromEntries(SOCIAL_PLATFORMS.map((s) => [s, p.account.socials?.[s] ?? ""])) as Record<SocialPlatform, string>, avatarUrl: p.account.avatarUrl ?? "",
   };
 }
@@ -36,7 +36,7 @@ export function toInput(d: ProfileDraft): CustomerProfileInput {
   const t = trimDraft(d);
   const socials = Object.fromEntries(SOCIAL_PLATFORMS.flatMap((s): [SocialPlatform, string][] => (t.socials[s] ? [[s, t.socials[s]]] : []))) as Socials;
   return {
-    fullName: t.fullName, preferredLocale: t.preferredLocale, country: t.country, birthDate: t.birthDate,
+    fullName: t.fullName, preferredLocale: t.preferredLocale, country: t.country, birthDate: t.birthDate, favoriteCategories: t.favoriteCategories,
     ...(t.phone ? { phone: t.phone } : {}), ...(t.gender ? { gender: t.gender } : {}), ...(Object.keys(socials).length ? { socials } : {}), ...(t.avatarUrl ? { avatarUrl: t.avatarUrl } : {}),
   };
 }
@@ -51,6 +51,7 @@ export function validateDraft(d: ProfileDraft, today: string): Record<string, st
   if (!COUNTRY_CODES.includes(t.country)) errors.country = "required";
   if (!t.birthDate) errors.birthDate = "required";
   else if (t.birthDate < "1900-01-01" || t.birthDate > today) errors.birthDate = "invalid";
+  if (!isFavoriteCategories(t.favoriteCategories)) errors.categories = "categories"; // exactly three different ones (FAVORITE_CATEGORY_COUNT)
   if (SOCIAL_PLATFORMS.some((s) => t.socials[s].length > SOCIAL_MAX)) errors.socials = "tooLong";
   if (t.avatarUrl.length > AVATAR_MAX) errors.avatarUrl = "tooLong";
   else if (t.avatarUrl && !isHttpsUrl(t.avatarUrl)) errors.avatarUrl = "urlInvalid";

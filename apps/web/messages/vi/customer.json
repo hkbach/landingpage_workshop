@@ -54,12 +54,22 @@
       "required": "Vui lòng điền mục này.",
       "tooLong": "Nội dung quá dài.",
       "invalid": "Ngày sinh không hợp lệ.",
-      "urlInvalid": "Nhập liên kết bắt đầu bằng https://."
-    }
+      "urlInvalid": "Nhập liên kết bắt đầu bằng https://.",
+      "categories": "Hãy chọn đúng 3 ngành nghề."
+    },
+    "categories": "Ngành nghề yêu thích",
+    "categoriesHint": "Chọn đúng 3 ngành nghề workshop bạn thích.",
+    "categoriesCount": "Đã chọn {count}/{max}"
   },
   "workshops": {
-    "empty": "Chưa có workshop nào để hiển thị.",
-    "visitSite": "Xem trang của {shop}",
-    "demoOnly": "Shop demo: các bước đặt chỗ hoạt động nhưng không tạo booking thật."
+    "shopLine": "Shop: {shop}",
+    "ratingLabel": "Đánh giá {average} trên 5, {count, plural, other {# lượt đánh giá}}",
+    "noRating": "Chưa có đánh giá",
+    "searchLabel": "Tìm workshop",
+    "searchPlaceholder": "Tên workshop hoặc tên shop",
+    "noResults": "Không có workshop nào khớp với “{query}”.",
+    "count": "{count, plural, other {# workshop}}",
+    "demoOnly": "Một số shop là shop demo: các bước đặt chỗ hoạt động nhưng không tạo booking thật.",
+    "empty": "Chưa có workshop nào để hiển thị."
   }
 }

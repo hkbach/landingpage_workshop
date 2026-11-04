@@ -51,19 +51,19 @@ export const workshops: Workshop[] = [
     includes: { en: ["All ingredients", "Apron", "Tea and a tasting"] }, notes: { en: "Wear closed shoes and tie back long hair." },
     durationMinutes: 120, priceAmount: 650_000, currency: "VND", defaultCapacity: 8, maxPerBooking: 6,
     coverUrl: "https://picsum.photos/seed/pasta/1200/800", galleryUrls: ["https://picsum.photos/seed/pasta1/800/600", "https://picsum.photos/seed/pasta2/800/600"],
-    status: "ACTIVE", sortOrder: 1, createdAt: at(-120, 9),
+    status: "ACTIVE", sortOrder: 1, createdAt: at(-120, 9), category: "COOKING", rating: { average: 4.8, count: 126 },
   },
   {
     id: "ws-2", title: { en: "Decorate Your Cupcakes", vi: "Trang trí cupcake" },
     shortDescription: { en: "Frost and decorate a box of cupcakes." }, description: { en: "Pick colours and toppings; take your box home the same day." },
     includes: { en: ["Cupcakes", "Frosting and toppings"] }, notes: {},
     durationMinutes: 90, priceAmount: 400_000, currency: "VND", defaultCapacity: 10, maxPerBooking: 6,
-    coverUrl: "https://picsum.photos/seed/cupcake/1200/800", galleryUrls: [], status: "ACTIVE", sortOrder: 2, createdAt: at(-75, 14),
+    coverUrl: "https://picsum.photos/seed/cupcake/1200/800", galleryUrls: [], status: "ACTIVE", sortOrder: 2, createdAt: at(-75, 14), category: "BAKING", rating: { average: 4.5, count: 84 },
   },
   {
     id: "ws-3", title: { en: "Sourdough Bread Basics" }, shortDescription: { en: "Feed a starter and shape your first loaf." }, description: { en: "Draft." },
     includes: {}, notes: {}, durationMinutes: 150, priceAmount: 500_000, currency: "VND", defaultCapacity: 6, maxPerBooking: 4,
-    coverUrl: "https://picsum.photos/seed/sourdough/1200/800", galleryUrls: [], status: "DRAFT", sortOrder: 3, createdAt: at(-6, 10.5),
+    coverUrl: "https://picsum.photos/seed/sourdough/1200/800", galleryUrls: [], status: "DRAFT", sortOrder: 3, createdAt: at(-6, 10.5), category: "BAKING",
   },
   {
     id: "ws-4", title: { en: "Dim Sum Night", vi: "Đêm dim sum", ko: "딤섬 나이트", ja: "点心ナイト", zh: "点心之夜" },
@@ -72,12 +72,12 @@ export const workshops: Workshop[] = [
     includes: { en: ["Ingredients", "Bamboo steamer", "Tea"] }, notes: { en: "Closed shoes are required in the kitchen." },
     durationMinutes: 180, priceAmount: 700_000, currency: "VND", defaultCapacity: 8, maxPerBooking: 4,
     coverUrl: "https://picsum.photos/seed/dimsum/1200/800", galleryUrls: ["https://picsum.photos/seed/dimsum1/800/600"],
-    status: "ACTIVE", sortOrder: 4, createdAt: at(-40, 11),
+    status: "ACTIVE", sortOrder: 4, createdAt: at(-40, 11), category: "COOKING", rating: { average: 4.9, count: 57 },
   },
   {
     id: "ws-5", title: { en: "Couples Cooking Night" }, shortDescription: { en: "Cook a three-course dinner together." }, description: { en: "Draft." },
     includes: {}, notes: {}, durationMinutes: 150, priceAmount: 900_000, currency: "VND", defaultCapacity: 12, maxPerBooking: 2,
-    coverUrl: "https://picsum.photos/seed/dinner/1200/800", galleryUrls: [], status: "DRAFT", sortOrder: 5, createdAt: at(-2, 15),
+    coverUrl: "https://picsum.photos/seed/dinner/1200/800", galleryUrls: [], status: "DRAFT", sortOrder: 5, createdAt: at(-2, 15), category: "COOKING",
   },
 ];
 
@@ -186,25 +186,25 @@ export const sessions: Session[] = [
 ];
 
 export const customers: Customer[] = [
-  { id: "cu-1", fullName: "Emma Johnson", email: "emma@example.com", phone: "+44 7000 000000", preferredLocale: "en", account: { country: "GB", birthDate: "1990-04-12", avatarUrl: "https://picsum.photos/seed/avatar-emma/200/200", gender: "FEMALE", socials: { WHATSAPP: "+44 7000 000000", FACEBOOK: "emma.johnson.clay", INSTAGRAM: "@emma.makes" } } },
+  { id: "cu-1", fullName: "Emma Johnson", email: "emma@example.com", phone: "+44 7000 000000", preferredLocale: "en", account: { favoriteCategories: ["COOKING", "BAKING", "COFFEE_TEA"], country: "GB", birthDate: "1990-04-12", avatarUrl: "https://picsum.photos/seed/avatar-emma/200/200", gender: "FEMALE", socials: { WHATSAPP: "+44 7000 000000", FACEBOOK: "emma.johnson.clay", INSTAGRAM: "@emma.makes" } } },
   { id: "cu-2", fullName: "Kim Min-jun", email: "minjun@example.com", preferredLocale: "ko" }, // booked without an account
   { id: "cu-3", fullName: "Walk-in guest", preferredLocale: "en" },
-  { id: "cu-4", fullName: "Nguyen Thu", email: "thu@example.com", phone: "+84 90 123 4567", preferredLocale: "vi", account: { country: "VN", birthDate: "1995-09-30", avatarUrl: "https://picsum.photos/seed/avatar-thu/200/200", socials: { ZALO: "0901 234 567", TIKTOK: "@thu.clay" } } }, // no gender given
+  { id: "cu-4", fullName: "Nguyen Thu", email: "thu@example.com", phone: "+84 90 123 4567", preferredLocale: "vi", account: { favoriteCategories: ["COOKING", "DRINKS", "FLORAL"], country: "VN", birthDate: "1995-09-30", avatarUrl: "https://picsum.photos/seed/avatar-thu/200/200", socials: { ZALO: "0901 234 567", TIKTOK: "@thu.clay" } } }, // no gender given
   // More guests so every language, every gender (and none), and guests with and without an account have a few records.
-  { id: "cu-5", fullName: "Sato Yuki", email: "yuki@example.com", phone: "+81 90 0000 1111", preferredLocale: "ja", account: { country: "JP", birthDate: "1992-02-14", avatarUrl: "https://picsum.photos/seed/avatar-yuki/200/200", gender: "FEMALE", socials: { INSTAGRAM: "@yuki.clay" } } },
-  { id: "cu-6", fullName: "Wang Wei", email: "wei@example.com", phone: "+86 138 0000 0000", preferredLocale: "zh", account: { country: "CN", birthDate: "1988-11-05", avatarUrl: "https://picsum.photos/seed/avatar-wei/200/200", gender: "MALE" } },
-  { id: "cu-7", fullName: "Bui Khoa", email: "khoa@example.com", phone: "+84 91 222 3333", preferredLocale: "vi", account: { country: "VN", birthDate: "2000-06-21", gender: "MALE", socials: { ZALO: "0912 223 333" } } },
+  { id: "cu-5", fullName: "Sato Yuki", email: "yuki@example.com", phone: "+81 90 0000 1111", preferredLocale: "ja", account: { favoriteCategories: ["POTTERY", "ART", "CRAFTS"], country: "JP", birthDate: "1992-02-14", avatarUrl: "https://picsum.photos/seed/avatar-yuki/200/200", gender: "FEMALE", socials: { INSTAGRAM: "@yuki.clay" } } },
+  { id: "cu-6", fullName: "Wang Wei", email: "wei@example.com", phone: "+86 138 0000 0000", preferredLocale: "zh", account: { favoriteCategories: ["COFFEE_TEA", "PHOTOGRAPHY", "MUSIC_DANCE"], country: "CN", birthDate: "1988-11-05", avatarUrl: "https://picsum.photos/seed/avatar-wei/200/200", gender: "MALE" } },
+  { id: "cu-7", fullName: "Bui Khoa", email: "khoa@example.com", phone: "+84 91 222 3333", preferredLocale: "vi", account: { favoriteCategories: ["BAKING", "WELLNESS", "CANDLES"], country: "VN", birthDate: "2000-06-21", gender: "MALE", socials: { ZALO: "0912 223 333" } } },
   { id: "cu-8", fullName: "Park Ji-woo", email: "jiwoo@example.com", preferredLocale: "ko" }, // booked without an account
-  { id: "cu-9", fullName: "Oliver Smith", email: "oliver@example.com", phone: "+1 202 555 0100", preferredLocale: "en", account: { country: "US", birthDate: "1985-01-09", avatarUrl: "https://picsum.photos/seed/avatar-oliver/200/200", gender: "OTHER", socials: { FACEBOOK: "oliver.smith.clay" } } },
+  { id: "cu-9", fullName: "Oliver Smith", email: "oliver@example.com", phone: "+1 202 555 0100", preferredLocale: "en", account: { favoriteCategories: ["DRINKS", "COOKING", "JEWELRY"], country: "US", birthDate: "1985-01-09", avatarUrl: "https://picsum.photos/seed/avatar-oliver/200/200", gender: "OTHER", socials: { FACEBOOK: "oliver.smith.clay" } } },
   { id: "cu-10", fullName: "Le Lan Anh", email: "lananh@example.com", preferredLocale: "vi" }, // booked without an account
   { id: "cu-11", fullName: "Pham Huy", phone: "+84 93 555 6666", preferredLocale: "vi" }, // booked by phone: no email, no account
-  { id: "cu-12", fullName: "Lee Seo-yeon", email: "seoyeon@example.com", phone: "+82 10 0000 2222", preferredLocale: "ko", account: { country: "KR", birthDate: "1997-07-23", gender: "FEMALE" } },
+  { id: "cu-12", fullName: "Lee Seo-yeon", email: "seoyeon@example.com", phone: "+82 10 0000 2222", preferredLocale: "ko", account: { favoriteCategories: ["ART", "TEXTILE", "FLORAL"], country: "KR", birthDate: "1997-07-23", gender: "FEMALE" } },
   { id: "cu-13", fullName: "Tanaka Ren", email: "ren@example.com", preferredLocale: "ja" }, // booked without an account
-  { id: "cu-14", fullName: "Chen Mei", email: "mei@example.com", preferredLocale: "zh", account: { country: "CN", birthDate: "1993-03-30", gender: "OTHER" } },
-  { id: "cu-15", fullName: "Ito Haru", email: "haru@example.com", phone: "+81 80 0000 3333", preferredLocale: "ja", account: { country: "JP", birthDate: "2001-12-02", gender: "OTHER" } },
-  { id: "cu-16", fullName: "Liu Yang", email: "yang@example.com", preferredLocale: "zh", account: { country: "CN", birthDate: "1990-08-17", gender: "MALE" } },
-  { id: "cu-17", fullName: "Vo Hanh", email: "hanh@example.com", preferredLocale: "vi", account: { country: "VN", birthDate: "1999-05-11" } }, // no gender given
-  { id: "cu-18", fullName: "Do Quan", email: "quan@example.com", preferredLocale: "vi", account: { country: "VN", birthDate: "1987-10-26" } }, // no gender given
+  { id: "cu-14", fullName: "Chen Mei", email: "mei@example.com", preferredLocale: "zh", account: { favoriteCategories: ["COOKING", "COFFEE_TEA", "WELLNESS"], country: "CN", birthDate: "1993-03-30", gender: "OTHER" } },
+  { id: "cu-15", fullName: "Ito Haru", email: "haru@example.com", phone: "+81 80 0000 3333", preferredLocale: "ja", account: { favoriteCategories: ["CRAFTS", "POTTERY", "BAKING"], country: "JP", birthDate: "2001-12-02", gender: "OTHER" } },
+  { id: "cu-16", fullName: "Liu Yang", email: "yang@example.com", preferredLocale: "zh", account: { favoriteCategories: ["MUSIC_DANCE", "PHOTOGRAPHY", "ART"], country: "CN", birthDate: "1990-08-17", gender: "MALE" } },
+  { id: "cu-17", fullName: "Vo Hanh", email: "hanh@example.com", preferredLocale: "vi", account: { favoriteCategories: ["BAKING", "COOKING", "CANDLES"], country: "VN", birthDate: "1999-05-11" } }, // no gender given
+  { id: "cu-18", fullName: "Do Quan", email: "quan@example.com", preferredLocale: "vi", account: { favoriteCategories: ["DRINKS", "COFFEE_TEA", "OTHER"], country: "VN", birthDate: "1987-10-26" } }, // no gender given
 ];
 
 // The booking code is "<session code>-<3 digits>", counted per session in the order the demo bookings are listed.

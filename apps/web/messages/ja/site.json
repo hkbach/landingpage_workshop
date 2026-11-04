@@ -276,6 +276,27 @@
     "proceed": "続ける",
     "consentLabel": "{shop}がお客様の把握と特典の企画のために、私の国と生年月日を保管することに同意します。スタジオに削除を依頼できます。",
     "consentRequired": "アカウントを作成するには、同意欄にチェックを入れてください。",
-    "otpFailed": "問題が発生しました。もう一度お試しください。"
+    "otpFailed": "問題が発生しました。もう一度お試しください。",
+    "categoriesTitle": "好きな分野を3つ選んでください",
+    "categoriesHint": "今後のワークショップのご提案に使います。ちょうど3つ選んでください。",
+    "categoriesCount": "{max}個中{count}個を選択",
+    "categoriesInvalid": "ちょうど3つの分野を選択してください。"
+  },
+  "categories": {
+    "COOKING": "料理",
+    "BAKING": "ベーキング・製菓",
+    "COFFEE_TEA": "コーヒー・紅茶",
+    "DRINKS": "ドリンク・カクテル",
+    "POTTERY": "陶芸",
+    "CANDLES": "キャンドル・香り",
+    "FLORAL": "フラワー・植物",
+    "ART": "絵画・ドローイング",
+    "CRAFTS": "クラフト・DIY",
+    "JEWELRY": "ジュエリー・金工",
+    "TEXTILE": "裁縫・テキスタイル",
+    "PHOTOGRAPHY": "写真・映像",
+    "MUSIC_DANCE": "音楽・ダンス",
+    "WELLNESS": "ウェルネス・マインドフルネス",
+    "OTHER": "その他"
   }
 }

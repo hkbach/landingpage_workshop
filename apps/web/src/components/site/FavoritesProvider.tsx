@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { FAVORITE_CATEGORY_COUNT, WORKSHOP_CATEGORIES, toggleCategory, type WorkshopCategory } from "@workshop/shared";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { COUNTRY_CODES, countryName } from "@/components/booking/countries";
@@ -79,6 +80,7 @@ const selectClass =
  */
 export function GuestLoginForm({ slug, shopName, onLoggedIn, onCancel }: { slug: string; shopName: string; onLoggedIn: (email: string) => void; onCancel: () => void }) {
   const t = useTranslations("site.favorites");
+  const tc = useTranslations("site.categories");
   const locale = useLocale();
   const [step, setStep] = useState<"email" | "code" | "profile" | "done">("email");
   const [email, setEmail] = useState("");
@@ -92,7 +94,9 @@ export function GuestLoginForm({ slug, shopName, onLoggedIn, onCancel }: { slug:
   const [country, setCountry] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [consent, setConsent] = useState(false);
-  const [errors, setErrors] = useState<{ fullName?: boolean; country?: boolean; birthDate?: boolean; consent?: boolean }>({});
+  /** The three fields of workshops the guest likes. */
+  const [categories, setCategories] = useState<WorkshopCategory[]>([]);
+  const [errors, setErrors] = useState<{ fullName?: boolean; country?: boolean; birthDate?: boolean; categories?: boolean; consent?: boolean }>({});
   const [failed, setFailed] = useState(false);
   /** Sending or checking the code failed (network, too many requests): the guest is told and can try again. */
   const [otpFailed, setOtpFailed] = useState(false);
@@ -147,15 +151,15 @@ export function GuestLoginForm({ slug, shopName, onLoggedIn, onCancel }: { slug:
   }
 
   async function register() {
-    const next = { fullName: !fullName.trim(), country: !COUNTRY_CODES.includes(country), birthDate: !birthDate || birthDate > today || birthDate < "1900-01-01", consent: !consent };
+    const next = { fullName: !fullName.trim(), country: !COUNTRY_CODES.includes(country), birthDate: !birthDate || birthDate > today || birthDate < "1900-01-01", categories: categories.length !== FAVORITE_CATEGORY_COUNT, consent: !consent };
     setErrors(next);
     setFailed(false);
-    if (next.fullName || next.country || next.birthDate || next.consent) return;
+    if (next.fullName || next.country || next.birthDate || next.categories || next.consent) return;
     setBusy(true);
     try {
       const res = await fetch(base, {
         method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ email: clean, fullName: fullName.trim(), country, birthDate, locale, consent: true }),
+        body: JSON.stringify({ email: clean, fullName: fullName.trim(), country, birthDate, categories, locale, consent: true }),
       });
       if (res.status === 409) { onLoggedIn(clean); return; } // the email has an account after all
       if (!res.ok) { setFailed(true); return; }
@@ -218,6 +222,29 @@ export function GuestLoginForm({ slug, shopName, onLoggedIn, onCancel }: { slug:
             </select>
           ))}
           {field("fav-birth", t("birthDateLabel"), errors.birthDate, <Input id="fav-birth" type="date" min="1900-01-01" max={today} className="h-11 text-base" value={birthDate} aria-required aria-invalid={errors.birthDate} onChange={(e) => setBirthDate(e.target.value)} />)}
+          <fieldset className="space-y-2" data-testid="favorites-categories" aria-describedby="fav-categories-hint">
+            <legend className="text-sm font-medium">{t("categoriesTitle")} <span aria-hidden>*</span></legend>
+            <p id="fav-categories-hint" className="text-xs text-[var(--site-muted)]">{t("categoriesHint")}</p>
+            <div className="flex flex-wrap gap-2">
+              {WORKSHOP_CATEGORIES.map((c) => {
+                const on = categories.includes(c);
+                // A fourth one is not taken: one has to be taken out first.
+                const full = !on && categories.length >= FAVORITE_CATEGORY_COUNT;
+                return (
+                  <label
+                    key={c}
+                    className={cn("relative inline-flex min-h-9 cursor-pointer items-center rounded-full border px-3 py-1 text-sm has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-[var(--site-primary)]/40",
+                      on ? "border-[var(--site-primary)] bg-[var(--site-primary)] text-[var(--site-primary-fg)]" : "border-black/20 bg-white", full && "cursor-not-allowed opacity-50")}
+                  >
+                    <input type="checkbox" className="sr-only" name="fav-category" value={c} checked={on} disabled={full} onChange={() => { setCategories((p) => toggleCategory(p, c)); setErrors((x) => ({ ...x, categories: false })); }} />
+                    {tc(c)}
+                  </label>
+                );
+              })}
+            </div>
+            <p className="text-xs text-[var(--site-muted)]" aria-live="polite">{t("categoriesCount", { count: categories.length, max: FAVORITE_CATEGORY_COUNT })}</p>
+            {errors.categories ? <p role="alert" className="text-sm text-red-700">{t("categoriesInvalid")}</p> : null}
+          </fieldset>
           <div className="space-y-1">
             <label htmlFor="fav-consent" className="flex cursor-pointer items-start gap-2 text-sm">
               <input id="fav-consent" type="checkbox" className="mt-0.5 size-4 shrink-0" checked={consent} aria-required aria-invalid={errors.consent} onChange={(e) => { setConsent(e.target.checked); setErrors((x) => ({ ...x, consent: false })); }} />

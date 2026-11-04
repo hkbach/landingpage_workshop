@@ -54,12 +54,22 @@
       "required": "この項目は必須です。",
       "tooLong": "文字数が多すぎます。",
       "invalid": "正しい生年月日ではありません。",
-      "urlInvalid": "https://で始まるリンクを入力してください。"
-    }
+      "urlInvalid": "https://で始まるリンクを入力してください。",
+      "categories": "ちょうど3つの分野を選択してください。"
+    },
+    "categories": "お気に入りの分野",
+    "categoriesHint": "好きなワークショップの分野をちょうど3つ選んでください。",
+    "categoriesCount": "{max}個中{count}個を選択"
   },
   "workshops": {
-    "empty": "表示できるワークショップはまだありません。",
-    "visitSite": "{shop}のサイトを見る",
-    "demoOnly": "デモショップ：予約の手順は動作しますが、実際の予約は作成されません。"
+    "shopLine": "ショップ：{shop}",
+    "ratingLabel": "5段階中{average}、{count, plural, other {評価#件}}",
+    "noRating": "まだ評価がありません",
+    "searchLabel": "ワークショップを検索",
+    "searchPlaceholder": "ワークショップ名またはショップ名",
+    "noResults": "「{query}」に一致するワークショップはありません。",
+    "count": "{count, plural, other {ワークショップ#件}}",
+    "demoOnly": "一部のショップはデモショップです。予約の手順は動作しますが、実際の予約は作成されません。",
+    "empty": "表示できるワークショップはまだありません。"
   }
 }

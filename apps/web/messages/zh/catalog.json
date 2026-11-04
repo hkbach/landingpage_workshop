@@ -86,6 +86,7 @@
     "maxPerBookingHint": "单次预订中每位客人最多可订的座位数。至少为 1，且不能超过默认容量。",
     "sortOrder": "排序",
     "sortOrderHint": "决定工作坊在列表和落地页中的显示顺序。数字越小越靠前。",
+    "category": "行业类别",
     "images": "图片",
     "imagesHint": "一张封面图和最多 {max} 张图库图片。",
     "uploaderStub": "图片上传暂不可用。目前请在下方粘贴图片 URL。",
@@ -104,7 +105,9 @@
     "savedSim": "已保存（演示模式：更改不会持久保存）。",
     "fixErrors": "请修正高亮显示的字段。",
     "cancel": "取消",
-    "statusFromList": "请在工作坊列表中使用“启用 / 停用”来更改。"
+    "statusFromList": "请在工作坊列表中使用“启用 / 停用”来更改。",
+    "categoryPlaceholder": "选择类别",
+    "categoryHint": "工作坊所属的领域，用于统计。"
   },
   "errors": {
     "titleRequired": "必须填写默认语言的标题。",
@@ -124,7 +127,8 @@
     "duplicateSession": "该 Workshop 在此时间已存在场次。",
     "capacityBelowReserved": "容量不能低于已预订的 {reserved} 个座位。",
     "cutoffInvalid": "请输入 0 到 10080 之间的整数。",
-    "pastStart": "开始时间不能是过去。请选择更晚的日期和时间。"
+    "pastStart": "开始时间不能是过去。请选择更晚的日期和时间。",
+    "categoryRequired": "请选择类别。"
   },
   "rules": {
     "title": "排期规则",
@@ -287,5 +291,22 @@
     "cancelledNoPayment": "已取消的预订无需支付",
     "closeInProgressHint": "场次正在进行。只有在工作坊已完成时，才能提前关闭。",
     "cancelledByGuest": "客人自行取消"
+  },
+  "categories": {
+    "COOKING": "烹饪",
+    "BAKING": "烘焙与糕点",
+    "COFFEE_TEA": "咖啡与茶",
+    "DRINKS": "饮品与鸡尾酒",
+    "POTTERY": "陶艺",
+    "CANDLES": "蜡烛与香氛",
+    "FLORAL": "花艺与植物",
+    "ART": "绘画",
+    "CRAFTS": "手工与DIY",
+    "JEWELRY": "珠宝与金工",
+    "TEXTILE": "缝纫与纺织",
+    "PHOTOGRAPHY": "摄影与电影",
+    "MUSIC_DANCE": "音乐与舞蹈",
+    "WELLNESS": "身心健康与正念",
+    "OTHER": "其他"
   }
 }

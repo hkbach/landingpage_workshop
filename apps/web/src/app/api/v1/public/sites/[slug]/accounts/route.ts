@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { LOCALES } from "@workshop/shared";
+import { isFavoriteCategories, LOCALES, WORKSHOP_CATEGORIES } from "@workshop/shared";
 import { apiError, fieldCodes } from "@/lib/api-error";
 import { COUNTRY_CODES } from "@/components/booking/countries";
 import { currentShop } from "@/lib/mock/data";
@@ -17,6 +17,8 @@ const bodySchema = z.object({
   birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "invalid").refine((d) => !Number.isNaN(Date.parse(`${d}T00:00:00Z`)) && d >= "1900-01-01" && d <= today(), "invalid"),
   phone: z.string().trim().max(40, "tooLong").optional(),
   locale: z.enum(LOCALES).optional(),
+  /** The three fields of workshops the guest likes (exactly three different ones). */
+  categories: z.array(z.enum(WORKSHOP_CATEGORIES, "categories"), "categories").refine((c) => isFavoriteCategories(c), "categories"),
   /** The guest has to agree that the shop keeps the country and the date of birth. */
   consent: z.literal(true, { error: "consent" }),
 });

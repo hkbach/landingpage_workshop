@@ -5,7 +5,7 @@ import { toDraft, toInput, trimDraft, validateDraft } from "./customer-profile-f
 const TODAY = "2026-11-10";
 const profile: CustomerProfile = {
   id: "cu-1", fullName: "Emma Johnson", email: "emma@example.com", phone: "+44 7000 000000", preferredLocale: "en",
-  account: { country: "GB", birthDate: "1990-04-12", gender: "FEMALE", socials: { INSTAGRAM: "@emma.makes" }, avatarUrl: "https://picsum.photos/seed/a/200/200" },
+  account: { country: "GB", birthDate: "1990-04-12", favoriteCategories: ["COOKING", "BAKING", "COFFEE_TEA"], gender: "FEMALE", socials: { INSTAGRAM: "@emma.makes" }, avatarUrl: "https://picsum.photos/seed/a/200/200" },
 };
 
 describe("the form of My Profile", () => {
@@ -14,19 +14,19 @@ describe("the form of My Profile", () => {
     expect(d).toMatchObject({ fullName: "Emma Johnson", phone: "+44 7000 000000", country: "GB", birthDate: "1990-04-12", gender: "FEMALE" });
     expect(d.socials.INSTAGRAM).toBe("@emma.makes");
     expect(d.socials.ZALO).toBe("");
-    const bare = toDraft({ ...profile, phone: undefined, account: { country: "VN", birthDate: "2000-01-01" } });
+    const bare = toDraft({ ...profile, phone: undefined, account: { country: "VN", birthDate: "2000-01-01", favoriteCategories: ["ART", "CRAFTS", "FLORAL"] } });
     expect(bare).toMatchObject({ phone: "", gender: "", avatarUrl: "" });
   });
   it("sends what the profile held, as it was", () => {
     expect(toInput(toDraft(profile))).toEqual({
-      fullName: "Emma Johnson", phone: "+44 7000 000000", preferredLocale: "en", country: "GB", birthDate: "1990-04-12", gender: "FEMALE",
+      fullName: "Emma Johnson", phone: "+44 7000 000000", preferredLocale: "en", country: "GB", birthDate: "1990-04-12", favoriteCategories: ["COOKING", "BAKING", "COFFEE_TEA"], gender: "FEMALE",
       socials: { INSTAGRAM: "@emma.makes" }, avatarUrl: "https://picsum.photos/seed/a/200/200",
     });
   });
   it("trims every text, and leaves out what is empty so it is removed", () => {
     const d = { ...toDraft(profile), fullName: "  Emma J  ", phone: "   ", gender: "" as const, avatarUrl: " ", socials: { ...toDraft(profile).socials, INSTAGRAM: "  ", ZALO: " 0901 " } };
     expect(trimDraft(d).fullName).toBe("Emma J");
-    expect(toInput(d)).toEqual({ fullName: "Emma J", preferredLocale: "en", country: "GB", birthDate: "1990-04-12", socials: { ZALO: "0901" } });
+    expect(toInput(d)).toEqual({ fullName: "Emma J", preferredLocale: "en", country: "GB", birthDate: "1990-04-12", favoriteCategories: ["COOKING", "BAKING", "COFFEE_TEA"], socials: { ZALO: "0901" } });
   });
   it("is valid as the profile was, and says which field is wrong", () => {
     expect(validateDraft(toDraft(profile), TODAY)).toEqual({});
@@ -41,6 +41,14 @@ describe("the form of My Profile", () => {
     expect(validateDraft({ ...base, birthDate: "1899-12-31" }, TODAY)).toEqual({ birthDate: "invalid" });
     expect(validateDraft({ ...base, birthDate: TODAY }, TODAY)).toEqual({});
     expect(validateDraft({ ...base, socials: { ...base.socials, X: "x".repeat(101) } }, TODAY)).toEqual({ socials: "tooLong" });
+  });
+  it("needs exactly three different favorite categories", () => {
+    const base = toDraft(profile);
+    expect(validateDraft({ ...base, favoriteCategories: ["COOKING", "BAKING"] }, TODAY)).toEqual({ categories: "categories" });
+    expect(validateDraft({ ...base, favoriteCategories: [] }, TODAY)).toEqual({ categories: "categories" });
+    expect(validateDraft({ ...base, favoriteCategories: ["COOKING", "BAKING", "ART", "FLORAL"] }, TODAY)).toEqual({ categories: "categories" });
+    expect(validateDraft({ ...base, favoriteCategories: ["COOKING", "COOKING", "ART"] }, TODAY)).toEqual({ categories: "categories" });
+    expect(validateDraft({ ...base, favoriteCategories: ["ART", "FLORAL", "OTHER"] }, TODAY)).toEqual({});
   });
   it("accepts only an https link for the picture", () => {
     const base = toDraft(profile);

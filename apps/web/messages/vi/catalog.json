@@ -86,6 +86,7 @@
     "maxPerBookingHint": "Số chỗ tối đa một khách được đặt trong một lần đặt. Tối thiểu 1 và không vượt quá sức chứa mặc định.",
     "sortOrder": "Thứ tự sắp xếp",
     "sortOrderHint": "Quyết định thứ tự workshop trong danh sách và trên landing page. Số nhỏ hơn hiển thị trước.",
+    "category": "Ngành nghề",
     "images": "Hình ảnh",
     "imagesHint": "Một ảnh bìa và tối đa {max} ảnh trong thư viện.",
     "uploaderStub": "Chưa hỗ trợ tải ảnh lên. Tạm thời hãy dán URL ảnh bên dưới.",
@@ -104,7 +105,9 @@
     "savedSim": "Đã lưu (chế độ demo: thay đổi không được lưu lại).",
     "fixErrors": "Vui lòng sửa các trường được đánh dấu.",
     "cancel": "Hủy",
-    "statusFromList": "Đổi bằng nút Kích hoạt / Ngừng kích hoạt trong danh sách workshop."
+    "statusFromList": "Đổi bằng nút Kích hoạt / Ngừng kích hoạt trong danh sách workshop.",
+    "categoryPlaceholder": "Chọn ngành nghề",
+    "categoryHint": "Lĩnh vực mà workshop thuộc về. Dùng để thống kê."
   },
   "errors": {
     "titleRequired": "Bắt buộc nhập tiêu đề bằng ngôn ngữ mặc định.",
@@ -124,7 +127,8 @@
     "duplicateSession": "Đã có một buổi của workshop này vào thời điểm đó.",
     "capacityBelowReserved": "Sức chứa không được thấp hơn {reserved} chỗ đã đặt.",
     "cutoffInvalid": "Nhập số nguyên từ 0 đến 10080.",
-    "pastStart": "Giờ bắt đầu không được ở quá khứ. Hãy chọn ngày giờ muộn hơn."
+    "pastStart": "Giờ bắt đầu không được ở quá khứ. Hãy chọn ngày giờ muộn hơn.",
+    "categoryRequired": "Hãy chọn ngành nghề."
   },
   "rules": {
     "title": "Quy tắc lịch",
@@ -287,5 +291,22 @@
     "cancelledNoPayment": "Booking đã hủy không có thanh toán",
     "closeInProgressHint": "Session đang diễn ra. Bạn chỉ có thể đóng sớm vì buổi workshop đã hoàn thành.",
     "cancelledByGuest": "Khách tự hủy"
+  },
+  "categories": {
+    "COOKING": "Nấu ăn",
+    "BAKING": "Làm bánh & bánh ngọt",
+    "COFFEE_TEA": "Cà phê & trà",
+    "DRINKS": "Đồ uống & cocktail",
+    "POTTERY": "Gốm & sứ",
+    "CANDLES": "Nến & hương thơm",
+    "FLORAL": "Hoa & cây cảnh",
+    "ART": "Vẽ & hội họa",
+    "CRAFTS": "Thủ công & DIY",
+    "JEWELRY": "Trang sức & kim loại",
+    "TEXTILE": "May vá & dệt may",
+    "PHOTOGRAPHY": "Nhiếp ảnh & phim",
+    "MUSIC_DANCE": "Âm nhạc & khiêu vũ",
+    "WELLNESS": "Sức khỏe & thiền định",
+    "OTHER": "Khác"
   }
 }

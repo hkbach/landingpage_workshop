@@ -5,14 +5,15 @@ import { useLocale, useTranslations } from "next-intl";
 import { z } from "zod";
 import { ImageOff, Plus, Trash2, TriangleAlert } from "lucide-react";
 import {
-  LOCALES, formatMoney, minorDigits, missingLocales, trimDeep,
-  type Locale, type Localized, type WorkshopStatus,
+  LOCALES, WORKSHOP_CATEGORIES, formatMoney, minorDigits, missingLocales, trimDeep,
+  type Locale, type Localized, type WorkshopCategory, type WorkshopStatus,
 } from "@workshop/shared";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Field } from "@/components/ops/field";
+import { NativeSelect } from "@/components/ops/native-select";
 import { WorkshopStatusBadge } from "./workshop-status-badge";
 import { issuesToErrors } from "@/components/ops/validation";
 import type { Workshop } from "@/lib/types";
@@ -34,6 +35,8 @@ interface Draft {
   includes: Partial<Record<Locale, string>>; // one item per line
   price: string; durationMinutes: string; defaultCapacity: string; maxPerBooking: string; sortOrder: string;
   coverUrl: string; galleryUrls: string[]; status: WorkshopStatus;
+  /** The field of the workshop, "" until the owner picks one. */
+  category: WorkshopCategory | "";
 }
 
 type LocalizedKey = "title" | "shortDescription" | "description" | "notes";
@@ -46,7 +49,7 @@ function toDraft(w: Workshop | undefined, currency: string): Draft {
     includes: Object.fromEntries(LOCALES.map((l) => [l, (w?.includes?.[l] ?? []).join("\n")])),
     price: w ? String(w.priceAmount / 10 ** digits) : "", durationMinutes: String(w?.durationMinutes ?? 120),
     defaultCapacity: String(w?.defaultCapacity ?? 8), maxPerBooking: String(w?.maxPerBooking ?? 6), sortOrder: String(w?.sortOrder ?? 1),
-    coverUrl: w?.coverUrl ?? "", galleryUrls: [...(w?.galleryUrls ?? [])], status: w?.status ?? "DRAFT",
+    coverUrl: w?.coverUrl ?? "", galleryUrls: [...(w?.galleryUrls ?? [])], status: w?.status ?? "DRAFT", category: w?.category ?? "",
   };
 }
 
@@ -86,6 +89,7 @@ export function WorkshopForm({
     e.preventDefault();
     const schema = z.object({
       titleDefault: z.string().trim().min(1, "errors.titleRequired"),
+      category: z.enum(WORKSHOP_CATEGORIES, "errors.categoryRequired"),
       price: z.number("errors.priceInvalid").min(0, "errors.priceInvalid"),
       durationMinutes: z.number("errors.durationRange").int("errors.durationRange").min(15, "errors.durationRange").max(600, "errors.durationRange"),
       defaultCapacity: z.number("errors.capacityRange").int("errors.capacityRange").min(1, "errors.capacityRange").max(MAX_CAPACITY, "errors.capacityRange"),
@@ -98,7 +102,7 @@ export function WorkshopForm({
         ctx.addIssue({ code: "custom", path: ["maxPerBooking"], message: "errors.maxPerBookingRange" });
     });
     const parsed = schema.safeParse({
-      titleDefault: d.title[shop.defaultLocale] ?? "", price: num(d.price), durationMinutes: num(d.durationMinutes),
+      titleDefault: d.title[shop.defaultLocale] ?? "", category: d.category, price: num(d.price), durationMinutes: num(d.durationMinutes),
       defaultCapacity: num(d.defaultCapacity), maxPerBooking: num(d.maxPerBooking), sortOrder: num(d.sortOrder),
       coverUrl: d.coverUrl, galleryUrls: d.galleryUrls.filter((u) => u.trim() !== ""),
     });
@@ -170,6 +174,14 @@ export function WorkshopForm({
       <Card>
         <CardHeader><CardTitle>{t("form.pricing")}</CardTitle></CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
+          <Field id="ws-category" label={t("form.category")} required error={err("category")} hint={t("form.categoryHint")} className="sm:col-span-2">
+            {(p) => (
+              <NativeSelect
+                {...p} value={d.category} onChange={(e) => setField("category", e.target.value as WorkshopCategory | "")}
+                options={[{ value: "", label: t("form.categoryPlaceholder") }, ...WORKSHOP_CATEGORIES.map((c) => ({ value: c, label: t(`categories.${c}`) }))]}
+              />
+            )}
+          </Field>
           <Field id="ws-price" label={t("form.price", { currency: shop.currency })} required error={err("price")}
             hint={Number.isFinite(priceMinor) ? t("form.pricePreview", { value: formatMoney(priceMinor, shop.currency, locale) }) : undefined}>
             {(p) => <Input {...p} inputMode="decimal" value={d.price} onChange={(e) => setField("price", e.target.value)} />}

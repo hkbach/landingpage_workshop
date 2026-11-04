@@ -54,12 +54,22 @@
       "required": "此项为必填。",
       "tooLong": "内容过长。",
       "invalid": "出生日期无效。",
-      "urlInvalid": "请输入以 https:// 开头的链接。"
-    }
+      "urlInvalid": "请输入以 https:// 开头的链接。",
+      "categories": "请恰好选择 3 个类别。"
+    },
+    "categories": "喜欢的类别",
+    "categoriesHint": "请恰好选择 3 个您喜欢的工作坊类别。",
+    "categoriesCount": "已选 {count}/{max}"
   },
   "workshops": {
-    "empty": "暂无可显示的工作坊。",
-    "visitSite": "访问 {shop} 的网站",
-    "demoOnly": "演示商店：预订步骤可用，但不会创建真实预订。"
+    "shopLine": "商店：{shop}",
+    "ratingLabel": "评分 {average}（满分 5 分），{count, plural, other {# 条评价}}",
+    "noRating": "暂无评分",
+    "searchLabel": "搜索工作坊",
+    "searchPlaceholder": "工作坊或商店名称",
+    "noResults": "没有与“{query}”匹配的工作坊。",
+    "count": "{count, plural, other {# 个工作坊}}",
+    "demoOnly": "部分商店为演示商店：预订步骤可用，但不会创建真实预订。",
+    "empty": "暂无可显示的工作坊。"
   }
 }

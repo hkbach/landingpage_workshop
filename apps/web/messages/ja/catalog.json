@@ -86,6 +86,7 @@
     "maxPerBookingHint": "1回の予約で1人が予約できる最大席数です。1以上で、デフォルト定員を超えることはできません。",
     "sortOrder": "表示順",
     "sortOrderHint": "一覧とランディングページでのワークショップの表示順を決めます。数字が小さいほど先に表示されます。",
+    "category": "分野",
     "images": "画像",
     "imagesHint": "カバー画像1枚と、最大{max}枚のギャラリー画像。",
     "uploaderStub": "画像のアップロードはまだ利用できません。当面は下に画像のURLを貼り付けてください。",
@@ -104,7 +105,9 @@
     "savedSim": "保存しました（デモモード: 変更は保持されません）。",
     "fixErrors": "強調表示された項目を修正してください。",
     "cancel": "キャンセル",
-    "statusFromList": "ワークショップ一覧の「有効にする / 無効にする」で変更できます。"
+    "statusFromList": "ワークショップ一覧の「有効にする / 無効にする」で変更できます。",
+    "categoryPlaceholder": "分野を選択",
+    "categoryHint": "ワークショップが属する分野です。統計に使われます。"
   },
   "errors": {
     "titleRequired": "デフォルト言語のタイトルは必須です。",
@@ -124,7 +127,8 @@
     "duplicateSession": "この日時のセッションは、このワークショップにすでに存在します。",
     "capacityBelowReserved": "定員は、すでに予約済みの{reserved}席を下回ることはできません。",
     "cutoffInvalid": "0〜10080の整数を入力してください。",
-    "pastStart": "開始日時は過去にできません。より後の日付と時刻を選択してください。"
+    "pastStart": "開始日時は過去にできません。より後の日付と時刻を選択してください。",
+    "categoryRequired": "分野を選択してください。"
   },
   "rules": {
     "title": "スケジュールルール",
@@ -287,5 +291,22 @@
     "cancelledNoPayment": "キャンセル済みの予約は支払いを受け付けません",
     "closeInProgressHint": "セッションは開催中です。ワークショップが完了した場合にのみ、早めにクローズできます。",
     "cancelledByGuest": "お客様が取消"
+  },
+  "categories": {
+    "COOKING": "料理",
+    "BAKING": "ベーキング・製菓",
+    "COFFEE_TEA": "コーヒー・紅茶",
+    "DRINKS": "ドリンク・カクテル",
+    "POTTERY": "陶芸",
+    "CANDLES": "キャンドル・香り",
+    "FLORAL": "フラワー・植物",
+    "ART": "絵画・ドローイング",
+    "CRAFTS": "クラフト・DIY",
+    "JEWELRY": "ジュエリー・金工",
+    "TEXTILE": "裁縫・テキスタイル",
+    "PHOTOGRAPHY": "写真・映像",
+    "MUSIC_DANCE": "音楽・ダンス",
+    "WELLNESS": "ウェルネス・マインドフルネス",
+    "OTHER": "その他"
   }
 }

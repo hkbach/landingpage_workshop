@@ -13,7 +13,7 @@ const patch = (id: string, email: string | undefined, body: unknown) =>
 
 const EMMA = "emma@example.com"; // cu-1: an account with a phone, a gender, social accounts and a picture
 const input = {
-  fullName: "Emma J. Johnson", phone: "+44 7000 111111", preferredLocale: "vi", country: "VN", birthDate: "1991-05-13", gender: "OTHER",
+  fullName: "Emma J. Johnson", phone: "+44 7000 111111", preferredLocale: "vi", country: "VN", birthDate: "1991-05-13", favoriteCategories: ["ART", "FLORAL", "OTHER"], gender: "OTHER",
   socials: { ZALO: "0901 000 111", INSTAGRAM: "@emma.cooks" }, avatarUrl: "https://picsum.photos/seed/emma2/200/200",
 };
 
@@ -47,7 +47,7 @@ describe("PATCH /customer/{id}", () => {
   it("saves the profile: the guest sees it, and so does the shop", async () => {
     const res = await patch("cu-1", EMMA, input);
     expect(res.status).toBe(200);
-    expect(await res.json()).toMatchObject({ fullName: "Emma J. Johnson", phone: "+44 7000 111111", preferredLocale: "vi", account: { country: "VN", birthDate: "1991-05-13", gender: "OTHER", socials: { ZALO: "0901 000 111", INSTAGRAM: "@emma.cooks" } } });
+    expect(await res.json()).toMatchObject({ fullName: "Emma J. Johnson", phone: "+44 7000 111111", preferredLocale: "vi", account: { country: "VN", birthDate: "1991-05-13", favoriteCategories: ["ART", "FLORAL", "OTHER"], gender: "OTHER", socials: { ZALO: "0901 000 111", INSTAGRAM: "@emma.cooks" } } });
     expect(await (await get("cu-1", EMMA)).json()).toMatchObject({ fullName: "Emma J. Johnson", preferredLocale: "vi" });
     expect(liveCustomers().find((c) => c.id === "cu-1")).toMatchObject({ fullName: "Emma J. Johnson", phone: "+44 7000 111111", preferredLocale: "vi", account: { country: "VN" } });
   });
@@ -58,7 +58,7 @@ describe("PATCH /customer/{id}", () => {
     expect((await get("cu-1", EMMA)).status).toBe(200);
   });
   it("trims the texts, and what is left out is removed (the profile is replaced as a whole)", async () => {
-    const res = await patch("cu-1", EMMA, { fullName: "  Emma  ", phone: "   ", preferredLocale: "en", country: "GB", birthDate: "1990-04-12", socials: { TIKTOK: "  @e  ", ZALO: "   " }, avatarUrl: " " });
+    const res = await patch("cu-1", EMMA, { fullName: "  Emma  ", phone: "   ", preferredLocale: "en", country: "GB", birthDate: "1990-04-12", favoriteCategories: ["COOKING", "BAKING", "COFFEE_TEA"], socials: { TIKTOK: "  @e  ", ZALO: "   " }, avatarUrl: " " });
     expect(res.status).toBe(200);
     const profile = (await res.json()) as { fullName: string; phone?: string; account: { gender?: string; socials?: Record<string, string>; avatarUrl?: string } };
     expect(profile.fullName).toBe("Emma");
@@ -88,6 +88,11 @@ describe("PATCH /customer/{id}", () => {
     expect(await bad({ avatarUrl: "http://example.com/a.png" })).toEqual({ avatarUrl: "urlInvalid" });
     expect(await bad({ avatarUrl: "javascript:alert(1)" })).toEqual({ avatarUrl: "urlInvalid" });
     expect(await bad({ gender: "ROBOT" })).toHaveProperty("gender");
+    expect(await bad({ favoriteCategories: ["ART", "FLORAL"] })).toEqual({ favoriteCategories: "categories" });
+    expect(await bad({ favoriteCategories: ["ART", "FLORAL", "ART"] })).toEqual({ favoriteCategories: "categories" });
+    expect(await bad({ favoriteCategories: ["ART", "FLORAL", "ART", "OTHER"] })).toEqual({ favoriteCategories: "categories" });
+    expect(await bad({ favoriteCategories: ["ART", "FLORAL", "NOPE"] })).toEqual({ favoriteCategories: "categories" });
+    expect(await bad({ favoriteCategories: undefined })).toEqual({ favoriteCategories: "categories" });
     expect(await bad({ socials: { ZALO: "z".repeat(101) } })).toHaveProperty("socials");
     expect(liveCustomers().find((c) => c.id === "cu-1")!.fullName).toBe("Emma Johnson");
   });

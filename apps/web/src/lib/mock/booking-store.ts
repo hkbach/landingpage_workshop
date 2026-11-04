@@ -1,7 +1,7 @@
 // SERVER-ONLY: the bookings as the mock backend knows them, until apps/api exists. The demo rows, plus the bookings guests make on the landing page
 // (they start NOT_CONFIRMED and become CONFIRMED when the guest opens the link of the email), plus the status changes the ops screens make (cancel,
 // check-in, ...: they are sent here so they survive a reload and the promotion rules can see them). Lives on globalThis like the other mock stores.
-import { closeIfEnded, eligiblePromotions, pickLocalized, isSessionBookable, isSessionFinished, nextBookingCode, priceBooking, socialEntries, type BookingStatus, type BookingUse, type Gender, type Socials } from "@workshop/shared";
+import { closeIfEnded, eligiblePromotions, pickLocalized, isSessionBookable, isSessionFinished, nextBookingCode, priceBooking, socialEntries, type BookingStatus, type BookingUse, type Gender, type Socials, type WorkshopCategory } from "@workshop/shared";
 import { computePaymentStatus, confirmation, netPaid, reservedSeats, type PreCheckInStatus } from "@/lib/booking-state";
 import type { Booking, Customer, PaymentEntry, Session } from "@/lib/types";
 import { newUuid } from "@/lib/uuid";
@@ -131,11 +131,11 @@ export type RegisterResult = { ok: true; customerId: string; created: boolean; m
  * booked becomes the account, so every booking of that email is in it (a new customer is made only when the email never booked). `merged` is how many
  * bookings the account got that way. Refused when the email has an account already.
  */
-export function registerGuestAccount(input: { email: string; fullName: string; country: string; birthDate: string; consentAt?: string; phone?: string; locale?: Customer["preferredLocale"] }): RegisterResult {
+export function registerGuestAccount(input: { email: string; fullName: string; country: string; birthDate: string; categories: WorkshopCategory[]; consentAt?: string; phone?: string; locale?: Customer["preferredLocale"] }): RegisterResult {
   const email = normalizeEmail(input.email);
   const matches = customersWithEmail(email);
   if (matches.some((c) => c.account)) return { ok: false, code: "ALREADY_REGISTERED" };
-  const account = { country: input.country, birthDate: input.birthDate, ...(input.consentAt ? { consentAt: input.consentAt } : {}) };
+  const account = { country: input.country, birthDate: input.birthDate, favoriteCategories: input.categories, ...(input.consentAt ? { consentAt: input.consentAt } : {}) };
   const phone = input.phone?.trim() || undefined;
   if (matches.length === 0) {
     const customer: Customer = { id: `cu-${newUuid().slice(0, 8)}`, fullName: input.fullName.trim(), email, ...(phone ? { phone } : {}), preferredLocale: input.locale ?? currentShop.defaultLocale, account };
@@ -159,7 +159,7 @@ export function accountOfGuest(id: string, email: string | null): Customer | und
 }
 
 export interface AccountPatch {
-  fullName: string; phone?: string; locale: Customer["preferredLocale"]; country: string; birthDate: string; gender?: Gender; socials?: Socials; avatarUrl?: string;
+  fullName: string; phone?: string; locale: Customer["preferredLocale"]; country: string; birthDate: string; favoriteCategories: WorkshopCategory[]; gender?: Gender; socials?: Socials; avatarUrl?: string;
 }
 
 /**
@@ -172,7 +172,7 @@ export function updateGuestAccount(id: string, email: string | null, patch: Acco
   if (!current?.account) return { ok: false, code: "NOT_FOUND" };
   const socials = Object.fromEntries(socialEntries(patch.socials)) as Socials;
   const account: NonNullable<Customer["account"]> = {
-    country: patch.country, birthDate: patch.birthDate,
+    country: patch.country, birthDate: patch.birthDate, favoriteCategories: patch.favoriteCategories,
     ...(patch.gender ? { gender: patch.gender } : {}), ...(Object.keys(socials).length ? { socials } : {}), ...(patch.avatarUrl ? { avatarUrl: patch.avatarUrl } : {}),
     ...(current.account.consentAt ? { consentAt: current.account.consentAt } : {}),
   };

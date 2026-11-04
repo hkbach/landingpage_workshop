@@ -276,6 +276,27 @@
     "proceed": "继续",
     "consentLabel": "我同意 {shop} 保存我的国家/地区和出生日期，用于了解客人和策划优惠。我可以要求工作室删除这些信息。",
     "consentRequired": "请勾选同意框以创建账户。",
-    "otpFailed": "出现问题，请重试。"
+    "otpFailed": "出现问题，请重试。",
+    "categoriesTitle": "选择 3 个您喜欢的类别",
+    "categoriesHint": "我们之后会据此推荐工作坊。请恰好选择 3 个。",
+    "categoriesCount": "已选 {count}/{max}",
+    "categoriesInvalid": "请恰好选择 3 个类别。"
+  },
+  "categories": {
+    "COOKING": "烹饪",
+    "BAKING": "烘焙与糕点",
+    "COFFEE_TEA": "咖啡与茶",
+    "DRINKS": "饮品与鸡尾酒",
+    "POTTERY": "陶艺",
+    "CANDLES": "蜡烛与香氛",
+    "FLORAL": "花艺与植物",
+    "ART": "绘画",
+    "CRAFTS": "手工与DIY",
+    "JEWELRY": "珠宝与金工",
+    "TEXTILE": "缝纫与纺织",
+    "PHOTOGRAPHY": "摄影与电影",
+    "MUSIC_DANCE": "音乐与舞蹈",
+    "WELLNESS": "身心健康与正念",
+    "OTHER": "其他"
   }
 }

@@ -1,6 +1,6 @@
 import type {
   BookingSource, BookingStatus, Gender, Localized, Locale, OrgStatus, PaymentMethod,
-  PaymentStatus, ReportRecord, SectionType, SessionNote, SessionStatus, Socials, WorkshopStatus
+  PaymentStatus, ReportRecord, SectionType, SessionNote, SessionStatus, Socials, WorkshopCategory, WorkshopStatus
 } from "@workshop/shared";
 
 // UI-side view models. Money is minor units (number here; bigint is serialized by the API). Times are ISO UTC strings.
@@ -23,6 +23,10 @@ export interface Workshop {
   durationMinutes: number; priceAmount: number; currency: string;
   defaultCapacity: number; maxPerBooking: number; coverUrl: string; galleryUrls: string[];
   status: WorkshopStatus; sortOrder: number;
+  /** The field the workshop belongs to, chosen by the shop owner (for statistics). */
+  category?: WorkshopCategory;
+  /** What guests rated it: the average, from 1 to 5 stars, and how many ratings it comes from. Missing while nobody rated it. TODO(api): worked out from the ratings. */
+  rating?: { average: number; count: number };
   /** ISO UTC instant the workshop was created. */
   createdAt: string;
 }
@@ -50,7 +54,7 @@ export interface Customer {
    * Set only for a guest who registered an account: the country they live in and their birth date ("YYYY-MM-DD"), both given at registration. A guest who
    * only booked has no account, so the shop knows neither.
    */
-  account?: { country: string; birthDate: string; gender?: Gender; socials?: Socials; avatarUrl?: string; /** When the guest agreed that the shop keeps the country and the date of birth. */ consentAt?: string };
+  account?: { country: string; birthDate: string; /** The three fields of workshops the guest likes, picked at registration. */ favoriteCategories?: WorkshopCategory[]; gender?: Gender; socials?: Socials; avatarUrl?: string; /** When the guest agreed that the shop keeps the country and the date of birth. */ consentAt?: string };
 }
 
 export interface PaymentEntry {

@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { ChevronRight, Clock } from "lucide-react";
 import { formatMoney } from "@workshop/shared";
@@ -144,13 +145,19 @@ export function AboutSection({ section, props, ctx, variant }: RenderProps<About
   );
 }
 
-export function WorkshopCard({ w, ctx, horizontal, featured, showBook = true }: { w: Workshop; ctx: RenderContext; horizontal?: boolean; featured?: boolean; showBook?: boolean }) {
+/**
+ * One workshop of the list. `as` is "div" when the card sits in a list of its own; `meta` is shown under the name (the guest area puts the shop and the rating
+ * there); `className` is added to the card.
+ */
+export function WorkshopCard({ w, ctx, horizontal, featured, showBook = true, as: Root = "li", meta, className }: {
+  w: Workshop; ctx: RenderContext; horizontal?: boolean; featured?: boolean; showBook?: boolean; as?: "li" | "div"; meta?: ReactNode; className?: string;
+}) {
   const L = localizer(ctx);
   const t = useTranslations("site");
   const { open } = useBookingActions();
   const cover = imageOf(ctx)(w.coverUrl);
   return (
-    <li className={cn("relative overflow-hidden", card, horizontal && "@xl:flex", featured && "@xl:col-span-2 @5xl:col-span-3")}>
+    <Root className={cn("relative overflow-hidden", card, horizontal && "@xl:flex", featured && "@xl:col-span-2 @5xl:col-span-3", className)}>
       {cover ? (
         <Img
           src={cover}
@@ -160,6 +167,7 @@ export function WorkshopCard({ w, ctx, horizontal, featured, showBook = true }: 
       <FavoriteButton workshopId={w.id} title={L(w.title)} className="absolute end-3 top-3" />
       <div className={cn("flex flex-1 flex-col gap-2 p-4", featured && "@xl:justify-center @xl:p-8")}>
         <h3 className={cn("pe-10 font-semibold text-[var(--site-text)]", featured ? "text-2xl" : "text-lg")}>{L(w.title)}</h3>
+        {meta}
         <p className="whitespace-pre-line text-sm text-[var(--site-muted)]">{L(w.shortDescription)}</p>
         <p className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[var(--site-text)]">
           <span className="inline-flex items-center gap-1"><Clock className="size-4" aria-hidden />{t("sections.duration", { minutes: w.durationMinutes })}</span>
@@ -174,7 +182,7 @@ export function WorkshopCard({ w, ctx, horizontal, featured, showBook = true }: 
           </div>
         ) : null}
       </div>
-    </li>
+    </Root>
   );
 }
 

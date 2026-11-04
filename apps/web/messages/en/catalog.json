@@ -86,6 +86,7 @@
     "maxPerBookingHint": "The most seats one guest can book in a single booking. At least 1, and not more than the default capacity.",
     "sortOrder": "Sort order",
     "sortOrderHint": "Sets the order of your workshops in the list and on your landing page. A smaller number comes first.",
+    "category": "Category",
     "images": "Images",
     "imagesHint": "One cover image and up to {max} gallery images.",
     "uploaderStub": "Image upload is not available yet. Paste image URLs below for now.",
@@ -104,7 +105,9 @@
     "savedSim": "Saved (demo mode: changes are not persisted).",
     "fixErrors": "Please fix the highlighted fields.",
     "cancel": "Cancel",
-    "statusFromList": "Change it with Activate / Deactivate in the workshop list."
+    "statusFromList": "Change it with Activate / Deactivate in the workshop list.",
+    "categoryPlaceholder": "Choose a category",
+    "categoryHint": "The field your workshop belongs to. Used for statistics."
   },
   "errors": {
     "titleRequired": "A title in the default language is required.",
@@ -124,7 +127,8 @@
     "duplicateSession": "A session for this workshop already exists at that time.",
     "capacityBelowReserved": "Capacity cannot be lower than the {reserved} seats already reserved.",
     "cutoffInvalid": "Enter a whole number between 0 and 10080.",
-    "pastStart": "The start cannot be in the past. Choose a later date and time."
+    "pastStart": "The start cannot be in the past. Choose a later date and time.",
+    "categoryRequired": "Choose a category."
   },
   "rules": {
     "title": "Schedule rules",
@@ -287,5 +291,22 @@
     "cancelledNoPayment": "No payment for a cancelled booking",
     "closeInProgressHint": "The session is taking place. You can close it early only because the workshop has been completed.",
     "cancelledByGuest": "Cancelled by the guest"
+  },
+  "categories": {
+    "COOKING": "Cooking",
+    "BAKING": "Baking & pastry",
+    "COFFEE_TEA": "Coffee & tea",
+    "DRINKS": "Drinks & cocktails",
+    "POTTERY": "Pottery & ceramics",
+    "CANDLES": "Candles & fragrance",
+    "FLORAL": "Flowers & plants",
+    "ART": "Painting & drawing",
+    "CRAFTS": "Crafts & DIY",
+    "JEWELRY": "Jewelry & metalwork",
+    "TEXTILE": "Sewing & textiles",
+    "PHOTOGRAPHY": "Photography & film",
+    "MUSIC_DANCE": "Music & dance",
+    "WELLNESS": "Wellness & mindfulness",
+    "OTHER": "Other"
   }
 }
