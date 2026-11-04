@@ -1,6 +1,5 @@
-import { CustomerBlankPage } from "@/components/customer/customer-shell";
+import { CustomerBookings } from "@/components/customer/customer-bookings";
 
-// No content yet: the page is there so the menu works; it will be defined later.
 export default function CustomerBookingsPage() {
-  return <CustomerBlankPage menu="bookings" />;
+  return <CustomerBookings />;
 }

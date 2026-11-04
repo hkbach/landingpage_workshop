@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
  * The guest cancels their booking from the page where they looked it up (the code and the email already proved who they are): a button, then a popup that asks to
  * be sure and takes a reason that is optional. The server checks again (until the session starts, not once the guest is checked in).
  */
-export function CancelBooking({ slug, code, email }: { slug: string; code: string; email: string }) {
+export function CancelBooking({ slug, code, email, onCancelled }: { slug: string; code: string; email: string; /** Called once it is cancelled, when the page updates itself (the default is to refresh the page). */ onCancelled?: () => void }) {
   const t = useTranslations("site.confirmation");
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -28,7 +28,8 @@ export function CancelBooking({ slug, code, email }: { slug: string; code: strin
       });
       if (!res.ok) { setFailed(true); return; }
       setOpen(false);
-      router.refresh(); // the page now shows the booking as cancelled
+      if (onCancelled) onCancelled();
+      else router.refresh(); // the page now shows the booking as cancelled
     } catch {
       setFailed(true);
     } finally {

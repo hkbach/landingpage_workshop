@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Search } from "lucide-react";
 import type { Locale } from "@workshop/shared";
@@ -12,7 +12,7 @@ import { themeStyle } from "@/components/sections/theme";
 import { FavoritesProvider } from "@/components/site/FavoritesProvider";
 import { Input } from "@/components/ui/input";
 import { workshopMatches } from "@/lib/customer-workshop-search";
-import { readGuestEmail, writeGuestEmail } from "@/lib/favorites";
+import { normalizeGuestEmail, parseFavorites, readFavoritesRaw, readGuestEmail, subscribeFavorites, writeGuestEmail } from "@/lib/favorites";
 import type { ListedShop } from "@/lib/mock/customer-listing";
 import { cn } from "@/lib/utils";
 import { RatingStars } from "./rating-stars";
@@ -22,28 +22,36 @@ import { useCustomer } from "./customer-shell";
  * The Workshops page of the guest area: the workshops of every shop the platform administrator chose to list, in one list. Each card is the one of the landing page of
  * its shop (its theme, Book button and booking popup; the booking is made at that shop) with the name of the shop and the rating under the name of the workshop. The
  * guest can search by the name of a workshop or of a shop. A shop's booking popup and favorites are shared by its cards (they belong to a shop).
+ * The Favorites page is the same page with only the workshops the guest added to their favorites (`mode="favorites"`): taking the heart off a card takes it away at once.
  */
-export function CustomerWorkshops({ shops }: { shops: ListedShop[] }) {
+export function CustomerWorkshops({ shops, mode = "all" }: { shops: ListedShop[]; mode?: "all" | "favorites" }) {
   const t = useTranslations("customer");
   const locale = useLocale() as Locale;
   const { profile } = useCustomer();
   const [query, setQuery] = useState("");
 
-  // The guest is known here: the hearts of a shop are theirs without asking for the login again (what a login already stored is kept).
+  // The guest is known here: the hearts of a shop are the hearts of this account, without asking for the login again.
   useEffect(() => {
-    for (const s of shops) if (!readGuestEmail(s.shop.slug)) writeGuestEmail(s.shop.slug, profile.email);
+    for (const s of shops) if (readGuestEmail(s.shop.slug) !== normalizeGuestEmail(profile.email)) writeGuestEmail(s.shop.slug, profile.email);
   }, [shops, profile.email]);
 
-  // What the search leaves, shop by shop (the shops keep their order; a shop with nothing left is not there).
-  const found = shops
-    .map((s) => ({ ...s, list: [...s.workshops].sort((a, b) => a.sortOrder - b.sortOrder).filter((w) => workshopMatches(w, s.shop.name, query)) }))
-    .filter((s) => s.list.length > 0);
+  // The workshops this account added to its favorites, shop by shop (kept in the browser, see lib/favorites.ts); the snapshot is one text so it can be compared.
+  const savedSnapshot = useSyncExternalStore(subscribeFavorites, () => JSON.stringify(shops.map((s) => readFavoritesRaw(s.shop.slug, normalizeGuestEmail(profile.email)))), () => "[]");
+  const saved = useMemo(() => {
+    const raws = JSON.parse(savedSnapshot) as string[];
+    return new Map(shops.map((s, i) => [s.shop.id, new Set(parseFavorites(raws[i]))]));
+  }, [shops, savedSnapshot]);
+
+  // The workshops of the page (all of them, or the favorites), then what the search leaves, shop by shop (the shops keep their order; a shop with nothing left is not there).
+  const pool = shops.map((s) => ({ ...s, list: [...s.workshops].sort((a, b) => a.sortOrder - b.sortOrder).filter((w) => mode === "all" || saved.get(s.shop.id)?.has(w.id)) }));
+  const found = pool.map((s) => ({ ...s, list: s.list.filter((w) => workshopMatches(w, s.shop.name, query)) })).filter((s) => s.list.length > 0);
   const total = found.reduce((n, s) => n + s.list.length, 0);
+  const nothingToShow = pool.every((s) => s.list.length === 0); // no workshop listed, or no favorite yet
 
   return (
     <div className="grid gap-4">
-      <h1 className="text-2xl font-semibold">{t("menu.workshops")}</h1>
-      {shops.length === 0 ? <p className="text-sm text-muted-foreground" data-testid="customer-workshops-empty">{t("workshops.empty")}</p> : (
+      <h1 className="text-2xl font-semibold">{t(mode === "favorites" ? "menu.favorites" : "menu.workshops")}</h1>
+      {nothingToShow ? <p className="text-sm text-muted-foreground" data-testid="customer-workshops-empty">{t(mode === "favorites" && shops.length > 0 ? "favorites.empty" : "workshops.empty")}</p> : (
         <>
           <div className="grid gap-1.5">
             <label htmlFor="cw-search" className="text-sm font-medium">{t("workshops.searchLabel")}</label>

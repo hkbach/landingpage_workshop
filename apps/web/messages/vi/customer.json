@@ -71,5 +71,71 @@
     "count": "{count, plural, other {# workshop}}",
     "demoOnly": "Một số shop là shop demo: các bước đặt chỗ hoạt động nhưng không tạo booking thật.",
     "empty": "Chưa có workshop nào để hiển thị."
+  },
+  "bookings": {
+    "intro": "Mọi booking của bạn ở một nơi.",
+    "tabs": {
+      "all": "Tất cả",
+      "upcoming": "Sắp tới",
+      "past": "Đã qua",
+      "cancelled": "Đã hủy"
+    },
+    "attended": "Đã tham gia",
+    "nextUp": "Sắp diễn ra",
+    "nextNone": "Chưa có kế hoạch nào",
+    "searchLabel": "Tìm booking",
+    "searchPlaceholder": "Mã booking, workshop hoặc shop",
+    "workshopLabel": "Workshop",
+    "allWorkshops": "Tất cả workshop",
+    "from": "Từ ngày",
+    "to": "Đến ngày",
+    "clear": "Xóa bộ lọc",
+    "count": "{count, plural, other {# booking}}",
+    "empty": "Bạn chưa có booking nào.",
+    "emptyHint": "Chọn một workshop bạn thích và giữ chỗ đầu tiên.",
+    "browse": "Xem workshop",
+    "noResults": "Không có booking nào khớp với bộ lọc.",
+    "shopLine": "Shop: {shop}",
+    "when": {
+      "today": "Hôm nay",
+      "tomorrow": "Ngày mai",
+      "inDays": "Còn {days, plural, other {# ngày}}",
+      "inProgress": "Đang diễn ra",
+      "finished": "Đã kết thúc",
+      "cancelled": "Đã hủy"
+    },
+    "guests": "{count, plural, other {# khách}}",
+    "status": {
+      "NOT_CONFIRMED": "Vui lòng xác nhận qua email",
+      "CONFIRMED": "Đã xác nhận",
+      "CHECKED_IN": "Đã check-in",
+      "CANCELLED": "Đã hủy"
+    },
+    "payment": {
+      "UNPAID": "Thanh toán tại studio",
+      "PAID": "Đã thanh toán"
+    },
+    "code": "Mã booking",
+    "total": "Tổng tiền",
+    "saved": "Bạn tiết kiệm {amount} nhờ {codes}",
+    "note": "Ghi chú của bạn: {note}",
+    "checkedInAt": "Check-in lúc {time}",
+    "showCode": "Đưa mã này cho studio để được check-in.",
+    "confirmHint": "Mở liên kết trong email xác nhận để xác nhận booking này.",
+    "cancelledBy": {
+      "GUEST": "Bạn đã hủy booking này",
+      "SHOP": "Shop đã hủy booking này"
+    },
+    "cancelReason": "Lý do: {reason}",
+    "cancelBlocked": {
+      "started": "Đã quá muộn để hủy: workshop đã bắt đầu.",
+      "checkedIn": "Booking đã check-in không thể hủy.",
+      "closed": "Session này đã đóng nên không thể hủy tại đây. Vui lòng liên hệ studio."
+    },
+    "directions": "Chỉ đường",
+    "cancelledDone": "Đã hủy booking {code}. Chúng tôi đã gửi email cho bạn và shop."
+  },
+  "favorites": {
+    "empty": "Chưa có workshop yêu thích nào. Bấm vào trái tim ở một workshop để lưu vào đây."
   }
 }

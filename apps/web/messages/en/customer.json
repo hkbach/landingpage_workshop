@@ -71,5 +71,71 @@
     "count": "{count, plural, one {# workshop} other {# workshops}}",
     "demoOnly": "Some shops are demo shops: their booking steps work, but no booking is created.",
     "empty": "No workshops to show yet."
+  },
+  "bookings": {
+    "intro": "Everything you have booked, in one place.",
+    "tabs": {
+      "all": "All",
+      "upcoming": "Upcoming",
+      "past": "Past",
+      "cancelled": "Cancelled"
+    },
+    "attended": "Attended",
+    "nextUp": "Next up",
+    "nextNone": "Nothing planned yet",
+    "searchLabel": "Search bookings",
+    "searchPlaceholder": "Booking code, workshop or shop",
+    "workshopLabel": "Workshop",
+    "allWorkshops": "All workshops",
+    "from": "From",
+    "to": "To",
+    "clear": "Clear filters",
+    "count": "{count, plural, one {# booking} other {# bookings}}",
+    "empty": "You have no bookings yet.",
+    "emptyHint": "Pick a workshop you like and reserve your first spot.",
+    "browse": "Browse workshops",
+    "noResults": "No booking matches your filters.",
+    "shopLine": "Shop: {shop}",
+    "when": {
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "inDays": "In {days, plural, one {# day} other {# days}}",
+      "inProgress": "Happening now",
+      "finished": "Finished",
+      "cancelled": "Cancelled"
+    },
+    "guests": "{count, plural, one {# guest} other {# guests}}",
+    "status": {
+      "NOT_CONFIRMED": "Please confirm by email",
+      "CONFIRMED": "Confirmed",
+      "CHECKED_IN": "Checked in",
+      "CANCELLED": "Cancelled"
+    },
+    "payment": {
+      "UNPAID": "Pay at the studio",
+      "PAID": "Paid"
+    },
+    "code": "Booking code",
+    "total": "Total",
+    "saved": "You saved {amount} with {codes}",
+    "note": "Your note: {note}",
+    "checkedInAt": "Checked in at {time}",
+    "showCode": "Show this code at the studio to be checked in.",
+    "confirmHint": "Open the link in your confirmation email to confirm this booking.",
+    "cancelledBy": {
+      "GUEST": "You cancelled this booking",
+      "SHOP": "The shop cancelled this booking"
+    },
+    "cancelReason": "Reason: {reason}",
+    "cancelBlocked": {
+      "started": "It is too late to cancel: the workshop has started.",
+      "checkedIn": "A booking that is checked in cannot be cancelled.",
+      "closed": "This session is closed, so it cannot be cancelled here. Please contact the studio."
+    },
+    "directions": "Directions",
+    "cancelledDone": "Booking {code} was cancelled. We emailed you and the shop."
+  },
+  "favorites": {
+    "empty": "No favorite workshops yet. Tap the heart on a workshop to save it here."
   }
 }

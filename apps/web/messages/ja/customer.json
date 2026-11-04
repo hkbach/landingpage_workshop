@@ -71,5 +71,71 @@
     "count": "{count, plural, other {ワークショップ#件}}",
     "demoOnly": "一部のショップはデモショップです。予約の手順は動作しますが、実際の予約は作成されません。",
     "empty": "表示できるワークショップはまだありません。"
+  },
+  "bookings": {
+    "intro": "予約した内容をすべてここで確認できます。",
+    "tabs": {
+      "all": "すべて",
+      "upcoming": "これから",
+      "past": "過去",
+      "cancelled": "キャンセル済み"
+    },
+    "attended": "参加済み",
+    "nextUp": "次の予定",
+    "nextNone": "予定はまだありません",
+    "searchLabel": "予約を検索",
+    "searchPlaceholder": "予約コード、ワークショップ名またはショップ名",
+    "workshopLabel": "ワークショップ",
+    "allWorkshops": "すべてのワークショップ",
+    "from": "開始日",
+    "to": "終了日",
+    "clear": "絞り込みを解除",
+    "count": "{count, plural, other {予約#件}}",
+    "empty": "まだ予約がありません。",
+    "emptyHint": "気になるワークショップを選んで、最初の席を予約しましょう。",
+    "browse": "ワークショップを探す",
+    "noResults": "条件に合う予約はありません。",
+    "shopLine": "ショップ：{shop}",
+    "when": {
+      "today": "今日",
+      "tomorrow": "明日",
+      "inDays": "{days, plural, other {#日後}}",
+      "inProgress": "開催中",
+      "finished": "終了",
+      "cancelled": "キャンセル済み"
+    },
+    "guests": "{count, plural, other {#名}}",
+    "status": {
+      "NOT_CONFIRMED": "メールで確認してください",
+      "CONFIRMED": "確定",
+      "CHECKED_IN": "チェックイン済み",
+      "CANCELLED": "キャンセル済み"
+    },
+    "payment": {
+      "UNPAID": "現地でお支払い",
+      "PAID": "支払い済み"
+    },
+    "code": "予約コード",
+    "total": "合計",
+    "saved": "{codes}で{amount}お得になりました",
+    "note": "あなたのメモ：{note}",
+    "checkedInAt": "{time}にチェックイン",
+    "showCode": "スタジオでこのコードを見せるとチェックインされます。",
+    "confirmHint": "確認メールのリンクを開いて、この予約を確定してください。",
+    "cancelledBy": {
+      "GUEST": "ご自身でキャンセルした予約です",
+      "SHOP": "ショップがキャンセルした予約です"
+    },
+    "cancelReason": "理由：{reason}",
+    "cancelBlocked": {
+      "started": "ワークショップがすでに始まっているため、キャンセルできません。",
+      "checkedIn": "チェックイン済みの予約はキャンセルできません。",
+      "closed": "このセッションは締め切られているため、ここではキャンセルできません。スタジオにお問い合わせください。"
+    },
+    "directions": "経路",
+    "cancelledDone": "予約 {code} をキャンセルしました。あなたとショップにメールを送りました。"
+  },
+  "favorites": {
+    "empty": "お気に入りのワークショップはまだありません。ワークショップのハートを押すとここに保存されます。"
   }
 }

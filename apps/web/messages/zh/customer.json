@@ -71,5 +71,71 @@
     "count": "{count, plural, other {# 个工作坊}}",
     "demoOnly": "部分商店为演示商店：预订步骤可用，但不会创建真实预订。",
     "empty": "暂无可显示的工作坊。"
+  },
+  "bookings": {
+    "intro": "您所有的预订都在这里。",
+    "tabs": {
+      "all": "全部",
+      "upcoming": "即将开始",
+      "past": "已结束",
+      "cancelled": "已取消"
+    },
+    "attended": "已参加",
+    "nextUp": "下一场",
+    "nextNone": "暂无安排",
+    "searchLabel": "搜索预订",
+    "searchPlaceholder": "预订编号、工作坊或商店名称",
+    "workshopLabel": "工作坊",
+    "allWorkshops": "全部工作坊",
+    "from": "开始日期",
+    "to": "结束日期",
+    "clear": "清除筛选",
+    "count": "{count, plural, other {# 个预订}}",
+    "empty": "您还没有任何预订。",
+    "emptyHint": "挑选一个喜欢的工作坊，预订您的第一个名额。",
+    "browse": "浏览工作坊",
+    "noResults": "没有符合筛选条件的预订。",
+    "shopLine": "商店：{shop}",
+    "when": {
+      "today": "今天",
+      "tomorrow": "明天",
+      "inDays": "{days, plural, other {# 天后}}",
+      "inProgress": "进行中",
+      "finished": "已结束",
+      "cancelled": "已取消"
+    },
+    "guests": "{count, plural, other {# 位}}",
+    "status": {
+      "NOT_CONFIRMED": "请通过邮件确认",
+      "CONFIRMED": "已确认",
+      "CHECKED_IN": "已签到",
+      "CANCELLED": "已取消"
+    },
+    "payment": {
+      "UNPAID": "到店支付",
+      "PAID": "已支付"
+    },
+    "code": "预订编号",
+    "total": "合计",
+    "saved": "使用 {codes} 节省了 {amount}",
+    "note": "您的备注：{note}",
+    "checkedInAt": "{time} 签到",
+    "showCode": "到店后出示此编号即可签到。",
+    "confirmHint": "请打开确认邮件中的链接以确认此预订。",
+    "cancelledBy": {
+      "GUEST": "您已取消此预订",
+      "SHOP": "商店已取消此预订"
+    },
+    "cancelReason": "原因：{reason}",
+    "cancelBlocked": {
+      "started": "工作坊已经开始，无法再取消。",
+      "checkedIn": "已签到的预订无法取消。",
+      "closed": "该场次已关闭，无法在此取消。请联系工作室。"
+    },
+    "directions": "路线",
+    "cancelledDone": "预订 {code} 已取消。我们已向您和商店发送邮件。"
+  },
+  "favorites": {
+    "empty": "还没有收藏的工作坊。点击工作坊上的爱心即可保存到这里。"
   }
 }

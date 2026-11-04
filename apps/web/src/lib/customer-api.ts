@@ -1,4 +1,5 @@
 import type { Gender, Locale, Socials, WorkshopCategory } from "@workshop/shared";
+import type { CustomerBooking } from "./customer-bookings";
 
 // Browser side of the account of a guest (/api/v1/customer/{id}). The guest is identified by the email of the login, sent in the `x-guest-email` header.
 // TODO(api): the guest session is a cookie; no email is sent.
@@ -35,6 +36,12 @@ const emailHeader = (email?: string): Record<string, string> => (email ? { "x-gu
 
 export const fetchCustomerProfile = async (id: string, email?: string): Promise<CustomerProfile> =>
   parse(await fetch(url(id), { headers: emailHeader(email), cache: "no-store" }));
+
+/** The bookings of the guest, and the time of the server (the page counts "today" and "in 3 days" from it). */
+export interface CustomerBookingsResponse { bookings: CustomerBooking[]; now: string }
+
+export const fetchCustomerBookings = async (id: string, email?: string): Promise<CustomerBookingsResponse> =>
+  parse(await fetch(`${url(id)}/bookings`, { headers: emailHeader(email), cache: "no-store" }));
 
 export const saveCustomerProfile = async (id: string, email: string | undefined, input: CustomerProfileInput): Promise<CustomerProfile> =>
   parse(await fetch(url(id), { method: "PATCH", headers: { "content-type": "application/json", ...emailHeader(email) }, body: JSON.stringify(input) }));

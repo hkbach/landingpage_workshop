@@ -71,5 +71,71 @@
     "count": "{count, plural, other {워크숍 #개}}",
     "demoOnly": "일부 샵은 데모 샵입니다. 예약 단계는 동작하지만 실제 예약은 생성되지 않습니다.",
     "empty": "아직 표시할 워크숍이 없습니다."
+  },
+  "bookings": {
+    "intro": "예약한 모든 내역을 한곳에서 확인하세요.",
+    "tabs": {
+      "all": "전체",
+      "upcoming": "예정",
+      "past": "지난 예약",
+      "cancelled": "취소됨"
+    },
+    "attended": "참석 완료",
+    "nextUp": "다음 일정",
+    "nextNone": "예정된 일정이 없습니다",
+    "searchLabel": "예약 검색",
+    "searchPlaceholder": "예약 코드, 워크숍 또는 샵 이름",
+    "workshopLabel": "워크숍",
+    "allWorkshops": "모든 워크숍",
+    "from": "시작일",
+    "to": "종료일",
+    "clear": "필터 초기화",
+    "count": "{count, plural, other {예약 #건}}",
+    "empty": "아직 예약이 없습니다.",
+    "emptyHint": "마음에 드는 워크숍을 골라 첫 자리를 예약해 보세요.",
+    "browse": "워크숍 둘러보기",
+    "noResults": "필터에 맞는 예약이 없습니다.",
+    "shopLine": "샵: {shop}",
+    "when": {
+      "today": "오늘",
+      "tomorrow": "내일",
+      "inDays": "{days, plural, other {#일 후}}",
+      "inProgress": "진행 중",
+      "finished": "종료됨",
+      "cancelled": "취소됨"
+    },
+    "guests": "{count, plural, other {#명}}",
+    "status": {
+      "NOT_CONFIRMED": "이메일로 확인해 주세요",
+      "CONFIRMED": "확정됨",
+      "CHECKED_IN": "체크인 완료",
+      "CANCELLED": "취소됨"
+    },
+    "payment": {
+      "UNPAID": "현장 결제",
+      "PAID": "결제 완료"
+    },
+    "code": "예약 코드",
+    "total": "합계",
+    "saved": "{codes}(으)로 {amount} 절약했어요",
+    "note": "내 메모: {note}",
+    "checkedInAt": "{time}에 체크인",
+    "showCode": "스튜디오에서 이 코드를 보여 주면 체크인됩니다.",
+    "confirmHint": "확인 이메일의 링크를 열어 이 예약을 확정하세요.",
+    "cancelledBy": {
+      "GUEST": "직접 취소한 예약입니다",
+      "SHOP": "샵에서 취소한 예약입니다"
+    },
+    "cancelReason": "사유: {reason}",
+    "cancelBlocked": {
+      "started": "워크숍이 이미 시작되어 취소할 수 없습니다.",
+      "checkedIn": "체크인된 예약은 취소할 수 없습니다.",
+      "closed": "마감된 세션이라 여기서 취소할 수 없습니다. 스튜디오에 문의해 주세요."
+    },
+    "directions": "길찾기",
+    "cancelledDone": "예약 {code}이(가) 취소되었습니다. 회원님과 샵에 이메일을 보냈습니다."
+  },
+  "favorites": {
+    "empty": "아직 즐겨찾는 워크숍이 없습니다. 워크숍의 하트를 눌러 여기에 저장하세요."
   }
 }

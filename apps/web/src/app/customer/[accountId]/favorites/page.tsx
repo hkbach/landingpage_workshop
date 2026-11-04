@@ -1,6 +1,9 @@
-import { CustomerBlankPage } from "@/components/customer/customer-shell";
+import { CustomerWorkshops } from "@/components/customer/customer-workshops";
+import { listedShops } from "@/lib/mock/customer-listing";
 
-// No content yet: the page is there so the menu works; it will be defined later.
+// The Workshops page with only the workshops the guest added to their favorites (the list of favorites is read in the browser, where it is kept).
+export const dynamic = "force-dynamic";
+
 export default function CustomerFavoritesPage() {
-  return <CustomerBlankPage menu="favorites" />;
+  return <CustomerWorkshops shops={listedShops()} mode="favorites" />;
 }
