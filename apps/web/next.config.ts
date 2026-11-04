@@ -15,7 +15,7 @@ const nextConfig: NextConfig = {
       { source: "/admin/:path*", destination: "/systemadmin/:path*", permanent: false },
     ];
   },
-  // Dev only: subdomains of PLATFORM_DOMAIN (e.g. app.localtest.me, clayco.localtest.me) load dev resources/HMR.
+  // Dev only: subdomains of PLATFORM_DOMAIN (e.g. app.localtest.me, whiskladle.localtest.me) load dev resources/HMR.
   allowedDevOrigins: ["localtest.me", "*.localtest.me"],
   turbopack: {
     rules: {

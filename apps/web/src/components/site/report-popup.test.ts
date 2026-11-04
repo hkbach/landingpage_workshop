@@ -48,7 +48,7 @@ describe("the footer link 'Report this site'", () => {
 });
 
 describe("ReportForm", () => {
-  const form = (props: Partial<Parameters<typeof ReportForm>[0]> = {}) => render(createElement(ReportForm, { slug: "clayco", ...props }));
+  const form = (props: Partial<Parameters<typeof ReportForm>[0]> = {}) => render(createElement(ReportForm, { slug: "whiskladle", ...props }));
 
   it("has labelled reason, description and email fields, the Turnstile placeholder and a submit button", () => {
     const html = form({ variant: "dialog" });
@@ -79,7 +79,7 @@ describe("ReportForm", () => {
 
 describe("ReportProvider", () => {
   it("renders the page and no dialog until the popup is opened", () => {
-    const html = render(createElement(ReportProvider, { slug: "clayco", theme: sitePage.theme } as ComponentProps<typeof ReportProvider>, createElement("p", null, "page content")));
+    const html = render(createElement(ReportProvider, { slug: "whiskladle", theme: sitePage.theme } as ComponentProps<typeof ReportProvider>, createElement("p", null, "page content")));
     expect(html).toContain("page content");
     expect(html).not.toContain('role="dialog"');
     expect(html).not.toContain("Send report");
@@ -105,7 +105,7 @@ describe("buildReportsQuery", () => {
     expect(buildReportsQuery({})).toBe("");
     expect(buildReportsQuery({ sort: "newest" })).toBe("");
     expect(buildReportsQuery({ status: "OPEN" })).toBe("?status=OPEN");
-    expect(buildReportsQuery({ status: "OPEN", reason: "SCAM", shop: "clayco", q: "card", sort: "oldest" })).toBe("?status=OPEN&reason=SCAM&shop=clayco&q=card&sort=oldest");
+    expect(buildReportsQuery({ status: "OPEN", reason: "SCAM", shop: "whiskladle", q: "card", sort: "oldest" })).toBe("?status=OPEN&reason=SCAM&shop=whiskladle&q=card&sort=oldest");
   });
   it("trims and encodes the search text, and ignores a blank one", () => {
     expect(buildReportsQuery({ q: "  charged twice & more  " })).toBe("?q=charged+twice+%26+more");

@@ -13,9 +13,9 @@ export const orgStats: Record<string, { workshops: number; bookings30d: number }
 };
 
 const extraReports: AbuseReport[] = [
-  { id: "ar-3", shopSlug: "waxwick", reason: "INAPPROPRIATE", description: "Cover image is not related to the workshop.", reporterEmail: "visitor@example.com", status: "OPEN", createdAt: ago(30) },
-  { id: "ar-4", shopSlug: "silverthread", reason: "PHISHING", description: "Booking confirmation asks to pay by an external link.", status: "OPEN", createdAt: ago(52) },
-  { id: "ar-5", shopSlug: "clayco", reason: "SCAM", description: "Workshop was cancelled without notice.", reporterEmail: "guest@example.com", status: "RESOLVED", createdAt: ago(24 * 12) },
+  { id: "ar-3", shopSlug: "sugarsift", reason: "INAPPROPRIATE", description: "Cover image is not related to the workshop.", reporterEmail: "visitor@example.com", status: "OPEN", createdAt: ago(30) },
+  { id: "ar-4", shopSlug: "goldennoodle", reason: "PHISHING", description: "Booking confirmation asks to pay by an external link.", status: "OPEN", createdAt: ago(52) },
+  { id: "ar-5", shopSlug: "whiskladle", reason: "SCAM", description: "Workshop was cancelled without notice.", reporterEmail: "guest@example.com", status: "RESOLVED", createdAt: ago(24 * 12) },
 ];
 
 export const adminReports: AbuseReport[] = [...abuseReports, ...extraReports].sort((a, b) =>

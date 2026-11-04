@@ -12,7 +12,7 @@ import { POST as confirm } from "./public/sites/[slug]/bookings/confirm/route";
 const slug = currentShop.slug;
 const ctx = { params: Promise.resolve({ slug }) } as never;
 const post = (route: (request: Request, ctx: never) => Promise<Response>, body: unknown, headers: Record<string, string> = {}) =>
-  route(new Request("http://clayco.localtest.me:3000/x", { method: "POST", headers: { "content-type": "application/json", ...headers }, body: JSON.stringify(body) }), ctx);
+  route(new Request("http://whiskladle.localtest.me:3000/x", { method: "POST", headers: { "content-type": "application/json", ...headers }, body: JSON.stringify(body) }), ctx);
 const patch = (id: string, body: unknown) => PATCH(new Request("http://x", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }), { params: Promise.resolve({ id }) } as never);
 
 const FREE = sessions.find((s) => s.status === "RUNNING" && Date.parse(s.startsAt) > Date.now() + 86_400_000 && s.capacity - s.reservedCount >= 4 && workshops.find((w) => w.id === s.workshopId)?.status === "ACTIVE")!; // an open session of the future, with free seats
@@ -46,7 +46,7 @@ describe("a guest books", () => {
     await post(book, { ...GUEST, locale: "vi" });
     expect(emails()).toHaveLength(1);
     expect(emails()[0]).toMatchObject({ type: "BOOKING_CONFIRMATION", to: "binh@example.com", locale: "vi", quantity: 2 });
-    expect(emails()[0]!.confirmUrl).toMatch(/^http:\/\/clayco\.localtest\.me:3000\/booking\/confirm\/[0-9a-f-]{36}$/);
+    expect(emails()[0]!.confirmUrl).toMatch(/^http:\/\/whiskladle\.localtest\.me:3000\/booking\/confirm\/[0-9a-f-]{36}$/);
   });
   it("a repeated Idempotency-Key gives the same booking and no second email", async () => {
     const a = await post(book, GUEST, { "idempotency-key": "k-1" });

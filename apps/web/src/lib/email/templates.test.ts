@@ -6,7 +6,7 @@ import { EMAIL_LANGS, EMAIL_LANG_NAMES, renderBookingConfirmation, renderBooking
 const BOOKING: BookingConfirmationData = {
   guestName: "Tran Binh", shopName: "Clay & Co Studio", bookingCode: "SES-0007-001", workshopTitle: "Pottery <Wheel> Basics",
   startsAt: "2026-11-07T02:00:00Z", endsAt: "2026-11-07T04:00:00Z", timezone: "Asia/Ho_Chi_Minh", quantity: 2, totalAmount: 1_300_000, currency: "VND",
-  confirmUrl: "http://clayco.localtest.me:3000/booking/confirm/abc-123",
+  confirmUrl: "http://whiskladle.localtest.me:3000/booking/confirm/abc-123",
 };
 const NAMES = ["English", "Tiếng Việt", "ภาษาไทย", "中文", "한국어", "日本語"];
 
@@ -30,7 +30,7 @@ describe("the booking confirmation email", () => {
     }
   });
   it("says the same thing in each language: the link and a button to confirm", () => {
-    expect(mail.html.split('href="http://clayco.localtest.me:3000/booking/confirm/abc-123"').length - 1).toBe(12); // the button and the plain link, six times
+    expect(mail.html.split('href="http://whiskladle.localtest.me:3000/booking/confirm/abc-123"').length - 1).toBe(12); // the button and the plain link, six times
     for (const label of ["Confirm my booking", "Xác nhận booking", "ยืนยันการจองของฉัน", "确认我的预订", "내 예약 확인", "予約を確認する"]) expect(mail.html, label).toContain(label);
   });
   it("greets the guest in each language", () => {
@@ -58,7 +58,7 @@ describe("the booking confirmation email", () => {
   });
   it("has a plain-text version with the six languages too", () => {
     for (const name of NAMES) expect(mail.text, name).toContain(`==== ${name} ====`);
-    expect(mail.text).toContain("http://clayco.localtest.me:3000/booking/confirm/abc-123");
+    expect(mail.text).toContain("http://whiskladle.localtest.me:3000/booking/confirm/abc-123");
   });
 });
 

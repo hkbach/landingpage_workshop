@@ -44,13 +44,13 @@ describe("handleReportSchema", () => {
 });
 
 const R = (id: string, o: Partial<ReportRecord>): ReportRecord => ({
-  id, shopSlug: "clayco", reason: "SCAM", description: "desc", status: "OPEN", createdAt: "2026-10-01T00:00:00.000Z", ...o,
+  id, shopSlug: "whiskladle", reason: "SCAM", description: "desc", status: "OPEN", createdAt: "2026-10-01T00:00:00.000Z", ...o,
 });
 const sample: ReportRecord[] = [
   R("1", { createdAt: "2026-10-01T10:00:00.000Z", description: "Charged twice", reporterEmail: "Anna@Example.com" }),
-  R("2", { createdAt: "2026-10-03T10:00:00.000Z", shopSlug: "waxwick", reason: "PHISHING", description: "Asked for a password" }),
+  R("2", { createdAt: "2026-10-03T10:00:00.000Z", shopSlug: "sugarsift", reason: "PHISHING", description: "Asked for a password" }),
   R("3", { createdAt: "2026-10-02T10:00:00.000Z", status: "RESOLVED", reason: "OTHER", description: "Wrong address" }),
-  R("4", { createdAt: "2026-10-04T10:00:00.000Z", status: "DISMISSED", shopSlug: "silverthread", description: "Rude owner" }),
+  R("4", { createdAt: "2026-10-04T10:00:00.000Z", status: "DISMISSED", shopSlug: "goldennoodle", description: "Rude owner" }),
 ];
 const ids = (rows: ReportRecord[]) => rows.map((r) => r.id).join(",");
 
@@ -62,13 +62,13 @@ describe("filterReports", () => {
   it("filters by status, reason and shop", () => {
     expect(ids(filterReports(sample, { status: "OPEN" }))).toBe("2,1");
     expect(ids(filterReports(sample, { reason: "OTHER" }))).toBe("3");
-    expect(ids(filterReports(sample, { shop: "silverthread" }))).toBe("4");
-    expect(ids(filterReports(sample, { status: "OPEN", shop: "clayco" }))).toBe("1");
+    expect(ids(filterReports(sample, { shop: "goldennoodle" }))).toBe("4");
+    expect(ids(filterReports(sample, { status: "OPEN", shop: "whiskladle" }))).toBe("1");
   });
   it("searches description, reporter email and shop slug, ignoring case and spaces around", () => {
     expect(ids(filterReports(sample, { q: "CHARGED" }))).toBe("1");
     expect(ids(filterReports(sample, { q: "  anna@example  " }))).toBe("1");
-    expect(ids(filterReports(sample, { q: "waxwick" }))).toBe("2");
+    expect(ids(filterReports(sample, { q: "sugarsift" }))).toBe("2");
     expect(ids(filterReports(sample, { q: "nothing like this" }))).toBe("");
     expect(ids(filterReports(sample, { q: "   " }))).toBe("4,2,3,1");
   });

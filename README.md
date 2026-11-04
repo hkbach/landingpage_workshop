@@ -257,11 +257,11 @@ Mở trình duyệt (khuyên dùng Chrome) và vào các địa chỉ sau. Đị
 | Khu vực | Địa chỉ | Ai dùng |
 | --- | --- | --- |
 | Trang chủ nền tảng | http://app.localtest.me:3000 | Mọi người |
-| **Quản lý của shop** (shop mẫu `clayco`) | http://app.localtest.me:3000/shopowner/clayco | Chủ shop |
-| **Landing page công khai** của shop mẫu | http://clayco.localtest.me:3000 | Khách đặt chỗ |
+| **Quản lý của shop** (shop mẫu `whiskladle`) | http://app.localtest.me:3000/shopowner/whiskladle | Chủ shop |
+| **Landing page công khai** của shop mẫu | http://whiskladle.localtest.me:3000 | Khách đặt chỗ |
 | **Admin hệ thống** (chỉ en + vi) | http://app.localtest.me:3000/systemadmin | Quản trị nền tảng |
 
-Mẹo: bạn có thể dùng `http://localhost:3000/shopowner/clayco` thay cho địa chỉ `app.localtest.me` khi máy không có Internet (riêng landing page công khai thì bắt buộc dùng `clayco.localtest.me`).
+Mẹo: bạn có thể dùng `http://localhost:3000/shopowner/whiskladle` thay cho địa chỉ `app.localtest.me` khi máy không có Internet (riêng landing page công khai thì bắt buộc dùng `whiskladle.localtest.me`).
 
 ### Đổi ngôn ngữ
 
@@ -270,6 +270,7 @@ Dùng nút ngôn ngữ ở góc trên bên phải (English, Tiếng Việt, 한�
 ### Về dữ liệu mẫu (rất quan trọng)
 
 - Toàn bộ dữ liệu (workshop, session, booking, khuyến mãi, thu nhập...) là **dữ liệu mẫu** tạo sẵn.
+- Bộ dữ liệu mẫu là một bếp dạy nấu ăn và làm bánh: 3 shop (Whisk & Ladle Kitchen `whiskladle`, Sugar & Sift Bakery `sugarsift`, Golden Noodle House `goldennoodle`), 5 workshop (Fresh Pasta from Scratch, Decorate Your Cupcakes, Sourdough Bread Basics, Dim Sum Night, Couples Cooking Night), cùng session, khách, booking và khuyến mãi. Dữ liệu nằm trong `apps/web/src/lib/mock/`.
 - Những thay đổi bạn làm (ví dụ hủy booking, đổi tỷ lệ phí của admin, tạo khuyến mãi) được giữ **trong bộ nhớ của máy chủ đang chạy** nên sẽ **mất khi tắt `pnpm dev` và chạy lại**. Một số thay đổi khác lưu trong trình duyệt (xóa dữ liệu trình duyệt là mất).
 - Vì vậy muốn "làm lại từ đầu" chỉ cần tắt (Ctrl + C) rồi chạy lại `pnpm dev`.
 
@@ -285,7 +286,7 @@ Dùng nút ngôn ngữ ở góc trên bên phải (English, Tiếng Việt, 한�
 | `pnpm install` báo lỗi về phiên bản Node/pnpm | Kiểm tra `node --version` (≥ 24) và `pnpm --version` (`12.16.1`). |
 | `pnpm install` rất chậm hoặc đứt giữa chừng | Kiểm tra mạng, chạy lại `pnpm install`. Vẫn lỗi: xóa thư mục `node_modules` rồi chạy lại. |
 | "Port 3000 is already in use" / `EADDRINUSE` | Có chương trình khác đang dùng cổng 3000 (thường là bản `pnpm dev` cũ chưa tắt). Tắt cửa sổ đó (Ctrl + C) rồi chạy lại. |
-| Trình duyệt không mở được `app.localtest.me` | Kiểm tra Internet. Hoặc dùng `http://localhost:3000/shopowner/clayco`. |
+| Trình duyệt không mở được `app.localtest.me` | Kiểm tra Internet. Hoặc dùng `http://localhost:3000/shopowner/whiskladle`. |
 | `pnpm test` có 1–2 test đỏ **không liên quan** thay đổi của bạn | Có vài test thỉnh thoảng chạy chậm trên máy yếu. Chạy lại `pnpm test` lần nữa. Nếu vẫn đỏ ở cùng một test thì báo cho nhóm kèm ảnh chụp màn hình. |
 | Thấy nhiều dòng `IntlError` khi chạy test | Bình thường, bỏ qua. Chỉ nhìn dòng tổng kết `Tests ... passed`. |
 | Sửa code nhưng trang không đổi | Tắt `pnpm dev` (Ctrl + C), chạy lại. |

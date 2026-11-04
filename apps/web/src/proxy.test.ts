@@ -9,7 +9,7 @@ const rewrittenTo = (res: Response) => res.headers.get("x-middleware-rewrite");
 
 describe("proxy", () => {
   it("rewrites a shop's host to its site", () => {
-    expect(rewrittenTo(run("http://clayco.localtest.me/ja"))).toBe("http://clayco.localtest.me/sites/clayco/ja");
+    expect(rewrittenTo(run("http://whiskladle.localtest.me/ja"))).toBe("http://whiskladle.localtest.me/sites/whiskladle/ja");
   });
   it("serves the system admin area on the platform hosts", () => {
     for (const url of ["http://localtest.me/systemadmin", "http://app.localtest.me/systemadmin/organizations", "http://localhost:3000/systemadmin"]) {
@@ -19,8 +19,8 @@ describe("proxy", () => {
     }
   });
   it("never serves the system admin area on a shop's host: it is a page of the shop site", () => {
-    const res = run("http://clayco.localtest.me/systemadmin");
-    expect(rewrittenTo(res)).toBe("http://clayco.localtest.me/sites/clayco/systemadmin");
+    const res = run("http://whiskladle.localtest.me/systemadmin");
+    expect(rewrittenTo(res)).toBe("http://whiskladle.localtest.me/sites/whiskladle/systemadmin");
     expect(res.headers.get("x-middleware-request-x-ui-area")).toBeNull();
   });
 });

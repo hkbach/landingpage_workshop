@@ -12,7 +12,7 @@ import { POST as lookup } from "./public/sites/[slug]/accounts/lookup/route";
 const slug = currentShop.slug;
 const ctx = { params: Promise.resolve({ slug }) } as never;
 const post = (route: (request: Request, ctx: never) => Promise<Response>, body: unknown) =>
-  route(new Request("http://clayco.localtest.me:3000/x", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }), ctx);
+  route(new Request("http://whiskladle.localtest.me:3000/x", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }), ctx);
 const FREE = sessions.find((s) => s.status === "RUNNING" && Date.parse(s.startsAt) > Date.now() + 86_400_000 && s.capacity - s.reservedCount >= 4 && workshops.find((w) => w.id === s.workshopId)?.status === "ACTIVE")!;
 const guest = (email: string, fullName = "Someone") => ({ sessionId: FREE.id, quantity: 1, fullName, email, phone: "+84 90 111 2222" });
 const PROFILE = { fullName: "Tran Binh", country: "VN", birthDate: "1995-05-20", consent: true };

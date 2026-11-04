@@ -57,7 +57,7 @@ const COUNTRY_DEFAULTS: Record<string, { timezone: string; currency: string }> =
 };
 
 // Mock "already taken" slugs: the real check is the uniqueness of the slug in the whole system (FR-ORG-01).
-const TAKEN_SLUGS = ["clayco", "waxwick", "silverthread", "demo", "studio"];
+const TAKEN_SLUGS = ["whiskladle", "sugarsift", "goldennoodle", "demo", "studio"];
 const isTaken = (slug: string) => TAKEN_SLUGS.includes(slug);
 
 export function OnboardingWizard({ platformDomain }: { platformDomain: string }) {

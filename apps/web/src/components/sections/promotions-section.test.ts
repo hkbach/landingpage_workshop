@@ -41,7 +41,7 @@ describe("promotions section", () => {
   it("writes a fixed amount in the shop currency and names the workshops it covers", () => {
     const out = html([promo({ discountType: "FIXED_AMOUNT", discountValue: 100_000, appliesTo: "SELECTED", workshopIds: ["ws-2"], code: undefined })]);
     expect(out).toContain("100,000");
-    expect(out).toContain("Applies to: Glaze &amp; Paint Your Mug");
+    expect(out).toContain("Applies to: Decorate Your Cupcakes");
     expect(out).not.toContain("Code:");
   });
   it("has two layouts that both show every promotion", () => {

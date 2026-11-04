@@ -18,22 +18,22 @@ function at(daysFromNow: number, hourLocal: number): string {
 
 export const shops: Shop[] = [
   {
-    id: "org-1", name: "Clay & Co Studio", slug: "clayco", status: "ACTIVE", country: "VN", timezone: TZ, currency: "VND",
-    defaultLocale: "en", enabledLocales: ["en", "vi", "ko", "ja", "zh"], contactEmail: "hello@clayco.example", contactPhone: "+84 90 000 0000",
+    id: "org-1", name: "Whisk & Ladle Kitchen", slug: "whiskladle", status: "ACTIVE", country: "VN", timezone: TZ, currency: "VND",
+    defaultLocale: "en", enabledLocales: ["en", "vi", "ko", "ja", "zh"], contactEmail: "hello@whiskladle.example", contactPhone: "+84 90 000 0000",
     whatsapp: "+84 90 000 0000", address: "12 Nguyen Hue, District 1, Ho Chi Minh City", mapsUrl: "https://maps.app.goo.gl/example",
-    plan: "FREE", ownerName: "Linh Tran", ownerEmail: "linh@clayco.example", createdAt: at(-60, 9),
+    plan: "FREE", ownerName: "Linh Tran", ownerEmail: "linh@whiskladle.example", createdAt: at(-60, 9),
   },
   {
-    id: "org-2", name: "Wax & Wick", slug: "waxwick", status: "PENDING_REVIEW", country: "VN", timezone: TZ, currency: "VND",
-    defaultLocale: "en", enabledLocales: ["en", "ja"], contactEmail: "hi@waxwick.example", contactPhone: "+84 91 111 1111",
+    id: "org-2", name: "Sugar & Sift Bakery", slug: "sugarsift", status: "PENDING_REVIEW", country: "VN", timezone: TZ, currency: "VND",
+    defaultLocale: "en", enabledLocales: ["en", "ja"], contactEmail: "hi@sugarsift.example", contactPhone: "+84 91 111 1111",
     address: "5 Le Loi, Hoi An", mapsUrl: "https://maps.app.goo.gl/example2",
-    plan: "FREE", ownerName: "Minh Pham", ownerEmail: "minh@waxwick.example", createdAt: at(-3, 10),
+    plan: "FREE", ownerName: "Minh Pham", ownerEmail: "minh@sugarsift.example", createdAt: at(-3, 10),
   },
   {
-    id: "org-3", name: "Silver Thread", slug: "silverthread", status: "SUSPENDED", statusReason: "Reported as misleading", country: "VN", timezone: TZ, currency: "USD",
-    defaultLocale: "en", enabledLocales: ["en"], contactEmail: "contact@silver.example", contactPhone: "+84 92 222 2222",
+    id: "org-3", name: "Golden Noodle House", slug: "goldennoodle", status: "SUSPENDED", statusReason: "Reported as misleading", country: "VN", timezone: TZ, currency: "USD",
+    defaultLocale: "en", enabledLocales: ["en"], contactEmail: "contact@goldennoodle.example", contactPhone: "+84 92 222 2222",
     address: "88 Hang Bac, Hanoi", mapsUrl: "https://maps.app.goo.gl/example3",
-    plan: "PRO", ownerName: "An Nguyen", ownerEmail: "an@silver.example", createdAt: at(-120, 10),
+    plan: "PRO", ownerName: "An Nguyen", ownerEmail: "an@goldennoodle.example", createdAt: at(-120, 10),
   },
 ];
 
@@ -42,39 +42,39 @@ export const currentShop = shops[0]!;
 
 export const workshops: Workshop[] = [
   {
-    id: "ws-1", title: { en: "Pottery Wheel Basics", vi: "Làm gốm cơ bản", ko: "도자기 물레 기초", ja: "ろくろ体験の基本", zh: "陶艺转盘入门" },
-    shortDescription: { en: "Throw your first bowl on the wheel.", vi: "Tự tay làm chiếc bát đầu tiên." },
-    description: { en: "A relaxed 2-hour class: centering, pulling and shaping clay with a local artisan." },
-    includes: { en: ["All materials", "Apron", "Tea and snacks"] }, notes: { en: "Wear clothes you do not mind getting dirty." },
+    id: "ws-1", title: { en: "Fresh Pasta from Scratch", vi: "Làm pasta tươi từ đầu", ko: "수제 생파스타 만들기", ja: "手打ちパスタ入門", zh: "手工新鲜意面" },
+    shortDescription: { en: "Roll, cut and cook your first fresh pasta.", vi: "Tự tay cán, cắt và nấu món pasta đầu tiên." },
+    description: { en: "A relaxed 2-hour class: mixing the dough, rolling sheets and cutting shapes with a local chef." },
+    includes: { en: ["All ingredients", "Apron", "Tea and a tasting"] }, notes: { en: "Wear closed shoes and tie back long hair." },
     durationMinutes: 120, priceAmount: 650_000, currency: "VND", defaultCapacity: 8, maxPerBooking: 6,
-    coverUrl: "https://picsum.photos/seed/pottery/1200/800", galleryUrls: ["https://picsum.photos/seed/p1/800/600", "https://picsum.photos/seed/p2/800/600"],
+    coverUrl: "https://picsum.photos/seed/pasta/1200/800", galleryUrls: ["https://picsum.photos/seed/pasta1/800/600", "https://picsum.photos/seed/pasta2/800/600"],
     status: "ACTIVE", sortOrder: 1, createdAt: at(-120, 9),
   },
   {
-    id: "ws-2", title: { en: "Glaze & Paint Your Mug", vi: "Vẽ men lên cốc" },
-    shortDescription: { en: "Decorate a ready-made mug." }, description: { en: "Pick colours and patterns; we fire it for pickup in 5 days." },
-    includes: { en: ["Mug", "Glazes"] }, notes: {},
+    id: "ws-2", title: { en: "Decorate Your Cupcakes", vi: "Trang trí cupcake" },
+    shortDescription: { en: "Frost and decorate a box of cupcakes." }, description: { en: "Pick colours and toppings; take your box home the same day." },
+    includes: { en: ["Cupcakes", "Frosting and toppings"] }, notes: {},
     durationMinutes: 90, priceAmount: 400_000, currency: "VND", defaultCapacity: 10, maxPerBooking: 6,
-    coverUrl: "https://picsum.photos/seed/mug/1200/800", galleryUrls: [], status: "ACTIVE", sortOrder: 2, createdAt: at(-75, 14),
+    coverUrl: "https://picsum.photos/seed/cupcake/1200/800", galleryUrls: [], status: "ACTIVE", sortOrder: 2, createdAt: at(-75, 14),
   },
   {
-    id: "ws-3", title: { en: "Hand-building Plates" }, shortDescription: { en: "Coil and slab techniques." }, description: { en: "Draft." },
+    id: "ws-3", title: { en: "Sourdough Bread Basics" }, shortDescription: { en: "Feed a starter and shape your first loaf." }, description: { en: "Draft." },
     includes: {}, notes: {}, durationMinutes: 150, priceAmount: 500_000, currency: "VND", defaultCapacity: 6, maxPerBooking: 4,
-    coverUrl: "https://picsum.photos/seed/plates/1200/800", galleryUrls: [], status: "DRAFT", sortOrder: 3, createdAt: at(-6, 10.5),
+    coverUrl: "https://picsum.photos/seed/sourdough/1200/800", galleryUrls: [], status: "DRAFT", sortOrder: 3, createdAt: at(-6, 10.5),
   },
   {
-    id: "ws-4", title: { en: "Raku Firing Day", vi: "Ngày nung Raku", ko: "라쿠 소성 데이", ja: "楽焼きの一日", zh: "乐烧体验日" },
-    shortDescription: { en: "Glaze a piece and watch it fired in the open kiln.", vi: "Tráng men và xem sản phẩm được nung trong lò mở." },
-    description: { en: "A half-day class: glaze your own bowl, then fire it in a raku kiln with our instructor." },
-    includes: { en: ["Clay piece", "Glazes", "Firing", "Tea"] }, notes: { en: "Closed shoes are required near the kiln." },
+    id: "ws-4", title: { en: "Dim Sum Night", vi: "Đêm dim sum", ko: "딤섬 나이트", ja: "点心ナイト", zh: "点心之夜" },
+    shortDescription: { en: "Fold, steam and share a table of dim sum.", vi: "Gói, hấp và cùng thưởng thức bàn dim sum." },
+    description: { en: "A half-day class: fold your own dumplings, steam them and share the table with our chef." },
+    includes: { en: ["Ingredients", "Bamboo steamer", "Tea"] }, notes: { en: "Closed shoes are required in the kitchen." },
     durationMinutes: 180, priceAmount: 700_000, currency: "VND", defaultCapacity: 8, maxPerBooking: 4,
-    coverUrl: "https://picsum.photos/seed/raku/1200/800", galleryUrls: ["https://picsum.photos/seed/raku1/800/600"],
+    coverUrl: "https://picsum.photos/seed/dimsum/1200/800", galleryUrls: ["https://picsum.photos/seed/dimsum1/800/600"],
     status: "ACTIVE", sortOrder: 4, createdAt: at(-40, 11),
   },
   {
-    id: "ws-5", title: { en: "Couples Night Class" }, shortDescription: { en: "Make a pair of cups together." }, description: { en: "Draft." },
+    id: "ws-5", title: { en: "Couples Cooking Night" }, shortDescription: { en: "Cook a three-course dinner together." }, description: { en: "Draft." },
     includes: {}, notes: {}, durationMinutes: 150, priceAmount: 900_000, currency: "VND", defaultCapacity: 12, maxPerBooking: 2,
-    coverUrl: "https://picsum.photos/seed/kids/1200/800", galleryUrls: [], status: "DRAFT", sortOrder: 5, createdAt: at(-2, 15),
+    coverUrl: "https://picsum.photos/seed/dinner/1200/800", galleryUrls: [], status: "DRAFT", sortOrder: 5, createdAt: at(-2, 15),
   },
 ];
 
@@ -91,7 +91,7 @@ const pic = (seed: string) => `https://picsum.photos/seed/session-${seed}/400/30
 //   Open: new, never started. Running: bookable. Paused: stopped (Close / Re-schedule). Closed: by the owner (with a reason) or by the system.
 export const sessions: Session[] = [
   // ---- TODAY (fixed hours: depending on the time of day they are over, taking place or still to come) ----
-  { id: "se-1", code: "SES-0001", workshopId: "ws-1", startsAt: at(0, 9), endsAt: at(0, 11), capacity: 8, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 120, imageUrl: pic("wheel") },
+  { id: "se-1", code: "SES-0001", workshopId: "ws-1", startsAt: at(0, 9), endsAt: at(0, 11), capacity: 8, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 120, imageUrl: pic("pasta") },
   { id: "se-2", code: "SES-0002", workshopId: "ws-2", startsAt: at(0, 14), endsAt: at(0, 15.5), capacity: 10, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 120 },
 
   // ---- RIGHT NOW (times relative to when the server started) ----
@@ -107,15 +107,15 @@ export const sessions: Session[] = [
   { id: "se-31", code: "SES-0031", workshopId: "ws-1", startsAt: inMinutes(180), endsAt: inMinutes(300), capacity: 8, reservedCount: 0, status: "PAUSED", bookingCutoffMinutes: 90 },
 
   // ---- COMING DAYS ----
-  { id: "se-3", code: "SES-0003", workshopId: "ws-1", startsAt: at(1, 9), endsAt: at(1, 11), capacity: 8, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 120, imageUrl: pic("glaze") },
+  { id: "se-3", code: "SES-0003", workshopId: "ws-1", startsAt: at(1, 9), endsAt: at(1, 11), capacity: 8, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 120, imageUrl: pic("icing") },
   // Closed by the owner before it started, with a reason that is one of the basic ones.
   { id: "se-4", code: "SES-0004", workshopId: "ws-1", startsAt: at(1, 14), endsAt: at(1, 16), capacity: 8, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, notes: [{ type: "CLOSED", at: at(-1, 16), reason: { code: "VENUE_ISSUE" } }] },
-  { id: "se-5", code: "SES-0005", workshopId: "ws-2", startsAt: at(2, 10), endsAt: at(2, 11.5), capacity: 10, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 180, imageUrl: pic("mug") },
+  { id: "se-5", code: "SES-0005", workshopId: "ws-2", startsAt: at(2, 10), endsAt: at(2, 11.5), capacity: 10, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 180, imageUrl: pic("cupcake") },
   { id: "se-41", code: "SES-0041", workshopId: "ws-1", startsAt: at(2, 16), endsAt: at(2, 18), capacity: 6, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 0 }, // closes when it starts
   { id: "se-6", code: "SES-0006", workshopId: "ws-1", startsAt: at(3, 9), endsAt: at(3, 11), capacity: 8, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, notes: [{ type: "CLOSED", at: at(0, 8), reason: { code: "INSTRUCTOR_UNAVAILABLE" } }] },
   { id: "se-7", code: "SES-0007", workshopId: "ws-1", startsAt: at(4, 9), endsAt: at(4, 11), capacity: 8, reservedCount: 0, status: "OPEN", bookingCutoffMinutes: 60 },
   { id: "se-8", code: "SES-0008", workshopId: "ws-2", startsAt: at(4, 14), endsAt: at(4, 15.5), capacity: 10, reservedCount: 0, status: "OPEN", bookingCutoffMinutes: 120 },
-  { id: "se-9", code: "SES-0009", workshopId: "ws-1", startsAt: at(5, 9), endsAt: at(5, 11), capacity: 8, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 1440, imageUrl: pic("pottery") },
+  { id: "se-9", code: "SES-0009", workshopId: "ws-1", startsAt: at(5, 9), endsAt: at(5, 11), capacity: 8, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 1440, imageUrl: pic("dough") },
   { id: "se-10", code: "SES-0010", workshopId: "ws-2", startsAt: at(5, 10), endsAt: at(5, 11.5), capacity: 10, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 120 },
   // Paused with two guests: one has an email (re-scheduling emails them), the other is a walk-in.
   { id: "se-11", code: "SES-0011", workshopId: "ws-1", startsAt: at(6, 14), endsAt: at(6, 16), capacity: 8, reservedCount: 0, status: "PAUSED", bookingCutoffMinutes: 120 },
@@ -126,13 +126,13 @@ export const sessions: Session[] = [
     { type: "CLOSED", at: at(0, 10), reason: { code: "SCHEDULE_CHANGE" } }, // the 4th close: closed for good (only a system administrator can open it)
   ] },
   { id: "se-13", code: "SES-0013", workshopId: "ws-1", startsAt: at(7, 9), endsAt: at(7, 11), capacity: 8, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, notes: [{ type: "CLOSED", at: at(-3, 10), reason: { code: "NOT_ENOUGH_GUESTS" } }, { type: "REOPENED", at: at(-2, 9) }, { type: "CLOSED", at: at(-1, 9), reason: { code: "NOT_ENOUGH_GUESTS" } }] },
-  { id: "se-14", code: "SES-0014", workshopId: "ws-2", startsAt: at(7, 14), endsAt: at(7, 15.5), capacity: 10, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, notes: [{ type: "RESCHEDULED", at: at(-4, 11), reason: { code: "VENUE_ISSUE" } }, { type: "CLOSED", at: at(-1, 11), reason: { code: "OTHER", note: "The glaze delivery is late." } }] },
+  { id: "se-14", code: "SES-0014", workshopId: "ws-2", startsAt: at(7, 14), endsAt: at(7, 15.5), capacity: 10, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, notes: [{ type: "RESCHEDULED", at: at(-4, 11), reason: { code: "VENUE_ISSUE" } }, { type: "CLOSED", at: at(-1, 11), reason: { code: "OTHER", note: "The flour delivery is late." } }] },
   // Sold out: every seat is booked.
-  { id: "se-15", code: "SES-0015", workshopId: "ws-1", startsAt: at(8, 10), endsAt: at(8, 12), capacity: 6, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 30, imageUrl: pic("plates") },
+  { id: "se-15", code: "SES-0015", workshopId: "ws-1", startsAt: at(8, 10), endsAt: at(8, 12), capacity: 6, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 30, imageUrl: pic("bread") },
   // Closed by a system administrator (the note says so): the owner cannot re-open it, only an administrator can.
   { id: "se-16", code: "SES-0016", workshopId: "ws-2", startsAt: at(9, 10), endsAt: at(9, 11.5), capacity: 12, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 240, notes: [{ type: "CLOSED", at: at(0, 7), by: "ADMIN", reason: { code: "OTHER", note: "Reported by guests: the venue is not safe." } }] },
   // Cloned from SES-0009.
-  { id: "se-17", code: "SES-0017", workshopId: "ws-1", startsAt: at(10, 9), endsAt: at(10, 11), capacity: 8, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 1440, imageUrl: pic("pottery"), clonedFrom: { code: "SES-0009", workshopId: "ws-1" } },
+  { id: "se-17", code: "SES-0017", workshopId: "ws-1", startsAt: at(10, 9), endsAt: at(10, 11), capacity: 8, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 1440, imageUrl: pic("dough"), clonedFrom: { code: "SES-0009", workshopId: "ws-1" } },
   // Re-scheduled once already (it was moved from another day): its Re-schedule button is read-only.
   { id: "se-34", code: "SES-0034", workshopId: "ws-2", startsAt: at(12, 10), endsAt: at(12, 11.5), capacity: 10, reservedCount: 0, status: "PAUSED", bookingCutoffMinutes: 120, notes: [{ type: "RESCHEDULED", at: at(-1, 10), reason: { code: "SCHEDULE_CHANGE" } }] },
   // Three sessions on one day, in three situations.
@@ -158,7 +158,7 @@ export const sessions: Session[] = [
   // Closed by the owner before it started, with each kind of reason:
   { id: "se-19", code: "SES-0019", workshopId: "ws-1", startsAt: at(-2, 9), endsAt: at(-2, 11), capacity: 8, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, notes: [{ type: "CLOSED", at: at(-3, 10), reason: { code: "NOT_ENOUGH_GUESTS" } }] },
   { id: "se-20", code: "SES-0020", workshopId: "ws-2", startsAt: at(-2, 14), endsAt: at(-2, 15.5), capacity: 10, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 60, notes: [{ type: "CLOSED", at: at(-4, 15), reason: { code: "INSTRUCTOR_UNAVAILABLE" } }] },
-  { id: "se-21", code: "SES-0021", workshopId: "ws-1", startsAt: at(-3, 14), endsAt: at(-3, 16), capacity: 8, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, notes: [{ type: "CLOSED", at: at(-5, 9), reason: { code: "OTHER", note: "The kiln needed an urgent repair." } }] },
+  { id: "se-21", code: "SES-0021", workshopId: "ws-1", startsAt: at(-3, 14), endsAt: at(-3, 16), capacity: 8, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, notes: [{ type: "CLOSED", at: at(-5, 9), reason: { code: "OTHER", note: "The oven needed an urgent repair." } }] },
   { id: "se-26", code: "SES-0026", workshopId: "ws-2", startsAt: at(-9, 10), endsAt: at(-9, 11.5), capacity: 10, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 180, notes: [{ type: "CLOSED", at: at(-11, 11), reason: { code: "SCHEDULE_CHANGE" } }] },
   { id: "se-43", code: "SES-0043", workshopId: "ws-1", startsAt: at(-12, 9), endsAt: at(-12, 11), capacity: 8, reservedCount: 0, status: "CLOSED", bookingCutoffMinutes: 120, notes: [{ type: "CLOSED", at: at(-14, 9), reason: { code: "VENUE_ISSUE" } }] },
   // Left Running, Paused or Open when their time was over: the system shows them as Closed automatically.
@@ -171,10 +171,10 @@ export const sessions: Session[] = [
   // ---- COMPLETED: the owner checked the payments and completed them (final: nothing about them changes any more) ----
   { id: "se-44", code: "SES-0044", workshopId: "ws-1", startsAt: at(-8, 9), endsAt: at(-8, 11), capacity: 8, reservedCount: 0, status: "COMPLETED", bookingCutoffMinutes: 120, imageUrl: pic("done1") },
   { id: "se-45", code: "SES-0045", workshopId: "ws-2", startsAt: at(-10, 14), endsAt: at(-10, 15.5), capacity: 10, reservedCount: 0, status: "COMPLETED", bookingCutoffMinutes: 120 },
-  { id: "se-46", code: "SES-0046", workshopId: "ws-4", startsAt: at(-15, 10), endsAt: at(-15, 13), capacity: 8, reservedCount: 0, status: "COMPLETED", bookingCutoffMinutes: 120, imageUrl: pic("raku") },
+  { id: "se-46", code: "SES-0046", workshopId: "ws-4", startsAt: at(-15, 10), endsAt: at(-15, 13), capacity: 8, reservedCount: 0, status: "COMPLETED", bookingCutoffMinutes: 120, imageUrl: pic("dimsum") },
 
   // ---- A fourth workshop with sessions of its own: running, paused, open, and one closed by the owner (it has guests) ----
-  { id: "se-48", code: "SES-0048", workshopId: "ws-4", startsAt: at(3, 15), endsAt: at(3, 18), capacity: 8, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 120, imageUrl: pic("raku2") },
+  { id: "se-48", code: "SES-0048", workshopId: "ws-4", startsAt: at(3, 15), endsAt: at(3, 18), capacity: 8, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 120, imageUrl: pic("dimsum2") },
   { id: "se-49", code: "SES-0049", workshopId: "ws-4", startsAt: at(9, 15), endsAt: at(9, 18), capacity: 8, reservedCount: 0, status: "OPEN", bookingCutoffMinutes: 120 },
   { id: "se-50", code: "SES-0050", workshopId: "ws-4", startsAt: at(5, 16), endsAt: at(5, 19), capacity: 8, reservedCount: 0, status: "PAUSED", bookingCutoffMinutes: 120 },
   // Taking place now, closed early by the owner because the workshop was completed (its guests are emailed that the workshop took place).
@@ -238,7 +238,7 @@ const ci = (sessionId: string, minutes: number) => ({
 
 export const bookings: Booking[] = [
   // Bookings that used promotions: 20% off 1,300,000; 150,000 + 15% + 5% off 1,950,000; 100,000 off 4,000,000; 5% off 1,200,000 (cancelled).
-  booking({ id: "bk-1", sessionId: "se-1", customerId: "cu-1", quantity: 2, specialRequest: "Vegetarian snacks please",
+  booking({ id: "bk-1", sessionId: "se-1", customerId: "cu-1", quantity: 2, specialRequest: "Vegetarian filling please",
     promotionIds: ["pr-1"], discountAmount: 260_000, totalAmount: 1_040_000 }),
   booking({ id: "bk-2", sessionId: "se-1", customerId: "cu-2", quantity: 3, status: "CHECKED_IN", checkedInAt: at(0, 9.1),
     promotionIds: ["pr-5", "pr-6", "pr-7"], discountAmount: 540_000, totalAmount: 1_410_000,
@@ -463,8 +463,8 @@ export const auditLogs: AuditEntry[] = [
 ];
 
 export const abuseReports: AbuseReport[] = [
-  { id: "ar-1", shopSlug: "silverthread", reason: "SCAM", description: "Charged me twice on arrival.", reporterEmail: "x@example.com", status: "OPEN", createdAt: at(-6, 10) },
-  { id: "ar-2", shopSlug: "clayco", reason: "OTHER", description: "Address looks wrong.", status: "DISMISSED", createdAt: at(-20, 10) },
+  { id: "ar-1", shopSlug: "goldennoodle", reason: "SCAM", description: "Charged me twice on arrival.", reporterEmail: "x@example.com", status: "OPEN", createdAt: at(-6, 10) },
+  { id: "ar-2", shopSlug: "whiskladle", reason: "OTHER", description: "Address looks wrong.", status: "DISMISSED", createdAt: at(-20, 10) },
 ];
 
 // Default site of the current shop. The demo shop uses the Bento Grid layout (the most striking structure); the sample
@@ -475,19 +475,19 @@ const photo = (seed: string, w: number, h: number) => `https://picsum.photos/see
 
 const mockContent: PageContent = {
   schemaVersion: 1,
-  seo: { title: { en: "Clay & Co Studio – Pottery workshops in Saigon", ja: "Clay & Co Studio – サイゴンの陶芸ワークショップ", zh: "Clay & Co Studio – 西贡陶艺工作坊" }, description: { en: "Hands-on pottery classes for travellers.", ja: "旅行者向けの陶芸体験クラス。", zh: "面向游客的陶艺体验课程。" } },
+  seo: { title: { en: "Whisk & Ladle Kitchen – Cooking workshops in Saigon", ja: "Whisk & Ladle Kitchen – サイゴンの料理ワークショップ", zh: "Whisk & Ladle Kitchen – 西贡烹饪工作坊" }, description: { en: "Hands-on cooking and baking classes for travellers.", ja: "旅行者向けの料理・お菓子作り体験クラス。", zh: "面向游客的烹饪与烘焙体验课程。" } },
   sections: [
     { id: "s-hero", type: "hero", enabled: true, props: {
       title: { en: "Make something with your hands", vi: "Tự tay tạo nên điều đặc biệt", ko: "손으로 직접 만들어 보세요", ja: "自分の手で作ってみましょう", zh: "亲手创作属于你的作品" },
-      subtitle: { en: "Pottery workshops in the heart of Saigon", vi: "Workshop làm gốm giữa lòng Sài Gòn", ja: "サイゴンの中心で陶芸体験", zh: "西贡市中心的陶艺工作坊" },
+      subtitle: { en: "Cooking and baking workshops in the heart of Saigon", vi: "Workshop nấu ăn và làm bánh giữa lòng Sài Gòn", ja: "サイゴンの中心で料理とお菓子作り体験", zh: "西贡市中心的烹饪与烘焙工作坊" },
       imageUrl: photo("hero", 1600, 1000), ctaText: { en: "Book a workshop", vi: "Đặt chỗ", ko: "예약하기", ja: "予約する", zh: "立即预订" } } },
     { id: "s-about", type: "about", enabled: true, showBook: true, props: {
       heading: { en: "About us", vi: "Về chúng tôi", ja: "私たちについて", zh: "关于我们" },
-      body: { en: "We are a small family studio. Every class is led by a local artisan, in small groups, with everything included.", vi: "Chúng tôi là xưởng gốm gia đình nhỏ. Mỗi lớp do một nghệ nhân địa phương hướng dẫn." },
+      body: { en: "We are a small family kitchen. Every class is led by a local chef, in small groups, with everything included.", vi: "Chúng tôi là bếp gia đình nhỏ. Mỗi lớp do một đầu bếp địa phương hướng dẫn." },
       imageUrl: photo("about", 900, 700) } },
-    { id: "s-team", type: "team", enabled: true, props: { heading: { en: "Meet the artisans" }, members: [
+    { id: "s-team", type: "team", enabled: true, props: { heading: { en: "Meet the chefs" }, members: [
       { name: "Linh", role: { en: "Founder" }, bio: { en: "15 years of experience." }, imageUrl: photo("t1", 400, 400) },
-      { name: "Minh", role: { en: "Glaze specialist" }, bio: { en: "Loves bold colours and speckled glazes." }, imageUrl: photo("t2", 400, 400) },
+      { name: "Minh", role: { en: "Pastry chef" }, bio: { en: "Loves bold flavours and delicate pastry." }, imageUrl: photo("t2", 400, 400) },
       { name: "An", role: { en: "Host" }, bio: { en: "Makes sure every guest leaves with a smile." }, imageUrl: photo("t3", 400, 400) },
     ] } },
     { id: "s-ws", type: "workshops", enabled: true, props: { heading: { en: "Our workshops", vi: "Các workshop", ja: "ワークショップ", zh: "我们的工作坊" } } },
@@ -496,11 +496,11 @@ const mockContent: PageContent = {
       photo("g5", 900, 700), photo("g6", 700, 900), photo("g7", 700, 700), photo("g8", 800, 600),
     ] } },
     // Placeholder video ID for the mock; shops paste a YouTube link and only the ID is stored.
-    { id: "s-video", type: "video", enabled: true, props: { heading: { en: "A day in the studio" }, caption: { en: "Watch how a bowl is made, from a lump of clay to the kiln." }, videos: ["dQw4w9WgXcQ", "9bZkp7q19f0", "jNQXAC9IVRw"] } },
+    { id: "s-video", type: "video", enabled: true, props: { heading: { en: "A day in the kitchen" }, caption: { en: "Watch how fresh pasta is made, from flour and eggs to the plate." }, videos: ["dQw4w9WgXcQ", "9bZkp7q19f0", "jNQXAC9IVRw"] } },
     { id: "s-test", type: "testimonials", enabled: true, props: { heading: { en: "Guests say" }, items: [
       { name: "Emma", country: "GB", text: { en: "Best afternoon of our trip!" } },
       { name: "Min-jun", country: "KR", text: { en: "Patient teachers and a very relaxed atmosphere." } },
-      { name: "Sofia", country: "ES", text: { en: "I made a bowl I actually use every day." } },
+      { name: "Sofia", country: "ES", text: { en: "I now make fresh pasta every weekend." } },
     ] } },
     { id: "s-faq", type: "faq", enabled: true, showBook: true, props: { heading: { en: "FAQ" }, items: [
       { q: { en: "What if I arrive late?" }, a: { en: "Please arrive on time; bookings may be released after 30 minutes." } },
@@ -508,10 +508,10 @@ const mockContent: PageContent = {
       { q: { en: "Can I bring children?" }, a: { en: "Children from 8 years old are welcome with an adult." } },
     ] } },
     { id: "s-loc", type: "location", enabled: true, props: { heading: { en: "Find us" }, address: { en: "12 Nguyen Hue, District 1, HCMC" }, hours: { en: "Daily 9:00–18:00" }, mapsUrl: "https://maps.app.goo.gl/example" } },
-    { id: "s-con", type: "contact", enabled: true, props: { heading: { en: "Contact" }, phone: "+84 90 000 0000", whatsapp: "+84 90 000 0000", email: "hello@clayco.example", socials: [
-      { label: "Instagram", url: "https://instagram.com/clayco.example" },
+    { id: "s-con", type: "contact", enabled: true, props: { heading: { en: "Contact" }, phone: "+84 90 000 0000", whatsapp: "+84 90 000 0000", email: "hello@whiskladle.example", socials: [
+      { label: "Instagram", url: "https://instagram.com/whiskladle.example" },
     ] } },
-    { id: "s-foot", type: "footer", enabled: true, props: { text: { en: "© Clay & Co Studio" }, socials: [{ label: "Instagram", url: "https://instagram.com/clayco.example" }] } },
+    { id: "s-foot", type: "footer", enabled: true, props: { text: { en: "© Whisk & Ladle Kitchen" }, socials: [{ label: "Instagram", url: "https://instagram.com/whiskladle.example" }] } },
   ],
 };
 
@@ -520,7 +520,7 @@ const mockContent: PageContent = {
  * starting list: the shop owner can delete or add pages, and the list is then kept in the browser.
  */
 export const mockLandingPages: { id: string; name: string; template: TemplateKey }[] = [
-  { id: "p-summer", name: "Summer Pottery Promo", template: "magazine" },
+  { id: "p-summer", name: "Summer Baking Promo", template: "magazine" },
 ];
 
 export const defaultTheme: PageTheme = themeForTemplate(MOCK_TEMPLATE);
@@ -548,12 +548,12 @@ export const paymentHistory: { id: string; bookingCode: string; currency: string
   const VOUCHERS: Record<string, Voucher> = {
     EARLY20: { id: "EARLY20", discountType: "PERCENT", discountValue: 20, stacking: "SINGLE" },
     SPRING10: { id: "SPRING10", discountType: "PERCENT", discountValue: 10, stacking: "SINGLE" },
-    MUG100: { id: "MUG100", discountType: "FIXED_AMOUNT", discountValue: 100_000, stacking: "SINGLE" },
+    CAKE100: { id: "CAKE100", discountType: "FIXED_AMOUNT", discountValue: 100_000, stacking: "SINGLE" },
     GROUP15: { id: "GROUP15", discountType: "PERCENT", discountValue: 15, stacking: "MULTIPLE" },
     NEWS5: { id: "NEWS5", discountType: "PERCENT", discountValue: 5, stacking: "MULTIPLE" },
     COUPLE150: { id: "COUPLE150", discountType: "FIXED_AMOUNT", discountValue: 150_000, stacking: "MULTIPLE" },
   };
-  const combos: string[][] = [[], ["EARLY20"], [], ["SPRING10"], ["GROUP15", "NEWS5"], ["MUG100"], [], ["COUPLE150", "NEWS5"]];
+  const combos: string[][] = [[], ["EARLY20"], [], ["SPRING10"], ["GROUP15", "NEWS5"], ["CAKE100"], [], ["COUPLE150", "NEWS5"]];
   const out: { id: string; bookingCode: string; currency: string; price?: BookingPriceInfo; payments: HistoryPayment[] }[] = [];
   for (let back = 5; back >= 1; back--) {
     const idx = base - back;

@@ -40,12 +40,12 @@ function seed(): PromotionRecord[] {
       description: { en: "Book any workshop and pay 20% less. Mention the code at the studio.", vi: "Đặt bất kỳ workshop nào và trả ít hơn 20%." }, startDate: day(-10), endDate: day(20),
     },
     {
-      id: "pr-2", title: { en: "Paint your mug for less", vi: "Vẽ men cốc giá tốt" }, discountType: "FIXED_AMOUNT", discountValue: 100_000, stacking: "SINGLE", code: "MUG100", imageUrl: img("mugsale"),
-      description: { en: "100,000 off the mug painting class." }, appliesTo: "SELECTED", workshopIds: ["ws-2"], startDate: day(-3), endDate: day(10),
+      id: "pr-2", title: { en: "Cupcake class for less", vi: "Lớp cupcake giá tốt" }, discountType: "FIXED_AMOUNT", discountValue: 100_000, stacking: "SINGLE", code: "CAKE100", imageUrl: img("cakesale"),
+      description: { en: "100,000 off the cupcake decorating class." }, appliesTo: "SELECTED", workshopIds: ["ws-2"], startDate: day(-3), endDate: day(10),
     },
     {
       id: "pr-5", title: { en: "Date night: 150,000 off" }, discountType: "FIXED_AMOUNT", discountValue: 150_000, stacking: "MULTIPLE", code: "COUPLE150", imageUrl: img("datenight"),
-      description: { en: "Bring a partner to the pottery wheel class and take 150,000 off the booking." }, appliesTo: "SELECTED", workshopIds: ["ws-1"], startDate: day(-5), endDate: day(12),
+      description: { en: "Bring a partner to the fresh pasta class and take 150,000 off the booking." }, appliesTo: "SELECTED", workshopIds: ["ws-1"], startDate: day(-5), endDate: day(12),
     },
     {
       id: "pr-6", code: "GROUP15", title: { en: "Groups save 15%", vi: "Đi nhóm giảm 15%" }, discountType: "PERCENT", discountValue: 15, stacking: "MULTIPLE",
@@ -65,7 +65,7 @@ function seed(): PromotionRecord[] {
     },
     {
       id: "pr-9", title: { en: "Gift a class: 200,000 off" }, discountType: "FIXED_AMOUNT", discountValue: 200_000, stacking: "MULTIPLE", code: "GIFT200",
-      description: { en: "Give the gift of clay this season." }, appliesTo: "SELECTED", workshopIds: ["ws-1", "ws-2"], startDate: day(45), endDate: day(60),
+      description: { en: "Give the gift of a class this season." }, appliesTo: "SELECTED", workshopIds: ["ws-1", "ws-2"], startDate: day(45), endDate: day(60),
     },
     // Scheduled, far away
     {
@@ -78,7 +78,7 @@ function seed(): PromotionRecord[] {
     },
     {
       id: "pr-11", title: { en: "Summer splash: 25% off" }, discountType: "PERCENT", discountValue: 25, stacking: "SINGLE", code: "SPLASH25", imageUrl: img("summersplash"),
-      description: { en: "Cool down with clay." }, startDate: day(-120), endDate: day(-90),
+      description: { en: "Beat the heat with a cool class." }, startDate: day(-120), endDate: day(-90),
     },
     {
       id: "pr-12", code: "MIDAUTUMN80", title: { en: "Mid-autumn: 80,000 off" }, discountType: "FIXED_AMOUNT", discountValue: 80_000, stacking: "MULTIPLE", startDate: day(-50), endDate: day(-35),

@@ -154,7 +154,7 @@ Browser ────────────────────────
 
 | Host | Xử lý |
 |---|---|
-| `app.{PLATFORM_DOMAIN}` | Khu vực quản lý của shop owner (`/shopowner/{slug}/*`, ví dụ `/shopowner/clayco/bookings`; `/shopowner` chuyển hướng tới `/shopowner/{slug}` của shop trong phiên; địa chỉ cũ `/shopowner/bookings` và `/dashboard/*` được chuyển hướng sang địa chỉ có slug; slug khác slug của shop trả 404; `/shopowner/onboarding` là wizard tạo shop nên chưa có slug), system admin (`/systemadmin/*`; đường dẫn cũ `/admin/*` được chuyển hướng sang `/systemadmin/*`), auth (`/login`, `/signup`…) |
+| `app.{PLATFORM_DOMAIN}` | Khu vực quản lý của shop owner (`/shopowner/{slug}/*`, ví dụ `/shopowner/whiskladle/bookings`; `/shopowner` chuyển hướng tới `/shopowner/{slug}` của shop trong phiên; địa chỉ cũ `/shopowner/bookings` và `/dashboard/*` được chuyển hướng sang địa chỉ có slug; slug khác slug của shop trả 404; `/shopowner/onboarding` là wizard tạo shop nên chưa có slug), system admin (`/systemadmin/*`; đường dẫn cũ `/admin/*` được chuyển hướng sang `/systemadmin/*`), auth (`/login`, `/signup`…) |
 | `{PLATFORM_DOMAIN}` | Trang marketing của nền tảng (đơn giản, tĩnh) |
 | `{slug}.{PLATFORM_DOMAIN}` | Landing page của shop. Next.js middleware/proxy (tùy phiên bản Next.js) rewrite sang `/sites/[slug]/[[...locale]]` |
 | `media.{PLATFORM_DOMAIN}` | R2 public bucket (custom domain của R2) |

@@ -2,13 +2,13 @@
 // without it ("/shopowner/bookings"); these helpers put the slug in. /shopowner/onboarding has no shop yet, so it stays as it is.
 
 /** The slug of the demo shop (the mock session). TODO(api): the slug comes from the session's organization. */
-export const DEMO_SHOP_SLUG = "clayco";
+export const DEMO_SHOP_SLUG = "whiskladle";
 
 const ROOT = "/shopowner";
 /** The sections of the shop owner area: an old address such as /shopowner/bookings is sent to /shopowner/{slug}/bookings. */
 export const SHOP_SECTIONS = ["today", "bookings", "customers", "workshops", "sessions", "finance", "promotions", "site", "settings"] as const;
 
-/** `/shopowner/bookings?x=1#y` -> `/shopowner/clayco/bookings?x=1#y`. Other paths, and paths that already have the slug, are returned as they are. */
+/** `/shopowner/bookings?x=1#y` -> `/shopowner/whiskladle/bookings?x=1#y`. Other paths, and paths that already have the slug, are returned as they are. */
 export function withShopSlug(slug: string | null | undefined, path: string): string {
   if (!slug || !path.startsWith(ROOT)) return path;
   const rest = path.slice(ROOT.length);
