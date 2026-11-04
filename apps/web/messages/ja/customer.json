@@ -1,0 +1,60 @@
+{
+  "shell": {
+    "skipToContent": "本文へスキップ",
+    "menuLabel": "お客様メニュー",
+    "language": "言語",
+    "logout": "ログアウト",
+    "openSite": "{shop}に戻る",
+    "loading": "アカウントを開いています…",
+    "account": "{name}さんのアカウント"
+  },
+  "menu": {
+    "profile": "マイプロフィール",
+    "today": "今日",
+    "bookings": "マイ予約",
+    "favorites": "お気に入り",
+    "workshops": "ワークショップ"
+  },
+  "gate": {
+    "loginTitle": "ログインしてアカウントを見る",
+    "loginIntro": "{shop}でご利用のアカウントのメールアドレスを入力してください。",
+    "deniedTitle": "このアカウントを開けません",
+    "deniedText": "このアカウントは存在しないか、別のメールアドレスのものです。アカウントのメールアドレスでログインしてください。",
+    "switchAccount": "別のメールアドレスでログイン",
+    "loadFailed": "アカウントを読み込めませんでした。もう一度お試しください。",
+    "retry": "再試行"
+  },
+  "profile": {
+    "title": "マイプロフィール",
+    "intro": "{shop}が把握しているあなたの情報です。ここで変更できます。",
+    "email": "メールアドレス",
+    "emailHint": "メールアドレスは変更できません。",
+    "fullName": "氏名",
+    "phone": "電話番号",
+    "language": "言語",
+    "country": "国",
+    "countryPlaceholder": "国を選択",
+    "birthDate": "生年月日",
+    "gender": "性別",
+    "genderNone": "未入力",
+    "genders": {
+      "MALE": "男性",
+      "FEMALE": "女性",
+      "OTHER": "その他"
+    },
+    "socials": "SNS情報",
+    "socialsHint": "任意です。各アプリのアカウント名または番号を入力してください。",
+    "avatar": "写真のリンク",
+    "avatarHint": "https://で始まるリンクです。任意です。",
+    "save": "保存",
+    "saving": "保存中…",
+    "saved": "プロフィールを保存しました。",
+    "saveFailed": "プロフィールを保存できませんでした。もう一度お試しください。",
+    "errors": {
+      "required": "この項目は必須です。",
+      "tooLong": "文字数が多すぎます。",
+      "invalid": "正しい生年月日ではありません。",
+      "urlInvalid": "https://で始まるリンクを入力してください。"
+    }
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "shell": {
+    "skipToContent": "Chuyển tới nội dung",
+    "menuLabel": "Menu của khách hàng",
+    "language": "Ngôn ngữ",
+    "logout": "Đăng xuất",
+    "openSite": "Quay lại {shop}",
+    "loading": "Đang mở tài khoản của bạn…",
+    "account": "Tài khoản của {name}"
+  },
+  "menu": {
+    "profile": "Hồ sơ của tôi",
+    "today": "Hôm nay",
+    "bookings": "Booking của tôi",
+    "favorites": "Yêu thích",
+    "workshops": "Workshop"
+  },
+  "gate": {
+    "loginTitle": "Đăng nhập để xem tài khoản",
+    "loginIntro": "Dùng email của tài khoản bạn tại {shop}.",
+    "deniedTitle": "Không thể mở tài khoản này",
+    "deniedText": "Tài khoản này không tồn tại hoặc thuộc về email khác. Hãy đăng nhập bằng email của tài khoản.",
+    "switchAccount": "Đăng nhập bằng email khác",
+    "loadFailed": "Không thể tải tài khoản của bạn. Vui lòng thử lại.",
+    "retry": "Thử lại"
+  },
+  "profile": {
+    "title": "Hồ sơ của tôi",
+    "intro": "Những gì {shop} biết về bạn. Bạn có thể sửa tại đây.",
+    "email": "Email",
+    "emailHint": "Không thể đổi email.",
+    "fullName": "Họ và tên",
+    "phone": "Số điện thoại",
+    "language": "Ngôn ngữ",
+    "country": "Quốc gia",
+    "countryPlaceholder": "Chọn quốc gia",
+    "birthDate": "Ngày sinh",
+    "gender": "Giới tính",
+    "genderNone": "Không cung cấp",
+    "genders": {
+      "MALE": "Nam",
+      "FEMALE": "Nữ",
+      "OTHER": "Khác"
+    },
+    "socials": "Thông tin mạng xã hội",
+    "socialsHint": "Không bắt buộc. Tên tài khoản hoặc số của bạn trên từng ứng dụng.",
+    "avatar": "Liên kết ảnh",
+    "avatarHint": "Liên kết bắt đầu bằng https://. Không bắt buộc.",
+    "save": "Lưu",
+    "saving": "Đang lưu…",
+    "saved": "Đã lưu hồ sơ của bạn.",
+    "saveFailed": "Không thể lưu hồ sơ. Vui lòng thử lại.",
+    "errors": {
+      "required": "Vui lòng điền mục này.",
+      "tooLong": "Nội dung quá dài.",
+      "invalid": "Ngày sinh không hợp lệ.",
+      "urlInvalid": "Nhập liên kết bắt đầu bằng https://."
+    }
+  }
+}

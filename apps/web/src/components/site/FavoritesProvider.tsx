@@ -52,7 +52,7 @@ export function FavoritesProvider({ slug, shopName, theme, children }: { slug: s
         <DialogContent style={modalThemeStyle(theme)} className={cn("max-h-[92dvh] gap-4 overflow-y-auto p-5 sm:max-w-md", siteFontClass(theme.font))}>
           <LoginHeader shopName={shopName} />
           {/* Mounted only while open, so the form starts empty every time. */}
-          {open ? <LoginForm slug={slug} shopName={shopName} onLoggedIn={onLoggedIn} onCancel={() => { setOpen(false); setPending(null); }} /> : null}
+          {open ? <GuestLoginForm slug={slug} shopName={shopName} onLoggedIn={onLoggedIn} onCancel={() => { setOpen(false); setPending(null); }} /> : null}
         </DialogContent>
       </Dialog>
     </FavoritesContext.Provider>
@@ -77,7 +77,7 @@ const selectClass =
  * birth). Creating it merges into it the bookings that were made before with the same email, and the last step says how many. The builder preview (slug
  * "preview") has no server to ask, so it only logs in.
  */
-function LoginForm({ slug, shopName, onLoggedIn, onCancel }: { slug: string; shopName: string; onLoggedIn: (email: string) => void; onCancel: () => void }) {
+export function GuestLoginForm({ slug, shopName, onLoggedIn, onCancel }: { slug: string; shopName: string; onLoggedIn: (email: string) => void; onCancel: () => void }) {
   const t = useTranslations("site.favorites");
   const locale = useLocale();
   const [step, setStep] = useState<"email" | "code" | "profile" | "done">("email");

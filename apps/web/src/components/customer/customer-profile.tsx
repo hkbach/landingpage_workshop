@@ -1,0 +1,141 @@
+"use client";
+
+import { useState, type FormEvent } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { GENDERS, LOCALES, SOCIAL_PLATFORMS, type Gender, type Locale, type SocialPlatform } from "@workshop/shared";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DateInput } from "@/components/ui/date-input";
+import { Input } from "@/components/ui/input";
+import { CustomerAvatar } from "@/components/ops/customer-avatar";
+import { Field } from "@/components/dashboard/shell/field";
+import { NativeSelect } from "@/components/dashboard/shell/native-select";
+import { COUNTRY_CODES, countryName } from "@/components/booking/countries";
+import { LOCALE_NAMES } from "@/components/site/locale-names";
+import { CustomerApiError, saveCustomerProfile } from "@/lib/customer-api";
+import { AVATAR_MAX, NAME_MAX, PHONE_MAX, SOCIAL_MAX, toDraft, toInput, trimDraft, validateDraft, type ProfileDraft } from "@/lib/customer-profile-form";
+import { useDirty } from "@/lib/use-dirty";
+import { useCustomer } from "./customer-shell";
+
+/** Brand names: written the same in every language. */
+const SOCIAL_NAMES: Record<SocialPlatform, string> = {
+  ZALO: "Zalo", WHATSAPP: "WhatsApp", FACEBOOK: "Facebook", INSTAGRAM: "Instagram", TIKTOK: "TikTok", LINE: "LINE", KAKAOTALK: "KakaoTalk", WECHAT: "WeChat", TELEGRAM: "Telegram", X: "X",
+};
+
+/**
+ * My Profile: what the shop knows about the guest, which the guest can change (everything but the email). Save is only on when something changed (BR-17),
+ * every text is trimmed (BR-16) and the profile is replaced as a whole: what is emptied is removed.
+ */
+export function CustomerProfileView() {
+  const t = useTranslations("customer.profile");
+  const locale = useLocale();
+  const { accountId, email, shop, profile, setProfile } = useCustomer();
+  const [draft, setDraft] = useState<ProfileDraft>(() => toDraft(profile));
+  const [savedCount, setSavedCount] = useState(0); // the form is "clean" again after each save
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<"saved" | "failed" | null>(null);
+  const dirty = useDirty(draft, savedCount);
+  const today = new Date().toISOString().slice(0, 10);
+
+  const set = <K extends keyof ProfileDraft>(key: K, value: ProfileDraft[K]) => {
+    setDraft((d) => ({ ...d, [key]: value }));
+    setMessage(null);
+    setErrors((e) => (key in e ? Object.fromEntries(Object.entries(e).filter(([k]) => k !== key)) : e));
+  };
+  const setSocial = (platform: SocialPlatform, value: string) => {
+    setDraft((d) => ({ ...d, socials: { ...d.socials, [platform]: value } }));
+    setMessage(null);
+    setErrors((e) => (e.socials ? Object.fromEntries(Object.entries(e).filter(([k]) => k !== "socials")) : e));
+  };
+  const err = (field: string) => (errors[field] ? t(`errors.${errors[field]}` as never) : undefined);
+
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    if (saving || !dirty) return;
+    const found = validateDraft(draft, today);
+    setErrors(found);
+    if (Object.keys(found).length > 0) return;
+    setSaving(true);
+    setMessage(null);
+    try {
+      const saved = await saveCustomerProfile(accountId, email, toInput(draft));
+      setProfile(saved);
+      setDraft(trimDraft(toDraft(saved))); // the form shows what was saved
+      setSavedCount((n) => n + 1);
+      setMessage("saved");
+    } catch (error) {
+      if (error instanceof CustomerApiError && error.status === 422) setErrors(error.fields);
+      else setMessage("failed");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <form onSubmit={submit} noValidate className="grid gap-4" data-testid="customer-profile-form">
+      <div className="flex items-center gap-3">
+        <CustomerAvatar name={profile.fullName} url={profile.account.avatarUrl} className="size-14 text-base" />
+        <div className="min-w-0">
+          <h1 className="text-2xl font-semibold">{t("title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("intro", { shop: shop.name })}</p>
+        </div>
+      </div>
+      <Card>
+        <CardContent className="grid gap-4 pt-4 sm:grid-cols-2">
+          <Field htmlFor="cp-email" label={t("email")} hint={t("emailHint")}>
+            <Input id="cp-email" type="text" value={profile.email} readOnly aria-describedby="cp-email-hint" className="bg-muted/50" />
+          </Field>
+          <Field htmlFor="cp-name" label={<>{t("fullName")} <span aria-hidden>*</span></>} error={err("fullName")}>
+            <Input id="cp-name" value={draft.fullName} maxLength={NAME_MAX + 20} aria-required aria-invalid={Boolean(errors.fullName)} autoComplete="name" onChange={(e) => set("fullName", e.target.value)} />
+          </Field>
+          <Field htmlFor="cp-phone" label={t("phone")} error={err("phone")}>
+            <Input id="cp-phone" type="text" inputMode="tel" value={draft.phone} maxLength={PHONE_MAX + 10} aria-invalid={Boolean(errors.phone)} autoComplete="tel" onChange={(e) => set("phone", e.target.value)} />
+          </Field>
+          <Field htmlFor="cp-language" label={t("language")}>
+            <NativeSelect id="cp-language" value={draft.preferredLocale} onChange={(e) => set("preferredLocale", e.target.value as Locale)}>
+              {LOCALES.map((l) => <option key={l} value={l}>{LOCALE_NAMES[l]}</option>)}
+            </NativeSelect>
+          </Field>
+          <Field htmlFor="cp-country" label={<>{t("country")} <span aria-hidden>*</span></>} error={err("country")}>
+            <NativeSelect id="cp-country" value={draft.country} aria-required aria-invalid={Boolean(errors.country)} onChange={(e) => set("country", e.target.value)}>
+              <option value="">{t("countryPlaceholder")}</option>
+              {COUNTRY_CODES.map((c) => <option key={c} value={c}>{countryName(c, locale)}</option>)}
+            </NativeSelect>
+          </Field>
+          <Field htmlFor="cp-birth" label={<>{t("birthDate")} <span aria-hidden>*</span></>} error={err("birthDate")}>
+            <DateInput id="cp-birth" value={draft.birthDate} onChange={(d) => set("birthDate", d)} min="1900-01-01" max={today} lenient aria-required aria-invalid={Boolean(errors.birthDate)} />
+          </Field>
+          <Field htmlFor="cp-gender" label={t("gender")}>
+            <NativeSelect id="cp-gender" value={draft.gender} onChange={(e) => set("gender", e.target.value as Gender | "")}>
+              <option value="">{t("genderNone")}</option>
+              {GENDERS.map((g) => <option key={g} value={g}>{t(`genders.${g}`)}</option>)}
+            </NativeSelect>
+          </Field>
+          <Field htmlFor="cp-avatar" label={t("avatar")} hint={t("avatarHint")} error={err("avatarUrl")}>
+            <Input id="cp-avatar" type="text" inputMode="url" value={draft.avatarUrl} maxLength={AVATAR_MAX + 20} aria-invalid={Boolean(errors.avatarUrl)} autoComplete="off" onChange={(e) => set("avatarUrl", e.target.value)} />
+          </Field>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("socials")}</CardTitle>
+          <p className="text-sm text-muted-foreground">{t("socialsHint")}</p>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {SOCIAL_PLATFORMS.map((p) => (
+            <Field key={p} htmlFor={`cp-social-${p}`} label={SOCIAL_NAMES[p]}>
+              <Input id={`cp-social-${p}`} type="text" value={draft.socials[p]} maxLength={SOCIAL_MAX + 20} autoComplete="off" onChange={(e) => setSocial(p, e.target.value)} />
+            </Field>
+          ))}
+          {errors.socials ? <p role="alert" className="text-xs text-destructive sm:col-span-2 lg:col-span-3">{err("socials")}</p> : null}
+        </CardContent>
+      </Card>
+      <div className="flex flex-wrap items-center justify-end gap-3">
+        {message === "saved" ? <p role="status" className="text-sm text-emerald-700" data-testid="customer-profile-saved">{t("saved")}</p> : null}
+        {message === "failed" ? <p role="alert" className="text-sm text-destructive">{t("saveFailed")}</p> : null}
+        <Button type="submit" disabled={!dirty || saving}>{saving ? t("saving") : t("save")}</Button>
+      </div>
+    </form>
+  );
+}

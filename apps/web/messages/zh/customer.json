@@ -1,0 +1,60 @@
+{
+  "shell": {
+    "skipToContent": "跳到内容",
+    "menuLabel": "客户菜单",
+    "language": "语言",
+    "logout": "退出登录",
+    "openSite": "返回 {shop}",
+    "loading": "正在打开您的账户…",
+    "account": "{name} 的账户"
+  },
+  "menu": {
+    "profile": "我的资料",
+    "today": "今天",
+    "bookings": "我的预订",
+    "favorites": "收藏",
+    "workshops": "工作坊"
+  },
+  "gate": {
+    "loginTitle": "登录以查看您的账户",
+    "loginIntro": "请使用您在 {shop} 的账户邮箱。",
+    "deniedTitle": "无法打开此账户",
+    "deniedText": "此账户不存在，或属于其他邮箱。请使用该账户的邮箱登录。",
+    "switchAccount": "使用其他邮箱登录",
+    "loadFailed": "无法加载您的账户，请重试。",
+    "retry": "重试"
+  },
+  "profile": {
+    "title": "我的资料",
+    "intro": "{shop} 所了解的您的信息。您可以在此修改。",
+    "email": "邮箱",
+    "emailHint": "邮箱无法修改。",
+    "fullName": "姓名",
+    "phone": "电话",
+    "language": "语言",
+    "country": "国家/地区",
+    "countryPlaceholder": "选择国家/地区",
+    "birthDate": "出生日期",
+    "gender": "性别",
+    "genderNone": "未提供",
+    "genders": {
+      "MALE": "男",
+      "FEMALE": "女",
+      "OTHER": "其他"
+    },
+    "socials": "社交信息",
+    "socialsHint": "选填。您在各应用中的账号或号码。",
+    "avatar": "照片链接",
+    "avatarHint": "以 https:// 开头的链接，选填。",
+    "save": "保存",
+    "saving": "保存中…",
+    "saved": "您的资料已保存。",
+    "saveFailed": "无法保存您的资料，请重试。",
+    "errors": {
+      "required": "此项为必填。",
+      "tooLong": "内容过长。",
+      "invalid": "出生日期无效。",
+      "urlInvalid": "请输入以 https:// 开头的链接。"
+    }
+  }
+}

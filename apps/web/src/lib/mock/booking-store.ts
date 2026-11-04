@@ -1,7 +1,7 @@
 // SERVER-ONLY: the bookings as the mock backend knows them, until apps/api exists. The demo rows, plus the bookings guests make on the landing page
 // (they start NOT_CONFIRMED and become CONFIRMED when the guest opens the link of the email), plus the status changes the ops screens make (cancel,
 // check-in, ...: they are sent here so they survive a reload and the promotion rules can see them). Lives on globalThis like the other mock stores.
-import { closeIfEnded, eligiblePromotions, pickLocalized, isSessionBookable, isSessionFinished, nextBookingCode, priceBooking, type BookingStatus, type BookingUse } from "@workshop/shared";
+import { closeIfEnded, eligiblePromotions, pickLocalized, isSessionBookable, isSessionFinished, nextBookingCode, priceBooking, socialEntries, type BookingStatus, type BookingUse, type Gender, type Socials } from "@workshop/shared";
 import { computePaymentStatus, confirmation, netPaid, reservedSeats, type PreCheckInStatus } from "@/lib/booking-state";
 import type { Booking, Customer, PaymentEntry, Session } from "@/lib/types";
 import { newUuid } from "@/lib/uuid";
@@ -36,7 +36,7 @@ interface Store {
   /** The payments and refunds the shop recorded after the session (Confirm payment / Unpaid), added to the ones the booking already has. */
   extra: Map<string, PaymentEntry[]>;
   /** The account a guest registered, by customer id: the name and phone they gave and their profile (it is added to a customer who booked before). */
-  accounts: Map<string, { fullName: string; phone?: string; account: NonNullable<Customer["account"]> }>;
+  accounts: Map<string, { fullName: string; phone?: string; locale?: Customer["preferredLocale"]; account: NonNullable<Customer["account"]> }>;
 }
 const g = globalThis as unknown as { __bookingStore?: Store };
 const store = (): Store => {
@@ -106,7 +106,10 @@ export const liveCustomers = (): Customer[] =>
   [...seedCustomers, ...store().madeCustomers]
     .map((c) => {
       const a = store().accounts.get(c.id);
-      return a ? { ...c, fullName: a.fullName, ...(a.phone ? { phone: a.phone } : {}), account: a.account } : c;
+      if (!a) return c;
+      const { phone: _phone, ...rest } = c; // the phone of the account replaces the one of the customer (and may be none)
+      void _phone;
+      return { ...rest, fullName: a.fullName, ...(a.phone ? { phone: a.phone } : {}), ...(a.locale ? { preferredLocale: a.locale } : {}), account: a.account };
     });
 
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
@@ -143,6 +146,34 @@ export function registerGuestAccount(input: { email: string; fullName: string; c
   const merged = liveBookings().filter((b) => b.customerId === primary.id).length;
   store().accounts.set(primary.id, { fullName: input.fullName.trim(), ...((phone ?? primary.phone) ? { phone: phone ?? primary.phone } : {}), account });
   return { ok: true, customerId: primary.id, created: false, merged };
+}
+
+/** The customer with this id when they have an account and `email` is the email of that account (any case, spaces at the ends); otherwise nothing. */
+export function accountOfGuest(id: string, email: string): Customer | undefined {
+  const c = liveCustomers().find((x) => x.id === id);
+  return c?.account && c.email && normalizeEmail(c.email) === normalizeEmail(email) ? c : undefined;
+}
+
+export interface AccountPatch {
+  fullName: string; phone?: string; locale: Customer["preferredLocale"]; country: string; birthDate: string; gender?: Gender; socials?: Socials; avatarUrl?: string;
+}
+
+/**
+ * The guest changes their own profile: name, phone, language, country, date of birth, gender, social accounts and picture (never the email). Whatever is
+ * not given is removed (the profile is replaced as a whole), except what the guest agreed to at registration (`consentAt`). The same answer for an unknown
+ * id, a customer without an account and a wrong email. TODO(api): the account of the guest session, not the email in a header.
+ */
+export function updateGuestAccount(id: string, email: string, patch: AccountPatch): { ok: true; customer: Customer } | { ok: false; code: "NOT_FOUND" } {
+  const current = accountOfGuest(id, email);
+  if (!current?.account) return { ok: false, code: "NOT_FOUND" };
+  const socials = Object.fromEntries(socialEntries(patch.socials)) as Socials;
+  const account: NonNullable<Customer["account"]> = {
+    country: patch.country, birthDate: patch.birthDate,
+    ...(patch.gender ? { gender: patch.gender } : {}), ...(Object.keys(socials).length ? { socials } : {}), ...(patch.avatarUrl ? { avatarUrl: patch.avatarUrl } : {}),
+    ...(current.account.consentAt ? { consentAt: current.account.consentAt } : {}),
+  };
+  store().accounts.set(id, { fullName: patch.fullName, ...(patch.phone ? { phone: patch.phone } : {}), locale: patch.locale, account });
+  return { ok: true, customer: liveCustomers().find((x) => x.id === id)! };
 }
 
 /**

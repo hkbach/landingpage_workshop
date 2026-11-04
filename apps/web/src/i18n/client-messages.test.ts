@@ -32,9 +32,10 @@ describe("message areas per part of the app", () => {
     expect(setsWith("marketing")).toEqual(["marketing"]);
     expect(setsWith("auth")).toEqual(["auth"]);
   });
-  it("the public site texts are not part of any area set (the site has its own provider)", () => {
-    expect(setsWith("site")).toEqual([]);
+  it("the public site texts are only part of the guest area set (the site has its own provider; the guest area reuses the login form of the site)", () => {
+    expect(setsWith("site")).toEqual(["customer"]);
   });
+  it("the guest area texts go only to the guest area", () => expect(setsWith("customer")).toEqual(["customer"]));
   it("the root layout sends no messages itself", () => {
     const layout = readFileSync(join(SRC, "app/layout.tsx"), "utf8");
     expect(layout).toMatch(/<NextIntlClientProvider messages=\{\{\}\}>/);
@@ -56,6 +57,8 @@ describe("client components only use the namespaces their area sends", () => {
     ["app/shopowner", AREA_MESSAGES.shopowner],
     ["app/systemadmin", AREA_MESSAGES.admin],
     ["app/sites", PUBLIC_SITE],
+    ["app/customer", AREA_MESSAGES.customer],
+    ["components/customer", AREA_MESSAGES.customer],
     ["components/admin", AREA_MESSAGES.admin],
     ["components/dashboard", AREA_MESSAGES.shopowner],
     ["components/ops", AREA_MESSAGES.shopowner],

@@ -1,0 +1,60 @@
+{
+  "shell": {
+    "skipToContent": "Skip to content",
+    "menuLabel": "Customer menu",
+    "language": "Language",
+    "logout": "Log out",
+    "openSite": "Back to {shop}",
+    "loading": "Opening your account…",
+    "account": "Account of {name}"
+  },
+  "menu": {
+    "profile": "My Profile",
+    "today": "Today",
+    "bookings": "My Booking",
+    "favorites": "Favorites",
+    "workshops": "Workshops"
+  },
+  "gate": {
+    "loginTitle": "Log in to see your account",
+    "loginIntro": "Use the email of your account at {shop}.",
+    "deniedTitle": "We could not open this account",
+    "deniedText": "This account does not exist, or it belongs to another email. Log in with the email of the account.",
+    "switchAccount": "Log in with another email",
+    "loadFailed": "We could not load your account. Please try again.",
+    "retry": "Try again"
+  },
+  "profile": {
+    "title": "My Profile",
+    "intro": "What {shop} knows about you. You can change it here.",
+    "email": "Email",
+    "emailHint": "The email cannot be changed.",
+    "fullName": "Full name",
+    "phone": "Phone",
+    "language": "Language",
+    "country": "Country",
+    "countryPlaceholder": "Choose a country",
+    "birthDate": "Date of birth",
+    "gender": "Gender",
+    "genderNone": "Not provided",
+    "genders": {
+      "MALE": "Male",
+      "FEMALE": "Female",
+      "OTHER": "Other"
+    },
+    "socials": "Social information",
+    "socialsHint": "Optional. Your handle or number on each app.",
+    "avatar": "Photo link",
+    "avatarHint": "A link that starts with https://. Optional.",
+    "save": "Save",
+    "saving": "Saving…",
+    "saved": "Your profile was saved.",
+    "saveFailed": "We could not save your profile. Please try again.",
+    "errors": {
+      "required": "This field is required.",
+      "tooLong": "This text is too long.",
+      "invalid": "This is not a valid date of birth.",
+      "urlInvalid": "Enter a link that starts with https://."
+    }
+  }
+}
