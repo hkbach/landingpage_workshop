@@ -10,6 +10,8 @@ export const orgStats: Record<string, { workshops: number; bookings30d: number }
   "org-1": { workshops: 4, bookings30d: 128 },
   "org-2": { workshops: 2, bookings30d: 0 },
   "org-3": { workshops: 3, bookings30d: 17 },
+  "org-4": { workshops: 3, bookings30d: 41 },
+  "org-5": { workshops: 3, bookings30d: 23 },
 };
 
 const extraReports: AbuseReport[] = [

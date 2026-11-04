@@ -59,6 +59,7 @@
   },
   "workshops": {
     "empty": "아직 표시할 워크숍이 없습니다.",
-    "visitSite": "{shop} 사이트 방문"
+    "visitSite": "{shop} 사이트 방문",
+    "demoOnly": "데모 샵: 예약 단계는 동작하지만 실제 예약은 생성되지 않습니다."
   }
 }

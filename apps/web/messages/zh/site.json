@@ -83,6 +83,7 @@
     "countryPlaceholder": "选择国家/地区",
     "phone": "电话 / WhatsApp",
     "phoneHint": "请包含国家区号，例如 +84。",
+    "fromAccount": "来自您的账户。",
     "specialRequest": "特殊要求（选填）",
     "when": "日期和时间",
     "contactLabel": "联系方式",

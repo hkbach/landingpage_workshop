@@ -83,6 +83,7 @@
     "countryPlaceholder": "国を選択",
     "phone": "電話番号 / WhatsApp",
     "phoneHint": "国番号を含めて入力してください（例：+84）。",
+    "fromAccount": "アカウントの情報です。",
     "specialRequest": "ご要望（任意）",
     "when": "日時",
     "contactLabel": "連絡先",

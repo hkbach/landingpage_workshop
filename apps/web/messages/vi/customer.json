@@ -59,6 +59,7 @@
   },
   "workshops": {
     "empty": "Chưa có workshop nào để hiển thị.",
-    "visitSite": "Xem trang của {shop}"
+    "visitSite": "Xem trang của {shop}",
+    "demoOnly": "Shop demo: các bước đặt chỗ hoạt động nhưng không tạo booking thật."
   }
 }

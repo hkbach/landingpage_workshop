@@ -83,6 +83,7 @@
     "countryPlaceholder": "Select a country",
     "phone": "Phone / WhatsApp",
     "phoneHint": "Include the country code, for example +84.",
+    "fromAccount": "From your account.",
     "specialRequest": "Special request (optional)",
     "when": "Date and time",
     "contactLabel": "Contact",

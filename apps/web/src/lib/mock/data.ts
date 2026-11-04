@@ -5,6 +5,7 @@ import type {
 import { applyTemplate, themeForTemplate, type TemplateKey } from "@/components/sections/templates";
 import { priceBooking, type BookingPriceInfo, type PaymentMethod } from "@workshop/shared";
 import { computePaymentStatus, reservedSeats } from "../booking-state";
+import { otherShops } from "./other-shops";
 
 const TZ = "Asia/Ho_Chi_Minh"; // UTC+7
 const DAY = 86_400_000;
@@ -35,6 +36,8 @@ export const shops: Shop[] = [
     address: "88 Hang Bac, Hanoi", mapsUrl: "https://maps.app.goo.gl/example3",
     plan: "PRO", ownerName: "An Nguyen", ownerEmail: "an@goldennoodle.example", createdAt: at(-120, 10),
   },
+  // Two more ACTIVE shops with workshops of their own (other-shops.ts), for the Workshops page of the guest area.
+  ...otherShops,
 ];
 
 /** The shop the dashboard mock is "logged in" as. */

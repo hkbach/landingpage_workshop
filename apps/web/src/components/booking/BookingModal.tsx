@@ -40,6 +40,11 @@ interface Props {
   basePath: string;
   /** Builder preview: submitting shows a note and makes no booking. */
   preview?: boolean;
+  /**
+   * A guest who is known (the guest area): the form starts with what their account holds. The name and the email are read only (they are the account's); the
+   * country and the phone can be changed for this booking.
+   */
+  guest?: { fullName: string; email: string; phone?: string; country?: string };
 }
 
 /** The current time, read when an event happens (not while rendering). */
@@ -123,7 +128,7 @@ function PromoOption({ checked, onChange, label, detail, note }: {
   );
 }
 
-function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, sessions, locale, basePath, promotions = [], preview = false }: Props) {
+function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, sessions, locale, basePath, promotions = [], preview = false, guest }: Props) {
   const t = useTranslations("site.booking");
   const tp = useTranslations("site");
   const router = useRouter();
@@ -198,7 +203,7 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
 
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingContactSchema),
-    defaultValues: { fullName: "", email: "", country: "", phone: "", specialRequest: "", consent: false },
+    defaultValues: { fullName: guest?.fullName ?? "", email: guest?.email ?? "", country: guest?.country ?? "", phone: guest?.phone ?? "", specialRequest: "", consent: false },
     mode: "onTouched",
   });
   const { register, control, handleSubmit, trigger, formState: { errors } } = form;
@@ -429,14 +434,16 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
         <div className="space-y-4">
           <div className="space-y-1.5">
             <label htmlFor="bk-name" className="text-sm font-medium">{t("fullName")} <span aria-hidden>*</span></label>
-            <Input id="bk-name" autoComplete="name" className={fieldClass} aria-required aria-invalid={!!errors.fullName}
+            <Input id="bk-name" autoComplete="name" className={cn(fieldClass, guest && "bg-black/5")} aria-required aria-invalid={!!errors.fullName} readOnly={!!guest}
               aria-describedby={errors.fullName ? "bk-name-err" : undefined} {...register("fullName")} />
+            {guest ? <p className="text-xs text-[var(--site-muted)]">{t("fromAccount")}</p> : null}
             {errors.fullName && <p id="bk-name-err" role="alert" className="text-xs text-red-700">{err("fullName")}</p>}
           </div>
           <div className="space-y-1.5">
             <label htmlFor="bk-email" className="text-sm font-medium">{t("email")} <span aria-hidden>*</span></label>
-            <Input id="bk-email" type="email" autoComplete="email" className={fieldClass} aria-required aria-invalid={!!errors.email}
+            <Input id="bk-email" type="email" autoComplete="email" className={cn(fieldClass, guest && "bg-black/5")} aria-required aria-invalid={!!errors.email} readOnly={!!guest}
               aria-describedby={errors.email ? "bk-email-err" : undefined} {...register("email")} />
+            {guest ? <p className="text-xs text-[var(--site-muted)]">{t("fromAccount")}</p> : null}
             {errors.email && <p id="bk-email-err" role="alert" className="text-xs text-red-700">{err("email")}</p>}
           </div>
           <div className="space-y-1.5">

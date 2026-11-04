@@ -59,6 +59,7 @@
   },
   "workshops": {
     "empty": "暂无可显示的工作坊。",
-    "visitSite": "访问 {shop} 的网站"
+    "visitSite": "访问 {shop} 的网站",
+    "demoOnly": "演示商店：预订步骤可用，但不会创建真实预订。"
   }
 }

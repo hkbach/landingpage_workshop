@@ -8,6 +8,11 @@ import { getPublicSite, type PublicSite } from "./site";
 export interface ListedShop extends PublicSite {
   /** Promotions active today that the booking form of this shop offers. */
   promotions: PromotionRecord[];
+  /**
+   * Whether a booking made at this shop is really created. The mock backend only keeps the bookings of the demo shop; for the other shops the booking popup works
+   * but makes no booking. TODO(api): every shop is bookable.
+   */
+  bookable: boolean;
 }
 
 /**
@@ -20,7 +25,7 @@ export function listedShops(candidates: readonly Shop[] = shops): ListedShop[] {
     .filter((s) => s.status === "ACTIVE" && s.showOnCustomerPage === true)
     .flatMap((s): ListedShop[] => {
       const site = getPublicSite(s.slug);
-      return site ? [{ ...site, promotions: s.id === currentShop.id ? publicPromotions() : [] }] : [];
+      return site ? [{ ...site, promotions: s.id === currentShop.id ? publicPromotions() : [], bookable: s.id === currentShop.id }] : [];
     })
     .sort((a, b) => a.shop.name.localeCompare(b.shop.name));
 }

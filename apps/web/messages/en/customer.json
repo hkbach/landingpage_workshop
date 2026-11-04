@@ -59,6 +59,7 @@
   },
   "workshops": {
     "empty": "No workshops to show yet.",
-    "visitSite": "Visit the site of {shop}"
+    "visitSite": "Visit the site of {shop}",
+    "demoOnly": "Demo shop: the booking steps work, but no booking is created."
   }
 }

@@ -33,7 +33,7 @@ export function CustomerWorkshops({ shops }: { shops: ListedShop[] }) {
     <div className="grid gap-6">
       <h1 className="text-2xl font-semibold">{t("menu.workshops")}</h1>
       {shops.length === 0 ? <p className="text-sm text-muted-foreground" data-testid="customer-workshops-empty">{t("workshops.empty")}</p> : null}
-      {shops.map(({ shop, theme, workshops, sessions, promotions }) => {
+      {shops.map(({ shop, theme, workshops, sessions, promotions, bookable }) => {
         const base = `/sites/${shop.slug}`;
         const ctx: RenderContext = {
           locale, workshops, promotions, reportHref: `${base}/report`, privacyHref: "#privacy",
@@ -48,11 +48,13 @@ export function CustomerWorkshops({ shops }: { shops: ListedShop[] }) {
                 {t("workshops.visitSite", { shop: shop.name })}<ExternalLink className="size-3.5" aria-hidden />
               </a>
             </div>
+            {bookable ? null : <p className="text-xs text-muted-foreground" data-testid="customer-shop-demo-note">{t("workshops.demoOnly")}</p>}
             {/* The theme of the shop (colours, radius, font) as on its landing page; the cards size themselves from this box. */}
             <div style={themeStyle(theme)} lang={locale} className={cn("@container overflow-hidden rounded-xl border", siteFontClass(theme.font))}>
               <BookingProvider
                 shop={{ name: shop.name, slug: shop.slug, timezone: shop.timezone, currency: shop.currency, defaultLocale: shop.defaultLocale }}
-                workshops={workshops} sessions={sessions} theme={theme} locale={locale} basePath={base} promotions={promotions}
+                workshops={workshops} sessions={sessions} theme={theme} locale={locale} basePath={base} promotions={promotions} preview={!bookable}
+                guest={{ fullName: profile.fullName, email: profile.email, phone: profile.phone, country: profile.account.country }}
               >
                 <FavoritesProvider slug={shop.slug} shopName={shop.name} theme={theme}>
                   <ul className="grid gap-6 bg-[var(--site-bg)] p-4 text-[var(--site-text)] @xl:grid-cols-2 @5xl:grid-cols-3 @xl:p-6" data-testid="customer-workshop-list">
