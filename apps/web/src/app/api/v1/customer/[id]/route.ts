@@ -3,13 +3,15 @@ import { GENDERS, LOCALES, SOCIAL_PLATFORMS } from "@workshop/shared";
 import { apiError, fieldCodes } from "@/lib/api-error";
 import { COUNTRY_CODES } from "@/components/booking/countries";
 import { isHttpsUrl } from "@/components/sections/safe-url";
+import { customerLoginRequired } from "@/lib/customer-access";
 import { accountOfGuest, updateGuestAccount } from "@/lib/mock/booking-store";
 import type { CustomerProfile } from "@/lib/customer-api";
 import type { Customer } from "@/lib/types";
 
 // The account of a guest, seen by the guest themselves (/customer/{id}). MOCK implementation inside Next until apps/api exists.
 // The guest is identified by the email of the account in the `x-guest-email` header (what the browser keeps after the OTP login); any other email, an unknown id
-// and a customer without an account all get the same 404, so the ids cannot be probed.
+// and a customer without an account all get the same 404, so the ids cannot be probed. While the login of the guest area is switched off (testing only, never in
+// production: see customerLoginRequired) the id alone is enough.
 // TODO(api): the account of the guest session (cookie), never an email sent by the browser; organization_id from the server.
 
 const headers = { "cache-control": "no-store", "x-robots-tag": "noindex" };
@@ -36,7 +38,8 @@ const bodySchema = z.object({
   avatarUrl: z.string().trim().max(500, "tooLong").refine((v) => v === "" || isHttpsUrl(v), "urlInvalid").optional(),
 });
 
-const emailOf = (request: Request) => request.headers.get("x-guest-email") ?? "";
+/** The email to check the account against; null when the login is switched off (the id alone is enough). */
+const emailOf = (request: Request): string | null => (customerLoginRequired() ? (request.headers.get("x-guest-email") ?? "") : null);
 
 /** GET -> 200 the profile; 404 NOT_FOUND. */
 export async function GET(request: Request, ctx: RouteContext<"/api/v1/customer/[id]">) {

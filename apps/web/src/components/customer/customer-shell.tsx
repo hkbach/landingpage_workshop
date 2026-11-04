@@ -20,7 +20,8 @@ import { cn } from "@/lib/utils";
 export interface CustomerShop { slug: string; name: string }
 
 interface CustomerContextValue {
-  accountId: string; email: string; shop: CustomerShop; profile: CustomerProfile;
+  /** The email the guest logged in with; undefined while the login is switched off. */
+  accountId: string; email: string | undefined; shop: CustomerShop; profile: CustomerProfile;
   /** The profile after the guest saved it (what the page and the header show). */
   setProfile: (profile: CustomerProfile) => void;
 }
@@ -45,26 +46,29 @@ export const CUSTOMER_MENUS: { path: string; key: "profile" | "today" | "booking
 const card = "mx-auto mt-16 w-full max-w-md rounded-xl border bg-background p-6 shadow-sm";
 
 /**
- * The guest area of /customer/{accountId}: only the guest who is logged in with the email of that account gets in. Anyone else is asked to log in, and an account
- * that does not exist or belongs to another email gets the same answer (the server says 404 for both). The login is the one of the landing page of the shop.
+ * The guest area of /customer/{accountId}. When the login is required (always in production, see customerLoginRequired) only the guest who is logged in with the
+ * email of that account gets in: anyone else is asked to log in, and an account that does not exist or belongs to another email gets the same answer (the server
+ * says 404 for both). The login is the one of the landing page of the shop. While the prototype is tested the login is switched off and the area opens by its address.
  * TODO(api): the guest session is a cookie checked by the server; here the browser keeps the email of the OTP login and sends it with each request.
  */
-export function CustomerShell({ accountId, shop, theme, children }: { accountId: string; shop: CustomerShop; theme: PageTheme; children: ReactNode }) {
+export function CustomerShell({ accountId, shop, theme, loginRequired, children }: { accountId: string; shop: CustomerShop; theme: PageTheme; loginRequired: boolean; children: ReactNode }) {
   const t = useTranslations("customer");
   const router = useRouter();
   const pathname = usePathname();
   const queryClient = useQueryClient();
   // null until the browser has been asked (the server cannot know who is logged in), "" when nobody is.
-  const email = useSyncExternalStore<string | null>(subscribeFavorites, () => readGuestEmail(shop.slug), () => null);
+  const stored = useSyncExternalStore<string | null>(subscribeFavorites, () => readGuestEmail(shop.slug), () => null);
+  const email = loginRequired ? stored : ""; // with no login there is nothing to ask the browser: the account is opened as it is
+  const open = !loginRequired || Boolean(stored);
   const query = useQuery({
-    queryKey: ["customer", accountId, email], queryFn: () => fetchCustomerProfile(accountId, email!), enabled: Boolean(email), retry: false,
+    queryKey: ["customer", accountId, loginRequired ? stored : "no-login"], queryFn: () => fetchCustomerProfile(accountId, loginRequired ? stored! : undefined), enabled: open, retry: false,
   });
   const logout = () => writeGuestEmail(shop.slug, null);
 
-  if (email === null || (email !== "" && query.isPending)) {
+  if (email === null || (open && query.isPending)) {
     return <div role="status" aria-busy="true" className={cn(card, "text-center text-sm text-muted-foreground")}>{t("shell.loading")}</div>;
   }
-  if (email === "") {
+  if (loginRequired && email === "") {
     return (
       <div className={cn(card, siteFontClass(theme.font))} style={modalThemeStyle(theme)} data-testid="customer-login">
         <h1 className="text-lg font-semibold">{t("gate.loginTitle")}</h1>
@@ -80,7 +84,8 @@ export function CustomerShell({ accountId, shop, theme, children }: { accountId:
         <h1 className="text-lg font-semibold">{missing ? t("gate.deniedTitle") : t("gate.loadFailed")}</h1>
         {missing ? <p className="text-sm text-muted-foreground">{t("gate.deniedText")}</p> : null}
         <div className="flex flex-wrap gap-2">
-          {missing ? <Button onClick={logout}>{t("gate.switchAccount")}</Button> : <Button onClick={() => void query.refetch()}>{t("gate.retry")}</Button>}
+          {missing && loginRequired ? <Button onClick={logout}>{t("gate.switchAccount")}</Button> : null}
+          {missing ? null : <Button onClick={() => void query.refetch()}>{t("gate.retry")}</Button>}
           <Link href={`/sites/${shop.slug}`} className="inline-flex h-8 items-center rounded-lg border px-2.5 text-sm hover:bg-muted">{t("shell.openSite", { shop: shop.name })}</Link>
         </div>
       </div>
@@ -89,7 +94,8 @@ export function CustomerShell({ accountId, shop, theme, children }: { accountId:
 
   const profile = query.data;
   const value: CustomerContextValue = {
-    accountId, email, shop, profile, setProfile: (p) => queryClient.setQueryData(["customer", accountId, email], p),
+    accountId, email: loginRequired ? email || undefined : undefined, shop, profile,
+    setProfile: (p) => queryClient.setQueryData(["customer", accountId, loginRequired ? stored : "no-login"], p),
   };
   return (
     <CustomerContext.Provider value={value}>
@@ -106,7 +112,7 @@ export function CustomerShell({ accountId, shop, theme, children }: { accountId:
                 <CustomerAvatar name={profile.fullName} url={profile.account.avatarUrl} />
                 <span className="max-w-40 truncate text-sm">{profile.fullName}</span>
               </span>
-              <Button variant="outline" onClick={logout}><LogOut aria-hidden />{t("shell.logout")}</Button>
+              {loginRequired ? <Button variant="outline" onClick={logout}><LogOut aria-hidden />{t("shell.logout")}</Button> : null}
             </div>
           </div>
         </header>

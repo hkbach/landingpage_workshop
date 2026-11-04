@@ -148,10 +148,14 @@ export function registerGuestAccount(input: { email: string; fullName: string; c
   return { ok: true, customerId: primary.id, created: false, merged };
 }
 
-/** The customer with this id when they have an account and `email` is the email of that account (any case, spaces at the ends); otherwise nothing. */
-export function accountOfGuest(id: string, email: string): Customer | undefined {
+/**
+ * The customer with this id when they have an account and `email` is the email of that account (any case, spaces at the ends); otherwise nothing. `email` is
+ * null only when the login of the guest area is switched off (see customerLoginRequired): then the id alone is enough.
+ */
+export function accountOfGuest(id: string, email: string | null): Customer | undefined {
   const c = liveCustomers().find((x) => x.id === id);
-  return c?.account && c.email && normalizeEmail(c.email) === normalizeEmail(email) ? c : undefined;
+  if (!c?.account) return undefined;
+  return email === null || (c.email && normalizeEmail(c.email) === normalizeEmail(email)) ? c : undefined;
 }
 
 export interface AccountPatch {
@@ -163,7 +167,7 @@ export interface AccountPatch {
  * not given is removed (the profile is replaced as a whole), except what the guest agreed to at registration (`consentAt`). The same answer for an unknown
  * id, a customer without an account and a wrong email. TODO(api): the account of the guest session, not the email in a header.
  */
-export function updateGuestAccount(id: string, email: string, patch: AccountPatch): { ok: true; customer: Customer } | { ok: false; code: "NOT_FOUND" } {
+export function updateGuestAccount(id: string, email: string | null, patch: AccountPatch): { ok: true; customer: Customer } | { ok: false; code: "NOT_FOUND" } {
   const current = accountOfGuest(id, email);
   if (!current?.account) return { ok: false, code: "NOT_FOUND" };
   const socials = Object.fromEntries(socialEntries(patch.socials)) as Socials;

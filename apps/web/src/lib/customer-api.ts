@@ -30,8 +30,11 @@ async function parse<T>(res: Response): Promise<T> {
 
 const url = (id: string) => `/api/v1/customer/${encodeURIComponent(id)}`;
 
-export const fetchCustomerProfile = async (id: string, email: string): Promise<CustomerProfile> =>
-  parse(await fetch(url(id), { headers: { "x-guest-email": email }, cache: "no-store" }));
+/** `email` is left out only while the login of the guest area is switched off. */
+const emailHeader = (email?: string): Record<string, string> => (email ? { "x-guest-email": email } : {});
 
-export const saveCustomerProfile = async (id: string, email: string, input: CustomerProfileInput): Promise<CustomerProfile> =>
-  parse(await fetch(url(id), { method: "PATCH", headers: { "content-type": "application/json", "x-guest-email": email }, body: JSON.stringify(input) }));
+export const fetchCustomerProfile = async (id: string, email?: string): Promise<CustomerProfile> =>
+  parse(await fetch(url(id), { headers: emailHeader(email), cache: "no-store" }));
+
+export const saveCustomerProfile = async (id: string, email: string | undefined, input: CustomerProfileInput): Promise<CustomerProfile> =>
+  parse(await fetch(url(id), { method: "PATCH", headers: { "content-type": "application/json", ...emailHeader(email) }, body: JSON.stringify(input) }));

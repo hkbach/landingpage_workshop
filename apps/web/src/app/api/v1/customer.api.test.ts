@@ -1,8 +1,10 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { customerLoginRequired } from "@/lib/customer-access";
 import { liveBookings, liveCustomers, resetBookingStore } from "@/lib/mock/booking-store";
 import { GET, PATCH } from "./customer/[id]/route";
 
-// The account of a guest, seen by the guest (/customer/{id}): only with the email of the account; the profile can be changed, the email cannot.
+// The account of a guest, seen by the guest (/customer/{id}): with the login required, only with the email of the account; the profile can be changed, the email cannot.
+// While the prototype is tested the login is switched off (the id alone is enough), but never in production.
 
 const ctx = (id: string) => ({ params: Promise.resolve({ id }) }) as never;
 const get = (id: string, email?: string) => GET(new Request("http://x", { headers: email === undefined ? {} : { "x-guest-email": email } }), ctx(id));
@@ -15,7 +17,8 @@ const input = {
   socials: { ZALO: "0901 000 111", INSTAGRAM: "@emma.cooks" }, avatarUrl: "https://picsum.photos/seed/emma2/200/200",
 };
 
-beforeEach(() => resetBookingStore());
+beforeEach(() => { resetBookingStore(); vi.stubEnv("CUSTOMER_LOGIN_REQUIRED", "true"); }); // the suites below are about the login; the last one switches it off
+afterEach(() => vi.unstubAllEnvs());
 
 describe("GET /customer/{id}", () => {
   it("gives the profile to the guest who has the email of the account (whatever the case and the spaces)", async () => {
@@ -97,6 +100,37 @@ describe("PATCH /customer/{id}", () => {
   });
   it("refuses a body that is not JSON", async () => {
     expect((await patch("cu-1", EMMA, "not json")).status).toBe(400);
+  });
+});
+
+describe("with the login switched off (testing only)", () => {
+  beforeEach(() => vi.stubEnv("CUSTOMER_LOGIN_REQUIRED", "false"));
+
+  it("is off by default outside production, and only a variable set to true turns it on", () => {
+    vi.stubEnv("CUSTOMER_LOGIN_REQUIRED", "");
+    expect(customerLoginRequired()).toBe(false);
+    vi.stubEnv("CUSTOMER_LOGIN_REQUIRED", "true");
+    expect(customerLoginRequired()).toBe(true);
+  });
+  it("is always on in production, whatever the variable says", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("CUSTOMER_LOGIN_REQUIRED", "false");
+    expect(customerLoginRequired()).toBe(true);
+    expect((await get("cu-1")).status).toBe(404);
+  });
+  it("the id alone gives the profile (an email is not needed, and a wrong one does not matter)", async () => {
+    expect((await get("cu-1")).status).toBe(200);
+    expect(await (await get("cu-1", "someone.else@example.com")).json()).toMatchObject({ id: "cu-1", email: EMMA });
+  });
+  it("an unknown id and a customer without an account are still 404", async () => {
+    expect((await get("cu-nope")).status).toBe(404);
+    expect((await get("cu-2")).status).toBe(404); // booked without an account
+  });
+  it("the profile can be saved with the id alone, and the email still cannot change", async () => {
+    const res = await patch("cu-1", undefined, { ...input, email: "new@example.com" });
+    expect(res.status).toBe(200);
+    expect(liveCustomers().find((c) => c.id === "cu-1")).toMatchObject({ fullName: "Emma J. Johnson", email: EMMA });
+    expect((await patch("cu-2", undefined, input)).status).toBe(404);
   });
 });
 
