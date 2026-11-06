@@ -43,5 +43,18 @@ export interface CustomerBookingsResponse { bookings: CustomerBooking[]; now: st
 export const fetchCustomerBookings = async (id: string, email?: string): Promise<CustomerBookingsResponse> =>
   parse(await fetch(`${url(id)}/bookings`, { headers: emailHeader(email), cache: "no-store" }));
 
+/** A referral (affiliate) link of the guest with what it earned: the referral rate of the shop (basis points) x the original price of the paid bookings that came through it. */
+export interface CustomerReferral {
+  id: string; code: string; workshopId: string; workshopTitle: string; shopName: string; link: string; createdAt: string; clicks: number;
+  referralBps: number; bookings: number; referralFee: number; currency: string;
+}
+
+export const fetchCustomerReferrals = async (id: string, email?: string): Promise<{ items: CustomerReferral[] }> =>
+  parse(await fetch(`${url(id)}/referrals`, { headers: emailHeader(email), cache: "no-store" }));
+
+/** The link of a workshop (a new one, or the one the guest already has). */
+export const createCustomerReferral = async (id: string, email: string | undefined, workshopId: string): Promise<CustomerReferral> =>
+  parse(await fetch(`${url(id)}/referrals`, { method: "POST", headers: { "content-type": "application/json", ...emailHeader(email) }, body: JSON.stringify({ workshopId }) }));
+
 export const saveCustomerProfile = async (id: string, email: string | undefined, input: CustomerProfileInput): Promise<CustomerProfile> =>
   parse(await fetch(url(id), { method: "PATCH", headers: { "content-type": "application/json", ...emailHeader(email) }, body: JSON.stringify(input) }));

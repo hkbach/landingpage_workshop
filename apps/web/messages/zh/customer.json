@@ -13,7 +13,8 @@
     "today": "今天",
     "bookings": "我的预订",
     "favorites": "收藏",
-    "workshops": "工作坊"
+    "workshops": "工作坊",
+    "referrals": "推荐"
   },
   "gate": {
     "loginTitle": "登录以查看您的账户",
@@ -142,5 +143,33 @@
   "map": {
     "name": "Google Maps",
     "label": "在 Google 地图中打开该地址（新标签页）"
+  },
+  "referrals": {
+    "intro": "通过链接分享工作坊。当有人通过您的链接预订并付款后，您将获得推荐费。",
+    "createTitle": "获取链接",
+    "createHint": "请选择一个工作坊。每个工作坊您有一个链接。",
+    "workshopLabel": "工作坊",
+    "workshopPlaceholder": "选择工作坊",
+    "create": "获取我的链接",
+    "creating": "正在创建...",
+    "created": "您的链接已出现在下方列表中。",
+    "existing": "您已有此工作坊的链接。",
+    "pick": "请先选择工作坊。",
+    "failed": "无法生成链接，请重试。",
+    "copyFailed": "无法复制链接。",
+    "copy": "复制链接",
+    "copied": "已复制",
+    "totalTitle": "已获得的推荐费",
+    "totalHint": "通过您的链接产生且已付款的每笔预订原价的一定百分比。百分比按店铺设置。",
+    "listTitle": "您的链接",
+    "empty": "您还没有链接。请在上方选择一个工作坊获取第一个链接。",
+    "col": {
+      "workshop": "工作坊",
+      "link": "链接",
+      "rate": "比例",
+      "clicks": "点击",
+      "bookings": "已付款预订",
+      "fee": "推荐费"
+    }
   }
 }

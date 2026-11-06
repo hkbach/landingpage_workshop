@@ -518,6 +518,12 @@ Browser ────────────────────────
 
 ### 5.7 Thông báo email
 
+
+**FR-CUST-02 – Referrals của customer (Should)** (`/customer/{id}/referrals`, menu "Referrals")
+- Customer có tài khoản chọn một workshop (trong các workshop đang hiển thị cho khách) để lấy **link referral** chia sẻ; mỗi cặp tài khoản + workshop một link, bấm lại thì trả link cũ. Có nút sao chép link.
+- Trang **chỉ hiển thị phí referral**: tổng phí referral đã nhận (theo từng loại tiền) và danh sách link với tỷ lệ của shop, lượt nhấp, số booking đã thanh toán và phí referral của từng link (**tỷ lệ referral của shop × giá booking gốc**). Customer không thấy phí duy trì, phí dịch vụ hay lợi nhuận của shop và hệ thống.
+- API: `GET/POST /customer/{id}/referrals` (xác thực như các API `/customer/{id}`). Text i18n đủ 5 ngôn ngữ.
+
 **FR-MAIL-01 – Email (Must)**
 
 | Event | Người nhận | Ngôn ngữ |
@@ -593,11 +599,12 @@ Browser ────────────────────────
 **FR-ADM-15 – Referrals (Should)** (`/systemadmin/referrals`)
 - Referral là cách thu hút người dùng theo mô hình affiliate: customer có tài khoản thấy danh sách workshops, chọn workshop để tạo **link referral** (`{shop}.domain/?ref=CODE`, mỗi cặp tài khoản + workshop một link; chỉ workshop của shop `ACTIVE`). API khách: `GET/POST /customer/{id}/referrals`.
 - Admin xem danh sách link: tìm theo **email của người đăng ký tài khoản** (hoặc mã, workshop, shop), lọc theo ngày tạo; mỗi link có lượt nhấp, số booking đã thanh toán và phí referral đã tạo ra.
-- *Giả định cần xác nhận:* phí referral = % (theo shop) của **phí nền tảng** (phí duy trì + phí dịch vụ) của booking đến từ link. *Giới hạn MVP:* giao diện tạo link phía customer và việc bắt `?ref=` khi đặt booking chưa làm; mock gán mỗi booking thứ hai của workshop đã được chia sẻ (không phải của chính người chia sẻ) cho link để có số liệu xem thử.
+- **Phí referral = tỷ lệ referral của shop × giá booking gốc** (giá gốc = đơn giá × số lượng, trước voucher; cùng cơ sở tính với phí duy trì và phí dịch vụ). Chỉ booking đã thanh toán và đến từ link mới có phí referral.
+- Phía customer: menu **Referrals** (`/customer/{id}/referrals`, xem FR-CUST-02). *Giới hạn MVP:* việc bắt `?ref=` khi đặt booking chưa làm; mock gán mỗi booking thứ hai của workshop đã được chia sẻ (không phải của chính người chia sẻ) cho link **đã có lượt nhấp** để có số liệu xem thử.
 
-**FR-ADM-16 – Income của nền tảng (Should)** (`/systemadmin/income`): phí đã thu từ booking của từng shop (phí duy trì + phí dịch vụ theo tỷ lệ của shop, tính trên giá gốc, đúng quy tắc của FR-PAY-02), trừ phí referral; **lợi nhuận hệ thống = tổng phí − phí referral**. Lọc theo khoảng ngày thanh toán (múi giờ shop). Tổng theo từng loại tiền (không cộng lẫn tiền tệ).
+**FR-ADM-16 – Income của nền tảng (Should)** (`/systemadmin/income`): phí đã thu từ booking của từng shop, trừ phí referral. **Lợi nhuận của hệ thống = (giá gốc × Maintenance Fee + giá gốc × Service Fee) − giá gốc × Referral Fee** (Referral Fee chỉ áp dụng cho booking đến từ link referral). Bảng có cột giá gốc của các booking đã thanh toán, từng loại phí và lợi nhuận; mọi phí đều tính trên giá gốc theo đúng quy tắc của FR-PAY-02. Lọc theo khoảng ngày thanh toán (múi giờ shop). Tổng theo từng loại tiền (không cộng lẫn tiền tệ).
 
-**FR-ADM-17 – Config Fee (Must, mở rộng FR-PAY-02)** (`/systemadmin/fees`): cấu hình **phí duy trì, phí dịch vụ và phí referral** theo phần trăm (0–100, tối đa 2 số lẻ, nhập được dấu phẩy; duy trì + dịch vụ không quá 100%; lưu bằng basis points). Đặt cho **từng shop** (mỗi dòng có Save, chỉ bật khi có thay đổi) hoặc **bulk action áp dụng cùng tỷ lệ cho tất cả shop** (có xác nhận, tất cả hoặc không gì cả). Mặc định: 2% / 3% / 10%. API: `GET /admin/fees`, `PUT /admin/fees/{id}`, `POST /admin/fees/bulk`; form phí theo shop trong chi tiết shop vẫn dùng `PUT /admin/organizations/{id}/finance-settings`.
+**FR-ADM-17 – Config Fee (Must, mở rộng FR-PAY-02)** (`/systemadmin/fees`): cấu hình **phí duy trì, phí dịch vụ và phí referral** theo phần trăm (0–100, tối đa 2 số lẻ, nhập được dấu phẩy; duy trì + dịch vụ không quá 100%; lưu bằng basis points). Đặt cho **từng shop** (mỗi dòng có Save, chỉ bật khi có thay đổi) hoặc **bulk action áp dụng cùng tỷ lệ cho tất cả shop** (có xác nhận, tất cả hoặc không gì cả). Mọi tỷ lệ là phần trăm của **giá booking gốc**. Mặc định: 2% / 3% / 1% (duy trì / dịch vụ / referral). Hệ thống không chặn tỷ lệ referral lớn hơn tổng hai phí còn lại (lợi nhuận có thể âm, hiển thị đúng như tính). API: `GET /admin/fees`, `PUT /admin/fees/{id}`, `POST /admin/fees/bulk`; form phí theo shop trong chi tiết shop vẫn dùng `PUT /admin/organizations/{id}/finance-settings`.
 
 ---
 

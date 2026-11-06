@@ -72,11 +72,12 @@ export function createReferral(accountId: string, workshopId: string): CreateRef
 
 /**
  * The bookings that came through a link, by booking id. The mock has no `?ref=` capture yet, so it attributes every second booking of a shared workshop (never the
- * booking of the person who shares it) to the link, which is enough to look at the numbers. TODO(api): the referral_link_id kept on the booking.
+ * booking of the person who shares it) to a link that was opened, which is enough to look at the numbers. TODO(api): the referral_link_id kept on the booking.
  */
 export function attributedBookings(bookings: readonly Booking[] = liveBookings()): Map<string, string> {
   const out = new Map<string, string>();
   for (const r of store()) {
+    if (r.clicks === 0) continue; // a link nobody opened brought no booking
     bookings.filter((b) => b.workshopId === r.workshopId && b.customerId !== r.accountId && b.status !== "CANCELLED").forEach((b, i) => {
       if (i % 2 === 1 && !out.has(b.id)) out.set(b.id, r.id);
     });

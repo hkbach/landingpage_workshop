@@ -140,6 +140,9 @@ describe("referrals", () => {
 });
 
 describe("fees", () => {
+  it("starts with 1% referral fee (of the original price)", () => {
+    expect(DEFAULT_REFERRAL_BPS).toBe(100);
+  });
   it("sets the three rates of a shop, refusing a wrong one without saving anything", () => {
     expect(setAllRates("org-1", { maintenanceBps: 100, serviceBps: 250, referralBps: 500 })).toBe("OK");
     expect(getFeeRates("org-1")).toEqual({ maintenanceBps: 100, serviceBps: 250 });
@@ -173,12 +176,26 @@ describe("income of the platform", () => {
     const base = adminIncome().shops.find((s) => s.shopId === "org-1")!;
     setAllRates("org-1", { maintenanceBps: 0, serviceBps: 0, referralBps: 1000 });
     const zero = adminIncome().shops.find((s) => s.shopId === "org-1")!;
-    expect([zero.fees, zero.referralFee, zero.profit]).toEqual([0, 0, 0]);
+    expect(zero.fees).toBe(0);
+    expect(zero.referralFee).toBeGreaterThan(0); // the referral fee does not depend on the other fees: it is a percentage of the original price
+    expect(zero.profit).toBe(-zero.referralFee);
     expect(zero.income).toBe(base.income);
     setAllRates("org-1", { maintenanceBps: 200, serviceBps: 300, referralBps: 0 });
     const noRef = adminIncome().shops.find((s) => s.shopId === "org-1")!;
     expect(noRef.referralFee).toBe(0);
     expect(noRef.profit).toBe(noRef.fees);
+  });
+  it("the referral fee is a percentage of the ORIGINAL price: at 100% it is the original price of the referred bookings, and the profit of the platform is then minus that", () => {
+    setAllRates("org-1", { maintenanceBps: 0, serviceBps: 0, referralBps: 10_000 });
+    const d = adminIncome().shops.find((s) => s.shopId === "org-1")!;
+    expect(d.referralFee).toBeGreaterThan(0);
+    expect(d.referralFee).toBeLessThan(d.basePrice);
+    expect(d.profit).toBe(-d.referralFee);
+    setAllRates("org-1", { maintenanceBps: 500, serviceBps: 0, referralBps: 100 });
+    const e = adminIncome().shops.find((s) => s.shopId === "org-1")!;
+    expect(Math.abs(e.maintenanceFee - e.basePrice * 0.05)).toBeLessThan(e.bookings + 1); // 5% of the original price (rounded per payment)
+    expect(Math.abs(e.referralFee - d.referralFee / 100)).toBeLessThan(e.bookings + 1); // 1% of the same bookings
+    expect(e.profit).toBe(e.fees - e.referralFee);
   });
   it("narrows to a range of days and checks it", () => {
     expect(adminIncome("2999-01-01").shops.every((s) => s.income === 0)).toBe(true);

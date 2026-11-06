@@ -530,7 +530,7 @@
   },
   "referrals": {
     "title": "Referrals",
-    "description": "The referral (affiliate) links. A customer with an account picks a workshop and shares its link; a booking that comes through it earns them a referral fee.",
+    "description": "The referral (affiliate) links. A customer with an account picks a workshop and shares its link; a paid booking that comes through it earns them a referral fee = referral rate of the shop x the original price of the booking.",
     "search": "Search",
     "searchPlaceholder": "Email of the person, code, workshop or shop",
     "from": "Made from",
@@ -550,7 +550,7 @@
   },
   "income": {
     "title": "Income",
-    "description": "The fees charged on the bookings of the shops, less the referral fees. Profit of the platform = total fees - referral fees.",
+    "description": "Fees charged on the bookings of the shops, less the referral fees. Profit of the platform = original price x maintenance fee + original price x service fee - original price x referral fee.",
     "from": "From",
     "to": "To",
     "clearDates": "Clear dates",
@@ -563,22 +563,24 @@
       "service": "Service fee",
       "fees": "Total fees",
       "referral": "Referral fee",
-      "profit": "Profit"
+      "profit": "Profit",
+      "basePrice": "Original price"
     },
     "totalIn": "Total in {currency}",
-    "formula": "Profit = total fees - referral fees",
+    "formula": "Profit = fees - referral fee",
     "totalFees": "Total fees",
-    "note": "The fees are taken on the payments of the bookings at the rates of each shop (Config fees). The referral fee is the part of the fees of a booking that came through a referral link, paid to the person who shared it."
+    "note": "Every fee is a percentage of the ORIGINAL price of the booking (before vouchers), at the rates of each shop (Config fees). The referral fee is paid only for bookings that came through a referral link, and is also a percentage of the original price.",
+    "totalBase": "Original price of the bookings"
   },
   "feesAll": {
     "title": "Config fees",
-    "description": "The maintenance fee, the service fee and the referral fee, in percent. Set them for one shop, or apply the same rates to every shop at once.",
+    "description": "The maintenance fee, the service fee and the referral fee, in percent of the original price of a booking. Set them for one shop, or apply the same rates to every shop at once.",
     "bulkTitle": "Apply to all shops",
     "bulkIntro": "The three rates below replace the rates of every shop.",
     "applyAll": "Apply to all shops",
     "invalid": "Enter a percentage from 0 to 100 (at most 2 decimals).",
     "totalTooHigh": "The maintenance and the service fee together cannot be more than 100%.",
-    "defaults": "Until set, a shop uses {m}% maintenance, {s}% service and {r}% referral.",
+    "defaults": "Until set, a shop uses {m}% maintenance, {s}% service and {r}% referral, all of the original price.",
     "col": {
       "shop": "Shop",
       "maintenance": "Maintenance fee (%)",

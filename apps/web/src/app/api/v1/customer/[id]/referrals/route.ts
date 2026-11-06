@@ -3,7 +3,9 @@ import { apiError, fieldCodes } from "@/lib/api-error";
 import { siteOrigin } from "@/components/site/site-url";
 import { customerLoginRequired } from "@/lib/customer-access";
 import { workshopsWithShop } from "@/lib/mock/admin-directory";
+import { referralEarnings } from "@/lib/mock/admin-income";
 import { accountOfGuest } from "@/lib/mock/booking-store";
+import { getReferralBps } from "@/lib/mock/fee-rates-store";
 import { createReferral, listReferrals } from "@/lib/mock/referral-store";
 
 // The referral (affiliate) links of a customer: they pick a workshop and share the link; a booking that comes through it earns them a referral fee. MOCK implementation
@@ -12,6 +14,7 @@ import { createReferral, listReferrals } from "@/lib/mock/referral-store";
 const headers = { "cache-control": "no-store", "x-robots-tag": "noindex" };
 const emailOf = (request: Request): string | null => (customerLoginRequired() ? (request.headers.get("x-guest-email") ?? "") : null);
 const notFound = () => apiError(404, "NOT_FOUND", "Account not found.", {}, headers);
+const titleOf = (l: Record<string, string | undefined>): string => l.en ?? Object.values(l).find(Boolean) ?? "";
 const bodySchema = z.object({ workshopId: z.string().min(1, "required").max(100, "invalid") });
 
 /** The link as the customer shares it: the landing page of the shop with `?ref=CODE` (the port of the server is kept in development). */
@@ -23,9 +26,15 @@ function linkOf(slug: string, code: string, request: Request): string {
 
 function view(request: Request, accountId: string) {
   const ws = new Map(workshopsWithShop().map((x) => [x.workshop.id, x]));
+  const earned = referralEarnings();
   return listReferrals().filter((r) => r.accountId === accountId).flatMap((r) => {
     const w = ws.get(r.workshopId);
-    return w ? [{ id: r.id, code: r.code, workshopId: r.workshopId, shopName: w.shop.name, link: linkOf(w.shop.slug, r.code, request), createdAt: r.createdAt, clicks: r.clicks }] : [];
+    const e = earned.get(r.id) ?? { bookings: 0, fee: 0 };
+    return w ? [{
+      id: r.id, code: r.code, workshopId: r.workshopId, workshopTitle: titleOf(w.workshop.title), shopName: w.shop.name, link: linkOf(w.shop.slug, r.code, request), createdAt: r.createdAt, clicks: r.clicks,
+      // What the customer earns: the referral rate of the shop x the original price of the paid bookings that came through the link.
+      referralBps: getReferralBps(w.shop.id), bookings: e.bookings, referralFee: e.fee, currency: w.shop.currency,
+    }] : [];
   });
 }
 

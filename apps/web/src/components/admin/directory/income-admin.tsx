@@ -40,6 +40,7 @@ export function IncomeAdmin() {
     { key: "shop", header: t("col.shop"), cell: (s) => <span className="font-medium">{s.shopName}</span> },
     { key: "bookings", header: t("col.bookings"), className: "text-right tabular-nums", cell: (s) => s.bookings },
     { key: "income", header: t("col.income"), className: "text-right tabular-nums", cell: (s) => money(s.income, s.currency) },
+    { key: "base", header: t("col.basePrice"), className: "text-right tabular-nums", cell: (s) => money(s.basePrice, s.currency) },
     { key: "maintenance", header: t("col.maintenance"), className: "text-right tabular-nums", cell: (s) => money(s.maintenanceFee, s.currency) },
     { key: "service", header: t("col.service"), className: "text-right tabular-nums", cell: (s) => money(s.serviceFee, s.currency) },
     { key: "fees", header: t("col.fees"), className: "text-right tabular-nums", cell: (s) => money(s.fees, s.currency) },
@@ -68,6 +69,7 @@ export function IncomeAdmin() {
             </CardHeader>
             <CardContent className="grid gap-1 text-sm">
               <div className="flex justify-between"><span>{t("col.income")}</span><span className="tabular-nums">{money(tot.income, tot.currency)}</span></div>
+              <div className="flex justify-between"><span>{t("totalBase")}</span><span className="tabular-nums">{money(tot.basePrice, tot.currency)}</span></div>
               <div className="flex justify-between"><span>{t("totalFees")}</span><span className="tabular-nums" data-testid="total-fees">{money(tot.fees, tot.currency)}</span></div>
               <div className="flex justify-between"><span>{t("col.referral")}</span><span className="tabular-nums" data-testid="total-referral">−{money(tot.referralFee, tot.currency)}</span></div>
               <div className="flex justify-between border-t pt-1 font-semibold"><span>{t("col.profit")}</span><span className="tabular-nums" data-testid="total-profit">{money(tot.profit, tot.currency)}</span></div>

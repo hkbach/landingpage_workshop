@@ -530,7 +530,7 @@
   },
   "referrals": {
     "title": "Referral",
-    "description": "Các liên kết referral (affiliate). Khách hàng có tài khoản chọn một workshop và chia sẻ liên kết; booking đến từ liên kết đó giúp họ nhận phí referral.",
+    "description": "Các liên kết referral (affiliate). Khách hàng có tài khoản chọn một workshop và chia sẻ liên kết; booking đã thanh toán đến từ liên kết đó giúp họ nhận phí referral = tỷ lệ referral của shop x giá gốc của booking.",
     "search": "Tìm kiếm",
     "searchPlaceholder": "Email người đăng ký, mã, workshop hoặc shop",
     "from": "Tạo từ ngày",
@@ -550,7 +550,7 @@
   },
   "income": {
     "title": "Thu nhập",
-    "description": "Các khoản phí thu từ booking của các shop, trừ phí referral. Lợi nhuận của hệ thống = tổng phí - phí referral.",
+    "description": "Các khoản phí thu từ booking của các shop, trừ phí referral. Lợi nhuận của hệ thống = giá gốc x phí duy trì + giá gốc x phí dịch vụ - giá gốc x phí referral.",
     "from": "Từ ngày",
     "to": "Đến ngày",
     "clearDates": "Xóa ngày",
@@ -563,22 +563,24 @@
       "service": "Phí dịch vụ",
       "fees": "Tổng phí",
       "referral": "Phí referral",
-      "profit": "Lợi nhuận"
+      "profit": "Lợi nhuận",
+      "basePrice": "Giá gốc"
     },
     "totalIn": "Tổng theo {currency}",
-    "formula": "Lợi nhuận = tổng phí - phí referral",
+    "formula": "Lợi nhuận = phí - phí referral",
     "totalFees": "Tổng phí",
-    "note": "Phí được tính trên các khoản thanh toán của booking theo tỷ lệ của từng shop (Cấu hình phí). Phí referral là phần phí của booking đến từ liên kết referral, trả cho người đã chia sẻ liên kết."
+    "note": "Mọi khoản phí đều là phần trăm của GIÁ GỐC của booking (trước voucher), theo tỷ lệ của từng shop (Cấu hình phí). Phí referral chỉ trả cho booking đến từ liên kết referral và cũng là phần trăm của giá gốc.",
+    "totalBase": "Giá gốc của các booking"
   },
   "feesAll": {
     "title": "Cấu hình phí",
-    "description": "Phí duy trì, phí dịch vụ và phí referral, tính theo phần trăm. Đặt cho từng shop, hoặc áp dụng cùng một tỷ lệ cho tất cả shop cùng lúc.",
+    "description": "Phí duy trì, phí dịch vụ và phí referral, tính theo phần trăm của giá gốc của booking. Đặt cho từng shop, hoặc áp dụng cùng một tỷ lệ cho tất cả shop cùng lúc.",
     "bulkTitle": "Áp dụng cho tất cả shop",
     "bulkIntro": "Ba tỷ lệ dưới đây sẽ thay thế tỷ lệ của mọi shop.",
     "applyAll": "Áp dụng cho tất cả shop",
     "invalid": "Nhập phần trăm từ 0 đến 100 (tối đa 2 chữ số thập phân).",
     "totalTooHigh": "Phí duy trì và phí dịch vụ cộng lại không được quá 100%.",
-    "defaults": "Khi chưa đặt, shop dùng phí duy trì {m}%, phí dịch vụ {s}% và phí referral {r}%.",
+    "defaults": "Khi chưa đặt, shop dùng phí duy trì {m}%, phí dịch vụ {s}% và phí referral {r}%, đều tính trên giá gốc.",
     "col": {
       "shop": "Shop",
       "maintenance": "Phí duy trì (%)",

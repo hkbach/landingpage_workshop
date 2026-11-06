@@ -13,7 +13,8 @@
     "today": "오늘",
     "bookings": "내 예약",
     "favorites": "즐겨찾기",
-    "workshops": "워크숍"
+    "workshops": "워크숍",
+    "referrals": "추천"
   },
   "gate": {
     "loginTitle": "로그인하여 계정 보기",
@@ -142,5 +143,33 @@
   "map": {
     "name": "Google Maps",
     "label": "Google Maps에서 주소 열기(새 탭)"
+  },
+  "referrals": {
+    "intro": "링크로 워크숍을 공유하세요. 누군가 내 링크로 예약하고 결제하면 추천 수수료를 받습니다.",
+    "createTitle": "링크 받기",
+    "createHint": "워크숍을 선택하세요. 워크숍마다 링크가 하나씩 있습니다.",
+    "workshopLabel": "워크숍",
+    "workshopPlaceholder": "워크숍 선택",
+    "create": "내 링크 받기",
+    "creating": "만드는 중...",
+    "created": "링크가 아래 목록에 준비되었습니다.",
+    "existing": "이 워크숍의 링크가 이미 있습니다.",
+    "pick": "먼저 워크숍을 선택하세요.",
+    "failed": "링크를 만들 수 없습니다. 다시 시도해 주세요.",
+    "copyFailed": "링크를 복사할 수 없습니다.",
+    "copy": "링크 복사",
+    "copied": "복사됨",
+    "totalTitle": "받은 추천 수수료",
+    "totalHint": "내 링크로 들어온 결제 완료 예약의 원래 가격에 대한 일정 비율입니다. 비율은 상점별로 정해집니다.",
+    "listTitle": "내 링크",
+    "empty": "아직 링크가 없습니다. 위에서 워크숍을 선택해 첫 링크를 받으세요.",
+    "col": {
+      "workshop": "워크숍",
+      "link": "링크",
+      "rate": "비율",
+      "clicks": "클릭",
+      "bookings": "결제된 예약",
+      "fee": "추천 수수료"
+    }
   }
 }

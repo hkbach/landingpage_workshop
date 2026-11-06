@@ -1,12 +1,12 @@
 // SERVER-ONLY: the fee rates a system administrator sets for each shop (REQUIREMENTS FR-PAY-02, FR-ADM-10), until apps/api exists. The Income page of a shop reads
 // the rates of that shop only; a shop without rates of its own uses the defaults. Besides the maintenance and the service fee, each shop has a REFERRAL fee: the
-// part, in basis points, of the platform fees taken on a booking that came from a referral link, which the platform pays to the person who shared the link.
+// percentage, in basis points, of the ORIGINAL price of a booking that came from a referral link, which the platform pays to the person who shared the link.
 // Lives on globalThis like the other mock stores.
 // TODO(api): `organization_fee_settings` (organization_id, maintenance_bps, service_bps, referral_bps), SUPER_ADMIN only, audited.
 import { checkFeeRates, DEFAULT_FEE_RATES, isValidFeeBps, type FeeRates } from "@workshop/shared";
 
-/** The referral fee until an administrator sets it: 10% of the platform fees of the referred booking. */
-export const DEFAULT_REFERRAL_BPS = 1000;
+/** The referral fee until an administrator sets it: 1% of the original price of the referred booking. */
+export const DEFAULT_REFERRAL_BPS = 100;
 
 const g = globalThis as unknown as { __feeRates?: Map<string, FeeRates>; __referralBps?: Map<string, number> };
 const rates = () => (g.__feeRates ??= new Map<string, FeeRates>());

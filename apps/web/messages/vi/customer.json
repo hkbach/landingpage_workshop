@@ -13,7 +13,8 @@
     "today": "Hôm nay",
     "bookings": "Booking của tôi",
     "favorites": "Yêu thích",
-    "workshops": "Workshop"
+    "workshops": "Workshop",
+    "referrals": "Referral"
   },
   "gate": {
     "loginTitle": "Đăng nhập để xem tài khoản",
@@ -142,5 +143,33 @@
   "map": {
     "name": "Google Maps",
     "label": "Mở địa chỉ trên Google Maps (mở tab mới)"
+  },
+  "referrals": {
+    "intro": "Chia sẻ workshop bằng một liên kết. Khi có người đặt qua liên kết của bạn và thanh toán, bạn nhận được phí referral.",
+    "createTitle": "Lấy liên kết",
+    "createHint": "Chọn một workshop. Mỗi workshop bạn có một liên kết.",
+    "workshopLabel": "Workshop",
+    "workshopPlaceholder": "Chọn workshop",
+    "create": "Lấy liên kết của tôi",
+    "creating": "Đang tạo...",
+    "created": "Liên kết của bạn đã có trong danh sách bên dưới.",
+    "existing": "Bạn đã có liên kết cho workshop này.",
+    "pick": "Hãy chọn workshop trước.",
+    "failed": "Chúng tôi không thể tạo liên kết. Vui lòng thử lại.",
+    "copyFailed": "Không thể sao chép liên kết.",
+    "copy": "Sao chép liên kết",
+    "copied": "Đã sao chép",
+    "totalTitle": "Phí referral đã nhận",
+    "totalHint": "Một tỷ lệ phần trăm của giá gốc của mỗi booking đã thanh toán đến từ liên kết của bạn. Tỷ lệ được đặt riêng cho từng shop.",
+    "listTitle": "Liên kết của bạn",
+    "empty": "Bạn chưa có liên kết nào. Hãy chọn một workshop ở trên để lấy liên kết đầu tiên.",
+    "col": {
+      "workshop": "Workshop",
+      "link": "Liên kết",
+      "rate": "Tỷ lệ",
+      "clicks": "Lượt nhấp",
+      "bookings": "Booking đã thanh toán",
+      "fee": "Phí referral"
+    }
   }
 }
