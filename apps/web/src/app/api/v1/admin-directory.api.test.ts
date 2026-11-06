@@ -92,7 +92,7 @@ describe("the referral links of a customer", () => {
     const first = await makeLink(json({ workshopId }), ctx({ id: "cu-9" }));
     expect(first.status).toBe(201);
     const link = await body(first);
-    expect(link.link).toMatch(/^http:\/\/whiskladle\.localtest\.me:3000\/\?ref=R[0-9A-F]{8}$/);
+    expect(link.link).toMatch(/^http:\/\/whiskladle\.localtest\.me:3000\/\?ref=R[0-9A-F]{8}&book=ws-1$/);
     expect((await makeLink(json({ workshopId }), ctx({ id: "cu-9" }))).status).toBe(200);
     const mine = (await body(await myLinks(get("/x"), ctx({ id: "cu-9" })))).items;
     expect(mine).toHaveLength(1);

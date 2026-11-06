@@ -35,13 +35,13 @@ export function useCustomer(): CustomerContextValue {
 }
 
 /** The menus of the guest area, in order: the path below /customer/{id} and the key of its text. */
-export const CUSTOMER_MENUS: { path: string; key: "profile" | "today" | "bookings" | "favorites" | "workshops" | "referrals"; icon: LucideIcon }[] = [
+export const CUSTOMER_MENUS: { path: string; key: "profile" | "today" | "bookings" | "favorites" | "workshops" | "affiliate"; icon: LucideIcon }[] = [
   { path: "profile", key: "profile", icon: UserRound },
   { path: "today", key: "today", icon: CalendarClock },
   { path: "bookings", key: "bookings", icon: Ticket },
   { path: "favorites", key: "favorites", icon: Heart },
   { path: "workshops", key: "workshops", icon: Sparkles },
-  { path: "referrals", key: "referrals", icon: Share2 },
+  { path: "affiliate", key: "affiliate", icon: Share2 },
 ];
 
 const card = "mx-auto mt-16 w-full max-w-md rounded-xl border bg-background p-6 shadow-sm";

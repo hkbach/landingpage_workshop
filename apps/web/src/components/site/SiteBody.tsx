@@ -2,6 +2,7 @@
 
 import type { Locale, PromotionRecord } from "@workshop/shared";
 import { BookingProvider } from "@/components/booking/BookingProvider";
+import { AffiliateEntry } from "./AffiliateEntry";
 import { FavoritesProvider } from "./FavoritesProvider";
 import { ReportProvider } from "./ReportProvider";
 import type { BookingShop } from "@/components/booking/BookingModal";
@@ -17,6 +18,7 @@ export function SiteBody({ content, theme, ctx, shop, workshops, sessions, local
 }) {
   return (
     <BookingProvider shop={shop} workshops={workshops} sessions={sessions} theme={theme} locale={locale} basePath={basePath} promotions={promotions}>
+      <AffiliateEntry slug={shop.slug} workshopIds={workshops.map((w) => w.id)} />
       <FavoritesProvider slug={shop.slug} shopName={shop.name} theme={theme}>
         <ReportProvider slug={shop.slug} theme={theme}>
           <PageRenderer content={content} theme={theme} ctx={ctx} />

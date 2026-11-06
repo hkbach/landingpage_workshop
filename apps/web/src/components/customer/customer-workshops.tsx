@@ -17,6 +17,7 @@ import { normalizeGuestEmail, parseFavorites, readFavoritesRaw, readGuestEmail, 
 import type { ListedShop } from "@/lib/mock/customer-listing";
 import { cn } from "@/lib/utils";
 import { GoogleMapsButton } from "./google-maps-button";
+import { AffiliateAction, AffiliateFeeLine, AffiliateSummary } from "./customer-affiliate";
 import { RatingStars } from "./rating-stars";
 import { useCustomer } from "./customer-shell";
 
@@ -25,8 +26,10 @@ import { useCustomer } from "./customer-shell";
  * its shop (its theme, Book button and booking popup; the booking is made at that shop) with the name of the shop and the rating under the name of the workshop. The
  * guest can search by the name of a workshop or of a shop. A shop's booking popup and favorites are shared by its cards (they belong to a shop).
  * The Favorites page is the same page with only the workshops the guest added to their favorites (`mode="favorites"`): taking the heart off a card takes it away at once.
+ * The Affiliate page (`mode="affiliate"`) lists every workshop with the affiliate fee of its shop; a card has Register Affiliate, which becomes Copy Affiliate link once the guest
+ * is registered for that workshop (the link opens its booking at the shop).
  */
-export function CustomerWorkshops({ shops, mode = "all" }: { shops: ListedShop[]; mode?: "all" | "favorites" }) {
+export function CustomerWorkshops({ shops, mode = "all" }: { shops: ListedShop[]; mode?: "all" | "favorites" | "affiliate" }) {
   const t = useTranslations("customer");
   const locale = useLocale() as Locale;
   const { profile } = useCustomer();
@@ -45,14 +48,15 @@ export function CustomerWorkshops({ shops, mode = "all" }: { shops: ListedShop[]
   }, [shops, savedSnapshot]);
 
   // The workshops of the page (all of them, or the favorites), then what the search leaves, shop by shop (the shops keep their order; a shop with nothing left is not there).
-  const pool = shops.map((s) => ({ ...s, list: [...s.workshops].sort((a, b) => a.sortOrder - b.sortOrder).filter((w) => mode === "all" || saved.get(s.shop.id)?.has(w.id)) }));
+  const pool = shops.map((s) => ({ ...s, list: [...s.workshops].sort((a, b) => a.sortOrder - b.sortOrder).filter((w) => mode !== "favorites" || saved.get(s.shop.id)?.has(w.id)) }));
   const found = pool.map((s) => ({ ...s, list: s.list.filter((w) => workshopMatches(w, s.shop.name, query)) })).filter((s) => s.list.length > 0);
   const total = found.reduce((n, s) => n + s.list.length, 0);
   const nothingToShow = pool.every((s) => s.list.length === 0); // no workshop listed, or no favorite yet
 
   return (
     <div className="grid gap-4">
-      <h1 className="text-2xl font-semibold">{t(mode === "favorites" ? "menu.favorites" : "menu.workshops")}</h1>
+      <h1 className="text-2xl font-semibold">{t(mode === "favorites" ? "menu.favorites" : mode === "affiliate" ? "menu.affiliate" : "menu.workshops")}</h1>
+      {mode === "affiliate" ? <AffiliateSummary /> : null}
       {nothingToShow ? <p className="text-sm text-muted-foreground" data-testid="customer-workshops-empty">{t(mode === "favorites" && shops.length > 0 ? "favorites.empty" : "workshops.empty")}</p> : (
         <>
           <div className="grid gap-1.5">
@@ -89,12 +93,18 @@ export function CustomerWorkshops({ shops, mode = "all" }: { shops: ListedShop[]
                           // Google Maps beside Book: the map link of the shop for the shop's address, a search for an address of the workshop's own.
                           actions={(() => {
                             const maps = safeMaps(workshopDirectionsUrl({ address: w.address }, shop));
-                            return maps ? <GoogleMapsButton href={maps} testId="customer-workshop-map" /> : null;
+                            return (
+                              <>
+                                {maps ? <GoogleMapsButton href={maps} testId="customer-workshop-map" /> : null}
+                                {mode === "affiliate" ? <AffiliateAction workshopId={w.id} /> : null}
+                              </>
+                            );
                           })()}
                           meta={(
                             <div className="grid gap-1">
                               <p className="text-sm text-[var(--site-muted)]" data-testid="customer-workshop-shop">{t("workshops.shopLine", { shop: shop.name })}</p>
                               {w.rating ? <RatingStars average={w.rating.average} count={w.rating.count} /> : <p className="text-xs text-[var(--site-muted)]" data-testid="customer-workshop-no-rating">{t("workshops.noRating")}</p>}
+                              {mode === "affiliate" ? <AffiliateFeeLine workshopId={w.id} /> : null}
                             </div>
                           )}
                         />

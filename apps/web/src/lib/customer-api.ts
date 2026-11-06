@@ -49,7 +49,10 @@ export interface CustomerReferral {
   referralBps: number; bookings: number; referralFee: number; currency: string;
 }
 
-export const fetchCustomerReferrals = async (id: string, email?: string): Promise<{ items: CustomerReferral[] }> =>
+/** The links of the guest, the affiliate fee of every shop (basis points) and the shop of every workshop (so the fee of a workshop without a link can be shown). */
+export interface CustomerReferralsResponse { items: CustomerReferral[]; rates: Record<string, number>; shopOfWorkshop: Record<string, string> }
+
+export const fetchCustomerReferrals = async (id: string, email?: string): Promise<CustomerReferralsResponse> =>
   parse(await fetch(`${url(id)}/referrals`, { headers: emailHeader(email), cache: "no-store" }));
 
 /** The link of a workshop (a new one, or the one the guest already has). */

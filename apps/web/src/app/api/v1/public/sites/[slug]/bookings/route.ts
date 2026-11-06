@@ -4,6 +4,7 @@ import { apiError, fieldCodes } from "@/lib/api-error";
 import { siteOrigin } from "@/components/site/site-url";
 import { currentShop } from "@/lib/mock/data";
 import { createGuestBooking, demoConfirmToken } from "@/lib/mock/booking-store";
+import { attributeBooking } from "@/lib/mock/referral-store";
 
 // A guest books on the landing page of the shop (after the OTP). MOCK implementation inside Next until apps/api exists.
 // TODO(api): POST /public/sites/{slug}/bookings verifies Turnstile and the OTP, checks the seats in one locked step (SessionCapacityService), computes
@@ -18,6 +19,8 @@ const bodySchema = z.object({
   specialRequest: z.string().trim().max(500, "tooLong").optional(),
   promotionIds: z.array(z.string()).max(10).optional(),
   locale: z.enum(LOCALES).optional(),
+  /** The code of the affiliate link the guest came through (`?ref=` of the landing page), when there was one. */
+  ref: z.string().trim().max(40, "invalid").optional(),
 });
 
 /** POST -> 201 { code, status: "NOT_CONFIRMED", demoConfirmUrl? }. A repeated Idempotency-Key gives 200 and the same booking. 409 SESSION_FULL / SESSION_CLOSED. */
@@ -43,6 +46,7 @@ export async function POST(request: Request, ctx: RouteContext<"/api/v1/public/s
     if (res.code === "UNKNOWN_SESSION") return apiError(404, "NOT_FOUND", "Session not found.");
     return apiError(422, "VALIDATION", "Please check the highlighted fields.", { fields: { [res.code === "QUANTITY" ? "quantity" : "promotionIds"]: res.code } });
   }
+  if (parsed.data.ref && !res.repeated) attributeBooking(res.booking.id, parsed.data.ref, res.booking.workshopId, res.booking.customerId); // an unknown or wrong code is simply ignored
   const demo = demoConfirmToken(res.booking.id);
   return Response.json(
     { code: res.booking.bookingCode, status: res.booking.status, totalAmount: res.booking.totalAmount, ...(demo ? { demoConfirmUrl: `${origin}/booking/confirm/${demo}` } : {}) },

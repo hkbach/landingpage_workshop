@@ -1,4 +1,5 @@
 import type { BookingStatus, Locale } from "@workshop/shared";
+import { readAffiliateCode } from "@/lib/affiliate";
 
 // The guest books through POST /api/v1/public/sites/{slug}/bookings (a mock inside Next until apps/api exists). The server makes the booking NOT_CONFIRMED,
 // recomputes the price, checks the seats (SessionCapacityService) and queues the email with the link that confirms it. This file keeps what the
@@ -45,7 +46,9 @@ const KEY_PREFIX = "booking:";
  * booking is NOT_CONFIRMED: the guest gets an email with the link that confirms it.
  */
 export async function submitBooking(req: BookingRequest, display: Omit<ConfirmationData, "code" | "status" | "demoConfirmUrl">, idempotencyKey: string): Promise<ConfirmationData> {
-  const { slug, ...body } = req;
+  const { slug, ...rest } = req;
+  const ref = readAffiliateCode(slug);
+  const body = { ...rest, ...(ref ? { ref } : {}) };
   const res = await fetch(`/api/v1/public/sites/${encodeURIComponent(slug)}/bookings`, {
     method: "POST", headers: { "content-type": "application/json", "idempotency-key": idempotencyKey }, body: JSON.stringify(body),
   });

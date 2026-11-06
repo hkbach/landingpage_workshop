@@ -23,7 +23,9 @@ export interface Referral {
 }
 
 const DAY = 86_400_000;
-const g = globalThis as unknown as { __referrals?: Referral[] };
+const g = globalThis as unknown as { __referrals?: Referral[]; __referralBookings?: Map<string, string> };
+/** The bookings made through a link (the code of the link was sent with the booking): booking id -> link id. */
+const made = (): Map<string, string> => (g.__referralBookings ??= new Map());
 
 /** The workshops that can be shared: every workshop of every shop that exists in the mock. */
 function workshopShop(workshopId: string): string | undefined {
@@ -50,6 +52,7 @@ const store = (): Referral[] => (g.__referrals ??= seed());
 /** Test helper: back to the demo links. */
 export function resetReferralStore(): void {
   g.__referrals = undefined;
+  g.__referralBookings = undefined;
 }
 
 export const listReferrals = (): Referral[] => store().map((r) => ({ ...r }));
@@ -70,12 +73,31 @@ export function createReferral(accountId: string, workshopId: string): CreateRef
   return { ok: true, referral: { ...referral }, created: true };
 }
 
+/** Someone opened the link (the landing page of the shop `shopId` was loaded with `?ref=CODE`): false when there is no such link at that shop. */
+export function recordClick(code: string, shopId: string): boolean {
+  const r = store().find((x) => x.code === code && x.shopId === shopId);
+  if (r) r.clicks += 1;
+  return Boolean(r);
+}
+
 /**
- * The bookings that came through a link, by booking id. The mock has no `?ref=` capture yet, so it attributes every second booking of a shared workshop (never the
- * booking of the person who shares it) to a link that was opened, which is enough to look at the numbers. TODO(api): the referral_link_id kept on the booking.
+ * A booking is made with the code of a link: it counts for that link when the booking is for the workshop the link is for and is not the booking of the person who
+ * shares the link. A code that is not a link, another workshop or one's own booking is ignored (the booking itself is not affected). True when it counts.
+ */
+export function attributeBooking(bookingId: string, code: string, workshopId: string, customerId: string): boolean {
+  const r = store().find((x) => x.code === code);
+  if (!r || r.workshopId !== workshopId || r.accountId === customerId) return false;
+  made().set(bookingId, r.id);
+  return true;
+}
+
+/**
+ * The bookings that came through a link, by booking id: the ones made with the code of a link (the landing page keeps the `?ref=` and the booking sends it), and, for
+ * the demo data that has no such booking, every second booking of a shared workshop (never the booking of the person who shares it) attributed to a link that was
+ * opened, so the numbers can be looked at. TODO(api): the referral_link_id kept on the booking; no demo attribution.
  */
 export function attributedBookings(bookings: readonly Booking[] = liveBookings()): Map<string, string> {
-  const out = new Map<string, string>();
+  const out = new Map<string, string>(made());
   for (const r of store()) {
     if (r.clicks === 0) continue; // a link nobody opened brought no booking
     bookings.filter((b) => b.workshopId === r.workshopId && b.customerId !== r.accountId && b.status !== "CANCELLED").forEach((b, i) => {

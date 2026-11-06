@@ -14,7 +14,7 @@
     "bookings": "My Booking",
     "favorites": "Favorites",
     "workshops": "Workshops",
-    "referrals": "Referrals"
+    "affiliate": "Affiliate"
   },
   "gate": {
     "loginTitle": "Log in to see your account",
@@ -144,32 +144,17 @@
     "name": "Google Maps",
     "label": "Open the address in Google Maps (opens in a new tab)"
   },
-  "referrals": {
-    "intro": "Share a workshop with a link. When someone books it through your link and pays, you earn a referral fee.",
-    "createTitle": "Get a link",
-    "createHint": "Pick a workshop. You have one link for each workshop.",
-    "workshopLabel": "Workshop",
-    "workshopPlaceholder": "Choose a workshop",
-    "create": "Get my link",
-    "creating": "Creating...",
-    "created": "Your link is ready in the list below.",
-    "existing": "You already have a link for this workshop.",
-    "pick": "Choose a workshop first.",
-    "failed": "We could not make the link. Please try again.",
-    "copyFailed": "The link could not be copied.",
-    "copy": "Copy link",
+  "affiliate": {
+    "intro": "Register for a workshop, copy its Affiliate link and send it to people you invite. The link takes them to the booking of that workshop.",
+    "totalTitle": "Affiliate fee earned",
+    "totalHint": "{count, plural, =0 {You are not registered for any workshop yet.} one {From # workshop you registered for.} other {From # workshops you registered for.}}",
+    "register": "Register Affiliate",
+    "registering": "Registering...",
+    "copy": "Copy Affiliate link",
     "copied": "Copied",
-    "totalTitle": "Referral fee earned",
-    "totalHint": "A percentage of the original price of every paid booking that came through your links. The percentage is set for each shop.",
-    "listTitle": "Your links",
-    "empty": "You have no links yet. Pick a workshop above to get your first one.",
-    "col": {
-      "workshop": "Workshop",
-      "link": "Link",
-      "rate": "Rate",
-      "clicks": "Clicks",
-      "bookings": "Paid bookings",
-      "fee": "Referral fee"
-    }
+    "copyFailed": "The link could not be copied.",
+    "failed": "We could not register you. Please try again.",
+    "fee": "Affiliate fee: {rate} of the booking price",
+    "earned": "Earned {amount} · {count, plural, one {# paid booking} other {# paid bookings}} · {clicks, plural, one {# click} other {# clicks}}"
   }
 }
