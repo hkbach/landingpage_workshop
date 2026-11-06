@@ -114,7 +114,9 @@
     "address": "Địa chỉ",
     "addressHint": "Nơi tổ chức workshop. Để trống nếu dùng địa chỉ của shop ({address}).",
     "addressNote": "Ghi chú cho địa chỉ",
-    "addressNoteHint": "Hiển thị cho khách cùng với địa chỉ, ví dụ tầng, lối vào hoặc nơi gửi xe."
+    "addressNoteHint": "Hiển thị cho khách cùng với địa chỉ, ví dụ tầng, lối vào hoặc nơi gửi xe.",
+    "openMap": "Google Maps",
+    "openMapLabel": "Mở địa chỉ trên Google Maps (mở tab mới)"
   },
   "errors": {
     "titleRequired": "Bắt buộc nhập tiêu đề bằng ngôn ngữ mặc định.",

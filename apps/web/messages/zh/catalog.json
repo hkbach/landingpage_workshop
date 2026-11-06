@@ -114,7 +114,9 @@
     "address": "地址",
     "addressHint": "工作坊举办的地点。留空则使用商店地址（{address}）。",
     "addressNote": "地址备注",
-    "addressNoteHint": "与地址一起显示给客人，例如楼层、入口或停车位置。"
+    "addressNoteHint": "与地址一起显示给客人，例如楼层、入口或停车位置。",
+    "openMap": "Google Maps",
+    "openMapLabel": "在 Google 地图中打开该地址（新标签页）"
   },
   "errors": {
     "titleRequired": "必须填写默认语言的标题。",

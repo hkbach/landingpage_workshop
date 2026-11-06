@@ -114,7 +114,9 @@
     "address": "住所",
     "addressHint": "ワークショップを開催する場所です。空欄の場合はショップの住所（{address}）を使います。",
     "addressNote": "住所のメモ",
-    "addressNoteHint": "住所と一緒にお客様に表示されます。例：階数、入口、駐車場所。"
+    "addressNoteHint": "住所と一緒にお客様に表示されます。例：階数、入口、駐車場所。",
+    "openMap": "Google Maps",
+    "openMapLabel": "Google マップで住所を開く（新しいタブで開きます）"
   },
   "errors": {
     "titleRequired": "デフォルト言語のタイトルは必須です。",

@@ -3,9 +3,9 @@
 import { useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { z } from "zod";
-import { ImageOff, Plus, Trash2, TriangleAlert } from "lucide-react";
+import { ImageOff, MapPin, Plus, Trash2, TriangleAlert } from "lucide-react";
 import {
-  LOCALES, WORKSHOP_ADDRESS_MAX, WORKSHOP_ADDRESS_NOTE_MAX, WORKSHOP_CATEGORIES, formatMoney, minorDigits, missingLocales, trimDeep,
+  LOCALES, WORKSHOP_ADDRESS_MAX, WORKSHOP_ADDRESS_NOTE_MAX, WORKSHOP_CATEGORIES, formatMoney, mapsSearchUrl, minorDigits, missingLocales, trimDeep,
   type Locale, type Localized, type WorkshopCategory, type WorkshopStatus,
 } from "@workshop/shared";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -186,7 +186,26 @@ export function WorkshopForm({
             id="ws-address" label={t("form.address")} error={errors.address ? t("errors.addressTooLong", { max: WORKSHOP_ADDRESS_MAX }) : undefined}
             hint={t("form.addressHint", { address: shop.address ?? "" })}
           >
-            {(p) => <Input {...p} type="text" maxLength={WORKSHOP_ADDRESS_MAX} autoComplete="street-address" value={d.address} onChange={(e) => setField("address", e.target.value)} />}
+            {(p) => (
+              // The textbox and, beside it, a button that opens the address that was typed in Google Maps (a new tab; nothing to open while the box is empty).
+              <div className="flex items-start gap-2">
+                <Input {...p} type="text" className="flex-1" maxLength={WORKSHOP_ADDRESS_MAX} autoComplete="street-address" value={d.address} onChange={(e) => setField("address", e.target.value)} />
+                {d.address.trim() ? (
+                  <a
+                    href={mapsSearchUrl(d.address)} target="_blank" rel="noopener noreferrer" aria-label={t("form.openMapLabel")} data-testid="workshop-address-map"
+                    className={buttonVariants({ variant: "outline" })}
+                  >
+                    <MapPin aria-hidden="true" />
+                    {t("form.openMap")}
+                  </a>
+                ) : (
+                  <Button type="button" variant="outline" disabled aria-label={t("form.openMapLabel")} data-testid="workshop-address-map">
+                    <MapPin aria-hidden="true" />
+                    {t("form.openMap")}
+                  </Button>
+                )}
+              </div>
+            )}
           </Field>
           <Field
             id="ws-address-note" label={t("form.addressNote")} hint={t("form.addressNoteHint")}

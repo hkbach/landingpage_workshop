@@ -114,7 +114,9 @@
     "address": "주소",
     "addressHint": "워크숍이 열리는 곳입니다. 비워 두면 샵 주소({address})를 사용합니다.",
     "addressNote": "주소 메모",
-    "addressNoteHint": "주소와 함께 손님에게 표시됩니다. 예: 층수, 출입구, 주차 위치."
+    "addressNoteHint": "주소와 함께 손님에게 표시됩니다. 예: 층수, 출입구, 주차 위치.",
+    "openMap": "Google Maps",
+    "openMapLabel": "Google Maps에서 주소 열기(새 탭)"
   },
   "errors": {
     "titleRequired": "기본 언어의 제목을 입력해 주세요.",
