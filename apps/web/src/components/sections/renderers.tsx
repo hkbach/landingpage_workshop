@@ -147,10 +147,10 @@ export function AboutSection({ section, props, ctx, variant }: RenderProps<About
 
 /**
  * One workshop of the list. `as` is "div" when the card sits in a list of its own; `meta` is shown under the name (the guest area puts the shop and the rating
- * there); `className` is added to the card.
+ * there); `actions` are buttons beside the Book button (the guest area puts Google Maps there); `className` is added to the card.
  */
-export function WorkshopCard({ w, ctx, horizontal, featured, showBook = true, as: Root = "li", meta, className }: {
-  w: Workshop; ctx: RenderContext; horizontal?: boolean; featured?: boolean; showBook?: boolean; as?: "li" | "div"; meta?: ReactNode; className?: string;
+export function WorkshopCard({ w, ctx, horizontal, featured, showBook = true, as: Root = "li", meta, actions, className }: {
+  w: Workshop; ctx: RenderContext; horizontal?: boolean; featured?: boolean; showBook?: boolean; as?: "li" | "div"; meta?: ReactNode; actions?: ReactNode; className?: string;
 }) {
   const L = localizer(ctx);
   const t = useTranslations("site");
@@ -181,11 +181,14 @@ export function WorkshopCard({ w, ctx, horizontal, featured, showBook = true, as
           </p>
         ) : null}
         {w.addressNote ? <p className="whitespace-pre-line text-xs text-[var(--site-muted)]" data-testid="workshop-card-address-note"><span className="sr-only">{t("sections.venueNote")}: </span>{w.addressNote}</p> : null}
-        {showBook ? (
-          <div className="mt-auto pt-3">
-            <button type="button" className={primaryButton} onClick={() => open(w.id)} aria-label={t("sections.bookWorkshop", { title: L(w.title) })}>
-              {t("sections.book")}
-            </button>
+        {showBook || actions ? (
+          <div className="mt-auto flex flex-wrap items-center gap-2 pt-3">
+            {showBook ? (
+              <button type="button" className={primaryButton} onClick={() => open(w.id)} aria-label={t("sections.bookWorkshop", { title: L(w.title) })}>
+                {t("sections.book")}
+              </button>
+            ) : null}
+            {actions}
           </div>
         ) : null}
       </div>

@@ -1,10 +1,23 @@
 import { describe, expect, it } from "vitest";
+import { mapsSearchUrl, workshopDirectionsUrl } from "@workshop/shared";
+import { safeMaps } from "@/components/sections/safe-url";
 import { currentShop, shops } from "./data";
 import { listedShops } from "./customer-listing";
 
 // The Workshops page of the guest area lists only the ACTIVE shops the platform administrator chose.
 
 describe("listedShops", () => {
+  it("gives every listed workshop a way to Google Maps that the sites accept: the shop's map link for the shop's address, a search for its own address", () => {
+    for (const l of listedShops()) {
+      for (const w of l.workshops) {
+        const href = workshopDirectionsUrl({ address: w.address }, l.shop); // the address a guest sees is always filled in
+        expect(safeMaps(href), `${l.shop.slug} ${w.id}`).toBeDefined();
+        expect(href, `${l.shop.slug} ${w.id}`).toBe(w.address === l.shop.address ? l.shop.mapsUrl : mapsSearchUrl(w.address!));
+      }
+    }
+    const demo = listedShops().find((l) => l.shop.id === currentShop.id)!;
+    expect(workshopDirectionsUrl({ address: demo.workshops.find((w) => w.id === "ws-4")!.address }, demo.shop)).toContain("google.com/maps/search"); // Dim Sum Night: its own address
+  });
   it("lists every shop that was chosen, by name, each with the ACTIVE workshops of its landing page", () => {
     const listed = listedShops();
     expect(listed.map((l) => l.shop.slug)).toEqual(["brewbean", "greentable", currentShop.slug]); // Brew & Bean, Green Table, Whisk & Ladle

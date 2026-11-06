@@ -10,7 +10,7 @@ import { CancelBooking } from "@/components/booking/CancelBooking";
 import { safeImage, safeMaps } from "@/components/sections/safe-url";
 import { Field } from "@/components/dashboard/shell/field";
 import { NativeSelect } from "@/components/dashboard/shell/native-select";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { DateInput } from "@/components/ui/date-input";
 import { Input } from "@/components/ui/input";
 import { PaginationBar } from "@/components/ui/pagination-bar";
@@ -21,6 +21,7 @@ import { fetchCustomerBookings } from "@/lib/customer-api";
 import { formatTime } from "@/lib/format";
 import { usePagination } from "@/lib/pagination";
 import { cn } from "@/lib/utils";
+import { GoogleMapsButton } from "./google-maps-button";
 import { useCustomer } from "./customer-shell";
 
 type Icon = ComponentType<LucideProps>;
@@ -244,11 +245,7 @@ function BookingTicket({ booking: b, now, locale, email, isNext, onCancelled }: 
           {b.canCancel ? <CancelBooking slug={b.shop.slug} code={b.code} email={email} onCancelled={onCancelled} /> : null}
           {block ? <p className="text-xs text-muted-foreground" data-testid="customer-booking-blocked">{tb(`cancelBlocked.${block}`)}</p> : null}
           {maps && phase === "upcoming" ? (
-            // The same button as beside the address of the workshop form: Google Maps, in a new tab.
-            <a href={maps} target="_blank" rel="noopener noreferrer" aria-label={tb("openMapLabel")} data-testid="customer-booking-map" className={buttonVariants({ variant: "outline" })}>
-              <MapPin aria-hidden="true" />
-              {tb("openMap")}
-            </a>
+            <GoogleMapsButton href={maps} testId="customer-booking-map" />
           ) : null}
         </div>
       </div>

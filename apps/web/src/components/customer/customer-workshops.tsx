@@ -3,10 +3,11 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Search } from "lucide-react";
-import type { Locale } from "@workshop/shared";
+import { workshopDirectionsUrl, type Locale } from "@workshop/shared";
 import { BookingProvider } from "@/components/booking/BookingProvider";
 import type { RenderContext } from "@/components/sections/context";
 import { WorkshopCard } from "@/components/sections/renderers";
+import { safeMaps } from "@/components/sections/safe-url";
 import { siteFontClass } from "@/components/sections/site-fonts";
 import { themeStyle } from "@/components/sections/theme";
 import { FavoritesProvider } from "@/components/site/FavoritesProvider";
@@ -15,6 +16,7 @@ import { workshopMatches } from "@/lib/customer-workshop-search";
 import { normalizeGuestEmail, parseFavorites, readFavoritesRaw, readGuestEmail, subscribeFavorites, writeGuestEmail } from "@/lib/favorites";
 import type { ListedShop } from "@/lib/mock/customer-listing";
 import { cn } from "@/lib/utils";
+import { GoogleMapsButton } from "./google-maps-button";
 import { RatingStars } from "./rating-stars";
 import { useCustomer } from "./customer-shell";
 
@@ -84,6 +86,11 @@ export function CustomerWorkshops({ shops, mode = "all" }: { shops: ListedShop[]
                       <li key={w.id} style={themeStyle(theme)} lang={locale} className={cn("@container h-full overflow-hidden rounded-xl", siteFontClass(theme.font))} data-testid={`customer-workshop-${w.id}`}>
                         <WorkshopCard
                           w={w} ctx={ctx} as="div" className="flex h-full flex-col"
+                          // Google Maps beside Book: the map link of the shop for the shop's address, a search for an address of the workshop's own.
+                          actions={(() => {
+                            const maps = safeMaps(workshopDirectionsUrl({ address: w.address }, shop));
+                            return maps ? <GoogleMapsButton href={maps} testId="customer-workshop-map" /> : null;
+                          })()}
                           meta={(
                             <div className="grid gap-1">
                               <p className="text-sm text-[var(--site-muted)]" data-testid="customer-workshop-shop">{t("workshops.shopLine", { shop: shop.name })}</p>
