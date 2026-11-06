@@ -24,8 +24,8 @@ export interface PaymentSource {
 
 export interface FeeRates { maintenanceBps: number; serviceBps: number }
 export const MAX_FEE_BPS = 10_000; // 100%
-/** The rates until an administrator sets them (mock data): 2% maintenance, 3% service. */
-export const DEFAULT_FEE_RATES: FeeRates = { maintenanceBps: 200, serviceBps: 300 };
+/** The rates until an administrator sets them (mock data): 10% maintenance, 10% service. A round value chosen to try the UI; the real defaults are a business decision. */
+export const DEFAULT_FEE_RATES: FeeRates = { maintenanceBps: 1000, serviceBps: 1000 };
 
 export const isValidFeeBps = (n: unknown): n is number => typeof n === "number" && Number.isInteger(n) && n >= 0 && n <= MAX_FEE_BPS;
 

@@ -96,7 +96,7 @@ describe("the referral links of a customer", () => {
     expect((await makeLink(json({ workshopId }), ctx({ id: "cu-9" }))).status).toBe(200);
     const mine = (await body(await myLinks(get("/x"), ctx({ id: "cu-9" })))).items;
     expect(mine).toHaveLength(1);
-    expect(mine[0]).toMatchObject({ workshopId, referralBps: 100, bookings: 0, referralFee: 0, currency: "VND" });
+    expect(mine[0]).toMatchObject({ workshopId, referralBps: 1000, bookings: 0, referralFee: 0, currency: "VND" });
     // a customer whose link brought paid bookings sees the fee it earned: the referral rate x the original price
     const emma = (await body(await myLinks(get("/x"), ctx({ id: "cu-1" })))).items as { referralFee: number; bookings: number }[];
     expect(emma.reduce((n, r) => n + r.referralFee, 0)).toBeGreaterThan(0);

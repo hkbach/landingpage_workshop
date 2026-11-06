@@ -140,8 +140,9 @@ describe("referrals", () => {
 });
 
 describe("fees", () => {
-  it("starts with 1% referral fee (of the original price)", () => {
-    expect(DEFAULT_REFERRAL_BPS).toBe(100);
+  it("starts with 10% for every fee (of the original price)", () => {
+    expect(DEFAULT_REFERRAL_BPS).toBe(1000);
+    expect(getFeeRates("org-2")).toEqual({ maintenanceBps: 1000, serviceBps: 1000 });
   });
   it("sets the three rates of a shop, refusing a wrong one without saving anything", () => {
     expect(setAllRates("org-1", { maintenanceBps: 100, serviceBps: 250, referralBps: 500 })).toBe("OK");

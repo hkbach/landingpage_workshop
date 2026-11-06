@@ -5,8 +5,8 @@
 // TODO(api): `organization_fee_settings` (organization_id, maintenance_bps, service_bps, referral_bps), SUPER_ADMIN only, audited.
 import { checkFeeRates, DEFAULT_FEE_RATES, isValidFeeBps, type FeeRates } from "@workshop/shared";
 
-/** The referral fee until an administrator sets it: 1% of the original price of the referred booking. */
-export const DEFAULT_REFERRAL_BPS = 100;
+/** The referral fee until an administrator sets it: 10% of the original price of the referred booking (a round value chosen to try the UI, like the other defaults). */
+export const DEFAULT_REFERRAL_BPS = 1000;
 
 const g = globalThis as unknown as { __feeRates?: Map<string, FeeRates>; __referralBps?: Map<string, number> };
 const rates = () => (g.__feeRates ??= new Map<string, FeeRates>());
