@@ -17,7 +17,7 @@ import { normalizeGuestEmail, parseFavorites, readFavoritesRaw, readGuestEmail, 
 import type { ListedShop } from "@/lib/mock/customer-listing";
 import { cn } from "@/lib/utils";
 import { GoogleMapsButton } from "./google-maps-button";
-import { AffiliateAction, AffiliateFeeLine, AffiliateSummary } from "./customer-affiliate";
+import { AffiliateAction, AffiliateFeeLine } from "./customer-affiliate";
 import { RatingStars } from "./rating-stars";
 import { useCustomer } from "./customer-shell";
 
@@ -26,8 +26,8 @@ import { useCustomer } from "./customer-shell";
  * its shop (its theme, Book button and booking popup; the booking is made at that shop) with the name of the shop and the rating under the name of the workshop. The
  * guest can search by the name of a workshop or of a shop. A shop's booking popup and favorites are shared by its cards (they belong to a shop).
  * The Favorites page is the same page with only the workshops the guest added to their favorites (`mode="favorites"`): taking the heart off a card takes it away at once.
- * The Affiliate page (`mode="affiliate"`) lists every workshop with the affiliate fee of its shop; a card has Register Affiliate, which becomes Copy Affiliate link once the guest
- * is registered for that workshop (the link opens its booking at the shop).
+ * The Program tab of the Affiliate page (`mode="affiliate"`) lists the active workshops with the affiliate fee of their shop, without the Book and Google Maps buttons; a card has
+ * Register Affiliate, which is replaced for good by Copy Affiliate link once the guest is registered for that workshop (the link opens its booking at the shop).
  */
 export function CustomerWorkshops({ shops, mode = "all" }: { shops: ListedShop[]; mode?: "all" | "favorites" | "affiliate" }) {
   const t = useTranslations("customer");
@@ -55,8 +55,7 @@ export function CustomerWorkshops({ shops, mode = "all" }: { shops: ListedShop[]
 
   return (
     <div className="grid gap-4">
-      <h1 className="text-2xl font-semibold">{t(mode === "favorites" ? "menu.favorites" : mode === "affiliate" ? "menu.affiliate" : "menu.workshops")}</h1>
-      {mode === "affiliate" ? <AffiliateSummary /> : null}
+      {mode === "affiliate" ? null : <h1 className="text-2xl font-semibold">{t(mode === "favorites" ? "menu.favorites" : "menu.workshops")}</h1>}
       {nothingToShow ? <p className="text-sm text-muted-foreground" data-testid="customer-workshops-empty">{t(mode === "favorites" && shops.length > 0 ? "favorites.empty" : "workshops.empty")}</p> : (
         <>
           <div className="grid gap-1.5">
@@ -89,16 +88,13 @@ export function CustomerWorkshops({ shops, mode = "all" }: { shops: ListedShop[]
                       // The theme of the shop (colours, radius, font) as on its landing page; the card sizes itself from this box.
                       <li key={w.id} style={themeStyle(theme)} lang={locale} className={cn("@container h-full overflow-hidden rounded-xl", siteFontClass(theme.font))} data-testid={`customer-workshop-${w.id}`}>
                         <WorkshopCard
-                          w={w} ctx={ctx} as="div" className="flex h-full flex-col"
+                          w={w} ctx={ctx} as="div" className="flex h-full flex-col" showBook={mode !== "affiliate"}
                           // Google Maps beside Book: the map link of the shop for the shop's address, a search for an address of the workshop's own.
                           actions={(() => {
                             const maps = safeMaps(workshopDirectionsUrl({ address: w.address }, shop));
-                            return (
-                              <>
-                                {maps ? <GoogleMapsButton href={maps} testId="customer-workshop-map" /> : null}
-                                {mode === "affiliate" ? <AffiliateAction workshopId={w.id} /> : null}
-                              </>
-                            );
+                            // The Affiliate page has no Book and no Google Maps button: only the affiliate button.
+                            if (mode === "affiliate") return <AffiliateAction workshopId={w.id} />;
+                            return maps ? <GoogleMapsButton href={maps} testId="customer-workshop-map" /> : null;
                           })()}
                           meta={(
                             <div className="grid gap-1">

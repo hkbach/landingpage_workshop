@@ -4,6 +4,7 @@ import { resetAccountsStore } from "@/lib/mock/accounts-store";
 import { liveBookings, resetBookingStore } from "@/lib/mock/booking-store";
 import { sessions, workshops } from "@/lib/mock/data";
 import { resetOutbox } from "@/lib/mock/outbox-store";
+import { resetShopAdminStore, setShopActive } from "@/lib/mock/shop-admin-store";
 import { attributedBookings, createReferral, listReferrals, resetReferralStore } from "@/lib/mock/referral-store";
 import { POST as book } from "./public/sites/[slug]/bookings/route";
 import { POST as click } from "./public/sites/[slug]/referrals/click/route";
@@ -16,7 +17,7 @@ const body = async (res: Response) => (await res.json()) as Record<string, any>;
 const FREE = sessions.find((s) => s.status === "RUNNING" && Date.parse(s.startsAt) > Date.now() + 86_400_000 && s.capacity - s.reservedCount >= 4 && workshops.find((w) => w.id === s.workshopId)?.status === "ACTIVE")!;
 const guest = (email: string, ref?: string) => ({ sessionId: FREE.id, quantity: 1, fullName: "Guest", email, phone: "+84 90 111 2222", ...(ref ? { ref } : {}) });
 
-beforeEach(() => { resetBookingStore(); resetOutbox(); resetAccountsStore(); resetAccountStatus(); resetReferralStore(); });
+beforeEach(() => { resetBookingStore(); resetOutbox(); resetAccountsStore(); resetAccountStatus(); resetReferralStore(); resetShopAdminStore(); });
 
 describe("an affiliate link", () => {
   it("opens the booking of its workshop at its shop and carries the code", async () => {
@@ -66,6 +67,18 @@ describe("a booking made with the code of a link", () => {
   });
   it("rejects a code that is too long", async () => {
     expect((await book(json(guest("c@example.com", "x".repeat(41))), ctx({ slug: "whiskladle" }))).status).toBe(422);
+  });
+});
+
+describe("the status of a link", () => {
+  it("is On-going while the workshop is active and Deactive once it (or its shop) is deactivated; the link stays in the list", async () => {
+    createReferral("cu-9", FREE.workshopId);
+    const list = async () => (await body(await myLinks(new Request("http://x/api/v1/customer/cu-9/referrals"), ctx({ id: "cu-9" })))).items as { workshopId: string; status: string }[];
+    expect((await list()).find((r) => r.workshopId === FREE.workshopId)!.status).toBe("ON_GOING");
+    setShopActive("org-1", false, "Reported");
+    expect((await list()).find((r) => r.workshopId === FREE.workshopId)!.status).toBe("DEACTIVE");
+    setShopActive("org-1", true);
+    expect((await list()).find((r) => r.workshopId === FREE.workshopId)!.status).toBe("ON_GOING");
   });
 });
 

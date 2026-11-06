@@ -155,6 +155,14 @@
     "copyFailed": "リンクをコピーできませんでした。",
     "failed": "登録できませんでした。もう一度お試しください。",
     "fee": "アフィリエイト報酬：予約価格の{rate}",
-    "earned": "{amount} 獲得 · {count, plural, other {支払い済み予約 #件}} · {clicks, plural, other {クリック #回}}"
+    "earned": "{amount} 獲得 · {count, plural, other {支払い済み予約 #件}} · {clicks, plural, other {クリック #回}}",
+    "tabProgram": "プログラム",
+    "tabLinks": "アフィリエイトリンク",
+    "linksEmpty": "アフィリエイトリンクはまだありません。プログラムでワークショップに登録して最初のリンクを取得しましょう。",
+    "colLink": "リンク",
+    "colStatus": "ステータス",
+    "statusOngoing": "進行中",
+    "statusDeactive": "無効",
+    "deactiveHint": "このワークショップは無効化されており、リンクから予約できません。"
   }
 }

@@ -155,6 +155,14 @@
     "copyFailed": "Không thể sao chép liên kết.",
     "failed": "Chúng tôi không thể đăng ký cho bạn. Vui lòng thử lại.",
     "fee": "Phí affiliate: {rate} giá booking",
-    "earned": "Đã nhận {amount} · {count, plural, other {# booking đã thanh toán}} · {clicks, plural, other {# lượt nhấp}}"
+    "earned": "Đã nhận {amount} · {count, plural, other {# booking đã thanh toán}} · {clicks, plural, other {# lượt nhấp}}",
+    "tabProgram": "Program",
+    "tabLinks": "Affiliate link",
+    "linksEmpty": "Bạn chưa có Affiliate link nào. Hãy đăng ký một workshop trong Program để có link đầu tiên.",
+    "colLink": "Link",
+    "colStatus": "Trạng thái",
+    "statusOngoing": "On-going",
+    "statusDeactive": "Deactive",
+    "deactiveHint": "Workshop này đã bị deactivate: link không còn dẫn tới việc đặt chỗ."
   }
 }

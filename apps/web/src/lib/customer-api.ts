@@ -47,6 +47,8 @@ export const fetchCustomerBookings = async (id: string, email?: string): Promise
 export interface CustomerReferral {
   id: string; code: string; workshopId: string; workshopTitle: string; shopName: string; link: string; createdAt: string; clicks: number;
   referralBps: number; bookings: number; referralFee: number; currency: string;
+  /** ON_GOING while the workshop is active; DEACTIVE once the workshop (or its shop) was deactivated. */
+  status: "ON_GOING" | "DEACTIVE";
 }
 
 /** The links of the guest, the affiliate fee of every shop (basis points) and the shop of every workshop (so the fee of a workshop without a link can be shown). */

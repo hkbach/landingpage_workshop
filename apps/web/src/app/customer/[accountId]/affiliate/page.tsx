@@ -1,9 +1,9 @@
-import { CustomerWorkshops } from "@/components/customer/customer-workshops";
+import { CustomerAffiliatePage } from "@/components/customer/customer-affiliate-page";
 import { listedShops } from "@/lib/mock/customer-listing";
 
-// The Affiliate page: the same list as Workshops, where each workshop has Register Affiliate and then Copy Affiliate link (the link opens the booking of that workshop).
+// The Affiliate page: tab Program (the active workshops, each with Register Affiliate and then Copy Affiliate link) and tab Affiliate link (the links made, with their status).
 export const dynamic = "force-dynamic";
 
-export default function CustomerAffiliatePage() {
-  return <CustomerWorkshops shops={listedShops()} mode="affiliate" />;
+export default function CustomerAffiliateRoute() {
+  return <CustomerAffiliatePage shops={listedShops()} />;
 }

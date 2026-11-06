@@ -155,6 +155,14 @@
     "copyFailed": "링크를 복사할 수 없습니다.",
     "failed": "등록할 수 없습니다. 다시 시도해 주세요.",
     "fee": "제휴 수수료: 예약 가격의 {rate}",
-    "earned": "{amount} 적립 · {count, plural, other {결제된 예약 #건}} · {clicks, plural, other {클릭 #회}}"
+    "earned": "{amount} 적립 · {count, plural, other {결제된 예약 #건}} · {clicks, plural, other {클릭 #회}}",
+    "tabProgram": "프로그램",
+    "tabLinks": "제휴 링크",
+    "linksEmpty": "아직 제휴 링크가 없습니다. 프로그램에서 워크숍에 등록해 첫 링크를 받으세요.",
+    "colLink": "링크",
+    "colStatus": "상태",
+    "statusOngoing": "진행 중",
+    "statusDeactive": "비활성",
+    "deactiveHint": "이 워크숍은 비활성화되어 링크로 더 이상 예약할 수 없습니다."
   }
 }
