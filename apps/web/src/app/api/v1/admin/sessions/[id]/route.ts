@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { apiError, fieldCodes } from "@/lib/api-error";
+import { recordAdminAction } from "@/lib/mock/admin-audit-store";
 import { adminChangeSession } from "@/lib/mock/session-admin-store";
 import { mailSessionClosed } from "@/lib/mock/session-mail";
 
@@ -20,6 +21,7 @@ export async function POST(request: Request, ctx: RouteContext<"/api/v1/admin/se
   if (!parsed.success) return apiError(422, "VALIDATION", "Please check the highlighted fields.", { fields: fieldCodes(parsed.error.issues) });
   const res = adminChangeSession(id, parsed.data.action, parsed.data.reason ?? "");
   if (res.ok) {
+    recordAdminAction({ action: parsed.data.action === "close" ? "session.close" : "session.reopen", entityType: "session", entityId: id });
     // An administrator's close is a close like any other: the guests who booked the session are told (except the ones who cancelled).
     const reason = parsed.data.action === "close" ? { code: "OTHER" as const, note: (parsed.data.reason ?? "").trim().slice(0, 300) } : undefined;
     const mail = reason ? mailSessionClosed(id, { startsAt: res.session.startsAt, endsAt: res.session.endsAt, reason }) : undefined;

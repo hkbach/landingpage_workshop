@@ -1,7 +1,9 @@
 import { getTranslations } from "next-intl/server";
 import { AuditTable } from "@/components/admin/audit-table";
-import { adminAuditLogs } from "@/lib/mock/admin";
+import { liveAuditLogs } from "@/lib/mock/admin-audit-store";
 import { shops } from "@/lib/mock/data";
+
+export const dynamic = "force-dynamic"; // the entries of the administrators are made at run time
 
 export default async function AuditLogsPage() {
   const t = await getTranslations("admin.audit");
@@ -12,7 +14,7 @@ export default async function AuditLogsPage() {
         <h1 className="text-2xl font-semibold">{t("title")}</h1>
         <p className="text-sm text-muted-foreground">{t("description")}</p>
       </header>
-      <AuditTable entries={adminAuditLogs} orgNames={orgNames} />
+      <AuditTable entries={liveAuditLogs()} orgNames={orgNames} />
     </div>
   );
 }

@@ -6,12 +6,15 @@ import { OrganizationDetail } from "@/components/admin/organization-detail";
 import { adminAuditLogs, orgStats } from "@/lib/mock/admin";
 import { AdminSessions } from "@/components/admin/admin-sessions";
 import { PlatformFeesForm } from "@/components/admin/platform-fees-form";
-import { currentShop, shops } from "@/lib/mock/data";
+import { currentShop } from "@/lib/mock/data";
+import { liveShop } from "@/lib/mock/shop-admin-store";
 import { getFeeRates } from "@/lib/mock/fee-rates-store";
+
+export const dynamic = "force-dynamic"; // the status of a shop is changed at run time
 
 export default async function OrganizationDetailPage({ params }: PageProps<"/systemadmin/organizations/[id]">) {
   const { id } = await params;
-  const shop = shops.find((s) => s.id === id);
+  const shop = liveShop(id);
   if (!shop) notFound();
 
   const t = await getTranslations("admin.orgDetail");

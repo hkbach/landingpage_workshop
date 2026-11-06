@@ -1,0 +1,55 @@
+import { z } from "zod";
+import { apiError, fieldCodes } from "@/lib/api-error";
+import { siteOrigin } from "@/components/site/site-url";
+import { customerLoginRequired } from "@/lib/customer-access";
+import { workshopsWithShop } from "@/lib/mock/admin-directory";
+import { accountOfGuest } from "@/lib/mock/booking-store";
+import { createReferral, listReferrals } from "@/lib/mock/referral-store";
+
+// The referral (affiliate) links of a customer: they pick a workshop and share the link; a booking that comes through it earns them a referral fee. MOCK implementation
+// inside Next until apps/api exists. Identified like the rest of /customer/{id}: the email of the account in `x-guest-email`. TODO(api): the account of the session.
+
+const headers = { "cache-control": "no-store", "x-robots-tag": "noindex" };
+const emailOf = (request: Request): string | null => (customerLoginRequired() ? (request.headers.get("x-guest-email") ?? "") : null);
+const notFound = () => apiError(404, "NOT_FOUND", "Account not found.", {}, headers);
+const bodySchema = z.object({ workshopId: z.string().min(1, "required").max(100, "invalid") });
+
+/** The link as the customer shares it: the landing page of the shop with `?ref=CODE` (the port of the server is kept in development). */
+function linkOf(slug: string, code: string, request: Request): string {
+  const base = siteOrigin(slug);
+  const port = (request.headers.get("host") ?? "").split(":")[1];
+  return `${port && /^\d{1,5}$/.test(port) && base.startsWith("http:") ? `${base}:${port}` : base}/?ref=${encodeURIComponent(code)}`;
+}
+
+function view(request: Request, accountId: string) {
+  const ws = new Map(workshopsWithShop().map((x) => [x.workshop.id, x]));
+  return listReferrals().filter((r) => r.accountId === accountId).flatMap((r) => {
+    const w = ws.get(r.workshopId);
+    return w ? [{ id: r.id, code: r.code, workshopId: r.workshopId, shopName: w.shop.name, link: linkOf(w.shop.slug, r.code, request), createdAt: r.createdAt, clicks: r.clicks }] : [];
+  });
+}
+
+/** GET -> { items }: the links of the customer. 404 NOT_FOUND. */
+export async function GET(request: Request, ctx: RouteContext<"/api/v1/customer/[id]/referrals">) {
+  const { id } = await ctx.params;
+  if (!accountOfGuest(id, emailOf(request))) return notFound();
+  return Response.json({ items: view(request, id) }, { headers });
+}
+
+/** POST { workshopId } -> 201 (a new link) or 200 (the link they already had): { id, code, link, ... }. 404 NOT_FOUND, 404 NO_WORKSHOP, 409 SHOP_INACTIVE, 422 with `fields`. */
+export async function POST(request: Request, ctx: RouteContext<"/api/v1/customer/[id]/referrals">) {
+  const { id } = await ctx.params;
+  if (!accountOfGuest(id, emailOf(request))) return notFound();
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return apiError(400, "BAD_REQUEST", "The request body must be JSON.", {}, headers);
+  }
+  const parsed = bodySchema.safeParse(body);
+  if (!parsed.success) return apiError(422, "VALIDATION", "Please check the highlighted fields.", { fields: fieldCodes(parsed.error.issues) }, headers);
+  const res = createReferral(id, parsed.data.workshopId);
+  if (!res.ok) return res.code === "SHOP_INACTIVE" ? apiError(409, "SHOP_INACTIVE", "This shop is not active.", {}, headers) : apiError(404, res.code === "NO_WORKSHOP" ? "NO_WORKSHOP" : "NOT_FOUND", "Not found.", {}, headers);
+  const mine = view(request, id).find((x) => x.id === res.referral.id)!;
+  return Response.json(mine, { status: res.created ? 201 : 200, headers });
+}

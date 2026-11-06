@@ -256,7 +256,7 @@ Browser ────────────────────────
 - Reset password: token một lần, lưu hash, hết hạn 1 giờ; reset xong thì xóa toàn bộ session cũ.
 - Rate limit login: 5 lần sai / 15 phút / IP+email.
 - **Mọi tài khoản (shop owner và customer) đăng nhập bằng email + mật khẩu** (mật khẩu 10 đến 72 ký tự, lưu dạng hash có salt). Sai email hay sai mật khẩu đều trả cùng một thông báo; tài khoản bị vô hiệu hóa chỉ được báo sau khi nhập đúng mật khẩu. Sau khi đăng nhập: shop owner vào `/shopowner/{slug}`, customer vào `/customer/{id}`. Customer đăng ký trên popup của landing page (email, mật khẩu + xác nhận mật khẩu, họ tên, quốc gia, ngày sinh, 3 lĩnh vực yêu thích) và không còn đăng nhập bằng OTP; OTP chỉ còn ở bước 5 của booking modal.
-- **Reset mật khẩu bởi quản trị viên (FR-ADM-01):** khi admin bấm Reset Password, tài khoản bị **deactivate** và hệ thống gửi email (6 ngôn ngữ) gồm **mật khẩu tạm thời** và **link** `/reset-password?token=…`. Trang link yêu cầu nhập mật khẩu tạm thời, mật khẩu mới và xác nhận mật khẩu mới; thành công thì tài khoản active lại. Mật khẩu tạm thời (14 ký tự ngẫu nhiên) và token chỉ nằm trong email, chỉ lưu hash; dùng được **một lần**, hết hạn sau **3 ngày**, nhập sai mật khẩu tạm thời 5 lần thì link bị hủy; admin activate/deactivate sau đó cũng hủy link; reset mới thay thế reset cũ. API không bao giờ trả mật khẩu tạm thời hay token.
+- **Reset mật khẩu bởi quản trị viên (FR-ADM-08):** khi admin bấm Reset Password, tài khoản bị **deactivate** và hệ thống gửi email (6 ngôn ngữ) gồm **mật khẩu tạm thời** và **link** `/reset-password?token=…`. Trang link yêu cầu nhập mật khẩu tạm thời, mật khẩu mới và xác nhận mật khẩu mới; thành công thì tài khoản active lại. Mật khẩu tạm thời (14 ký tự ngẫu nhiên) và token chỉ nằm trong email, chỉ lưu hash; dùng được **một lần**, hết hạn sau **3 ngày**, nhập sai mật khẩu tạm thời 5 lần thì link bị hủy; admin activate/deactivate sau đó cũng hủy link; reset mới thay thế reset cũ. API không bao giờ trả mật khẩu tạm thời hay token.
 - *Giả định cần xác nhận:* gửi mật khẩu tạm thời qua email là thiết kế do yêu cầu; rủi ro được giảm bằng hash, một lần, hết hạn, giới hạn số lần thử và việc tài khoản bị deactivate cho tới khi đổi mật khẩu. MVP frontend dùng mật khẩu demo chung cho các tài khoản mẫu cho đến khi người dùng đặt mật khẩu riêng (backend thật dùng identity provider).
 
 **FR-ORG-01 – Tạo shop / onboarding (Must)**
@@ -568,6 +568,37 @@ Browser ────────────────────────
 - Shop owner thấy các kênh này trong khung **Publish** của trình dựng trang ("Need help?") và ở **cuối menu bên trái, dưới mục Settings** (cùng dữ liệu, dạng cột hẹp không có đoạn mô tả), ở mọi trạng thái shop. Chỉ hiển thị kênh đã nhập; liên kết được dựng ở phía ứng dụng sau khi kiểm tra định dạng (`wa.me`, `tel:`, `zalo.me`, `mailto:`), giá trị sai bị bỏ qua.
 - Hiện tại (MVP, chưa có trang admin này) dùng dữ liệu mock tại `apps/web/src/lib/mock/platform.ts`.
 
+
+**Khu vực quản trị `/systemadmin` (FR-ADM-08 đến FR-ADM-17).** Mỗi danh mục là một trang riêng trong menu bên trái; mọi danh sách có ô tìm kiếm (không phân biệt hoa thường và dấu), phân trang 10/20/50 dòng và xem chi tiết. Chỉ en + vi. Các hành động của admin (sửa, đổi trạng thái, reset mật khẩu, đóng/mở session, đổi phí, sửa landing page) được ghi vào audit log (FR-ADM-05) với actor "Platform Admin", không bao giờ ghi mật khẩu hay token. MVP frontend: API mock trong Next (`/api/v1/admin/*`), chưa kiểm tra quyền; backend thật chỉ cho `SUPER_ADMIN`.
+
+**FR-ADM-08 – Người dùng (Must)** (`/systemadmin/users`)
+- Danh sách mọi tài khoản: **shop owner** (email của chủ shop) và **customer** có tài khoản, có cột **Loại tài khoản** (Customer / Shop owner), lọc theo loại và trạng thái; tìm theo tên, email, số điện thoại, id hoặc tên shop.
+- Xem chi tiết; **Edit** chỉ sửa tên và số điện thoại (không sửa email và loại; BR-16 trim, BR-17 Save chỉ bật khi có thay đổi); **Activate / Deactivate** (tài khoản deactivated không đăng nhập và không dùng được khu vực của mình); **Reset Password**: tài khoản bị deactivate, người dùng nhận email (6 ngôn ngữ) có mật khẩu tạm thời và link; mở link, nhập mật khẩu tạm thời + mật khẩu mới + xác nhận để active lại (chi tiết ở 5.1).
+- API: `GET /admin/directory/users`, `GET/PATCH /admin/users/{id}`, `POST /admin/users/{id}/status`, `POST /admin/users/{id}/reset-password`.
+
+**FR-ADM-09 – Shop (Must, mở rộng FR-ADM-01 và FR-ADM-03)** (`/systemadmin/organizations`)
+- Tìm theo tên (hoặc slug) shop **và email của shop owner**, lọc theo status; xem chi tiết; **Activate / Deactivate** (`SUSPENDED` ↔ `ACTIVE`, deactivate bắt buộc lý do; shop `PENDING_REVIEW`/`DRAFT` đổi qua hàng đợi duyệt); bật/tắt hiển thị workshops của shop trên trang Workshops của customer (`show_on_customer_page`).
+- Trạng thái shop do admin đổi được lưu ở mock backend: danh sách của khách (Workshops, Favorites) đọc theo trạng thái này.
+
+**FR-ADM-10 – Workshops (Should)** (`/systemadmin/workshops`): workshops của mọi shop; tìm theo tên workshop (mọi ngôn ngữ) hoặc tên shop; xem chi tiết (giá, thời lượng, sức chứa, địa chỉ, đánh giá, số session và booking).
+
+**FR-ADM-11 – Bookings (Should)** (`/systemadmin/bookings`): tìm theo mã booking, workshop, shop, **email hoặc id người dùng** (id customer, trùng id tài khoản khi có); lọc theo **ngày đặt booking** (ngày tạo booking theo múi giờ shop, gồm cả hai đầu; ngày đầu sau ngày cuối bị từ chối); xem chi tiết (khách, session, giá, giảm giá, thanh toán, check-in). *Giả định:* "ngày booking" là ngày khách đặt, không phải ngày diễn ra session.
+
+**FR-ADM-12 – Customers (Should)** (`/systemadmin/customers`): danh sách email đã booking (giống màn hình Customers của shop owner nhưng toàn nền tảng, kèm email chỉ có tài khoản); tìm theo email, tên hoặc **tên shop mà email đã booking**.
+
+**FR-ADM-13 – Sessions (Should)** (`/systemadmin/sessions`): session của mọi shop; tìm theo thông tin session (mã, workshop, ngày YYYY-MM-DD, trạng thái, ghi chú) hoặc tên shop; lọc trạng thái; xem lịch sử; **Close** (bắt buộc lý do, khách đã đặt được báo email) và **Open lại** không bị giới hạn của shop owner (3 lần dời lịch, 4 lần đóng, lần thứ 4 là đóng vĩnh viễn), nên session đã bị owner đóng quá 3 lần mở lại được; bộ lọc "chỉ session đã đóng vĩnh viễn". *Giới hạn MVP:* các chức năng khác của shop owner (dời lịch, nhân bản, sửa sức chứa) chưa có trong khu vực admin.
+
+**FR-ADM-14 – Landing pages (Should)** (`/systemadmin/landing-pages`): tìm theo tên shop; **Edit** mở trình dựng trang của shop ở **chế độ admin** (dùng lại toàn bộ builder, có banner "bạn đang sửa với tư cách quản trị viên" ở mọi trang owner cho tới khi quay lại khu admin); audit log ghi `landing_page.edit` do admin. *Giới hạn MVP:* mock chỉ có dữ liệu builder của shop demo, các shop khác hiển thị "chưa có trang để sửa".
+
+**FR-ADM-15 – Referrals (Should)** (`/systemadmin/referrals`)
+- Referral là cách thu hút người dùng theo mô hình affiliate: customer có tài khoản thấy danh sách workshops, chọn workshop để tạo **link referral** (`{shop}.domain/?ref=CODE`, mỗi cặp tài khoản + workshop một link; chỉ workshop của shop `ACTIVE`). API khách: `GET/POST /customer/{id}/referrals`.
+- Admin xem danh sách link: tìm theo **email của người đăng ký tài khoản** (hoặc mã, workshop, shop), lọc theo ngày tạo; mỗi link có lượt nhấp, số booking đã thanh toán và phí referral đã tạo ra.
+- *Giả định cần xác nhận:* phí referral = % (theo shop) của **phí nền tảng** (phí duy trì + phí dịch vụ) của booking đến từ link. *Giới hạn MVP:* giao diện tạo link phía customer và việc bắt `?ref=` khi đặt booking chưa làm; mock gán mỗi booking thứ hai của workshop đã được chia sẻ (không phải của chính người chia sẻ) cho link để có số liệu xem thử.
+
+**FR-ADM-16 – Income của nền tảng (Should)** (`/systemadmin/income`): phí đã thu từ booking của từng shop (phí duy trì + phí dịch vụ theo tỷ lệ của shop, tính trên giá gốc, đúng quy tắc của FR-PAY-02), trừ phí referral; **lợi nhuận hệ thống = tổng phí − phí referral**. Lọc theo khoảng ngày thanh toán (múi giờ shop). Tổng theo từng loại tiền (không cộng lẫn tiền tệ).
+
+**FR-ADM-17 – Config Fee (Must, mở rộng FR-PAY-02)** (`/systemadmin/fees`): cấu hình **phí duy trì, phí dịch vụ và phí referral** theo phần trăm (0–100, tối đa 2 số lẻ, nhập được dấu phẩy; duy trì + dịch vụ không quá 100%; lưu bằng basis points). Đặt cho **từng shop** (mỗi dòng có Save, chỉ bật khi có thay đổi) hoặc **bulk action áp dụng cùng tỷ lệ cho tất cả shop** (có xác nhận, tất cả hoặc không gì cả). Mặc định: 2% / 3% / 10%. API: `GET /admin/fees`, `PUT /admin/fees/{id}`, `POST /admin/fees/bulk`; form phí theo shop trong chi tiết shop vẫn dùng `PUT /admin/organizations/{id}/finance-settings`.
+
 ---
 
 ## 6. Quy tắc nghiệp vụ
@@ -831,6 +862,10 @@ Rate limit public: availability 60 req/phút/IP; tạo booking 10 req/phút/IP; 
 | GET | `/admin/organizations/{id}/preview` |
 | GET/PATCH | `/admin/reports` |
 | GET | `/admin/audit-logs` |
+| GET | `/admin/directory/{users,shops,workshops,bookings,customers,sessions,landing-pages,referrals}?q=` |
+| GET/PATCH/POST | `/admin/users/{id}` · `/status` · `/reset-password` |
+| POST | `/admin/organizations/{id}/status` · `/visibility` · `/admin/landing-pages/{slug}/audit` |
+| GET/PUT/POST | `/admin/fees` · `/admin/fees/{id}` · `/admin/fees/bulk` · GET `/admin/income` |
 
 ---
 

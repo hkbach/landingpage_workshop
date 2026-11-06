@@ -3,14 +3,24 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Building2, ClipboardCheck, Flag, ScrollText } from "lucide-react";
+import { BookOpen, Building2, CalendarClock, ClipboardCheck, Coins, Flag, Globe, Percent, ScrollText, Share2, Ticket, UserCog, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ITEMS = [
+  { href: "/systemadmin/users", key: "users", Icon: UserCog },
   { href: "/systemadmin/organizations", key: "organizations", Icon: Building2 },
+  { href: "/systemadmin/workshops", key: "workshops", Icon: BookOpen },
+  { href: "/systemadmin/bookings", key: "bookings", Icon: Ticket },
+  { href: "/systemadmin/customers", key: "customers", Icon: Users },
+  { href: "/systemadmin/sessions", key: "sessions", Icon: CalendarClock },
+  { href: "/systemadmin/landing-pages", key: "landingPages", Icon: Globe },
+  { href: "/systemadmin/referrals", key: "referrals", Icon: Share2 },
+  { href: "/systemadmin/income", key: "income", Icon: Coins },
+  { href: "/systemadmin/fees", key: "fees", Icon: Percent },
   { href: "/systemadmin/reviews", key: "reviews", Icon: ClipboardCheck },
   { href: "/systemadmin/reports", key: "reports", Icon: Flag },
-  { href: "/systemadmin/audit-logs", key: "auditLogs", Icon: ScrollText },] as const;
+  { href: "/systemadmin/audit-logs", key: "auditLogs", Icon: ScrollText },
+] as const;
 
 export function AdminNav() {
   const t = useTranslations("admin");

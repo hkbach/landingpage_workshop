@@ -1,0 +1,60 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useTranslations } from "next-intl";
+import { Pencil } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import type { AdminLandingPage } from "@/lib/mock/admin-directory";
+import { StatusBadge } from "../status-badge";
+import { landingUrl } from "../utils";
+import { DirectoryTable, Notice, Toolbar, useDebounced, useDirectory, type Column } from "./kit";
+
+/** sessionStorage key: while it holds a shop slug the owner area shows the banner "You are editing as an administrator" (see AdminModeBanner). */
+export const ADMIN_MODE_KEY = "wk:admin-mode";
+
+/**
+ * The landing pages of the shops: search by the name of the shop. Edit opens the page builder of the shop in admin mode (the whole builder, with a banner on top); the
+ * audit log records that the edits are made by an administrator.
+ */
+export function LandingPagesAdmin() {
+  const t = useTranslations("admin.landing");
+  const router = useRouter();
+  const [q, setQ] = useState("");
+  const typed = useDebounced(q);
+  const { items, error } = useDirectory<AdminLandingPage>("landing-pages", { q: typed });
+  const [message, setMessage] = useState<{ text: string; tone: "ok" | "error" } | null>(null);
+
+  async function edit(p: AdminLandingPage) {
+    const res = await fetch(`/api/v1/admin/landing-pages/${encodeURIComponent(p.slug)}/audit`, { method: "POST" }).catch(() => null);
+    if (!res?.ok) { setMessage({ text: t("failed"), tone: "error" }); return; }
+    try { window.sessionStorage.setItem(ADMIN_MODE_KEY, p.slug); } catch { /* the banner is only a reminder */ }
+    router.push(`/shopowner/${p.slug}/site?admin=1`);
+  }
+
+  const columns: Column<AdminLandingPage>[] = [
+    { key: "shop", header: t("col.shop"), cell: (p) => <><div className="font-medium">{p.shopName}</div><div className="font-mono text-xs text-muted-foreground">{p.slug}</div></> },
+    { key: "owner", header: t("col.owner"), cell: (p) => p.ownerEmail },
+    { key: "status", header: t("col.status"), cell: (p) => <StatusBadge status={p.status} /> },
+    { key: "workshops", header: t("col.workshops"), className: "text-right", cell: (p) => p.workshops },
+    { key: "page", header: t("col.page"), cell: (p) => (p.status === "ACTIVE" ? <a href={landingUrl(p.slug)} target="_blank" rel="noreferrer" className="text-primary underline underline-offset-4">{p.slug}<span className="sr-only"> {t("opensNewTab")}</span></a> : "—") },
+    {
+      key: "actions", header: <span className="sr-only">{t("col.actions")}</span>, className: "text-right",
+      cell: (p) => p.editable
+        ? <Button size="sm" variant="outline" onClick={() => void edit(p)}><Pencil aria-hidden /> {t("edit")}<span className="sr-only"> {p.shopName}</span></Button>
+        : <span className="text-xs text-muted-foreground">{t("notEditable")}</span>,
+    },
+  ];
+
+  return (
+    <div className="grid gap-4">
+      <header>
+        <h1 className="text-2xl font-semibold">{t("title")}</h1>
+        <p className="text-sm text-muted-foreground">{t("description")}</p>
+      </header>
+      <Notice message={message} />
+      <Toolbar label={t("search")} placeholder={t("searchPlaceholder")} value={q} onChange={setQ} />
+      <DirectoryTable rows={items} error={error} columns={columns} rowKey={(p) => p.shopId} resetKey={typed} testId="landing-table" />
+    </div>
+  );
+}

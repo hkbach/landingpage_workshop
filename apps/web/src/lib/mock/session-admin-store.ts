@@ -1,10 +1,14 @@
-// SERVER-ONLY: what a system administrator did to the sessions of the demo shop (close or open, without the limits of the owner), until apps/api
+// SERVER-ONLY: what a system administrator did to the sessions of the shops (close or open, without the limits of the owner), until apps/api
 // exists. The shop owner's pages and the landing page read the sessions through `withAdminChanges`, so the change shows up there on the next
 // load. Lives on globalThis like the other mock stores. TODO(api): SUPER_ADMIN only, audited; the real backend writes the status and the note of
 // the session itself.
 import { canAdminClose, canAdminReopen, closeIfEnded, withNote, type SessionNote } from "@workshop/shared";
 import type { Session } from "@/lib/types";
-import { sessions as seed } from "./data";
+import { sessions as demoSessions } from "./data";
+import { otherShopSites } from "./other-shops";
+
+/** The sessions of every shop (the demo shop and the others of the mock). */
+const seed: Session[] = [...demoSessions, ...Object.values(otherShopSites).flatMap((x) => x.sessions)];
 
 interface Change { action: "close" | "reopen"; note: SessionNote }
 const g = globalThis as unknown as { __sessionAdmin?: Map<string, Change[]> };

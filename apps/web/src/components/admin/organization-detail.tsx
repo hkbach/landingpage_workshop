@@ -32,8 +32,12 @@ export function OrganizationDetail({
   const [message, setMessage] = useState("");
   const auditPg = usePagination(entries, "");
 
-  function apply(kind: "suspend" | "reactivate", why: string) {
-    // Simulated state change (valid transitions only: ACTIVE <-> SUSPENDED); nothing is persisted.
+  async function apply(kind: "suspend" | "reactivate", why: string) {
+    // Valid transitions only (ACTIVE <-> SUSPENDED): the mock backend keeps the change, so the lists of the admin and the guests see it.
+    const res = await fetch(`/api/v1/admin/organizations/${encodeURIComponent(shop.id)}/status`, {
+      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ active: kind === "reactivate", ...(why ? { reason: why } : {}) }),
+    }).catch(() => null);
+    if (!res?.ok) { setMessage(t("actionFailed")); setDialog(null); return; }
     setStatus(kind === "suspend" ? "SUSPENDED" : "ACTIVE");
     setReason(kind === "suspend" ? why : undefined);
     setEntries((e) => [
