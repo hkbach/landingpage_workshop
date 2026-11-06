@@ -132,10 +132,11 @@
       "checkedIn": "Booking đã check-in không thể hủy.",
       "closed": "Session này đã đóng nên không thể hủy tại đây. Vui lòng liên hệ studio."
     },
-    "directions": "Chỉ đường",
     "cancelledDone": "Đã hủy booking {code}. Chúng tôi đã gửi email cho bạn và shop.",
     "where": "Địa điểm",
-    "whereNote": "Ghi chú"
+    "whereNote": "Ghi chú",
+    "openMap": "Google Maps",
+    "openMapLabel": "Mở địa chỉ trên Google Maps (mở tab mới)"
   },
   "favorites": {
     "empty": "Chưa có workshop yêu thích nào. Bấm vào trái tim ở một workshop để lưu vào đây."

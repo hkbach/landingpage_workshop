@@ -10,7 +10,7 @@ import { CancelBooking } from "@/components/booking/CancelBooking";
 import { safeImage, safeMaps } from "@/components/sections/safe-url";
 import { Field } from "@/components/dashboard/shell/field";
 import { NativeSelect } from "@/components/dashboard/shell/native-select";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { DateInput } from "@/components/ui/date-input";
 import { Input } from "@/components/ui/input";
 import { PaginationBar } from "@/components/ui/pagination-bar";
@@ -244,7 +244,11 @@ function BookingTicket({ booking: b, now, locale, email, isNext, onCancelled }: 
           {b.canCancel ? <CancelBooking slug={b.shop.slug} code={b.code} email={email} onCancelled={onCancelled} /> : null}
           {block ? <p className="text-xs text-muted-foreground" data-testid="customer-booking-blocked">{tb(`cancelBlocked.${block}`)}</p> : null}
           {maps && phase === "upcoming" ? (
-            <a href={maps} target="_blank" rel="noopener noreferrer" className="inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-sm hover:bg-muted"><MapPin className="size-4" aria-hidden />{tb("directions")}</a>
+            // The same button as beside the address of the workshop form: Google Maps, in a new tab.
+            <a href={maps} target="_blank" rel="noopener noreferrer" aria-label={tb("openMapLabel")} data-testid="customer-booking-map" className={buttonVariants({ variant: "outline" })}>
+              <MapPin aria-hidden="true" />
+              {tb("openMap")}
+            </a>
           ) : null}
         </div>
       </div>

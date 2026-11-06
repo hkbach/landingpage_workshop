@@ -132,10 +132,11 @@
       "checkedIn": "체크인된 예약은 취소할 수 없습니다.",
       "closed": "마감된 세션이라 여기서 취소할 수 없습니다. 스튜디오에 문의해 주세요."
     },
-    "directions": "길찾기",
     "cancelledDone": "예약 {code}이(가) 취소되었습니다. 회원님과 샵에 이메일을 보냈습니다.",
     "where": "장소",
-    "whereNote": "메모"
+    "whereNote": "메모",
+    "openMap": "Google Maps",
+    "openMapLabel": "Google Maps에서 주소 열기(새 탭)"
   },
   "favorites": {
     "empty": "아직 즐겨찾는 워크숍이 없습니다. 워크숍의 하트를 눌러 여기에 저장하세요."

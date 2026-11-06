@@ -132,10 +132,11 @@
       "checkedIn": "A booking that is checked in cannot be cancelled.",
       "closed": "This session is closed, so it cannot be cancelled here. Please contact the studio."
     },
-    "directions": "Directions",
     "cancelledDone": "Booking {code} was cancelled. We emailed you and the shop.",
     "where": "Where",
-    "whereNote": "Note"
+    "whereNote": "Note",
+    "openMap": "Google Maps",
+    "openMapLabel": "Open the address in Google Maps (opens in a new tab)"
   },
   "favorites": {
     "empty": "No favorite workshops yet. Tap the heart on a workshop to save it here."
