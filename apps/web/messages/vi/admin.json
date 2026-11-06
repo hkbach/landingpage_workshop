@@ -550,7 +550,7 @@
   },
   "income": {
     "title": "Thu nhập",
-    "description": "Các khoản phí thu từ booking của các shop, trừ phí referral. Lợi nhuận của hệ thống = giá gốc x phí duy trì + giá gốc x phí dịch vụ - giá gốc x phí referral.",
+    "description": "Income của admin (nền tảng) là phí duy trì + phí dịch vụ thu từ booking của các shop. Lợi nhuận của hệ thống = Income của admin - phí referral.",
     "from": "Từ ngày",
     "to": "Đến ngày",
     "clearDates": "Xóa ngày",
@@ -558,18 +558,18 @@
     "col": {
       "shop": "Shop",
       "bookings": "Booking đã thanh toán",
-      "income": "Thu nhập của shop",
+      "income": "Doanh thu của shop",
       "maintenance": "Phí duy trì",
       "service": "Phí dịch vụ",
-      "fees": "Tổng phí",
+      "fees": "Income của admin",
       "referral": "Phí referral",
       "profit": "Lợi nhuận",
       "basePrice": "Giá gốc"
     },
     "totalIn": "Tổng theo {currency}",
-    "formula": "Lợi nhuận = phí - phí referral",
-    "totalFees": "Tổng phí",
-    "note": "Mọi khoản phí đều là phần trăm của GIÁ GỐC của booking (trước voucher), theo tỷ lệ của từng shop (Cấu hình phí). Phí referral chỉ trả cho booking đến từ liên kết referral và cũng là phần trăm của giá gốc.",
+    "formula": "Lợi nhuận = Income của admin - phí referral",
+    "totalFees": "Income của admin (duy trì + dịch vụ)",
+    "note": "Income của admin là phí duy trì cộng phí dịch vụ, mỗi phí là phần trăm của GIÁ GỐC của booking (trước voucher) theo tỷ lệ của từng shop (Cấu hình phí). Phí referral chỉ trả cho booking đến từ liên kết referral và cũng là phần trăm của giá gốc. Doanh thu của shop là số tiền shop đã nhận từ khách.",
     "totalBase": "Giá gốc của các booking"
   },
   "feesAll": {

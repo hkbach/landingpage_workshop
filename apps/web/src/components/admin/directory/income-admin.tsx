@@ -13,7 +13,7 @@ type ShopRow = Income["shops"][number];
 
 /**
  * The income of the platform: the fees charged on the bookings of every shop (maintenance and service, at the rates of each shop), less the referral fees paid for the
- * bookings that came through referral links. Profit of the platform = total fees - referral fees.
+ * bookings that came through referral links. The sum of the two fees is the INCOME OF THE ADMIN; profit of the platform = income of the admin - referral fees.
  */
 export function IncomeAdmin() {
   const t = useTranslations("admin.income");

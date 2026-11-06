@@ -550,7 +550,7 @@
   },
   "income": {
     "title": "Income",
-    "description": "Fees charged on the bookings of the shops, less the referral fees. Profit of the platform = original price x maintenance fee + original price x service fee - original price x referral fee.",
+    "description": "The income of the platform (admin) is the maintenance fee + the service fee charged on the bookings of the shops. Profit of the platform = income of the admin - referral fee.",
     "from": "From",
     "to": "To",
     "clearDates": "Clear dates",
@@ -558,18 +558,18 @@
     "col": {
       "shop": "Shop",
       "bookings": "Paid bookings",
-      "income": "Income of the shop",
+      "income": "Shop revenue",
       "maintenance": "Maintenance fee",
       "service": "Service fee",
-      "fees": "Total fees",
+      "fees": "Income of the admin",
       "referral": "Referral fee",
       "profit": "Profit",
       "basePrice": "Original price"
     },
     "totalIn": "Total in {currency}",
-    "formula": "Profit = fees - referral fee",
-    "totalFees": "Total fees",
-    "note": "Every fee is a percentage of the ORIGINAL price of the booking (before vouchers), at the rates of each shop (Config fees). The referral fee is paid only for bookings that came through a referral link, and is also a percentage of the original price.",
+    "formula": "Profit = income of the admin - referral fee",
+    "totalFees": "Income of the admin (maintenance + service)",
+    "note": "The income of the admin is the maintenance fee plus the service fee, each a percentage of the ORIGINAL price of the booking (before vouchers) at the rates of each shop (Config fees). The referral fee is paid only for bookings that came through a referral link, and is also a percentage of the original price. Shop revenue is what the shops received from the guests.",
     "totalBase": "Original price of the bookings"
   },
   "feesAll": {

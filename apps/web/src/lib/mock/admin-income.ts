@@ -1,6 +1,7 @@
 // SERVER-ONLY: the income of the PLATFORM (the Income page of the system admin), until apps/api exists. It is made of the fees charged on the bookings of the shops
 // (maintenance + service, each shop with its own rates, both a percentage of the ORIGINAL price of the booking) minus the referral fees paid to the people whose
 // links brought the bookings (the referral rate of the shop, also a percentage of the original price):
+// The sum of the maintenance and the service fee is called the income of the admin (`fees` here and in the API):
 //   profit of the platform = original price x maintenance + original price x service - original price x referral (the last one only for referred bookings).
 import { dayKeyOf, feeBase, feeOf, isDayKey, ledgerFromPayments, type LedgerRow } from "@workshop/shared";
 import { liveBookings } from "./booking-store";
@@ -17,7 +18,7 @@ export interface ShopIncome {
   /** The original price of the bookings (before vouchers): what every fee is a percentage of. */
   basePrice: number;
   maintenanceFee: number; serviceFee: number;
-  /** maintenanceFee + serviceFee: what the platform charged the shop. */
+  /** maintenanceFee + serviceFee: the INCOME OF THE ADMIN (what the platform charged the shop). */
   fees: number;
   /** What the platform pays for the bookings that came through referral links. */
   referralFee: number;
