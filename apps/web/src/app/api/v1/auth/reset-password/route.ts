@@ -1,0 +1,35 @@
+import { z } from "zod";
+import { apiError, fieldCodes } from "@/lib/api-error";
+import { completePasswordReset, resetLinkValid } from "@/lib/mock/accounts-store";
+
+// The page of the link in the reset email: the temporary password of the email plus a new password. MOCK implementation inside Next until apps/api exists.
+// TODO(api): rate limit per IP and per token; the token is looked up by its hash.
+
+const bodySchema = z.object({
+  token: z.string().min(1, "required").max(200, "invalid"),
+  tempPassword: z.string().min(1, "required").max(200, "tooLong"),
+  newPassword: z.string().min(1, "required").max(200, "tooLong"),
+});
+
+/** GET ?token= -> { valid } so the page can say at once that a link is used or expired. */
+export async function GET(request: Request) {
+  const token = new URL(request.url).searchParams.get("token") ?? "";
+  return Response.json({ valid: token.length > 0 && token.length <= 200 && resetLinkValid(token) }, { headers: { "cache-control": "no-store" } });
+}
+
+/** POST { token, tempPassword, newPassword } -> 204. 400 INVALID_LINK (used, expired or unknown), 422 with `fields`: tempPassword wrong, newPassword too short / too long / the same as the temporary one. */
+export async function POST(request: Request) {
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return apiError(400, "BAD_REQUEST", "The request body must be JSON.");
+  }
+  const parsed = bodySchema.safeParse(body);
+  if (!parsed.success) return apiError(422, "VALIDATION", "Please check the highlighted fields.", { fields: fieldCodes(parsed.error.issues) });
+  const res = completePasswordReset(parsed.data.token, parsed.data.tempPassword, parsed.data.newPassword);
+  if (res.ok) return new Response(null, { status: 204 });
+  if (res.code === "INVALID_LINK") return apiError(400, "INVALID_LINK", "This link has expired or was already used.");
+  if (res.code === "WRONG_TEMP_PASSWORD") return apiError(422, "VALIDATION", "The temporary password is wrong.", { fields: { tempPassword: "wrong" } });
+  return apiError(422, "VALIDATION", "Please check the highlighted fields.", { fields: { newPassword: res.code === "SAME_PASSWORD" ? "samePassword" : "weak" } });
+}

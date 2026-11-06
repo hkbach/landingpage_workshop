@@ -19,7 +19,7 @@ const REASON = { code: "VENUE_ISSUE" };
 
 /** Booking codes of a session that are not cancelled in the mock data. */
 const live = (sessionId: string) => bookings.filter((b) => b.sessionId === sessionId && b.status !== "CANCELLED").map((b) => b.bookingCode).sort();
-const sentTo = (type: string) => outboxEmails().filter((e) => e.type === type).map((e) => e.bookingCode).sort();
+const sentTo = (type: string) => outboxEmails().filter((e) => e.type === type).flatMap((e) => ("bookingCode" in e ? [e.bookingCode] : [])).sort();
 
 beforeEach(() => { resetBookingStore(); resetOutbox(); resetSessionAdminStore(); resetAutoClosed(); });
 
@@ -87,7 +87,7 @@ describe("a close by an administrator", () => {
     const target = sessions.find((s) => s.status !== "CLOSED" && Date.parse(s.endsAt) > Date.now() && live(s.id).length > 0)!;
     const res = await adminChange(json({ action: "close", reason: "Fraud report" }), ctxId(target.id));
     expect(res.status).toBe(200);
-    expect(sentTo("SESSION_CLOSED")).toEqual(live(target.id).filter((c) => outboxEmails().some((e) => e.bookingCode === c)));
+    expect(sentTo("SESSION_CLOSED")).toEqual(live(target.id).filter((c) => outboxEmails().some((e) => "bookingCode" in e && e.bookingCode === c)));
     expect(outboxEmails()[0]).toMatchObject({ auto: false, reason: { code: "OTHER", note: "Fraud report" } });
   });
 });

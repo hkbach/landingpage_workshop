@@ -20,3 +20,4 @@ export * from "./workshop-rules";
 export * from "./customer-profile";
 export * from "./workshop-categories";
 export * from "./workshop-address";
+export * from "./password-rules";

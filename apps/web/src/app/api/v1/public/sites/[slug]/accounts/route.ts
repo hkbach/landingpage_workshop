@@ -1,11 +1,12 @@
 import { z } from "zod";
-import { isFavoriteCategories, LOCALES, WORKSHOP_CATEGORIES } from "@workshop/shared";
+import { checkPassword, isFavoriteCategories, LOCALES, WORKSHOP_CATEGORIES } from "@workshop/shared";
 import { apiError, fieldCodes } from "@/lib/api-error";
 import { COUNTRY_CODES } from "@/components/booking/countries";
 import { currentShop } from "@/lib/mock/data";
+import { setPassword } from "@/lib/mock/accounts-store";
 import { registerGuestAccount } from "@/lib/mock/booking-store";
 
-// A guest registers an account on the site of the shop. The guest has to have proved the email (the OTP of the login). MOCK implementation inside Next until
+// A guest registers an account on the site of the shop, with the email and a password (10 to 72 characters) they will log in with. MOCK implementation inside Next until
 // apps/api exists. Every booking made before with the same email (a guest who booked without an account) is merged into the new account.
 // TODO(api): POST /public/sites/{slug}/accounts checks the verified email server side, and the account and the merge are ONE transaction (organization_id from the server).
 
@@ -15,6 +16,7 @@ const bodySchema = z.object({
   fullName: z.string().trim().min(1, "required").max(120, "tooLong"),
   country: z.string().refine((c) => COUNTRY_CODES.includes(c), "required"),
   birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "invalid").refine((d) => !Number.isNaN(Date.parse(`${d}T00:00:00Z`)) && d >= "1900-01-01" && d <= today(), "invalid"),
+  password: z.string({ error: "password" }).refine((p) => checkPassword(p) === "OK", "password"),
   phone: z.string().trim().max(40, "tooLong").optional(),
   locale: z.enum(LOCALES).optional(),
   /** The three fields of workshops the guest likes (exactly three different ones). */
@@ -35,7 +37,9 @@ export async function POST(request: Request, ctx: RouteContext<"/api/v1/public/s
   }
   const parsed = bodySchema.safeParse(body);
   if (!parsed.success) return apiError(422, "VALIDATION", "Please check the highlighted fields.", { fields: fieldCodes(parsed.error.issues) });
-  const res = registerGuestAccount({ ...parsed.data, consentAt: new Date().toISOString() });
+  const { password, ...profile } = parsed.data;
+  const res = registerGuestAccount({ ...profile, consentAt: new Date().toISOString() });
   if (!res.ok) return apiError(409, "ALREADY_REGISTERED", "This email already has an account.");
+  setPassword(res.customerId, password);
   return Response.json({ customerId: res.customerId, created: res.created, merged: res.merged }, { status: 201 });
 }

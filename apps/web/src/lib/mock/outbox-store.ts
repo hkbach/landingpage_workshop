@@ -2,7 +2,7 @@
 // change and a worker sends the email in the language of the guest (REQUIREMENTS 5.7), so nothing is sent from a request handler.
 // Lives on globalThis like the other mock stores.
 import type { Locale, SessionCloseReason } from "@workshop/shared";
-import { renderBookingCancelled, renderBookingConfirmation, renderBookingInfo, renderPaymentReceived, renderShopBookingNotice, renderSessionClosed, renderSessionRescheduled, type RenderedEmail } from "@/lib/email/templates";
+import { renderBookingCancelled, renderBookingConfirmation, renderBookingInfo, renderPasswordReset, renderPaymentReceived, renderShopBookingNotice, renderSessionClosed, renderSessionRescheduled, type RenderedEmail } from "@/lib/email/templates";
 import { newUuid } from "@/lib/uuid";
 
 interface EmailBase extends RenderedEmail {
@@ -96,7 +96,17 @@ export interface PaymentReceivedEmail extends EmailBase {
   currency: string;
 }
 
-export type OutboxEmail = SessionRescheduledEmail | SessionClosedEmail | BookingConfirmationEmail | BookingInfoEmail | BookingCancelledEmail | ShopBookingNoticeEmail | PaymentReceivedEmail;
+/** An administrator reset the password of an account: the email with the temporary password and the link of the page where the new one is chosen (both only in the email). */
+export interface PasswordResetEmail extends RenderedEmail {
+  id: string;
+  type: "PASSWORD_RESET";
+  to: string;
+  locale: Locale;
+  accountName: string;
+  createdAt: string;
+}
+
+export type OutboxEmail = PasswordResetEmail | SessionRescheduledEmail | SessionClosedEmail | BookingConfirmationEmail | BookingInfoEmail | BookingCancelledEmail | ShopBookingNoticeEmail | PaymentReceivedEmail;
 
 const g = globalThis as unknown as { __outbox?: OutboxEmail[] };
 const box = () => (g.__outbox ??= []);
@@ -141,6 +151,16 @@ export function queueShopBookingNotice(email: Queued<ShopBookingNoticeEmail>): S
 
 export function queuePaymentReceived(email: Queued<PaymentReceivedEmail>): PaymentReceivedEmail {
   const entry: PaymentReceivedEmail = { ...email, ...renderPaymentReceived(email), id: newUuid(), type: "PAYMENT_RECEIVED", createdAt: new Date().toISOString() };
+  box().push(entry);
+  return entry;
+}
+
+/** Queues the email of a reset of the password. The temporary password and the link are written in `html` and `text` only: the list of the outbox does not give them. */
+export function queuePasswordReset(email: { to: string; locale: Locale; accountName: string; accountEmail: string; tempPassword: string; resetUrl: string; expiresAt: string }): PasswordResetEmail {
+  const entry: PasswordResetEmail = {
+    ...renderPasswordReset({ name: email.accountName, accountEmail: email.accountEmail, tempPassword: email.tempPassword, resetUrl: email.resetUrl, expiresAt: email.expiresAt }),
+    id: newUuid(), type: "PASSWORD_RESET", to: email.to, locale: email.locale, accountName: email.accountName, createdAt: new Date().toISOString(),
+  };
   box().push(entry);
   return entry;
 }

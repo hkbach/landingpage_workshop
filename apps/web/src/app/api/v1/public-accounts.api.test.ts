@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { liveBookings, liveCustomers, resetBookingStore } from "@/lib/mock/booking-store";
 import { currentShop, customers, sessions, workshops } from "@/lib/mock/data";
+import { login, resetAccountsStore } from "@/lib/mock/accounts-store";
+import { resetAccountStatus } from "@/lib/mock/account-status";
 import { resetOutbox } from "@/lib/mock/outbox-store";
 import { POST as book } from "./public/sites/[slug]/bookings/route";
 import { POST as register } from "./public/sites/[slug]/accounts/route";
@@ -15,9 +17,10 @@ const post = (route: (request: Request, ctx: never) => Promise<Response>, body: 
   route(new Request("http://whiskladle.localtest.me:3000/x", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }), ctx);
 const FREE = sessions.find((s) => s.status === "RUNNING" && Date.parse(s.startsAt) > Date.now() + 86_400_000 && s.capacity - s.reservedCount >= 4 && workshops.find((w) => w.id === s.workshopId)?.status === "ACTIVE")!;
 const guest = (email: string, fullName = "Someone") => ({ sessionId: FREE.id, quantity: 1, fullName, email, phone: "+84 90 111 2222" });
-const PROFILE = { fullName: "Tran Binh", country: "VN", birthDate: "1995-05-20", categories: ["COOKING", "BAKING", "COFFEE_TEA"], consent: true };
+const PASSWORD = "a-long-password-1";
+const PROFILE = { password: PASSWORD, fullName: "Tran Binh", country: "VN", birthDate: "1995-05-20", categories: ["COOKING", "BAKING", "COFFEE_TEA"], consent: true };
 
-beforeEach(() => { resetBookingStore(); resetOutbox(); });
+beforeEach(() => { resetBookingStore(); resetOutbox(); resetAccountsStore(); resetAccountStatus(); });
 
 describe("a guest who is not logged in books", () => {
   it("with an email that booked before: the booking is counted for that customer, whatever the case and the spaces", async () => {
@@ -72,7 +75,7 @@ describe("a guest registers an account", () => {
   it("merges the bookings of a customer who booked in the demo data too, and a later booking goes to the account", async () => {
     const old = customers.find((c) => c.email === "minjun@example.com")!;
     const count = liveBookings().filter((b) => b.customerId === old.id).length;
-    const res = await post(register, { email: "minjun@example.com", fullName: "Kim Min-jun", country: "KR", birthDate: "1993-03-03", categories: ["ART", "CRAFTS", "POTTERY"], consent: true });
+    const res = await post(register, { email: "minjun@example.com", password: PASSWORD, fullName: "Kim Min-jun", country: "KR", birthDate: "1993-03-03", categories: ["ART", "CRAFTS", "POTTERY"], consent: true });
     expect(await res.json()).toMatchObject({ customerId: old.id, created: false, merged: count });
     expect(liveCustomers().find((c) => c.id === old.id)!.account).toMatchObject({ country: "KR" });
     await post(book, guest("MINJUN@example.com"));
@@ -108,6 +111,16 @@ describe("a guest registers an account", () => {
     }
     expect(liveCustomers().some((c) => c.email === "a@example.com")).toBe(false);
   });
+  it("needs a password of 10 to 72 characters, and the guest logs in with it", async () => {
+    for (const password of [undefined, "", "short", "x".repeat(73), 1234567890]) {
+      const res = await post(register, { email: "pw@example.com", ...PROFILE, password });
+      expect(res.status, String(password)).toBe(422);
+      expect(((await res.json()) as { error: { details: { fields: Record<string, string> } } }).error.details.fields).toEqual({ password: "password" });
+    }
+    expect((await post(register, { email: "pw@example.com", ...PROFILE })).status).toBe(201);
+    expect(login("PW@example.com", PASSWORD)).toMatchObject({ ok: true, account: { type: "CUSTOMER" } });
+    expect(login("pw@example.com", "another-password")).toMatchObject({ ok: false });
+  });
   it("needs the consent of the guest, and keeps when it was given", async () => {
     expect((await post(register, { email: "c@example.com", ...PROFILE, consent: false })).status).toBe(422);
     const { consent: _drop, ...without } = PROFILE;
@@ -134,7 +147,7 @@ describe("does an email have an account", () => {
     expect(await (await post(lookup, { email: "nobody@example.com" })).json()).toEqual({ registered: false, bookings: 0 });
   });
   it("is registered after the account was made", async () => {
-    await post(register, { email: "minjun@example.com", fullName: "Kim", country: "KR", birthDate: "1993-03-03", categories: ["ART", "CRAFTS", "POTTERY"], consent: true });
+    await post(register, { email: "minjun@example.com", password: PASSWORD, fullName: "Kim", country: "KR", birthDate: "1993-03-03", categories: ["ART", "CRAFTS", "POTTERY"], consent: true });
     expect(await (await post(lookup, { email: "minjun@example.com" })).json()).toMatchObject({ registered: true });
   });
   it("422 for an email that is not one", async () => {

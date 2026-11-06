@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { getTranslations } from "next-intl/server";
 import { ResetPasswordForm } from "../_components/auth-forms";
 
@@ -9,7 +10,10 @@ export default async function ResetPasswordPage() {
         <h1 className="text-xl font-semibold">{t("title")}</h1>
         <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
       </div>
-      <ResetPasswordForm />
+      {/* The form reads the token of the link from the query string. */}
+      <Suspense fallback={null}>
+        <ResetPasswordForm />
+      </Suspense>
     </div>
   );
 }

@@ -1,12 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useCallback, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { FAVORITE_CATEGORY_COUNT, WORKSHOP_CATEGORIES, toggleCategory, type WorkshopCategory } from "@workshop/shared";
+import { FAVORITE_CATEGORY_COUNT, WORKSHOP_CATEGORIES, checkPassword, toggleCategory, type WorkshopCategory } from "@workshop/shared";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { COUNTRY_CODES, countryName } from "@/components/booking/countries";
-import { cleanOtp, DEMO_OTP, isOtpComplete, OTP_LENGTH, OTP_MAX_ATTEMPTS, OTP_RESEND_SECONDS, sendOtp, verifyOtp } from "@/components/booking/otp";
 import { FavoritesContext } from "@/components/sections/favorites-context";
 import { siteFontClass } from "@/components/sections/site-fonts";
 import { modalThemeStyle } from "@/components/sections/theme";
@@ -24,7 +23,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
  * Owns the favorites of the guest on the landing page and the login popup. A guest who is not logged in who clicks the heart of a workshop is asked
- * to log in first (email + code); once logged in, that workshop is saved. The builder preview uses it too (slug "preview"), in the browser of the owner.
+ * to log in first (email + password); once logged in, that workshop is saved. The builder preview uses it too (slug "preview"), in the browser of the owner.
  */
 export function FavoritesProvider({ slug, shopName, theme, children }: { slug: string; shopName: string; theme: PageTheme; children: ReactNode }) {
   const email = useSyncExternalStore(subscribeFavorites, () => readGuestEmail(slug), () => "");
@@ -74,21 +73,21 @@ const selectClass =
   "h-11 w-full rounded-lg border border-input bg-white px-2.5 text-base text-[var(--site-text)] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
 
 /**
- * The steps of the login: the email, the code that was sent to it and, for an email that has no account yet, the account to create (name, country, date of
- * birth). Creating it merges into it the bookings that were made before with the same email, and the last step says how many. The builder preview (slug
- * "preview") has no server to ask, so it only logs in.
+ * The steps of the login: email + password and, for a guest who has no account yet, the account to create (name, password, country, date of birth, favorite
+ * fields). Creating it merges into it the bookings that were made before with the same email, and the last step says how many. The builder preview (slug
+ * "preview") has no server to ask, so it only logs in with the email.
  */
 export function GuestLoginForm({ slug, shopName, onLoggedIn, onCancel }: { slug: string; shopName: string; onLoggedIn: (email: string) => void; onCancel: () => void }) {
   const t = useTranslations("site.favorites");
   const tc = useTranslations("site.categories");
   const locale = useLocale();
-  const [step, setStep] = useState<"email" | "code" | "profile" | "done">("email");
+  const [step, setStep] = useState<"login" | "profile" | "done">("login");
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState(false);
-  const [code, setCode] = useState("");
-  const [wrong, setWrong] = useState(false);
-  const [attempts, setAttempts] = useState(0);
-  const [cooldown, setCooldown] = useState(0);
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  /** The message key of what went wrong with the login (a wrong email or password, a deactivated account, ...). */
+  const [loginError, setLoginError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [fullName, setFullName] = useState("");
   const [country, setCountry] = useState("");
@@ -96,72 +95,51 @@ export function GuestLoginForm({ slug, shopName, onLoggedIn, onCancel }: { slug:
   const [consent, setConsent] = useState(false);
   /** The three fields of workshops the guest likes. */
   const [categories, setCategories] = useState<WorkshopCategory[]>([]);
-  const [errors, setErrors] = useState<{ fullName?: boolean; country?: boolean; birthDate?: boolean; categories?: boolean; consent?: boolean }>({});
+  const [errors, setErrors] = useState<{ fullName?: boolean; country?: boolean; birthDate?: boolean; categories?: boolean; consent?: boolean; password?: boolean; confirm?: boolean }>({});
   const [failed, setFailed] = useState(false);
-  /** Sending or checking the code failed (network, too many requests): the guest is told and can try again. */
-  const [otpFailed, setOtpFailed] = useState(false);
   const [merged, setMerged] = useState(0);
-  const locked = attempts >= OTP_MAX_ATTEMPTS;
   const clean = normalizeGuestEmail(email);
   const base = `/api/v1/public/sites/${encodeURIComponent(slug)}/accounts`;
   const today = new Date().toISOString().slice(0, 10);
 
-  useEffect(() => {
-    if (cooldown <= 0) return;
-    const timer = setTimeout(() => setCooldown((c) => c - 1), 1000);
-    return () => clearTimeout(timer);
-  }, [cooldown]);
-
-  async function send() {
+  async function logIn() {
+    setLoginError(null);
     if (!EMAIL_RE.test(clean)) { setEmailError(true); return; }
+    if (slug === "preview") { onLoggedIn(clean); return; }
+    if (!password) { setLoginError("passwordRequired"); return; }
     setBusy(true);
-    setOtpFailed(false);
     try {
-      await sendOtp(clean);
-      setCode(""); setWrong(false); setAttempts(0); setCooldown(OTP_RESEND_SECONDS); setStep("code");
-    } catch {
-      setOtpFailed(true);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function verify() {
-    if (!isOtpComplete(code) || locked) return;
-    setBusy(true);
-    setOtpFailed(false);
-    try {
-      if (!(await verifyOtp(clean, code))) { setAttempts((a) => a + 1); setWrong(true); setCode(""); return; }
-      if (slug === "preview") { onLoggedIn(clean); return; }
-      // The email is proved. Has it an account? If not, the guest creates one (and the bookings made with this email join it).
-      let registered = true;
-      try {
-        const res = await fetch(`${base}/lookup`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: clean }) });
-        if (res.ok) registered = ((await res.json()) as { registered: boolean }).registered;
-      } catch {
-        /* the server cannot be asked: the guest is simply logged in */
+      const res = await fetch("/api/v1/auth/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: clean, password }) });
+      if (res.ok) {
+        const me = (await res.json()) as { type: string };
+        if (me.type === "CUSTOMER") onLoggedIn(clean);
+        else setLoginError("loginInvalid"); // the account of a shop owner is not a customer account
+        return;
       }
-      if (registered) onLoggedIn(clean);
-      else setStep("profile");
+      const code = ((await res.json().catch(() => null)) as { error?: { code?: string } } | null)?.error?.code;
+      setLoginError(code === "DEACTIVATED" ? "loginDeactivated" : code === "TOO_MANY_ATTEMPTS" ? "loginTooMany" : code === "INVALID_CREDENTIALS" ? "loginInvalid" : "loginFailed");
     } catch {
-      setOtpFailed(true);
+      setLoginError("loginFailed");
     } finally {
       setBusy(false);
     }
   }
 
   async function register() {
-    const next = { fullName: !fullName.trim(), country: !COUNTRY_CODES.includes(country), birthDate: !birthDate || birthDate > today || birthDate < "1900-01-01", categories: categories.length !== FAVORITE_CATEGORY_COUNT, consent: !consent };
+    const next = {
+      fullName: !fullName.trim(), country: !COUNTRY_CODES.includes(country), birthDate: !birthDate || birthDate > today || birthDate < "1900-01-01",
+      categories: categories.length !== FAVORITE_CATEGORY_COUNT, consent: !consent, password: checkPassword(password) !== "OK", confirm: confirm !== password,
+    };
     setErrors(next);
     setFailed(false);
-    if (next.fullName || next.country || next.birthDate || next.categories || next.consent) return;
+    if (Object.values(next).some(Boolean)) return;
     setBusy(true);
     try {
       const res = await fetch(base, {
         method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ email: clean, fullName: fullName.trim(), country, birthDate, categories, locale, consent: true }),
+        body: JSON.stringify({ email: clean, password, fullName: fullName.trim(), country, birthDate, categories, locale, consent: true }),
       });
-      if (res.status === 409) { onLoggedIn(clean); return; } // the email has an account after all
+      if (res.status === 409) { setStep("login"); setLoginError("alreadyRegistered"); return; } // the email has an account after all: log in with its password
       if (!res.ok) { setFailed(true); return; }
       setMerged(((await res.json()) as { merged: number }).merged);
       setStep("done");
@@ -172,48 +150,47 @@ export function GuestLoginForm({ slug, shopName, onLoggedIn, onCancel }: { slug:
     }
   }
 
-  const field = (id: string, label: string, error: boolean | undefined, control: ReactNode) => (
+  const field = (id: string, label: string, error: boolean | undefined, control: ReactNode, message?: string) => (
     <div className="space-y-1.5">
       <label htmlFor={id} className="text-sm font-medium">{label} <span aria-hidden>*</span></label>
       {control}
-      {error ? <p role="alert" className="text-sm text-red-700">{t(id === "fav-birth" ? "birthDateInvalid" : "fieldRequired")}</p> : null}
+      {error ? <p role="alert" className="text-sm text-red-700">{message ?? t(id === "fav-birth" ? "birthDateInvalid" : "fieldRequired")}</p> : null}
     </div>
   );
 
   return (
     <form
-      onSubmit={(e) => { e.preventDefault(); void (step === "email" ? send() : step === "code" ? verify() : step === "profile" ? register() : onLoggedIn(clean)); }}
+      onSubmit={(e) => { e.preventDefault(); void (step === "login" ? logIn() : step === "profile" ? register() : onLoggedIn(clean)); }}
       noValidate className="space-y-4" data-testid="favorites-login"
     >
-      {otpFailed ? <p role="alert" className="text-sm text-red-700" data-testid="favorites-otp-failed">{t("otpFailed")}</p> : null}
-      {step === "email" ? (
-        <div className="space-y-1.5">
-          <label htmlFor="fav-email" className="text-sm font-medium">{t("emailLabel")} <span aria-hidden>*</span></label>
-          <Input
-            id="fav-email" type="text" inputMode="email" autoComplete="email" className="h-11 text-base" value={email} aria-required aria-invalid={emailError}
-            aria-describedby={emailError ? "fav-email-error" : undefined} onChange={(e) => { setEmail(e.target.value); setEmailError(false); }}
-          />
-          {emailError ? <p id="fav-email-error" role="alert" className="text-sm text-red-700">{t("emailInvalid")}</p> : null}
-        </div>
-      ) : step === "code" ? (
-        <div className="space-y-1.5" data-testid="favorites-code-step">
-          <p className="text-sm">{t("codeIntro", { email: clean })}</p>
-          <label htmlFor="fav-code" className="text-sm font-medium">{t("codeLabel")} <span aria-hidden>*</span></label>
-          <Input
-            id="fav-code" inputMode="numeric" autoComplete="one-time-code" maxLength={OTP_LENGTH + 4} className="h-11 text-base tracking-[0.4em]"
-            value={code} disabled={locked || busy} aria-required aria-invalid={wrong} onChange={(e) => { setCode(cleanOtp(e.target.value)); setWrong(false); }}
-          />
-          {process.env.NODE_ENV !== "production" ? <p className="text-xs text-[var(--site-muted)]" data-testid="favorites-demo">{t("codeDemo", { code: DEMO_OTP })}</p> : null}
-          {wrong && !locked ? <p role="alert" className="text-sm text-red-700">{t("codeWrong", { left: OTP_MAX_ATTEMPTS - attempts })}</p> : null}
-          {locked ? <p role="alert" className="text-sm text-red-700">{t("codeLocked")}</p> : null}
-          <button type="button" className="text-sm underline underline-offset-4 disabled:no-underline disabled:opacity-60" disabled={cooldown > 0 || busy} onClick={() => void send()}>
-            {cooldown > 0 ? t("resendIn", { seconds: cooldown }) : t("resend")}
-          </button>
+      {step === "login" ? (
+        <div className="space-y-3" data-testid="favorites-login-step">
+          {loginError ? <p role="alert" className="text-sm text-red-700" data-testid="favorites-login-error">{t(loginError)}</p> : null}
+          <div className="space-y-1.5">
+            <label htmlFor="fav-email" className="text-sm font-medium">{t("emailLabel")} <span aria-hidden>*</span></label>
+            <Input
+              id="fav-email" type="text" inputMode="email" autoComplete="email" className="h-11 text-base" value={email} aria-required aria-invalid={emailError}
+              aria-describedby={emailError ? "fav-email-error" : undefined} onChange={(e) => { setEmail(e.target.value); setEmailError(false); }}
+            />
+            {emailError ? <p id="fav-email-error" role="alert" className="text-sm text-red-700">{t("emailInvalid")}</p> : null}
+          </div>
+          {slug === "preview" ? null : (
+            <div className="space-y-1.5">
+              <label htmlFor="fav-password" className="text-sm font-medium">{t("passwordLabel")} <span aria-hidden>*</span></label>
+              <Input id="fav-password" type="password" autoComplete="current-password" className="h-11 text-base" value={password} aria-required onChange={(e) => { setPassword(e.target.value); setLoginError(null); }} />
+            </div>
+          )}
+          {slug === "preview" ? null : (
+            <button type="button" className="text-sm underline underline-offset-4" data-testid="favorites-to-register" onClick={() => { setLoginError(null); setPassword(""); setStep("profile"); }}>{t("noAccountYet")}</button>
+          )}
         </div>
       ) : step === "profile" ? (
         <div className="space-y-3" data-testid="favorites-register-step">
           <h3 className="text-base font-semibold">{t("registerTitle")}</h3>
-          <p className="text-sm">{t("registerIntro", { email: clean })}</p>
+          <p className="text-sm">{t("registerIntro")}</p>
+          {field("fav-reg-email", t("emailLabel"), !EMAIL_RE.test(clean), <Input id="fav-reg-email" type="text" inputMode="email" autoComplete="email" className="h-11 text-base" value={email} aria-required aria-invalid={!EMAIL_RE.test(clean)} onChange={(e) => setEmail(e.target.value)} />, t("emailInvalid"))}
+          {field("fav-reg-password", t("passwordLabel"), errors.password, <Input id="fav-reg-password" type="password" autoComplete="new-password" className="h-11 text-base" value={password} aria-required aria-invalid={errors.password} onChange={(e) => setPassword(e.target.value)} />, t("passwordInvalid"))}
+          {field("fav-reg-confirm", t("confirmPasswordLabel"), errors.confirm, <Input id="fav-reg-confirm" type="password" autoComplete="new-password" className="h-11 text-base" value={confirm} aria-required aria-invalid={errors.confirm} onChange={(e) => setConfirm(e.target.value)} />, t("passwordMismatch"))}
           {field("fav-name", t("fullNameLabel"), errors.fullName, <Input id="fav-name" autoComplete="name" className="h-11 text-base" value={fullName} aria-required aria-invalid={errors.fullName} onChange={(e) => setFullName(e.target.value)} />)}
           {field("fav-country", t("countryLabel"), errors.country, (
             <select id="fav-country" className={selectClass} value={country} aria-required aria-invalid={errors.country} onChange={(e) => setCountry(e.target.value)}>
@@ -253,6 +230,7 @@ export function GuestLoginForm({ slug, shopName, onLoggedIn, onCancel }: { slug:
             {errors.consent ? <p role="alert" className="text-sm text-red-700">{t("consentRequired")}</p> : null}
           </div>
           {failed ? <p role="alert" className="text-sm text-red-700">{t("registerFailed")}</p> : null}
+          <button type="button" className="text-sm underline underline-offset-4" onClick={() => { setStep("login"); setErrors({}); setFailed(false); }}>{t("haveAccount")}</button>
         </div>
       ) : (
         <div className="space-y-2" data-testid="favorites-registered-step">
@@ -262,10 +240,8 @@ export function GuestLoginForm({ slug, shopName, onLoggedIn, onCancel }: { slug:
       )}
       <div className="flex flex-wrap justify-end gap-2">
         {step === "done" ? null : <button type="button" className={secondaryBtn} onClick={onCancel}>{t("cancel")}</button>}
-        {step === "email" ? (
-          <button type="submit" className={primaryBtn} disabled={busy || !clean}>{busy ? t("sending") : t("sendCode")}</button>
-        ) : step === "code" ? (
-          <button type="submit" className={primaryBtn} disabled={busy || locked || !isOtpComplete(code)}>{t("login")}</button>
+        {step === "login" ? (
+          <button type="submit" className={primaryBtn} disabled={busy || !clean}>{busy ? t("sending") : t("login")}</button>
         ) : step === "profile" ? (
           <button type="submit" className={primaryBtn} disabled={busy}>{busy ? t("creating") : t("createAccount")}</button>
         ) : (

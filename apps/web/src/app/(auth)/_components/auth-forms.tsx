@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
+import { PASSWORD_MAX, PASSWORD_MIN } from "@workshop/shared";
+import { writeGuestEmail } from "@/lib/favorites";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -16,7 +18,7 @@ import { zodResolver } from "@/lib/zod-resolver";
 const fakeRequest = () => new Promise<void>((resolve) => setTimeout(resolve, 700));
 
 const email = z.string().trim().min(1, "errors.emailRequired").pipe(z.email("errors.emailInvalid"));
-const password = z.string().min(10, "errors.passwordMin");
+const password = z.string().min(PASSWORD_MIN, "errors.passwordMin");
 
 const loginSchema = z.object({ email, password: z.string().min(1, "errors.passwordRequired") });
 const signupSchema = z.object({
@@ -26,9 +28,11 @@ const signupSchema = z.object({
   acceptTerms: z.boolean().refine((v) => v, "errors.termsRequired"),
 });
 const forgotSchema = z.object({ email });
+// The page of the link an administrator's reset emails: the temporary password of the email, then the new password twice.
 const resetSchema = z
-  .object({ password, confirm: z.string() })
-  .refine((v) => v.password === v.confirm, { path: ["confirm"], message: "errors.passwordMismatch" });
+  .object({ tempPassword: z.string().min(1, "errors.tempRequired"), password: password.max(PASSWORD_MAX, "errors.passwordMax"), confirm: z.string() })
+  .refine((v) => v.password === v.confirm, { path: ["confirm"], message: "errors.passwordMismatch" })
+  .refine((v) => v.password !== v.tempPassword, { path: ["password"], message: "errors.samePassword" });
 
 type LoginValues = z.infer<typeof loginSchema>;
 type SignupValues = z.infer<typeof signupSchema>;
@@ -47,6 +51,7 @@ function SuccessNotice({ title, body }: { title: string; body: string }) {
 export function LoginForm() {
   const t = useTranslations("auth");
   const router = useRouter();
+  const [failure, setFailure] = useState<string | null>(null);
   const form = useForm<LoginValues>({ resolver: zodResolver(loginSchema), defaultValues: { email: "", password: "" } });
   const { register, handleSubmit, formState: { errors, isSubmitting } } = form;
   const err = (k: keyof LoginValues) => (errors[k]?.message ? t(errors[k]!.message as string) : undefined);
@@ -55,11 +60,27 @@ export function LoginForm() {
     <form
       noValidate
       className="grid gap-4"
-      onSubmit={handleSubmit(async () => {
-        await fakeRequest();
-        router.push("/shopowner");
+      onSubmit={handleSubmit(async (values) => {
+        setFailure(null);
+        try {
+          const res = await fetch("/api/v1/auth/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(values) });
+          if (!res.ok) {
+            const code = ((await res.json().catch(() => null)) as { error?: { code?: string } } | null)?.error?.code;
+            setFailure(code === "DEACTIVATED" ? "login.deactivated" : code === "TOO_MANY_ATTEMPTS" ? "login.tooMany" : code === "INVALID_CREDENTIALS" ? "login.invalid" : "login.failed");
+            return;
+          }
+          const me = (await res.json()) as { type: "SHOP_OWNER" | "CUSTOMER"; id: string; email: string; slug?: string; guestSlug?: string };
+          if (me.type === "SHOP_OWNER") router.push(`/shopowner/${me.slug}`);
+          else {
+            writeGuestEmail(me.guestSlug ?? "", me.email); // the customer area looks the account up with the email of the guest session
+            router.push(`/customer/${me.id}`);
+          }
+        } catch {
+          setFailure("login.failed");
+        }
       })}
     >
+      {failure ? <p role="alert" className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">{t(failure)}</p> : null}
       <Field htmlFor="login-email" label={t("fields.email")} error={err("email")}>
         <Input id="login-email" type="email" autoComplete="email" aria-invalid={!!errors.email}
           aria-describedby={describedBy("login-email", { error: !!errors.email })} {...register("email")} />
@@ -164,10 +185,14 @@ export function ForgotPasswordForm() {
 
 export function ResetPasswordForm() {
   const t = useTranslations("auth");
+  const token = useSearchParams().get("token") ?? "";
   const [done, setDone] = useState(false);
-  const form = useForm<ResetValues>({ resolver: zodResolver(resetSchema), defaultValues: { password: "", confirm: "" } });
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = form;
+  const [invalid, setInvalid] = useState(false);
+  const form = useForm<ResetValues>({ resolver: zodResolver(resetSchema), defaultValues: { tempPassword: "", password: "", confirm: "" } });
+  const { register, handleSubmit, setError, formState: { errors, isSubmitting } } = form;
   const err = (k: keyof ResetValues) => (errors[k]?.message ? t(errors[k]!.message as string) : undefined);
+
+  if (!token || invalid) return <SuccessNotice title={t("reset.invalidTitle")} body={t("reset.invalidBody")} />;
 
   if (done) {
     return (
@@ -179,7 +204,24 @@ export function ResetPasswordForm() {
   }
 
   return (
-    <form noValidate className="grid gap-4" onSubmit={handleSubmit(async () => { await fakeRequest(); setDone(true); })}>
+    <form
+      noValidate
+      className="grid gap-4"
+      onSubmit={handleSubmit(async (v) => {
+        const res = await fetch("/api/v1/auth/reset-password", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ token, tempPassword: v.tempPassword, newPassword: v.password }) }).catch(() => null);
+        if (res?.ok) return setDone(true);
+        const body = (await res?.json().catch(() => null)) as { error?: { code?: string; details?: { fields?: Record<string, string> } } } | null;
+        if (body?.error?.code === "INVALID_LINK") return setInvalid(true);
+        const fields = body?.error?.details?.fields ?? {};
+        if (fields.tempPassword) setError("tempPassword", { message: "errors.tempWrong" });
+        else if (fields.newPassword) setError("password", { message: fields.newPassword === "samePassword" ? "errors.samePassword" : fields.newPassword === "weak" ? "errors.passwordMin" : "errors.passwordMax" });
+        else setError("tempPassword", { message: "errors.resetFailed" });
+      })}
+    >
+      <Field htmlFor="reset-temp" label={t("reset.tempPassword")} hint={t("reset.tempHint")} error={err("tempPassword")}>
+        <Input id="reset-temp" type="password" autoComplete="one-time-code" aria-invalid={!!errors.tempPassword}
+          aria-describedby={describedBy("reset-temp", { error: !!errors.tempPassword, hint: true })} {...register("tempPassword")} />
+      </Field>
       <Field htmlFor="reset-password" label={t("reset.newPassword")} hint={t("signup.passwordHint")} error={err("password")}>
         <Input id="reset-password" type="password" autoComplete="new-password" aria-invalid={!!errors.password}
           aria-describedby={describedBy("reset-password", { error: !!errors.password, hint: true })} {...register("password")} />

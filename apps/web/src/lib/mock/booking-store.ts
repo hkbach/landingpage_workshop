@@ -6,6 +6,7 @@ import { computePaymentStatus, confirmation, netPaid, reservedSeats, type PreChe
 import type { Booking, Customer, PaymentEntry, Session } from "@/lib/types";
 import { newUuid } from "@/lib/uuid";
 import { bookings as seed, currentShop, customers as seedCustomers, sessions, workshops } from "./data";
+import { isAccountActive } from "./account-status";
 import { queueBookingCancelled, queueBookingConfirmation, queueBookingInfo, queueShopBookingNotice } from "./outbox-store";
 import { allPromotions, shopToday } from "./promotion-store";
 import { withAdminChanges } from "./session-admin-store";
@@ -154,7 +155,7 @@ export function registerGuestAccount(input: { email: string; fullName: string; c
  */
 export function accountOfGuest(id: string, email: string | null): Customer | undefined {
   const c = liveCustomers().find((x) => x.id === id);
-  if (!c?.account) return undefined;
+  if (!c?.account || !isAccountActive(c.id)) return undefined; // a deactivated account (by an administrator, or until a reset of the password is done) is closed
   return email === null || (c.email && normalizeEmail(c.email) === normalizeEmail(email)) ? c : undefined;
 }
 
@@ -178,6 +179,15 @@ export function updateGuestAccount(id: string, email: string | null, patch: Acco
   };
   store().accounts.set(id, { fullName: patch.fullName, ...(patch.phone ? { phone: patch.phone } : {}), locale: patch.locale, account });
   return { ok: true, customer: liveCustomers().find((x) => x.id === id)! };
+}
+
+/** An administrator edits the name and phone of a customer account (nothing else of the profile; an empty phone removes it). False when there is no such account. */
+export function adminUpdateGuestProfile(id: string, patch: { fullName: string; phone?: string }): boolean {
+  const current = liveCustomers().find((x) => x.id === id);
+  if (!current?.account) return false;
+  const prev = store().accounts.get(id);
+  store().accounts.set(id, { locale: prev?.locale ?? current.preferredLocale, account: current.account, fullName: patch.fullName, ...(patch.phone ? { phone: patch.phone } : {}) });
+  return true;
 }
 
 /**

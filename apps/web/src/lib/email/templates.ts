@@ -375,3 +375,52 @@ function compose(sections: Section[]): RenderedEmail {
 
   return { subject, text, html };
 }
+
+export interface PasswordResetData {
+  name: string; accountEmail: string;
+  /** The password the administrator's reset gave: the page of the link asks for it. */
+  tempPassword: string;
+  /** The page where the person chooses a new password (it holds the secret of the reset). */
+  resetUrl: string;
+  /** When the temporary password and the link stop working (ISO). */
+  expiresAt: string;
+}
+
+/**
+ * The email sent when an administrator resets the password of an account: the account is deactivated until the person opens the link, gives the temporary password and
+ * chooses a new one. The temporary password is only valid once, for a few days, and is useless without the link.
+ */
+export function renderPasswordReset(d: PasswordResetData): RenderedEmail {
+  const T = {
+    subject: w("Choose a new password for your account", "Đặt mật khẩu mới cho tài khoản của bạn", "ตั้งรหัสผ่านใหม่สำหรับบัญชีของคุณ", "为您的账户设置新密码", "계정의 새 비밀번호를 설정하세요", "アカウントの新しいパスワードを設定してください"),
+    intro: w(
+      "An administrator has reset the password of your account. Your account is deactivated until you choose a new password. Open the link below, enter the temporary password from this email, then choose and confirm a new password.",
+      "Quản trị viên đã đặt lại mật khẩu của tài khoản bạn. Tài khoản của bạn bị vô hiệu hóa cho đến khi bạn đặt mật khẩu mới. Hãy mở liên kết bên dưới, nhập mật khẩu tạm thời trong email này, rồi đặt và xác nhận mật khẩu mới.",
+      "ผู้ดูแลระบบได้รีเซ็ตรหัสผ่านของบัญชีคุณ บัญชีของคุณจะถูกปิดใช้งานจนกว่าคุณจะตั้งรหัสผ่านใหม่ โปรดเปิดลิงก์ด้านล่าง กรอกรหัสผ่านชั่วคราวจากอีเมลนี้ แล้วตั้งและยืนยันรหัสผ่านใหม่",
+      "管理员已重置您账户的密码。在您设置新密码之前，账户处于停用状态。请打开下方链接，输入本邮件中的临时密码，然后设置并确认新密码。",
+      "관리자가 계정의 비밀번호를 재설정했습니다. 새 비밀번호를 설정할 때까지 계정은 비활성화됩니다. 아래 링크를 열어 이 이메일의 임시 비밀번호를 입력한 뒤 새 비밀번호를 설정하고 확인해 주세요.",
+      "管理者がアカウントのパスワードをリセットしました。新しいパスワードを設定するまで、アカウントは無効です。下のリンクを開き、このメールの一時パスワードを入力して、新しいパスワードを設定・確認してください。",
+    ),
+    account: w("Account", "Tài khoản", "บัญชี", "账户", "계정", "アカウント"),
+    temp: w("Temporary password", "Mật khẩu tạm thời", "รหัสผ่านชั่วคราว", "临时密码", "임시 비밀번호", "一時パスワード"),
+    until: w("Valid until", "Có hiệu lực đến", "ใช้ได้ถึง", "有效期至", "유효 기간", "有効期限"),
+    button: w("Choose a new password", "Đặt mật khẩu mới", "ตั้งรหัสผ่านใหม่", "设置新密码", "새 비밀번호 설정", "新しいパスワードを設定"),
+    fallback: w("If the button does not work, copy this link into your browser:", "Nếu nút không hoạt động, hãy sao chép đường link này vào trình duyệt:", "หากปุ่มใช้งานไม่ได้ ให้คัดลอกลิงก์นี้ไปวางในเบราว์เซอร์:", "如果按钮无法使用，请将此链接复制到浏览器：", "버튼이 작동하지 않으면 이 링크를 브라우저에 복사하세요:", "ボタンが使えない場合は、このリンクをブラウザにコピーしてください："),
+    footer: w(
+      "The temporary password and the link work once and stop working after the date above. If you did not expect this email, contact the support of the platform.",
+      "Mật khẩu tạm thời và liên kết chỉ dùng được một lần và hết hiệu lực sau thời điểm trên. Nếu bạn không mong đợi email này, hãy liên hệ bộ phận hỗ trợ của nền tảng.",
+      "รหัสผ่านชั่วคราวและลิงก์ใช้ได้เพียงครั้งเดียวและจะหมดอายุหลังวันที่ด้านบน หากคุณไม่ได้คาดหวังอีเมลนี้ โปรดติดต่อฝ่ายสนับสนุนของแพลตฟอร์ม",
+      "临时密码和链接仅可使用一次，并在上述日期后失效。如果您并未预期收到此邮件，请联系平台支持。",
+      "임시 비밀번호와 링크는 한 번만 사용할 수 있으며 위 날짜 이후에는 사용할 수 없습니다. 이 이메일을 예상하지 못했다면 플랫폼 지원팀에 문의해 주세요.",
+      "一時パスワードとリンクは一度だけ使え、上記の日付を過ぎると使えなくなります。このメールに心当たりがない場合は、プラットフォームのサポートにご連絡ください。",
+    ),
+  };
+  return compose(EMAIL_LANGS.map((lang): Section => ({
+    lang, subject: T.subject[lang], greeting: fill(L.hello[lang], { name: d.name }), paragraphs: [T.intro[lang]],
+    rows: [
+      { label: T.account[lang], value: d.accountEmail }, { label: T.temp[lang], value: d.tempPassword },
+      { label: T.until[lang], value: dateTime(d.expiresAt, "UTC", lang) },
+    ],
+    button: { label: T.button[lang], url: d.resetUrl }, fallback: T.fallback[lang], footer: T.footer[lang],
+  })));
+}
