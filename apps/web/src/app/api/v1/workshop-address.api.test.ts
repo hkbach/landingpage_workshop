@@ -29,6 +29,16 @@ describe("the address guests see on the site", () => {
     expect(byId("ws-2").address).toBe(currentShop.address);
     for (const w of site.workshops) expect(w.address, w.id).toBeTruthy();
   });
+  it("comes with the note of the workshop, whichever address applies, and only when there is a note", () => {
+    const site = getPublicSite(currentShop.slug)!;
+    const byId = (id: string) => site.workshops.find((w) => w.id === id)!;
+    expect(byId("ws-4").addressNote).toContain("ring the bell of the green door"); // its own address and its note
+    expect(byId("ws-1").addressNote).toContain("first floor"); // the shop's address, with a note of the workshop
+    expect(byId("ws-2").addressNote).toBeUndefined(); // no note
+    expect("addressNote" in byId("ws-2")).toBe(false);
+    expect(getPublicSite("brewbean")!.workshops.find((w) => w.id === "ws-b3")!.addressNote).toContain("red brick");
+    expect(getPublicSite("greentable")!.workshops.find((w) => w.id === "ws-g2")!.addressNote).toContain("level 2");
+  });
   it("works the same for the other shops", () => {
     for (const shop of shops.filter((s) => otherShopSites[s.id])) {
       const site = getPublicSite(shop.slug)!;
@@ -40,6 +50,7 @@ describe("the address guests see on the site", () => {
   it("does not change the workshop the shop owner sees: its address stays empty when it has none", () => {
     expect(workshops.find((w) => w.id === "ws-1")!.address).toBeUndefined();
     expect(workshops.find((w) => w.id === "ws-4")!.address).toBe(OWN);
+    expect(workshops.find((w) => w.id === "ws-1")!.addressNote).toContain("first floor"); // a note, and still no address of its own
   });
 });
 
@@ -51,6 +62,9 @@ describe("the address in the emails of a booking", () => {
     const mail = outboxEmails().find((e): e is BookingConfirmationEmail => e.type === "BOOKING_CONFIRMATION")!;
     expect(mail.address).toBe(OWN);
     expect(mail.html).toContain("88 Pasteur Street");
+    expect(mail.addressNote).toContain("ring the bell of the green door");
+    expect(mail.html).toContain("ring the bell of the green door");
+    expect(mail.html).toContain("Ghi chú địa chỉ"); // the label of the note, in the six languages
     expect([...mail.html.matchAll(/Địa điểm/g)].length).toBeGreaterThan(0); // the label is in the six languages
     expect(mail.text).toContain(OWN);
   });
@@ -59,6 +73,7 @@ describe("the address in the emails of a booking", () => {
     const mail = outboxEmails().find((e): e is BookingConfirmationEmail => e.type === "BOOKING_CONFIRMATION")!;
     expect(mail.address).toBe(currentShop.address);
     expect(mail.html).toContain("Nguyen Hue");
+    expect(mail.addressNote).toContain("first floor"); // the note of the workshop goes with the shop's address too
   });
 });
 
@@ -74,10 +89,13 @@ describe("the address in My Booking", () => {
     const list = await mine();
     const own = list.find((b) => b.workshopId === "ws-4" && codes.includes(b.code))!;
     expect(own.address).toBe(OWN);
-    expect(own.directionsUrl).toBe(mapsSearchUrl(OWN)); // a search of its own address
+    expect(own.directionsUrl).toBe(mapsSearchUrl(OWN)); // a search of its own address (not of the note)
+    expect(own.addressNote).toContain("ring the bell of the green door");
     const shopWide = list.find((b) => b.workshopId === "ws-1" && codes.includes(b.code))!;
     expect(shopWide.address).toBe(currentShop.address);
     expect(shopWide.directionsUrl).toBe(currentShop.mapsUrl); // the map link of the shop
+    expect(shopWide.addressNote).toContain("first floor");
+    expect(list.find((b) => b.workshopId === "ws-2")?.addressNote).toBeUndefined();
     for (const b of list) expect(b.address, b.code).toBeTruthy();
   });
 });

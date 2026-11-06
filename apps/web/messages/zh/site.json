@@ -22,7 +22,8 @@
     "promotionValidUntil": "有效期至 {date}",
     "promotionCode": "优惠码",
     "promotionAlone": "不可与其他优惠叠加",
-    "promotionCombinable": "可与其他优惠叠加"
+    "promotionCombinable": "可与其他优惠叠加",
+    "venueNote": "备注"
   },
   "header": {
     "language": "语言"

@@ -55,7 +55,8 @@
     "searchPlaceholder": "工作坊名称",
     "allStatuses": "所有状态",
     "noMatch": "没有符合搜索或筛选条件的工作坊。",
-    "address": "地址"
+    "address": "地址",
+    "addressNote": "地址备注"
   },
   "detail": {
     "tabDetails": "详情",
@@ -110,8 +111,10 @@
     "categoryPlaceholder": "选择类别",
     "categoryHint": "工作坊所属的领域，用于统计。",
     "location": "地点",
-    "address": "工作坊地址",
-    "addressHint": "工作坊举办的地点。留空则使用商店地址（{address}）。"
+    "address": "地址",
+    "addressHint": "工作坊举办的地点。留空则使用商店地址（{address}）。",
+    "addressNote": "地址备注",
+    "addressNoteHint": "与地址一起显示给客人，例如楼层、入口或停车位置。"
   },
   "errors": {
     "titleRequired": "必须填写默认语言的标题。",
@@ -133,7 +136,8 @@
     "cutoffInvalid": "请输入 0 到 10080 之间的整数。",
     "pastStart": "开始时间不能是过去。请选择更晚的日期和时间。",
     "categoryRequired": "请选择类别。",
-    "addressTooLong": "地址最多 {max} 个字符。"
+    "addressTooLong": "地址最多 {max} 个字符。",
+    "addressNoteTooLong": "备注最多 {max} 个字符。"
   },
   "rules": {
     "title": "排期规则",

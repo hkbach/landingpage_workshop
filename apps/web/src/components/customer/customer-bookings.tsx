@@ -223,6 +223,7 @@ function BookingTicket({ booking: b, now, locale, email, isNext, onCancelled }: 
             <MapPin className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden /><span><span className="sr-only">{tb("where")}: </span>{b.address}</span>
           </p>
         ) : null}
+        {b.addressNote ? <p className="whitespace-pre-line text-xs text-muted-foreground" data-testid="customer-booking-address-note"><span className="sr-only">{tb("whereNote")}: </span>{b.addressNote}</p> : null}
         <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
           <span className="inline-flex items-center gap-1.5"><Clock className="size-4 text-muted-foreground" aria-hidden />{dayFmt({ weekday: "short", day: "numeric", month: "short", year: "numeric" })} · {formatTime(b.startsAt, b.timezone, locale)} – {formatTime(b.endsAt, b.timezone, locale)}</span>
           <span className="inline-flex items-center gap-1.5"><Users className="size-4 text-muted-foreground" aria-hidden />{tb("guests", { count: b.quantity })}</span>

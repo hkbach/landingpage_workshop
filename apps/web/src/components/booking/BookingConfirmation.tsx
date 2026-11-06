@@ -10,7 +10,7 @@ import { safeMaps } from "@/components/sections/safe-url";
 import { CancelBooking } from "./CancelBooking";
 import { readSimulatedBooking, type ConfirmationData } from "./simulate";
 
-export type ConfirmationShop = Pick<Shop, "name" | "address" | "mapsUrl" | "contactEmail" | "contactPhone">;
+export type ConfirmationShop = Pick<Shop, "name" | "address" | "mapsUrl" | "contactEmail" | "contactPhone"> & { /** The note the shop owner wrote about the address of the workshop. */ addressNote?: string };
 
 /** `cancel` is set when the guest can still cancel the booking (until the session starts): the button is shown. */
 export function BookingConfirmation({ data, shop, locale, homeHref, cancel }: { data: ConfirmationData; shop: ConfirmationShop; locale: Locale; homeHref: string; cancel?: { slug: string } }) {
@@ -69,6 +69,7 @@ export function BookingConfirmation({ data, shop, locale, homeHref, cancel }: { 
       <section className="space-y-1 text-sm">
         <h2 className="font-semibold">{t("confirmation.where")}</h2>
         <p className="whitespace-pre-line">{shop.address}</p>
+        {shop.addressNote ? <p className="whitespace-pre-line text-[var(--site-muted)]" data-testid="confirmation-address-note">{shop.addressNote}</p> : null}
         {maps ? (
           <a href={maps} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-medium text-[var(--site-primary)] underline underline-offset-4">
             {t("sections.openMap")}<ExternalLink className="size-4" aria-hidden />

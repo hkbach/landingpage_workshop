@@ -55,7 +55,8 @@
     "searchPlaceholder": "Workshop name",
     "allStatuses": "All statuses",
     "noMatch": "No workshops match your search or filter.",
-    "address": "Address"
+    "address": "Address",
+    "addressNote": "Address note"
   },
   "detail": {
     "tabDetails": "Details",
@@ -110,8 +111,10 @@
     "categoryPlaceholder": "Choose a category",
     "categoryHint": "The field your workshop belongs to. Used for statistics.",
     "location": "Location",
-    "address": "Workshop address",
-    "addressHint": "Where the workshop takes place. Leave it empty to use the address of the shop ({address})."
+    "address": "Address",
+    "addressHint": "Where the workshop takes place. Leave it empty to use the address of the shop ({address}).",
+    "addressNote": "Note about the address",
+    "addressNoteHint": "Shown to guests with the address, for example the floor, the entrance or where to park."
   },
   "errors": {
     "titleRequired": "A title in the default language is required.",
@@ -133,7 +136,8 @@
     "cutoffInvalid": "Enter a whole number between 0 and 10080.",
     "pastStart": "The start cannot be in the past. Choose a later date and time.",
     "categoryRequired": "Choose a category.",
-    "addressTooLong": "The address can have at most {max} characters."
+    "addressTooLong": "The address can have at most {max} characters.",
+    "addressNoteTooLong": "The note can have at most {max} characters."
   },
   "rules": {
     "title": "Schedule rules",

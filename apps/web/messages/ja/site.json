@@ -22,7 +22,8 @@
     "promotionValidUntil": "{date}まで有効",
     "promotionCode": "コード",
     "promotionAlone": "他のプロモーションとは併用できません",
-    "promotionCombinable": "他のプロモーションと併用できます"
+    "promotionCombinable": "他のプロモーションと併用できます",
+    "venueNote": "メモ"
   },
   "header": {
     "language": "言語"

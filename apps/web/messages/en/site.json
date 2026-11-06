@@ -22,7 +22,8 @@
     "promotionValidUntil": "Valid until {date}",
     "promotionCode": "Code",
     "promotionAlone": "Cannot be combined with other promotions",
-    "promotionCombinable": "Can be combined with other promotions"
+    "promotionCombinable": "Can be combined with other promotions",
+    "venueNote": "Note"
   },
   "header": {
     "language": "Language"

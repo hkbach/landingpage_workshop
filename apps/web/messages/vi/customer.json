@@ -134,7 +134,8 @@
     },
     "directions": "Chỉ đường",
     "cancelledDone": "Đã hủy booking {code}. Chúng tôi đã gửi email cho bạn và shop.",
-    "where": "Địa điểm"
+    "where": "Địa điểm",
+    "whereNote": "Ghi chú"
   },
   "favorites": {
     "empty": "Chưa có workshop yêu thích nào. Bấm vào trái tim ở một workshop để lưu vào đây."

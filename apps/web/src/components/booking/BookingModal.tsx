@@ -478,7 +478,15 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
             <dt className="text-[var(--site-muted)]">{t("workshop")}</dt><dd className="font-medium">{L(workshop.title)}</dd>
             <dt className="text-[var(--site-muted)]">{t("when")}</dt>
             <dd className="font-medium">{dateLabel(session.startsAt)}, {formatTime(session.startsAt, shop.timezone, locale)}</dd>
-            {workshop.address ? <><dt className="text-[var(--site-muted)]">{t("where")}</dt><dd className="font-medium" data-testid="booking-summary-address">{workshop.address}</dd></> : null}
+            {workshop.address ? (
+              <>
+                <dt className="text-[var(--site-muted)]">{t("where")}</dt>
+                <dd className="font-medium" data-testid="booking-summary-address">
+                  {workshop.address}
+                  {workshop.addressNote ? <span className="mt-0.5 block whitespace-pre-line text-xs font-normal text-[var(--site-muted)]" data-testid="booking-summary-address-note">{workshop.addressNote}</span> : null}
+                </dd>
+              </>
+            ) : null}
             <dt className="text-[var(--site-muted)]">{t("guests")}</dt><dd className="font-medium">{quantity}</dd>
             <dt className="text-[var(--site-muted)]">{t("contactLabel")}</dt><dd className="font-medium break-all">{watchedName} · {watchedEmail}</dd>
           </dl>

@@ -180,6 +180,7 @@ export function WorkshopCard({ w, ctx, horizontal, featured, showBook = true, as
             <span><span className="sr-only">{t("sections.venue")}: </span>{w.address}</span>
           </p>
         ) : null}
+        {w.addressNote ? <p className="whitespace-pre-line text-xs text-[var(--site-muted)]" data-testid="workshop-card-address-note"><span className="sr-only">{t("sections.venueNote")}: </span>{w.addressNote}</p> : null}
         {showBook ? (
           <div className="mt-auto pt-3">
             <button type="button" className={primaryButton} onClick={() => open(w.id)} aria-label={t("sections.bookWorkshop", { title: L(w.title) })}>
@@ -212,6 +213,7 @@ function WorkshopLinkRow({ w, ctx, showBook }: { w: Workshop; ctx: RenderContext
             <MapPin className="mt-0.5 size-3.5 shrink-0" aria-hidden /><span><span className="sr-only">{t("sections.venue")}: </span>{w.address}</span>
           </span>
         ) : null}
+        {w.addressNote ? <span className="mt-0.5 block whitespace-pre-line text-xs text-[var(--site-muted)]" data-testid="workshop-card-address-note"><span className="sr-only">{t("sections.venueNote")}: </span>{w.addressNote}</span> : null}
       </span>
       {showBook ? (
         <span aria-hidden className="grid size-9 shrink-0 place-items-center rounded-full bg-[var(--site-primary)] text-[var(--site-primary-fg)]"><ChevronRight className="size-5" /></span>

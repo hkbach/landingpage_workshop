@@ -1,6 +1,6 @@
 import { getLocale, getTranslations } from "next-intl/server";
 import { MapPin, Tag } from "lucide-react";
-import { formatMoney, openSessionCount, pickLocalized, resolveShopLocale, workshopAddress, workshopPromotions, type Locale } from "@workshop/shared";
+import { formatMoney, openSessionCount, ownAddressNote, pickLocalized, resolveShopLocale, workshopAddress, workshopPromotions, type Locale } from "@workshop/shared";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { TableCell, TableRow } from "@/components/ui/table";
@@ -55,6 +55,7 @@ export default async function WorkshopsPage() {
               <MapPin className="mt-0.5 size-3 shrink-0" aria-hidden="true" />
               <span><span className="sr-only">{t("list.address")}: </span>{workshopAddress(w, currentShop.address)}</span>
             </p>
+            {ownAddressNote(w) ? <p className="whitespace-pre-line text-xs text-muted-foreground" data-testid="workshop-address-note"><span className="sr-only">{t("list.addressNote")}: </span>{ownAddressNote(w)}</p> : null}
             <p className="text-xs text-muted-foreground" data-testid="workshop-created-at">{t("list.created", { date: formatDate(w.createdAt, currentShop.timezone, locale) })}</p>
             <div className="mt-1.5"><WorkshopStatusBadge status={w.status} /></div>
             {/* The thumbnail of the workshop (its cover image) closes the cell. */}

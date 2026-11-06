@@ -10,7 +10,7 @@ import { matchesSearch } from "./text-search";
 export interface CustomerBooking {
   id: string; code: string; status: BookingStatus; paymentStatus: "UNPAID" | "PAID";
   workshopId: string; workshopTitle: Localized; coverUrl?: string;
-  /** Where the workshop is held (its own address, or the shop's) and a link to the way there. */ address: string; directionsUrl?: string;
+  /** Where the workshop is held (its own address, or the shop's), the note about it and a link to the way there. */ address: string; addressNote?: string; directionsUrl?: string;
   startsAt: string; endsAt: string; timezone: string; quantity: number;
   currency: string; totalAmount: number; /** What the vouchers took off (0 when none). */ discountAmount: number; /** The codes of the vouchers used. */ vouchers: string[];
   checkedInAt?: string; cancelReason?: string; cancelledBy?: "SHOP" | "GUEST"; specialRequest?: string; createdAt: string;

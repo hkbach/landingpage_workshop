@@ -134,7 +134,8 @@
     },
     "directions": "路线",
     "cancelledDone": "预订 {code} 已取消。我们已向您和商店发送邮件。",
-    "where": "地点"
+    "where": "地点",
+    "whereNote": "备注"
   },
   "favorites": {
     "empty": "还没有收藏的工作坊。点击工作坊上的爱心即可保存到这里。"

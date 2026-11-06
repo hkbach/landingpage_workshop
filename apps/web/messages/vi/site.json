@@ -22,7 +22,8 @@
     "promotionValidUntil": "Có hiệu lực đến {date}",
     "promotionCode": "Mã",
     "promotionAlone": "Không thể kết hợp với khuyến mãi khác",
-    "promotionCombinable": "Có thể kết hợp với khuyến mãi khác"
+    "promotionCombinable": "Có thể kết hợp với khuyến mãi khác",
+    "venueNote": "Ghi chú"
   },
   "header": {
     "language": "Ngôn ngữ"

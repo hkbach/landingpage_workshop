@@ -134,7 +134,8 @@
     },
     "directions": "Directions",
     "cancelledDone": "Booking {code} was cancelled. We emailed you and the shop.",
-    "where": "Where"
+    "where": "Where",
+    "whereNote": "Note"
   },
   "favorites": {
     "empty": "No favorite workshops yet. Tap the heart on a workshop to save it here."

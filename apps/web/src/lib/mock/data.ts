@@ -51,7 +51,7 @@ export const workshops: Workshop[] = [
     includes: { en: ["All ingredients", "Apron", "Tea and a tasting"] }, notes: { en: "Wear closed shoes and tie back long hair." },
     durationMinutes: 120, priceAmount: 650_000, currency: "VND", defaultCapacity: 8, maxPerBooking: 6,
     coverUrl: "https://picsum.photos/seed/pasta/1200/800", galleryUrls: ["https://picsum.photos/seed/pasta1/800/600", "https://picsum.photos/seed/pasta2/800/600"],
-    status: "ACTIVE", sortOrder: 1, createdAt: at(-120, 9), category: "COOKING", rating: { average: 4.8, count: 126 },
+    status: "ACTIVE", sortOrder: 1, createdAt: at(-120, 9), category: "COOKING", rating: { average: 4.8, count: 126 }, addressNote: "Our kitchen is on the first floor, behind the shop.",
   },
   {
     id: "ws-2", title: { en: "Decorate Your Cupcakes", vi: "Trang trí cupcake" },
@@ -72,7 +72,7 @@ export const workshops: Workshop[] = [
     includes: { en: ["Ingredients", "Bamboo steamer", "Tea"] }, notes: { en: "Closed shoes are required in the kitchen." },
     durationMinutes: 180, priceAmount: 700_000, currency: "VND", defaultCapacity: 8, maxPerBooking: 4,
     coverUrl: "https://picsum.photos/seed/dimsum/1200/800", galleryUrls: ["https://picsum.photos/seed/dimsum1/800/600"],
-    status: "ACTIVE", sortOrder: 4, createdAt: at(-40, 11), category: "COOKING", rating: { average: 4.9, count: 57 }, address: "88 Pasteur Street, District 3, Ho Chi Minh City",
+    status: "ACTIVE", sortOrder: 4, createdAt: at(-40, 11), category: "COOKING", rating: { average: 4.9, count: 57 }, address: "88 Pasteur Street, District 3, Ho Chi Minh City", addressNote: "Second floor: ring the bell of the green door.\nMotorbikes can park on the left of the entrance.",
   },
   {
     id: "ws-5", title: { en: "Couples Cooking Night" }, shortDescription: { en: "Cook a three-course dinner together." }, description: { en: "Draft." },

@@ -47,6 +47,7 @@ const L = {
   workshop: w("Workshop", "Workshop", "เวิร์กช็อป", "工作坊", "워크숍", "ワークショップ"),
   when: w("Date and time", "Ngày giờ", "วันและเวลา", "日期和时间", "날짜 및 시간", "日時"),
   where: w("Where", "Địa điểm", "สถานที่", "地点", "장소", "場所"),
+  addressNote: w("Address note", "Ghi chú địa chỉ", "หมายเหตุสถานที่", "地址备注", "주소 메모", "住所メモ"),
   guests: w("Guests", "Số khách", "จำนวนผู้เข้าร่วม", "人数", "인원", "人数"),
   total: w("Total (pay at the studio)", "Tổng tiền (thanh toán tại studio)", "ยอดรวม (ชำระที่สตูดิโอ)", "总价（到工作室支付）", "합계(스튜디오에서 결제)", "合計（スタジオでお支払い）"),
   reason: w("Reason", "Lý do", "เหตุผล", "原因", "사유", "理由"),
@@ -60,6 +61,8 @@ export interface BookingConfirmationData {
   quantity: number; totalAmount: number; currency: string; confirmUrl: string;
   /** Where the workshop takes place (its own address, or the shop's); left out of the email when not given. */
   address?: string;
+  /** The note the shop owner wrote about the address; left out of the email when not given. */
+  addressNote?: string;
 }
 
 /** The email sent when a guest has booked: the booking and the link that confirms it. */
@@ -84,7 +87,7 @@ export function renderBookingConfirmation(d: BookingConfirmationData): RenderedE
     paragraphs: [fill(T.intro[lang], { shop: d.shopName })],
     rows: [
       { label: L.code[lang], value: d.bookingCode }, { label: L.workshop[lang], value: d.workshopTitle },
-      { label: L.when[lang], value: range(d.startsAt, d.endsAt, d.timezone, lang) }, ...(d.address ? [{ label: L.where[lang], value: d.address }] : []), { label: L.guests[lang], value: String(d.quantity) },
+      { label: L.when[lang], value: range(d.startsAt, d.endsAt, d.timezone, lang) }, ...(d.address ? [{ label: L.where[lang], value: d.address }] : []), ...(d.addressNote ? [{ label: L.addressNote[lang], value: d.addressNote }] : []), { label: L.guests[lang], value: String(d.quantity) },
       { label: L.total[lang], value: formatMoney(d.totalAmount, d.currency, TAG[lang]) },
     ],
     button: { label: T.button[lang], url: d.confirmUrl }, fallback: T.fallback[lang], footer: T.footer[lang],
@@ -112,7 +115,7 @@ export function renderBookingInfo(d: BookingInfoData): RenderedEmail {
     paragraphs: [fill(T.intro[lang], { shop: d.shopName })],
     rows: [
       { label: L.code[lang], value: d.bookingCode }, { label: L.workshop[lang], value: d.workshopTitle },
-      { label: L.when[lang], value: range(d.startsAt, d.endsAt, d.timezone, lang) }, ...(d.address ? [{ label: L.where[lang], value: d.address }] : []), { label: L.guests[lang], value: String(d.quantity) },
+      { label: L.when[lang], value: range(d.startsAt, d.endsAt, d.timezone, lang) }, ...(d.address ? [{ label: L.where[lang], value: d.address }] : []), ...(d.addressNote ? [{ label: L.addressNote[lang], value: d.addressNote }] : []), { label: L.guests[lang], value: String(d.quantity) },
       { label: L.total[lang], value: formatMoney(d.totalAmount, d.currency, TAG[lang]) },
     ],
     footer: T.footer[lang],

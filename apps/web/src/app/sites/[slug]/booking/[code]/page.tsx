@@ -27,7 +27,9 @@ export default async function BookingPage({ params, searchParams }: PageProps<"/
   const shopInfo = { name: shop.name, address: shop.address, mapsUrl: shop.mapsUrl, contactEmail: shop.contactEmail, contactPhone: shop.contactPhone };
   // Where the guest goes: the address of the workshop they booked (its own, or the shop's) and the way to it.
   const workshop = found ? site.workshops.find((w) => w.id === found.booking.workshopId) : undefined;
-  const whereInfo = workshop ? { ...shopInfo, address: workshop.address ?? shop.address, mapsUrl: workshopDirectionsUrl(workshop, shop) ?? shop.mapsUrl } : shopInfo;
+  const whereInfo = workshop
+    ? { ...shopInfo, address: workshop.address ?? shop.address, mapsUrl: workshopDirectionsUrl(workshop, shop) ?? shop.mapsUrl, ...(workshop.addressNote ? { addressNote: workshop.addressNote } : {}) }
+    : shopInfo;
 
   return (
     <SiteIntlProvider locale={shop.defaultLocale}>

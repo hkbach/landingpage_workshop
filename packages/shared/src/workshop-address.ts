@@ -2,9 +2,14 @@
 // shop. Guests always see the address that applies (`workshopAddress`).
 
 export const WORKSHOP_ADDRESS_MAX = 300;
+/** The note that goes with the address (the floor, the entrance, where to park...): a few lines. */
+export const WORKSHOP_ADDRESS_NOTE_MAX = 500;
 
 /** The address of a workshop, as the shop owner wrote it (trimmed): empty when the workshop is held at the address of the shop. */
 export const ownAddress = (workshop: { address?: string }): string => (workshop.address ?? "").trim();
+
+/** The note the shop owner wrote about the address (trimmed; empty when there is none). It belongs to the workshop and is shown with the address that applies, whichever it is. */
+export const ownAddressNote = (workshop: { addressNote?: string }): string => (workshop.addressNote ?? "").trim();
 
 /** The address a guest sees for a workshop: its own, or the one of the shop. */
 export const workshopAddress = (workshop: { address?: string }, shopAddress: string): string => ownAddress(workshop) || shopAddress.trim();

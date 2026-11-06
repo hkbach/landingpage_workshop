@@ -80,6 +80,18 @@ describe("where the workshop takes place, in the booking emails", () => {
     expect(mail.html).not.toContain("Địa điểm");
     expect(mail.html).not.toContain("สถานที่");
   });
+  it("the note about the address is a line of its own in each language, escaped, and only when there is one", () => {
+    const NOTE = "Second floor <green door>\nPark on the left";
+    const { confirmUrl: _url, ...info } = BOOKING;
+    void _url;
+    for (const mail of [renderBookingConfirmation({ ...BOOKING, address: ADDRESS, addressNote: NOTE }), renderBookingInfo({ ...info, address: ADDRESS, addressNote: NOTE })]) {
+      expect(mail.html.split("Second floor &lt;green door&gt;").length - 1).toBe(6);
+      expect(mail.html).not.toContain("<green door>");
+      for (const label of ["Address note", "Ghi chú địa chỉ", "หมายเหตุสถานที่", "地址备注", "주소 메모", "住所メモ"]) expect(mail.html, label).toContain(label);
+      expect(mail.text).toContain("Park on the left");
+    }
+    expect(renderBookingConfirmation({ ...BOOKING, address: ADDRESS }).html).not.toContain("Ghi chú địa chỉ");
+  });
 });
 
 describe("the session emails", () => {

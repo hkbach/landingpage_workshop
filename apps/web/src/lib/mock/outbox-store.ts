@@ -43,8 +43,9 @@ export interface BookingConfirmationEmail extends EmailBase {
   quantity: number;
   totalAmount: number;
   currency: string;
-  /** Where the workshop takes place (its own address, or the shop's). */
+  /** Where the workshop takes place (its own address, or the shop's), and the note about it. */
   address?: string;
+  addressNote?: string;
   /** The link that confirms the booking (a secret: only the guest gets it, by email). */
   confirmUrl: string;
 }
@@ -58,6 +59,7 @@ export interface BookingInfoEmail extends EmailBase {
   totalAmount: number;
   currency: string;
   address?: string;
+  addressNote?: string;
 }
 
 /** A booking was cancelled by the guest (a confirmation for the guest) or by the shop (the guest is told). */

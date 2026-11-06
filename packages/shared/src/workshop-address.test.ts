@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mapsSearchUrl, ownAddress, WORKSHOP_ADDRESS_MAX, workshopAddress, workshopDirectionsUrl } from "./workshop-address";
+import { mapsSearchUrl, ownAddress, ownAddressNote, WORKSHOP_ADDRESS_MAX, WORKSHOP_ADDRESS_NOTE_MAX, workshopAddress, workshopDirectionsUrl } from "./workshop-address";
 
 const SHOP = { address: "12 Nguyen Hue, District 1", mapsUrl: "https://maps.app.goo.gl/shop" };
 
@@ -10,6 +10,14 @@ describe("the address of a workshop", () => {
     expect(ownAddress({})).toBe("");
     expect(ownAddress({ address: " x " })).toBe("x");
     expect(WORKSHOP_ADDRESS_MAX).toBe(300);
+  });
+  it("has a note with the address (trimmed, empty when none), which does not change the address or the way there", () => {
+    expect(ownAddressNote({ addressNote: "  Second floor, green door \n Park on the left " })).toBe("Second floor, green door \n Park on the left");
+    for (const addressNote of [undefined, "", "  \n "]) expect(ownAddressNote({ addressNote }), String(addressNote)).toBe("");
+    expect(WORKSHOP_ADDRESS_NOTE_MAX).toBe(500);
+    const withNote = { addressNote: "second floor" };
+    expect(workshopAddress({ address: "", ...withNote }, SHOP.address)).toBe(SHOP.address); // the note is not part of the address
+    expect(workshopDirectionsUrl({ address: "88 Pasteur", ...withNote }, SHOP)).toBe(mapsSearchUrl("88 Pasteur")); // and is not searched
   });
   it("makes a Google Maps search link that is safe to put in a page", () => {
     const url = mapsSearchUrl("88 Pasteur,\n  District 3 & more");
