@@ -1,4 +1,5 @@
 // Mock "public API" for shop sites. Replaced by GET /public/sites/{slug} once apps/api exists.
+import { workshopAddress } from "@workshop/shared";
 import type { Session, Shop, Workshop, PageContent, PageTheme, Booking, Customer } from "../types";
 import { reservedSeats } from "../booking-state";
 import { liveBookings, liveCustomers } from "./booking-store";
@@ -23,11 +24,12 @@ export function getPublicSite(slug: string): PublicSite | null {
   if (shop.id !== currentShop.id) {
     const other = otherShopSites[shop.id];
     if (!other) return null;
-    const active = other.workshops.filter((w) => w.status === "ACTIVE");
+    const active = other.workshops.filter((w) => w.status === "ACTIVE").map((w) => ({ ...w, address: workshopAddress(w, shop.address) }));
     const ids = new Set(active.map((w) => w.id));
     return { shop, content: other.content, theme: other.theme, workshops: active, sessions: other.sessions.filter((s) => ids.has(s.workshopId)) };
   }
-  const active = withWorkshopStatus(workshops).filter((w) => w.status === "ACTIVE");
+  // Guests see the address a workshop is held at: its own, or the address of the shop.
+  const active = withWorkshopStatus(workshops).filter((w) => w.status === "ACTIVE").map((w) => ({ ...w, address: workshopAddress(w, shop.address) }));
   const ids = new Set(active.map((w) => w.id));
   const live = liveBookings(); // a cancelled booking frees its seats on the landing page too
   return { shop, content: sitePage.draft, theme: sitePage.theme, workshops: active, sessions: withAdminChanges(sessions).filter((s) => ids.has(s.workshopId)).map((s) => ({ ...s, reservedCount: reservedSeats(live, s.id) })) };

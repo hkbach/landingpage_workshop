@@ -73,7 +73,7 @@ const brewWorkshops: Workshop[] = [
     durationMinutes: 150, priceAmount: 800_000, currency: "VND", defaultCapacity: 8, maxPerBooking: 4, status: "ACTIVE", sortOrder: 2,
   }, "barista", 40, "COFFEE_TEA", { average: 4.4, count: 41 }),
   workshop({
-    id: "ws-b3", title: { en: "Cold Brew & Cupping", vi: "Cold brew và thử vị cà phê", ko: "콜드브루와 커핑" }, shortDescription: { en: "Taste five origins side by side and brew a cold brew to take home." },
+    id: "ws-b3", address: "The Roastery, 41 Nguyen Van Troi, Phu Nhuan District, Ho Chi Minh City", title: { en: "Cold Brew & Cupping", vi: "Cold brew và thử vị cà phê", ko: "콜드브루와 커핑" }, shortDescription: { en: "Taste five origins side by side and brew a cold brew to take home." },
     durationMinutes: 120, priceAmount: 550_000, currency: "VND", defaultCapacity: 10, maxPerBooking: 6, status: "ACTIVE", sortOrder: 3,
   }, "coldbrew", 30, "COFFEE_TEA", { average: 4.6, count: 28 }),
   workshop({
@@ -105,7 +105,7 @@ const greenWorkshops: Workshop[] = [
     durationMinutes: 150, priceAmount: 6_500, currency: "USD", defaultCapacity: 8, maxPerBooking: 4, status: "ACTIVE", sortOrder: 1,
   }, "ramen", 68, "COOKING", { average: 4.9, count: 92 }),
   workshop({
-    id: "ws-g2", title: { en: "Vegan Dumplings Night", ja: "ヴィーガン餃子ナイト", zh: "纯素饺子之夜" }, shortDescription: { en: "Fold and pan-fry three kinds of dumplings, then share the table." },
+    id: "ws-g2", address: "Community Kitchen, 5 Eng Hoon Street, Singapore", title: { en: "Vegan Dumplings Night", ja: "ヴィーガン餃子ナイト", zh: "纯素饺子之夜" }, shortDescription: { en: "Fold and pan-fry three kinds of dumplings, then share the table." },
     durationMinutes: 120, priceAmount: 4_800, currency: "USD", defaultCapacity: 12, maxPerBooking: 6, status: "ACTIVE", sortOrder: 2,
   }, "dumplings", 60, "COOKING", { average: 3.8, count: 35 }),
   workshop({

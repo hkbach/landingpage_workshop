@@ -1,4 +1,4 @@
-import { BOOKING_CODE_RE } from "@workshop/shared";
+import { BOOKING_CODE_RE, workshopDirectionsUrl } from "@workshop/shared";
 import type { Metadata } from "next";
 import { BookingConfirmation, BookingNotFound, SimulatedBookingConfirmation } from "@/components/booking/BookingConfirmation";
 import { SiteFrame } from "@/components/site/SiteFrame";
@@ -16,7 +16,8 @@ export default async function BookingPage({ params, searchParams }: PageProps<"/
   const { slug, code } = await params;
   const sp = await searchParams;
   const email = typeof sp.email === "string" ? sp.email : "";
-  const { shop, theme } = requireSite(slug);
+  const site = requireSite(slug);
+  const { shop, theme } = site;
   const base = await getSiteBase(slug);
   const homeHref = base || "/";
   const found = findBookingForLookup(shop.id, code, email);
@@ -24,6 +25,9 @@ export default async function BookingPage({ params, searchParams }: PageProps<"/
   const demoEmailId = found ? demoConfirmationEmailId(found.booking.bookingCode) : undefined;
   const cancellable = found ? canGuestCancel(found.booking) : false;
   const shopInfo = { name: shop.name, address: shop.address, mapsUrl: shop.mapsUrl, contactEmail: shop.contactEmail, contactPhone: shop.contactPhone };
+  // Where the guest goes: the address of the workshop they booked (its own, or the shop's) and the way to it.
+  const workshop = found ? site.workshops.find((w) => w.id === found.booking.workshopId) : undefined;
+  const whereInfo = workshop ? { ...shopInfo, address: workshop.address ?? shop.address, mapsUrl: workshopDirectionsUrl(workshop, shop) ?? shop.mapsUrl } : shopInfo;
 
   return (
     <SiteIntlProvider locale={shop.defaultLocale}>
@@ -31,7 +35,7 @@ export default async function BookingPage({ params, searchParams }: PageProps<"/
         <main>
           {found ? (
             <BookingConfirmation
-              locale={shop.defaultLocale} shop={shopInfo} homeHref={homeHref} cancel={cancellable ? { slug } : undefined}
+              locale={shop.defaultLocale} shop={whereInfo} homeHref={homeHref} cancel={cancellable ? { slug } : undefined}
               data={{
                 code: found.booking.bookingCode, email: email.trim().toLowerCase(), workshopTitle: found.booking.workshopTitle,
                 startsAt: found.booking.startsAt, endsAt: found.booking.endsAt, timezone: found.booking.timezone,

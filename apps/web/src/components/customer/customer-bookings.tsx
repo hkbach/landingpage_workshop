@@ -187,7 +187,7 @@ function BookingTicket({ booking: b, now, locale, email, isNext, onCancelled }: 
   const note = checkInNote(b, now);
   const block = cancelBlock(b, now);
   const cover = safeImage(b.coverUrl);
-  const maps = safeMaps(b.shop.mapsUrl);
+  const maps = safeMaps(b.directionsUrl);
   const dayFmt = (opts: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(locale, { ...opts, timeZone: b.timezone }).format(new Date(b.startsAt));
   const dim = b.status === "CANCELLED";
   return (
@@ -218,6 +218,11 @@ function BookingTicket({ booking: b, now, locale, email, isNext, onCancelled }: 
         </div>
         <h2 id={`cb-title-${b.id}`} className={cn("text-lg font-semibold leading-snug", dim && "text-muted-foreground")}>{title}</h2>
         <p className="text-sm text-muted-foreground">{tb("shopLine", { shop: b.shop.name })}</p>
+        {b.address ? (
+          <p className="flex items-start gap-1.5 text-sm" data-testid="customer-booking-address">
+            <MapPin className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden /><span><span className="sr-only">{tb("where")}: </span>{b.address}</span>
+          </p>
+        ) : null}
         <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
           <span className="inline-flex items-center gap-1.5"><Clock className="size-4 text-muted-foreground" aria-hidden />{dayFmt({ weekday: "short", day: "numeric", month: "short", year: "numeric" })} · {formatTime(b.startsAt, b.timezone, locale)} – {formatTime(b.endsAt, b.timezone, locale)}</span>
           <span className="inline-flex items-center gap-1.5"><Users className="size-4 text-muted-foreground" aria-hidden />{tb("guests", { count: b.quantity })}</span>

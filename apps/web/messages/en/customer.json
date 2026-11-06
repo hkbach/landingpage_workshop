@@ -133,7 +133,8 @@
       "closed": "This session is closed, so it cannot be cancelled here. Please contact the studio."
     },
     "directions": "Directions",
-    "cancelledDone": "Booking {code} was cancelled. We emailed you and the shop."
+    "cancelledDone": "Booking {code} was cancelled. We emailed you and the shop.",
+    "where": "Where"
   },
   "favorites": {
     "empty": "No favorite workshops yet. Tap the heart on a workshop to save it here."

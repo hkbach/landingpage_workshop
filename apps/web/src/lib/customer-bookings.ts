@@ -10,11 +10,12 @@ import { matchesSearch } from "./text-search";
 export interface CustomerBooking {
   id: string; code: string; status: BookingStatus; paymentStatus: "UNPAID" | "PAID";
   workshopId: string; workshopTitle: Localized; coverUrl?: string;
+  /** Where the workshop is held (its own address, or the shop's) and a link to the way there. */ address: string; directionsUrl?: string;
   startsAt: string; endsAt: string; timezone: string; quantity: number;
   currency: string; totalAmount: number; /** What the vouchers took off (0 when none). */ discountAmount: number; /** The codes of the vouchers used. */ vouchers: string[];
   checkedInAt?: string; cancelReason?: string; cancelledBy?: "SHOP" | "GUEST"; specialRequest?: string; createdAt: string;
   /** Whether the guest can cancel it now (decided by the server: not confirmed or confirmed, session not closed, not started). */ canCancel: boolean;
-  shop: { slug: string; name: string; address: string; mapsUrl?: string; defaultLocale: string };
+  shop: { slug: string; name: string; address: string; defaultLocale: string };
 }
 
 export type BookingTab = "all" | "upcoming" | "past" | "cancelled";

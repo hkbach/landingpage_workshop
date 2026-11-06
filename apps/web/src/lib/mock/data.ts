@@ -72,12 +72,12 @@ export const workshops: Workshop[] = [
     includes: { en: ["Ingredients", "Bamboo steamer", "Tea"] }, notes: { en: "Closed shoes are required in the kitchen." },
     durationMinutes: 180, priceAmount: 700_000, currency: "VND", defaultCapacity: 8, maxPerBooking: 4,
     coverUrl: "https://picsum.photos/seed/dimsum/1200/800", galleryUrls: ["https://picsum.photos/seed/dimsum1/800/600"],
-    status: "ACTIVE", sortOrder: 4, createdAt: at(-40, 11), category: "COOKING", rating: { average: 4.9, count: 57 },
+    status: "ACTIVE", sortOrder: 4, createdAt: at(-40, 11), category: "COOKING", rating: { average: 4.9, count: 57 }, address: "88 Pasteur Street, District 3, Ho Chi Minh City",
   },
   {
     id: "ws-5", title: { en: "Couples Cooking Night" }, shortDescription: { en: "Cook a three-course dinner together." }, description: { en: "Draft." },
     includes: {}, notes: {}, durationMinutes: 150, priceAmount: 900_000, currency: "VND", defaultCapacity: 12, maxPerBooking: 2,
-    coverUrl: "https://picsum.photos/seed/dinner/1200/800", galleryUrls: [], status: "DRAFT", sortOrder: 5, createdAt: at(-2, 15), category: "COOKING",
+    coverUrl: "https://picsum.photos/seed/dinner/1200/800", galleryUrls: [], status: "DRAFT", sortOrder: 5, createdAt: at(-2, 15), category: "COOKING", address: "Rooftop Kitchen, 25 Ly Tu Trong, District 1, Ho Chi Minh City",
   },
 ];
 

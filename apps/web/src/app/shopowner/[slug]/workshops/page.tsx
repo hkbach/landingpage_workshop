@@ -1,6 +1,6 @@
 import { getLocale, getTranslations } from "next-intl/server";
-import { Tag } from "lucide-react";
-import { formatMoney, openSessionCount, pickLocalized, resolveShopLocale, workshopPromotions, type Locale } from "@workshop/shared";
+import { MapPin, Tag } from "lucide-react";
+import { formatMoney, openSessionCount, pickLocalized, resolveShopLocale, workshopAddress, workshopPromotions, type Locale } from "@workshop/shared";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { TableCell, TableRow } from "@/components/ui/table";
@@ -27,7 +27,7 @@ export default async function WorkshopsPage() {
   const promotions = allPromotions();
   const today = shopToday();
   const bookings = liveBookings();
-  const shop = { currency: currentShop.currency, timezone: currentShop.timezone, defaultLocale: currentShop.defaultLocale, enabledLocales: currentShop.enabledLocales };
+  const shop = { currency: currentShop.currency, timezone: currentShop.timezone, defaultLocale: currentShop.defaultLocale, enabledLocales: currentShop.enabledLocales, address: currentShop.address };
   /** What the popup of a workshop needs (its details, schedule rules and number of bookings). */
   const editData = (w: (typeof rows)[number]) => ({ workshop: w, rules: scheduleRules.filter((r) => r.workshopId === w.id), bookingCount: bookings.filter((b) => b.workshopId === w.id).length, shop });
   const title = (p: { title: Parameters<typeof pickLocalized>[0] }) => pickLocalized(p.title, displayLocale, currentShop.defaultLocale);
@@ -49,6 +49,11 @@ export default async function WorkshopsPage() {
             {/* Price, duration and capacity under the name of the workshop. */}
             <p className="mt-0.5 text-xs text-muted-foreground" data-testid="workshop-facts">
               {t("list.pricePerGuest", { price: money(w.priceAmount) })} · {t("list.minutes", { n: w.durationMinutes })} · {t("list.seats", { count: w.defaultCapacity })}
+            </p>
+            {/* Where it takes place: its own address, or the shop's. */}
+            <p className="mt-0.5 flex items-start gap-1 text-xs text-muted-foreground" data-testid="workshop-address">
+              <MapPin className="mt-0.5 size-3 shrink-0" aria-hidden="true" />
+              <span><span className="sr-only">{t("list.address")}: </span>{workshopAddress(w, currentShop.address)}</span>
             </p>
             <p className="text-xs text-muted-foreground" data-testid="workshop-created-at">{t("list.created", { date: formatDate(w.createdAt, currentShop.timezone, locale) })}</p>
             <div className="mt-1.5"><WorkshopStatusBadge status={w.status} /></div>

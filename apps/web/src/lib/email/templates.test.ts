@@ -62,6 +62,26 @@ describe("the booking confirmation email", () => {
   });
 });
 
+describe("where the workshop takes place, in the booking emails", () => {
+  const ADDRESS = "88 Pasteur <Street>, District 3";
+  const WHERE = ["Where", "Địa điểm", "สถานที่", "地点", "장소", "場所"];
+  it("the confirmation and the information email give the address in each of the six languages, escaped", () => {
+    const { confirmUrl: _url, ...info } = BOOKING;
+    void _url;
+    for (const mail of [renderBookingConfirmation({ ...BOOKING, address: ADDRESS }), renderBookingInfo({ ...info, address: ADDRESS })]) {
+      expect(mail.html.split("88 Pasteur &lt;Street&gt;, District 3").length - 1).toBe(6);
+      expect(mail.html).not.toContain("<Street>");
+      for (const label of WHERE) expect(mail.html, label).toContain(label);
+      expect(mail.text).toContain(ADDRESS);
+    }
+  });
+  it("without an address there is no such line", () => {
+    const mail = renderBookingConfirmation(BOOKING);
+    expect(mail.html).not.toContain("Địa điểm");
+    expect(mail.html).not.toContain("สถานที่");
+  });
+});
+
 describe("the session emails", () => {
   const base = { guestName: "Binh", shopName: "Clay & Co", bookingCode: "SES-0001-001", workshopTitle: "Mug", timezone: "Asia/Ho_Chi_Minh" };
   it("re-schedule: six languages, the new date and the reason in each language", () => {

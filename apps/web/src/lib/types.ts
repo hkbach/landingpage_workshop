@@ -25,6 +25,8 @@ export interface Workshop {
   status: WorkshopStatus; sortOrder: number;
   /** The field the workshop belongs to, chosen by the shop owner (for statistics). */
   category?: WorkshopCategory;
+  /** Where the workshop takes place, as the shop owner wrote it. Missing or empty: it is held at the address of the shop. Guests see the address that applies (see workshopAddress). */
+  address?: string;
   /** What guests rated it: the average, from 1 to 5 stars, and how many ratings it comes from. Missing while nobody rated it. TODO(api): worked out from the ratings. */
   rating?: { average: number; count: number };
   /** ISO UTC instant the workshop was created. */

@@ -54,7 +54,8 @@
     "searchLabel": "검색",
     "searchPlaceholder": "워크숍 이름",
     "allStatuses": "모든 상태",
-    "noMatch": "검색 또는 필터에 맞는 워크숍이 없습니다."
+    "noMatch": "검색 또는 필터에 맞는 워크숍이 없습니다.",
+    "address": "주소"
   },
   "detail": {
     "tabDetails": "상세",
@@ -107,7 +108,10 @@
     "cancel": "취소",
     "statusFromList": "워크숍 목록의 활성화 / 비활성화 버튼으로 변경하세요.",
     "categoryPlaceholder": "분야 선택",
-    "categoryHint": "워크숍이 속한 분야입니다. 통계에 사용됩니다."
+    "categoryHint": "워크숍이 속한 분야입니다. 통계에 사용됩니다.",
+    "location": "장소",
+    "address": "워크숍 주소",
+    "addressHint": "워크숍이 열리는 곳입니다. 비워 두면 샵 주소({address})를 사용합니다."
   },
   "errors": {
     "titleRequired": "기본 언어의 제목을 입력해 주세요.",
@@ -128,7 +132,8 @@
     "capacityBelowReserved": "정원은 이미 예약된 {reserved}석보다 적을 수 없어요.",
     "cutoffInvalid": "0에서 10080 사이의 정수를 입력하세요.",
     "pastStart": "시작 시간은 과거일 수 없습니다. 더 늦은 날짜와 시간을 선택하세요.",
-    "categoryRequired": "분야를 선택하세요."
+    "categoryRequired": "분야를 선택하세요.",
+    "addressTooLong": "주소는 최대 {max}자까지 입력할 수 있습니다."
   },
   "rules": {
     "title": "일정 규칙",

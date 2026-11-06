@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
-import { ChevronRight, Clock } from "lucide-react";
+import { ChevronRight, Clock, MapPin } from "lucide-react";
 import { formatMoney } from "@workshop/shared";
 import type { Workshop } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -174,6 +174,12 @@ export function WorkshopCard({ w, ctx, horizontal, featured, showBook = true, as
           <span className="font-semibold">{formatMoney(w.priceAmount, w.currency, ctx.locale)}</span>
           <span className="text-[var(--site-muted)]">{t("sections.perPerson")}</span>
         </p>
+        {w.address ? (
+          <p className="flex items-start gap-1.5 text-sm text-[var(--site-muted)]" data-testid="workshop-card-address">
+            <MapPin className="mt-0.5 size-4 shrink-0" aria-hidden />
+            <span><span className="sr-only">{t("sections.venue")}: </span>{w.address}</span>
+          </p>
+        ) : null}
         {showBook ? (
           <div className="mt-auto pt-3">
             <button type="button" className={primaryButton} onClick={() => open(w.id)} aria-label={t("sections.bookWorkshop", { title: L(w.title) })}>
@@ -201,6 +207,11 @@ function WorkshopLinkRow({ w, ctx, showBook }: { w: Workshop; ctx: RenderContext
           <span className="inline-flex items-center gap-1"><Clock className="size-3.5" aria-hidden />{t("sections.duration", { minutes: w.durationMinutes })}</span>
           <span className="font-semibold text-[var(--site-text)]">{formatMoney(w.priceAmount, w.currency, ctx.locale)}</span>
         </span>
+        {w.address ? (
+          <span className="mt-0.5 flex items-start gap-1 text-sm text-[var(--site-muted)]" data-testid="workshop-card-address">
+            <MapPin className="mt-0.5 size-3.5 shrink-0" aria-hidden /><span><span className="sr-only">{t("sections.venue")}: </span>{w.address}</span>
+          </span>
+        ) : null}
       </span>
       {showBook ? (
         <span aria-hidden className="grid size-9 shrink-0 place-items-center rounded-full bg-[var(--site-primary)] text-[var(--site-primary-fg)]"><ChevronRight className="size-5" /></span>

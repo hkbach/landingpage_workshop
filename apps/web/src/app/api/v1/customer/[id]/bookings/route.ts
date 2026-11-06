@@ -1,3 +1,4 @@
+import { workshopAddress, workshopDirectionsUrl } from "@workshop/shared";
 import { apiError } from "@/lib/api-error";
 import { customerLoginRequired } from "@/lib/customer-access";
 import type { CustomerBooking } from "@/lib/customer-bookings";
@@ -26,11 +27,12 @@ export async function GET(request: Request, ctx: RouteContext<"/api/v1/customer/
       if (!workshop) return [];
       return [{
         id: b.id, code: b.bookingCode, status: b.status, paymentStatus: b.paymentStatus, workshopId: b.workshopId, workshopTitle: workshop.title, ...(workshop.coverUrl ? { coverUrl: workshop.coverUrl } : {}),
+        address: workshopAddress(workshop, currentShop.address), ...(workshopDirectionsUrl(workshop, currentShop) ? { directionsUrl: workshopDirectionsUrl(workshop, currentShop) } : {}),
         startsAt: b.startsAt, endsAt: b.endsAt, timezone: b.timezone, quantity: b.quantity, currency: b.currency, totalAmount: b.totalAmount, discountAmount: b.discountAmount ?? 0,
         vouchers: vouchers.filter((p) => b.promotionIds?.includes(p.id)).map((p) => p.code ?? p.id), ...(b.checkedInAt ? { checkedInAt: b.checkedInAt } : {}),
         ...(b.cancelReason ? { cancelReason: b.cancelReason } : {}), ...(b.cancelledBy ? { cancelledBy: b.cancelledBy } : {}), ...(b.specialRequest ? { specialRequest: b.specialRequest } : {}),
         createdAt: b.createdAt, canCancel: canGuestCancel(b, now),
-        shop: { slug: currentShop.slug, name: currentShop.name, address: currentShop.address, ...(currentShop.mapsUrl ? { mapsUrl: currentShop.mapsUrl } : {}), defaultLocale: currentShop.defaultLocale },
+        shop: { slug: currentShop.slug, name: currentShop.name, address: currentShop.address, defaultLocale: currentShop.defaultLocale },
       }];
     });
   return Response.json({ bookings, now: now.toISOString() }, { headers });

@@ -1,7 +1,7 @@
 // SERVER-ONLY: the bookings as the mock backend knows them, until apps/api exists. The demo rows, plus the bookings guests make on the landing page
 // (they start NOT_CONFIRMED and become CONFIRMED when the guest opens the link of the email), plus the status changes the ops screens make (cancel,
 // check-in, ...: they are sent here so they survive a reload and the promotion rules can see them). Lives on globalThis like the other mock stores.
-import { closeIfEnded, eligiblePromotions, pickLocalized, isSessionBookable, isSessionFinished, nextBookingCode, priceBooking, socialEntries, type BookingStatus, type BookingUse, type Gender, type Socials, type WorkshopCategory } from "@workshop/shared";
+import { closeIfEnded, eligiblePromotions, pickLocalized, isSessionBookable, isSessionFinished, nextBookingCode, priceBooking, socialEntries, type BookingStatus, type BookingUse, type Gender, type Socials, type WorkshopCategory, workshopAddress } from "@workshop/shared";
 import { computePaymentStatus, confirmation, netPaid, reservedSeats, type PreCheckInStatus } from "@/lib/booking-state";
 import type { Booking, Customer, PaymentEntry, Session } from "@/lib/types";
 import { newUuid } from "@/lib/uuid";
@@ -239,6 +239,7 @@ export function createManualBooking(input: ManualBookingInput, now: Date = new D
     queueBookingInfo({
       to: email, locale: customer.preferredLocale, guestName: name, shopName: currentShop.name, bookingCode: booking.bookingCode, workshopTitle: booking.workshopTitle, timezone: booking.timezone,
       startsAt: booking.startsAt, endsAt: booking.endsAt, quantity: booking.quantity, totalAmount: booking.totalAmount, currency: booking.currency,
+      address: workshopAddress(workshop, currentShop.address),
     });
   }
   return { ok: true, booking, emailed: Boolean(email) };
@@ -306,6 +307,7 @@ export function createGuestBooking(input: GuestBookingInput, confirmUrlFor: (tok
   queueBookingConfirmation({
     to: email, locale: customer.preferredLocale, guestName: booking.guestName ?? customer.fullName, shopName: currentShop.name, bookingCode: booking.bookingCode, workshopTitle: booking.workshopTitle, timezone: booking.timezone,
     startsAt: booking.startsAt, endsAt: booking.endsAt, quantity: booking.quantity, totalAmount: booking.totalAmount, currency: booking.currency, confirmUrl: confirmUrlFor(token),
+    address: workshopAddress(workshop, currentShop.address),
   });
   // The shop is told of the new booking (it stays not confirmed until the guest opens the link).
   queueShopBookingNotice({

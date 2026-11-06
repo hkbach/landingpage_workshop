@@ -54,7 +54,8 @@
     "searchLabel": "Tìm kiếm",
     "searchPlaceholder": "Tên workshop",
     "allStatuses": "Tất cả trạng thái",
-    "noMatch": "Không có workshop nào khớp với tìm kiếm hoặc bộ lọc."
+    "noMatch": "Không có workshop nào khớp với tìm kiếm hoặc bộ lọc.",
+    "address": "Địa chỉ"
   },
   "detail": {
     "tabDetails": "Chi tiết",
@@ -107,7 +108,10 @@
     "cancel": "Hủy",
     "statusFromList": "Đổi bằng nút Kích hoạt / Ngừng kích hoạt trong danh sách workshop.",
     "categoryPlaceholder": "Chọn ngành nghề",
-    "categoryHint": "Lĩnh vực mà workshop thuộc về. Dùng để thống kê."
+    "categoryHint": "Lĩnh vực mà workshop thuộc về. Dùng để thống kê.",
+    "location": "Địa điểm",
+    "address": "Địa chỉ tổ chức workshop",
+    "addressHint": "Nơi tổ chức workshop. Để trống nếu dùng địa chỉ của shop ({address})."
   },
   "errors": {
     "titleRequired": "Bắt buộc nhập tiêu đề bằng ngôn ngữ mặc định.",
@@ -128,7 +132,8 @@
     "capacityBelowReserved": "Sức chứa không được thấp hơn {reserved} chỗ đã đặt.",
     "cutoffInvalid": "Nhập số nguyên từ 0 đến 10080.",
     "pastStart": "Giờ bắt đầu không được ở quá khứ. Hãy chọn ngày giờ muộn hơn.",
-    "categoryRequired": "Hãy chọn ngành nghề."
+    "categoryRequired": "Hãy chọn ngành nghề.",
+    "addressTooLong": "Địa chỉ tối đa {max} ký tự."
   },
   "rules": {
     "title": "Quy tắc lịch",

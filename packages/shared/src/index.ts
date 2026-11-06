@@ -19,3 +19,4 @@ export * from "./booking-code";
 export * from "./workshop-rules";
 export * from "./customer-profile";
 export * from "./workshop-categories";
+export * from "./workshop-address";

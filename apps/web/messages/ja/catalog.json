@@ -54,7 +54,8 @@
     "searchLabel": "検索",
     "searchPlaceholder": "ワークショップ名",
     "allStatuses": "すべてのステータス",
-    "noMatch": "検索条件に一致するワークショップがありません。"
+    "noMatch": "検索条件に一致するワークショップがありません。",
+    "address": "住所"
   },
   "detail": {
     "tabDetails": "詳細",
@@ -107,7 +108,10 @@
     "cancel": "キャンセル",
     "statusFromList": "ワークショップ一覧の「有効にする / 無効にする」で変更できます。",
     "categoryPlaceholder": "分野を選択",
-    "categoryHint": "ワークショップが属する分野です。統計に使われます。"
+    "categoryHint": "ワークショップが属する分野です。統計に使われます。",
+    "location": "開催場所",
+    "address": "ワークショップの住所",
+    "addressHint": "ワークショップを開催する場所です。空欄の場合はショップの住所（{address}）を使います。"
   },
   "errors": {
     "titleRequired": "デフォルト言語のタイトルは必須です。",
@@ -128,7 +132,8 @@
     "capacityBelowReserved": "定員は、すでに予約済みの{reserved}席を下回ることはできません。",
     "cutoffInvalid": "0〜10080の整数を入力してください。",
     "pastStart": "開始日時は過去にできません。より後の日付と時刻を選択してください。",
-    "categoryRequired": "分野を選択してください。"
+    "categoryRequired": "分野を選択してください。",
+    "addressTooLong": "住所は{max}文字以内で入力してください。"
   },
   "rules": {
     "title": "スケジュールルール",

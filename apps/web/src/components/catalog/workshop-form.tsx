@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { z } from "zod";
 import { ImageOff, Plus, Trash2, TriangleAlert } from "lucide-react";
 import {
-  LOCALES, WORKSHOP_CATEGORIES, formatMoney, minorDigits, missingLocales, trimDeep,
+  LOCALES, WORKSHOP_ADDRESS_MAX, WORKSHOP_CATEGORIES, formatMoney, minorDigits, missingLocales, trimDeep,
   type Locale, type Localized, type WorkshopCategory, type WorkshopStatus,
 } from "@workshop/shared";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -28,6 +28,8 @@ const MAX_GALLERY = 6;
 
 export interface ShopForCatalog {
   currency: string; timezone: string; defaultLocale: Locale; enabledLocales: Locale[];
+  /** The address of the shop: the one a workshop without an address of its own is held at (said under the field). */
+  address?: string;
 }
 
 interface Draft {
@@ -37,6 +39,8 @@ interface Draft {
   coverUrl: string; galleryUrls: string[]; status: WorkshopStatus;
   /** The field of the workshop, "" until the owner picks one. */
   category: WorkshopCategory | "";
+  /** Where it takes place; empty = the address of the shop. */
+  address: string;
 }
 
 type LocalizedKey = "title" | "shortDescription" | "description" | "notes";
@@ -49,7 +53,7 @@ function toDraft(w: Workshop | undefined, currency: string): Draft {
     includes: Object.fromEntries(LOCALES.map((l) => [l, (w?.includes?.[l] ?? []).join("\n")])),
     price: w ? String(w.priceAmount / 10 ** digits) : "", durationMinutes: String(w?.durationMinutes ?? 120),
     defaultCapacity: String(w?.defaultCapacity ?? 8), maxPerBooking: String(w?.maxPerBooking ?? 6), sortOrder: String(w?.sortOrder ?? 1),
-    coverUrl: w?.coverUrl ?? "", galleryUrls: [...(w?.galleryUrls ?? [])], status: w?.status ?? "DRAFT", category: w?.category ?? "",
+    coverUrl: w?.coverUrl ?? "", galleryUrls: [...(w?.galleryUrls ?? [])], status: w?.status ?? "DRAFT", category: w?.category ?? "", address: w?.address ?? "",
   };
 }
 
@@ -90,6 +94,7 @@ export function WorkshopForm({
     const schema = z.object({
       titleDefault: z.string().trim().min(1, "errors.titleRequired"),
       category: z.enum(WORKSHOP_CATEGORIES, "errors.categoryRequired"),
+      address: z.string().trim().max(WORKSHOP_ADDRESS_MAX, "errors.addressTooLong"),
       price: z.number("errors.priceInvalid").min(0, "errors.priceInvalid"),
       durationMinutes: z.number("errors.durationRange").int("errors.durationRange").min(15, "errors.durationRange").max(600, "errors.durationRange"),
       defaultCapacity: z.number("errors.capacityRange").int("errors.capacityRange").min(1, "errors.capacityRange").max(MAX_CAPACITY, "errors.capacityRange"),
@@ -102,7 +107,7 @@ export function WorkshopForm({
         ctx.addIssue({ code: "custom", path: ["maxPerBooking"], message: "errors.maxPerBookingRange" });
     });
     const parsed = schema.safeParse({
-      titleDefault: d.title[shop.defaultLocale] ?? "", category: d.category, price: num(d.price), durationMinutes: num(d.durationMinutes),
+      titleDefault: d.title[shop.defaultLocale] ?? "", category: d.category, address: d.address, price: num(d.price), durationMinutes: num(d.durationMinutes),
       defaultCapacity: num(d.defaultCapacity), maxPerBooking: num(d.maxPerBooking), sortOrder: num(d.sortOrder),
       coverUrl: d.coverUrl, galleryUrls: d.galleryUrls.filter((u) => u.trim() !== ""),
     });
@@ -168,6 +173,18 @@ export function WorkshopForm({
               </div>
             </div>
           ) : null}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle>{t("form.location")}</CardTitle></CardHeader>
+        <CardContent className="grid gap-4">
+          <Field
+            id="ws-address" label={t("form.address")} error={errors.address ? t("errors.addressTooLong", { max: WORKSHOP_ADDRESS_MAX }) : undefined}
+            hint={t("form.addressHint", { address: shop.address ?? "" })}
+          >
+            {(p) => <Textarea {...p} rows={2} maxLength={WORKSHOP_ADDRESS_MAX} autoComplete="street-address" value={d.address} onChange={(e) => setField("address", e.target.value)} />}
+          </Field>
         </CardContent>
       </Card>
 

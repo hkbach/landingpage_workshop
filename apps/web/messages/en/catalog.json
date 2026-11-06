@@ -54,7 +54,8 @@
     "searchLabel": "Search",
     "searchPlaceholder": "Workshop name",
     "allStatuses": "All statuses",
-    "noMatch": "No workshops match your search or filter."
+    "noMatch": "No workshops match your search or filter.",
+    "address": "Address"
   },
   "detail": {
     "tabDetails": "Details",
@@ -107,7 +108,10 @@
     "cancel": "Cancel",
     "statusFromList": "Change it with Activate / Deactivate in the workshop list.",
     "categoryPlaceholder": "Choose a category",
-    "categoryHint": "The field your workshop belongs to. Used for statistics."
+    "categoryHint": "The field your workshop belongs to. Used for statistics.",
+    "location": "Location",
+    "address": "Workshop address",
+    "addressHint": "Where the workshop takes place. Leave it empty to use the address of the shop ({address})."
   },
   "errors": {
     "titleRequired": "A title in the default language is required.",
@@ -128,7 +132,8 @@
     "capacityBelowReserved": "Capacity cannot be lower than the {reserved} seats already reserved.",
     "cutoffInvalid": "Enter a whole number between 0 and 10080.",
     "pastStart": "The start cannot be in the past. Choose a later date and time.",
-    "categoryRequired": "Choose a category."
+    "categoryRequired": "Choose a category.",
+    "addressTooLong": "The address can have at most {max} characters."
   },
   "rules": {
     "title": "Schedule rules",
