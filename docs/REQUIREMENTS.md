@@ -3,10 +3,28 @@
 > **Mục đích file:** Đây là tài liệu requirement dùng làm nguồn sự thật (source of truth) khi vibe code với Claude Code trong VS Code.
 > Claude phải đọc file này trước khi code, làm theo từng milestone ở **Mục 13**, và tuân thủ các quy tắc ở **Mục 14**.
 >
-> - Phiên bản: 1.2-MVP (draft)
-> - Ngày: 31/10/2026
+> - Phiên bản: **2.0-MVP** (bản frontend + mock; backend thật chưa làm)
+> - Ngày: 11/11/2026 (v1.2: 31/10/2026)
 > - Nguồn: WS-SaaS-BRS-SRS-001 v1.0 + định hướng sản phẩm mới (3 actor, shop tự đăng ký, landing page builder)
 > - Ngôn ngữ tài liệu: tiếng Việt. **Code, tên biến, enum, commit message: tiếng Anh.**
+> - Nguồn bổ sung của bản 2.0: các yêu cầu bổ sung trong quá trình làm bản frontend (khu vực customer, affiliate / referral, rút tiền, khu admin mở rộng, website công khai, tên miền riêng, đăng ký bằng popup...).
+
+### Tình trạng triển khai (11/11/2026)
+
+| Phần | Trạng thái |
+|---|---|
+| **Giao diện** (website công khai, khu shop owner, khu customer, khu admin) với **5 ngôn ngữ** (en, vi, ko, ja, zh; `/systemadmin` chỉ en + vi) | **Đã làm**, chạy bằng dữ liệu mẫu |
+| **API mock** trong Next.js (`/api/v1/*`, xem 9.5), dữ liệu trong bộ nhớ, mất khi khởi động lại | **Đã làm** (cùng hợp đồng với backend thật) |
+| **Test** (Vitest): luật nghiệp vụ trong `packages/shared`, API mock, giao diện, bản dịch đủ 5 ngôn ngữ | **Đã làm**, `pnpm lint`, `pnpm typecheck`, `pnpm test` phải xanh trước mỗi thay đổi |
+| **Backend thật** (NestJS, PostgreSQL, Drizzle, pg-boss, session cookie, R2, Resend, Turnstile) | **Chưa làm** (`apps/api` chưa tồn tại) |
+| **Hạ tầng** (Docker, Caddy, CI, backup, Sentry, E2E Playwright, Testcontainers) | **Chưa làm** (thư mục `infra/` còn trống) |
+
+Mọi chỗ trong tài liệu ghi **TODO(api)** là phần chờ backend thật. Các mục ghi "*Giới hạn MVP (mock)*" nói rõ chỗ mock chưa làm hết (ví dụ chỉ shop demo có đủ dữ liệu).
+
+### Thay đổi của bản 2.0 so với 1.2
+
+- **Bỏ:** hàng đợi duyệt shop (publish có hiệu lực ngay), gói trả phí FREE / PRO, chức năng hoàn tiền (chỉ còn khoản điều chỉnh giảm / reversal), chức năng admin bật / tắt template.
+- **Thêm:** website công khai (Home, About Us, Contact, Terms, Privacy) và popup Log in / Sign up 2 tab; khu vực customer (Today, My Profile, My Booking với Check in / Completed (đánh giá) / Cancel, Favorites, Workshops, Affiliate, Referrals, rút tiền); tên miền riêng của shop; dùng khu admin để sửa shop, sửa landing page / workshop / session của shop ngay trong khu admin; vô hiệu hóa affiliate / referral; Settings của nền tảng; hộp thư hỗ trợ; email hệ thống; Terms & Privacy do admin soạn; chi tiết Income theo shop với kết sổ từng tháng; voucher; quản lý hình ảnh; audit log của mọi người dùng; liên hệ hỗ trợ của nền tảng; danh mục workshop và thuật toán sắp xếp công bằng giữa các shop.
 
 ---
 
@@ -16,15 +34,19 @@ Các mục dưới đây là **giả định** để có thể bắt đầu code
 
 | # | Giả định | Ảnh hưởng nếu đổi |
 |---|---|---|
-| A1 | Khách du lịch **thanh toán tại shop**. MVP không có thanh toán online. | Lớn: thanh toán online cần Stripe Connect (hoặc tương đương), KYC, refund, phí nền tảng |
+| A1 | Khách du lịch **thanh toán tại shop**. MVP không có thanh toán online và **không có hoàn tiền**. Hệ thống **kết sổ vào cuối tháng**, shop thanh toán phí nền tảng theo **invoice** hệ thống gửi (chức năng gửi invoice làm sau). | Lớn: thanh toán online cần Stripe Connect (hoặc tương đương), KYC, phí nền tảng |
 | A2 | Mỗi shop có **tối đa 2 landing page, 1 page public tại một thời điểm** (FR-SITE-07), page public dùng địa chỉ của shop | Trung bình: schema đã chuẩn bị cho nhiều page |
 | A3 | Shop tự đăng ký; **publish landing page có hiệu lực ngay, không cần admin duyệt** (không có hàng đợi duyệt) | Thấp |
 | A4 | Tính phí shop **chưa làm**; **không có gói trả phí (plan FREE/PRO)**, đã loại bỏ hoàn toàn (cột `plan`, giới hạn theo gói) | Thấp |
 | A5 | Chỉ có lịch **cố định** (fixed schedule) và **instant booking**. Request booking và lịch linh hoạt để phase sau | Trung bình |
 | A6 | Ngôn ngữ hỗ trợ: EN (mặc định), VI, KO, JA, **ZH (tiếng Trung, một ngôn ngữ duy nhất; shop tự điền chữ giản thể hoặc phồn thể tùy ý)** *(v1.2: thêm tiếng Trung)*. Shop tự chọn bật ngôn ngữ nào. Mã locale trong URL: `/ja`, `/zh`. `hreflang`: `zh`. Dữ liệu cũ lưu dưới khóa `zh-TW` được tự gộp vào `zh`. Giao diện nền tảng (dashboard, modal đặt chỗ…) mới dịch EN và một phần VI/KO/JA; ZH tạm fallback EN, riêng chính sách đến trễ (BR-09) có đủ bản dịch | Thấp |
 | A7 | Shop chỉ có 1 role là `OWNER` trong MVP. Schema vẫn hỗ trợ nhiều member/role | Thấp |
-| A8 | Domain: `{shop}.{PLATFORM_DOMAIN}`. Custom domain để phase sau | Trung bình |
+| A8 | Domain mặc định: `{shop}.{PLATFORM_DOMAIN}`. **Shop có thể gắn tên miền riêng** (Settings; admin cũng sửa được), mức mock: chưa kiểm tra DNS, chưa cấp chứng chỉ TLS (FR-ORG-02) | Trung bình: cần DNS check, Caddy on-demand TLS, cột `custom_domain` unique |
 | A9 | Sinh session trước **60 ngày**, job chạy hằng ngày | Thấp |
+| A11 | **Không có gói trả phí** (plan FREE / PRO) và **không có bước admin duyệt shop**; admin kiểm soát bằng khóa shop và xử lý báo cáo | Thấp |
+| A12 | Customer có **tài khoản** (đăng ký bằng popup, email + mật khẩu) và khu vực riêng `/customer/{id}`; khách vãng lai vẫn đặt chỗ không cần tài khoản | Trung bình |
+| A13 | Admin hệ thống chỉ có **một vai trò** (`SUPER_ADMIN`, giả lập); nhiều admin, phân quyền và nhật ký đăng nhập của admin để sau | Trung bình |
+| A14 | Mock chỉ có đủ dữ liệu cho **shop demo** (Whisk & Ladle); shop đăng ký mới chỉ có trang chào mừng cho tới khi có backend | Lớn khi làm backend |
 | A10 | Email provider: **Resend** (qua interface để thay được). Dev dùng Mailpit | Thấp |
 
 `{PLATFORM_DOMAIN}` là placeholder, ví dụ `workshopkit.com`. Không hard-code trong code; đọc từ env.
@@ -47,27 +69,30 @@ Giá trị cốt lõi:
 |---|---|---|
 | **Platform Admin** | Đội vận hành nền tảng | `app.{PLATFORM_DOMAIN}/systemadmin` |
 | **Shop Owner** | Chủ shop; đăng ký, tạo landing page, quản lý workshop/lịch/booking | `app.{PLATFORM_DOMAIN}/shopowner` |
-| **Traveler (Guest)** | Khách du lịch; xem landing page và đặt chỗ, không có tài khoản | `{shop}.{PLATFORM_DOMAIN}` |
+| **Traveler (Guest)** | Khách du lịch; xem landing page và đặt chỗ, không cần tài khoản | `{shop}.{PLATFORM_DOMAIN}` hoặc tên miền riêng của shop |
+| **Customer** | Khách có tài khoản (đăng ký bằng popup): xem booking, check-in, đánh giá workshop, yêu thích, Affiliate, Referrals, rút tiền | `app.{PLATFORM_DOMAIN}/customer/{id}` |
+| **Khách truy cập website nền tảng** | Xem Home, About Us, Contact, Terms, Privacy; Log in / Sign up bằng popup | `app.{PLATFORM_DOMAIN}` |
 
 ### 1.2 Trong phạm vi MVP
 
-- Shop đăng ký, xác minh email, đăng nhập, quên mật khẩu.
-- Onboarding: tên shop, subdomain, timezone, currency, ngôn ngữ.
-- Landing page builder theo **template + section** (không cho viết HTML/JS tùy ý), preview desktop/mobile theo từng ngôn ngữ, publish (có hiệu lực ngay, không qua duyệt).
-- Quản lý workshop, schedule rule (lịch cố định), session, capacity.
-- Trang public: render landing page, xem lịch còn chỗ, đặt chỗ instant, email xác nhận.
-- Dashboard shop: danh sách booking, tạo booking thủ công (walk-in/điện thoại), check-in / uncheck-in, hủy có lý do, đổi session, ghi nhận thanh toán, hủy session hàng loạt.
-- Admin: khóa/mở khóa shop, xem danh sách shop, xử lý báo cáo vi phạm, audit log (ghi lại hành động của mọi người dùng, tìm theo email và theo Organization).
-- Anti-spam: Cloudflare Turnstile và rate limit.
+- **Website công khai của nền tảng:** Home (có 10 workshop ngẫu nhiên), About Us, Contact, Terms, Privacy; popup **Log in** và **Sign up** (tab customer: email + mật khẩu; tab shop owner: thêm tên shop để sinh slug); đa ngôn ngữ.
+- Shop owner: đăng ký, đăng nhập, quên mật khẩu, onboarding (tên shop, slug sinh từ tên, timezone, currency, ngôn ngữ), Settings (kể cả **tên miền riêng**).
+- Landing page builder theo **template + section** (không cho viết HTML / JS tùy ý), tối đa 2 landing page, preview theo từng ngôn ngữ, publish **có hiệu lực ngay, không qua duyệt**.
+- Quản lý workshop (có danh mục 1 đến 3 loại), schedule rule, session, capacity; promotion / voucher; Income của shop (phí duy trì, phí dịch vụ).
+- Trang public của shop: landing page, lịch còn chỗ, đặt chỗ instant, email xác nhận, khách tự hủy booking, báo cáo vi phạm; affiliate link và referral link.
+- Dashboard shop: Overview, Today, danh sách booking, booking thủ công, check-in / uncheck-in, hủy có lý do, ghi nhận thanh toán (Confirm payment / Unpaid), customers, đóng / dời session.
+- **Khu vực customer:** Today, My Profile, My Booking (Check in, **Completed = đánh giá workshop**, Cancel), Favorites, Workshops (xếp công bằng giữa các shop), Affiliate, Referrals, rút tiền; menu dạng ngăn kéo trên điện thoại.
+- **Khu admin hệ thống** (`/systemadmin`, en + vi): Users, Shops (sửa thông tin, tên miền riêng), Customers, Workshops, Sessions, Bookings, Landing pages (sửa ngay trong khu admin), Images, Vouchers, Income (chi tiết + kết sổ tháng), Withdrawals, Config fees, Affiliate, Referrals, Report management, Support inbox, Emails, Terms & Privacy, Settings, Support contact, Audit logs.
+- Audit log ghi hành động của mọi người dùng; anti-spam: Cloudflare Turnstile và rate limit (mức mock: rate limit form Contact và báo cáo; Turnstile chỉ có chỗ giữ chỗ).
 
 ### 1.3 Ngoài phạm vi MVP (KHÔNG code)
 
-- Thanh toán online, **hoàn tiền (không có chức năng hoàn tiền trong hệ thống)**, tính phí shop (billing).
-- Request booking, lịch linh hoạt, promotion/khuyến mãi.
-- Nhiều page/shop, revision/rollback đầy đủ. (*Custom domain đã được đưa vào phạm vi ở mức hạn chế, xem FR-ORG-02.*)
-- Nhân viên shop (Manager/Staff), Product Order, Custom Order.
-- Marketplace tổng hợp shop, tài khoản khách, app mobile native.
-- Khách tự hủy booking.
+- Thanh toán online, **hoàn tiền**, gói trả phí và billing; **gửi invoice** cho shop (sẽ làm sau; hiện chỉ có kết sổ tháng để xem).
+- Request booking, lịch linh hoạt.
+- Revision / rollback đầy đủ của landing page; nhiều hơn 2 landing page mỗi shop.
+- Nhân viên shop (Manager / Staff), Product Order, Custom Order.
+- Marketplace tổng hợp shop (khác với mục Workshops của khu customer), app mobile native.
+- Nhiều admin và phân quyền admin; hộp thư hỗ trợ gộp yêu cầu của shop owner và customer; lịch sử phiên bản Terms / Privacy.
 
 ---
 
@@ -164,46 +189,40 @@ Browser ────────────────────────
 
 ### 3.4 Cấu trúc thư mục
 
+Bản hiện tại (frontend + mock):
+
 ```
 /
 ├─ apps/
-│  ├─ web/                      # Next.js
-│  │  ├─ src/app/
-│  │  │  ├─ (marketing)/        # trang chủ nền tảng
-│  │  │  ├─ (auth)/             # login, signup, verify, reset
-│  │  │  ├─ shopowner/          # shop owner (trước đây: dashboard/)
-│  │  │  ├─ admin/              # platform admin
-│  │  │  └─ sites/[slug]/       # landing page public (SSR)
-│  │  ├─ src/components/
-│  │  │  ├─ ui/                 # shadcn
-│  │  │  ├─ builder/            # page builder
-│  │  │  └─ sections/           # renderer cho từng section type
-│  │  ├─ src/lib/               # api client, i18n, utils
-│  │  └─ messages/              # en.json, vi.json, ko.json, ja.json
-│  └─ api/                      # NestJS
-│     ├─ src/modules/
-│     │  ├─ auth/  organizations/  members/  sites/  media/
-│     │  ├─ workshops/  schedules/  sessions/  bookings/
-│     │  ├─ customers/  payments/  notifications/  admin/
-│     │  ├─ audit/  reports/  public/
-│     ├─ src/common/            # guards, interceptors, filters, tenant context
-│     ├─ src/db/                # drizzle schema, migrations, client
-│     ├─ src/jobs/              # pg-boss handlers
-│     ├─ src/main.ts
-│     └─ src/main.worker.ts
+│  └─ web/                         # Next.js (giao diện + API mock)
+│     ├─ src/app/
+│     │  ├─ (marketing)/(site)/    # Home, About Us, Contact, Terms, Privacy (khung tối chung)
+│     │  ├─ (auth)/                # /login, /signup chuyển về popup; forgot / reset password, verify email
+│     │  ├─ shopowner/[slug]/      # khu shop owner (today, bookings, customers, workshops, sessions, finance, promotions, site, settings)
+│     │  ├─ customer/[accountId]/  # khu customer (today, profile, bookings, favorites, workshops, affiliate, referrals)
+│     │  ├─ systemadmin/           # khu admin; systemadmin/shops/[slug]/ = sửa landing page, session, workshop của shop
+│     │  ├─ sites/[slug]/          # landing page public (SSR), sitemap, robots, booking, report
+│     │  └─ api/v1/                # API mock (xem 9.5)
+│     ├─ src/components/           # ui (shadcn), builder, sections, marketing, customer, admin, dashboard, ...
+│     ├─ src/lib/mock/             # kho dữ liệu mẫu trong bộ nhớ (mỗi kho có test)
+│     ├─ src/proxy.ts              # định tuyến theo host (subdomain, tên miền riêng)
+│     └─ messages/{en,vi,ko,ja,zh}/ # chữ giao diện, mỗi khu vực một file JSON
 ├─ packages/
-│  ├─ shared/                   # Zod schemas, enums, section registry, types
-│  ├─ email-templates/          # React Email
-│  └─ config/                   # eslint, tsconfig, prettier dùng chung
-├─ infra/
-│  ├─ docker-compose.yml        # production
-│  ├─ docker-compose.dev.yml    # postgres, mailpit
-│  ├─ Caddyfile
-│  └─ backup/                   # script pg_dump → R2
-├─ docs/
-│  └─ REQUIREMENTS.md           # file này
+│  ├─ shared/                      # luật nghiệp vụ dùng chung (Zod, session, booking, phí, khuyến mãi, tên miền...), có test
+│  └─ config/                      # chỗ dự phòng cho cấu hình dùng chung (trống)
+├─ infra/                          # trống (chưa có Docker, Caddy, backup)
+├─ docs/REQUIREMENTS.md            # file này
 ├─ CLAUDE.md
 └─ .env.example
+```
+
+Cấu trúc đích khi có backend thật (chưa làm):
+
+```
+├─ apps/api/                       # NestJS: modules auth, organizations, sites, media, workshops, sessions, bookings,
+│                                  #   customers, payments, notifications, admin, audit, reports, public; db (Drizzle); jobs (pg-boss)
+├─ packages/email-templates/       # React Email
+└─ infra/                          # docker-compose, Caddyfile, backup pg_dump -> R2
 ```
 
 ---
@@ -983,6 +1002,102 @@ Rate limit public: availability 60 req/phút/IP; tạo booking 10 req/phút/IP; 
 | GET/POST | `/admin/directory/withdrawals` · `/admin/withdrawals/{id}` |
 | GET/PUT/POST | `/admin/fees` · `/admin/fees/{id}` · `/admin/fees/bulk` · GET `/admin/income` |
 
+### 9.5 Danh sách API mock đang có trong bản frontend
+
+Các route dưới đây chạy **trong Next.js** (`apps/web/src/app/api/v1/**`) với dữ liệu trong bộ nhớ, **cùng hợp đồng** (đường dẫn, body, mã lỗi) mà backend thật phải giữ. Bảng được sinh từ mã nguồn; chi tiết từng API nằm trong mô tả của FR tương ứng và trong chú thích đầu mỗi file `route.ts`. Mục 9.1 đến 9.4 là thiết kế đích của backend thật.
+
+**Tài khoản** (3 route)
+
+| Method | Path |
+|---|---|
+| POST | `/auth/login` |
+| GET · POST | `/auth/reset-password` |
+| POST | `/auth/signup` |
+
+**Public (không cần đăng nhập)** (8 route)
+
+| Method | Path |
+|---|---|
+| POST | `/public/contact` |
+| POST | `/public/sites/{slug}/accounts/lookup` |
+| POST | `/public/sites/{slug}/accounts` |
+| POST | `/public/sites/{slug}/bookings/cancel` |
+| POST | `/public/sites/{slug}/bookings/confirm` |
+| POST | `/public/sites/{slug}/bookings` |
+| POST | `/public/sites/{slug}/referrals/click` |
+| POST | `/public/sites/{slug}/reports` |
+
+**Khu vực customer `/customer/{id}` (cần email của tài khoản trong header `x-guest-email` khi bật đăng nhập)** (8 route)
+
+| Method | Path |
+|---|---|
+| POST | `/customer/{id}/bookings/{code}/check-in` |
+| POST | `/customer/{id}/bookings/{code}/rating` |
+| GET | `/customer/{id}/bookings` |
+| GET | `/customer/{id}/invites` |
+| GET · POST | `/customer/{id}/referrals` |
+| GET · PATCH | `/customer/{id}` |
+| GET | `/customer/{id}/wallet` |
+| POST | `/customer/{id}/withdrawals` |
+
+**Shop owner và dùng chung** (18 route)
+
+| Method | Path |
+|---|---|
+| POST | `/bookings/{id}/paid` |
+| PATCH | `/bookings/{id}/payment` |
+| PATCH | `/bookings/{id}/status` |
+| POST | `/bookings` |
+| GET | `/media/promotions/{id}` |
+| POST | `/media/promotions` |
+| GET | `/media/sessions/{id}` |
+| POST | `/media/sessions` |
+| GET | `/outbox/{id}` |
+| GET | `/outbox` |
+| PUT · PATCH · DELETE | `/promotions/{id}` |
+| GET · POST | `/promotions` |
+| POST | `/sessions/{id}/closed` |
+| POST | `/sessions/{id}/reschedule` |
+| POST | `/sessions/auto-closed` |
+| GET · PUT | `/shop/domain` |
+| POST | `/site/publish` |
+| POST | `/workshops/{id}/status` |
+
+**Admin hệ thống (`SUPER_ADMIN`, mock chưa kiểm tra quyền)** (30 route)
+
+| Method | Path |
+|---|---|
+| POST | `/admin/affiliate/{id}` |
+| GET | `/admin/directory/{name}` |
+| POST | `/admin/emails/{id}/resend` |
+| GET | `/admin/emails/{id}` |
+| POST | `/admin/emails` |
+| PUT | `/admin/fees/{id}` |
+| POST | `/admin/fees/bulk` |
+| GET | `/admin/fees` |
+| GET | `/admin/income/{shopId}` |
+| GET | `/admin/income` |
+| POST | `/admin/landing-pages/{slug}/audit` |
+| GET · PUT | `/admin/legal/{kind}` |
+| POST | `/admin/media/{id}` |
+| PATCH · DELETE | `/admin/messages/{id}` |
+| GET · PUT | `/admin/organizations/{id}/finance-settings` |
+| PATCH | `/admin/organizations/{id}` |
+| POST | `/admin/organizations/{id}/status` |
+| POST | `/admin/organizations/{id}/visibility` |
+| POST | `/admin/referrals/{accountId}` |
+| PATCH | `/admin/reports/{id}` |
+| GET | `/admin/reports` |
+| POST | `/admin/sessions/{id}` |
+| GET | `/admin/sessions` |
+| GET · PUT | `/admin/settings` |
+| GET · PUT | `/admin/support-contact` |
+| POST | `/admin/users/{id}/reset-password` |
+| GET · PATCH | `/admin/users/{id}` |
+| POST | `/admin/users/{id}/status` |
+| POST | `/admin/vouchers/{id}` |
+| POST | `/admin/withdrawals/{id}` |
+
 ---
 
 ## 10. Yêu cầu phi chức năng
@@ -1095,6 +1210,23 @@ Mục tiêu coverage: ≥ 80% cho `bookings`, `sessions`, `payments`, `auth`; c�
 
 Mỗi milestone: code → test → `pnpm lint && pnpm typecheck && pnpm test` pass → cập nhật checklist này → commit.
 
+### Tình trạng từng milestone (11/11/2026)
+
+Các ô `[ ]` bên dưới là việc của **backend và hạ tầng thật**, nên vẫn chưa tick. Phần giao diện và API mock của từng milestone đã làm, tóm tắt ở đây:
+
+| Milestone | Giao diện + mock | Backend / hạ tầng thật |
+|---|---|---|
+| M0 Khởi tạo | Monorepo pnpm + Turborepo, `apps/web`, `packages/shared`, test, lint, typecheck, i18n 5 ngôn ngữ | Chưa: `apps/api`, Docker, Drizzle, pino, CI, `.nvmrc` kiểm tra bởi CI |
+| M1 Auth và tenant | Đăng ký (popup 2 tab), đăng nhập (chuyển theo loại tài khoản), quên / đặt lại mật khẩu, onboarding, slug sinh từ tên, audit log | Chưa: bảng, session cookie, Turnstile, xác minh email, guard tenant, pg-boss, outbox, Resend |
+| M2 Workshop và lịch | CRUD workshop (danh mục, địa chỉ, ảnh), schedule rule, session (thêm, đóng, dời, sức chứa), tải ảnh (mock) | Chưa: presign R2, job sinh session |
+| M3 Landing page builder | Section registry, template, theme, builder, preview, autosave (trình duyệt), publish ngay, tối đa 2 page | Chưa: `site_page_versions`, publish atomic trên server |
+| M4 Trang public và booking | Host / proxy, renderer, SEO (meta, OG, hreflang, sitemap, robots), lịch còn chỗ, booking, trang xác nhận, tên miền riêng | Chưa: ISR, Turnstile, `SessionCapacityService` + khóa dòng + **test đồng thời**, email thật |
+| M5 Vận hành booking | Booking list, Today, thủ công, check-in, hủy, thanh toán, customers, đổi session | Chưa: state machine ở server, file `.ics`, email nhắc 24h |
+| M6 Admin | Đầy đủ các màn hình ở FR-ADM-01 đến FR-ADM-26 (mock) | Chưa: kiểm tra vai trò thật, một transaction |
+| M7 Hardening và deploy | Chưa | Chưa: security headers / CSP, E2E Playwright, Docker, Caddy, backup, Sentry, rà soát AC |
+
+Các tính năng làm thêm ngoài danh sách milestone gốc (đã có ở bản mock): khu vực customer, affiliate / referral, rút tiền, voucher, tên miền riêng, website công khai, hộp thư hỗ trợ, email hệ thống, settings, Terms & Privacy.
+
 ### M0 – Khởi tạo
 - [ ] Monorepo pnpm + Turborepo, `packages/config` (tsconfig strict, eslint, prettier)
 - [ ] `apps/web` (Next.js + Tailwind + shadcn + next-intl), `apps/api` (NestJS Fastify), `packages/shared`
@@ -1179,7 +1311,7 @@ Mỗi milestone: code → test → `pnpm lint && pnpm typecheck && pnpm test` pa
 | # | Câu hỏi | Mặc định đang dùng |
 |---|---|---|
 | Q1 | Thanh toán online ở phase nào? Mô hình (Stripe Connect, cổng nội địa…)? | Chưa làm (A1) |
-| Q2 | Tên nền tảng và domain chính thức? | `{PLATFORM_DOMAIN}` |
+| Q2 | Tên nền tảng và domain chính thức? | Tên hiển thị tạm: **Workshop Platform**; domain `{PLATFORM_DOMAIN}` |
 | Q3 | Giá trị plan limits và giá gói? | **Đã đóng**: loại bỏ gói thanh toán |
 | Q4 | Booking cutoff mặc định (2 giờ) có phù hợp? | 120 phút mặc định; **cấu hình theo từng session khi tạo session** (không còn theo shop) |
 | Q5 | Số khách tối đa mỗi booking mặc định? | 6 |

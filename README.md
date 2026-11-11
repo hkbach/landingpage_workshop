@@ -1,8 +1,13 @@
 # Workshop Landing Page & Booking Platform
 
-Nền tảng cho các shop workshop (gốm, nến, bạc...) tự tạo **landing page**, quản lý **workshop, session, booking, khuyến mãi, thu nhập**, và để khách đặt chỗ trực tuyến. Có thêm khu vực **admin hệ thống** để duyệt shop, xử lý báo cáo và cấu hình phí.
+Nền tảng cho các shop workshop (gốm, nến, nấu ăn, bánh...) tự tạo **landing page**, quản lý **workshop, session, booking, voucher, thu nhập**, và để khách đặt chỗ trực tuyến. Gồm 4 khu vực:
 
-> **Trạng thái hiện tại:** đây là bản **MVP chỉ có giao diện (frontend)**. Dữ liệu là **dữ liệu mẫu (mock)** nằm trong bộ nhớ, **không cần database, không cần Docker, không cần backend**. Yêu cầu đầy đủ của dự án nằm ở [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) (tiếng Việt, là nguồn sự thật duy nhất).
+- **Website công khai của nền tảng:** Home, About Us, Contact, Terms, Privacy; đăng nhập và đăng ký bằng **popup** (đăng ký có 2 tab: khách cá nhân và chủ shop).
+- **Khu vực chủ shop (shop owner):** landing page builder, workshop, session, booking, khuyến mãi, thu nhập, cài đặt (kể cả tên miền riêng).
+- **Khu vực khách hàng (customer):** Today, hồ sơ, booking (check-in, đánh giá workshop, hủy), yêu thích, workshops, Affiliate, Referrals và rút tiền.
+- **Khu admin hệ thống:** quản lý người dùng, shop (sửa, khóa, tên miền riêng), workshop, session, booking, landing page, hình ảnh, voucher, thu nhập, rút tiền, phí, affiliate, referrals, báo cáo vi phạm, hộp thư hỗ trợ, email hệ thống, Terms & Privacy, cài đặt nền tảng và audit log.
+
+> **Trạng thái hiện tại (phiên bản 2.0-MVP, 11/11/2026):** đây là bản **MVP chỉ có giao diện (frontend)**. Dữ liệu là **dữ liệu mẫu (mock)** nằm trong bộ nhớ, **không cần database, không cần Docker, không cần backend**. Các API chạy ngay trong Next.js (`/api/v1/*`) nhưng **giữ đúng hợp đồng** của backend thật sẽ làm sau. Yêu cầu đầy đủ của dự án nằm ở [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) (tiếng Việt, là nguồn sự thật duy nhất; có bảng tình trạng triển khai và danh sách API mock).
 
 ---
 
@@ -31,23 +36,28 @@ Nền tảng cho các shop workshop (gốm, nến, bạc...) tự tạo **landin
 | Kiểm tra dữ liệu | Zod |
 | Test | Vitest |
 
-Các thành phần dự kiến cho giai đoạn sau (NestJS, PostgreSQL, Drizzle, pg-boss, Cloudflare R2, Resend) **chưa có trong mã nguồn**, bạn không cần cài.
+Các thành phần dự kiến cho giai đoạn sau (NestJS, PostgreSQL, Drizzle, pg-boss, Cloudflare R2, Resend, Cloudflare Turnstile, Docker, Caddy) **chưa có trong mã nguồn**, bạn không cần cài.
 
 ## 2. Cấu trúc thư mục
 
 ```
 landingpage_workshop/
 ├── apps/
-│   └── web/              Ứng dụng Next.js (giao diện + API mock dưới /api/v1)
+│   └── web/                  Ứng dụng Next.js (giao diện + API mock dưới /api/v1)
+│       ├── src/app/          Các trang: (marketing) website công khai, (auth), shopowner, customer,
+│       │                     systemadmin, sites (landing page của shop), api
+│       ├── src/lib/mock/     Kho dữ liệu mẫu trong bộ nhớ (mỗi kho có test)
+│       └── messages/         Chữ giao diện 5 ngôn ngữ: en, vi, ko, ja, zh
 ├── packages/
-│   ├── shared/           Luật nghiệp vụ dùng chung (session, booking, phí...), có test riêng
-│   └── config/           Chỗ dự phòng cho cấu hình dùng chung (hiện còn trống)
+│   ├── shared/               Luật nghiệp vụ dùng chung (session, booking, phí, khuyến mãi, tên miền...), có test riêng
+│   └── config/               Chỗ dự phòng cho cấu hình dùng chung (hiện còn trống)
+├── infra/                    Dự phòng cho Docker, Caddy, backup (hiện còn trống)
 ├── docs/
-│   └── REQUIREMENTS.md   Tài liệu yêu cầu (tiếng Việt)
-├── CLAUDE.md             Quy tắc làm việc của dự án
-├── .env.example          Mẫu biến môi trường
-├── package.json          Các lệnh chạy chung (pnpm dev, pnpm test...)
-└── turbo.json            Cấu hình Turborepo
+│   └── REQUIREMENTS.md       Tài liệu yêu cầu (tiếng Việt)
+├── CLAUDE.md                 Quy tắc làm việc của dự án
+├── .env.example              Mẫu biến môi trường
+├── package.json              Các lệnh chạy chung (pnpm dev, pnpm test...)
+└── turbo.json                Cấu hình Turborepo
 ```
 
 ---
@@ -188,11 +198,11 @@ pnpm test
 - Mất khoảng **10–60 giây**.
 - **Thành công** khi cuối màn hình có các dòng kiểu:
   ```
-  Test Files  15 passed (15)
-  Tests  319 passed (319)
+  Test Files  23 passed (23)
+  Tests  377 passed (377)
   ...
-  Test Files  48 passed (48)
-  Tests  614 passed (614)
+  Test Files  104 passed (104)
+  Tests  1120 passed (1120)
   ```
   (Con số có thể khác khi dự án thêm test mới. Quan trọng là **không có chữ `failed`** và không có `FAIL`.)
 - Trong lúc chạy bạn có thể thấy nhiều dòng `IntlError ...` màu đỏ/vàng. **Đó là cảnh báo của bài test, không phải lỗi.** Chỉ cần xem dòng tổng kết ở cuối.
@@ -201,8 +211,8 @@ Hai nhóm test được chạy:
 
 | Nhóm | Ở đâu | Kiểm tra gì |
 | --- | --- | --- |
-| `@workshop/shared` | `packages/shared` | Luật nghiệp vụ: session, booking, phí, khuyến mãi... |
-| `web` | `apps/web` | Giao diện, API mock, dữ liệu mẫu, bản dịch 5 ngôn ngữ... |
+| `@workshop/shared` | `packages/shared` | Luật nghiệp vụ: session, booking, phí, khuyến mãi, tên miền riêng... |
+| `web` | `apps/web` | Giao diện, API mock, dữ liệu mẫu, audit log, bản dịch 5 ngôn ngữ... |
 
 ### 6.2. Chạy kiểm tra code (lint) và kiểm tra kiểu (typecheck)
 
@@ -256,10 +266,16 @@ Mở trình duyệt (khuyên dùng Chrome) và vào các địa chỉ sau. Đị
 
 | Khu vực | Địa chỉ | Ai dùng |
 | --- | --- | --- |
-| Trang chủ nền tảng | http://app.localtest.me:3000 | Mọi người |
+| **Website công khai** (Home, About Us, Contact) | http://app.localtest.me:3000 | Mọi người |
+| Đăng nhập / đăng ký | Nút **Log in** và **Sign up** trên thanh trên của website (mở popup) | Mọi người |
 | **Quản lý của shop** (shop mẫu `whiskladle`) | http://app.localtest.me:3000/shopowner/whiskladle | Chủ shop |
+| **Khu vực khách hàng** (khách mẫu `cu-1`) | http://app.localtest.me:3000/customer/cu-1/today | Khách có tài khoản |
 | **Landing page công khai** của shop mẫu | http://whiskladle.localtest.me:3000 | Khách đặt chỗ |
 | **Admin hệ thống** (chỉ en + vi) | http://app.localtest.me:3000/systemadmin | Quản trị nền tảng |
+
+**Đăng nhập thử:** mọi tài khoản mẫu (chủ shop và khách) dùng chung **một mật khẩu mẫu** được ghi ở đầu file `apps/web/src/lib/mock/accounts-store.ts` (đây là dữ liệu mẫu, không phải mật khẩu thật). Email mẫu: chủ shop `linh@whiskladle.example`; khách có thể tìm ở trang Users của admin. Bạn cũng có thể **đăng ký tài khoản mới** bằng popup Sign up: khách cá nhân (email + mật khẩu) hoặc chủ shop (thêm tên shop, địa chỉ shop được sinh từ tên). Shop mới chỉ có trang chào mừng vì dữ liệu mẫu đầy đủ chỉ có cho shop `whiskladle`.
+
+**Sau khi đăng nhập:** chủ shop vào trang **Overview** của shop, khách hàng vào trang **Today**.
 
 Mẹo: bạn có thể dùng `http://localhost:3000/shopowner/whiskladle` thay cho địa chỉ `app.localtest.me` khi máy không có Internet (riêng landing page công khai thì bắt buộc dùng `whiskladle.localtest.me`).
 
@@ -270,8 +286,8 @@ Dùng nút ngôn ngữ ở góc trên bên phải (English, Tiếng Việt, 한�
 ### Về dữ liệu mẫu (rất quan trọng)
 
 - Toàn bộ dữ liệu (workshop, session, booking, khuyến mãi, thu nhập...) là **dữ liệu mẫu** tạo sẵn.
-- Bộ dữ liệu mẫu là một bếp dạy nấu ăn và làm bánh: 3 shop (Whisk & Ladle Kitchen `whiskladle`, Sugar & Sift Bakery `sugarsift`, Golden Noodle House `goldennoodle`), 5 workshop (Fresh Pasta from Scratch, Decorate Your Cupcakes, Sourdough Bread Basics, Dim Sum Night, Couples Cooking Night), cùng session, khách, booking và khuyến mãi. Dữ liệu nằm trong `apps/web/src/lib/mock/`.
-- Những thay đổi bạn làm (ví dụ hủy booking, đổi tỷ lệ phí của admin, tạo khuyến mãi) được giữ **trong bộ nhớ của máy chủ đang chạy** nên sẽ **mất khi tắt `pnpm dev` và chạy lại**. Một số thay đổi khác lưu trong trình duyệt (xóa dữ liệu trình duyệt là mất).
+- Bộ dữ liệu mẫu có **5 shop**: Whisk & Ladle Kitchen `whiskladle` (shop mẫu đầy đủ), Sugar & Sift Bakery `sugarsift` (bản nháp), Golden Noodle House `goldennoodle` (bị khóa), Brew & Bean Coffee Lab và Green Table Vegan Kitchen (có workshop riêng để xem trang Workshops của khách), kèm workshop, session, khách, booking ở đủ các trạng thái, khuyến mãi, thanh toán, affiliate / referral và yêu cầu rút tiền. Dữ liệu nằm trong `apps/web/src/lib/mock/`.
+- Những thay đổi bạn làm (ví dụ hủy booking, đổi tỷ lệ phí hay cài đặt của admin, tạo khuyến mãi, đăng ký tài khoản, gửi tin ở trang Contact) được giữ **trong bộ nhớ của máy chủ đang chạy** nên sẽ **mất khi tắt `pnpm dev` và chạy lại**. Một số thay đổi khác lưu trong trình duyệt (xóa dữ liệu trình duyệt là mất).
 - Vì vậy muốn "làm lại từ đầu" chỉ cần tắt (Ctrl + C) rồi chạy lại `pnpm dev`.
 
 ---
@@ -290,6 +306,7 @@ Dùng nút ngôn ngữ ở góc trên bên phải (English, Tiếng Việt, 한�
 | `pnpm test` có 1–2 test đỏ **không liên quan** thay đổi của bạn | Có vài test thỉnh thoảng chạy chậm trên máy yếu. Chạy lại `pnpm test` lần nữa. Nếu vẫn đỏ ở cùng một test thì báo cho nhóm kèm ảnh chụp màn hình. |
 | Thấy nhiều dòng `IntlError` khi chạy test | Bình thường, bỏ qua. Chỉ nhìn dòng tổng kết `Tests ... passed`. |
 | Sửa code nhưng trang không đổi | Tắt `pnpm dev` (Ctrl + C), chạy lại. |
+| Lỗi kiểu `X is not a function` ở API sau khi `git pull` | Máy chủ dev đang giữ dữ liệu mẫu cũ trong bộ nhớ. Tắt `pnpm dev` rồi chạy lại. |
 | Lỗi lạ sau khi kéo code mới (`git pull`) | Chạy lại `pnpm install`, rồi `pnpm test`. |
 
 Vẫn chưa được? Chụp ảnh màn hình **toàn bộ** thông báo lỗi trong terminal và gửi cho nhóm.
@@ -302,6 +319,8 @@ Vẫn chưa được? Chụp ảnh màn hình **toàn bộ** thông báo lỗi t
 
 - **Không thêm thư viện mới** nếu chưa hỏi/duyệt.
 - **Mọi chữ hiển thị** phải đi qua i18n, và **mỗi chữ tĩnh phải có đủ 5 ngôn ngữ** (en, vi, ko, ja, zh) trong thư mục `apps/web/messages/`. Test `messages-parity.test.ts` sẽ báo lỗi nếu thiếu. Riêng `/systemadmin` chỉ cần en + vi. Nội dung do chủ shop nhập thì không dịch.
+- **Cập nhật [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) cùng với mỗi thay đổi** về chức năng (tài liệu viết bằng tiếng Việt).
+- **Mọi hành động ghi dữ liệu** của người dùng hay admin phải ghi **audit log** (không ghi mật khẩu, token hay nội dung riêng tư).
 - **Không bao giờ** đưa mật khẩu, khóa bí mật, token, dữ liệu khách thật vào mã nguồn, log hay tài liệu.
 - Tiền lưu bằng **đơn vị nhỏ nhất (số nguyên)**, thời gian lưu **UTC**. Giá và trạng thái do **backend tính**, không tin dữ liệu từ trình duyệt.
 - Nút **Save** của form thêm/sửa chỉ bật khi dữ liệu có thay đổi; chữ nhập vào được cắt khoảng trắng đầu/cuối khi gửi.
