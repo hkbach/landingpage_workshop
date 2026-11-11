@@ -150,7 +150,7 @@
       "notYet": "Check-in mở lúc {time}, một giờ trước khi workshop bắt đầu.",
       "closed": "Session này đã đóng nên bạn không thể check-in tại đây. Vui lòng hỏi studio."
     },
-    "completed": "Hoàn tất",
+    "completed": "Đánh giá workshop",
     "completedNote": "Bạn đánh giá được workshop này sau khi đã check-in booking.",
     "rated": "Bạn đã đánh giá {stars}/5",
     "rateTitle": "Đánh giá workshop",

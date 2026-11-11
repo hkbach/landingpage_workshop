@@ -1,11 +1,11 @@
 # Workshop Landing Page & Booking Platform
 
-Nền tảng cho các shop workshop (gốm, nến, nấu ăn, bánh...) tự tạo **landing page**, quản lý **workshop, session, booking, voucher, thu nhập**, và để khách đặt chỗ trực tuyến. Gồm 4 khu vực:
+Nền tảng cho các shop workshop (gốm, nến, nấu ăn, bánh...) tự tạo **landing page**, quản lý **workshop, session, booking, khuyến mãi, thu nhập**, và để khách đặt chỗ trực tuyến. Gồm 4 khu vực:
 
 - **Website công khai của nền tảng:** Home, About Us, Contact, Terms, Privacy; đăng nhập và đăng ký bằng **popup** (đăng ký có 2 tab: khách cá nhân và chủ shop).
 - **Khu vực chủ shop (shop owner):** landing page builder, workshop, session, booking, khuyến mãi, thu nhập, cài đặt (kể cả tên miền riêng).
 - **Khu vực khách hàng (customer):** Today, hồ sơ, booking (check-in, đánh giá workshop, hủy), yêu thích, workshops, Affiliate, Referrals và rút tiền.
-- **Khu admin hệ thống:** quản lý người dùng, shop (sửa, khóa, tên miền riêng), workshop, session, booking, landing page, hình ảnh, voucher, thu nhập, rút tiền, phí, affiliate, referrals, báo cáo vi phạm, hộp thư hỗ trợ, email hệ thống, Terms & Privacy, cài đặt nền tảng và audit log.
+- **Khu admin hệ thống:** quản lý người dùng, shop (sửa, khóa, tên miền riêng), workshop, session, booking, landing page, hình ảnh, khuyến mãi, thu nhập, rút tiền, phí, affiliate, referrals, báo cáo vi phạm, hộp thư hỗ trợ, email hệ thống, Terms & Privacy, cài đặt nền tảng và audit log.
 
 > **Trạng thái hiện tại (phiên bản 2.0-MVP, 11/11/2026):** đây là bản **MVP chỉ có giao diện (frontend)**. Dữ liệu là **dữ liệu mẫu (mock)** nằm trong bộ nhớ, **không cần database, không cần Docker, không cần backend**. Các API chạy ngay trong Next.js (`/api/v1/*`) nhưng **giữ đúng hợp đồng** của backend thật sẽ làm sau. Yêu cầu đầy đủ của dự án nằm ở [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) (tiếng Việt, là nguồn sự thật duy nhất; có bảng tình trạng triển khai và danh sách API mock).
 

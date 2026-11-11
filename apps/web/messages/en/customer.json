@@ -150,7 +150,7 @@
       "notYet": "Check-in opens at {time}, an hour before the workshop starts.",
       "closed": "This session is closed, so you cannot check in here. Please ask the studio."
     },
-    "completed": "Completed",
+    "completed": "Rate this workshop",
     "completedNote": "You can rate this workshop once you have checked in to the booking.",
     "rated": "You rated {stars}/5",
     "rateTitle": "Rate this workshop",

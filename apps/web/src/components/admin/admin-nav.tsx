@@ -25,7 +25,7 @@ const GROUPS = [
     key: "finance",
     items: [
       { href: "/systemadmin/income", key: "income", Icon: Coins },
-      { href: "/systemadmin/vouchers", key: "vouchers", Icon: Tag },
+      { href: "/systemadmin/promotions", key: "promotions", Icon: Tag },
       { href: "/systemadmin/withdrawals", key: "withdrawals", Icon: Banknote },
       { href: "/systemadmin/fees", key: "fees", Icon: Percent },
       { href: "/systemadmin/affiliate", key: "affiliate", Icon: Share2 },

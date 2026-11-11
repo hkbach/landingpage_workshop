@@ -18,19 +18,19 @@ const STATUSES = ["ACTIVE", "SCHEDULED", "PAUSED", "EXPIRED"] as const;
  * owner then sees it as paused by the platform and cannot resume it, while the bookings that already used it keep their discount. Only an administrator can resume it.
  */
 export function VouchersAdmin() {
-  const t = useTranslations("admin.vouchers");
+  const t = useTranslations("admin.promotions");
   const locale = useLocale();
   const [q, setQ] = useState("");
   const [status, setStatus] = useState("");
   const typed = useDebounced(q);
-  const { items, error, reload } = useDirectory<AdminVoucher>("vouchers", { q: typed, status });
+  const { items, error, reload } = useDirectory<AdminVoucher>("promotions", { q: typed, status });
   const [pausing, setPausing] = useState<AdminVoucher | null>(null);
   const [message, setMessage] = useState<Message>(null);
   const money = (n: number, c: string) => formatMoney(n, c, locale);
 
   async function change(v: AdminVoucher, hold: boolean, reason = "") {
     setPausing(null);
-    const res = await fetch(`/api/v1/admin/vouchers/${encodeURIComponent(v.id)}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ hold, ...(reason ? { reason } : {}) }) }).catch(() => null);
+    const res = await fetch(`/api/v1/admin/promotions/${encodeURIComponent(v.id)}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ hold, ...(reason ? { reason } : {}) }) }).catch(() => null);
     setMessage(res?.ok ? { text: t(hold ? "paused" : "resumed", { code: v.code }), tone: "ok" } : { text: t("failed"), tone: "error" });
     reload();
   }
@@ -69,7 +69,7 @@ export function VouchersAdmin() {
           </select>
         </FilterBox>
       </Toolbar>
-      <DirectoryTable rows={items} error={error} columns={columns} rowKey={(v) => v.id} resetKey={`${typed}|${status}`} testId="vouchers-table" />
+      <DirectoryTable rows={items} error={error} columns={columns} rowKey={(v) => v.id} resetKey={`${typed}|${status}`} testId="promotions-table" />
       <ReasonDialog
         open={pausing !== null} onOpenChange={(o) => { if (!o) setPausing(null); }} reason="required" destructive
         title={t("pauseTitle", { code: pausing?.code ?? "" })} description={t("pauseBody")} confirmLabel={t("pause")}

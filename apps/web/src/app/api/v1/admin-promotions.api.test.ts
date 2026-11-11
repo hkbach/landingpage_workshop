@@ -5,7 +5,7 @@ import { resetBookingStore } from "@/lib/mock/booking-store";
 import { allPromotions, publicPromotions, resetPromotionStore } from "@/lib/mock/promotion-store";
 import { GET as listPromotions } from "./promotions/route";
 import { PATCH as ownerToggle } from "./promotions/[id]/route";
-import { POST as adminHold } from "./admin/vouchers/[id]/route";
+import { POST as adminHold } from "./admin/promotions/[id]/route";
 
 const hold = (id: string, body: unknown) => adminHold(new Request("http://x", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }), { params: Promise.resolve({ id }) } as never);
 const owner = (id: string, enabled: boolean) => ownerToggle(new Request("http://x", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ enabled }) }), { params: Promise.resolve({ id }) } as never);
@@ -61,7 +61,7 @@ describe("the vouchers in the admin area", () => {
   it("writes audit lines by the administrator with the code and the reason", async () => {
     await hold("pr-1", { hold: true, reason: "Fake discount" });
     await hold("pr-1", { hold: false });
-    expect(liveAuditLogs().slice(0, 2).map((l) => l.action)).toEqual(["voucher.resume", "voucher.pause"]);
+    expect(liveAuditLogs().slice(0, 2).map((l) => l.action)).toEqual(["promotion.resume", "promotion.pause"]);
     expect(liveAuditLogs()[1]).toMatchObject({ actorRole: "SYSTEM_ADMIN", details: "code EARLY20; reason: Fake discount" });
   });
 });

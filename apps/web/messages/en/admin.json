@@ -36,7 +36,7 @@
     "messages": "Support inbox",
     "emails": "Emails",
     "legal": "Terms & Privacy",
-    "vouchers": "Vouchers",
+    "promotions": "Promotions",
     "media": "Images"
   },
   "guard": {
@@ -541,7 +541,7 @@
     "totalIn": "Total in {currency}",
     "formula": "Profit = income of the admin - affiliate fee - referral bonus",
     "totalFees": "Income of the admin (maintenance + service)",
-    "note": "The income of the admin is the maintenance fee plus the service fee, each a percentage of the ORIGINAL price of the booking (before vouchers) at the rates of each shop (Config fees). The affiliate fee is paid only for bookings that came through an affiliate link. The referral bonus is paid once for each invited friend, on the first paid booking of the friend. Both are also a percentage of the original price. Shop revenue is what the shops received from the guests.",
+    "note": "The income of the admin is the maintenance fee plus the service fee, each a percentage of the ORIGINAL price of the booking (before promotions) at the rates of each shop (Config fees). The affiliate fee is paid only for bookings that came through an affiliate link. The referral bonus is paid once for each invited friend, on the first paid booking of the friend. Both are also a percentage of the original price. Shop revenue is what the shops received from the guests.",
     "totalBase": "Original price of the bookings",
     "detail": {
       "open": "Details",
@@ -956,14 +956,14 @@
     "openPublic": "Open the public page",
     "opensNewTab": "(opens in a new tab)"
   },
-  "vouchers": {
-    "title": "Vouchers",
-    "description": "The vouchers (promotions) of every shop: what each one gives, when it runs and how much it took off. Pause a voucher that breaks the rules; the shop owner cannot resume it.",
+  "promotions": {
+    "title": "Promotions",
+    "description": "The promotions of every shop: what each one gives, when it runs and how much it took off. Pause a promotion that breaks the rules; the shop owner cannot resume it.",
     "search": "Search",
     "searchPlaceholder": "Code, title or shop",
     "all": "All",
     "col": {
-      "voucher": "Voucher",
+      "voucher": "Promotion",
       "shop": "Shop",
       "discount": "Discount",
       "range": "Runs",
@@ -984,17 +984,17 @@
     "heldByPlatform": "(paused by the platform)",
     "pause": "Pause",
     "resume": "Resume",
-    "pauseTitle": "Pause the voucher {code}?",
-    "pauseBody": "The voucher stops being offered at once. The shop owner sees it as paused by the platform and cannot resume it; bookings that already used it keep their discount. A reason is needed.",
-    "paused": "The voucher {code} is paused.",
-    "resumed": "The voucher {code} can be used again.",
-    "failed": "The voucher could not be changed."
+    "pauseTitle": "Pause the promotion {code}?",
+    "pauseBody": "The promotion stops being offered at once. The shop owner sees it as paused by the platform and cannot resume it; bookings that already used it keep their discount. A reason is needed.",
+    "paused": "The promotion {code} is paused.",
+    "resumed": "The promotion {code} can be used again.",
+    "failed": "The promotion could not be changed."
   },
   "media": {
     "title": "Images",
     "description": "The images of the shops: the files shops uploaded and the images they show from a link. Remove a file that breaks the rules.",
     "search": "Search",
-    "searchPlaceholder": "Shop, voucher code, session code or workshop",
+    "searchPlaceholder": "Shop, promotion code, session code or workshop",
     "all": "All",
     "open": "Open",
     "remove": "Remove",
@@ -1010,7 +1010,7 @@
       "actions": "Actions"
     },
     "kind": {
-      "promotion": "Voucher",
+      "promotion": "Promotion",
       "session": "Session",
       "workshop": "Workshop cover"
     },
@@ -1018,7 +1018,7 @@
       "UPLOAD": "Uploaded file",
       "LINK": "From a link"
     },
-    "note": "An uploaded file is kept by the platform (later in Cloudflare R2) and can be removed here. An image shown from a link is not a file of the platform, so it can be looked at but not removed. When a file is removed, the voucher that showed it has no image; a session that shows it keeps showing an empty picture until its shop owner chooses another.",
+    "note": "An uploaded file is kept by the platform (later in Cloudflare R2) and can be removed here. An image shown from a link is not a file of the platform, so it can be looked at but not removed. When a file is removed, the promotion that showed it has no image; a session that shows it keeps showing an empty picture until its shop owner chooses another.",
     "removeTitle": "Remove this image?",
     "removeBody": "The file is deleted for good and what showed it has no image. A reason is needed.",
     "removed": "The image was removed.",

@@ -36,7 +36,7 @@
     "messages": "Hộp thư hỗ trợ",
     "emails": "Email hệ thống",
     "legal": "Terms & Privacy",
-    "vouchers": "Voucher",
+    "promotions": "Khuyến mãi",
     "media": "Hình ảnh"
   },
   "guard": {
@@ -541,7 +541,7 @@
     "totalIn": "Tổng theo {currency}",
     "formula": "Lợi nhuận = Income của admin - phí affiliate - thưởng referral",
     "totalFees": "Income của admin (duy trì + dịch vụ)",
-    "note": "Income của admin là phí duy trì cộng phí dịch vụ, mỗi phí là phần trăm của GIÁ GỐC của booking (trước voucher) theo tỷ lệ của từng shop (Cấu hình phí). Phí affiliate chỉ trả cho booking đến từ liên kết affiliate. Thưởng referral trả một lần cho mỗi người bạn được mời, trên booking đầu tiên đã thanh toán của người đó. Cả hai cũng là phần trăm của giá gốc. Doanh thu của shop là số tiền shop đã nhận từ khách.",
+    "note": "Income của admin là phí duy trì cộng phí dịch vụ, mỗi phí là phần trăm của GIÁ GỐC của booking (trước khuyến mãi) theo tỷ lệ của từng shop (Cấu hình phí). Phí affiliate chỉ trả cho booking đến từ liên kết affiliate. Thưởng referral trả một lần cho mỗi người bạn được mời, trên booking đầu tiên đã thanh toán của người đó. Cả hai cũng là phần trăm của giá gốc. Doanh thu của shop là số tiền shop đã nhận từ khách.",
     "totalBase": "Giá gốc của các booking",
     "detail": {
       "open": "Chi tiết",
@@ -956,14 +956,14 @@
     "openPublic": "Mở trang công khai",
     "opensNewTab": "(mở trong tab mới)"
   },
-  "vouchers": {
-    "title": "Voucher",
-    "description": "Các voucher (khuyến mãi) của mọi shop: mỗi voucher cho gì, chạy khi nào, đã giảm bao nhiêu. Tạm dừng voucher vi phạm; shop owner không tự bật lại được.",
+  "promotions": {
+    "title": "Khuyến mãi",
+    "description": "Các khuyến mãi của mọi shop: mỗi khuyến mãi cho gì, chạy khi nào, đã giảm bao nhiêu. Tạm dừng khuyến mãi vi phạm; shop owner không tự bật lại được.",
     "search": "Tìm kiếm",
     "searchPlaceholder": "Mã, tên hoặc shop",
     "all": "Tất cả",
     "col": {
-      "voucher": "Voucher",
+      "voucher": "Khuyến mãi",
       "shop": "Shop",
       "discount": "Giảm",
       "range": "Thời gian chạy",
@@ -984,17 +984,17 @@
     "heldByPlatform": "(nền tảng tạm dừng)",
     "pause": "Tạm dừng",
     "resume": "Bật lại",
-    "pauseTitle": "Tạm dừng voucher {code}?",
-    "pauseBody": "Voucher ngừng được áp dụng ngay. Shop owner thấy voucher ở trạng thái do nền tảng tạm dừng và không tự bật lại được; booking đã dùng voucher vẫn giữ mức giảm. Cần nhập lý do.",
-    "paused": "Đã tạm dừng voucher {code}.",
-    "resumed": "Voucher {code} dùng lại được.",
-    "failed": "Không thay đổi được voucher."
+    "pauseTitle": "Tạm dừng khuyến mãi {code}?",
+    "pauseBody": "Khuyến mãi ngừng được áp dụng ngay. Shop owner thấy khuyến mãi ở trạng thái do nền tảng tạm dừng và không tự bật lại được; booking đã dùng khuyến mãi vẫn giữ mức giảm. Cần nhập lý do.",
+    "paused": "Đã tạm dừng khuyến mãi {code}.",
+    "resumed": "Khuyến mãi {code} dùng lại được.",
+    "failed": "Không thay đổi được khuyến mãi."
   },
   "media": {
     "title": "Hình ảnh",
     "description": "Hình ảnh của các shop: file shop đã tải lên và ảnh hiển thị từ liên kết. Xóa file vi phạm.",
     "search": "Tìm kiếm",
-    "searchPlaceholder": "Shop, mã voucher, mã session hoặc workshop",
+    "searchPlaceholder": "Shop, mã khuyến mãi, mã session hoặc workshop",
     "all": "Tất cả",
     "open": "Mở",
     "remove": "Xóa",
@@ -1010,7 +1010,7 @@
       "actions": "Thao tác"
     },
     "kind": {
-      "promotion": "Voucher",
+      "promotion": "Khuyến mãi",
       "session": "Session",
       "workshop": "Ảnh bìa workshop"
     },
@@ -1018,7 +1018,7 @@
       "UPLOAD": "File đã tải lên",
       "LINK": "Từ liên kết"
     },
-    "note": "File đã tải lên do nền tảng lưu (sau này trên Cloudflare R2) và xóa được tại đây. Ảnh hiển thị từ liên kết không phải file của nền tảng nên chỉ xem được, không xóa được. Khi xóa file, voucher đang dùng ảnh đó sẽ không còn ảnh; session đang dùng sẽ hiện ảnh trống cho tới khi shop owner chọn ảnh khác.",
+    "note": "File đã tải lên do nền tảng lưu (sau này trên Cloudflare R2) và xóa được tại đây. Ảnh hiển thị từ liên kết không phải file của nền tảng nên chỉ xem được, không xóa được. Khi xóa file, khuyến mãi đang dùng ảnh đó sẽ không còn ảnh; session đang dùng sẽ hiện ảnh trống cho tới khi shop owner chọn ảnh khác.",
     "removeTitle": "Xóa hình ảnh này?",
     "removeBody": "File bị xóa hẳn và nơi đang hiển thị sẽ không còn ảnh. Cần nhập lý do.",
     "removed": "Đã xóa hình ảnh.",

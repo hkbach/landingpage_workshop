@@ -5,7 +5,7 @@ import { adminAffiliate, adminAuditRows, adminEmails, adminMedia, adminMessages,
 // Filters: q (the search typed), type / status (users, shops, sessions), shopId (workshops, sessions), from / to ("YYYY-MM-DD": bookings, affiliate and referrals). MOCK implementation
 // inside Next until apps/api exists. TODO(api): SUPER_ADMIN only; page and pageSize; the audit log of the reads of personal data.
 
-const NAMES = ["users", "shops", "workshops", "bookings", "customers", "sessions", "landing-pages", "affiliate", "referrals", "withdrawals", "audit-logs", "messages", "emails", "vouchers", "media"] as const;
+const NAMES = ["users", "shops", "workshops", "bookings", "customers", "sessions", "landing-pages", "affiliate", "referrals", "withdrawals", "audit-logs", "messages", "emails", "promotions", "media"] as const;
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 
 export async function GET(request: Request, ctx: RouteContext<"/api/v1/admin/directory/[name]">) {
@@ -29,7 +29,7 @@ export async function GET(request: Request, ctx: RouteContext<"/api/v1/admin/dir
     : name === "withdrawals" ? adminWithdrawals(q, get("status"), from, to, get("source"))
     : name === "messages" ? adminMessages(q, get("status"), get("topic"))
     : name === "media" ? adminMedia(q, get("kind"), get("source"))
-    : name === "vouchers" ? adminVouchers(q, get("status"))
+    : name === "promotions" ? adminVouchers(q, get("status"))
     : name === "emails" ? adminEmails(q, get("type"), get("status"))
     : name === "audit-logs" ? adminAuditRows({ email: get("email").slice(0, 200), org: get("org").slice(0, 200), action: get("action"), entity: get("entity"), role: get("role"), from, to })
     : adminLandingPages(q);

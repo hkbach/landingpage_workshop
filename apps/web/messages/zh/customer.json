@@ -150,7 +150,7 @@
       "notYet": "签到将于 {time} 开放，即工作坊开始前一小时。",
       "closed": "此场次已关闭，无法在此签到。请咨询工作室。"
     },
-    "completed": "已完成",
+    "completed": "评价工作坊",
     "completedNote": "您在该预订签到后，才能评价此工作坊。",
     "rated": "您已评分 {stars}/5",
     "rateTitle": "评价工作坊",
