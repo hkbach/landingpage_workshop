@@ -88,7 +88,6 @@
     "maxPerBookingHint": "한 번의 예약으로 한 명이 예약할 수 있는 최대 좌석 수입니다. 최소 1이며 기본 수용 인원을 넘을 수 없습니다.",
     "sortOrder": "정렬 순서",
     "sortOrderHint": "목록과 랜딩 페이지에서 워크숍이 보이는 순서를 정합니다. 숫자가 작을수록 먼저 표시됩니다.",
-    "category": "분야",
     "images": "이미지",
     "imagesHint": "커버 이미지 1장과 갤러리 이미지 최대 {max}장.",
     "uploaderStub": "이미지 업로드는 아직 지원하지 않아요. 지금은 아래에 이미지 URL을 붙여넣어 주세요.",
@@ -108,15 +107,16 @@
     "fixErrors": "강조 표시된 항목을 수정해 주세요.",
     "cancel": "취소",
     "statusFromList": "워크숍 목록의 활성화 / 비활성화 버튼으로 변경하세요.",
-    "categoryPlaceholder": "분야 선택",
-    "categoryHint": "워크숍이 속한 분야입니다. 통계에 사용됩니다.",
     "location": "장소",
     "address": "주소",
     "addressHint": "워크숍이 열리는 곳입니다. 비워 두면 샵 주소({address})를 사용합니다.",
     "addressNote": "주소 메모",
     "addressNoteHint": "주소와 함께 손님에게 표시됩니다. 예: 층수, 출입구, 주차 위치.",
     "openMap": "Google Maps",
-    "openMapLabel": "Google Maps에서 주소 열기(새 탭)"
+    "openMapLabel": "Google Maps에서 주소 열기(새 탭)",
+    "categories": "카테고리",
+    "categoriesHint": "워크숍이 속하는 카테고리를 1~3개 선택하세요. 해당 카테고리를 좋아하는 고객에게 워크숍이 먼저 표시됩니다.",
+    "categoriesCount": "{max}개 중 {count}개 선택"
   },
   "errors": {
     "titleRequired": "기본 언어의 제목을 입력해 주세요.",
@@ -137,9 +137,9 @@
     "capacityBelowReserved": "정원은 이미 예약된 {reserved}석보다 적을 수 없어요.",
     "cutoffInvalid": "0에서 10080 사이의 정수를 입력하세요.",
     "pastStart": "시작 시간은 과거일 수 없습니다. 더 늦은 날짜와 시간을 선택하세요.",
-    "categoryRequired": "분야를 선택하세요.",
     "addressTooLong": "주소는 최대 {max}자까지 입력할 수 있습니다.",
-    "addressNoteTooLong": "메모는 최대 {max}자까지 입력할 수 있습니다."
+    "addressNoteTooLong": "메모는 최대 {max}자까지 입력할 수 있습니다.",
+    "categoriesRequired": "카테고리를 최소 1개(최대 3개) 선택하세요."
   },
   "rules": {
     "title": "일정 규칙",

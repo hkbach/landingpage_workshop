@@ -18,7 +18,7 @@ export function WorkshopsAdmin() {
   const [detail, setDetail] = useState<AdminWorkshop | null>(null);
 
   const columns: Column<AdminWorkshop>[] = [
-    { key: "title", header: t("col.title"), cell: (w) => <><div className="font-medium">{w.title}</div><div className="text-xs text-muted-foreground">{w.category ? humanize(w.category) : "—"}</div></> },
+    { key: "title", header: t("col.title"), cell: (w) => <><div className="font-medium">{w.title}</div><div className="text-xs text-muted-foreground">{w.categories.length ? w.categories.map(humanize).join(", ") : "—"}</div></> },
     { key: "shop", header: t("col.shop"), cell: (w) => w.shopName },
     { key: "status", header: t("col.status"), cell: (w) => <Pill tone={w.status === "ACTIVE" ? "green" : "slate"}>{t(`status.${w.status}`)}</Pill> },
     { key: "price", header: t("col.price"), className: "text-right", cell: (w) => formatMoney(w.priceAmount, w.currency, locale) },
@@ -38,7 +38,7 @@ export function WorkshopsAdmin() {
       <DetailDialog
         open={detail !== null} onClose={() => setDetail(null)} title={detail?.title ?? ""} description={detail?.shopName ?? ""}
         rows={detail ? [
-          [t("col.status"), t(`status.${detail.status}`)], [t("category"), detail.category ? humanize(detail.category) : ""], [t("description2"), detail.description],
+          [t("col.status"), t(`status.${detail.status}`)], [t("category"), detail.categories.map(humanize).join(", ")], [t("description2"), detail.description],
           [t("col.price"), formatMoney(detail.priceAmount, detail.currency, locale)], [t("duration"), t("minutes", { n: detail.durationMinutes })],
           [t("capacity"), detail.defaultCapacity], [t("maxPerBooking"), detail.maxPerBooking], [t("address"), detail.address ?? t("shopAddress")], [t("addressNote"), detail.addressNote ?? ""],
           [t("rating"), detail.rating ? `${detail.rating.average} (${detail.rating.count})` : ""], [t("col.sessions"), detail.sessions], [t("col.bookings"), detail.bookings], [t("created"), fmt(detail.createdAt, locale)],

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Search } from "lucide-react";
-import { workshopDirectionsUrl, type Locale } from "@workshop/shared";
+import { hashText, rankWorkshops, workshopDirectionsUrl, type Locale } from "@workshop/shared";
 import { BookingProvider } from "@/components/booking/BookingProvider";
 import type { RenderContext } from "@/components/sections/context";
 import { WorkshopCard } from "@/components/sections/renderers";
@@ -25,6 +25,8 @@ import { useCustomer } from "./customer-shell";
  * The Workshops page of the guest area: the workshops of every shop the platform administrator chose to list, in one list. Each card is the one of the landing page of
  * its shop (its theme, Book button and booking popup; the booking is made at that shop) with the name of the shop and the rating under the name of the workshop. The
  * guest can search by the name of a workshop or of a shop. A shop's booking popup and favorites are shared by its cards (they belong to a shop).
+ * The order of the Workshops page is made for the guest (`rankWorkshops`): the workshops that share the most categories with their favorite categories come first, and the shops take turns
+ * in each group (the shop that leads rotates every day and is not the same for every guest), so no shop is always on top whatever the date it was created.
  * The Favorites page is the same page with only the workshops the guest added to their favorites (`mode="favorites"`): taking the heart off a card takes it away at once.
  * The Program tab of the Affiliate page (`mode="affiliate"`) lists the active workshops with the affiliate fee of their shop, without the Book and Google Maps buttons; a card has
  * Register Affiliate, which is replaced for good by Copy Affiliate link once the guest is registered for that workshop (the link opens its booking at the shop).
@@ -47,10 +49,22 @@ export function CustomerWorkshops({ shops, mode = "all" }: { shops: ListedShop[]
     return new Map(shops.map((s, i) => [s.shop.id, new Set(parseFavorites(raws[i]))]));
   }, [shops, savedSnapshot]);
 
-  // The workshops of the page (all of them, or the favorites), then what the search leaves, shop by shop (the shops keep their order; a shop with nothing left is not there).
-  const pool = shops.map((s) => ({ ...s, list: [...s.workshops].sort((a, b) => a.sortOrder - b.sortOrder).filter((w) => mode !== "favorites" || saved.get(s.shop.id)?.has(w.id)) }));
-  const found = pool.map((s) => ({ ...s, list: s.list.filter((w) => workshopMatches(w, s.shop.name, query)) })).filter((s) => s.list.length > 0);
-  const total = found.reduce((n, s) => n + s.list.length, 0);
+  // The workshops of the page (all of them, or the favorites), shop by shop.
+  const pool = useMemo(
+    () => shops.map((s) => ({ ...s, list: [...s.workshops].sort((a, b) => a.sortOrder - b.sortOrder).filter((w) => mode !== "favorites" || saved.get(s.shop.id)?.has(w.id)) })),
+    [shops, mode, saved],
+  );
+  // The order of the Workshops page: by what the guest likes, the shops taking turns. The seed is the day mixed with the guest, taken once for the visit (so the page does not reshuffle
+  // while the guest searches or hearts a workshop): it changes every day and differs from guest to guest. The other pages keep the order shop by shop.
+  const [visitAt] = useState(() => Date.now());
+  const seed = Math.floor(visitAt / 86_400_000) + hashText(profile.id);
+  const favoriteCategories = profile.account.favoriteCategories;
+  // What the search leaves, in that order (the order is made on all the workshops, so a search does not change it).
+  const cards = useMemo(() => {
+    const flat = pool.flatMap((s) => s.list.map((w) => ({ s, w, id: w.id, shopId: s.shop.id, categories: w.categories ?? [] })));
+    return (mode === "all" ? rankWorkshops(flat, favoriteCategories, seed) : flat).filter(({ s, w }) => workshopMatches(w, s.shop.name, query));
+  }, [pool, mode, favoriteCategories, seed, query]);
+  const total = cards.length;
   const nothingToShow = pool.every((s) => s.list.length === 0); // no workshop listed, or no favorite yet
 
   return (
@@ -69,23 +83,22 @@ export function CustomerWorkshops({ shops, mode = "all" }: { shops: ListedShop[]
           <p role="status" className="text-sm text-muted-foreground" data-testid="customer-workshops-count">{t("workshops.count", { count: total })}</p>
           {total === 0 ? <p className="text-sm" data-testid="customer-workshops-none">{t("workshops.noResults", { query: query.trim() })}</p> : null}
           <ul id="cw-list" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" data-testid="customer-workshop-list">
-            {found.map(({ shop, theme, workshops, sessions, promotions, bookable, list }) => {
+            {cards.map(({ s: { shop, theme, workshops, sessions, promotions, bookable, list }, w }) => {
               const base = `/sites/${shop.slug}`;
               const ctx: RenderContext = {
                 locale, workshops: list, promotions, reportHref: `${base}/report`, privacyHref: "#privacy",
                 shop: { name: shop.name, defaultLocale: shop.defaultLocale, enabledLocales: shop.enabledLocales, timezone: shop.timezone, currency: shop.currency },
               };
               return (
-                // One popup (with all the workshops of the shop, whatever the search leaves) and one favorites list for the cards of a shop; they add no element of
-                // their own, so the cards stay items of the one list.
+                // Each card sits in the popup (with all the workshops of its shop) and the favorites of ITS shop, so cards of different shops can follow each other in the one
+                // list; they add no element of their own, so the cards stay items of the list.
                 <BookingProvider
-                  key={shop.id} shop={{ name: shop.name, slug: shop.slug, timezone: shop.timezone, currency: shop.currency, defaultLocale: shop.defaultLocale }}
+                  key={`${shop.id}:${w.id}`} shop={{ name: shop.name, slug: shop.slug, timezone: shop.timezone, currency: shop.currency, defaultLocale: shop.defaultLocale }}
                   workshops={workshops} sessions={sessions} theme={theme} locale={locale} basePath={base} promotions={promotions} preview={!bookable}
                   guest={{ fullName: profile.fullName, email: profile.email, phone: profile.phone, country: profile.account.country }}
                 >
                   <FavoritesProvider slug={shop.slug} shopName={shop.name} theme={theme}>
-                    {list.map((w) => (
-                      // The theme of the shop (colours, radius, font) as on its landing page; the card sizes itself from this box.
+                      {/* The theme of the shop (colours, radius, font) as on its landing page; the card sizes itself from this box. */}
                       <li key={w.id} style={themeStyle(theme)} lang={locale} className={cn("@container h-full overflow-hidden rounded-xl", siteFontClass(theme.font))} data-testid={`customer-workshop-${w.id}`}>
                         <WorkshopCard
                           w={w} ctx={ctx} as="div" className="flex h-full flex-col" showBook={mode !== "affiliate"}
@@ -105,7 +118,6 @@ export function CustomerWorkshops({ shops, mode = "all" }: { shops: ListedShop[]
                           )}
                         />
                       </li>
-                    ))}
                   </FavoritesProvider>
                 </BookingProvider>
               );

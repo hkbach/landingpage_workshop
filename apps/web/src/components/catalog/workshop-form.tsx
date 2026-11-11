@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { z } from "zod";
 import { ImageOff, MapPin, Plus, Trash2, TriangleAlert } from "lucide-react";
 import {
-  LOCALES, WORKSHOP_ADDRESS_MAX, WORKSHOP_ADDRESS_NOTE_MAX, WORKSHOP_CATEGORIES, formatMoney, mapsSearchUrl, minorDigits, missingLocales, trimDeep,
+  LOCALES, WORKSHOP_ADDRESS_MAX, WORKSHOP_ADDRESS_NOTE_MAX, WORKSHOP_CATEGORIES, WORKSHOP_CATEGORY_MAX, WORKSHOP_CATEGORY_MIN, formatMoney, mapsSearchUrl, minorDigits, missingLocales, toggleCategory, trimDeep,
   type Locale, type Localized, type WorkshopCategory, type WorkshopStatus,
 } from "@workshop/shared";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Field } from "@/components/ops/field";
-import { NativeSelect } from "@/components/ops/native-select";
+import { cn } from "@/lib/utils";
 import { WorkshopStatusBadge } from "./workshop-status-badge";
 import { issuesToErrors } from "@/components/ops/validation";
 import type { Workshop } from "@/lib/types";
@@ -37,8 +37,8 @@ interface Draft {
   includes: Partial<Record<Locale, string>>; // one item per line
   price: string; durationMinutes: string; defaultCapacity: string; maxPerBooking: string; sortOrder: string;
   coverUrl: string; galleryUrls: string[]; status: WorkshopStatus;
-  /** The field of the workshop, "" until the owner picks one. */
-  category: WorkshopCategory | "";
+  /** The categories of the workshop: 1 to 3, none until the owner picks them. */
+  categories: WorkshopCategory[];
   /** Where it takes place (one line); empty = the address of the shop. */
   address: string;
   /** A note that goes with the address (the floor, the entrance, where to park...). */
@@ -55,7 +55,7 @@ function toDraft(w: Workshop | undefined, currency: string): Draft {
     includes: Object.fromEntries(LOCALES.map((l) => [l, (w?.includes?.[l] ?? []).join("\n")])),
     price: w ? String(w.priceAmount / 10 ** digits) : "", durationMinutes: String(w?.durationMinutes ?? 120),
     defaultCapacity: String(w?.defaultCapacity ?? 8), maxPerBooking: String(w?.maxPerBooking ?? 6), sortOrder: String(w?.sortOrder ?? 1),
-    coverUrl: w?.coverUrl ?? "", galleryUrls: [...(w?.galleryUrls ?? [])], status: w?.status ?? "DRAFT", category: w?.category ?? "", address: w?.address ?? "", addressNote: w?.addressNote ?? "",
+    coverUrl: w?.coverUrl ?? "", galleryUrls: [...(w?.galleryUrls ?? [])], status: w?.status ?? "DRAFT", categories: [...(w?.categories ?? [])], address: w?.address ?? "", addressNote: w?.addressNote ?? "",
   };
 }
 
@@ -95,7 +95,7 @@ export function WorkshopForm({
     e.preventDefault();
     const schema = z.object({
       titleDefault: z.string().trim().min(1, "errors.titleRequired"),
-      category: z.enum(WORKSHOP_CATEGORIES, "errors.categoryRequired"),
+      categories: z.array(z.enum(WORKSHOP_CATEGORIES, "errors.categoriesRequired"), "errors.categoriesRequired").min(WORKSHOP_CATEGORY_MIN, "errors.categoriesRequired").max(WORKSHOP_CATEGORY_MAX, "errors.categoriesRequired"),
       address: z.string().trim().max(WORKSHOP_ADDRESS_MAX, "errors.addressTooLong"),
       addressNote: z.string().trim().max(WORKSHOP_ADDRESS_NOTE_MAX, "errors.addressNoteTooLong"),
       price: z.number("errors.priceInvalid").min(0, "errors.priceInvalid"),
@@ -110,7 +110,7 @@ export function WorkshopForm({
         ctx.addIssue({ code: "custom", path: ["maxPerBooking"], message: "errors.maxPerBookingRange" });
     });
     const parsed = schema.safeParse({
-      titleDefault: d.title[shop.defaultLocale] ?? "", category: d.category, address: d.address, addressNote: d.addressNote, price: num(d.price), durationMinutes: num(d.durationMinutes),
+      titleDefault: d.title[shop.defaultLocale] ?? "", categories: d.categories, address: d.address, addressNote: d.addressNote, price: num(d.price), durationMinutes: num(d.durationMinutes),
       defaultCapacity: num(d.defaultCapacity), maxPerBooking: num(d.maxPerBooking), sortOrder: num(d.sortOrder),
       coverUrl: d.coverUrl, galleryUrls: d.galleryUrls.filter((u) => u.trim() !== ""),
     });
@@ -219,14 +219,29 @@ export function WorkshopForm({
       <Card>
         <CardHeader><CardTitle>{t("form.pricing")}</CardTitle></CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
-          <Field id="ws-category" label={t("form.category")} required error={err("category")} hint={t("form.categoryHint")} className="sm:col-span-2">
-            {(p) => (
-              <NativeSelect
-                {...p} value={d.category} onChange={(e) => setField("category", e.target.value as WorkshopCategory | "")}
-                options={[{ value: "", label: t("form.categoryPlaceholder") }, ...WORKSHOP_CATEGORIES.map((c) => ({ value: c, label: t(`categories.${c}`) }))]}
-              />
-            )}
-          </Field>
+          {/* 1 to 3 categories, as chips like the ones a guest picks when they register. A fourth one is not taken: one has to be taken out first. */}
+          <fieldset className="grid content-start gap-2 sm:col-span-2" aria-describedby="ws-categories-hint" data-testid="workshop-categories">
+            <legend className="text-sm font-medium">{t("form.categories")} <span aria-hidden className="text-destructive">*</span></legend>
+            <p id="ws-categories-hint" className="text-xs text-muted-foreground">{t("form.categoriesHint")}</p>
+            <div className="flex flex-wrap gap-2">
+              {WORKSHOP_CATEGORIES.map((c) => {
+                const on = d.categories.includes(c);
+                const full = !on && d.categories.length >= WORKSHOP_CATEGORY_MAX;
+                return (
+                  <label
+                    key={c}
+                    className={cn("relative inline-flex min-h-9 cursor-pointer items-center rounded-full border px-3 py-1 text-sm has-[:focus-visible]:ring-3 has-[:focus-visible]:ring-ring/50",
+                      on ? "border-foreground bg-foreground text-background" : "bg-background", full && "cursor-not-allowed opacity-50")}
+                  >
+                    <input type="checkbox" className="sr-only" name="ws-category" value={c} checked={on} disabled={full} onChange={() => setField("categories", toggleCategory(d.categories, c, WORKSHOP_CATEGORY_MAX))} />
+                    {t(`categories.${c}`)}
+                  </label>
+                );
+              })}
+            </div>
+            <p className="text-xs text-muted-foreground" aria-live="polite">{t("form.categoriesCount", { count: d.categories.length, max: WORKSHOP_CATEGORY_MAX })}</p>
+            {err("categories") ? <p role="alert" id="ws-categories-error" className="text-xs text-destructive">{err("categories")}</p> : null}
+          </fieldset>
           <Field id="ws-price" label={t("form.price", { currency: shop.currency })} required error={err("price")}
             hint={Number.isFinite(priceMinor) ? t("form.pricePreview", { value: formatMoney(priceMinor, shop.currency, locale) }) : undefined}>
             {(p) => <Input {...p} inputMode="decimal" value={d.price} onChange={(e) => setField("price", e.target.value)} />}

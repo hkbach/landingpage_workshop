@@ -21,3 +21,4 @@ export * from "./customer-profile";
 export * from "./workshop-categories";
 export * from "./workshop-address";
 export * from "./password-rules";
+export * from "./workshop-ranking";

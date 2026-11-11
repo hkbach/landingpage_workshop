@@ -88,7 +88,6 @@
     "maxPerBookingHint": "单次预订中每位客人最多可订的座位数。至少为 1，且不能超过默认容量。",
     "sortOrder": "排序",
     "sortOrderHint": "决定工作坊在列表和落地页中的显示顺序。数字越小越靠前。",
-    "category": "行业类别",
     "images": "图片",
     "imagesHint": "一张封面图和最多 {max} 张图库图片。",
     "uploaderStub": "图片上传暂不可用。目前请在下方粘贴图片 URL。",
@@ -108,15 +107,16 @@
     "fixErrors": "请修正高亮显示的字段。",
     "cancel": "取消",
     "statusFromList": "请在工作坊列表中使用“启用 / 停用”来更改。",
-    "categoryPlaceholder": "选择类别",
-    "categoryHint": "工作坊所属的领域，用于统计。",
     "location": "地点",
     "address": "地址",
     "addressHint": "工作坊举办的地点。留空则使用商店地址（{address}）。",
     "addressNote": "地址备注",
     "addressNoteHint": "与地址一起显示给客人，例如楼层、入口或停车位置。",
     "openMap": "Google Maps",
-    "openMapLabel": "在 Google 地图中打开该地址（新标签页）"
+    "openMapLabel": "在 Google 地图中打开该地址（新标签页）",
+    "categories": "类别",
+    "categoriesHint": "请选择工作坊所属的 1 至 3 个类别。喜欢这些类别的客人会优先看到该工作坊。",
+    "categoriesCount": "已选 {count}/{max}"
   },
   "errors": {
     "titleRequired": "必须填写默认语言的标题。",
@@ -137,9 +137,9 @@
     "capacityBelowReserved": "容量不能低于已预订的 {reserved} 个座位。",
     "cutoffInvalid": "请输入 0 到 10080 之间的整数。",
     "pastStart": "开始时间不能是过去。请选择更晚的日期和时间。",
-    "categoryRequired": "请选择类别。",
     "addressTooLong": "地址最多 {max} 个字符。",
-    "addressNoteTooLong": "备注最多 {max} 个字符。"
+    "addressNoteTooLong": "备注最多 {max} 个字符。",
+    "categoriesRequired": "请至少选择 1 个类别（最多 3 个）。"
   },
   "rules": {
     "title": "排期规则",

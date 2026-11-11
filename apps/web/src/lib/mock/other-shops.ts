@@ -43,10 +43,10 @@ function landing(shop: Shop, info: PageInfo): { content: PageContent; theme: Pag
 }
 
 /** A workshop with the common fields filled in. */
-function workshop(w: Pick<Workshop, "id" | "title" | "shortDescription" | "durationMinutes" | "priceAmount" | "currency" | "defaultCapacity" | "maxPerBooking" | "status" | "sortOrder"> & Partial<Workshop>, seed: string, createdDaysAgo: number, category: WorkshopCategory, rating?: Workshop["rating"]): Workshop {
+function workshop(w: Pick<Workshop, "id" | "title" | "shortDescription" | "durationMinutes" | "priceAmount" | "currency" | "defaultCapacity" | "maxPerBooking" | "status" | "sortOrder"> & Partial<Workshop>, seed: string, createdDaysAgo: number, categories: WorkshopCategory[], rating?: Workshop["rating"]): Workshop {
   return {
     description: { en: "A hands-on class led by our team, in a small group, with everything included." }, includes: { en: ["All ingredients", "Recipe card", "A tasting"] }, notes: {},
-    coverUrl: photo(seed, 1200, 800), galleryUrls: [photo(`${seed}-1`, 800, 600)], createdAt: new Date(Date.now() - createdDaysAgo * DAY).toISOString(), category, ...(rating ? { rating } : {}), ...w,
+    coverUrl: photo(seed, 1200, 800), galleryUrls: [photo(`${seed}-1`, 800, 600)], createdAt: new Date(Date.now() - createdDaysAgo * DAY).toISOString(), categories, ...(rating ? { rating } : {}), ...w,
   };
 }
 
@@ -67,19 +67,19 @@ const brewWorkshops: Workshop[] = [
   workshop({
     id: "ws-b1", title: { en: "Latte Art Basics", vi: "Latte art cơ bản", ko: "라떼 아트 기초" }, shortDescription: { en: "Pour your first rosetta and heart.", vi: "Rót hình trái tim và lá đầu tiên của bạn.", ko: "첫 로제타와 하트를 부어 보세요." },
     durationMinutes: 90, priceAmount: 450_000, currency: "VND", defaultCapacity: 6, maxPerBooking: 4, status: "ACTIVE", sortOrder: 1,
-  }, "latte", 44, "COFFEE_TEA", { average: 4.7, count: 63 }),
+  }, "latte", 44, ["COFFEE_TEA", "DRINKS"], { average: 4.7, count: 63 }),
   workshop({
     id: "ws-b2", title: { en: "Home Barista Essentials", vi: "Barista tại nhà" }, shortDescription: { en: "Espresso, milk and brewing methods you can repeat at home." },
     durationMinutes: 150, priceAmount: 800_000, currency: "VND", defaultCapacity: 8, maxPerBooking: 4, status: "ACTIVE", sortOrder: 2,
-  }, "barista", 40, "COFFEE_TEA", { average: 4.4, count: 41 }),
+  }, "barista", 40, ["COFFEE_TEA"], { average: 4.4, count: 41 }),
   workshop({
     id: "ws-b3", address: "The Roastery, 41 Nguyen Van Troi, Phu Nhuan District, Ho Chi Minh City", addressNote: "Look for the red brick building; the roastery is at the back.", title: { en: "Cold Brew & Cupping", vi: "Cold brew và thử vị cà phê", ko: "콜드브루와 커핑" }, shortDescription: { en: "Taste five origins side by side and brew a cold brew to take home." },
     durationMinutes: 120, priceAmount: 550_000, currency: "VND", defaultCapacity: 10, maxPerBooking: 6, status: "ACTIVE", sortOrder: 3,
-  }, "coldbrew", 30, "COFFEE_TEA", { average: 4.6, count: 28 }),
+  }, "coldbrew", 30, ["COFFEE_TEA", "DRINKS"], { average: 4.6, count: 28 }),
   workshop({
     id: "ws-b4", title: { en: "Coffee Roasting Day" }, shortDescription: { en: "Roast a batch of beans from green to cup." }, description: { en: "Draft." },
     durationMinutes: 180, priceAmount: 950_000, currency: "VND", defaultCapacity: 6, maxPerBooking: 3, status: "DRAFT", sortOrder: 4,
-  }, "roasting", 5, "COFFEE_TEA"),
+  }, "roasting", 5, ["COFFEE_TEA", "COOKING"]),
 ];
 const brewAt = localAt(7);
 const brewSessions: Session[] = [
@@ -103,19 +103,19 @@ const greenWorkshops: Workshop[] = [
   workshop({
     id: "ws-g1", title: { en: "Plant-based Ramen", ja: "ヴィーガンラーメン", zh: "纯素拉面" }, shortDescription: { en: "Build a rich broth and hand-pull noodles without any animal products.", ja: "動物性食材を使わず、濃厚なスープと手打ち麺を作ります。", zh: "不使用任何动物性食材，制作浓郁汤底和手工面条。" },
     durationMinutes: 150, priceAmount: 6_500, currency: "USD", defaultCapacity: 8, maxPerBooking: 4, status: "ACTIVE", sortOrder: 1,
-  }, "ramen", 68, "COOKING", { average: 4.9, count: 92 }),
+  }, "ramen", 68, ["COOKING"], { average: 4.9, count: 92 }),
   workshop({
     id: "ws-g2", address: "Community Kitchen, 5 Eng Hoon Street, Singapore", addressNote: "Take the lift to level 2.", title: { en: "Vegan Dumplings Night", ja: "ヴィーガン餃子ナイト", zh: "纯素饺子之夜" }, shortDescription: { en: "Fold and pan-fry three kinds of dumplings, then share the table." },
     durationMinutes: 120, priceAmount: 4_800, currency: "USD", defaultCapacity: 12, maxPerBooking: 6, status: "ACTIVE", sortOrder: 2,
-  }, "dumplings", 60, "COOKING", { average: 3.8, count: 35 }),
+  }, "dumplings", 60, ["COOKING", "WELLNESS"], { average: 3.8, count: 35 }),
   workshop({
     id: "ws-g3", title: { en: "Fermentation 101: Kimchi & Miso", ja: "発酵入門：キムチと味噌", zh: "发酵入门：泡菜与味噌" }, shortDescription: { en: "Start a jar of kimchi and a batch of miso to take home.", zh: "制作一罐泡菜和一份味噌带回家。" },
     durationMinutes: 180, priceAmount: 7_200, currency: "USD", defaultCapacity: 6, maxPerBooking: 3, status: "ACTIVE", sortOrder: 3,
-  }, "ferment", 50, "COOKING"),
+  }, "ferment", 50, ["WELLNESS", "COOKING"]),
   workshop({
     id: "ws-g4", title: { en: "Dessert Without Dairy" }, shortDescription: { en: "Creamy desserts made with nuts, oats and coconut." }, description: { en: "Draft." },
     durationMinutes: 120, priceAmount: 5_500, currency: "USD", defaultCapacity: 8, maxPerBooking: 4, status: "DRAFT", sortOrder: 4,
-  }, "dessert", 4, "BAKING"),
+  }, "dessert", 4, ["BAKING"]),
 ];
 const greenAt = localAt(8);
 const greenSessions: Session[] = [

@@ -88,7 +88,6 @@
     "maxPerBookingHint": "The most seats one guest can book in a single booking. At least 1, and not more than the default capacity.",
     "sortOrder": "Sort order",
     "sortOrderHint": "Sets the order of your workshops in the list and on your landing page. A smaller number comes first.",
-    "category": "Category",
     "images": "Images",
     "imagesHint": "One cover image and up to {max} gallery images.",
     "uploaderStub": "Image upload is not available yet. Paste image URLs below for now.",
@@ -108,15 +107,16 @@
     "fixErrors": "Please fix the highlighted fields.",
     "cancel": "Cancel",
     "statusFromList": "Change it with Activate / Deactivate in the workshop list.",
-    "categoryPlaceholder": "Choose a category",
-    "categoryHint": "The field your workshop belongs to. Used for statistics.",
     "location": "Location",
     "address": "Address",
     "addressHint": "Where the workshop takes place. Leave it empty to use the address of the shop ({address}).",
     "addressNote": "Note about the address",
     "addressNoteHint": "Shown to guests with the address, for example the floor, the entrance or where to park.",
     "openMap": "Google Maps",
-    "openMapLabel": "Open the address in Google Maps (opens in a new tab)"
+    "openMapLabel": "Open the address in Google Maps (opens in a new tab)",
+    "categories": "Categories",
+    "categoriesHint": "Choose 1 to 3 categories your workshop belongs to. Guests who like them are shown the workshop first.",
+    "categoriesCount": "{count} of {max} chosen"
   },
   "errors": {
     "titleRequired": "A title in the default language is required.",
@@ -137,9 +137,9 @@
     "capacityBelowReserved": "Capacity cannot be lower than the {reserved} seats already reserved.",
     "cutoffInvalid": "Enter a whole number between 0 and 10080.",
     "pastStart": "The start cannot be in the past. Choose a later date and time.",
-    "categoryRequired": "Choose a category.",
     "addressTooLong": "The address can have at most {max} characters.",
-    "addressNoteTooLong": "The note can have at most {max} characters."
+    "addressNoteTooLong": "The note can have at most {max} characters.",
+    "categoriesRequired": "Choose at least 1 category (up to 3)."
   },
   "rules": {
     "title": "Schedule rules",

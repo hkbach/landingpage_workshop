@@ -23,8 +23,8 @@ export interface Workshop {
   durationMinutes: number; priceAmount: number; currency: string;
   defaultCapacity: number; maxPerBooking: number; coverUrl: string; galleryUrls: string[];
   status: WorkshopStatus; sortOrder: number;
-  /** The field the workshop belongs to, chosen by the shop owner (for statistics). */
-  category?: WorkshopCategory;
+  /** The fields the workshop belongs to: 1 to 3, chosen by the shop owner (required; for statistics and to show the workshop first to the guests who like them). */
+  categories: WorkshopCategory[];
   /** Where the workshop takes place, as the shop owner wrote it. Missing or empty: it is held at the address of the shop. Guests see the address that applies (see workshopAddress). */
   address?: string;
   /** A note that goes with the address (the floor, the entrance, where to park...), written by the shop owner. Shown to guests with the address, whichever address applies. */

@@ -88,7 +88,6 @@
     "maxPerBookingHint": "1回の予約で1人が予約できる最大席数です。1以上で、デフォルト定員を超えることはできません。",
     "sortOrder": "表示順",
     "sortOrderHint": "一覧とランディングページでのワークショップの表示順を決めます。数字が小さいほど先に表示されます。",
-    "category": "分野",
     "images": "画像",
     "imagesHint": "カバー画像1枚と、最大{max}枚のギャラリー画像。",
     "uploaderStub": "画像のアップロードはまだ利用できません。当面は下に画像のURLを貼り付けてください。",
@@ -108,15 +107,16 @@
     "fixErrors": "強調表示された項目を修正してください。",
     "cancel": "キャンセル",
     "statusFromList": "ワークショップ一覧の「有効にする / 無効にする」で変更できます。",
-    "categoryPlaceholder": "分野を選択",
-    "categoryHint": "ワークショップが属する分野です。統計に使われます。",
     "location": "開催場所",
     "address": "住所",
     "addressHint": "ワークショップを開催する場所です。空欄の場合はショップの住所（{address}）を使います。",
     "addressNote": "住所のメモ",
     "addressNoteHint": "住所と一緒にお客様に表示されます。例：階数、入口、駐車場所。",
     "openMap": "Google Maps",
-    "openMapLabel": "Google マップで住所を開く（新しいタブで開きます）"
+    "openMapLabel": "Google マップで住所を開く（新しいタブで開きます）",
+    "categories": "カテゴリ",
+    "categoriesHint": "ワークショップが属するカテゴリを1〜3個選んでください。そのカテゴリが好きなゲストに優先して表示されます。",
+    "categoriesCount": "{max}個中{count}個を選択"
   },
   "errors": {
     "titleRequired": "デフォルト言語のタイトルは必須です。",
@@ -137,9 +137,9 @@
     "capacityBelowReserved": "定員は、すでに予約済みの{reserved}席を下回ることはできません。",
     "cutoffInvalid": "0〜10080の整数を入力してください。",
     "pastStart": "開始日時は過去にできません。より後の日付と時刻を選択してください。",
-    "categoryRequired": "分野を選択してください。",
     "addressTooLong": "住所は{max}文字以内で入力してください。",
-    "addressNoteTooLong": "メモは{max}文字以内で入力してください。"
+    "addressNoteTooLong": "メモは{max}文字以内で入力してください。",
+    "categoriesRequired": "カテゴリを1個以上（最大3個）選んでください。"
   },
   "rules": {
     "title": "スケジュールルール",

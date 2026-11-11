@@ -88,7 +88,6 @@
     "maxPerBookingHint": "Số chỗ tối đa một khách được đặt trong một lần đặt. Tối thiểu 1 và không vượt quá sức chứa mặc định.",
     "sortOrder": "Thứ tự sắp xếp",
     "sortOrderHint": "Quyết định thứ tự workshop trong danh sách và trên landing page. Số nhỏ hơn hiển thị trước.",
-    "category": "Ngành nghề",
     "images": "Hình ảnh",
     "imagesHint": "Một ảnh bìa và tối đa {max} ảnh trong thư viện.",
     "uploaderStub": "Chưa hỗ trợ tải ảnh lên. Tạm thời hãy dán URL ảnh bên dưới.",
@@ -108,15 +107,16 @@
     "fixErrors": "Vui lòng sửa các trường được đánh dấu.",
     "cancel": "Hủy",
     "statusFromList": "Đổi bằng nút Kích hoạt / Ngừng kích hoạt trong danh sách workshop.",
-    "categoryPlaceholder": "Chọn ngành nghề",
-    "categoryHint": "Lĩnh vực mà workshop thuộc về. Dùng để thống kê.",
     "location": "Địa điểm",
     "address": "Địa chỉ",
     "addressHint": "Nơi tổ chức workshop. Để trống nếu dùng địa chỉ của shop ({address}).",
     "addressNote": "Ghi chú cho địa chỉ",
     "addressNoteHint": "Hiển thị cho khách cùng với địa chỉ, ví dụ tầng, lối vào hoặc nơi gửi xe.",
     "openMap": "Google Maps",
-    "openMapLabel": "Mở địa chỉ trên Google Maps (mở tab mới)"
+    "openMapLabel": "Mở địa chỉ trên Google Maps (mở tab mới)",
+    "categories": "Danh mục (ngành nghề)",
+    "categoriesHint": "Chọn từ 1 đến 3 danh mục mà workshop thuộc về. Khách yêu thích các danh mục này sẽ thấy workshop ở vị trí ưu tiên.",
+    "categoriesCount": "Đã chọn {count}/{max}"
   },
   "errors": {
     "titleRequired": "Bắt buộc nhập tiêu đề bằng ngôn ngữ mặc định.",
@@ -137,9 +137,9 @@
     "capacityBelowReserved": "Sức chứa không được thấp hơn {reserved} chỗ đã đặt.",
     "cutoffInvalid": "Nhập số nguyên từ 0 đến 10080.",
     "pastStart": "Giờ bắt đầu không được ở quá khứ. Hãy chọn ngày giờ muộn hơn.",
-    "categoryRequired": "Hãy chọn ngành nghề.",
     "addressTooLong": "Địa chỉ tối đa {max} ký tự.",
-    "addressNoteTooLong": "Ghi chú tối đa {max} ký tự."
+    "addressNoteTooLong": "Ghi chú tối đa {max} ký tự.",
+    "categoriesRequired": "Chọn ít nhất 1 danh mục (tối đa 3)."
   },
   "rules": {
     "title": "Quy tắc lịch",

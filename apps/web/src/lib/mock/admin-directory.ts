@@ -36,7 +36,7 @@ export function workshopsWithShop(): { workshop: Workshop; shop: Shop }[] {
 }
 
 export interface AdminWorkshop {
-  id: string; title: string; shopId: string; shopName: string; shopSlug: string; status: WorkshopStatus; category?: string;
+  id: string; title: string; shopId: string; shopName: string; shopSlug: string; status: WorkshopStatus; categories: string[];
   priceAmount: number; currency: string; durationMinutes: number; defaultCapacity: number; maxPerBooking: number; createdAt: string;
   address?: string; addressNote?: string; description: string; rating?: { average: number; count: number };
   sessions: number; bookings: number;
@@ -49,7 +49,7 @@ export function adminWorkshops(q = "", shopId = ""): AdminWorkshop[] {
   return workshopsWithShop()
     .filter(({ workshop, shop }) => (!shopId || shop.id === shopId) && matchesSearch(hay(allTitles(workshop.title), shop.name, shop.slug), q))
     .map(({ workshop: w, shop }) => ({
-      id: w.id, title: titleOf(w.title), shopId: shop.id, shopName: shop.name, shopSlug: shop.slug, status: w.status, ...(w.category ? { category: w.category } : {}),
+      id: w.id, title: titleOf(w.title), shopId: shop.id, shopName: shop.name, shopSlug: shop.slug, status: w.status, categories: w.categories ?? [],
       priceAmount: w.priceAmount, currency: w.currency, durationMinutes: w.durationMinutes, defaultCapacity: w.defaultCapacity, maxPerBooking: w.maxPerBooking, createdAt: w.createdAt,
       ...(w.address ? { address: w.address } : {}), ...(w.addressNote ? { addressNote: w.addressNote } : {}), description: titleOf(w.shortDescription), ...(w.rating ? { rating: w.rating } : {}),
       sessions: sessions.filter((s) => s.workshopId === w.id).length, bookings: bookings.filter((b) => b.workshopId === w.id).length,

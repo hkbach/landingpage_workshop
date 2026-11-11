@@ -51,19 +51,19 @@ export const workshops: Workshop[] = [
     includes: { en: ["All ingredients", "Apron", "Tea and a tasting"] }, notes: { en: "Wear closed shoes and tie back long hair." },
     durationMinutes: 120, priceAmount: 650_000, currency: "VND", defaultCapacity: 8, maxPerBooking: 6,
     coverUrl: "https://picsum.photos/seed/pasta/1200/800", galleryUrls: ["https://picsum.photos/seed/pasta1/800/600", "https://picsum.photos/seed/pasta2/800/600"],
-    status: "ACTIVE", sortOrder: 1, createdAt: at(-120, 9), category: "COOKING", rating: { average: 4.8, count: 126 }, addressNote: "Our kitchen is on the first floor, behind the shop.",
+    status: "ACTIVE", sortOrder: 1, createdAt: at(-120, 9), categories: ["COOKING"], rating: { average: 4.8, count: 126 }, addressNote: "Our kitchen is on the first floor, behind the shop.",
   },
   {
     id: "ws-2", title: { en: "Decorate Your Cupcakes", vi: "Trang trí cupcake" },
     shortDescription: { en: "Frost and decorate a box of cupcakes." }, description: { en: "Pick colours and toppings; take your box home the same day." },
     includes: { en: ["Cupcakes", "Frosting and toppings"] }, notes: {},
     durationMinutes: 90, priceAmount: 400_000, currency: "VND", defaultCapacity: 10, maxPerBooking: 6,
-    coverUrl: "https://picsum.photos/seed/cupcake/1200/800", galleryUrls: [], status: "ACTIVE", sortOrder: 2, createdAt: at(-75, 14), category: "BAKING", rating: { average: 4.5, count: 84 },
+    coverUrl: "https://picsum.photos/seed/cupcake/1200/800", galleryUrls: [], status: "ACTIVE", sortOrder: 2, createdAt: at(-75, 14), categories: ["BAKING"], rating: { average: 4.5, count: 84 },
   },
   {
     id: "ws-3", title: { en: "Sourdough Bread Basics" }, shortDescription: { en: "Feed a starter and shape your first loaf." }, description: { en: "Draft." },
     includes: {}, notes: {}, durationMinutes: 150, priceAmount: 500_000, currency: "VND", defaultCapacity: 6, maxPerBooking: 4,
-    coverUrl: "https://picsum.photos/seed/sourdough/1200/800", galleryUrls: [], status: "DRAFT", sortOrder: 3, createdAt: at(-6, 10.5), category: "BAKING",
+    coverUrl: "https://picsum.photos/seed/sourdough/1200/800", galleryUrls: [], status: "DRAFT", sortOrder: 3, createdAt: at(-6, 10.5), categories: ["BAKING"],
   },
   {
     id: "ws-4", title: { en: "Dim Sum Night", vi: "Đêm dim sum", ko: "딤섬 나이트", ja: "点心ナイト", zh: "点心之夜" },
@@ -72,12 +72,12 @@ export const workshops: Workshop[] = [
     includes: { en: ["Ingredients", "Bamboo steamer", "Tea"] }, notes: { en: "Closed shoes are required in the kitchen." },
     durationMinutes: 180, priceAmount: 700_000, currency: "VND", defaultCapacity: 8, maxPerBooking: 4,
     coverUrl: "https://picsum.photos/seed/dimsum/1200/800", galleryUrls: ["https://picsum.photos/seed/dimsum1/800/600"],
-    status: "ACTIVE", sortOrder: 4, createdAt: at(-40, 11), category: "COOKING", rating: { average: 4.9, count: 57 }, address: "88 Pasteur Street, District 3, Ho Chi Minh City", addressNote: "Second floor: ring the bell of the green door.\nMotorbikes can park on the left of the entrance.",
+    status: "ACTIVE", sortOrder: 4, createdAt: at(-40, 11), categories: ["COOKING"], rating: { average: 4.9, count: 57 }, address: "88 Pasteur Street, District 3, Ho Chi Minh City", addressNote: "Second floor: ring the bell of the green door.\nMotorbikes can park on the left of the entrance.",
   },
   {
     id: "ws-5", title: { en: "Couples Cooking Night" }, shortDescription: { en: "Cook a three-course dinner together." }, description: { en: "Draft." },
     includes: {}, notes: {}, durationMinutes: 150, priceAmount: 900_000, currency: "VND", defaultCapacity: 12, maxPerBooking: 2,
-    coverUrl: "https://picsum.photos/seed/dinner/1200/800", galleryUrls: [], status: "DRAFT", sortOrder: 5, createdAt: at(-2, 15), category: "COOKING", address: "Rooftop Kitchen, 25 Ly Tu Trong, District 1, Ho Chi Minh City",
+    coverUrl: "https://picsum.photos/seed/dinner/1200/800", galleryUrls: [], status: "DRAFT", sortOrder: 5, createdAt: at(-2, 15), categories: ["COOKING", "DRINKS"], address: "Rooftop Kitchen, 25 Ly Tu Trong, District 1, Ho Chi Minh City",
   },
 ];
 
