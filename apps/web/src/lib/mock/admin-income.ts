@@ -4,7 +4,7 @@
 // The sum of the maintenance and the service fee is called the income of the admin (`fees` here and in the API):
 //   profit of the platform = original price x maintenance + original price x service - original price x affiliate fee (the last one only for bookings that came through an affiliate link)
 //                            - the referral bonus (once for each invited friend: the bonus rate of the shop x the original price of the friend's first paid booking).
-import { dayKeyOf, feeBase, feeOf, isDayKey, ledgerFromPayments, type LedgerRow } from "@workshop/shared";
+import { dayKeyOf, feeBase, feeOf, isDayKey, ledgerFromPayments, monthKey, type LedgerRow } from "@workshop/shared";
 import { liveBookings } from "./booking-store";
 import { currentShop } from "./data";
 import { getFeeRates, getReferralBps } from "./fee-rates-store";
@@ -99,4 +99,52 @@ export function referralEarnings(from?: string, to?: string): Map<string, { book
   }
   for (const r of listReferrals()) if (!out.has(r.id)) out.set(r.id, { bookings: 0, fee: 0 });
   return out;
+}
+
+// ---- the detail of the income of one shop: every payment with its fees, and the statement of each month -------------------------------------------------------------------
+
+/** One payment recorded by the shop, with what the platform charged on it. A negative amount is a REVERSAL of a payment that was recorded by mistake (the shop undid it with Unpaid): it gives its fees back. */
+export interface IncomeLine {
+  id: string; bookingCode: string; occurredAt: string; kind: "PAYMENT" | "REVERSAL"; currency: string;
+  /** What the guest paid (signed), and the original price it is a part of: every fee is a percentage of this. */
+  amount: number; basePrice: number;
+  maintenanceFee: number; serviceFee: number;
+  /** The affiliate fee owed for this payment (0 when the booking did not come through a link). */
+  referralFee: number; referred: boolean;
+  /** maintenanceFee + serviceFee - referralFee. */
+  profit: number;
+}
+
+/** The statement of one month (the month of the shop): what the system closes at the end of the month, and what the shop owes the platform (maintenance + service fees). */
+export interface MonthStatement {
+  month: string; payments: number; income: number; basePrice: number; maintenanceFee: number; serviceFee: number;
+  /** maintenanceFee + serviceFee: the amount of the invoice the platform sends the shop for the month (sending the invoices is built later). */
+  fees: number; referralFee: number; inviteBonus: number; profit: number;
+}
+
+export interface ShopIncomeDetail { shopId: string; shopName: string; currency: string; timezone: string; lines: IncomeLine[]; months: MonthStatement[] }
+
+/** The payments of a shop in the days asked for (newest first) and the statement of each month; null for a shop that does not exist. */
+export function shopIncomeDetail(shopId: string, from?: string, to?: string): ShopIncomeDetail | null {
+  const shop = liveShops().find((s) => s.id === shopId);
+  if (!shop) return null;
+  const referred = referredCodes();
+  const bps = getReferralBps(shop.id);
+  const lines = shopRows(shop.id, shop.timezone, from, to)
+    .map((r): IncomeLine => {
+      const basePrice = feeBase(r.amount, r.price);
+      const isReferred = referred.has(r.bookingCode);
+      const referralFee = isReferred ? feeOf(basePrice, bps) : 0;
+      return { id: r.id, bookingCode: r.bookingCode, occurredAt: r.occurredAt, kind: r.amount < 0 ? "REVERSAL" : "PAYMENT", currency: r.currency, amount: r.amount, basePrice, maintenanceFee: r.maintenanceFee, serviceFee: r.serviceFee, referralFee, referred: isReferred, profit: r.maintenanceFee + r.serviceFee - referralFee };
+    })
+    .sort((a, b) => b.occurredAt.localeCompare(a.occurredAt) || a.id.localeCompare(b.id));
+  const byMonth = new Map<string, MonthStatement>();
+  const month = (m: string): MonthStatement => { let x = byMonth.get(m); if (!x) { x = { month: m, payments: 0, income: 0, basePrice: 0, maintenanceFee: 0, serviceFee: 0, fees: 0, referralFee: 0, inviteBonus: 0, profit: 0 }; byMonth.set(m, x); } return x; };
+  for (const l of lines) {
+    const x = month(monthKey(l.occurredAt, shop.timezone));
+    x.payments += 1; x.income += l.amount; x.basePrice += l.basePrice; x.maintenanceFee += l.maintenanceFee; x.serviceFee += l.serviceFee; x.referralFee += l.referralFee;
+  }
+  for (const b of inviteBonuses().filter((b) => b.shopId === shop.id && (!from || dayKeyOf(b.paidAt, shop.timezone) >= from) && (!to || dayKeyOf(b.paidAt, shop.timezone) <= to))) month(monthKey(b.paidAt, shop.timezone)).inviteBonus += b.amount;
+  const months = [...byMonth.values()].map((m) => ({ ...m, fees: m.maintenanceFee + m.serviceFee, profit: m.maintenanceFee + m.serviceFee - m.referralFee - m.inviteBonus })).sort((a, b) => b.month.localeCompare(a.month));
+  return { shopId: shop.id, shopName: shop.name, currency: shop.currency, timezone: shop.timezone, lines, months };
 }

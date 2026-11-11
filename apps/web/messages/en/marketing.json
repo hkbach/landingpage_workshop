@@ -65,7 +65,7 @@
       },
       "payments": {
         "title": "Know who has paid",
-        "body": "Record cash, card and transfer payments and refunds on every booking, and see your income at a glance."
+        "body": "Record cash, card and transfer payments on every booking, and see your income at a glance."
       },
       "guests": {
         "title": "Guests who come back",
@@ -139,7 +139,7 @@
       },
       "q5": {
         "q": "How do I keep track of payments?",
-        "a": "You record each payment (cash, card or bank transfer) and any refund on the booking, so you always know who has paid."
+        "a": "You record each payment (cash, card or bank transfer) on the booking, so you always know who has paid."
       }
     }
   },

@@ -4,6 +4,8 @@
 // TODO(api): GET /admin/{shops,workshops,bookings,customers,sessions,landing-pages} with the same filters, page and pageSize, SUPER_ADMIN only.
 import { getCustomDomain } from "./shop-domain-store";
 import { contactMessages, type ContactMessage } from "./contact-store";
+import { allPromotions, promotionHold, shopToday } from "./promotion-store";
+import { listMedia } from "./media-store";
 import { deliveryOf, outboxEmails } from "./outbox-store";
 import { closeCount, closeIfEnded, SESSION_STATUSES, type OrgStatus, type SessionStatus, type WorkshopStatus } from "@workshop/shared";
 import { listAccounts, type Account } from "./accounts-store";
@@ -347,4 +349,73 @@ export function adminEmails(q = "", type = "", status = ""): AdminEmail[] {
     })
     .filter((e) => (!type || e.type === type) && (!status || e.status === status) && matchesSearch(hay(e.to, e.subject, e.type), q))
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+
+// ---- vouchers (the promotions of the shops) ----
+
+export interface AdminVoucher {
+  id: string; code: string; title: string; shopId: string; shopName: string; discountType: "PERCENT" | "FIXED_AMOUNT"; discountValue: number; currency: string;
+  startDate: string; endDate: string; appliesTo: "ALL" | "SELECTED"; workshops: number; stacking: string;
+  /** RUNNING / SCHEDULED / PAUSED / EXPIRED, as the shop owner sees it. */
+  status: "ACTIVE" | "SCHEDULED" | "PAUSED" | "EXPIRED";
+  /** How many bookings used it and how much it took off in all. */
+  bookings: number; discountTotal: number;
+  /** The reason when an administrator paused it, and when. */
+  heldReason: string; heldAt: string;
+}
+
+/** Search: the code, the title (every language) or the shop; filter: the status. The mock keeps the promotions of the demo shop only. */
+export function adminVouchers(q = "", status = ""): AdminVoucher[] {
+  const shop = liveShops().find((s) => s.id === currentShop.id)!;
+  const today = shopToday();
+  const used = liveBookings().filter((b) => b.status !== "CANCELLED");
+  return allPromotions()
+    .map((p): AdminVoucher => {
+      const bookings = used.filter((b) => b.promotionIds?.includes(p.id));
+      const hold = promotionHold(p.id);
+      const st = p.enabled ? (p.endDate < today ? "EXPIRED" : p.startDate > today ? "SCHEDULED" : "ACTIVE") : (p.endDate < today ? "EXPIRED" : "PAUSED");
+      return {
+        id: p.id, code: p.code, title: titleOf(p.title), shopId: shop.id, shopName: shop.name, discountType: p.discountType, discountValue: p.discountValue, currency: shop.currency, startDate: p.startDate, endDate: p.endDate,
+        appliesTo: p.appliesTo, workshops: p.workshopIds.length, stacking: p.stacking, status: st, bookings: bookings.length, discountTotal: bookings.reduce((n, b) => n + (b.discountAmount ?? 0), 0), heldReason: hold?.reason ?? "", heldAt: hold?.at ?? "",
+      };
+    })
+    .filter((v) => (!status || v.status === status) && matchesSearch(hay(v.code, v.title, v.shopName, ...allPromotions().filter((p) => p.id === v.id).map((p) => allTitles(p.title))), q))
+    .sort((a, b) => b.startDate.localeCompare(a.startDate) || a.code.localeCompare(b.code));
+}
+
+
+// ---- images (the media of the shops) ----
+
+export interface AdminMedia {
+  /** For an upload the id of the file; for an image shown from a link a made-up id (`link-...`). */
+  id: string;
+  /** UPLOAD: a file kept by the platform (it can be removed). LINK: an image a record points to by an address (it can be looked at; the real storage, R2, replaces both). */
+  source: "UPLOAD" | "LINK";
+  kind: "promotion" | "session" | "workshop";
+  url: string; shopId: string; shopName: string;
+  /** What shows it: the code of the voucher, the code of the session, the name of the workshop. */
+  usedBy: string;
+  mime: string; size: number; uploadedAt: string;
+}
+
+/** Search: the shop, what shows the image; filters: the kind and the source. Uploads first (newest first), then the images shown from a link. */
+export function adminMedia(q = "", kind = "", source = ""): AdminMedia[] {
+  const shops = new Map(liveShops().map((s) => [s.id, s]));
+  const promos = allPromotions();
+  const rows: AdminMedia[] = [];
+  for (const m of listMedia()) {
+    const url = `/api/v1/media/${m.kind === "session" ? "sessions" : "promotions"}/${m.id}`;
+    const users = m.kind === "promotion" ? promos.filter((p) => p.imageUrl === url).map((p) => p.code) : [];
+    rows.push({ id: m.id, source: "UPLOAD", kind: m.kind, url, shopId: m.shopId, shopName: shops.get(m.shopId)?.name ?? m.shopId, usedBy: users.join(", "), mime: m.mime, size: m.size, uploadedAt: m.uploadedAt });
+  }
+  const linked = (id: string, k: AdminMedia["kind"], url: string | undefined, shopId: string, usedBy: string) => {
+    if (url && /^https:\/\//.test(url)) rows.push({ id: `link-${id}`, source: "LINK", kind: k, url, shopId, shopName: shops.get(shopId)?.name ?? shopId, usedBy, mime: "", size: 0, uploadedAt: "" });
+  };
+  for (const { workshop: w, shop } of workshopsWithShop()) linked(`ws-${w.id}`, "workshop", w.coverUrl, shop.id, titleOf(w.title));
+  for (const p of promos) linked(`pr-${p.id}`, "promotion", p.imageUrl, currentShop.id, p.code);
+  for (const s of shopSessions()) linked(`se-${s.id}`, "session", s.imageUrl, currentShop.id, s.code);
+  return rows
+    .filter((r) => (!kind || r.kind === kind) && (!source || r.source === source) && matchesSearch(hay(r.shopName, r.usedBy, r.kind), q))
+    .sort((a, b) => (a.source === b.source ? b.uploadedAt.localeCompare(a.uploadedAt) : a.source === "UPLOAD" ? -1 : 1));
 }

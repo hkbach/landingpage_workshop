@@ -21,6 +21,8 @@ export function saveFailure(res: Extract<SaveResult, { ok: false }>): Response {
       return apiError(409, "EDIT_NOT_ALLOWED", "An active promotion cannot be edited. Pause it first.");
     case "IN_USE":
       return apiError(409, "PROMOTION_IN_USE", "Guests are using this promotion in bookings of sessions that have not ended, so it cannot be paused yet.", { count: res.bookingCodes.length, bookingCodes: res.bookingCodes.slice(0, 20) });
+    case "HELD_BY_ADMIN":
+      return apiError(409, "HELD_BY_ADMIN", "This promotion was paused by the platform. Only an administrator can resume it.");
     case "UNKNOWN_IMAGE":
       return apiError(422, "VALIDATION", "Please check the highlighted fields.", { fields: { imageUrl: "imageInvalid" } });
     case "UNKNOWN_WORKSHOP":

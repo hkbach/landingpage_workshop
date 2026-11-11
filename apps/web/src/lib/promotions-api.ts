@@ -18,7 +18,8 @@ async function parse<T>(res: Response): Promise<T> {
 }
 
 export interface PromotionsResponse {
-  items: PromotionRecord[];
+  /** `heldByAdmin`: why an administrator paused the promotion; the shop owner cannot resume it. */
+  items: (PromotionRecord & { heldByAdmin?: string })[];
   /** Today in the shop timezone ("YYYY-MM-DD"): the status of a promotion depends on it, so the server says what day it is. */
   today: string;
   limit: number;

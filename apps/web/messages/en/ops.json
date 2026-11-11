@@ -53,7 +53,7 @@
   "errors": {
     "reasonRequired": "Please enter a reason.",
     "amountInvalid": "Enter an amount greater than zero.",
-    "refundTooHigh": "A refund cannot exceed the net amount paid ({max}).",
+    "refundTooHigh": "A reversal cannot exceed the net amount paid ({max}).",
     "pickSession": "Choose a session.",
     "noCapacity": "The selected session does not have enough free seats.",
     "sessionRequired": "Choose a session.",
@@ -264,7 +264,7 @@
     "summary": "Summary of the period",
     "subtitle": "Your profit is your total income minus the maintenance fee and the service fee of the platform.",
     "income": "Total income",
-    "incomeNote": "Payments received minus refunds.",
+    "incomeNote": "Payments received, less any that were reversed.",
     "maintenanceFee": "Maintenance fee ({rate})",
     "serviceFee": "Service fee ({rate})",
     "fees": "Fees",
@@ -282,7 +282,7 @@
     "noData": "Nothing in this period.",
     "entries": "Payments and fees",
     "typeFilter": "Type",
-    "allTypes": "Payments and refunds",
+    "allTypes": "Payments and reversals",
     "date": "Date",
     "booking": "Booking",
     "vouchers": "Vouchers applied",
@@ -290,14 +290,14 @@
     "typeLabel": "Type",
     "kind": {
       "PAYMENT": "Payment",
-      "REFUND": "Refund"
+      "REFUND": "Reversal"
     },
     "amount": "Amount",
     "empty": "No payments in this period.",
     "tipOriginal": "Original price",
     "tipTotal": "Booking total",
     "tipPayment": "This payment",
-    "tipRefund": "This refund"
+    "tipRefund": "This reversal"
   },
   "promotions": {
     "title": "Promotion management",
@@ -446,6 +446,9 @@
     "pauseBlockedBody": "Guests used it in {count, plural, one {# booking} other {# bookings}} for sessions that have not ended yet: {codes}. You can pause it when those bookings are cancelled or the sessions have ended.",
     "deleteOnlyPaused": "Pause the promotion before you delete it",
     "deleteBlockedTitle": "This promotion cannot be deleted",
-    "deleteBlockedBody": "Only a paused or expired promotion can be deleted. Pause it first."
+    "deleteBlockedBody": "Only a paused or expired promotion can be deleted. Pause it first.",
+    "heldByAdmin": "Paused by the platform: {reason}",
+    "heldByAdminTitle": "An administrator paused this promotion: only an administrator can resume it.",
+    "heldByAdminError": "This promotion was paused by the platform. Only an administrator can resume it."
   }
 }

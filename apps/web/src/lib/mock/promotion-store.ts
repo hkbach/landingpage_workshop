@@ -109,6 +109,7 @@ function store(): PromotionRecord[] {
 
 /** Test helper: back to the seed data. */
 export function resetPromotionStore(): void {
+  (globalThis as unknown as { __promotionHolds?: unknown }).__promotionHolds = undefined;
   g.__promotionStore = seed();
   g.__promotionSeedVersion = SEED_VERSION;
   resetMediaStore();
@@ -125,7 +126,7 @@ const knownWorkshops = () => new Set(workshops.map((w) => w.id));
 
 export type SaveResult =
   | { ok: true; promotion: PromotionRecord }
-  | { ok: false; code: "LIMIT" | "NOT_FOUND" | "UNKNOWN_WORKSHOP" | "UNKNOWN_IMAGE" }
+  | { ok: false; code: "LIMIT" | "NOT_FOUND" | "UNKNOWN_WORKSHOP" | "UNKNOWN_IMAGE" | "HELD_BY_ADMIN" }
   /** More than the allowed number of promotions would run at once on `date`. */
   | { ok: false; code: "CONCURRENT_LIMIT"; date: string }
   /** A guest could get these workshops for nothing (100% off) with this promotion next to the others. */
@@ -210,6 +211,7 @@ export function updatePromotion(id: string, input: PromotionInput): SaveResult {
 export function setPromotionEnabled(id: string, enabled: boolean): SaveResult {
   const p = store().find((x) => x.id === id);
   if (!p) return { ok: false, code: "NOT_FOUND" };
+  if (enabled && holds().has(id)) return { ok: false, code: "HELD_BY_ADMIN" }; // paused by an administrator: only an administrator can resume it
   if (!enabled && p.enabled) {
     const used = pauseBlockers(id);
     if (used.length > 0) return { ok: false, code: "IN_USE", bookingCodes: used };
@@ -235,6 +237,42 @@ export function deletePromotion(id: string): DeleteResult {
   if (i < 0) return { ok: false, code: "NOT_FOUND" };
   if (!isPromotionDeletable(store()[i]!, shopToday())) return { ok: false, code: "NOT_DELETABLE" };
   deleteImage(platformMediaId(store()[i]!.imageUrl));
+  holds().delete(id);
   store().splice(i, 1);
   return { ok: true };
+}
+
+// ---- an administrator pauses a voucher (promotion) that breaks the rules, and resumes it ---------------------------------------------------------------------------------------------
+
+/** Promotions an administrator paused: id -> { reason, whether it was running (enabled) before, when }. The shop owner sees them as paused by the platform and cannot resume them. */
+const gh = globalThis as unknown as { __promotionHolds?: Map<string, { reason: string; wasEnabled: boolean; at: string }> };
+const holds = () => (gh.__promotionHolds ??= new Map());
+export const promotionHold = (id: string): { reason: string; at: string } | undefined => { const h = holds().get(id); return h ? { reason: h.reason, at: h.at } : undefined; };
+
+/** An administrator pauses a promotion (a reason is needed) or resumes one they paused. Unlike the shop owner, an administrator is not stopped by the bookings that use it: what was booked keeps its discount. */
+export function holdPromotion(id: string, hold: boolean, reason = "", now = new Date()): { ok: true; promotion: PromotionRecord } | { ok: false; code: "NOT_FOUND" | "REASON_REQUIRED" | "NOT_HELD" | "ALREADY_HELD" } {
+  const p = store().find((x) => x.id === id);
+  if (!p) return { ok: false, code: "NOT_FOUND" };
+  if (hold) {
+    if (!reason.trim()) return { ok: false, code: "REASON_REQUIRED" };
+    if (holds().has(id)) return { ok: false, code: "ALREADY_HELD" };
+    holds().set(id, { reason: reason.trim().slice(0, 300), wasEnabled: p.enabled, at: now.toISOString() });
+    p.enabled = false;
+  } else {
+    const h = holds().get(id);
+    if (!h) return { ok: false, code: "NOT_HELD" };
+    holds().delete(id);
+    p.enabled = h.wasEnabled && p.endDate >= shopToday(); // it runs again if it was running before and is not over
+  }
+  p.updatedAt = now.toISOString();
+  return { ok: true, promotion: { ...p } };
+}
+
+/** An administrator removed an uploaded image: the promotions that showed it have no image any more. Returns how many were changed. */
+export function clearPromotionImage(mediaId: string, now = new Date()): number {
+  let n = 0;
+  for (const p of store()) {
+    if (platformMediaId(p.imageUrl) === mediaId) { delete p.imageUrl; p.updatedAt = now.toISOString(); n += 1; }
+  }
+  return n;
 }

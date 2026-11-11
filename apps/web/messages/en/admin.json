@@ -35,7 +35,9 @@
     "settings": "Settings",
     "messages": "Support inbox",
     "emails": "Emails",
-    "legal": "Terms & Privacy"
+    "legal": "Terms & Privacy",
+    "vouchers": "Vouchers",
+    "media": "Images"
   },
   "guard": {
     "mockNotice": "Prototype: the role check is simulated. Real authentication is added later.",
@@ -533,13 +535,45 @@
       "referral": "Affiliate fee",
       "profit": "Profit",
       "basePrice": "Original price",
-      "inviteBonus": "Referral bonus"
+      "inviteBonus": "Referral bonus",
+      "actions": "Actions"
     },
     "totalIn": "Total in {currency}",
     "formula": "Profit = income of the admin - affiliate fee - referral bonus",
     "totalFees": "Income of the admin (maintenance + service)",
     "note": "The income of the admin is the maintenance fee plus the service fee, each a percentage of the ORIGINAL price of the booking (before vouchers) at the rates of each shop (Config fees). The affiliate fee is paid only for bookings that came through an affiliate link. The referral bonus is paid once for each invited friend, on the first paid booking of the friend. Both are also a percentage of the original price. Shop revenue is what the shops received from the guests.",
-    "totalBase": "Original price of the bookings"
+    "totalBase": "Original price of the bookings",
+    "detail": {
+      "open": "Details",
+      "title": "Income of {shop}",
+      "description": "Every payment the shop recorded with the fees the platform charged on it, and the statement of each month.",
+      "loading": "Loading...",
+      "error": "The detail could not be loaded.",
+      "empty": "No payment in these days.",
+      "monthsTitle": "Statement of each month",
+      "monthsNote": "The system closes the books at the end of the month. The shop pays the maintenance and service fees (the invoice column) by the invoice the platform sends; sending the invoices comes later.",
+      "linesTitle": "Payments",
+      "col": {
+        "month": "Month",
+        "payments": "Payments",
+        "income": "Paid by guests",
+        "maintenance": "Maintenance fee",
+        "service": "Service fee",
+        "invoice": "Invoice (fees)",
+        "referral": "Affiliate fee",
+        "inviteBonus": "Referral bonus",
+        "profit": "Profit",
+        "date": "Date",
+        "booking": "Booking",
+        "kind": "Type",
+        "paid": "Paid",
+        "basePrice": "Original price"
+      },
+      "kind": {
+        "PAYMENT": "Payment",
+        "REVERSAL": "Reversal"
+      }
+    }
   },
   "feesAll": {
     "title": "Config fees",
@@ -921,5 +955,73 @@
     "loadFailed": "The text could not be loaded.",
     "openPublic": "Open the public page",
     "opensNewTab": "(opens in a new tab)"
+  },
+  "vouchers": {
+    "title": "Vouchers",
+    "description": "The vouchers (promotions) of every shop: what each one gives, when it runs and how much it took off. Pause a voucher that breaks the rules; the shop owner cannot resume it.",
+    "search": "Search",
+    "searchPlaceholder": "Code, title or shop",
+    "all": "All",
+    "col": {
+      "voucher": "Voucher",
+      "shop": "Shop",
+      "discount": "Discount",
+      "range": "Runs",
+      "applies": "Applies to",
+      "status": "Status",
+      "used": "Bookings",
+      "discountTotal": "Taken off",
+      "actions": "Actions"
+    },
+    "allWorkshops": "Every workshop",
+    "selectedWorkshops": "{n} workshop(s)",
+    "status": {
+      "ACTIVE": "Running",
+      "SCHEDULED": "Scheduled",
+      "PAUSED": "Paused",
+      "EXPIRED": "Over"
+    },
+    "heldByPlatform": "(paused by the platform)",
+    "pause": "Pause",
+    "resume": "Resume",
+    "pauseTitle": "Pause the voucher {code}?",
+    "pauseBody": "The voucher stops being offered at once. The shop owner sees it as paused by the platform and cannot resume it; bookings that already used it keep their discount. A reason is needed.",
+    "paused": "The voucher {code} is paused.",
+    "resumed": "The voucher {code} can be used again.",
+    "failed": "The voucher could not be changed."
+  },
+  "media": {
+    "title": "Images",
+    "description": "The images of the shops: the files shops uploaded and the images they show from a link. Remove a file that breaks the rules.",
+    "search": "Search",
+    "searchPlaceholder": "Shop, voucher code, session code or workshop",
+    "all": "All",
+    "open": "Open",
+    "remove": "Remove",
+    "opensNewTab": "(opens in a new tab)",
+    "col": {
+      "image": "Image",
+      "shop": "Shop",
+      "kind": "Used for",
+      "usedBy": "Shown by",
+      "source": "Kept",
+      "file": "File",
+      "uploaded": "Uploaded",
+      "actions": "Actions"
+    },
+    "kind": {
+      "promotion": "Voucher",
+      "session": "Session",
+      "workshop": "Workshop cover"
+    },
+    "source": {
+      "UPLOAD": "Uploaded file",
+      "LINK": "From a link"
+    },
+    "note": "An uploaded file is kept by the platform (later in Cloudflare R2) and can be removed here. An image shown from a link is not a file of the platform, so it can be looked at but not removed. When a file is removed, the voucher that showed it has no image; a session that shows it keeps showing an empty picture until its shop owner chooses another.",
+    "removeTitle": "Remove this image?",
+    "removeBody": "The file is deleted for good and what showed it has no image. A reason is needed.",
+    "removed": "The image was removed.",
+    "failed": "The image could not be removed."
   }
 }

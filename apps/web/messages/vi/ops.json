@@ -53,7 +53,7 @@
   "errors": {
     "reasonRequired": "Vui lòng nhập lý do.",
     "amountInvalid": "Nhập số tiền lớn hơn 0.",
-    "refundTooHigh": "Số tiền hoàn không được vượt quá số tiền đã thanh toán ròng ({max}).",
+    "refundTooHigh": "Khoản điều chỉnh giảm không được vượt quá số tiền đã thanh toán ròng ({max}).",
     "pickSession": "Chọn một buổi.",
     "noCapacity": "Buổi đã chọn không đủ chỗ trống.",
     "sessionRequired": "Chọn một buổi.",
@@ -264,7 +264,7 @@
     "summary": "Tổng kết kỳ",
     "subtitle": "Lợi nhuận của shop = tổng thu trừ phí duy trì hệ thống và phí dịch vụ.",
     "income": "Tổng thu",
-    "incomeNote": "Các khoản đã thu trừ hoàn tiền.",
+    "incomeNote": "Các khoản đã thanh toán, trừ các khoản đã điều chỉnh giảm.",
     "maintenanceFee": "Phí duy trì hệ thống ({rate})",
     "serviceFee": "Phí dịch vụ ({rate})",
     "fees": "Phí",
@@ -282,7 +282,7 @@
     "noData": "Không có dữ liệu trong kỳ này.",
     "entries": "Các khoản thu và phí",
     "typeFilter": "Loại",
-    "allTypes": "Thanh toán và hoàn tiền",
+    "allTypes": "Thanh toán và điều chỉnh giảm",
     "date": "Ngày",
     "booking": "Booking",
     "vouchers": "Voucher áp dụng",
@@ -290,14 +290,14 @@
     "typeLabel": "Loại",
     "kind": {
       "PAYMENT": "Thanh toán",
-      "REFUND": "Hoàn tiền"
+      "REFUND": "Điều chỉnh giảm"
     },
     "amount": "Số tiền",
     "empty": "Không có khoản thu nào trong kỳ này.",
     "tipOriginal": "Giá gốc",
     "tipTotal": "Tổng booking",
     "tipPayment": "Khoản thanh toán này",
-    "tipRefund": "Khoản hoàn tiền này"
+    "tipRefund": "Khoản điều chỉnh giảm này"
   },
   "promotions": {
     "title": "Quản lý khuyến mãi",
@@ -446,6 +446,9 @@
     "pauseBlockedBody": "Khách đã dùng khuyến mãi này trong {count, plural, other {# đặt chỗ}} cho các buổi chưa kết thúc: {codes}. Bạn có thể tạm dừng khi các đặt chỗ đó bị hủy hoặc các buổi đã kết thúc.",
     "deleteOnlyPaused": "Hãy tạm dừng khuyến mãi trước khi xóa",
     "deleteBlockedTitle": "Không thể xóa khuyến mãi này",
-    "deleteBlockedBody": "Chỉ có thể xóa khuyến mãi đang tạm dừng hoặc đã hết hạn. Hãy tạm dừng trước."
+    "deleteBlockedBody": "Chỉ có thể xóa khuyến mãi đang tạm dừng hoặc đã hết hạn. Hãy tạm dừng trước.",
+    "heldByAdmin": "Nền tảng tạm dừng: {reason}",
+    "heldByAdminTitle": "Admin đã tạm dừng khuyến mãi này: chỉ admin mới bật lại được.",
+    "heldByAdminError": "Khuyến mãi này đã bị nền tảng tạm dừng. Chỉ admin mới bật lại được."
   }
 }

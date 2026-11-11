@@ -65,7 +65,7 @@
       },
       "payments": {
         "title": "Biết ai đã thanh toán",
-        "body": "Ghi nhận thanh toán tiền mặt, thẻ, chuyển khoản và hoàn tiền cho từng booking, xem thu nhập chỉ trong một cái nhìn."
+        "body": "Ghi nhận thanh toán tiền mặt, thẻ và chuyển khoản cho từng booking, xem thu nhập chỉ trong một cái nhìn."
       },
       "guests": {
         "title": "Khách quay lại",
@@ -139,7 +139,7 @@
       },
       "q5": {
         "q": "Tôi theo dõi thanh toán thế nào?",
-        "a": "Bạn ghi nhận từng khoản thanh toán (tiền mặt, thẻ hoặc chuyển khoản) và hoàn tiền trên booking, nên luôn biết ai đã trả."
+        "a": "Bạn ghi nhận từng khoản thanh toán (tiền mặt, thẻ hoặc chuyển khoản) trên booking, nên luôn biết ai đã trả."
       }
     }
   },

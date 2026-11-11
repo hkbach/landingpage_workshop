@@ -53,7 +53,7 @@
   "errors": {
     "reasonRequired": "理由を入力してください。",
     "amountInvalid": "0より大きい金額を入力してください。",
-    "refundTooHigh": "返金額は、支払い済みの純額（{max}）を超えられません。",
+    "refundTooHigh": "取り消し額は純支払額({max})を超えられません。",
     "pickSession": "セッションを選択してください。",
     "noCapacity": "選択したセッションに空席が足りません。",
     "sessionRequired": "セッションを選択してください。",
@@ -264,7 +264,7 @@
     "summary": "期間の概要",
     "subtitle": "利益は、総収入からシステム維持費とサービス手数料を差し引いた金額です。",
     "income": "総収入",
-    "incomeNote": "受け取った支払いから返金を引いた金額です。",
+    "incomeNote": "受け取った支払いから、取り消した分を引いた額です。",
     "maintenanceFee": "システム維持費（{rate}）",
     "serviceFee": "サービス手数料（{rate}）",
     "fees": "手数料",
@@ -282,7 +282,7 @@
     "noData": "この期間にデータはありません。",
     "entries": "支払いと手数料",
     "typeFilter": "種類",
-    "allTypes": "支払いと返金",
+    "allTypes": "支払いと取り消し",
     "date": "日付",
     "booking": "予約",
     "vouchers": "適用バウチャー",
@@ -290,14 +290,14 @@
     "typeLabel": "種類",
     "kind": {
       "PAYMENT": "支払い",
-      "REFUND": "返金"
+      "REFUND": "取り消し"
     },
     "amount": "金額",
     "empty": "この期間の支払いはありません。",
     "tipOriginal": "元の価格",
     "tipTotal": "予約の合計",
     "tipPayment": "今回の支払い",
-    "tipRefund": "今回の返金"
+    "tipRefund": "この取り消し"
   },
   "promotions": {
     "title": "プロモーション管理",
@@ -446,6 +446,9 @@
     "pauseBlockedBody": "まだ終了していないセッションの{count, plural, other {#件の予約}}でお客様が利用しています: {codes}。これらの予約がキャンセルされるか、セッションが終了すると一時停止できます。",
     "deleteOnlyPaused": "削除する前にプロモーションを一時停止してください",
     "deleteBlockedTitle": "このプロモーションは削除できません",
-    "deleteBlockedBody": "削除できるのは、一時停止中または期限切れのプロモーションのみです。先に一時停止してください。"
+    "deleteBlockedBody": "削除できるのは、一時停止中または期限切れのプロモーションのみです。先に一時停止してください。",
+    "heldByAdmin": "プラットフォームが一時停止: {reason}",
+    "heldByAdminTitle": "管理者がこのプロモーションを一時停止しました。再開できるのは管理者だけです。",
+    "heldByAdminError": "このプロモーションはプラットフォームにより一時停止されています。再開できるのは管理者だけです。"
   }
 }

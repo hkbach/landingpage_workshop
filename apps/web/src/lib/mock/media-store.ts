@@ -2,10 +2,12 @@
 // checked, kept in memory and served at /api/v1/media/promotions/{id}; the promotion keeps that path as its image URL.
 // It lives on globalThis so it survives hot reloads and is lost when the server restarts (demo data).
 import { newUuid } from "@/lib/uuid";
+import { currentShop } from "./data";
 
 export const MAX_IMAGE_BYTES = 1_000_000;
 
-export interface StoredImage { mime: "image/jpeg" | "image/png" | "image/webp"; bytes: Buffer }
+export type MediaKind = "promotion" | "session";
+export interface StoredImage { mime: "image/jpeg" | "image/png" | "image/webp"; bytes: Buffer; /** What it was uploaded for, the shop that uploaded it and when (the real service keeps these on the object in R2). */ kind: MediaKind; shopId: string; uploadedAt: string }
 
 const g = globalThis as unknown as { __mediaStore?: Map<string, StoredImage> };
 const store = () => (g.__mediaStore ??= new Map());
@@ -26,7 +28,7 @@ function looksLike(mime: StoredImage["mime"], b: Buffer): boolean {
 
 export type SaveImageResult = { ok: true; id: string } | { ok: false; code: "INVALID" | "TOO_LARGE" };
 
-export function saveImage(dataUrl: unknown): SaveImageResult {
+export function saveImage(dataUrl: unknown, kind: MediaKind = "promotion", shopId: string = currentShop.id, now: Date = new Date()): SaveImageResult {
   if (typeof dataUrl !== "string") return { ok: false, code: "INVALID" };
   const m = DATA_URL.exec(dataUrl);
   if (!m) return { ok: false, code: "INVALID" };
@@ -35,10 +37,14 @@ export function saveImage(dataUrl: unknown): SaveImageResult {
   const mime = m[1] as StoredImage["mime"];
   if (!looksLike(mime, bytes)) return { ok: false, code: "INVALID" };
   const id = newUuid();
-  store().set(id, { mime, bytes });
+  store().set(id, { mime, bytes, kind, shopId, uploadedAt: now.toISOString() });
   return { ok: true, id };
 }
 
 export const getImage = (id: string): StoredImage | undefined => store().get(id);
 export const hasImage = (id: string): boolean => store().has(id);
 export const deleteImage = (id: string | null): void => { if (id) store().delete(id); };
+
+/** Every uploaded image with what the admin area needs (never the bytes), newest first. */
+export const listMedia = (): { id: string; kind: MediaKind; shopId: string; mime: StoredImage["mime"]; size: number; uploadedAt: string }[] =>
+  [...store()].map(([id, v]) => ({ id, kind: v.kind, shopId: v.shopId, mime: v.mime, size: v.bytes.length, uploadedAt: v.uploadedAt })).sort((a, b) => b.uploadedAt.localeCompare(a.uploadedAt));

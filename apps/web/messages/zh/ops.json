@@ -53,7 +53,7 @@
   "errors": {
     "reasonRequired": "请输入原因。",
     "amountInvalid": "请输入大于零的金额。",
-    "refundTooHigh": "退款金额不能超过实付净额（{max}）。",
+    "refundTooHigh": "冲销金额不能超过已付净额（{max}）。",
     "pickSession": "请选择场次。",
     "noCapacity": "所选场次的空余座位不足。",
     "sessionRequired": "请选择场次。",
@@ -264,7 +264,7 @@
     "summary": "期间汇总",
     "subtitle": "利润 = 总收入 − 系统维护费 − 服务费。",
     "income": "总收入",
-    "incomeNote": "已收款项减去退款。",
+    "incomeNote": "已收款项，扣除已冲销的部分。",
     "maintenanceFee": "系统维护费（{rate}）",
     "serviceFee": "服务费（{rate}）",
     "fees": "费用",
@@ -282,7 +282,7 @@
     "noData": "此期间没有数据。",
     "entries": "收款与费用明细",
     "typeFilter": "类型",
-    "allTypes": "收款和退款",
+    "allTypes": "收款与冲销",
     "date": "日期",
     "booking": "预订",
     "vouchers": "已用优惠券",
@@ -290,14 +290,14 @@
     "typeLabel": "类型",
     "kind": {
       "PAYMENT": "收款",
-      "REFUND": "退款"
+      "REFUND": "冲销"
     },
     "amount": "金额",
     "empty": "此期间没有收款。",
     "tipOriginal": "原价",
     "tipTotal": "预订合计",
     "tipPayment": "本次收款",
-    "tipRefund": "本次退款"
+    "tipRefund": "这笔冲销"
   },
   "promotions": {
     "title": "促销管理",
@@ -446,6 +446,9 @@
     "pauseBlockedBody": "宾客已在 {count, plural, other {# 个预订}}中使用该促销，对应场次尚未结束：{codes}。待这些预订被取消或场次结束后，即可暂停。",
     "deleteOnlyPaused": "删除前请先暂停促销",
     "deleteBlockedTitle": "无法删除此促销",
-    "deleteBlockedBody": "只有已暂停或已过期的促销才能删除。请先暂停。"
+    "deleteBlockedBody": "只有已暂停或已过期的促销才能删除。请先暂停。",
+    "heldByAdmin": "平台已暂停：{reason}",
+    "heldByAdminTitle": "管理员已暂停此促销，只有管理员才能恢复。",
+    "heldByAdminError": "此促销已被平台暂停，只有管理员才能恢复。"
   }
 }

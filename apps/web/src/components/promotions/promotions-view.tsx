@@ -129,7 +129,7 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
     },
     onError: (e) => {
       const n = inUseNotice(e, t) ?? fullDiscountNotice(e, t, nameOf, "fullDiscountResumeTitle") ?? limitNotice(e, t, day);
-      if (n) setNotice(n); else setMessage({ text: t("saveFailed"), tone: "error" });
+      if (n) setNotice(n); else setMessage({ text: e instanceof PromotionApiError && e.code === "HELD_BY_ADMIN" ? t("heldByAdminError") : t("saveFailed"), tone: "error" });
       void refresh();
     },
   });
@@ -292,7 +292,10 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
                     <TableCell className="whitespace-nowrap font-medium">{discountText(p)}</TableCell>
                     <TableCell className="min-w-36 whitespace-normal text-sm">{t("range", { from: day(p.startDate), to: day(p.endDate) })}</TableCell>
                     <TableCell className="min-w-32 max-w-56 whitespace-normal text-sm">{p.appliesTo === "ALL" ? t("allWorkshops") : p.workshopIds.map(nameOf).join(", ")}</TableCell>
-                    <TableCell><Badge className={STATUS_STYLES[status]}>{t(`status.${status}`)}</Badge></TableCell>
+                    <TableCell>
+                      <Badge className={STATUS_STYLES[status]}>{t(`status.${status}`)}</Badge>
+                      {p.heldByAdmin ? <p className="mt-1 max-w-48 whitespace-normal text-xs text-amber-800" data-testid="promotion-held">{t("heldByAdmin", { reason: p.heldByAdmin })}</p> : null}
+                    </TableCell>
                     <TableCell className="min-w-28 whitespace-normal text-sm">{t(`stackingOption.${p.stacking}.label`)}</TableCell>
                     <TableCell className="whitespace-nowrap text-right">
                       {/* Active and scheduled promotions have no Edit and Delete: pause them first. */}
@@ -311,7 +314,7 @@ export function PromotionsView({ shop, workshops }: { shop: PromotionShop; works
                       ) : null}
                       {status === "PAUSED" ? (
                         <Button
-                          size="icon-sm" variant="ghost" disabled={toggle.isPending || p.endDate < today} title={p.endDate < today ? t("startExpired") : t("start")}
+                          size="icon-sm" variant="ghost" disabled={toggle.isPending || p.endDate < today || Boolean(p.heldByAdmin)} title={p.heldByAdmin ? t("heldByAdminTitle") : p.endDate < today ? t("startExpired") : t("start")}
                           onClick={() => toggle.mutate({ id: p.id, enabled: true })}
                         >
                           <Play aria-hidden /><span className="sr-only">{t("start")}: {title}</span>

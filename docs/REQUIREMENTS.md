@@ -62,7 +62,7 @@ Giá trị cốt lõi:
 
 ### 1.3 Ngoài phạm vi MVP (KHÔNG code)
 
-- Thanh toán online, refund online, tính phí shop (billing).
+- Thanh toán online, **hoàn tiền (không có chức năng hoàn tiền trong hệ thống)**, tính phí shop (billing).
 - Request booking, lịch linh hoạt, promotion/khuyến mãi.
 - Nhiều page/shop, revision/rollback đầy đủ. (*Custom domain đã được đưa vào phạm vi ở mức hạn chế, xem FR-ORG-02.*)
 - Nhân viên shop (Manager/Staff), Product Order, Custom Order.
@@ -495,7 +495,7 @@ Browser ────────────────────────
 **FR-PAY-01 – Ghi nhận thanh toán tại shop (Must)**
 - **Thanh toán chỉ được ghi bằng Confirm payment / Unpaid ở popup của session đã đóng** (không còn màn hình nhập thủ công số tiền, phương thức hay hoàn tiền ở chi tiết booking): Confirm payment ghi một payment entry **tiền mặt** cho phần còn thiếu; Unpaid ghi một refund entry. Mỗi entry có amount, method (`CASH | CARD | BANK_TRANSFER | E_WALLET | OTHER`, hiện luôn `CASH`), type (`PAYMENT | REFUND`), note, `recorded_by`, `recorded_at`. Chi tiết booking chỉ xem danh sách entry.
 - `bookings.payment_status` **chỉ có 2 giá trị: `UNPAID` (Unpaid) và `PAID` (Paid)**; mọi booking mới đều mặc định `UNPAID`. Trạng thái được **tính lại** từ tổng các payment entry trong cùng transaction: `PAID` khi số đã thu ròng (payment trừ refund) > 0 và ≥ tổng tiền của booking, còn lại là `UNPAID` (chưa thu, mới thu một phần, hoặc đã hoàn lại). Số tiền thu từng phần và hoàn tiền vẫn nằm trong các payment entry và trang Income & expenses, không có trạng thái riêng.
-- Không sửa/xóa payment entry; sai thì tạo entry điều chỉnh (refund). Ghi audit.
+- Không sửa/xóa payment entry; ghi nhầm thì tạo **entry điều chỉnh giảm (reversal)** (shop bấm Unpaid). **Hệ thống không có chức năng hoàn tiền cho khách**: tiền khách trả tại shop do shop xử lý ngoài hệ thống; chỉ còn khoản điều chỉnh để sổ sách đúng. Trên giao diện khoản này gọi là **Reversal / Điều chỉnh giảm** (không còn chữ "refund"). Ghi audit.
 
 **FR-PAY-02 – Thu nhập và lợi nhuận của shop (Could)**
 - Menu `/shopowner/finance` "Income & expenses". **Chỉ thu thập và tính toán các booking có Payment status là `PAID`** (mọi payment và refund của các booking đó); booking `UNPAID` (chưa thu, mới thu một phần, hoặc đã thu rồi hoàn lại) không có mặt trong bảng và các số liệu (kể cả thẻ summary Income ở trang Overview); khi shop xác nhận thanh toán (Confirm payment ở màn hình Sessions) booking vào số liệu, khi bấm Unpaid thì ra khỏi số liệu. Backend mock lưu các payment entry do shop xác nhận (`PATCH /api/v1/bookings/{id}/payment`, số tiền do server tính từ booking). **Lợi nhuận = Tổng thu − Phí duy trì hệ thống − Phí dịch vụ.** Tổng thu = các payment entry của booking trừ refund entry (tự động, chỉ đọc; không còn khoản thu chi nhập tay). **Phí duy trì hệ thống và phí dịch vụ đều là một tỷ lệ % tính trên GIÁ GỐC của booking (đơn giá × số khách, trước khi áp dụng voucher), không tính trên số tiền khách trả sau voucher**: với từng payment / refund, cơ sở tính phí = số tiền × giá gốc ÷ giá sau voucher (nghĩa là cùng phần của giá gốc); booking không có voucher thì cơ sở chính là số tiền; booking không biết giá gốc hoặc giá sau voucher bằng 0 thì tính trên chính số tiền. Tổng thu vẫn là số tiền thực thu, nên voucher làm giảm thu nhập của shop chứ không làm giảm phí (lợi nhuận của một booking có thể âm khi voucher lớn). Refund trả lại phần phí tương ứng. Làm tròn từng khoản về minor unit.
@@ -633,7 +633,7 @@ Browser ────────────────────────
 - Mock: dữ liệu khởi đầu và kho lưu trong bộ nhớ tại `apps/web/src/lib/mock/platform.ts`. TODO(api): bảng `platform_settings`.
 
 
-**Khu vực quản trị `/systemadmin` (FR-ADM-08 đến FR-ADM-23).** Mỗi danh mục là một trang riêng trong menu bên trái; mọi danh sách có ô tìm kiếm (không phân biệt hoa thường và dấu), phân trang 10/20/50 dòng và xem chi tiết. Chỉ en + vi. Các hành động của admin (sửa, đổi trạng thái, reset mật khẩu, đóng/mở session, đổi phí, sửa landing page) được ghi vào audit log (FR-ADM-05) với actor "Platform Admin", không bao giờ ghi mật khẩu hay token. MVP frontend: API mock trong Next (`/api/v1/admin/*`), chưa kiểm tra quyền; backend thật chỉ cho `SUPER_ADMIN`.
+**Khu vực quản trị `/systemadmin` (FR-ADM-08 đến FR-ADM-26).** Mỗi danh mục là một trang riêng trong menu bên trái; mọi danh sách có ô tìm kiếm (không phân biệt hoa thường và dấu), phân trang 10/20/50 dòng và xem chi tiết. Chỉ en + vi. Các hành động của admin (sửa, đổi trạng thái, reset mật khẩu, đóng/mở session, đổi phí, sửa landing page) được ghi vào audit log (FR-ADM-05) với actor "Platform Admin", không bao giờ ghi mật khẩu hay token. MVP frontend: API mock trong Next (`/api/v1/admin/*`), chưa kiểm tra quyền; backend thật chỉ cho `SUPER_ADMIN`.
 
 **Website công khai của nền tảng (Home, About Us, Contact).** Ba trang giới thiệu nền tảng ở host chính, dùng chung thanh trên tối (tên nền tảng, Home / About Us / Contact, chọn ngôn ngữ, Log in, Sign up; điện thoại gom vào nút 3 sọc) và chân trang (Explore, Account, Legal). Phong cách hero tối có ánh sáng xanh lam / tím và nền sao, tiêu đề lớn với từ khóa màu xanh có gạch chân và phần còn lại chữ nghiêng nhạt, nút CTA tròn xanh nhạt; Privacy và Terms giữ bố cục đơn giản cũ.
 - **Home** (`/`): hero (tiêu đề "Turn Your Workshops into Full Classrooms", CTA **Create your shop** → `/signup`, nút xem cách hoạt động), ba số liệu thật của sản phẩm (5 ngôn ngữ, 0 session bị đặt quá chỗ, trang đặt chỗ 24/7), **Vì sao chọn nền tảng** (6 lợi ích cho shop: trang tự bán, booking không bao giờ vượt chỗ, đa ngôn ngữ, theo dõi thanh toán, khách quay lại, tăng trưởng qua affiliate / referral), **Cách hoạt động** (3 bước, publish không cần duyệt), **Dành cho khách** (đặt chỗ nhanh, trang Today, workshop theo danh mục yêu thích và luân phiên công bằng giữa các shop, thưởng khi chia sẻ), **FAQ** (5 câu, dạng `details`), dải CTA cuối trang.
@@ -705,6 +705,21 @@ Browser ────────────────────────
 - **Phiên bản:** mỗi lần nội dung đổi, số phiên bản của tài liệu tăng 1; hiển thị phiên bản, ngày và người lưu.
 - Trang công khai `/terms` và `/privacy` (dùng khung tối của website, nằm trong khung Home / About / Contact) hiển thị nội dung **ngay khi lưu**, kèm "cập nhật lần cuối" và phiên bản. Ngôn ngữ chưa có nội dung hiện **bản tiếng Anh** kèm ghi chú; chưa có gì thì hiện thông báo nội dung sắp có.
 - API `GET` / `PUT /admin/legal/{terms|privacy}` `{locale, content}`. Audit `legal.update` (`ngôn ngữ: version N`, không ghi nội dung). *Chưa làm:* lịch sử các phiên bản để xem lại / khôi phục, quy trình duyệt của pháp chế trước khi công bố. TODO(api): bảng `legal_documents`.
+
+**FR-ADM-24 – Chi tiết Income của shop (Should)** (nút **Details** ở mỗi shop trong `/systemadmin/income`, mở hộp thoại; bổ sung FR-ADM-16):
+- **Kết sổ từng tháng** (tháng theo múi giờ của shop, mới nhất trước): số khoản thanh toán, tiền khách đã trả, phí duy trì, phí dịch vụ, **Invoice (phí) = phí duy trì + phí dịch vụ** (số tiền shop phải thanh toán theo invoice hệ thống gửi), phí affiliate, thưởng referral, lợi nhuận của nền tảng. **Hệ thống kết sổ vào cuối tháng; shop chỉ thanh toán theo invoice do hệ thống gửi. Chức năng gửi invoice sẽ làm sau** (chưa có nút gửi, chưa có trạng thái đã thanh toán invoice).
+- **Từng khoản thanh toán** (mới nhất trước, có phân trang): ngày, mã booking, loại (**Payment** / **Reversal**), tiền khách đã trả, giá gốc của booking, phí duy trì, phí dịch vụ, phí affiliate (khi booking đến từ affiliate link), lợi nhuận của dòng. Có lọc khoảng ngày như trang Income. Tổng các dòng và các tháng **khớp** số liệu của trang Income.
+- **Không có hoàn tiền**: khoản trả lại không được tính; chỉ có reversal (đã nêu ở FR-PAY-01). API `GET /admin/income/{shopId}?from&to` (`404`, `422`). Mock chỉ có dữ liệu thanh toán của shop demo.
+
+**FR-ADM-25 – Voucher (Should)** (`/systemadmin/vouchers`): các **voucher (khuyến mãi)** của mọi shop; shop owner vẫn tự tạo và quản lý voucher ở trang Promotions (FR-PROMO-01).
+- Danh sách: mã, tên, shop, mức giảm (% hoặc số tiền), thời gian chạy, áp dụng cho (mọi workshop / một số), trạng thái (**Running, Scheduled, Paused, Over**), **số booking đã dùng** và **tổng tiền đã giảm**. Tìm theo mã, tên (mọi ngôn ngữ), shop; lọc trạng thái.
+- **Tạm dừng** voucher vi phạm (bắt buộc lý do): voucher ngừng được áp dụng ngay; shop owner thấy "tạm dừng bởi nền tảng" kèm lý do và **không tự bật lại được** (`409 HELD_BY_ADMIN`); booking đã dùng voucher **giữ nguyên mức giảm**. **Bật lại** chỉ admin làm được (voucher chạy lại nếu trước đó đang chạy và chưa hết hạn). Audit `voucher.pause` / `voucher.resume`. API `POST /admin/vouchers/{id}` `{hold, reason?}`.
+- *Chưa làm:* admin tạo voucher toàn nền tảng; sửa nội dung voucher của shop. Mock chỉ có voucher của shop demo.
+
+**FR-ADM-26 – Quản lý hình ảnh theo shop (Should)** (`/systemadmin/media`):
+- Danh sách ảnh theo shop: xem trước (thumbnail), shop, dùng cho (voucher / session / ảnh bìa workshop), ảnh nào đang hiển thị ở đâu (mã voucher, mã session, tên workshop), **nơi lưu** (**Uploaded file**: file nền tảng giữ, sau này trên **Cloudflare R2**; **From a link**: ảnh trỏ tới bằng địa chỉ), loại file và dung lượng, ngày tải lên. Tìm theo shop hoặc nơi hiển thị; lọc theo mục đích và nơi lưu.
+- **Xóa file** đã tải lên khi vi phạm (bắt buộc lý do): file bị xóa hẳn, voucher đang dùng ảnh đó không còn ảnh; session đang dùng ảnh lưu trong trình duyệt của shop hiện ảnh trống tới khi shop owner chọn ảnh khác. Ảnh hiển thị từ liên kết chỉ xem, không xóa (không phải file của nền tảng). Audit `media.remove` (loại, lý do). API `POST /admin/media/{id}` `{reason}` (`404`, `422`).
+- *Chưa làm (TODO(api)):* đối tượng trong R2 và cache CDN thật, thông báo email cho shop khi ảnh bị xóa, quản lý ảnh landing page (hiện nằm trong trình duyệt của shop), dung lượng đã dùng theo shop.
 
 ---
 
@@ -893,7 +908,7 @@ Khi `schemaVersion` của một section type thay đổi, viết hàm migrate tr
 - Composite FK `(organization_id, session_id)` → `workshop_sessions (organization_id, id)`; tương tự cho `customer_id`.
 - `UNIQUE (organization_id, idempotency_key)`; index `(organization_id, session_id, status)`, `(organization_id, created_at DESC)`.
 
-**payments**: `id`, `organization_id`, `booking_id`, `type` (`PAYMENT|REFUND`), `amount bigint` (luôn dương), `currency`, `method`, `note`, `recorded_by`, `recorded_at`.
+**payments**: `id`, `organization_id`, `booking_id`, `type` (`PAYMENT|REVERSAL`: khoản điều chỉnh giảm, không phải hoàn tiền), `amount bigint` (luôn dương), `currency`, `method`, `note`, `recorded_by`, `recorded_at`.
 
 ### 8.6 Hệ thống
 

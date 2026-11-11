@@ -14,7 +14,7 @@ export async function POST(request: Request) {
   } catch {
     return apiError(400, "BAD_REQUEST", "The request body must be JSON.");
   }
-  const res = saveImage((body as { dataUrl?: unknown } | null)?.dataUrl);
+  const res = saveImage((body as { dataUrl?: unknown } | null)?.dataUrl, "session");
   if (!res.ok) {
     return res.code === "TOO_LARGE"
       ? apiError(413, "IMAGE_TOO_LARGE", `The image can be at most ${MAX_IMAGE_BYTES / 1_000_000} MB.`)

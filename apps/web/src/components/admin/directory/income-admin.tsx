@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DateInput } from "@/components/ui/date-input";
 import type { Income } from "@/lib/mock/admin-income";
+import { IncomeDetailDialog } from "./income-detail-dialog";
 import { DirectoryTable, FilterBox, type Column } from "./kit";
 
 type ShopRow = Income["shops"][number];
@@ -35,6 +36,7 @@ export function IncomeAdmin() {
   const income = fresh ? data.income : (data?.income ?? null);
   const error = fresh && data.income === null;
   const money = (n: number, currency: string) => formatMoney(n, currency, locale);
+  const [detail, setDetail] = useState<{ id: string; name: string } | null>(null);
 
   const columns: Column<ShopRow>[] = [
     { key: "shop", header: t("col.shop"), cell: (s) => <span className="font-medium">{s.shopName}</span> },
@@ -47,6 +49,7 @@ export function IncomeAdmin() {
     { key: "referral", header: t("col.referral"), className: "text-right tabular-nums", cell: (s) => `−${money(s.referralFee, s.currency)}` },
     { key: "bonus", header: t("col.inviteBonus"), className: "text-right tabular-nums", cell: (s) => `−${money(s.inviteBonus, s.currency)}` },
     { key: "profit", header: t("col.profit"), className: "text-right tabular-nums font-semibold", cell: (s) => money(s.profit, s.currency) },
+    { key: "actions", header: <span className="sr-only">{t("col.actions")}</span>, className: "text-right", cell: (s) => <Button size="sm" variant="outline" onClick={() => setDetail({ id: s.shopId, name: s.shopName })} data-testid="income-detail-open">{t("detail.open")}<span className="sr-only"> {s.shopName}</span></Button> },
   ];
 
   return (
@@ -80,6 +83,7 @@ export function IncomeAdmin() {
         ))}
       </div>
       <DirectoryTable rows={income?.shops ?? null} error={error} columns={columns} rowKey={(s) => s.shopId} resetKey={qs} testId="income-table" />
+      <IncomeDetailDialog shop={detail} from={from} to={bad ? "" : to} onClose={() => setDetail(null)} />
       <p className="text-xs text-muted-foreground">{t("note")}</p>
     </div>
   );

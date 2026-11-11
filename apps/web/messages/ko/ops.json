@@ -53,7 +53,7 @@
   "errors": {
     "reasonRequired": "사유를 입력해 주세요.",
     "amountInvalid": "0보다 큰 금액을 입력해 주세요.",
-    "refundTooHigh": "환불 금액은 순 결제 금액({max})을 초과할 수 없어요.",
+    "refundTooHigh": "취소 정정 금액은 순 결제 금액({max})을 넘을 수 없어요.",
     "pickSession": "세션을 선택해 주세요.",
     "noCapacity": "선택한 세션에 빈 좌석이 부족해요.",
     "sessionRequired": "세션을 선택해 주세요.",
@@ -264,7 +264,7 @@
     "summary": "기간 요약",
     "subtitle": "수익은 총수입에서 플랫폼 유지비와 서비스 수수료를 뺀 금액입니다.",
     "income": "총수입",
-    "incomeNote": "받은 결제금액에서 환불을 뺀 금액입니다.",
+    "incomeNote": "받은 결제 금액에서 정정된 금액을 뺀 값이에요.",
     "maintenanceFee": "시스템 유지비 ({rate})",
     "serviceFee": "서비스 수수료 ({rate})",
     "fees": "수수료",
@@ -282,7 +282,7 @@
     "noData": "이 기간에는 내역이 없어요.",
     "entries": "결제 및 수수료 내역",
     "typeFilter": "유형",
-    "allTypes": "결제 및 환불",
+    "allTypes": "결제 및 정정",
     "date": "날짜",
     "booking": "예약",
     "vouchers": "적용된 바우처",
@@ -290,14 +290,14 @@
     "typeLabel": "유형",
     "kind": {
       "PAYMENT": "결제",
-      "REFUND": "환불"
+      "REFUND": "정정"
     },
     "amount": "금액",
     "empty": "이 기간에 결제가 없습니다.",
     "tipOriginal": "정가",
     "tipTotal": "예약 합계",
     "tipPayment": "이번 결제",
-    "tipRefund": "이번 환불"
+    "tipRefund": "이 정정"
   },
   "promotions": {
     "title": "프로모션 관리",
@@ -446,6 +446,9 @@
     "pauseBlockedBody": "아직 끝나지 않은 세션에 대해 손님이 {count, plural, other {예약 #건}}에서 이 프로모션을 사용했어요: {codes}. 해당 예약이 취소되거나 세션이 끝나면 일시중지할 수 있어요.",
     "deleteOnlyPaused": "삭제하려면 먼저 프로모션을 일시중지해 주세요",
     "deleteBlockedTitle": "이 프로모션은 삭제할 수 없어요",
-    "deleteBlockedBody": "일시중지되었거나 종료된 프로모션만 삭제할 수 있어요. 먼저 일시중지해 주세요."
+    "deleteBlockedBody": "일시중지되었거나 종료된 프로모션만 삭제할 수 있어요. 먼저 일시중지해 주세요.",
+    "heldByAdmin": "플랫폼이 일시 중지: {reason}",
+    "heldByAdminTitle": "관리자가 이 프로모션을 일시 중지했어요. 관리자만 다시 시작할 수 있어요.",
+    "heldByAdminError": "이 프로모션은 플랫폼이 일시 중지했어요. 관리자만 다시 시작할 수 있어요."
   }
 }

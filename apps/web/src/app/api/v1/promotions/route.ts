@@ -1,7 +1,7 @@
 import { MAX_CONCURRENT_PROMOTIONS, MAX_PROMOTIONS_PER_SHOP, promotionInputSchema } from "@workshop/shared";
 import { apiError, fieldCodes } from "@/lib/api-error";
 import { saveFailure } from "@/lib/promotion-http";
-import { allPromotions, createPromotion, shopToday } from "@/lib/mock/promotion-store";
+import { allPromotions, promotionHold, createPromotion, shopToday } from "@/lib/mock/promotion-store";
 import { recordAudit } from "@/lib/mock/admin-audit-store";
 import { ownerActor, DEMO_ORG } from "@/lib/mock/audit-actors";
 
@@ -10,7 +10,8 @@ import { ownerActor, DEMO_ORG } from "@/lib/mock/audit-actors";
 
 /** GET /api/v1/promotions: every promotion of the shop, newest first, with today's date in the shop timezone (the status depends on it) and the limits. */
 export async function GET() {
-  const items = allPromotions().sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id));
+  // `heldByAdmin`: the reason when an administrator paused the promotion (the shop owner cannot resume it).
+  const items = allPromotions().sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id)).map((p) => { const h = promotionHold(p.id); return h ? { ...p, heldByAdmin: h.reason } : p; });
   return Response.json({ items, today: shopToday(), limit: MAX_PROMOTIONS_PER_SHOP, maxConcurrent: MAX_CONCURRENT_PROMOTIONS });
 }
 
