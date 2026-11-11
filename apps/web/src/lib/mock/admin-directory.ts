@@ -10,6 +10,7 @@ import { currentShop, workshops as demoWorkshops } from "./data";
 import { otherShopSites } from "./other-shops";
 import { inviteBonuses, inviteCodeOf, listInviteCodes, listInvites } from "./invite-store";
 import { listReferrals } from "./referral-store";
+import { listWithdrawals, walletOf, type WalletSource, type WithdrawalStatus } from "./wallet-store";
 import { withAdminChanges } from "./session-admin-store";
 import { liveShops } from "./shop-admin-store";
 import { withWorkshopStatus } from "./workshop-status-store";
@@ -258,4 +259,28 @@ export function adminReferralLinks(q = "", from = "", to = ""): AdminReferralLin
     };
     return matchesSearch(hay(row.inviterEmail, row.inviterName, row.code, ...friends.flatMap((f) => [f.email, f.name])), q) ? [row] : [];
   }).sort((x, y) => y.bonusTotal - x.bonusTotal || x.inviterEmail.localeCompare(y.inviterEmail));
+}
+
+// ---- withdrawals (the invoices of the customers) ----
+
+export interface AdminWithdrawal {
+  id: string; code: string; accountId: string; accountEmail: string; accountName: string; source: WalletSource; amount: number; currency: string;
+  status: WithdrawalStatus; requestedAt: string; processedAt: string; reason: string;
+  /** What the customer has earned from the program and still can withdraw (to decide with). */
+  available: number;
+}
+
+/** Search: the invoice number, or the email or the name of the customer. `status` and `source` narrow the list; `from` / `to` ("YYYY-MM-DD"): the days the invoice was asked for. Pending first, then newest. */
+export function adminWithdrawals(q = "", status = "", from = "", to = "", source = ""): AdminWithdrawal[] {
+  const accounts = new Map(listAccounts().map((a) => [a.id, a]));
+  return listWithdrawals().flatMap((w): AdminWithdrawal[] => {
+    const a = accounts.get(w.accountId);
+    const day = w.requestedAt.slice(0, 10);
+    if (!a || (status && w.status !== status) || (source && w.source !== source) || (from && day < from) || (to && day > to)) return [];
+    const row: AdminWithdrawal = {
+      id: w.id, code: w.code, accountId: a.id, accountEmail: a.email, accountName: a.fullName, source: w.source, amount: w.amount, currency: w.currency, status: w.status,
+      requestedAt: w.requestedAt, processedAt: w.processedAt ?? "", reason: w.reason ?? "", available: walletOf(a.id, w.source).available,
+    };
+    return matchesSearch(hay(row.code, row.accountEmail, row.accountName), q) ? [row] : [];
+  }).sort((x, y) => Number(y.status === "PENDING") - Number(x.status === "PENDING") || y.requestedAt.localeCompare(x.requestedAt));
 }

@@ -147,8 +147,6 @@
   },
   "affiliate": {
     "intro": "ワークショップに登録し、アフィリエイトリンクをコピーして招待したい人に送りましょう。リンクからそのワークショップの予約へ進めます。",
-    "totalTitle": "受け取ったアフィリエイト報酬",
-    "totalHint": "{count, plural, =0 {登録したワークショップはまだありません。} other {登録した#件のワークショップの合計です。}}",
     "register": "アフィリエイト登録",
     "registering": "登録中...",
     "copy": "アフィリエイトリンクをコピー",
@@ -175,8 +173,6 @@
     "copy": "紹介リンクをコピー",
     "copied": "コピーしました",
     "copyFailed": "リンクをコピーできませんでした。",
-    "totalTitle": "受け取った紹介ボーナス",
-    "totalHint": "友達ごとの最初の支払い済み予約の価格の{rate}です。",
     "listTitle": "あなたの紹介",
     "empty": "まだあなたのリンクから登録した友達はいません。",
     "col": {
@@ -190,6 +186,50 @@
       "EARNED": "ボーナス獲得"
     },
     "forBooking": "予約 {code} 分",
-    "note": "ボーナスは紹介1件につき1回だけです。友達があなたのリンクから登録し、最初の予約を支払うと、その予約価格の{rate}を受け取れます。その後の予約では追加のボーナスはありません。"
+    "note": "ボーナスは紹介1件につき1回だけです。友達があなたのリンクから登録し、最初の予約を支払うと、その予約価格の{rate}を受け取れます。その後の予約では追加のボーナスはありません。",
+    "tabFriends": "紹介"
+  },
+  "wallet": {
+    "overview": "あなたの収益",
+    "earned": "累計獲得額",
+    "pending": "処理待ち",
+    "pendingHint": "プラットフォームの処理を待っている出金",
+    "withdrawn": "出金済み",
+    "withdraw": "出金",
+    "available": "出金可能額：{amount}",
+    "nothing": "出金できる金額はまだありません。",
+    "dialogTitle": "出金する",
+    "dialogBody": "{program}の収益からいくら出金しますか？最大{amount}まで出金できます。",
+    "program": {
+      "AFFILIATE": "アフィリエイト",
+      "REFERRAL": "紹介"
+    },
+    "amountLabel": "金額（{currency}）",
+    "amountHint": "最大{amount}。",
+    "submit": "申請する",
+    "submitting": "送信中...",
+    "cancel": "キャンセル",
+    "errors": {
+      "required": "金額を入力してください。",
+      "invalid": "正しい金額を入力してください。",
+      "exceeds": "出金可能額（{amount}）を超えています。",
+      "failed": "申請を送信できませんでした。もう一度お試しください。"
+    },
+    "done": "申請 {code} を送信しました。履歴で確認できます。",
+    "tabHistory": "履歴",
+    "empty": "出金の履歴はまだありません。",
+    "col": {
+      "invoice": "請求書",
+      "requested": "申請日",
+      "amount": "金額",
+      "status": "ステータス",
+      "processed": "処理日"
+    },
+    "status": {
+      "PENDING": "処理待ち",
+      "PAID": "支払い済み",
+      "REJECTED": "却下"
+    },
+    "reason": "理由：{reason}"
   }
 }

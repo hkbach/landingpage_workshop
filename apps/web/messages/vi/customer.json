@@ -147,8 +147,6 @@
   },
   "affiliate": {
     "intro": "Đăng ký một workshop, sao chép liên kết Affiliate của workshop và gửi cho những người bạn mời. Liên kết dẫn họ đến phần đặt chỗ của workshop đó.",
-    "totalTitle": "Phí affiliate đã nhận",
-    "totalHint": "{count, plural, =0 {Bạn chưa đăng ký workshop nào.} other {Từ # workshop bạn đã đăng ký.}}",
     "register": "Đăng ký Affiliate",
     "registering": "Đang đăng ký...",
     "copy": "Sao chép liên kết Affiliate",
@@ -175,8 +173,6 @@
     "copy": "Sao chép liên kết referral",
     "copied": "Đã sao chép",
     "copyFailed": "Không thể sao chép liên kết.",
-    "totalTitle": "Tiền thưởng referral đã nhận",
-    "totalHint": "{rate} giá booking, tính trên booking đầu tiên đã thanh toán của mỗi người bạn.",
     "listTitle": "Danh sách referral",
     "empty": "Chưa có người bạn nào đăng ký qua liên kết của bạn.",
     "col": {
@@ -190,6 +186,50 @@
       "EARNED": "Đã nhận thưởng"
     },
     "forBooking": "Cho booking {code}",
-    "note": "Bạn chỉ nhận thưởng một lần cho mỗi referral: khi bạn bè đăng ký qua liên kết của bạn và thanh toán booking đầu tiên, bạn nhận {rate} giá của booking đó. Các booking sau của người bạn đó không được thưởng thêm."
+    "note": "Bạn chỉ nhận thưởng một lần cho mỗi referral: khi bạn bè đăng ký qua liên kết của bạn và thanh toán booking đầu tiên, bạn nhận {rate} giá của booking đó. Các booking sau của người bạn đó không được thưởng thêm.",
+    "tabFriends": "Referrals"
+  },
+  "wallet": {
+    "overview": "Thu nhập của bạn",
+    "earned": "Tổng tiền đã kiếm",
+    "pending": "Chờ xử lý",
+    "pendingHint": "Các lệnh rút đang chờ nền tảng xử lý",
+    "withdrawn": "Đã rút",
+    "withdraw": "Rút tiền",
+    "available": "Có thể rút: {amount}",
+    "nothing": "Chưa có số tiền nào để rút.",
+    "dialogTitle": "Rút tiền",
+    "dialogBody": "Bạn muốn rút bao nhiêu từ thu nhập {program}? Bạn có thể rút tối đa {amount}.",
+    "program": {
+      "AFFILIATE": "Affiliate",
+      "REFERRAL": "Referrals"
+    },
+    "amountLabel": "Số tiền ({currency})",
+    "amountHint": "Tối đa {amount}.",
+    "submit": "Gửi yêu cầu",
+    "submitting": "Đang gửi...",
+    "cancel": "Hủy",
+    "errors": {
+      "required": "Nhập số tiền.",
+      "invalid": "Nhập số tiền hợp lệ.",
+      "exceeds": "Số tiền vượt quá số có thể rút ({amount}).",
+      "failed": "Không thể gửi yêu cầu. Vui lòng thử lại."
+    },
+    "done": "Đã gửi yêu cầu {code}. Theo dõi trong History.",
+    "tabHistory": "History",
+    "empty": "Bạn chưa rút khoản nào.",
+    "col": {
+      "invoice": "Invoice",
+      "requested": "Ngày yêu cầu",
+      "amount": "Số tiền",
+      "status": "Trạng thái",
+      "processed": "Ngày xử lý"
+    },
+    "status": {
+      "PENDING": "Chờ xử lý",
+      "PAID": "Đã thanh toán",
+      "REJECTED": "Bị từ chối"
+    },
+    "reason": "Lý do: {reason}"
   }
 }

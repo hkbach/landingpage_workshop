@@ -71,5 +71,20 @@ export interface CustomerInvitesResponse { code: string; link: string; bonusBps:
 export const fetchCustomerInvites = async (id: string, email?: string): Promise<CustomerInvitesResponse> =>
   parse(await fetch(`${url(id)}/invites`, { headers: emailHeader(email), cache: "no-store" }));
 
+/** The two programs a guest earns from: the fee of the links of a workshop (AFFILIATE) and the bonus for the friends invited to register (REFERRAL). */
+export type WalletSource = "AFFILIATE" | "REFERRAL";
+export type WithdrawalStatus = "PENDING" | "PAID" | "REJECTED";
+/** An invoice: a withdrawal the guest asked for. `reason` is why the platform rejected it. */
+export interface CustomerWithdrawal { id: string; code: string; amount: number; currency: string; status: WithdrawalStatus; requestedAt: string; processedAt?: string; reason?: string }
+/** What the guest earned from a program (minor units), what waits to be paid, what was withdrawn, what is left to withdraw, and the invoices (newest first). */
+export interface CustomerWallet { source: WalletSource; currency: string; earned: number; pending: number; withdrawn: number; available: number; items: CustomerWithdrawal[] }
+
+export const fetchCustomerWallet = async (id: string, email: string | undefined, source: WalletSource): Promise<CustomerWallet> =>
+  parse(await fetch(`${url(id)}/wallet?source=${source}`, { headers: emailHeader(email), cache: "no-store" }));
+
+/** Asks to withdraw `amount` (minor units): a new invoice that waits for the platform. The server refuses more than is available (422, `fields.amount` = "exceeds"). */
+export const requestCustomerWithdrawal = async (id: string, email: string | undefined, source: WalletSource, amount: number): Promise<CustomerWithdrawal> =>
+  parse(await fetch(`${url(id)}/withdrawals`, { method: "POST", headers: { "content-type": "application/json", ...emailHeader(email) }, body: JSON.stringify({ source, amount }) }));
+
 export const saveCustomerProfile = async (id: string, email: string | undefined, input: CustomerProfileInput): Promise<CustomerProfile> =>
   parse(await fetch(url(id), { method: "PATCH", headers: { "content-type": "application/json", ...emailHeader(email) }, body: JSON.stringify(input) }));

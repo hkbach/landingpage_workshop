@@ -92,27 +92,4 @@ export function AffiliateFeeLine({ workshopId }: { workshopId: string }) {
   );
 }
 
-/** At the top of the Affiliate page: how it works and the affiliate fee earned so far (one figure for each currency). */
-export function AffiliateSummary() {
-  const t = useTranslations("customer.affiliate");
-  const locale = useLocale() as Locale;
-  const { query } = useAffiliates();
-  const totals = useMemo(() => {
-    const by = new Map<string, number>();
-    for (const r of query.data?.items ?? []) by.set(r.currency, (by.get(r.currency) ?? 0) + r.referralFee);
-    return [...by];
-  }, [query.data]);
-  const count = (query.data?.items ?? []).length;
-  return (
-    <section aria-labelledby="aff-total" className="grid gap-1 rounded-xl border bg-card p-4" data-testid="affiliate-summary">
-      <p className="text-sm text-muted-foreground">{t("intro")}</p>
-      <h2 id="aff-total" className="mt-1 text-sm font-medium">{t("totalTitle")}</h2>
-      <p className="text-2xl font-semibold tabular-nums" data-testid="affiliate-total">
-        {totals.length === 0 ? "—" : totals.map(([currency, amount]) => formatMoney(amount, currency, locale)).join(" · ")}
-      </p>
-      <p className="text-xs text-muted-foreground">{t("totalHint", { count })}</p>
-    </section>
-  );
-}
-
 export type { CustomerReferral };

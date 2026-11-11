@@ -8,12 +8,16 @@ import { formatMoney, type Locale } from "@workshop/shared";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PaginationBar } from "@/components/ui/pagination-bar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { fetchCustomerInvites } from "@/lib/customer-api";
 import { formatDate } from "@/lib/format";
 import { usePagination } from "@/lib/pagination";
 import { cn } from "@/lib/utils";
 import { useCustomer } from "./customer-shell";
+import { WalletHistory, WalletOverview } from "./customer-wallet";
+
+type Tab = "friends" | "history";
 
 /**
  * Referrals: the customer invites friends to register a customer account with their ONE link (the same link for good). A friend who registered through it is a referral. When the friend
@@ -28,6 +32,8 @@ export function CustomerReferrals() {
   const query = useQuery({ queryKey: ["customer-invites", accountId, email ?? "no-login"], queryFn: () => fetchCustomerInvites(accountId, email), retry: false });
   const items = useMemo(() => query.data?.items ?? [], [query.data]);
   const pg = usePagination(items, "");
+  const tw = useTranslations("customer.wallet");
+  const [tab, setTab] = useState<Tab>("friends");
   const [copied, setCopied] = useState(false);
   const [failed, setFailed] = useState(false);
 
@@ -61,31 +67,28 @@ export function CustomerReferrals() {
         <p className="text-sm text-muted-foreground">{tr("intro")}</p>
       </header>
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">{tr("linkTitle")}</CardTitle>
-            <CardDescription>{tr("linkHint")}</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-2">
-            <span className="break-all rounded-lg border bg-muted/40 p-2 font-mono text-xs" data-testid="referral-link">{data.link}</span>
-            <Button type="button" variant="outline" className="w-fit" onClick={() => void copy(data.link)} data-testid="referral-copy">
-              {copied ? <Check aria-hidden /> : <Copy aria-hidden />} {copied ? tr("copied") : tr("copy")}
-            </Button>
-            {failed ? <p role="alert" className="text-xs text-destructive">{tr("copyFailed")}</p> : null}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">{tr("totalTitle")}</CardTitle>
-            <CardDescription>{tr("totalHint", { rate })}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-semibold tabular-nums" data-testid="referral-total">{formatMoney(data.total, data.currency, locale)}</p>
-          </CardContent>
-        </Card>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">{tr("linkTitle")}</CardTitle>
+          <CardDescription>{tr("linkHint")}</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-2">
+          <span className="break-all rounded-lg border bg-muted/40 p-2 font-mono text-xs" data-testid="referral-link">{data.link}</span>
+          <Button type="button" variant="outline" className="w-fit" onClick={() => void copy(data.link)} data-testid="referral-copy">
+            {copied ? <Check aria-hidden /> : <Copy aria-hidden />} {copied ? tr("copied") : tr("copy")}
+          </Button>
+          {failed ? <p role="alert" className="text-xs text-destructive">{tr("copyFailed")}</p> : null}
+        </CardContent>
+      </Card>
 
+      <WalletOverview source="REFERRAL" onRequested={() => setTab("history")} />
+
+      <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
+        <TabsList aria-label={t("menu.referrals")}>
+          <TabsTrigger value="friends" data-testid="referrals-tab-friends">{tr("tabFriends")}</TabsTrigger>
+          <TabsTrigger value="history" data-testid="referrals-tab-history">{tw("tabHistory")}</TabsTrigger>
+        </TabsList>
+        <TabsContent value="friends" className="pt-2">
       <section aria-labelledby="ref-list-title" className="grid gap-3">
         <h2 id="ref-list-title" className="text-lg font-semibold">{tr("listTitle")}</h2>
         {items.length === 0 ? (
@@ -126,6 +129,9 @@ export function CustomerReferrals() {
           <span>{tr("note", { rate })}</span>
         </p>
       </section>
+        </TabsContent>
+        <TabsContent value="history" className="pt-2"><WalletHistory source="REFERRAL" /></TabsContent>
+      </Tabs>
     </div>
   );
 }

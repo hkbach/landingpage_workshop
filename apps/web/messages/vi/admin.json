@@ -25,7 +25,8 @@
     "referrals": "Referrals",
     "income": "Thu nhập",
     "fees": "Cấu hình phí",
-    "affiliate": "Affiliate"
+    "affiliate": "Affiliate",
+    "withdrawals": "Rút tiền"
   },
   "guard": {
     "mockNotice": "Bản thử nghiệm: việc kiểm tra vai trò chỉ là giả lập. Xác thực thật sẽ được thêm sau.",
@@ -625,5 +626,51 @@
     "registeredOn": "đăng ký {date}",
     "bonusOn": "Thưởng {amount} cho booking {code}",
     "rule": "Tiền thưởng referral = tỷ lệ thưởng referral của shop (Cấu hình phí) x giá gốc của booking đầu tiên đã thanh toán mà người bạn đặt sau khi đăng ký. Chỉ nhận một lần cho mỗi người bạn và do nền tảng chi trả: khoản này được trừ vào lợi nhuận của nền tảng."
+  },
+  "withdrawals": {
+    "title": "Rút tiền",
+    "description": "Các yêu cầu rút tiền của customer từ thu nhập Affiliate và Referrals, mỗi yêu cầu là một invoice. Đánh dấu đã thanh toán khi đã chuyển tiền, hoặc từ chối kèm lý do.",
+    "search": "Tìm kiếm",
+    "searchPlaceholder": "Số invoice, email hoặc tên customer",
+    "all": "Tất cả",
+    "from": "Yêu cầu từ ngày",
+    "to": "Yêu cầu đến ngày",
+    "clearDates": "Xóa ngày",
+    "dateOrder": "Ngày đầu sau ngày cuối.",
+    "col": {
+      "invoice": "Invoice",
+      "customer": "Customer",
+      "program": "Chương trình",
+      "amount": "Số tiền",
+      "requested": "Ngày yêu cầu",
+      "status": "Trạng thái",
+      "actions": "Thao tác"
+    },
+    "program": {
+      "AFFILIATE": "Affiliate",
+      "REFERRAL": "Referrals"
+    },
+    "status": {
+      "PENDING": "Chờ xử lý",
+      "PAID": "Đã thanh toán",
+      "REJECTED": "Bị từ chối"
+    },
+    "reason": "Lý do: {reason}",
+    "pendingTitle": "Đang chờ thanh toán",
+    "pendingCount": "{count, plural, other {# invoice}} cần xử lý",
+    "paidTitle": "Đã thanh toán",
+    "paidHint": "Số tiền đã chuyển cho customer",
+    "rejectedTitle": "Invoice bị từ chối",
+    "rejectedHint": "Số tiền đã trả lại cho customer",
+    "pay": "Đánh dấu đã thanh toán",
+    "reject": "Từ chối",
+    "payTitle": "Đánh dấu {code} đã thanh toán?",
+    "payBody": "Xác nhận đã chuyển {amount} cho {email}. Mỗi invoice chỉ xử lý một lần.",
+    "rejectTitle": "Từ chối {code}?",
+    "rejectBody": "Số tiền {amount} sẽ quay lại phần customer có thể rút. Vui lòng nhập lý do; customer sẽ thấy lý do này.",
+    "paidDone": "Đã đánh dấu invoice {code} đã thanh toán.",
+    "rejectedDone": "Đã từ chối invoice {code}.",
+    "failed": "Không thể xử lý invoice.",
+    "rule": "Phí affiliate và tiền thưởng referral đã được trừ vào lợi nhuận của nền tảng ngay khi phát sinh (Income), nên việc thanh toán invoice không làm thay đổi lợi nhuận."
   }
 }

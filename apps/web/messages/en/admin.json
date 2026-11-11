@@ -25,7 +25,8 @@
     "referrals": "Referrals",
     "income": "Income",
     "fees": "Config fees",
-    "affiliate": "Affiliate"
+    "affiliate": "Affiliate",
+    "withdrawals": "Withdrawals"
   },
   "guard": {
     "mockNotice": "Prototype: the role check is simulated. Real authentication is added later.",
@@ -625,5 +626,51 @@
     "registeredOn": "registered {date}",
     "bonusOn": "Bonus {amount} for booking {code}",
     "rule": "Referral bonus = the referral bonus rate of the shop (Config fees) x the original price of the first paid booking the friend made after registering. It is earned once for each friend and is paid by the platform: it is taken off the profit of the platform."
+  },
+  "withdrawals": {
+    "title": "Withdrawals",
+    "description": "The withdrawals customers asked for from their Affiliate and Referrals earnings, one invoice each. Pay a pending invoice once the money was sent, or reject it with a reason.",
+    "search": "Search",
+    "searchPlaceholder": "Invoice number, email or name of the customer",
+    "all": "All",
+    "from": "Asked from",
+    "to": "Asked to",
+    "clearDates": "Clear dates",
+    "dateOrder": "The first day is after the last day.",
+    "col": {
+      "invoice": "Invoice",
+      "customer": "Customer",
+      "program": "Program",
+      "amount": "Amount",
+      "requested": "Asked on",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "program": {
+      "AFFILIATE": "Affiliate",
+      "REFERRAL": "Referrals"
+    },
+    "status": {
+      "PENDING": "Pending",
+      "PAID": "Paid",
+      "REJECTED": "Rejected"
+    },
+    "reason": "Reason: {reason}",
+    "pendingTitle": "Waiting to be paid",
+    "pendingCount": "{count, plural, one {# invoice} other {# invoices}} to process",
+    "paidTitle": "Paid so far",
+    "paidHint": "Money sent to customers",
+    "rejectedTitle": "Rejected invoices",
+    "rejectedHint": "Their amount went back to the customers",
+    "pay": "Mark as paid",
+    "reject": "Reject",
+    "payTitle": "Mark {code} as paid?",
+    "payBody": "Confirm that {amount} was sent to {email}. An invoice is processed once.",
+    "rejectTitle": "Reject {code}?",
+    "rejectBody": "The amount of {amount} goes back to what the customer can withdraw. Please give the reason; the customer sees it.",
+    "paidDone": "Invoice {code} was marked as paid.",
+    "rejectedDone": "Invoice {code} was rejected.",
+    "failed": "The invoice could not be processed.",
+    "rule": "The affiliate fees and the referral bonuses are already taken off the profit of the platform when they are earned (Income), so paying an invoice does not change the profit."
   }
 }

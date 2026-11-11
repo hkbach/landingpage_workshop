@@ -11,3 +11,19 @@ export function formatMoney(amountMinor: number | string | bigint, currency: str
   const major = Number(amountMinor) / 10 ** digits;
   return new Intl.NumberFormat(locale, { style: "currency", currency, minimumFractionDigits: digits, maximumFractionDigits: digits }).format(major);
 }
+
+/**
+ * An amount typed by a person to minor units, or null when it is not an amount. A currency without decimals (VND, JPY, KRW) takes whole numbers, whatever separators a person
+ * writes between the thousands ("1,500,000", "1.500.000", "1 500 000"); a currency with decimals takes a number with at most that many decimals ("12", "12.5", "12,50").
+ */
+export function parseMoney(text: string, currency: string): number | null {
+  const digits = minorDigits(currency);
+  const s = text.trim();
+  if (digits === 0) {
+    const whole = s.replace(/[\s,.]/g, "");
+    return /^\d{1,15}$/.test(whole) ? Number(whole) : null;
+  }
+  const m = /^(\d{1,12})(?:[.,](\d{1,6}))?$/.exec(s.replace(/\s/g, ""));
+  if (!m || (m[2] ?? "").length > digits) return null; // more decimals than the currency has
+  return Number(m[1]) * 10 ** digits + Number((m[2] ?? "").padEnd(digits, "0") || 0);
+}

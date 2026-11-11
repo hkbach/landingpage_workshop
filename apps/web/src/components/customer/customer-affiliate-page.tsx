@@ -11,10 +11,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePagination } from "@/lib/pagination";
 import type { ListedShop } from "@/lib/mock/customer-listing";
 import { cn } from "@/lib/utils";
-import { AffiliateSummary, useAffiliates } from "./customer-affiliate";
+import { useAffiliates } from "./customer-affiliate";
+import { WalletHistory, WalletOverview } from "./customer-wallet";
 import { CustomerWorkshops } from "./customer-workshops";
 
-type Tab = "program" | "links";
+type Tab = "program" | "links" | "history";
 
 /**
  * The Affiliate page. Program lists the workshops that are active (a workshop that was deactivated is not in it) with Register Affiliate / Copy Affiliate link; Affiliate link
@@ -24,18 +25,22 @@ type Tab = "program" | "links";
 export function CustomerAffiliatePage({ shops }: { shops: ListedShop[] }) {
   const t = useTranslations("customer");
   const ta = useTranslations("customer.affiliate");
+  const tw = useTranslations("customer.wallet");
   const [tab, setTab] = useState<Tab>("program");
   return (
     <div className="grid gap-4" data-testid="customer-affiliate">
       <h1 className="text-2xl font-semibold">{t("menu.affiliate")}</h1>
-      <AffiliateSummary />
+      <p className="text-sm text-muted-foreground">{ta("intro")}</p>
+      <WalletOverview source="AFFILIATE" onRequested={() => setTab("history")} />
       <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
         <TabsList aria-label={t("menu.affiliate")}>
           <TabsTrigger value="program" data-testid="affiliate-tab-program">{ta("tabProgram")}</TabsTrigger>
           <TabsTrigger value="links" data-testid="affiliate-tab-links">{ta("tabLinks")}</TabsTrigger>
+          <TabsTrigger value="history" data-testid="affiliate-tab-history">{tw("tabHistory")}</TabsTrigger>
         </TabsList>
         <TabsContent value="program" className="pt-2"><CustomerWorkshops shops={shops} mode="affiliate" /></TabsContent>
         <TabsContent value="links" className="pt-2"><AffiliateLinks /></TabsContent>
+        <TabsContent value="history" className="pt-2"><WalletHistory source="AFFILIATE" /></TabsContent>
       </Tabs>
     </div>
   );

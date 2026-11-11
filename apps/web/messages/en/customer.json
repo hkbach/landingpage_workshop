@@ -147,8 +147,6 @@
   },
   "affiliate": {
     "intro": "Register for a workshop, copy its Affiliate link and send it to people you invite. The link takes them to the booking of that workshop.",
-    "totalTitle": "Affiliate fee earned",
-    "totalHint": "{count, plural, =0 {You are not registered for any workshop yet.} one {From # workshop you registered for.} other {From # workshops you registered for.}}",
     "register": "Register Affiliate",
     "registering": "Registering...",
     "copy": "Copy Affiliate link",
@@ -175,8 +173,6 @@
     "copy": "Copy referral link",
     "copied": "Copied",
     "copyFailed": "The link could not be copied.",
-    "totalTitle": "Referral bonus earned",
-    "totalHint": "{rate} of the booking price, on the first paid booking of each friend.",
     "listTitle": "Your referrals",
     "empty": "No friend has registered through your link yet.",
     "col": {
@@ -190,6 +186,50 @@
       "EARNED": "Bonus earned"
     },
     "forBooking": "For booking {code}",
-    "note": "You earn the bonus only once for each referral: when your friend registers through your link and pays their first booking, you earn {rate} of that booking's price. Their later bookings do not earn more."
+    "note": "You earn the bonus only once for each referral: when your friend registers through your link and pays their first booking, you earn {rate} of that booking's price. Their later bookings do not earn more.",
+    "tabFriends": "Referrals"
+  },
+  "wallet": {
+    "overview": "Your earnings",
+    "earned": "Total earned",
+    "pending": "Pending",
+    "pendingHint": "Withdrawals waiting for the platform",
+    "withdrawn": "Withdrawn",
+    "withdraw": "Withdraw",
+    "available": "Available to withdraw: {amount}",
+    "nothing": "There is nothing to withdraw yet.",
+    "dialogTitle": "Withdraw money",
+    "dialogBody": "How much do you want to withdraw from your {program} earnings? You can withdraw up to {amount}.",
+    "program": {
+      "AFFILIATE": "Affiliate",
+      "REFERRAL": "Referrals"
+    },
+    "amountLabel": "Amount ({currency})",
+    "amountHint": "At most {amount}.",
+    "submit": "Submit request",
+    "submitting": "Sending...",
+    "cancel": "Cancel",
+    "errors": {
+      "required": "Enter the amount.",
+      "invalid": "Enter a valid amount.",
+      "exceeds": "The amount is more than what you can withdraw ({amount}).",
+      "failed": "The request could not be sent. Please try again."
+    },
+    "done": "Request {code} was sent. Follow it in History.",
+    "tabHistory": "History",
+    "empty": "You have not withdrawn anything yet.",
+    "col": {
+      "invoice": "Invoice",
+      "requested": "Requested",
+      "amount": "Amount",
+      "status": "Status",
+      "processed": "Processed"
+    },
+    "status": {
+      "PENDING": "Pending",
+      "PAID": "Paid",
+      "REJECTED": "Rejected"
+    },
+    "reason": "Reason: {reason}"
   }
 }

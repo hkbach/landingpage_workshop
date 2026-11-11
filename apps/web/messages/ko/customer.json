@@ -147,8 +147,6 @@
   },
   "affiliate": {
     "intro": "워크숍에 등록하고 제휴 링크를 복사해 초대할 사람에게 보내세요. 링크는 해당 워크숍의 예약 화면으로 연결됩니다.",
-    "totalTitle": "받은 제휴 수수료",
-    "totalHint": "{count, plural, =0 {아직 등록한 워크숍이 없습니다.} other {등록한 워크숍 #개 기준입니다.}}",
     "register": "제휴 등록",
     "registering": "등록 중...",
     "copy": "제휴 링크 복사",
@@ -175,8 +173,6 @@
     "copy": "추천 링크 복사",
     "copied": "복사됨",
     "copyFailed": "링크를 복사할 수 없습니다.",
-    "totalTitle": "받은 추천 보너스",
-    "totalHint": "친구마다 첫 번째 결제 완료 예약 가격의 {rate}입니다.",
     "listTitle": "내 추천 친구",
     "empty": "아직 내 링크로 가입한 친구가 없습니다.",
     "col": {
@@ -190,6 +186,50 @@
       "EARNED": "보너스 적립됨"
     },
     "forBooking": "예약 {code} 기준",
-    "note": "보너스는 추천 친구 한 명당 한 번만 받습니다. 친구가 내 링크로 가입하고 첫 예약을 결제하면 그 예약 가격의 {rate}를 받습니다. 이후 예약에는 추가 보너스가 없습니다."
+    "note": "보너스는 추천 친구 한 명당 한 번만 받습니다. 친구가 내 링크로 가입하고 첫 예약을 결제하면 그 예약 가격의 {rate}를 받습니다. 이후 예약에는 추가 보너스가 없습니다.",
+    "tabFriends": "추천 친구"
+  },
+  "wallet": {
+    "overview": "내 수익",
+    "earned": "총 적립액",
+    "pending": "처리 대기",
+    "pendingHint": "플랫폼의 처리를 기다리는 출금",
+    "withdrawn": "출금 완료",
+    "withdraw": "출금",
+    "available": "출금 가능: {amount}",
+    "nothing": "아직 출금할 금액이 없습니다.",
+    "dialogTitle": "출금하기",
+    "dialogBody": "{program} 수익에서 얼마를 출금하시겠습니까? 최대 {amount}까지 출금할 수 있습니다.",
+    "program": {
+      "AFFILIATE": "제휴",
+      "REFERRAL": "추천"
+    },
+    "amountLabel": "금액 ({currency})",
+    "amountHint": "최대 {amount}.",
+    "submit": "요청 보내기",
+    "submitting": "보내는 중...",
+    "cancel": "취소",
+    "errors": {
+      "required": "금액을 입력하세요.",
+      "invalid": "올바른 금액을 입력하세요.",
+      "exceeds": "출금 가능 금액({amount})을 초과했습니다.",
+      "failed": "요청을 보낼 수 없습니다. 다시 시도해 주세요."
+    },
+    "done": "요청 {code}을(를) 보냈습니다. 내역에서 확인하세요.",
+    "tabHistory": "내역",
+    "empty": "아직 출금한 내역이 없습니다.",
+    "col": {
+      "invoice": "청구서",
+      "requested": "요청일",
+      "amount": "금액",
+      "status": "상태",
+      "processed": "처리일"
+    },
+    "status": {
+      "PENDING": "대기 중",
+      "PAID": "지급 완료",
+      "REJECTED": "거절됨"
+    },
+    "reason": "사유: {reason}"
   }
 }

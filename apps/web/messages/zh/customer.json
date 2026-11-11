@@ -147,8 +147,6 @@
   },
   "affiliate": {
     "intro": "报名参加工作坊，复制其联盟推广链接并发送给您邀请的人。链接会带他们进入该工作坊的预订页面。",
-    "totalTitle": "已获得的联盟推广费",
-    "totalHint": "{count, plural, =0 {您还没有报名任何工作坊。} other {来自您报名的 # 个工作坊。}}",
     "register": "注册联盟推广",
     "registering": "正在注册...",
     "copy": "复制联盟推广链接",
@@ -175,8 +173,6 @@
     "copy": "复制推荐链接",
     "copied": "已复制",
     "copyFailed": "无法复制链接。",
-    "totalTitle": "已获得的推荐奖励",
-    "totalHint": "每位好友首笔已付款预订价格的 {rate}。",
     "listTitle": "您的推荐",
     "empty": "还没有好友通过您的链接注册。",
     "col": {
@@ -190,6 +186,50 @@
       "EARNED": "已获得奖励"
     },
     "forBooking": "预订 {code}",
-    "note": "每位被推荐好友的奖励只计一次：好友通过您的链接注册并支付首笔预订后，您将获得该预订价格的 {rate}。该好友之后的预订不再产生奖励。"
+    "note": "每位被推荐好友的奖励只计一次：好友通过您的链接注册并支付首笔预订后，您将获得该预订价格的 {rate}。该好友之后的预订不再产生奖励。",
+    "tabFriends": "推荐"
+  },
+  "wallet": {
+    "overview": "您的收益",
+    "earned": "累计收益",
+    "pending": "待处理",
+    "pendingHint": "等待平台处理的提现",
+    "withdrawn": "已提现",
+    "withdraw": "提现",
+    "available": "可提现：{amount}",
+    "nothing": "暂无可提现的金额。",
+    "dialogTitle": "提现",
+    "dialogBody": "您想从{program}收益中提现多少？最多可提现 {amount}。",
+    "program": {
+      "AFFILIATE": "联盟推广",
+      "REFERRAL": "推荐"
+    },
+    "amountLabel": "金额（{currency}）",
+    "amountHint": "最多 {amount}。",
+    "submit": "提交申请",
+    "submitting": "正在发送...",
+    "cancel": "取消",
+    "errors": {
+      "required": "请输入金额。",
+      "invalid": "请输入有效金额。",
+      "exceeds": "金额超过可提现金额（{amount}）。",
+      "failed": "无法发送申请，请重试。"
+    },
+    "done": "申请 {code} 已发送，可在“历史记录”中查看。",
+    "tabHistory": "历史记录",
+    "empty": "您还没有提现记录。",
+    "col": {
+      "invoice": "账单",
+      "requested": "申请日期",
+      "amount": "金额",
+      "status": "状态",
+      "processed": "处理日期"
+    },
+    "status": {
+      "PENDING": "待处理",
+      "PAID": "已支付",
+      "REJECTED": "已拒绝"
+    },
+    "reason": "原因：{reason}"
   }
 }
