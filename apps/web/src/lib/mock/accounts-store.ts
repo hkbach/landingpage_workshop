@@ -94,12 +94,15 @@ export type LoginResult =
   | { ok: true; account: Account }
   | { ok: false; code: "INVALID_CREDENTIALS" | "DEACTIVATED" | "TOO_MANY_ATTEMPTS" };
 
-/** The same answer for an unknown email and a wrong password; a deactivated account is only told after the right password; 5 failures lock the email for 15 minutes. */
-export function login(email: string, password: string, now = Date.now()): LoginResult {
-  const key = norm(email);
+/**
+ * The same answer for an unknown email and a wrong password; a deactivated account is only told after the right password; 5 failures of one client (IP) for one email
+ * lock that client out of that email for 15 minutes (someone failing elsewhere does not lock the owner out).
+ */
+export function login(email: string, password: string, now = Date.now(), client = "local"): LoginResult {
+  const key = `${client}|${norm(email)}`;
   const fail = store().failures.get(key);
   if (fail && fail.until > now) return { ok: false, code: "TOO_MANY_ATTEMPTS" };
-  const account = findAccountByEmail(key);
+  const account = findAccountByEmail(norm(email));
   const stored = account ? store().passwords.get(account.id) : undefined;
   const good = account ? (stored ? verifyPassword(password, stored) : password === DEMO_PASSWORD) : (verifyPassword(password, (dummyHash ??= hashPassword("not-an-account"))), false); // a work factor is spent either way
   if (!account || !good) {

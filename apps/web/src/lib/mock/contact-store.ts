@@ -32,6 +32,7 @@ export function contactRetryAfter(key: string, now = Date.now()): number {
 
 /** Counts a message accepted from the client (only accepted ones count, so a typo never locks anybody out). */
 export function recordContactHit(key: string, now = Date.now()): void {
+  for (const [k, times] of hits()) if (times.every((t) => now - t >= CONTACT_RATE_LIMIT.windowMs)) hits().delete(k); // forget the clients whose window is over
   hits().set(key, [...(hits().get(key) ?? []).filter((t) => now - t < CONTACT_RATE_LIMIT.windowMs), now]);
 }
 

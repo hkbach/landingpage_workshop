@@ -201,8 +201,8 @@ pnpm test
   Test Files  23 passed (23)
   Tests  377 passed (377)
   ...
-  Test Files  105 passed (105)
-  Tests  1128 passed (1128)
+  Test Files  107 passed (107)
+  Tests  1142 passed (1142)
   ```
   (Con số có thể khác khi dự án thêm test mới. Quan trọng là **không có chữ `failed`** và không có `FAIL`.)
 - Trong lúc chạy bạn có thể thấy nhiều dòng `IntlError ...` màu đỏ/vàng. **Đó là cảnh báo của bài test, không phải lỗi.** Chỉ cần xem dòng tổng kết ở cuối.

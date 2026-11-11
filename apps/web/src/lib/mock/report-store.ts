@@ -43,6 +43,7 @@ export function retryAfterSeconds(key: string, now = Date.now()): number {
 }
 
 export function recordHit(key: string, now = Date.now()): void {
+  for (const [k, times] of store().hits) if (times.every((t) => now - t >= REPORT_RATE_LIMIT.windowMs)) store().hits.delete(k); // forget the clients whose window is over
   recentHits(key, now).push(now);
 }
 

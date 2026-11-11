@@ -258,6 +258,7 @@ export function YoutubeFacade({ videoId, title }: { videoId: string; title: stri
           src={youtubeEmbedUrl(videoId)}
           title={title}
           allow="autoplay; encrypted-media; picture-in-picture"
+          sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
           allowFullScreen
           referrerPolicy="strict-origin-when-cross-origin"
           className="absolute inset-0 size-full border-0"

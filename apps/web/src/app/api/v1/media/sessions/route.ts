@@ -1,3 +1,4 @@
+import { readBodyText } from "@/lib/read-body";
 import { apiError } from "@/lib/api-error";
 import { MAX_IMAGE_BYTES, saveImage } from "@/lib/mock/media-store";
 import { recordAudit } from "@/lib/mock/admin-audit-store";
@@ -8,11 +9,12 @@ import { DEMO_ORG, ownerActor } from "@/lib/mock/audit-actors";
 
 /** POST { dataUrl } -> 201 { id, url }. 413 when too large, 422 when it is not a jpeg, png or webp image. */
 export async function POST(request: Request) {
-  // A body far larger than an image can be (base64 makes it about 4/3 bigger) is refused before it is read.
-  if (Number(request.headers.get("content-length") ?? 0) > MAX_IMAGE_BYTES * 1.5 + 1024) return apiError(413, "IMAGE_TOO_LARGE", `The image can be at most ${MAX_IMAGE_BYTES / 1_000_000} MB.`);
+  // A body far larger than an image can be (base64 makes it about 4/3 bigger) is refused: the read stops there, even without a Content-Length (a chunked body).
+  const raw = await readBodyText(request, MAX_IMAGE_BYTES * 1.5 + 1024);
+  if (raw === null) return apiError(413, "IMAGE_TOO_LARGE", `The image can be at most ${MAX_IMAGE_BYTES / 1_000_000} MB.`);
   let body: unknown;
   try {
-    body = await request.json();
+    body = JSON.parse(raw);
   } catch {
     return apiError(400, "BAD_REQUEST", "The request body must be JSON.");
   }

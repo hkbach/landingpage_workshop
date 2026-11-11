@@ -1,4 +1,6 @@
 import { createReportSchema } from "@workshop/shared";
+import { clientKey } from "@/lib/client-ip";
+import { readBodyText } from "@/lib/read-body";
 import { apiError } from "@/lib/api-error";
 import { getPublicSite } from "@/lib/mock/site";
 import { addReport, recordHit, retryAfterSeconds } from "@/lib/mock/report-store";
@@ -11,9 +13,6 @@ import { guestActor, DEMO_ORG } from "@/lib/mock/audit-actors";
 
 const MAX_BODY_CHARS = 10_000;
 
-function clientKey(request: Request): string {
-  return request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
-}
 
 export async function POST(request: Request, ctx: RouteContext<"/api/v1/public/sites/[slug]/reports">) {
   const { slug } = await ctx.params;
@@ -27,8 +26,8 @@ export async function POST(request: Request, ctx: RouteContext<"/api/v1/public/s
     return apiError(429, "RATE_LIMITED", "Too many reports. Please try again later.", { retryAfterSeconds: wait }, { "Retry-After": String(wait) });
   }
 
-  const text = await request.text();
-  if (text.length > MAX_BODY_CHARS) return apiError(413, "PAYLOAD_TOO_LARGE", "The report is too large.");
+  const text = await readBodyText(request, MAX_BODY_CHARS * 4); // read at most this many bytes (a character is up to 4 bytes)
+  if (text === null || text.length > MAX_BODY_CHARS) return apiError(413, "PAYLOAD_TOO_LARGE", "The report is too large.");
   let body: unknown;
   try {
     body = JSON.parse(text);

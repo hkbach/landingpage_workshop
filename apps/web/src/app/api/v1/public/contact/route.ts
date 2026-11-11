@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { clientKey } from "@/lib/client-ip";
+import { readBodyText } from "@/lib/read-body";
 import { apiError } from "@/lib/api-error";
 import { recordAudit } from "@/lib/mock/admin-audit-store";
 import { guestActor } from "@/lib/mock/audit-actors";
@@ -19,17 +21,14 @@ const bodySchema = z.object({
   website: z.string().optional(),
 });
 
-function clientKey(request: Request): string {
-  return request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
-}
 
 export async function POST(request: Request) {
   const client = clientKey(request);
   const wait = contactRetryAfter(client);
   if (wait > 0) return apiError(429, "RATE_LIMITED", "Too many messages. Please try again later.", { retryAfterSeconds: wait }, { "Retry-After": String(wait) });
 
-  const raw = await request.text();
-  if (raw.length > MAX_BODY_CHARS) return apiError(413, "PAYLOAD_TOO_LARGE", "The message is too large.");
+  const raw = await readBodyText(request, MAX_BODY_CHARS * 4); // read at most this many bytes (a character is up to 4 bytes)
+  if (raw === null || raw.length > MAX_BODY_CHARS) return apiError(413, "PAYLOAD_TOO_LARGE", "The message is too large.");
   let body: unknown;
   try {
     body = JSON.parse(raw);
