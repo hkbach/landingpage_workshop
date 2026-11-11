@@ -174,9 +174,3 @@ export function CustomerShell({ accountId, shop, theme, loginRequired, support, 
     </CustomerContext.Provider>
   );
 }
-
-/** A page of the guest area that has no content yet: its title only. */
-export function CustomerBlankPage({ menu }: { menu: "today" }) {
-  const t = useTranslations("customer.menu");
-  return <h1 className="text-2xl font-semibold">{t(menu)}</h1>;
-}

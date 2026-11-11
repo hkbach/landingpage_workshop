@@ -1,6 +1,6 @@
-import { CustomerBlankPage } from "@/components/customer/customer-shell";
+import { CustomerToday } from "@/components/customer/customer-today";
 
-// No content yet: the page is there so the menu works; it will be defined later.
+// Today: the workshops of today, what needs the guest, the next 7 days, a few figures and ideas.
 export default function CustomerTodayPage() {
-  return <CustomerBlankPage menu="today" />;
+  return <CustomerToday />;
 }

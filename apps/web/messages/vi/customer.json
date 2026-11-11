@@ -255,5 +255,42 @@
       "email": "Email"
     },
     "opensNewTab": "mở trong tab mới"
+  },
+  "today": {
+    "greeting": {
+      "morning": "Chào buổi sáng, {name}",
+      "afternoon": "Chào buổi chiều, {name}",
+      "evening": "Chào buổi tối, {name}"
+    },
+    "summaryToday": "{count, plural, other {Hôm nay bạn có # workshop.}}",
+    "summaryNext": "Sắp tới: {title} · {when}.",
+    "summaryNone": "Chưa có workshop nào trong 7 ngày tới. Hãy tìm một trải nghiệm mới.",
+    "todayTitle": "Workshop hôm nay",
+    "noneToday": "Hôm nay bạn không có workshop nào.",
+    "browse": "Xem workshop",
+    "now": "Đang diễn ra",
+    "later": "Hôm nay",
+    "attentionTitle": "Cần bạn xử lý",
+    "attention": {
+      "confirm": "Đang chờ bạn xác nhận: mở liên kết trong email chúng tôi đã gửi.",
+      "unpaid": "Chưa thanh toán: cần trả {amount}."
+    },
+    "weekTitle": "Sắp diễn ra trong tuần",
+    "weekNone": "Không còn booking nào trong 7 ngày tới.",
+    "seeAll": "Xem tất cả booking",
+    "figures": "Số liệu của bạn",
+    "upcoming": "Booking sắp tới",
+    "attended": "Workshop đã tham dự",
+    "affiliateBalance": "Affiliate: có thể rút",
+    "referralBalance": "Referrals: có thể rút",
+    "favoritesTitle": "Danh mục yêu thích",
+    "noFavorites": "Bạn chưa chọn danh mục yêu thích.",
+    "favoritesHint": "Workshop thuộc các danh mục này được xếp lên đầu ở trang Workshops.",
+    "explore": "Khám phá workshop",
+    "inviteTitle": "Mời bạn bè",
+    "inviteBody": "Nhận thưởng khi bạn bè bạn mời thanh toán thành công booking đầu tiên.",
+    "inviteStats": "Đã mời {friends, plural, other {# bạn}} · thưởng đã nhận {amount}",
+    "inviteCta": "Chia sẻ liên kết của bạn",
+    "failed": "Không tải được trang Today."
   }
 }

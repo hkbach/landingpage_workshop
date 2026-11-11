@@ -255,5 +255,42 @@
       "email": "邮箱"
     },
     "opensNewTab": "在新标签页中打开"
+  },
+  "today": {
+    "greeting": {
+      "morning": "早上好，{name}",
+      "afternoon": "下午好，{name}",
+      "evening": "晚上好，{name}"
+    },
+    "summaryToday": "{count, plural, other {您今天有 # 场工作坊。}}",
+    "summaryNext": "下一场：{title} · {when}。",
+    "summaryNone": "未来 7 天没有预订。去发现新的工作坊吧。",
+    "todayTitle": "今日工作坊",
+    "noneToday": "您今天没有工作坊。",
+    "browse": "浏览工作坊",
+    "now": "进行中",
+    "later": "今天",
+    "attentionTitle": "需要您处理",
+    "attention": {
+      "confirm": "等待您确认：请打开我们发送的邮件中的链接。",
+      "unpaid": "尚未付款：需支付 {amount}。"
+    },
+    "weekTitle": "本周安排",
+    "weekNone": "未来 7 天没有其他预订。",
+    "seeAll": "查看全部预订",
+    "figures": "我的数据",
+    "upcoming": "即将到来的预订",
+    "attended": "已参加的工作坊",
+    "affiliateBalance": "联盟推广：可提现",
+    "referralBalance": "推荐：可提现",
+    "favoritesTitle": "我喜欢的分类",
+    "noFavorites": "您还没有选择喜欢的分类。",
+    "favoritesHint": "这些分类的工作坊会排在工作坊页面的最前面。",
+    "explore": "探索工作坊",
+    "inviteTitle": "邀请朋友",
+    "inviteBody": "您邀请的朋友完成首次付费预订后，您可获得奖励。",
+    "inviteStats": "{friends, plural, other {已邀请 # 位朋友}} · 已获奖励 {amount}",
+    "inviteCta": "分享您的链接",
+    "failed": "无法加载今日页面。"
   }
 }

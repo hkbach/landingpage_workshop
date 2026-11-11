@@ -255,5 +255,42 @@
       "email": "Email"
     },
     "opensNewTab": "opens in a new tab"
+  },
+  "today": {
+    "greeting": {
+      "morning": "Good morning, {name}",
+      "afternoon": "Good afternoon, {name}",
+      "evening": "Good evening, {name}"
+    },
+    "summaryToday": "{count, plural, one {You have # workshop today.} other {You have # workshops today.}}",
+    "summaryNext": "Next up: {title} · {when}.",
+    "summaryNone": "Nothing is booked for the next 7 days. Find something new to try.",
+    "todayTitle": "Today's workshops",
+    "noneToday": "You have no workshop today.",
+    "browse": "Browse workshops",
+    "now": "Happening now",
+    "later": "Today",
+    "attentionTitle": "Needs your attention",
+    "attention": {
+      "confirm": "Waiting for your confirmation: open the link in the email we sent you.",
+      "unpaid": "Not paid yet: {amount} to pay."
+    },
+    "weekTitle": "Coming up this week",
+    "weekNone": "Nothing else is booked for the next 7 days.",
+    "seeAll": "See all bookings",
+    "figures": "Your figures",
+    "upcoming": "Upcoming bookings",
+    "attended": "Workshops attended",
+    "affiliateBalance": "Affiliate: can withdraw",
+    "referralBalance": "Referrals: can withdraw",
+    "favoritesTitle": "Your favorite categories",
+    "noFavorites": "You have not chosen favorite categories yet.",
+    "favoritesHint": "Workshops of these categories come first on the Workshops page.",
+    "explore": "Explore workshops",
+    "inviteTitle": "Invite friends",
+    "inviteBody": "Earn a bonus when a friend you invited makes their first paid booking.",
+    "inviteStats": "{friends, plural, one {# friend invited} other {# friends invited}} · bonus earned {amount}",
+    "inviteCta": "Share your link",
+    "failed": "Today could not be loaded."
   }
 }

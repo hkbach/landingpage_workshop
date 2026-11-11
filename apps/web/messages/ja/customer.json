@@ -255,5 +255,42 @@
       "email": "メール"
     },
     "opensNewTab": "新しいタブで開きます"
+  },
+  "today": {
+    "greeting": {
+      "morning": "おはようございます、{name}さん",
+      "afternoon": "こんにちは、{name}さん",
+      "evening": "こんばんは、{name}さん"
+    },
+    "summaryToday": "{count, plural, other {今日のワークショップは#件です。}}",
+    "summaryNext": "次の予定: {title} · {when}。",
+    "summaryNone": "今後7日間の予約はありません。新しいワークショップを探してみましょう。",
+    "todayTitle": "今日のワークショップ",
+    "noneToday": "今日のワークショップはありません。",
+    "browse": "ワークショップを探す",
+    "now": "開催中",
+    "later": "今日",
+    "attentionTitle": "対応が必要です",
+    "attention": {
+      "confirm": "確認待ちです。お送りしたメールのリンクを開いてください。",
+      "unpaid": "未払いです。お支払い金額: {amount}。"
+    },
+    "weekTitle": "今週の予定",
+    "weekNone": "今後7日間、ほかの予約はありません。",
+    "seeAll": "すべての予約を見る",
+    "figures": "あなたの数字",
+    "upcoming": "今後の予約",
+    "attended": "参加したワークショップ",
+    "affiliateBalance": "アフィリエイト: 引き出し可能",
+    "referralBalance": "紹介: 引き出し可能",
+    "favoritesTitle": "お気に入りカテゴリ",
+    "noFavorites": "お気に入りカテゴリはまだ選んでいません。",
+    "favoritesHint": "これらのカテゴリのワークショップが、ワークショップ一覧の先頭に表示されます。",
+    "explore": "ワークショップを探索",
+    "inviteTitle": "友達を招待",
+    "inviteBody": "招待した友達が最初の支払い済み予約をすると、ボーナスがもらえます。",
+    "inviteStats": "{friends, plural, other {#人を招待}} · 獲得ボーナス {amount}",
+    "inviteCta": "リンクを共有",
+    "failed": "今日の画面を読み込めませんでした。"
   }
 }

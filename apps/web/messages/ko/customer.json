@@ -255,5 +255,42 @@
       "email": "이메일"
     },
     "opensNewTab": "새 탭에서 열림"
+  },
+  "today": {
+    "greeting": {
+      "morning": "좋은 아침이에요, {name}님",
+      "afternoon": "좋은 오후예요, {name}님",
+      "evening": "좋은 저녁이에요, {name}님"
+    },
+    "summaryToday": "{count, plural, other {오늘 워크숍이 #개 있어요.}}",
+    "summaryNext": "다음 일정: {title} · {when}.",
+    "summaryNone": "앞으로 7일간 예약이 없어요. 새로운 워크숍을 찾아보세요.",
+    "todayTitle": "오늘의 워크숍",
+    "noneToday": "오늘은 워크숍이 없어요.",
+    "browse": "워크숍 둘러보기",
+    "now": "진행 중",
+    "later": "오늘",
+    "attentionTitle": "확인이 필요해요",
+    "attention": {
+      "confirm": "확인을 기다리고 있어요. 보내 드린 이메일의 링크를 열어 주세요.",
+      "unpaid": "아직 결제하지 않았어요. 결제할 금액: {amount}."
+    },
+    "weekTitle": "이번 주 일정",
+    "weekNone": "앞으로 7일간 다른 예약이 없어요.",
+    "seeAll": "모든 예약 보기",
+    "figures": "내 현황",
+    "upcoming": "예정된 예약",
+    "attended": "참석한 워크숍",
+    "affiliateBalance": "어필리에이트: 출금 가능",
+    "referralBalance": "추천: 출금 가능",
+    "favoritesTitle": "관심 카테고리",
+    "noFavorites": "아직 관심 카테고리를 고르지 않았어요.",
+    "favoritesHint": "이 카테고리의 워크숍이 워크숍 페이지 맨 위에 보여요.",
+    "explore": "워크숍 탐색",
+    "inviteTitle": "친구 초대",
+    "inviteBody": "초대한 친구가 첫 결제 예약을 완료하면 보너스를 받아요.",
+    "inviteStats": "{friends, plural, other {친구 #명 초대}} · 받은 보너스 {amount}",
+    "inviteCta": "내 링크 공유",
+    "failed": "오늘 화면을 불러오지 못했어요."
   }
 }
