@@ -109,7 +109,6 @@ export function CustomerShell({ accountId, shop, theme, loginRequired, support, 
         </a>
         <header className="border-b bg-background">
           <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4">
-            <Link href={`/sites/${shop.slug}`} className="truncate font-semibold" title={t("shell.openSite", { shop: shop.name })}>{shop.name}</Link>
             <div className="ml-auto flex items-center gap-2">
               <LocaleSwitcher labelKey="customer.shell.language" />
               <span className="hidden items-center gap-2 sm:flex" aria-label={t("shell.account", { name: profile.fullName })}>
