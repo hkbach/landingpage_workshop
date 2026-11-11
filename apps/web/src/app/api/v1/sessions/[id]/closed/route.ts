@@ -27,6 +27,6 @@ export async function POST(request: Request, ctx: RouteContext<"/api/v1/sessions
   if (!parsed.success) return apiError(422, "VALIDATION", "Please check the highlighted fields.", { fields: fieldCodes(parsed.error.issues) });
   const reason = checkCloseReasonFor(parsed.data, new Date(), parsed.data.reason.code, parsed.data.reason.note ?? "");
   if (!reason.ok) return apiError(422, "VALIDATION", "A reason is required.", { fields: { reason: reason.error === "NOTE_REQUIRED" ? "noteRequired" : "required" } });
-  recordAudit({ ...ownerActor(), action: "session.close", entityType: "Session", entityId: id, organizationId: DEMO_ORG, details: reason.reason.code });
+  recordAudit({ ...ownerActor(request), action: "session.close", entityType: "Session", entityId: id, organizationId: DEMO_ORG, details: reason.reason.code });
   return Response.json(mailSessionClosed(id, { startsAt: parsed.data.startsAt, endsAt: parsed.data.endsAt, reason: reason.reason }));
 }

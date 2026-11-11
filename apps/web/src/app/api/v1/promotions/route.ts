@@ -28,6 +28,6 @@ export async function POST(request: Request) {
   }
   const res = createPromotion(parsed.data);
   if (!res.ok) return saveFailure(res);
-  recordAudit({ ...ownerActor(), action: "promotion.create", entityType: "Promotion", entityId: res.promotion.id, organizationId: DEMO_ORG });
+  recordAudit({ ...ownerActor(request), action: "promotion.create", entityType: "Promotion", entityId: res.promotion.id, organizationId: DEMO_ORG });
   return Response.json(res.promotion, { status: 201 });
 }

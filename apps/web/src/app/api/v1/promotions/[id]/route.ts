@@ -28,7 +28,7 @@ export async function PUT(request: Request, ctx: RouteContext<"/api/v1/promotion
   const parsed = promotionInputSchema.safeParse(json.body);
   if (!parsed.success) return validation(parsed.error.issues);
   const res = updatePromotion(id, parsed.data);
-  if (res.ok) recordAudit({ ...ownerActor(), action: "promotion.update", entityType: "Promotion", entityId: id, organizationId: DEMO_ORG });
+  if (res.ok) recordAudit({ ...ownerActor(request), action: "promotion.update", entityType: "Promotion", entityId: id, organizationId: DEMO_ORG });
   return res.ok ? Response.json(res.promotion) : saveFailure(res);
 }
 
@@ -40,16 +40,16 @@ export async function PATCH(request: Request, ctx: RouteContext<"/api/v1/promoti
   const parsed = pauseSchema.safeParse(json.body);
   if (!parsed.success) return validation(parsed.error.issues);
   const res = setPromotionEnabled(id, parsed.data.enabled);
-  if (res.ok) recordAudit({ ...ownerActor(), action: parsed.data.enabled ? "promotion.resume" : "promotion.pause", entityType: "Promotion", entityId: id, organizationId: DEMO_ORG });
+  if (res.ok) recordAudit({ ...ownerActor(request), action: parsed.data.enabled ? "promotion.resume" : "promotion.pause", entityType: "Promotion", entityId: id, organizationId: DEMO_ORG });
   return res.ok ? Response.json(res.promotion) : saveFailure(res);
 }
 
 /** DELETE: 204; 404 when it does not exist; 409 DELETE_NOT_ALLOWED unless the promotion is paused or over. */
-export async function DELETE(_request: Request, ctx: RouteContext<"/api/v1/promotions/[id]">) {
+export async function DELETE(request: Request, ctx: RouteContext<"/api/v1/promotions/[id]">) {
   const { id } = await ctx.params;
   const res = deletePromotion(id);
   if (res.ok) {
-    recordAudit({ ...ownerActor(), action: "promotion.delete", entityType: "Promotion", entityId: id, organizationId: DEMO_ORG });
+    recordAudit({ ...ownerActor(request), action: "promotion.delete", entityType: "Promotion", entityId: id, organizationId: DEMO_ORG });
     return new Response(null, { status: 204 });
   }
   return res.code === "NOT_FOUND"

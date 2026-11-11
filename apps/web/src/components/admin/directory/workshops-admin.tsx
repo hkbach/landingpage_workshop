@@ -1,14 +1,16 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { Pencil } from "lucide-react";
 import { formatMoney } from "@workshop/shared";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import type { AdminWorkshop } from "@/lib/mock/admin-directory";
 import { fmt } from "../utils";
 import { DetailDialog, DirectoryTable, Pill, Toolbar, humanize, useDebounced, useDirectory, type Column } from "./kit";
 
-/** The workshops of every shop: search by the workshop or the shop, and open the detail. */
+/** The workshops of every shop: search by the workshop or the shop, open the detail, or Edit: the workshops page of the shop (the same as the shop owner's, on the admin site). */
 export function WorkshopsAdmin() {
   const t = useTranslations("admin.workshops");
   const locale = useLocale();
@@ -24,7 +26,12 @@ export function WorkshopsAdmin() {
     { key: "price", header: t("col.price"), className: "text-right", cell: (w) => formatMoney(w.priceAmount, w.currency, locale) },
     { key: "sessions", header: t("col.sessions"), className: "text-right", cell: (w) => w.sessions },
     { key: "bookings", header: t("col.bookings"), className: "text-right", cell: (w) => w.bookings },
-    { key: "actions", header: <span className="sr-only">{t("col.actions")}</span>, className: "text-right", cell: (w) => <Button size="sm" variant="outline" onClick={() => setDetail(w)}>{t("view")}</Button> },
+    { key: "actions", header: <span className="sr-only">{t("col.actions")}</span>, className: "text-right", cell: (w) => (
+      <div className="flex flex-wrap justify-end gap-1.5">
+        <Button size="sm" variant="outline" onClick={() => setDetail(w)}>{t("view")}</Button>
+        {w.editable ? <Link href={`/systemadmin/shops/${w.shopSlug}/workshops`} className={buttonVariants({ size: "sm", variant: "outline" })} data-testid="workshop-edit"><Pencil aria-hidden />{t("edit")}<span className="sr-only"> {w.shopName}</span></Link> : null}
+      </div>
+    ) },
   ];
 
   return (

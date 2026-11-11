@@ -32,7 +32,7 @@ export async function POST(request: Request, ctx: RouteContext<"/api/v1/sessions
   if (!reason.ok) return apiError(422, "VALIDATION", "A reason is required.", { fields: { reason: reason.error === "NOTE_REQUIRED" ? "noteRequired" : "required" } });
 
   // Every guest who booked the session is told, except the ones who cancelled their booking (sessions made in the browser only have no bookings here).
-  recordAudit({ ...ownerActor(), action: "session.reschedule", entityType: "Session", entityId: id, organizationId: DEMO_ORG, details: reason.reason.code });
+  recordAudit({ ...ownerActor(request), action: "session.reschedule", entityType: "Session", entityId: id, organizationId: DEMO_ORG, details: reason.reason.code });
   return Response.json(mailSessionRescheduled(id, {
     oldStartsAt: parsed.data.oldStartsAt, newStartsAt: parsed.data.newStartsAt, newEndsAt: parsed.data.newEndsAt, reason: reason.reason,
   }));

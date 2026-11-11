@@ -223,9 +223,5 @@
       "addressRequired": "Enter an address.",
       "urlInvalid": "Enter a URL starting with https://"
     }
-  },
-  "adminMode": {
-    "text": "You are editing this shop as a system administrator. Your changes are recorded in the audit log as made by an administrator.",
-    "back": "Back to the admin area"
   }
 }

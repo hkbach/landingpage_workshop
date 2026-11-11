@@ -384,7 +384,8 @@
     "shopAddress": "The address of the shop",
     "addressNote": "Address note",
     "rating": "Rating",
-    "created": "Created"
+    "created": "Created",
+    "edit": "Edit"
   },
   "bookings": {
     "title": "Bookings",
@@ -482,7 +483,8 @@
     "cutoff": "Booking closes",
     "minutes": "{n} minutes before it starts",
     "history": "History",
-    "byAdmin": "administrator"
+    "byAdmin": "administrator",
+    "edit": "Edit"
   },
   "landing": {
     "title": "Landing pages",
@@ -676,6 +678,14 @@
       "phone": "Number people can call. Leave empty to hide this channel.",
       "zalo": "Zalo phone number. Leave empty to hide this channel.",
       "email": "Leave empty to hide this channel."
+    }
+  },
+  "editAs": {
+    "text": "You are editing {shop} as a system administrator. Your changes are recorded in the audit log as made by an administrator.",
+    "back": {
+      "site": "Back to Landing pages",
+      "sessions": "Back to Sessions",
+      "workshops": "Back to Workshops"
     }
   }
 }

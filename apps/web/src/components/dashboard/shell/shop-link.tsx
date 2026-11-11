@@ -3,18 +3,23 @@
 import type { ComponentProps } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { withShopSlug } from "@/lib/shop-path";
+import { withShopSlug, type ShopArea } from "@/lib/shop-path";
 
-/** The slug of the shop in the address (/shopowner/{slug}/...); null outside the shop owner pages. Read from the path, which is the same on the server and in the browser. */
-function useShopSlug(): string | null {
-  const [area, slug] = (usePathname() ?? "").split("/").filter(Boolean);
-  return area === "shopowner" && slug && slug !== "onboarding" ? slug : null;
+/**
+ * The slug of the shop in the address and the area it is in: /shopowner/{slug}/... (the shop owner) or /systemadmin/shops/{slug}/... (an administrator editing the shop, on the admin site);
+ * null outside those pages. Read from the path, which is the same on the server and in the browser.
+ */
+function useShopSlug(): { slug: string; area: ShopArea } | null {
+  const [area, second, third] = (usePathname() ?? "").split("/").filter(Boolean);
+  if (area === "shopowner" && second && second !== "onboarding") return { slug: second, area: "shopowner" };
+  if (area === "systemadmin" && second === "shops" && third) return { slug: third, area: "admin" };
+  return null;
 }
 
-/** `(path) => path with the slug of the shop in it`, for router.push and the like: write the path as "/shopowner/bookings". */
+/** `(path) => path with the slug of the shop in it`, for router.push and the like: write the path as "/shopowner/bookings"; an administrator editing the shop stays in the admin area. */
 export function useShopHref(): (path: string) => string {
-  const slug = useShopSlug();
-  return (path) => withShopSlug(slug, path);
+  const at = useShopSlug();
+  return (path) => withShopSlug(at?.slug, path, at?.area);
 }
 
 /** A link inside the shop owner area: `href="/shopowner/bookings"` becomes `/shopowner/{slug}/bookings`. */

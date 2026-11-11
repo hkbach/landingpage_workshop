@@ -10,12 +10,9 @@ import { StatusBadge } from "../status-badge";
 import { landingUrl } from "../utils";
 import { DirectoryTable, Notice, Toolbar, useDebounced, useDirectory, type Column } from "./kit";
 
-/** sessionStorage key: while it holds a shop slug the owner area shows the banner "You are editing as an administrator" (see AdminModeBanner). */
-export const ADMIN_MODE_KEY = "wk:admin-mode";
-
 /**
- * The landing pages of the shops: search by the name of the shop. Edit opens the page builder of the shop in admin mode (the whole builder, with a banner on top); the
- * audit log records that the edits are made by an administrator.
+ * The landing pages of the shops: search by the name of the shop. Edit opens the landing pages of the shop and their builder (the same as the shop owner's) inside the admin area,
+ * at /systemadmin/shops/{slug}/site, never in the shop owner area; the audit log records that the edits are made by an administrator.
  */
 export function LandingPagesAdmin() {
   const t = useTranslations("admin.landing");
@@ -28,8 +25,7 @@ export function LandingPagesAdmin() {
   async function edit(p: AdminLandingPage) {
     const res = await fetch(`/api/v1/admin/landing-pages/${encodeURIComponent(p.slug)}/audit`, { method: "POST" }).catch(() => null);
     if (!res?.ok) { setMessage({ text: t("failed"), tone: "error" }); return; }
-    try { window.sessionStorage.setItem(ADMIN_MODE_KEY, p.slug); } catch { /* the banner is only a reminder */ }
-    router.push(`/shopowner/${p.slug}/site?admin=1`);
+    router.push(`/systemadmin/shops/${p.slug}/site`);
   }
 
   const columns: Column<AdminLandingPage>[] = [

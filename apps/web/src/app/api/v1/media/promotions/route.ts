@@ -22,6 +22,6 @@ export async function POST(request: Request) {
       ? apiError(413, "IMAGE_TOO_LARGE", `The image can be at most ${MAX_IMAGE_BYTES / 1_000_000} MB.`)
       : apiError(422, "VALIDATION", "The file must be a JPEG, PNG or WebP image.", { fields: { dataUrl: "imageInvalid" } });
   }
-  recordAudit({ ...ownerActor(), action: "media.upload", entityType: "Media", entityId: res.id, organizationId: DEMO_ORG, details: "promotion image" });
+  recordAudit({ ...ownerActor(request), action: "media.upload", entityType: "Media", entityId: res.id, organizationId: DEMO_ORG, details: "promotion image" });
   return Response.json({ id: res.id, url: `/api/v1/media/promotions/${res.id}` }, { status: 201 });
 }

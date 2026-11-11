@@ -22,6 +22,6 @@ export async function PATCH(request: Request, ctx: RouteContext<"/api/v1/booking
   const parsed = bodySchema.safeParse(body);
   if (!parsed.success) return apiError(422, "VALIDATION", "Please check the highlighted fields.", { fields: fieldCodes(parsed.error.issues) });
   if (!recordPaid(id, parsed.data.paid, currentShop.ownerName)) return apiError(404, "NOT_FOUND", "Booking not found, or it has nothing to pay.");
-  recordAudit({ ...ownerActor(), action: parsed.data.paid ? "booking.mark_paid" : "booking.mark_unpaid", entityType: "Booking", entityId: id, organizationId: DEMO_ORG });
+  recordAudit({ ...ownerActor(request), action: parsed.data.paid ? "booking.mark_paid" : "booking.mark_unpaid", entityType: "Booking", entityId: id, organizationId: DEMO_ORG });
   return Response.json({ id, paid: parsed.data.paid });
 }

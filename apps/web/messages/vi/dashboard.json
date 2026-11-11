@@ -223,9 +223,5 @@
       "addressRequired": "Vui lòng nhập địa chỉ.",
       "urlInvalid": "Vui lòng nhập URL bắt đầu bằng https://"
     }
-  },
-  "adminMode": {
-    "text": "Bạn đang chỉnh sửa shop này với tư cách quản trị viên hệ thống. Các thay đổi được ghi vào nhật ký kiểm toán là do quản trị viên thực hiện.",
-    "back": "Quay lại khu vực quản trị"
   }
 }

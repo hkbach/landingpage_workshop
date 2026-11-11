@@ -41,7 +41,7 @@ export async function PATCH(request: Request, ctx: RouteContext<"/api/v1/booking
   setBookingStatus(id, to, to === "CANCELLED" ? parsed.data.cancelReason : undefined, at, parsed.data.statusBeforeCheckIn, "SHOP");
   // The shop cancelled the booking: the guest is told.
   const guestEmail = liveCustomers().find((c) => c.id === before.customerId)?.email?.toLowerCase();
-  recordAudit({ ...ownerActor(), action: `booking.${to === "CHECKED_IN" ? "check_in" : to === "CANCELLED" ? "cancel_by_shop" : "undo_check_in"}`, entityType: "Booking", entityId: id, organizationId: DEMO_ORG, ...(guestEmail ? { targetEmail: guestEmail } : {}), details: before.bookingCode });
+  recordAudit({ ...ownerActor(request), action: `booking.${to === "CHECKED_IN" ? "check_in" : to === "CANCELLED" ? "cancel_by_shop" : "undo_check_in"}`, entityType: "Booking", entityId: id, organizationId: DEMO_ORG, ...(guestEmail ? { targetEmail: guestEmail } : {}), details: before.bookingCode });
   if (to === "CANCELLED") mailBookingCancelledByShop(id);
   return Response.json({ id, status: to });
 }

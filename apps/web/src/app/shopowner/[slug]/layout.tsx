@@ -4,7 +4,6 @@ import { currentShop } from "@/lib/mock/data";
 import { liveShop } from "@/lib/mock/shop-admin-store";
 import { getPlatformSupport } from "@/lib/mock/platform";
 import { DashboardShell } from "@/components/dashboard/shell/dashboard-shell";
-import { AdminModeBanner } from "@/components/dashboard/shell/admin-mode-banner";
 import { ShopStatusBanner } from "@/components/dashboard/shell/shop-status-banner";
 
 // The slug in /shopowner/{slug}/... is the slug of the shop and never changes. TODO(api): the shop of the session's organization.
@@ -15,7 +14,7 @@ export default async function DashboardLayout({ children, params }: LayoutProps<
   return (
     <DashboardShell
       shop={{ name: shop.name, slug: shop.slug, status: shop.status, ownerName: shop.ownerName, ownerEmail: shop.ownerEmail }}
-      banner={<><AdminModeBanner slug={shop.slug} /><ShopStatusBanner status={shop.status} reason={shop.statusReason} /></>}
+      banner={<ShopStatusBanner status={shop.status} reason={shop.statusReason} />}
       support={getPlatformSupport()}
     >
       {children}

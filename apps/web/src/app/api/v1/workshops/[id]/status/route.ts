@@ -23,7 +23,7 @@ export async function POST(request: Request, ctx: RouteContext<"/api/v1/workshop
   if (!parsed.success) return apiError(422, "VALIDATION", "The status must be ACTIVE or DRAFT.", { fields: { status: "invalid" } });
   const res = switchWorkshop(id, parsed.data.status);
   if (res.ok) {
-    recordAudit({ ...ownerActor(), action: parsed.data.status === "ACTIVE" ? "workshop.activate" : "workshop.deactivate", entityType: "Workshop", entityId: id, organizationId: DEMO_ORG });
+    recordAudit({ ...ownerActor(request), action: parsed.data.status === "ACTIVE" ? "workshop.activate" : "workshop.deactivate", entityType: "Workshop", entityId: id, organizationId: DEMO_ORG });
     return Response.json({ workshop: res.workshop });
   }
   if (res.code === "NOT_FOUND") return apiError(404, "NOT_FOUND", "Workshop not found.");

@@ -2,6 +2,7 @@
 // customer (the path), a route of the shop owner area is the owner of the demo shop, and a public route only knows the email the guest typed.
 // TODO(api): the actor of the session (user id, email, role, organization) for every route.
 import type { AuditActor } from "./admin-audit-store";
+import { ADMIN_EMAIL } from "./admin-audit-store";
 import { findAccount, type Account } from "./accounts-store";
 import { currentShop } from "./data";
 
@@ -15,8 +16,20 @@ export function accountActor(a: Account): AuditActor {
   return { actor: a.fullName, actorEmail: a.email, actorRole: a.type === "SHOP_OWNER" ? "SHOP_OWNER" : "CUSTOMER", actorId: a.id };
 }
 
-/** The owner of the shop (the routes of the shop owner area, until they have a session). */
-export function ownerActor(orgId: string = currentShop.id): AuditActor {
+/** Whether the request comes from a page of the admin area (an administrator editing a shop on the admin site). TODO(api): the role of the session decides, not the address of the page. */
+export function isAdminRequest(request?: Request): boolean {
+  const referer = request?.headers.get("referer");
+  if (!referer) return false;
+  try {
+    return new URL(referer).pathname.startsWith("/systemadmin/");
+  } catch {
+    return false;
+  }
+}
+
+/** The owner of the shop (the routes of the shop owner area, until they have a session); the administrator when the request comes from the admin area. */
+export function ownerActor(request?: Request, orgId: string = currentShop.id): AuditActor {
+  if (isAdminRequest(request)) return { actor: "Platform Admin", actorEmail: ADMIN_EMAIL, actorRole: "SYSTEM_ADMIN", actorId: "admin" };
   const a = findAccount(`owner-${orgId}`);
   return a ? accountActor(a) : { actor: "Shop owner", actorRole: "SHOP_OWNER", actorId: `owner-${orgId}` };
 }

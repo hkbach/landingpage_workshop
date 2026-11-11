@@ -15,6 +15,14 @@ describe("withShopSlug", () => {
     expect(withShopSlug("whiskladle", "/shopowner/whiskladle/bookings")).toBe("/shopowner/whiskladle/bookings");
     expect(withShopSlug("whiskladle", "/shopowners")).toBe("/shopowners");
   });
+  it("in the admin area the same paths lead to /systemadmin/shops/{slug}, never to the shop owner area", () => {
+    expect(withShopSlug("whiskladle", "/shopowner/sessions", "admin")).toBe("/systemadmin/shops/whiskladle/sessions");
+    expect(withShopSlug("whiskladle", "/shopowner/site/preview?page=a", "admin")).toBe("/systemadmin/shops/whiskladle/site/preview?page=a");
+    expect(withShopSlug("whiskladle", "/shopowner", "admin")).toBe("/systemadmin/shops/whiskladle");
+    expect(withShopSlug("whiskladle", "/shopowner/whiskladle/workshops", "admin")).toBe("/systemadmin/shops/whiskladle/workshops");
+    expect(withShopSlug("whiskladle", "/systemadmin/reports", "admin")).toBe("/systemadmin/reports");
+    expect(withShopSlug(null, "/shopowner/sessions", "admin")).toBe("/shopowner/sessions");
+  });
   it("returns the path unchanged when there is no slug", () => expect(withShopSlug(null, "/shopowner/bookings")).toBe("/shopowner/bookings"));
   it("the demo slug is the slug of the demo shop", () => expect(DEMO_SHOP_SLUG).toBe(currentShop.slug));
 });

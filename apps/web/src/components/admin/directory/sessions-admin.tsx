@@ -2,9 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Lock, LockOpen } from "lucide-react";
+import Link from "next/link";
+import { Lock, LockOpen, Pencil } from "lucide-react";
 import { SESSION_STATUSES, canAdminClose, canAdminReopen, closedForGood, type SessionStatus } from "@workshop/shared";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { formatDateTime } from "@/lib/format";
 import type { AdminSession } from "@/lib/mock/admin-directory";
@@ -16,7 +17,7 @@ type Message = { text: string; tone: "ok" | "error" } | null;
 const TONE: Record<SessionStatus, "sky" | "slate" | "green" | "amber"> = { OPEN: "sky", PAUSED: "slate", RUNNING: "green", CLOSED: "amber", COMPLETED: "green" };
 
 /**
- * The sessions of every shop. Search by the information of the session (code, workshop, day, status, notes) or the name of the shop. An administrator can close a session
+ * The sessions of every shop. Edit opens the sessions page of the shop (the same as the shop owner's, on the admin site: add, edit, close, reschedule and the rest). Search by the information of the session (code, workshop, day, status, notes) or the name of the shop. An administrator can close a session
  * (with a reason) and open it again without the limits of the shop owner, so a session the owner closed more than 3 times (closed for good) can be opened again.
  */
 export function SessionsAdmin() {
@@ -52,6 +53,7 @@ export function SessionsAdmin() {
       cell: (s) => (
         <div className="flex flex-wrap justify-end gap-1.5">
           <Button size="sm" variant="outline" onClick={() => setDetail(s)}>{t("view")}<span className="sr-only"> {s.code}</span></Button>
+          {s.editable ? <Link href={`/systemadmin/shops/${s.shopSlug}/sessions`} className={buttonVariants({ size: "sm", variant: "outline" })} data-testid="session-edit"><Pencil aria-hidden />{t("edit")}<span className="sr-only"> {s.shopName}</span></Link> : null}
           {canAdminClose(s) ? <Button size="sm" variant="destructive" onClick={() => setClosing(s)}><Lock aria-hidden />{t("close")}<span className="sr-only"> {s.code}</span></Button> : null}
           {canAdminReopen(s, now) ? <Button size="sm" variant="outline" onClick={() => void change(s, "reopen")}><LockOpen aria-hidden />{t("reopen")}<span className="sr-only"> {s.code}</span></Button> : null}
         </div>

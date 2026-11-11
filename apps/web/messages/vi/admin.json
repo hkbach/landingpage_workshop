@@ -384,7 +384,8 @@
     "shopAddress": "Địa chỉ của shop",
     "addressNote": "Ghi chú địa chỉ",
     "rating": "Đánh giá",
-    "created": "Ngày tạo"
+    "created": "Ngày tạo",
+    "edit": "Chỉnh sửa"
   },
   "bookings": {
     "title": "Booking",
@@ -482,7 +483,8 @@
     "cutoff": "Đóng đặt chỗ",
     "minutes": "{n} phút trước khi bắt đầu",
     "history": "Lịch sử",
-    "byAdmin": "quản trị viên"
+    "byAdmin": "quản trị viên",
+    "edit": "Chỉnh sửa"
   },
   "landing": {
     "title": "Landing page",
@@ -676,6 +678,14 @@
       "phone": "Số mà mọi người có thể gọi. Để trống để ẩn kênh này.",
       "zalo": "Số điện thoại Zalo. Để trống để ẩn kênh này.",
       "email": "Để trống để ẩn kênh này."
+    }
+  },
+  "editAs": {
+    "text": "Bạn đang chỉnh sửa {shop} với tư cách admin hệ thống. Các thay đổi được ghi vào audit log là do admin thực hiện.",
+    "back": {
+      "site": "Quay lại Landing pages",
+      "sessions": "Quay lại Sessions",
+      "workshops": "Quay lại Workshops"
     }
   }
 }

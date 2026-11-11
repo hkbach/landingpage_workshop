@@ -37,7 +37,7 @@ export function workshopsWithShop(): { workshop: Workshop; shop: Shop }[] {
 }
 
 export interface AdminWorkshop {
-  id: string; title: string; shopId: string; shopName: string; shopSlug: string; status: WorkshopStatus; categories: string[];
+  id: string; title: string; shopId: string; shopName: string; shopSlug: string; editable: boolean; status: WorkshopStatus; categories: string[];
   priceAmount: number; currency: string; durationMinutes: number; defaultCapacity: number; maxPerBooking: number; createdAt: string;
   address?: string; addressNote?: string; description: string; rating?: { average: number; count: number };
   sessions: number; bookings: number;
@@ -50,7 +50,7 @@ export function adminWorkshops(q = "", shopId = ""): AdminWorkshop[] {
   return workshopsWithShop()
     .filter(({ workshop, shop }) => (!shopId || shop.id === shopId) && matchesSearch(hay(allTitles(workshop.title), shop.name, shop.slug), q))
     .map(({ workshop: w, shop }) => ({
-      id: w.id, title: titleOf(w.title), shopId: shop.id, shopName: shop.name, shopSlug: shop.slug, status: w.status, categories: w.categories ?? [],
+      id: w.id, title: titleOf(w.title), shopId: shop.id, shopName: shop.name, shopSlug: shop.slug, editable: shop.id === currentShop.id, status: w.status, categories: w.categories ?? [],
       priceAmount: w.priceAmount, currency: w.currency, durationMinutes: w.durationMinutes, defaultCapacity: w.defaultCapacity, maxPerBooking: w.maxPerBooking, createdAt: w.createdAt,
       ...(w.address ? { address: w.address } : {}), ...(w.addressNote ? { addressNote: w.addressNote } : {}), description: titleOf(w.shortDescription), ...(w.rating ? { rating: w.rating } : {}),
       sessions: sessions.filter((s) => s.workshopId === w.id).length, bookings: bookings.filter((b) => b.workshopId === w.id).length,
@@ -82,7 +82,7 @@ export function adminShops(q = "", status = ""): AdminShop[] {
 
 // ---- sessions ----------------------------------------------------------------------------------------------------------------
 
-export interface AdminSession extends Session { shopId: string; shopName: string; shopSlug: string; workshopTitle: string; closes: number; noteTexts: string[] }
+export interface AdminSession extends Session { shopId: string; shopName: string; shopSlug: string; editable: boolean; workshopTitle: string; closes: number; noteTexts: string[] }
 
 /** Every session of every shop as the administrator sees it now (the changes of the administrators and the end of the time applied). */
 export function allSessions(now: Date = new Date()): AdminSession[] {
@@ -94,7 +94,7 @@ export function allSessions(now: Date = new Date()): AdminSession[] {
     const w = ws.find((x) => x.workshop.id === s.workshopId)?.workshop;
     const notes = live.notes ?? [];
     return {
-      ...live, shopId: shop.id, shopName: shop.name, shopSlug: shop.slug, workshopTitle: w ? titleOf(w.title) : s.workshopId,
+      ...live, shopId: shop.id, shopName: shop.name, shopSlug: shop.slug, editable: shop.id === currentShop.id, workshopTitle: w ? titleOf(w.title) : s.workshopId,
       closes: closeCount(notes), // the closes of the OWNER (the ones of an administrator are not counted in the limit)
       noteTexts: notes.flatMap((n) => [n.type, "reason" in n && n.reason ? `${n.reason.code} ${n.reason.note ?? ""}` : ""]).filter(Boolean),
     };
