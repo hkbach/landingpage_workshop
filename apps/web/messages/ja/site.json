@@ -158,7 +158,16 @@
     "cancelledByGuest": "お客様がこのご予約をキャンセルしました。確認メールをお送りしました。",
     "cancelledByShop": "スタジオがこのご予約をキャンセルしました。ご不明な点はスタジオまでご連絡ください。",
     "cancelledReason": "理由：{reason}",
-    "changeOnly": "ご予約の変更はスタジオまでご連絡ください。"
+    "changeOnly": "ご予約の変更はスタジオまでご連絡ください。",
+    "cancelReasonLegend": "キャンセルの理由は？（任意）",
+    "cancelReasons": {
+      "PLANS_CHANGED": "予定が変わりました",
+      "SCHEDULE_CONFLICT": "スケジュールが重なりました",
+      "FOUND_ALTERNATIVE": "別のワークショップを見つけました",
+      "UNWELL": "体調不良または急用ができました",
+      "BOOKED_BY_MISTAKE": "間違えて予約しました",
+      "OTHER": "その他"
+    }
   },
   "report": {
     "title": "このサイトを報告",

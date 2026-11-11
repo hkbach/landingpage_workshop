@@ -158,7 +158,16 @@
     "cancelledByGuest": "Bạn đã hủy booking này. Chúng tôi đã gửi email xác nhận cho bạn.",
     "cancelledByShop": "Studio đã hủy booking này. Nếu có thắc mắc, vui lòng liên hệ studio.",
     "cancelledReason": "Lý do: {reason}",
-    "changeOnly": "Để thay đổi booking, vui lòng liên hệ studio."
+    "changeOnly": "Để thay đổi booking, vui lòng liên hệ studio.",
+    "cancelReasonLegend": "Vì sao bạn hủy? (không bắt buộc)",
+    "cancelReasons": {
+      "PLANS_CHANGED": "Kế hoạch của tôi thay đổi",
+      "SCHEDULE_CONFLICT": "Tôi bị trùng lịch",
+      "FOUND_ALTERNATIVE": "Tôi tìm được workshop khác",
+      "UNWELL": "Tôi không khỏe hoặc có việc đột xuất",
+      "BOOKED_BY_MISTAKE": "Tôi đặt nhầm",
+      "OTHER": "Khác"
+    }
   },
   "report": {
     "title": "Báo cáo trang này",

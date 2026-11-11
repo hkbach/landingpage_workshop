@@ -158,7 +158,16 @@
     "cancelledByGuest": "You cancelled this booking. We sent you an email to confirm it.",
     "cancelledByShop": "The studio cancelled this booking. Please contact the studio if you have questions.",
     "cancelledReason": "Reason: {reason}",
-    "changeOnly": "To change the booking, please contact the studio."
+    "changeOnly": "To change the booking, please contact the studio.",
+    "cancelReasonLegend": "Why are you cancelling? (optional)",
+    "cancelReasons": {
+      "PLANS_CHANGED": "My plans changed",
+      "SCHEDULE_CONFLICT": "I have a schedule conflict",
+      "FOUND_ALTERNATIVE": "I found another workshop",
+      "UNWELL": "I am unwell or have an emergency",
+      "BOOKED_BY_MISTAKE": "I booked by mistake",
+      "OTHER": "Other"
+    }
   },
   "report": {
     "title": "Report this site",

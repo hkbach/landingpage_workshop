@@ -158,7 +158,16 @@
     "cancelledByGuest": "您已取消此预订，我们已向您发送确认邮件。",
     "cancelledByShop": "工作室已取消此预订。如有疑问，请联系工作室。",
     "cancelledReason": "原因：{reason}",
-    "changeOnly": "如需更改预订，请联系工作室。"
+    "changeOnly": "如需更改预订，请联系工作室。",
+    "cancelReasonLegend": "您为什么取消？（可选）",
+    "cancelReasons": {
+      "PLANS_CHANGED": "我的计划有变",
+      "SCHEDULE_CONFLICT": "时间冲突",
+      "FOUND_ALTERNATIVE": "我找到了其他工作坊",
+      "UNWELL": "身体不适或有急事",
+      "BOOKED_BY_MISTAKE": "我订错了",
+      "OTHER": "其他"
+    }
   },
   "report": {
     "title": "举报此网站",

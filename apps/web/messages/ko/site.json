@@ -158,7 +158,16 @@
     "cancelledByGuest": "회원님이 이 예약을 취소했습니다. 확인 이메일을 보냈습니다.",
     "cancelledByShop": "스튜디오에서 이 예약을 취소했습니다. 문의 사항은 스튜디오로 연락해 주세요.",
     "cancelledReason": "사유: {reason}",
-    "changeOnly": "예약을 변경하려면 스튜디오로 문의해 주세요."
+    "changeOnly": "예약을 변경하려면 스튜디오로 문의해 주세요.",
+    "cancelReasonLegend": "취소하는 이유가 무엇인가요? (선택)",
+    "cancelReasons": {
+      "PLANS_CHANGED": "계획이 바뀌었습니다",
+      "SCHEDULE_CONFLICT": "일정이 겹칩니다",
+      "FOUND_ALTERNATIVE": "다른 워크숍을 찾았습니다",
+      "UNWELL": "몸이 안 좋거나 급한 일이 생겼습니다",
+      "BOOKED_BY_MISTAKE": "실수로 예약했습니다",
+      "OTHER": "기타"
+    }
   },
   "report": {
     "title": "이 사이트 신고",
