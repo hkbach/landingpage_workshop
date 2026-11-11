@@ -201,8 +201,8 @@ pnpm test
   Test Files  23 passed (23)
   Tests  377 passed (377)
   ...
-  Test Files  104 passed (104)
-  Tests  1124 passed (1124)
+  Test Files  105 passed (105)
+  Tests  1127 passed (1127)
   ```
   (Con số có thể khác khi dự án thêm test mới. Quan trọng là **không có chữ `failed`** và không có `FAIL`.)
 - Trong lúc chạy bạn có thể thấy nhiều dòng `IntlError ...` màu đỏ/vàng. **Đó là cảnh báo của bài test, không phải lỗi.** Chỉ cần xem dòng tổng kết ở cuối.
@@ -273,7 +273,7 @@ Mở trình duyệt (khuyên dùng Chrome) và vào các địa chỉ sau. Đị
 | **Landing page công khai** của shop mẫu | http://whiskladle.localtest.me:3000 | Khách đặt chỗ |
 | **Admin hệ thống** (chỉ en + vi) | http://app.localtest.me:3000/systemadmin | Quản trị nền tảng |
 
-**Đăng nhập thử:** mọi tài khoản mẫu (chủ shop và khách) dùng chung **một mật khẩu mẫu** được ghi ở đầu file `apps/web/src/lib/mock/accounts-store.ts` (đây là dữ liệu mẫu, không phải mật khẩu thật). Email mẫu: chủ shop `linh@whiskladle.example`; khách có thể tìm ở trang Users của admin. Bạn cũng có thể **đăng ký tài khoản mới** bằng popup Sign up: khách cá nhân (email + mật khẩu) hoặc chủ shop (thêm tên shop, địa chỉ shop được sinh từ tên). Shop mới chỉ có trang chào mừng vì dữ liệu mẫu đầy đủ chỉ có cho shop `whiskladle`.
+**Đăng nhập thử:** mọi tài khoản mẫu (chủ shop và khách) dùng chung **một mật khẩu mẫu** được ghi ở đầu file `apps/web/src/lib/mock/accounts-store.ts` (đây là dữ liệu mẫu, không phải mật khẩu thật). Email mẫu: chủ shop `linh@whiskladle.example`; khách có thể tìm ở trang Users của admin. Bạn cũng có thể **đăng ký tài khoản mới** bằng popup Sign up: khách cá nhân (email + mật khẩu) hoặc chủ shop (thêm tên shop, địa chỉ shop được sinh từ tên); sau khi đăng ký, chủ shop đi qua wizard thiết lập (khu vực, ngôn ngữ, liên hệ). Shop mới chỉ có trang chào mừng vì dữ liệu mẫu đầy đủ chỉ có cho shop `whiskladle`.
 
 **Sau khi đăng nhập:** chủ shop vào trang **Overview** của shop, khách hàng vào trang **Today**.
 

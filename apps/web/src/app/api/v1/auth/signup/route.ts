@@ -40,6 +40,6 @@ export async function POST(request: Request) {
   if (!res.ok) return res.code === "EMAIL_TAKEN" ? apiError(409, "EMAIL_TAKEN", "This email already has an account.") : apiError(422, "VALIDATION", "Please check the highlighted fields.", { fields: { password: "weak" } });
   const a = res.account;
   recordAudit({ ...accountActor(a), action: "auth.signup", entityType: "Account", entityId: a.id, organizationId: a.shop?.id ?? currentShop.id, details: a.type === "SHOP_OWNER" ? `shop ${a.shop?.slug}` : undefined });
-  const out = a.type === "SHOP_OWNER" ? { type: a.type, id: a.id, email: a.email, slug: a.shop!.slug } : { type: a.type, id: a.id, email: a.email, guestSlug: currentShop.slug };
+  const out = a.type === "SHOP_OWNER" ? { type: a.type, id: a.id, email: a.email, slug: a.shop!.slug, setup: true } : { type: a.type, id: a.id, email: a.email, guestSlug: currentShop.slug };
   return Response.json(out, { status: 201, headers: { "cache-control": "no-store" } });
 }

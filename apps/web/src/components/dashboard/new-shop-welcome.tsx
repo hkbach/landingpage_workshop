@@ -1,5 +1,7 @@
 import { getTranslations } from "next-intl/server";
+import Link from "next/link";
 import { Globe, PartyPopper } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
 import { PLATFORM_DOMAIN } from "@/components/site/site-url";
 import type { Shop } from "@/lib/types";
 
@@ -7,7 +9,7 @@ import type { Shop } from "@/lib/types";
  * What a shop that signed up shows in its owner area for now: the shop was created (DRAFT) with the address made from its name. The tools of the owner area (bookings, workshops, sessions, landing
  * pages...) read the demo shop in this prototype, so a new shop does not show them (it would show another shop's data); they work with the real backend. TODO(api): one tenant for every shop.
  */
-export async function NewShopWelcome({ shop }: { shop: Pick<Shop, "name" | "slug" | "ownerEmail"> }) {
+export async function NewShopWelcome({ shop, setupDone = true }: { shop: Pick<Shop, "name" | "slug" | "ownerEmail">; setupDone?: boolean }) {
   const t = await getTranslations("dashboard.newShop");
   return (
     <div className="mx-auto grid max-w-2xl gap-4" data-testid="new-shop-welcome">
@@ -22,6 +24,12 @@ export async function NewShopWelcome({ shop }: { shop: Pick<Shop, "name" | "slug
           <dd>{shop.ownerEmail}</dd>
         </dl>
       </div>
+      {setupDone ? null : (
+        <div role="status" className="grid gap-2 rounded-lg border border-sky-300 bg-sky-50 p-3 text-sm text-sky-950" data-testid="setup-pending">
+          <p>{t("setupPending")}</p>
+          <Link href={`/shopowner/onboarding?shop=${encodeURIComponent(shop.slug)}`} className={buttonVariants({ size: "sm" })}>{t("setupCta")}</Link>
+        </div>
+      )}
       <p role="status" className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">{t("prototype")}</p>
     </div>
   );

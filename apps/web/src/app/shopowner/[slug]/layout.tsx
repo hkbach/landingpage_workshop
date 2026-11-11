@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { currentShop } from "@/lib/mock/data";
 import { NewShopWelcome } from "@/components/dashboard/new-shop-welcome";
 import { liveShop, liveShops } from "@/lib/mock/shop-admin-store";
+import { isOnboarded } from "@/lib/mock/registered-shops-store";
 import { getPlatformSupport } from "@/lib/mock/platform";
 import { DashboardShell } from "@/components/dashboard/shell/dashboard-shell";
 import { ShopStatusBanner } from "@/components/dashboard/shell/shop-status-banner";
@@ -21,7 +22,7 @@ export default async function DashboardLayout({ children, params }: LayoutProps<
       banner={<ShopStatusBanner status={shop.status} reason={shop.statusReason} />}
       support={getPlatformSupport()}
     >
-      {isDemo ? children : <NewShopWelcome shop={shop} />}
+      {isDemo ? children : <NewShopWelcome shop={shop} setupDone={isOnboarded(shop.id)} />}
     </DashboardShell>
   );
 }

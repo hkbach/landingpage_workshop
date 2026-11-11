@@ -1,8 +1,15 @@
 import { getTranslations } from "next-intl/server";
+import { notFound } from "next/navigation";
+import { registeredShops } from "@/lib/mock/registered-shops-store";
 import { OnboardingWizard } from "./onboarding-wizard";
 
 // Standalone page (no dashboard shell): FR-ORG-01. Reached after email verification.
-export default async function OnboardingPage() {
+// With ?shop={slug} it finishes the setup of a shop that just signed up (the popup Sign up sends its owner here); an unknown slug is a 404.
+export const dynamic = "force-dynamic";
+export default async function OnboardingPage({ searchParams }: { searchParams: Promise<{ shop?: string | string[] }> }) {
+  const { shop: slug } = await searchParams;
+  const shop = typeof slug === "string" ? registeredShops().find((s) => s.slug === slug) : undefined;
+  if (typeof slug === "string" && !shop) notFound();
   const t = await getTranslations("dashboard.onboarding");
   const tc = await getTranslations("common");
   const platformDomain = process.env.PLATFORM_DOMAIN ?? "localtest.me";
@@ -15,7 +22,7 @@ export default async function OnboardingPage() {
           <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
         <main>
-          <OnboardingWizard platformDomain={platformDomain} />
+          <OnboardingWizard platformDomain={platformDomain} {...(shop ? { shop: { name: shop.name, slug: shop.slug, ownerEmail: shop.ownerEmail } } : {})} />
         </main>
       </div>
     </div>

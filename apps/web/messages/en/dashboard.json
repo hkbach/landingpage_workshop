@@ -223,7 +223,7 @@
     "creating": "Creating...",
     "done": {
       "title": "Your shop is created",
-      "body": "Your page will be available at {host} once it is approved. Finish the setup checklist in your dashboard.",
+      "body": "Your page will be available at {host} once you publish it. Finish the setup checklist in your dashboard.",
       "cta": "Go to dashboard"
     },
     "errors": {
@@ -236,6 +236,13 @@
       "phoneRequired": "Enter a phone number.",
       "addressRequired": "Enter an address.",
       "urlInvalid": "Enter a URL starting with https://"
+    },
+    "save": "Save and continue",
+    "saving": "Saving...",
+    "failed": "The setup could not be saved. Please check your answers and try again.",
+    "doneSetup": {
+      "title": "Your shop is set up",
+      "body": "Your page will be available at {host} once you publish your landing page. Finish the setup checklist in your dashboard."
     }
   },
   "newShop": {
@@ -243,7 +250,9 @@
     "intro": "Your shop was created. Its address was made from the name of your shop.",
     "address": "Your address",
     "email": "Owner email",
-    "prototype": "Prototype: the tools of the shop owner area (bookings, workshops, sessions, landing pages) are available for the demo shop only. They will work for your shop with the backend."
+    "prototype": "Prototype: the tools of the shop owner area (bookings, workshops, sessions, landing pages) are available for the demo shop only. They will work for your shop with the backend.",
+    "setupPending": "Finish the setup of your shop: region, languages and contact details.",
+    "setupCta": "Finish the setup"
   },
   "ratings": {
     "title": "Ratings",

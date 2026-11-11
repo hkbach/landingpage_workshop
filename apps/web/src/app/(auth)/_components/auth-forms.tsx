@@ -92,12 +92,12 @@ export function LoginForm() {
 }
 
 /** What the server answers to a login or a signup: where the person goes next. */
-type Me = { type: "SHOP_OWNER" | "CUSTOMER"; id: string; email: string; slug?: string; guestSlug?: string };
+type Me = { type: "SHOP_OWNER" | "CUSTOMER"; id: string; email: string; slug?: string; guestSlug?: string; /** A shop that just signed up: its owner finishes the setup first. */ setup?: boolean };
 
 /** The person is logged in: a shop owner goes to the shop, a customer to Today of the customer area (the customer area looks the account up with the email of the guest session). */
 function goHome(router: ReturnType<typeof useRouter>, me: Me) {
   if (me.type === "SHOP_OWNER") {
-    router.push(`/shopowner/${me.slug}`);
+    router.push(me.setup ? `/shopowner/onboarding?shop=${encodeURIComponent(me.slug ?? "")}` : `/shopowner/${me.slug}`);
     return;
   }
   writeGuestEmail(me.guestSlug ?? "", me.email);

@@ -223,7 +223,7 @@
     "creating": "Đang tạo...",
     "done": {
       "title": "Cửa hàng của bạn đã được tạo",
-      "body": "Trang của bạn sẽ có tại {host} sau khi được duyệt. Hãy hoàn thành danh sách thiết lập trong bảng điều khiển.",
+      "body": "Trang của bạn sẽ có tại {host} sau khi bạn xuất bản. Hãy hoàn thành danh sách thiết lập trong bảng điều khiển.",
       "cta": "Đến bảng điều khiển"
     },
     "errors": {
@@ -236,6 +236,13 @@
       "phoneRequired": "Vui lòng nhập số điện thoại.",
       "addressRequired": "Vui lòng nhập địa chỉ.",
       "urlInvalid": "Vui lòng nhập URL bắt đầu bằng https://"
+    },
+    "save": "Lưu và tiếp tục",
+    "saving": "Đang lưu...",
+    "failed": "Không lưu được thiết lập. Vui lòng kiểm tra các câu trả lời rồi thử lại.",
+    "doneSetup": {
+      "title": "Shop của bạn đã được thiết lập",
+      "body": "Trang của bạn sẽ có tại {host} sau khi bạn xuất bản landing page. Hãy hoàn thành danh sách thiết lập trong bảng điều khiển."
     }
   },
   "newShop": {
@@ -243,7 +250,9 @@
     "intro": "Shop của bạn đã được tạo. Địa chỉ được tạo từ tên shop của bạn.",
     "address": "Địa chỉ của bạn",
     "email": "Email chủ shop",
-    "prototype": "Bản thử nghiệm: các công cụ của khu vực shop owner (booking, workshop, session, landing page) chỉ có cho shop demo. Chúng sẽ hoạt động cho shop của bạn khi có backend."
+    "prototype": "Bản thử nghiệm: các công cụ của khu vực shop owner (booking, workshop, session, landing page) chỉ có cho shop demo. Chúng sẽ hoạt động cho shop của bạn khi có backend.",
+    "setupPending": "Hoàn tất thiết lập shop: khu vực, ngôn ngữ và thông tin liên hệ.",
+    "setupCta": "Hoàn tất thiết lập"
   },
   "ratings": {
     "title": "Đánh giá",

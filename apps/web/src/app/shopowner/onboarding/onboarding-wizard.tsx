@@ -60,20 +60,26 @@ const COUNTRY_DEFAULTS: Record<string, { timezone: string; currency: string }> =
 const TAKEN_SLUGS = ["whiskladle", "sugarsift", "goldennoodle", "demo", "studio"];
 const isTaken = (slug: string) => TAKEN_SLUGS.includes(slug);
 
-export function OnboardingWizard({ platformDomain }: { platformDomain: string }) {
+/**
+ * The setup wizard. With `shop` (a shop that just signed up: its name and address exist already) it starts at the Region step, shows the name and the address as fixed and saves the answers with
+ * POST /api/v1/onboarding. Without it, it is the standalone wizard of the first version (a mock that creates nothing).
+ */
+export function OnboardingWizard({ platformDomain, shop }: { platformDomain: string; shop?: { name: string; slug: string; ownerEmail: string } }) {
   const t = useTranslations("dashboard.onboarding");
   const tc = useTranslations("common");
   const uiLocale = useLocale();
-  const [step, setStep] = useState(0);
+  const first = shop ? 1 : 0;
+  const [step, setStep] = useState(first);
   const [submitted, setSubmitted] = useState(false);
+  const [failure, setFailure] = useState(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
 
   const form = useForm<Values>({
     resolver: zodResolver(schema),
     mode: "onChange",
     defaultValues: {
-      name: "", slug: "", country: "VN", timezone: "Asia/Ho_Chi_Minh", currency: "VND", defaultLocale: "en",
-      enabledLocales: ["en"], contactEmail: "", contactPhone: "", whatsapp: "", address: "", mapsUrl: "",
+      name: shop?.name ?? "", slug: shop?.slug ?? "", country: "VN", timezone: "Asia/Ho_Chi_Minh", currency: "VND", defaultLocale: "en",
+      enabledLocales: ["en"], contactEmail: shop?.ownerEmail ?? "", contactPhone: "", whatsapp: "", address: "", mapsUrl: "",
     },
   });
   const { register, handleSubmit, control, setValue, trigger, getValues, formState: { errors, isSubmitting } } = form;
@@ -113,8 +119,8 @@ export function OnboardingWizard({ platformDomain }: { platformDomain: string })
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><CheckCircle2 className="size-5 text-emerald-600" aria-hidden />{t("done.title")}</CardTitle>
-          <CardDescription>{t("done.body", { host: `${getValues("slug").trim()}.${platformDomain}` })}</CardDescription>
+          <CardTitle className="flex items-center gap-2"><CheckCircle2 className="size-5 text-emerald-600" aria-hidden />{t(shop ? "doneSetup.title" : "done.title")}</CardTitle>
+          <CardDescription>{t(shop ? "doneSetup.body" : "done.body", { host: `${getValues("slug").trim()}.${platformDomain}` })}</CardDescription>
         </CardHeader>
         <CardContent>
           <Link href={`/shopowner/${getValues("slug")}`} className={buttonVariants()}>{t("done.cta")}</Link>
@@ -143,9 +149,23 @@ export function OnboardingWizard({ platformDomain }: { platformDomain: string })
     <form
       noValidate
       className="grid gap-6"
-      onSubmit={handleSubmit(async () => {
-        await new Promise((r) => setTimeout(r, 900));
-        setSubmitted(true);
+      onSubmit={handleSubmit(async (v) => {
+        setFailure(false);
+        if (!shop) {
+          await new Promise((r) => setTimeout(r, 900));
+          setSubmitted(true);
+          return;
+        }
+        try {
+          const res = await fetch("/api/v1/onboarding", {
+            method: "POST", headers: { "content-type": "application/json" },
+            body: JSON.stringify({ slug: shop.slug, country: v.country, timezone: v.timezone, currency: v.currency, defaultLocale: v.defaultLocale, enabledLocales: v.enabledLocales, contactEmail: v.contactEmail.trim(), contactPhone: v.contactPhone.trim(), whatsapp: v.whatsapp.trim(), address: v.address.trim(), mapsUrl: v.mapsUrl.trim() }), // BR-16
+          });
+          if (res.ok || res.status === 409) setSubmitted(true);
+          else setFailure(true);
+        } catch {
+          setFailure(true);
+        }
       })}
     >
       <nav aria-label={t("progress")}>
@@ -278,14 +298,15 @@ export function OnboardingWizard({ platformDomain }: { platformDomain: string })
         </CardContent>
       </Card>
 
+      {failure ? <p role="alert" className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive" data-testid="onboarding-failed">{t("failed")}</p> : null}
       <div className="flex justify-between gap-3">
-        <Button type="button" variant="outline" disabled={step === 0 || isSubmitting} onClick={() => setStep((s) => Math.max(0, s - 1))}>
+        <Button type="button" variant="outline" disabled={step <= first || isSubmitting} onClick={() => setStep((s) => Math.max(first, s - 1))}>
           {tc("back")}
         </Button>
         {step < STEPS.length - 1 ? (
           <Button type="button" onClick={next} disabled={step === 0 && slug === ""}>{tc("next")}</Button>
         ) : (
-          <Button type="submit" disabled={isSubmitting}>{isSubmitting ? t("creating") : t("create")}</Button>
+          <Button type="submit" disabled={isSubmitting}>{isSubmitting ? t(shop ? "saving" : "creating") : t(shop ? "save" : "create")}</Button>
         )}
       </div>
     </form>

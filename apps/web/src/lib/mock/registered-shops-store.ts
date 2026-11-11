@@ -11,6 +11,7 @@ const list = () => (g.__registeredShops ??= []);
 /** Test helper: no shop was registered. */
 export function resetRegisteredShops(): void {
   g.__registeredShops = [];
+  (globalThis as unknown as { __onboarded?: Set<string> }).__onboarded = new Set();
 }
 
 /** The shops created by signing up, oldest first. */
@@ -32,4 +33,31 @@ export function registerShop(input: { name: string; ownerEmail: string; ownerNam
   };
   list().push(shop);
   return shop;
+}
+
+// ---- the setup wizard (/shopowner/onboarding?shop=slug) ----
+// A shop that signed up has only a name and an address; its owner is taken to the setup wizard to fill in the region, the languages and the contact. Until then the shop is "not set up".
+const done = () => ((globalThis as unknown as { __onboarded?: Set<string> }).__onboarded ??= new Set<string>());
+
+/** Whether the setup of the shop is finished. The demo shops always are; a registered shop is after its owner went through the wizard. */
+export const isOnboarded = (shopId: string): boolean => !list().some((s) => s.id === shopId) || done().has(shopId);
+
+export interface OnboardingInput {
+  country: string; timezone: string; currency: string; defaultLocale: Shop["defaultLocale"]; enabledLocales: Shop["enabledLocales"];
+  contactEmail: string; contactPhone: string; whatsapp: string; address: string; mapsUrl: string;
+}
+
+export type OnboardingResult = { ok: true; shop: Shop } | { ok: false; code: "NOT_FOUND" | "ALREADY_DONE" };
+
+/** The owner finishes the setup of a shop that signed up (by its slug; the slug and the name never change here). NOT_FOUND for anything else, ALREADY_DONE the second time. */
+export function completeOnboarding(slug: string, input: OnboardingInput): OnboardingResult {
+  const i = list().findIndex((s) => s.slug === slug);
+  if (i < 0) return { ok: false, code: "NOT_FOUND" };
+  const shop = list()[i]!;
+  if (done().has(shop.id)) return { ok: false, code: "ALREADY_DONE" };
+  const { whatsapp, ...rest } = input;
+  const next: Shop = { ...shop, ...rest, ...(whatsapp ? { whatsapp } : {}) };
+  list()[i] = next;
+  done().add(shop.id);
+  return { ok: true, shop: next };
 }

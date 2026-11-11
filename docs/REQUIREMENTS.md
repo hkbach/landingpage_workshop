@@ -288,6 +288,7 @@ Cấu trúc đích khi có backend thật (chưa làm):
 - Slug: `^[a-z0-9](?:[a-z0-9-]{1,30}[a-z0-9])$`, unique toàn hệ thống, chặn danh sách reserved (`app, admin, api, www, mail, media, static, help, support, status, blog, docs, cdn, assets, dashboard, login, signup, shopowner, systemadmin, onboarding`).
 - **Quy tắc sinh slug** (`generateShopSlug`): từ tên shop, chữ thường, bỏ dấu (`đ` thành `d`), mỗi cụm ký tự không phải chữ hoặc số thành một dấu `-`, bỏ `-` ở hai đầu, tối đa 32 ký tự. Tên không còn ký tự dùng được (ví dụ chỉ có chữ Hàn / Nhật / Trung) thành `shop`; tên quá ngắn (dưới 3 ký tự) thêm `-shop` (ví dụ `a-shop`). Slug reserved hoặc đã có shop khác dùng thì thêm `-2`, `-3`… cho tới khi còn trống (vẫn tối đa 32 ký tự). Wizard hiển thị slug đã sinh (địa chỉ landing page và địa chỉ quản lý) ở chế độ chỉ đọc kèm lưu ý không đổi được.
 - Tạo `organizations` (status `DRAFT`) và `organization_members` (role `OWNER`).
+- **Luồng hiện tại (quyết định D5):** shop được tạo ngay khi chủ shop đăng ký bằng popup (đã có **tên** và **slug**). Đăng ký xong, hệ thống đưa chủ shop vào **wizard `/shopowner/onboarding?shop={slug}`**, bắt đầu từ bước **Region** (tên và địa chỉ hiển thị cố định, không sửa): khu vực (quốc gia, timezone, currency), ngôn ngữ, liên hệ (email mặc định là email chủ shop), rồi **Save and continue**. API `POST /onboarding` `{slug, country, timezone, currency, defaultLocale, enabledLocales, contactEmail, contactPhone, whatsapp?, address, mapsUrl?}` → `200 {slug}`; `422` kèm `fields`; `404` với slug không phải shop vừa đăng ký (shop mẫu đã thiết lập sẵn); `409 ALREADY_DONE` khi làm lần hai. Audit `shop.onboarding`. Chưa làm xong wizard thì trang chào của shop (`/shopowner/{slug}`) có khung nhắc **Finish the setup**; đăng nhập lần sau vẫn vào trang chào. Không có wizard thì tên shop và slug vẫn nằm trong luồng đăng ký (wizard cũ không `?shop` là bản chạy riêng của phiên bản đầu, chỉ để xem thử). *Giới hạn MVP (mock):* shop mới chưa dùng được các công cụ khác (workshop, session, landing page, booking) vì mock chỉ có dữ liệu của shop mẫu; làm khi có backend (TODO(api)).
 - AC: slug trùng hoặc reserved bị từ chối kèm thông báo rõ ràng.
 
 **FR-ORG-02 – Cài đặt shop (Must)**
@@ -1048,7 +1049,7 @@ Các route dưới đây chạy **trong Next.js** (`apps/web/src/app/api/v1/**`)
 | GET | `/customer/{id}/wallet` |
 | POST | `/customer/{id}/withdrawals` |
 
-**Shop owner và dùng chung** (19 route)
+**Shop owner và dùng chung** (20 route)
 
 | Method | Path |
 |---|---|
@@ -1061,6 +1062,7 @@ Các route dưới đây chạy **trong Next.js** (`apps/web/src/app/api/v1/**`)
 | GET | `/media/sessions/{id}` |
 | POST | `/media/sessions` |
 | GET | `/outbox/{id}` |
+| POST | `/onboarding` |
 | GET | `/outbox` |
 | PUT · PATCH · DELETE | `/promotions/{id}` |
 | GET · POST | `/promotions` |
@@ -1341,7 +1343,7 @@ Các quyết định dưới đây do chủ sản phẩm chọn khi rà soát to
 | D2 | Xác minh email | Bản mock vẫn đăng nhập ngay sau đăng ký (**chưa an toàn cho production**); backend bắt buộc xác minh email (FR-AUTH-01) | TODO(api) |
 | D3 | Chống dò email | Mock báo rõ "email đã có tài khoản"; backend trả thông báo chung và xác minh qua email | TODO(api) |
 | D4 | Vai trò của một email | Một email chỉ một vai trò (customer **hoặc** shop owner) | Đã đúng |
-| D5 | Onboarding shop mới | Sau khi đăng ký bằng popup, chủ shop vào wizard `/shopowner/onboarding` để điền khu vực, ngôn ngữ, liên hệ; dữ liệu đầy đủ cho nhiều shop làm khi có backend | Frontend (wizard); TODO(api) |
+| D5 | Onboarding shop mới | Sau khi đăng ký bằng popup, chủ shop vào wizard `/shopowner/onboarding?shop={slug}` để điền khu vực, ngôn ngữ, liên hệ; dữ liệu đầy đủ cho nhiều shop làm khi có backend | Frontend (đã làm wizard và `POST /onboarding`); TODO(api) cho mock đa shop |
 | D6 | Phạm vi tài khoản customer | **Toàn nền tảng** (đặt chỗ ở mọi shop, ví chung); ví, phí và giới hạn rút tiền tính **theo từng đồng tiền** | TODO(api) cho ví nhiều đồng tiền |
 | D7 | Nhận xét của khách | Shop owner và admin **xem được**; admin **gỡ** được nhận xét vi phạm | Frontend (đã làm: trang Ratings của shop, FR-ADM-27) |
 | D8 | Khi nào được đánh giá | Chỉ **sau khi session kết thúc** (và đã check-in); mỗi booking một lần, khách không sửa | Frontend |
