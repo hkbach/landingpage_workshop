@@ -122,7 +122,7 @@
     "saved": "{codes}(으)로 {amount} 절약했어요",
     "note": "내 메모: {note}",
     "checkedInAt": "{time}에 체크인",
-    "showCode": "스튜디오에서 이 코드를 보여 주면 체크인됩니다.",
+    "showCode": "체크인이 열리면 여기에서 체크인하거나, 스튜디오에서 이 코드를 보여 주세요.",
     "confirmHint": "확인 이메일의 링크를 열어 이 예약을 확정하세요.",
     "cancelledBy": {
       "GUEST": "직접 취소한 예약입니다",
@@ -136,7 +136,18 @@
     },
     "cancelledDone": "예약 {code}이(가) 취소되었습니다. 회원님과 샵에 이메일을 보냈습니다.",
     "where": "장소",
-    "whereNote": "메모"
+    "whereNote": "메모",
+    "checkIn": "체크인",
+    "checkingIn": "체크인 중...",
+    "checkInDone": "예약 {code}에 체크인했습니다. 즐거운 워크숍 되세요!",
+    "checkInFailed": "체크인할 수 없습니다. 다시 시도해 주세요.",
+    "checkInBlocked": {
+      "checkedIn": "이미 체크인했습니다.",
+      "confirm": "먼저 확인 이메일의 링크를 열어 이 예약을 확인하세요.",
+      "over": "워크숍이 끝났습니다.",
+      "notYet": "체크인은 워크숍 시작 한 시간 전인 {time}에 열립니다.",
+      "closed": "이 세션은 마감되어 여기에서 체크인할 수 없습니다. 스튜디오에 문의하세요."
+    }
   },
   "favorites": {
     "empty": "아직 즐겨찾는 워크숍이 없습니다. 워크숍의 하트를 눌러 여기에 저장하세요."

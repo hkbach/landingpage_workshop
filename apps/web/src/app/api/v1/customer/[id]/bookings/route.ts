@@ -2,7 +2,7 @@ import { ownAddressNote, workshopAddress, workshopDirectionsUrl } from "@worksho
 import { apiError } from "@/lib/api-error";
 import { customerLoginRequired } from "@/lib/customer-access";
 import type { CustomerBooking } from "@/lib/customer-bookings";
-import { accountOfGuest, canGuestCancel, liveBookings } from "@/lib/mock/booking-store";
+import { accountOfGuest, canGuestCancel, canGuestCheckIn, liveBookings } from "@/lib/mock/booking-store";
 import { currentShop, workshops } from "@/lib/mock/data";
 import { allPromotions } from "@/lib/mock/promotion-store";
 
@@ -31,7 +31,7 @@ export async function GET(request: Request, ctx: RouteContext<"/api/v1/customer/
         startsAt: b.startsAt, endsAt: b.endsAt, timezone: b.timezone, quantity: b.quantity, currency: b.currency, totalAmount: b.totalAmount, discountAmount: b.discountAmount ?? 0,
         vouchers: vouchers.filter((p) => b.promotionIds?.includes(p.id)).map((p) => p.code ?? p.id), ...(b.checkedInAt ? { checkedInAt: b.checkedInAt } : {}),
         ...(b.cancelReason ? { cancelReason: b.cancelReason } : {}), ...(b.cancelledBy ? { cancelledBy: b.cancelledBy } : {}), ...(b.specialRequest ? { specialRequest: b.specialRequest } : {}),
-        createdAt: b.createdAt, canCancel: canGuestCancel(b, now),
+        createdAt: b.createdAt, canCancel: canGuestCancel(b, now), canCheckIn: canGuestCheckIn(b, now),
         shop: { slug: currentShop.slug, name: currentShop.name, address: currentShop.address, defaultLocale: currentShop.defaultLocale },
       }];
     });

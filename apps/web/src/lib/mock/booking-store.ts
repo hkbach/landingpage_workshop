@@ -2,6 +2,7 @@
 // (they start NOT_CONFIRMED and become CONFIRMED when the guest opens the link of the email), plus the status changes the ops screens make (cancel,
 // check-in, ...: they are sent here so they survive a reload and the promotion rules can see them). Lives on globalThis like the other mock stores.
 import { closeIfEnded, eligiblePromotions, pickLocalized, isSessionBookable, isSessionFinished, nextBookingCode, priceBooking, socialEntries, type BookingStatus, type BookingUse, type Gender, type Socials, type WorkshopCategory, ownAddressNote, workshopAddress } from "@workshop/shared";
+import { CHECKIN_OPENS_MINUTES } from "@/lib/customer-bookings";
 import { computePaymentStatus, confirmation, netPaid, reservedSeats, type PreCheckInStatus } from "@/lib/booking-state";
 import type { Booking, Customer, PaymentEntry, Session } from "@/lib/types";
 import { newUuid } from "@/lib/uuid";
@@ -334,6 +335,27 @@ export function createGuestBooking(input: GuestBookingInput, confirmUrlFor: (tok
 export function canGuestCancel(booking: Pick<Booking, "status" | "sessionId" | "startsAt">, now: Date = new Date()): boolean {
   const session = liveSession(booking.sessionId, now);
   return isOpen(booking.status) && !!session && !isSessionFinished(session.status) && Date.parse(booking.startsAt) > now.getTime();
+}
+
+/**
+ * A guest can check in to a booking that is Confirmed (the link of the email was opened), from CHECKIN_OPENS_MINUTES before the session starts until it ends, while the
+ * session is not closed. (The shop can check a guest in at any time while the session is not closed.)
+ */
+export function canGuestCheckIn(booking: Pick<Booking, "status" | "sessionId" | "startsAt" | "endsAt">, now: Date = new Date()): boolean {
+  const session = liveSession(booking.sessionId, now);
+  const t = now.getTime();
+  return booking.status === "CONFIRMED" && !!session && !isSessionFinished(session.status) && t >= Date.parse(booking.startsAt) - CHECKIN_OPENS_MINUTES * 60_000 && t < Date.parse(booking.endsAt);
+}
+
+export type GuestCheckInResult = { ok: true; booking: Booking } | { ok: false; code: "NOT_FOUND" | "NOT_CHECKABLE" };
+
+/** A guest checks in to their own booking (found by its code among the bookings of that customer; anything else is NOT_FOUND). The check-in time is now. */
+export function checkInByGuest(customerId: string, code: string, now: Date = new Date()): GuestCheckInResult {
+  const b = liveBookings().find((x) => x.bookingCode === code && x.customerId === customerId);
+  if (!b) return { ok: false, code: "NOT_FOUND" };
+  if (!canGuestCheckIn(b, now)) return { ok: false, code: "NOT_CHECKABLE" };
+  setBookingStatus(b.id, "CHECKED_IN", undefined, now.toISOString(), "CONFIRMED", undefined);
+  return { ok: true, booking: liveBookings().find((x) => x.id === b.id)! };
 }
 
 export type GuestCancelResult = { ok: true; booking: Booking } | { ok: false; code: "NOT_FOUND" | "NOT_CANCELLABLE" };

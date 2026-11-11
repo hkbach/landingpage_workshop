@@ -122,7 +122,7 @@
     "saved": "使用 {codes} 节省了 {amount}",
     "note": "您的备注：{note}",
     "checkedInAt": "{time} 签到",
-    "showCode": "到店后出示此编号即可签到。",
+    "showCode": "签到开放后可在此签到，或在工作室出示此代码。",
     "confirmHint": "请打开确认邮件中的链接以确认此预订。",
     "cancelledBy": {
       "GUEST": "您已取消此预订",
@@ -136,7 +136,18 @@
     },
     "cancelledDone": "预订 {code} 已取消。我们已向您和商店发送邮件。",
     "where": "地点",
-    "whereNote": "备注"
+    "whereNote": "备注",
+    "checkIn": "签到",
+    "checkingIn": "正在签到...",
+    "checkInDone": "您已为预订 {code} 签到。祝您工作坊愉快！",
+    "checkInFailed": "无法为您签到，请重试。",
+    "checkInBlocked": {
+      "checkedIn": "您已经签到。",
+      "confirm": "请先打开确认邮件中的链接来确认此预订。",
+      "over": "工作坊已结束。",
+      "notYet": "签到将于 {time} 开放，即工作坊开始前一小时。",
+      "closed": "此场次已关闭，无法在此签到。请咨询工作室。"
+    }
   },
   "favorites": {
     "empty": "还没有收藏的工作坊。点击工作坊上的爱心即可保存到这里。"

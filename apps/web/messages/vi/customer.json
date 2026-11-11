@@ -122,7 +122,7 @@
     "saved": "Bạn tiết kiệm {amount} nhờ {codes}",
     "note": "Ghi chú của bạn: {note}",
     "checkedInAt": "Check-in lúc {time}",
-    "showCode": "Đưa mã này cho studio để được check-in.",
+    "showCode": "Hãy check-in tại đây khi đến giờ, hoặc đưa mã này cho studio.",
     "confirmHint": "Mở liên kết trong email xác nhận để xác nhận booking này.",
     "cancelledBy": {
       "GUEST": "Bạn đã hủy booking này",
@@ -136,7 +136,18 @@
     },
     "cancelledDone": "Đã hủy booking {code}. Chúng tôi đã gửi email cho bạn và shop.",
     "where": "Địa điểm",
-    "whereNote": "Ghi chú"
+    "whereNote": "Ghi chú",
+    "checkIn": "Check-in",
+    "checkingIn": "Đang check-in...",
+    "checkInDone": "Bạn đã check-in booking {code}. Chúc bạn có buổi workshop vui vẻ!",
+    "checkInFailed": "Không thể check-in cho bạn. Vui lòng thử lại.",
+    "checkInBlocked": {
+      "checkedIn": "Bạn đã check-in rồi.",
+      "confirm": "Hãy mở liên kết trong email xác nhận để xác nhận booking này trước.",
+      "over": "Workshop đã kết thúc.",
+      "notYet": "Check-in mở lúc {time}, một giờ trước khi workshop bắt đầu.",
+      "closed": "Session này đã đóng nên bạn không thể check-in tại đây. Vui lòng hỏi studio."
+    }
   },
   "favorites": {
     "empty": "Chưa có workshop yêu thích nào. Bấm vào trái tim ở một workshop để lưu vào đây."

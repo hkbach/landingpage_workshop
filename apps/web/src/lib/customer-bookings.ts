@@ -3,8 +3,9 @@ import { addDays } from "@/components/ops/time";
 import { dayKey } from "./format";
 import { matchesSearch } from "./text-search";
 
-// My Booking of the guest area: what a guest sees of their own bookings and what they can do with them. A guest does NOT check themselves in (the shop does, when they
-// arrive: the guest only sees that they were checked in) and can cancel their booking until its session starts. Pure functions, so they can be tested; `now` is given.
+// My Booking of the guest area: what a guest sees of their own bookings and what they can do with them. A guest can check themselves in from the booking (a confirmed booking,
+// from CHECKIN_OPENS_MINUTES before the session starts until it ends, while the session is not closed) and can cancel their booking until its session starts. The shop can
+// still check a guest in. Pure functions, so they can be tested; `now` is given.
 
 /** One booking as the guest area shows it (what GET /api/v1/customer/{id}/bookings gives). */
 export interface CustomerBooking {
@@ -15,8 +16,15 @@ export interface CustomerBooking {
   currency: string; totalAmount: number; /** What the vouchers took off (0 when none). */ discountAmount: number; /** The codes of the vouchers used. */ vouchers: string[];
   checkedInAt?: string; cancelReason?: string; cancelledBy?: "SHOP" | "GUEST"; specialRequest?: string; createdAt: string;
   /** Whether the guest can cancel it now (decided by the server: not confirmed or confirmed, session not closed, not started). */ canCancel: boolean;
+  /** Whether the guest can check in now (decided by the server: confirmed, session not closed, from CHECKIN_OPENS_MINUTES before it starts until it ends). */ canCheckIn: boolean;
   shop: { slug: string; name: string; address: string; defaultLocale: string };
 }
+
+/** A guest can check in from this many minutes before the session starts. */
+export const CHECKIN_OPENS_MINUTES = 60;
+
+/** When the check-in of a booking opens (ISO). */
+export const checkInOpensAt = (b: Pick<CustomerBooking, "startsAt">): string => new Date(Date.parse(b.startsAt) - CHECKIN_OPENS_MINUTES * 60_000).toISOString();
 
 export type BookingTab = "all" | "upcoming" | "past" | "cancelled";
 export const BOOKING_TABS: readonly BookingTab[] = ["all", "upcoming", "past", "cancelled"];
@@ -60,6 +68,21 @@ export function checkInNote(b: Pick<CustomerBooking, "status" | "startsAt" | "en
   const phase = bookingPhase(b, now);
   if (phase === "PAST" || phase === "CANCELLED") return null;
   return b.status === "NOT_CONFIRMED" ? { kind: "confirm" } : { kind: "showCode" }; // the shop checks the guest in at the studio, with the code
+}
+
+/**
+ * Why a guest cannot check in to a booking: it already is checked in, was cancelled, is not confirmed yet (the email link comes first), is over, the check-in does not open yet, or
+ * the session is closed. `null` when the guest can (and when there is nothing to check in to: a booking that is over keeps `over`, the page shows the button off).
+ */
+export type CheckInBlock = "checkedIn" | "cancelled" | "confirm" | "over" | "notYet" | "closed" | null;
+
+export function checkInBlock(b: Pick<CustomerBooking, "status" | "startsAt" | "endsAt" | "canCheckIn">, now: Date): CheckInBlock {
+  if (b.canCheckIn) return null;
+  if (b.status === "CHECKED_IN") return "checkedIn";
+  if (b.status === "CANCELLED") return "cancelled";
+  if (b.status === "NOT_CONFIRMED") return "confirm";
+  if (bookingPhase(b, now) === "PAST") return "over";
+  return now.getTime() < Date.parse(b.startsAt) - CHECKIN_OPENS_MINUTES * 60_000 ? "notYet" : "closed";
 }
 
 /** Why a booking cannot be cancelled by the guest: `null` when it can, or when there is nothing to cancel (already cancelled, or over). */

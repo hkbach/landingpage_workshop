@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
-  bookingPhase, cancelBlock, checkInNote, filterBookings, sortBookings, summarize, tabOf, whenOf, type BookingFilter, type CustomerBooking,
+  bookingPhase, cancelBlock, checkInBlock, checkInNote, filterBookings, sortBookings, summarize, tabOf, whenOf, type BookingFilter, type CustomerBooking,
 } from "./customer-bookings";
 
-// My Booking: the guest sees their bookings by time, searches them, is told about the check-in (the shop does it) and cancels until the session starts.
+// My Booking: the guest sees their bookings by time, searches them, checks in from an hour before the workshop (or the shop checks them in) and cancels until the session starts.
 
 const NOW = new Date("2026-11-04T05:00:00Z"); // 12:00 in Ho Chi Minh City (UTC+7)
 const TZ = "Asia/Ho_Chi_Minh";
@@ -14,7 +14,7 @@ function booking(over: Partial<CustomerBooking> & { startsAt: string; endsAt: st
   n += 1;
   return {
     id: `bk-${n}`, code: `SES-00${String(n).padStart(2, "0")}-001`, status: "CONFIRMED", paymentStatus: "UNPAID", workshopId: "ws-1", workshopTitle: { en: "Fresh Pasta from Scratch", vi: "Làm pasta tươi từ đầu" },
-    address: "12 Nguyen Hue, District 1", timezone: TZ, quantity: 2, currency: "VND", totalAmount: 1_300_000, discountAmount: 0, vouchers: [], createdAt: at(-5, 3), canCancel: true,
+    address: "12 Nguyen Hue, District 1", timezone: TZ, quantity: 2, currency: "VND", totalAmount: 1_300_000, discountAmount: 0, vouchers: [], createdAt: at(-5, 3), canCancel: true, canCheckIn: false,
     shop: { slug: "whiskladle", name: "Whisk & Ladle Kitchen", address: "12 Nguyen Hue", defaultLocale: "en" }, ...over,
   };
 }
@@ -54,13 +54,22 @@ describe("where a booking is in time", () => {
 });
 
 describe("check-in and cancel, as a guest sees them", () => {
-  it("a guest never checks in: they are told it happened, or to show the code, or to confirm first", () => {
+  it("a guest is told that the check-in happened, or to show the code (or check in), or to confirm first", () => {
     expect(checkInNote(attended, NOW)).toEqual({ kind: "checkedIn", at: attended.checkedInAt });
     expect(checkInNote(soon, NOW)).toEqual({ kind: "showCode" });
     expect(checkInNote(now_, NOW)).toEqual({ kind: "showCode" });
     expect(checkInNote(later, NOW)).toEqual({ kind: "confirm" });
     expect(checkInNote(missed, NOW)).toBeNull(); // over: nothing to do
     expect(checkInNote(cancelled, NOW)).toBeNull();
+  });
+  it("can check in what the server allows, and is told why not otherwise", () => {
+    expect(checkInBlock({ ...soon, canCheckIn: true }, NOW)).toBeNull();
+    expect(checkInBlock(attended, NOW)).toBe("checkedIn");
+    expect(checkInBlock(cancelled, NOW)).toBe("cancelled");
+    expect(checkInBlock(later, NOW)).toBe("confirm"); // the link of the email first
+    expect(checkInBlock(missed, NOW)).toBe("over");
+    expect(checkInBlock(tomorrow, NOW)).toBe("notYet"); // opens an hour before the start
+    expect(checkInBlock(now_, NOW)).toBe("closed"); // taking place, confirmed, and the server says no: its session is closed
   });
   it("can cancel what the server allows, and is told why not otherwise", () => {
     for (const b of [soon, tomorrow, later]) expect(cancelBlock(b, NOW), b.id).toBeNull();

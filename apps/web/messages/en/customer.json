@@ -122,7 +122,7 @@
     "saved": "You saved {amount} with {codes}",
     "note": "Your note: {note}",
     "checkedInAt": "Checked in at {time}",
-    "showCode": "Show this code at the studio to be checked in.",
+    "showCode": "Check in here when it opens, or show this code at the studio.",
     "confirmHint": "Open the link in your confirmation email to confirm this booking.",
     "cancelledBy": {
       "GUEST": "You cancelled this booking",
@@ -136,7 +136,18 @@
     },
     "cancelledDone": "Booking {code} was cancelled. We emailed you and the shop.",
     "where": "Where",
-    "whereNote": "Note"
+    "whereNote": "Note",
+    "checkIn": "Check in",
+    "checkingIn": "Checking in...",
+    "checkInDone": "You are checked in for booking {code}. Enjoy the workshop!",
+    "checkInFailed": "We could not check you in. Please try again.",
+    "checkInBlocked": {
+      "checkedIn": "You are already checked in.",
+      "confirm": "Open the link in your confirmation email to confirm this booking first.",
+      "over": "The workshop is over.",
+      "notYet": "Check-in opens at {time}, an hour before the workshop starts.",
+      "closed": "This session is closed, so you cannot check in here. Please ask the studio."
+    }
   },
   "favorites": {
     "empty": "No favorite workshops yet. Tap the heart on a workshop to save it here."
