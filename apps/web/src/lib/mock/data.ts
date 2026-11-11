@@ -99,11 +99,11 @@ export const sessions: Session[] = [
 
   // ---- RIGHT NOW (times relative to when the server started) ----
   // Taking place: Running (can only be paused), with a guest who checked in and two who did not yet.
-  { id: "se-27", code: "SES-0027", workshopId: "ws-1", startsAt: inMinutes(-30), endsAt: inMinutes(90), capacity: 8, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 120, imageUrl: pic("live") },
+  { id: "se-27", code: "SES-0027", workshopId: "ws-1", startsAt: inMinutes(-30), endsAt: inMinutes(90), capacity: 20, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 120, imageUrl: pic("live") },
   // Taking place but Paused: Close is read-only until it ends, Re-schedule is possible.
   { id: "se-28", code: "SES-0028", workshopId: "ws-2", startsAt: inMinutes(-20), endsAt: inMinutes(70), capacity: 10, reservedCount: 0, status: "PAUSED", bookingCutoffMinutes: 60 },
   // Starts soon, inside its cut-off: guests see "Booking closed" (the owner can still check guests in).
-  { id: "se-29", code: "SES-0029", workshopId: "ws-1", startsAt: inMinutes(40), endsAt: inMinutes(160), capacity: 8, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 120 },
+  { id: "se-29", code: "SES-0029", workshopId: "ws-1", startsAt: inMinutes(40), endsAt: inMinutes(160), capacity: 20, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 120 },
   // Starts in a few hours with a short cut-off: bookable now.
   { id: "se-30", code: "SES-0030", workshopId: "ws-2", startsAt: inMinutes(300), endsAt: inMinutes(390), capacity: 10, reservedCount: 0, status: "RUNNING", bookingCutoffMinutes: 60 },
   // Paused and not started: it can be closed (with a reason) or re-scheduled, and it has guests.
@@ -387,6 +387,31 @@ export const bookings: Booking[] = [
   booking({ id: "bk-121", sessionId: "se-24", customerId: "cu-18", quantity: 1, ...ci("se-24", 7) }),
   booking({ id: "bk-122", sessionId: "se-32", customerId: "cu-18", quantity: 1, ...ci("se-32", 8) }),
 ];
+
+// More bookings so EVERY customer with an account has what the Check in and the Cancel buttons of My Booking need, whenever the server starts (the sessions are relative to now):
+//  - one that can be checked in now (Confirmed, its session started a few minutes ago or starts within the hour),
+//  - one Confirmed and one Not confirmed that are still to come (they can be cancelled),
+//  - one the guest attended (checked in, a past session) and one the guest cancelled with one of the basic reasons.
+// Each goes to the first session of its list that still has a seat (a session is never over capacity), and none is paid, so the income does not change.
+const CANCEL_REASONS = ["My plans changed", "I have a schedule conflict", "I found another workshop", "I am unwell or have an emergency", "I booked by mistake"];
+function accountBookings(): Booking[] {
+  const out: Booking[] = [];
+  const left = (sid: string) => sessions.find((s) => s.id === sid)!.capacity - reservedSeats([...bookings, ...out], sid);
+  const rotate = (list: string[], i: number) => [...list.slice(i % list.length), ...list.slice(0, i % list.length)];
+  const add = (customerId: string, candidates: string[], fields: (sessionId: string) => Partial<Booking>) => {
+    const sessionId = candidates.find((sid) => left(sid) >= 1);
+    if (sessionId) out.push(booking({ id: `bk-g${out.length + 1}`, sessionId, customerId, quantity: 1, ...fields(sessionId) }));
+  };
+  customers.filter((c) => c.account).forEach((c, i) => {
+    add(c.id, rotate(["se-29", "se-27"], i), () => ({ status: "CONFIRMED" }));
+    add(c.id, rotate(["se-30", "se-10", "se-39", "se-9", "se-17", "se-36"], i), () => ({ status: "CONFIRMED" }));
+    add(c.id, rotate(["se-3", "se-5", "se-30", "se-39", "se-41"], i), () => ({ status: "NOT_CONFIRMED" }));
+    add(c.id, rotate(["se-18", "se-22", "se-25"], i), (sid) => ({ ...ci(sid, 5 + (i % 9)) }));
+    add(c.id, rotate(["se-5", "se-3", "se-10", "se-9"], i), () => ({ status: "CANCELLED", cancelledBy: "GUEST", cancelReason: CANCEL_REASONS[i % CANCEL_REASONS.length]! }));
+  });
+  return out;
+}
+bookings.push(...accountBookings());
 
 // What each demo booking has paid, so the Income page, the payment status of the bookings and the cancelled bookings agree. A guest who cancels
 // is refunded (all or part of it), a no-show keeps the payment, a booking of a session that was closed keeps what it paid until the owner refunds

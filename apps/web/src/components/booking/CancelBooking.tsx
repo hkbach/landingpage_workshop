@@ -49,7 +49,7 @@ export function CancelBooking({ slug, code, email, onCancelled }: { slug: string
 
   return (
     <section className="space-y-2 text-sm">
-      <Button type="button" variant="outline" data-testid="cancel-booking" onClick={() => { setChoice(""); setNote(""); setFailed(false); setOpen(true); }}>{t("cancelButton")}</Button>
+      <Button type="button" data-testid="cancel-booking" className="border-transparent bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-600/40" onClick={() => { setChoice(""); setNote(""); setFailed(false); setOpen(true); }}>{t("cancelButton")}</Button>
       <Dialog open={open} onOpenChange={(o) => { if (!busy) setOpen(o); }}>
         <DialogContent data-testid="cancel-dialog">
           <DialogHeader>
