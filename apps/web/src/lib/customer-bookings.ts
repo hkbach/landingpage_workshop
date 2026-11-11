@@ -17,6 +17,7 @@ export interface CustomerBooking {
   checkedInAt?: string; cancelReason?: string; cancelledBy?: "SHOP" | "GUEST"; specialRequest?: string; createdAt: string;
   /** Whether the guest can cancel it now (decided by the server: not confirmed or confirmed, session not closed, not started). */ canCancel: boolean;
   /** Whether the guest can check in now (decided by the server: confirmed, session not closed, from CHECKIN_OPENS_MINUTES before it starts until it ends). */ canCheckIn: boolean;
+  /** Whether the guest can rate the workshop now (decided by the server: they checked in to this booking and did not rate it yet), and the rating they gave. */ canRate: boolean; rating?: { stars: number; comment: string };
   shop: { slug: string; name: string; address: string; defaultLocale: string };
 }
 

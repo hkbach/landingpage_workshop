@@ -443,7 +443,8 @@ Browser ────────────────────────
   - **Tab và con số:** bốn ô **All / Upcoming / Past / Cancelled** vừa là con số vừa là bộ lọc (bấm để chỉ xem nhóm đó; con số đếm theo tìm kiếm và bộ lọc đang chọn). Booking đang diễn ra vẫn thuộc Upcoming; booking đã hủy luôn thuộc Cancelled.
   - **Tìm kiếm và lọc:** ô tìm theo mã booking, tên workshop (mọi ngôn ngữ shop đã viết) hoặc tên shop (không phân biệt hoa thường và dấu); lọc theo workshop và khoảng ngày (theo múi giờ của booking). Phân trang như các danh sách khác (10 / 20 / 50).
   - **Thứ tự:** booking sắp tới trước, gần nhất lên đầu và có nhãn **Next up**; sau đó booking đã qua / đã hủy, mới nhất trước.
-  - **Mỗi booking có hai nút: Check in và Cancel** (booking chưa dùng được nút nào thì nút bị khóa và dòng chữ dưới nút nói lý do).
+  - **Mỗi booking có ba nút: Check in, Completed và Cancel** (booking chưa dùng được nút nào thì nút bị khóa và dòng chữ dưới nút nói lý do).
+  - **Completed (đánh giá workshop):** nút **Completed** có trên **mọi** booking nhưng **chỉ đọc (khóa)** kèm dòng chú thích "Bạn đánh giá được workshop này sau khi đã check-in booking" cho tới khi khách **đã check-in** booking (`CHECKED_IN`). Khi đã check-in và chưa đánh giá, nút **bật** (nền xanh lam) và mở popup **Đánh giá workshop**: chọn **1 đến 5 sao** (bắt buộc, chọn được bằng bàn phím) và **nhận xét tùy chọn** (≤ 500 ký tự, `trim()` theo BR-16). Mỗi booking **chỉ đánh giá một lần**; sau khi gửi, nút lại chỉ đọc và hiện số sao khách đã chấm ("Bạn đã đánh giá 4/5"), có thông báo cảm ơn. Server kiểm tra lại: `POST /customer/{id}/bookings/{code}/rating` `{stars, comment?}` → `201`; `409 NOT_CHECKED_IN`, `409 ALREADY_RATED`; `404` cho booking không phải của khách (cùng câu trả lời); `422` kèm `fields` khi sao không hợp lệ hoặc nhận xét quá dài. Booking trả về thêm `canRate` và `rating`. **Điểm của workshop** = trung bình của điểm shop đã có (kèm số lượt) cộng các sao khách chấm, làm tròn 1 chữ số thập phân; hiển thị ở landing page, trang Workshops / Favorites của khách, mục Workshops của Home và khu admin. **Admin chỉ xem** (cột / chi tiết rating ở FR-ADM-10), không duyệt hay sửa. Audit `booking.rate` (mã booking và số sao, **không ghi nhận xét**). TODO(api): bảng `workshop_ratings` (booking_id unique), báo cáo nhận xét vi phạm.
   - **Màu nút:** khi bấm được, **Check in nền xanh lá** và **Cancel booking nền đỏ**; khi không bấm được, nút xám (khóa).
   - **Dữ liệu mẫu:** mỗi khi server khởi động, **mọi customer có tài khoản** đều có sẵn booking để thử hai nút: một booking check-in được ngay (session đang diễn ra hoặc bắt đầu trong vòng 1 giờ), một Confirmed và một Not confirmed còn hủy được, một booking đã tham dự và một booking khách đã hủy (kèm lý do cơ bản). Các booking này không thanh toán nên không đổi số liệu thu nhập, và không session nào vượt sức chứa.
   - **Check in (khách tự check-in):** bật khi booking **`CONFIRMED`** (đã mở link trong email xác nhận), **từ 60 phút trước giờ bắt đầu đến khi session kết thúc**, và session chưa đóng (server quyết định, `canCheckIn`; cũng kiểm tra lại khi bấm). Bấm xong booking thành `CHECKED_IN` (lưu giờ check-in và trạng thái trước đó là `CONFIRMED`, nên shop vẫn Uncheck-in được), danh sách cập nhật ngay và báo "You are checked in for booking …". Khóa kèm lý do: đã check-in, chưa tới giờ ("Check-in opens at <giờ>, an hour before…"), booking `NOT_CONFIRMED` ("Open the link in your confirmation email…"), workshop đã kết thúc, session đã đóng. Booking đã hủy thì nút khóa. Shop vẫn có thể check-in khách ở studio. API: `POST /customer/{id}/bookings/{code}/check-in` (404 nếu booking không phải của khách, 409 `NOT_CHECKABLE`).
@@ -619,8 +620,8 @@ Browser ────────────────────────
 - Trang `/systemadmin/audit-logs`: **tìm theo email của người dùng** (khớp email người thực hiện **hoặc** email người bị tác động; không phân biệt hoa thường, khớp một phần) và **tìm theo Organization** (tên, slug hoặc id của shop); có thêm lọc theo vai trò, hành động, loại bản ghi và khoảng ngày; mới nhất ở trên; xem chi tiết một dòng. API: `GET /admin/directory/audit-logs?email=&org=&role=&action=&entity=&from=&to=`.
 - Ghi chú mock: chưa có session thật nên người thực hiện ở các route của shop owner là chủ shop demo, route của customer lấy theo id trong đường dẫn, route public chỉ biết email khách nhập. Builder lưu bản nháp ở trình duyệt nên chỉ thao tác **publish** của landing page được ghi vào audit log. TODO(api): người thực hiện lấy từ session, kèm IP, ghi trong cùng transaction.
 
-**FR-ADM-06 – Template (Should)**
-- MVP: template định nghĩa trong code (`packages/shared`). Admin chỉ bật/tắt template.
+**FR-ADM-06 – Template (đã bỏ)**
+- Template định nghĩa trong code (`packages/shared`). **Đã bỏ chức năng admin bật/tắt template**: mọi shop dùng chung danh sách template; không có màn hình quản lý template trong khu admin.
 
 **FR-ADM-07 – Thông tin liên hệ hỗ trợ của nền tảng (Should)**
 - Admin cấu hình các kênh hỗ trợ của nền tảng: **WhatsApp, Phone, Zalo, Email** (giá trị toàn nền tảng, không theo shop; lưu trong `platform_settings`).
@@ -1182,7 +1183,7 @@ Mỗi milestone: code → test → `pnpm lint && pnpm typecheck && pnpm test` pa
 | Q3 | Giá trị plan limits và giá gói? | **Đã đóng**: loại bỏ gói thanh toán |
 | Q4 | Booking cutoff mặc định (2 giờ) có phù hợp? | 120 phút mặc định; **cấu hình theo từng session khi tạo session** (không còn theo shop) |
 | Q5 | Số khách tối đa mỗi booking mặc định? | 6 |
-| Q6 | Nội dung Terms, Privacy Policy và nghĩa vụ pháp lý về dữ liệu cá nhân? | Pháp chế cung cấp |
+| Q6 | Nội dung Terms, Privacy Policy và nghĩa vụ pháp lý về dữ liệu cá nhân? | Pháp chế cung cấp Admin soạn nội dung Terms và Privacy trong khu admin (FR-ADM-23); nội dung pháp lý do pháp chế cung cấp |
 | Q7 | RPO/RTO chính thức? | Backup daily, giữ 14 bản |
 | Q8 | Có cần request booking / lịch linh hoạt ở phase 2 không? | Phase 2 |
 | Q9 | Email nhắc lịch 24h có bắt buộc ở MVP? | Should |

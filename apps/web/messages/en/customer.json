@@ -149,6 +149,26 @@
       "over": "The workshop is over.",
       "notYet": "Check-in opens at {time}, an hour before the workshop starts.",
       "closed": "This session is closed, so you cannot check in here. Please ask the studio."
+    },
+    "completed": "Completed",
+    "completedNote": "You can rate this workshop once you have checked in to the booking.",
+    "rated": "You rated {stars}/5",
+    "rateTitle": "Rate this workshop",
+    "rateBody": "How was {title}? Your stars show on the workshop.",
+    "rateStars": "Your rating",
+    "starLabel": "{n} of 5 stars",
+    "rateComment": "Comment (optional)",
+    "ratePlaceholder": "What did you like? What could be better?",
+    "rateOnce": "You can rate a booking once.",
+    "rateCancel": "Cancel",
+    "rateSubmit": "Send rating",
+    "rateSubmitting": "Sending...",
+    "rateThanks": "Thank you! Your rating of booking {code} was saved.",
+    "rateErrors": {
+      "stars": "Choose from 1 to 5 stars.",
+      "failed": "The rating could not be saved. Please try again.",
+      "notCheckedIn": "You can rate after you check in to this booking.",
+      "already": "You already rated this booking."
     }
   },
   "favorites": {

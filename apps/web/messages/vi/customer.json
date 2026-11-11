@@ -149,6 +149,26 @@
       "over": "Workshop đã kết thúc.",
       "notYet": "Check-in mở lúc {time}, một giờ trước khi workshop bắt đầu.",
       "closed": "Session này đã đóng nên bạn không thể check-in tại đây. Vui lòng hỏi studio."
+    },
+    "completed": "Hoàn tất",
+    "completedNote": "Bạn đánh giá được workshop này sau khi đã check-in booking.",
+    "rated": "Bạn đã đánh giá {stars}/5",
+    "rateTitle": "Đánh giá workshop",
+    "rateBody": "{title} thế nào? Số sao của bạn sẽ hiển thị trên workshop.",
+    "rateStars": "Đánh giá của bạn",
+    "starLabel": "{n} trên 5 sao",
+    "rateComment": "Nhận xét (tùy chọn)",
+    "ratePlaceholder": "Bạn thích điều gì? Điều gì có thể tốt hơn?",
+    "rateOnce": "Mỗi booking chỉ đánh giá được một lần.",
+    "rateCancel": "Hủy",
+    "rateSubmit": "Gửi đánh giá",
+    "rateSubmitting": "Đang gửi...",
+    "rateThanks": "Cảm ơn bạn! Đã lưu đánh giá cho booking {code}.",
+    "rateErrors": {
+      "stars": "Hãy chọn từ 1 đến 5 sao.",
+      "failed": "Không lưu được đánh giá. Vui lòng thử lại.",
+      "notCheckedIn": "Bạn đánh giá được sau khi check-in booking này.",
+      "already": "Bạn đã đánh giá booking này."
     }
   },
   "favorites": {

@@ -13,7 +13,7 @@ function booking(over: Partial<CustomerBooking> & { startsAt: string; endsAt: st
   n += 1;
   return {
     id: `bk-${n}`, code: `SES-00${String(n).padStart(2, "0")}-001`, status: "CONFIRMED", paymentStatus: "PAID", workshopId: "ws-1", workshopTitle: { en: "Fresh Pasta" },
-    address: "12 Nguyen Hue", timezone: TZ, quantity: 1, currency: "VND", totalAmount: 500_000, discountAmount: 0, vouchers: [], createdAt: at(-5, 3), canCancel: true, canCheckIn: false,
+    address: "12 Nguyen Hue", timezone: TZ, quantity: 1, currency: "VND", totalAmount: 500_000, discountAmount: 0, vouchers: [], createdAt: at(-5, 3), canCancel: true, canCheckIn: false, canRate: false,
     shop: { slug: "whiskladle", name: "Whisk & Ladle Kitchen", address: "12 Nguyen Hue", defaultLocale: "en" }, ...over,
   };
 }

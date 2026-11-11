@@ -5,6 +5,7 @@ import type { CustomerBooking } from "@/lib/customer-bookings";
 import { accountOfGuest, canGuestCancel, canGuestCheckIn, liveBookings } from "@/lib/mock/booking-store";
 import { currentShop, workshops } from "@/lib/mock/data";
 import { allPromotions } from "@/lib/mock/promotion-store";
+import { ratingOfBooking } from "@/lib/mock/rating-store";
 
 // The bookings of a guest, seen by the guest (My Booking of /customer/{id}). MOCK implementation inside Next until apps/api exists. The same access as the profile
 // (see ../route.ts): the email of the account in `x-guest-email`, or the id alone while the login of the guest area is switched off (never in production), and the same
@@ -32,6 +33,8 @@ export async function GET(request: Request, ctx: RouteContext<"/api/v1/customer/
         vouchers: vouchers.filter((p) => b.promotionIds?.includes(p.id)).map((p) => p.code ?? p.id), ...(b.checkedInAt ? { checkedInAt: b.checkedInAt } : {}),
         ...(b.cancelReason ? { cancelReason: b.cancelReason } : {}), ...(b.cancelledBy ? { cancelledBy: b.cancelledBy } : {}), ...(b.specialRequest ? { specialRequest: b.specialRequest } : {}),
         createdAt: b.createdAt, canCancel: canGuestCancel(b, now), canCheckIn: canGuestCheckIn(b, now),
+        // Completed (the rating): on once the guest checked in and has not rated yet; after that the stars the guest gave.
+        canRate: b.status === "CHECKED_IN" && !ratingOfBooking(b.id), ...(ratingOfBooking(b.id) ? { rating: { stars: ratingOfBooking(b.id)!.stars, comment: ratingOfBooking(b.id)!.comment } } : {}),
         shop: { slug: currentShop.slug, name: currentShop.name, address: currentShop.address, defaultLocale: currentShop.defaultLocale },
       }];
     });

@@ -149,6 +149,26 @@
       "over": "워크숍이 끝났습니다.",
       "notYet": "체크인은 워크숍 시작 한 시간 전인 {time}에 열립니다.",
       "closed": "이 세션은 마감되어 여기에서 체크인할 수 없습니다. 스튜디오에 문의하세요."
+    },
+    "completed": "완료",
+    "completedNote": "예약에 체크인한 뒤에 이 워크숍을 평가할 수 있어요.",
+    "rated": "{stars}/5점으로 평가했어요",
+    "rateTitle": "워크숍 평가하기",
+    "rateBody": "{title}은(는) 어땠나요? 남긴 별점은 워크숍에 표시돼요.",
+    "rateStars": "내 평점",
+    "starLabel": "별 5개 중 {n}개",
+    "rateComment": "후기 (선택)",
+    "ratePlaceholder": "무엇이 좋았나요? 더 좋아질 점은요?",
+    "rateOnce": "예약 하나당 한 번만 평가할 수 있어요.",
+    "rateCancel": "취소",
+    "rateSubmit": "평가 보내기",
+    "rateSubmitting": "보내는 중...",
+    "rateThanks": "감사해요! 예약 {code}의 평가를 저장했어요.",
+    "rateErrors": {
+      "stars": "별을 1개에서 5개 사이로 골라 주세요.",
+      "failed": "평가를 저장하지 못했어요. 다시 시도해 주세요.",
+      "notCheckedIn": "이 예약에 체크인한 뒤에 평가할 수 있어요.",
+      "already": "이미 이 예약을 평가했어요."
     }
   },
   "favorites": {

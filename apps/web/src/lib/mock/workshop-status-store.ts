@@ -2,6 +2,7 @@
 // list, the workshop page and the landing page read the workshops through `withWorkshopStatus`, so a change shows everywhere on the next load.
 // Lives on globalThis like the other mock stores. TODO(api): organization_id from the session, OWNER / MANAGER only, audited; the backend checks the
 // sessions in the same transaction as the status change.
+import { withRating } from "./rating-store";
 import { checkWorkshopSwitch, closeIfEnded, openSessionCount, type SessionStatus, type WorkshopStatus } from "@workshop/shared";
 import type { Workshop } from "@/lib/types";
 import { sessions, workshops } from "./data";
@@ -17,7 +18,7 @@ export function resetWorkshopStatusStore(): void {
 
 /** The workshops with the status the shop owner gave them. */
 export function withWorkshopStatus<T extends Workshop>(list: readonly T[]): T[] {
-  return list.map((w) => (changed().has(w.id) ? { ...w, status: changed().get(w.id)! } : w));
+  return list.map((w) => withRating(changed().has(w.id) ? { ...w, status: changed().get(w.id)! } : w)); // the rating counts what the guests gave
 }
 
 /** The status of every session of a workshop as the shop sees it now (a session whose time is over is Closed; an administrator's changes count). */

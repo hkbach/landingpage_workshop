@@ -14,7 +14,7 @@ function booking(over: Partial<CustomerBooking> & { startsAt: string; endsAt: st
   n += 1;
   return {
     id: `bk-${n}`, code: `SES-00${String(n).padStart(2, "0")}-001`, status: "CONFIRMED", paymentStatus: "UNPAID", workshopId: "ws-1", workshopTitle: { en: "Fresh Pasta from Scratch", vi: "Làm pasta tươi từ đầu" },
-    address: "12 Nguyen Hue, District 1", timezone: TZ, quantity: 2, currency: "VND", totalAmount: 1_300_000, discountAmount: 0, vouchers: [], createdAt: at(-5, 3), canCancel: true, canCheckIn: false,
+    address: "12 Nguyen Hue, District 1", timezone: TZ, quantity: 2, currency: "VND", totalAmount: 1_300_000, discountAmount: 0, vouchers: [], createdAt: at(-5, 3), canCancel: true, canCheckIn: false, canRate: false,
     shop: { slug: "whiskladle", name: "Whisk & Ladle Kitchen", address: "12 Nguyen Hue", defaultLocale: "en" }, ...over,
   };
 }

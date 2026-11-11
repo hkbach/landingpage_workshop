@@ -8,6 +8,7 @@ import { CalendarCheck, CalendarClock, CheckCircle2, Clock, History, MapPin, Sea
 import { formatMoney, pickLocalized, type BookingStatus, type Locale } from "@workshop/shared";
 import { CancelBooking } from "@/components/booking/CancelBooking";
 import { CheckInBooking } from "./check-in-booking";
+import { RateBooking } from "./rate-booking";
 import { safeImage, safeMaps } from "@/components/sections/safe-url";
 import { Field } from "@/components/dashboard/shell/field";
 import { NativeSelect } from "@/components/dashboard/shell/native-select";
@@ -57,6 +58,7 @@ export function CustomerBookings() {
   const [to, setTo] = useState("");
   const [cancelled, setCancelled] = useState<string | null>(null); // the code of the booking the guest just cancelled
   const [checkedIn, setCheckedIn] = useState<string | null>(null); // the code of the booking the guest just checked in to
+  const [rated, setRated] = useState<string | null>(null); // the code of the booking the guest just rated
 
   const all = useMemo(() => query.data?.bookings ?? [], [query.data]);
   const now = useMemo(() => new Date(query.data?.now ?? 0), [query.data]);
@@ -150,6 +152,7 @@ export function CustomerBookings() {
 
       {cancelled ? <p role="status" className="rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-900" data-testid="customer-bookings-cancelled">{tb("cancelledDone", { code: cancelled })}</p> : null}
       {checkedIn ? <p role="status" className="rounded-xl bg-indigo-50 px-4 py-3 text-sm text-indigo-900" data-testid="customer-bookings-checked-in">{tb("checkInDone", { code: checkedIn })}</p> : null}
+      {rated ? <p role="status" className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900" data-testid="customer-bookings-rated">{tb("rateThanks", { code: rated })}</p> : null}
       <p role="status" className="text-sm text-muted-foreground" data-testid="customer-bookings-total">{tb("count", { count: list.length })}</p>
 
       {all.length === 0 ? (
@@ -168,7 +171,8 @@ export function CustomerBookings() {
               <BookingTicket
                 key={b.id} booking={b} now={now} locale={locale} email={profile.email} isNext={summary.next?.id === b.id}
                 onCancelled={() => { setCancelled(b.code); setCheckedIn(null); void queryClient.invalidateQueries({ queryKey: key }); }}
-                onCheckedIn={() => { setCheckedIn(b.code); setCancelled(null); void queryClient.invalidateQueries({ queryKey: key }); }}
+                onCheckedIn={() => { setCheckedIn(b.code); setCancelled(null); setRated(null); void queryClient.invalidateQueries({ queryKey: key }); }}
+                onRated={() => { setRated(b.code); setCancelled(null); setCheckedIn(null); void queryClient.invalidateQueries({ queryKey: key }); }}
               />
             ))}
           </ul>
@@ -185,7 +189,7 @@ function whenText(tb: ReturnType<typeof useTranslations>, when: When): string {
 }
 
 /** One booking as a ticket: the picture with the day, the workshop, the details, and a stub with the code and the price. */
-function BookingTicket({ booking: b, now, locale, email, isNext, onCancelled, onCheckedIn }: { booking: CustomerBooking; now: Date; locale: Locale; email: string; isNext: boolean; onCancelled: () => void; onCheckedIn: () => void }) {
+function BookingTicket({ booking: b, now, locale, email, isNext, onCancelled, onCheckedIn, onRated }: { booking: CustomerBooking; now: Date; locale: Locale; email: string; isNext: boolean; onCancelled: () => void; onCheckedIn: () => void; onRated: () => void }) {
   const tb = useTranslations("customer.bookings");
   const tc = useTranslations("site.confirmation");
   const title = pickLocalized(b.workshopTitle, locale, b.shop.defaultLocale as Locale);
@@ -251,6 +255,7 @@ function BookingTicket({ booking: b, now, locale, email, isNext, onCancelled, on
         <div className="mt-1 flex flex-wrap items-center gap-2">
           {/* Both buttons are on every booking; one that cannot be used is off and the reason is under the buttons. */}
           <CheckInBooking code={b.code} enabled={b.canCheckIn} onCheckedIn={onCheckedIn} />
+          <RateBooking code={b.code} title={title} status={b.status} canRate={b.canRate} {...(b.rating ? { rating: b.rating } : {})} onRated={onRated} />
           {b.canCancel ? <CancelBooking slug={b.shop.slug} code={b.code} email={email} onCancelled={onCancelled} /> : <Button type="button" variant="outline" disabled data-testid="cancel-booking-off">{tc("cancelButton")}</Button>}
           {maps && phase === "upcoming" ? (
             <GoogleMapsButton href={maps} testId="customer-booking-map" />
