@@ -28,6 +28,7 @@ export async function POST(request: Request, ctx: RouteContext<"/api/v1/customer
   const res = requestWithdrawal(id, parsed.data.source, parsed.data.amount);
   if (!res.ok) {
     if (res.code === "EXCEEDS_AVAILABLE") return apiError(422, "VALIDATION", "The amount is more than what is available.", { fields: { amount: "exceeds" } }, headers);
+    if (res.code === "BELOW_MIN" || res.code === "ABOVE_MAX") return apiError(422, "VALIDATION", "The amount is outside the limits of one withdrawal.", { fields: { amount: res.code === "BELOW_MIN" ? "belowMin" : "aboveMax" } }, headers);
     return apiError(res.code === "NO_ACCOUNT" ? 404 : 422, res.code === "NO_ACCOUNT" ? "NOT_FOUND" : "VALIDATION", "Please check the highlighted fields.", res.code === "NO_ACCOUNT" ? {} : { fields: { amount: "invalid" } }, headers);
   }
   const { id: wid, code, amount, currency, status, requestedAt } = res.withdrawal;

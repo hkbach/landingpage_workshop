@@ -21,6 +21,9 @@ export interface Referral {
   shopId: string;
   createdAt: string;
   clicks: number;
+  /** An administrator switched the link off (with a reason): it no longer leads to a booking and nothing is attributed to it. A customer cannot switch it back on. */
+  disabled?: boolean;
+  disabledReason?: string;
 }
 
 const DAY = 86_400_000;
@@ -77,6 +80,14 @@ export function resetReferralStore(): void {
 
 export const listReferrals = (): Referral[] => store().map((r) => ({ ...r }));
 
+/** An administrator switches a link off (with a reason) or on again. Null for an unknown link. */
+export function setReferralDisabled(id: string, disabled: boolean, reason = ""): Referral | null {
+  const r = store().find((x) => x.id === id);
+  if (!r) return null;
+  if (disabled) { r.disabled = true; r.disabledReason = reason.trim().slice(0, 300); } else { delete r.disabled; delete r.disabledReason; }
+  return { ...r };
+}
+
 export type CreateReferralResult = { ok: true; referral: Referral; created: boolean } | { ok: false; code: "NO_ACCOUNT" | "NO_WORKSHOP" | "SHOP_INACTIVE" | "WORKSHOP_INACTIVE" };
 
 /** A customer with an account gets the link of a workshop (the same link when they already have one for it). Only the workshops of an ACTIVE shop can be shared. */
@@ -111,7 +122,7 @@ export function recordClick(code: string, shopId: string, count = true): Referra
  */
 export function attributeBooking(bookingId: string, code: string, workshopId: string, customerId: string): boolean {
   const r = store().find((x) => x.code === code);
-  if (!r || r.workshopId !== workshopId || r.accountId === customerId) return false;
+  if (!r || r.disabled || r.workshopId !== workshopId || r.accountId === customerId) return false; // a link an administrator switched off brings nothing
   made().set(bookingId, r.id);
   return true;
 }
@@ -124,7 +135,7 @@ export function attributeBooking(bookingId: string, code: string, workshopId: st
 export function attributedBookings(bookings: readonly Booking[] = liveBookings()): Map<string, string> {
   const out = new Map<string, string>(made());
   for (const r of store()) {
-    if (r.clicks === 0) continue; // a link nobody opened brought no booking
+    if (r.clicks === 0 || r.disabled) continue; // a link nobody opened, or one that was switched off, brought no booking
     bookings.filter((b) => b.workshopId === r.workshopId && b.customerId !== r.accountId && b.status !== "CANCELLED").forEach((b, i) => {
       if (i % 2 === 1 && !out.has(b.id)) out.set(b.id, r.id);
     });

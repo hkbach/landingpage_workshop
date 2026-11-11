@@ -7,6 +7,7 @@
 // The mock keeps fees in the currency of the demo shop (the only shop with bookings). Lives on globalThis like the other mock stores.
 // TODO(api): `withdrawals` (account_id, source, amount, status, processed_by/at, reason) with the balance checked in the SAME transaction (SELECT ... FOR UPDATE on the account), the
 // payout itself, and the audit log.
+import { getPlatformSettings } from "./app-settings-store";
 import { referralEarnings } from "./admin-income";
 import { listAccounts } from "./accounts-store";
 import { currentShop } from "./data";
@@ -93,13 +94,16 @@ export function walletOf(accountId: string, source: WalletSource): Wallet {
 export const withdrawalsOf = (accountId: string, source: WalletSource): Withdrawal[] =>
   listWithdrawals().filter((w) => w.accountId === accountId && w.source === source).sort((a, b) => b.requestedAt.localeCompare(a.requestedAt) || b.code.localeCompare(a.code));
 
-export type RequestResult = { ok: true; withdrawal: Withdrawal } | { ok: false; code: "NO_ACCOUNT" | "AMOUNT_INVALID" | "EXCEEDS_AVAILABLE" };
+export type RequestResult = { ok: true; withdrawal: Withdrawal } | { ok: false; code: "NO_ACCOUNT" | "AMOUNT_INVALID" | "EXCEEDS_AVAILABLE" | "BELOW_MIN" | "ABOVE_MAX" };
 
 /** The customer asks to withdraw `amount` (minor units, a whole positive number) from one program: it must not be more than what is available. */
 export function requestWithdrawal(accountId: string, source: WalletSource, amount: number, now: Date = new Date()): RequestResult {
   if (!listAccounts().some((a) => a.id === accountId && a.type === "CUSTOMER")) return { ok: false, code: "NO_ACCOUNT" };
   if (!Number.isSafeInteger(amount) || amount <= 0) return { ok: false, code: "AMOUNT_INVALID" };
   if (amount > walletOf(accountId, source).available) return { ok: false, code: "EXCEEDS_AVAILABLE" };
+  const { withdrawalMin, withdrawalMax } = getPlatformSettings(); // the limits an administrator set (0 = none)
+  if (withdrawalMin > 0 && amount < withdrawalMin) return { ok: false, code: "BELOW_MIN" };
+  if (withdrawalMax > 0 && amount > withdrawalMax) return { ok: false, code: "ABOVE_MAX" };
   const n = store().length + 1;
   const withdrawal: Withdrawal = { id: `wd-${newUuid().slice(0, 8)}`, code: `WD-${String(n).padStart(4, "0")}`, accountId, source, amount, currency: currentShop.currency, status: "PENDING", requestedAt: now.toISOString() };
   store().push(withdrawal);

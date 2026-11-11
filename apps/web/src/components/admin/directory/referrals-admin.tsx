@@ -3,11 +3,13 @@
 import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { formatMoney } from "@workshop/shared";
+import { Ban, CircleCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DateInput } from "@/components/ui/date-input";
 import type { AdminReferralLink } from "@/lib/mock/admin-directory";
+import { ReasonDialog } from "../reason-dialog";
 import { fmt } from "../utils";
-import { DetailDialog, DirectoryTable, FilterBox, Pill, Toolbar, useDebounced, useDirectory, type Column } from "./kit";
+import { DetailDialog, DirectoryTable, FilterBox, Notice, Pill, Toolbar, useDebounced, useDirectory, type Column } from "./kit";
 
 /**
  * The referral program: a customer invites friends to register a customer account with their ONE invite link. The friend is the customer's referral; when the friend pays their first
@@ -22,7 +24,16 @@ export function ReferralsAdmin() {
   const [to, setTo] = useState("");
   const typed = useDebounced(q);
   const bad = Boolean(from && to && from > to);
-  const { items, error } = useDirectory<AdminReferralLink>("referrals", { q: typed, from, to: bad ? "" : to });
+  const { items, error, reload } = useDirectory<AdminReferralLink>("referrals", { q: typed, from, to: bad ? "" : to });
+  const [toggle, setToggle] = useState<AdminReferralLink | null>(null);
+  const [message, setMessage] = useState<{ text: string; tone: "ok" | "error" } | null>(null);
+
+  async function change(r: AdminReferralLink, disabled: boolean, reason = "") {
+    setToggle(null);
+    const res = await fetch(`/api/v1/admin/referrals/${encodeURIComponent(r.inviterId)}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ disabled, ...(reason ? { reason } : {}) }) }).catch(() => null);
+    setMessage(res?.ok ? { text: t(disabled ? "disabledDone" : "enabledDone", { email: r.inviterEmail }), tone: "ok" } : { text: t("failed"), tone: "error" });
+    reload();
+  }
   const [detail, setDetail] = useState<AdminReferralLink | null>(null);
   const money = (n: number, currency: string) => formatMoney(n, currency, locale);
 
@@ -32,7 +43,8 @@ export function ReferralsAdmin() {
     { key: "registered", header: t("col.registered"), className: "text-right tabular-nums", cell: (r) => r.registered },
     { key: "earned", header: t("col.earned"), className: "text-right tabular-nums", cell: (r) => r.earned },
     { key: "bonus", header: t("col.bonus"), className: "text-right tabular-nums", cell: (r) => money(r.bonusTotal, r.currency) },
-    { key: "actions", header: <span className="sr-only">{t("col.actions")}</span>, className: "text-right", cell: (r) => <Button size="sm" variant="outline" onClick={() => setDetail(r)}>{t("view")}<span className="sr-only"> {r.inviterEmail}</span></Button> },
+    { key: "state", header: t("col.state"), cell: (r) => (r.disabled ? <span title={r.disabledReason}><Pill tone="amber">{t("off")}</Pill></span> : <Pill tone="green">{t("on")}</Pill>) },
+    { key: "actions", header: <span className="sr-only">{t("col.actions")}</span>, className: "text-right", cell: (r) => (<div className="flex flex-wrap justify-end gap-1.5"><Button size="sm" variant="outline" onClick={() => setDetail(r)}>{t("view")}<span className="sr-only"> {r.inviterEmail}</span></Button>{r.disabled ? <Button size="sm" variant="outline" onClick={() => void change(r, false)} data-testid="referral-enable"><CircleCheck aria-hidden /> {t("enable")}</Button> : <Button size="sm" variant="outline" onClick={() => setToggle(r)} data-testid="referral-disable"><Ban aria-hidden /> {t("disable")}</Button>}</div>) },
   ];
 
   return (
@@ -46,8 +58,14 @@ export function ReferralsAdmin() {
         <FilterBox id="rl-to" label={t("to")}><DateInput id="rl-to" value={to} onChange={setTo} min={from || undefined} lenient /></FilterBox>
         {from || to ? <Button type="button" variant="outline" onClick={() => { setFrom(""); setTo(""); }}>{t("clearDates")}</Button> : null}
       </Toolbar>
+      <Notice message={message} />
       {bad ? <p role="alert" className="text-sm text-destructive">{t("dateOrder")}</p> : null}
       <DirectoryTable rows={items} error={error} columns={columns} rowKey={(r) => r.inviterId} resetKey={`${typed}|${from}|${to}`} testId="referrals-table" />
+      <ReasonDialog
+        open={toggle !== null} onOpenChange={(o) => { if (!o) setToggle(null); }} reason="required" destructive
+        title={t("disableTitle", { email: toggle?.inviterEmail ?? "" })} description={t("disableBody")} confirmLabel={t("disable")}
+        onConfirm={(why) => { if (toggle) void change(toggle, true, why); }}
+      />
       <p className="text-xs text-muted-foreground">{t("rule")}</p>
       <DetailDialog
         open={detail !== null} onClose={() => setDetail(null)} title={detail?.inviterEmail ?? ""} description={detail ? `${detail.inviterName} · ${detail.code}` : ""}

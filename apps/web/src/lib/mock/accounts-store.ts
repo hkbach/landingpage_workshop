@@ -7,10 +7,12 @@ import { everyShop } from "./registered-shops-store";
 import { accountStatus, setAccountStatus, type AccountStatus, type DeactivationReason } from "./account-status";
 import { hashPassword, hashToken, generateTempPassword, newToken, verifyPassword } from "./passwords";
 import { queuePasswordReset } from "./outbox-store";
+import { getPlatformSettings } from "./app-settings-store";
 
 /** The password of every demo account until its owner chooses another one (mock only). */
 export const DEMO_PASSWORD = "Workshop#2026";
-export const RESET_VALID_MS = 3 * 86_400_000;
+/** How long the link of a reset works: 24 hours by default (see Settings of the admin area). */
+export const resetValidMs = (): number => getPlatformSettings().resetLinkHours * 3_600_000;
 const MAX_RESET_ATTEMPTS = 5;
 const MAX_LOGIN_FAILURES = 5;
 const LOGIN_LOCK_MS = 15 * 60_000;
@@ -139,7 +141,7 @@ export function startPasswordReset(id: string, resetUrlFor: (token: string) => s
   for (const [k, r] of store().resets) if (r.accountId === id) store().resets.delete(k);
   const temp = generateTempPassword();
   const token = newToken();
-  const expiresAt = now + RESET_VALID_MS;
+  const expiresAt = now + resetValidMs();
   store().resets.set(hashToken(token), { accountId: id, tokenHash: hashToken(token), tempHash: hashPassword(temp), expiresAt, attempts: 0 });
   setAccountStatus(id, "DEACTIVATED", "PASSWORD_RESET");
   const customer = a.type === "CUSTOMER" ? liveCustomers().find((c) => c.id === id) : undefined;

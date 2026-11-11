@@ -200,7 +200,8 @@
     },
     "forBooking": "预订 {code}",
     "note": "每位被推荐好友的奖励只计一次：好友通过您的链接注册并支付首笔预订后，您将获得该预订价格的 {rate}。该好友之后的预订不再产生奖励。",
-    "tabFriends": "推荐"
+    "tabFriends": "推荐",
+    "disabledNote": "平台已关闭您的邀请链接。通过该链接注册的朋友暂时不会被统计。您已获得的朋友和奖励不受影响。如认为有误，请联系支持团队。"
   },
   "wallet": {
     "overview": "您的收益",
@@ -226,7 +227,9 @@
       "required": "请输入金额。",
       "invalid": "请输入有效金额。",
       "exceeds": "金额超过可提现金额（{amount}）。",
-      "failed": "无法发送申请，请重试。"
+      "failed": "无法发送申请，请重试。",
+      "belowMin": "最低提现金额为 {amount}。",
+      "aboveMax": "最高提现金额为 {amount}。"
     },
     "done": "申请 {code} 已发送，可在“历史记录”中查看。",
     "tabHistory": "历史记录",
@@ -243,7 +246,10 @@
       "PAID": "已支付",
       "REJECTED": "已拒绝"
     },
-    "reason": "原因：{reason}"
+    "reason": "原因：{reason}",
+    "limitsBoth": "单次提现：{min} 至 {max}。",
+    "limitsMin": "单次提现：至少 {min}。",
+    "limitsMax": "单次提现：最多 {max}。"
   },
   "support": {
     "title": "需要帮助？",

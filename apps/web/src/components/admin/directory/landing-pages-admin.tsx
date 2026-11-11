@@ -33,7 +33,7 @@ export function LandingPagesAdmin() {
     { key: "owner", header: t("col.owner"), cell: (p) => p.ownerEmail },
     { key: "status", header: t("col.status"), cell: (p) => <StatusBadge status={p.status} /> },
     { key: "workshops", header: t("col.workshops"), className: "text-right", cell: (p) => p.workshops },
-    { key: "page", header: t("col.page"), cell: (p) => (p.status === "ACTIVE" ? <a href={landingUrl(p.slug)} target="_blank" rel="noreferrer" className="text-primary underline underline-offset-4">{p.slug}<span className="sr-only"> {t("opensNewTab")}</span></a> : "—") },
+    { key: "page", header: t("col.page"), cell: (p) => (p.status === "ACTIVE" ? <a href={landingUrl(p.slug, p.customDomain)} target="_blank" rel="noreferrer" className="text-primary underline underline-offset-4">{p.customDomain || p.slug}<span className="sr-only"> {t("opensNewTab")}</span></a> : "—") },
     {
       key: "actions", header: <span className="sr-only">{t("col.actions")}</span>, className: "text-right",
       cell: (p) => p.editable

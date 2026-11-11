@@ -2,9 +2,10 @@ import { formatDateTime } from "@/lib/format";
 
 const DOMAIN = process.env.NEXT_PUBLIC_PLATFORM_DOMAIN || "localtest.me";
 
-/** Public landing page URL of a shop: https://{slug}.{PLATFORM_DOMAIN} (http + dev port on localtest.me). */
-export function landingUrl(slug: string): string {
-  return DOMAIN === "localtest.me" ? `http://${slug}.${DOMAIN}:3000` : `https://${slug}.${DOMAIN}`;
+/** Public landing page URL of a shop: its own domain when it has one, else https://{slug}.{PLATFORM_DOMAIN} (http + dev port on localtest.me). */
+export function landingUrl(slug: string, customDomain = ""): string {
+  const host = customDomain || `${slug}.${DOMAIN}`;
+  return DOMAIN === "localtest.me" ? `http://${host}:3000` : `https://${host}`;
 }
 
 export function landingHost(slug: string): string {

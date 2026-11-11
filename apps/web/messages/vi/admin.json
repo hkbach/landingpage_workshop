@@ -31,7 +31,8 @@
       "operations": "Vận hành",
       "finance": "Tài chính",
       "platform": "Nền tảng"
-    }
+    },
+    "settings": "Cài đặt"
   },
   "guard": {
     "mockNotice": "Bản thử nghiệm: việc kiểm tra vai trò chỉ là giả lập. Xác thực thật sẽ được thêm sau.",
@@ -85,7 +86,6 @@
     "country": "Quốc gia",
     "timezone": "Múi giờ",
     "currency": "Tiền tệ",
-    "plan": "Gói dịch vụ",
     "workshops": "Workshop",
     "bookings": "Đặt chỗ (30 ngày qua)",
     "landing": "Landing page",
@@ -331,7 +331,8 @@
       "sessions": "Session",
       "bookings": "Booking",
       "guests": "Trên trang Workshops của khách",
-      "actions": "Thao tác"
+      "actions": "Thao tác",
+      "domain": "Tên miền riêng"
     },
     "shown": "Đang hiển thị",
     "hidden": "Không hiển thị",
@@ -350,7 +351,6 @@
     "country": "Quốc gia",
     "timezone": "Múi giờ",
     "currency": "Tiền tệ",
-    "plan": "Gói",
     "created": "Ngày tạo",
     "landing": "Landing page",
     "deactivateTitle": "Vô hiệu hóa {name}?",
@@ -358,7 +358,11 @@
     "activateTitle": "Kích hoạt {name}?",
     "activateBody": "Shop hoạt động trở lại.",
     "deactivated": "{name} đã bị vô hiệu hóa.",
-    "activated": "{name} đã được kích hoạt."
+    "activated": "{name} đã được kích hoạt.",
+    "edit": "Chỉnh sửa",
+    "edited": "Đã cập nhật {name}.",
+    "languages": "Ngôn ngữ",
+    "domain": "Tên miền riêng"
   },
   "workshops": {
     "title": "Workshop",
@@ -575,9 +579,20 @@
       "created": "Ngày tạo",
       "clicks": "Lượt nhấp",
       "bookings": "Booking đã thanh toán",
-      "fee": "Phí affiliate"
+      "fee": "Phí affiliate",
+      "state": "Trạng thái",
+      "actions": "Thao tác"
     },
-    "opensNewTab": "(mở trong tab mới)"
+    "opensNewTab": "(mở trong tab mới)",
+    "on": "Bật",
+    "off": "Tắt",
+    "enable": "Bật lại",
+    "disable": "Tắt",
+    "disableTitle": "Tắt link {code}?",
+    "disableBody": "Link sẽ không dẫn tới booking nữa và không tính booking mới cho link. Customer thấy link ở trạng thái deactive. Khoản đã kiếm trước đó vẫn giữ. Cần nhập lý do.",
+    "disabledDone": "Đã tắt link {code}.",
+    "enabledDone": "Đã bật lại link {code}.",
+    "failed": "Không thay đổi được link."
   },
   "referrals": {
     "title": "Referrals",
@@ -594,7 +609,8 @@
       "registered": "Bạn bè đã đăng ký",
       "earned": "Có booking đã thanh toán",
       "bonus": "Tiền thưởng đã nhận",
-      "actions": "Thao tác"
+      "actions": "Thao tác",
+      "state": "Trạng thái"
     },
     "view": "Chi tiết",
     "noFriends": "Chưa có người bạn nào đăng ký qua liên kết này.",
@@ -604,7 +620,16 @@
     },
     "registeredOn": "đăng ký {date}",
     "bonusOn": "Thưởng {amount} cho booking {code}",
-    "rule": "Tiền thưởng referral = tỷ lệ thưởng referral của shop (Cấu hình phí) x giá gốc của booking đầu tiên đã thanh toán mà người bạn đặt sau khi đăng ký. Chỉ nhận một lần cho mỗi người bạn và do nền tảng chi trả: khoản này được trừ vào lợi nhuận của nền tảng."
+    "rule": "Tiền thưởng referral = tỷ lệ thưởng referral của shop (Cấu hình phí) x giá gốc của booking đầu tiên đã thanh toán mà người bạn đặt sau khi đăng ký. Chỉ nhận một lần cho mỗi người bạn và do nền tảng chi trả: khoản này được trừ vào lợi nhuận của nền tảng.",
+    "on": "Bật",
+    "off": "Tắt",
+    "enable": "Bật lại",
+    "disable": "Tắt",
+    "disableTitle": "Tắt link mời của {email}?",
+    "disableBody": "Bạn bè đăng ký bằng link này sẽ không được tính nữa. Bạn bè và thưởng đã có trước đó vẫn giữ. Cần nhập lý do.",
+    "disabledDone": "Đã tắt link mời của {email}.",
+    "enabledDone": "Đã bật lại link mời của {email}.",
+    "failed": "Không thay đổi được link mời."
   },
   "withdrawals": {
     "title": "Rút tiền",
@@ -691,6 +716,69 @@
       "site": "Quay lại Landing pages",
       "sessions": "Quay lại Sessions",
       "workshops": "Quay lại Workshops"
+    }
+  },
+  "shopEdit": {
+    "title": "Chỉnh sửa {name}",
+    "description": "Thay đổi được ghi vào audit log là do admin thực hiện. Slug của shop không bao giờ đổi.",
+    "name": "Tên shop",
+    "slug": "Slug",
+    "slugHint": "Là một phần địa chỉ của shop: không thể đổi, kể cả admin.",
+    "contactEmail": "Email liên hệ",
+    "contactPhone": "Điện thoại",
+    "whatsapp": "WhatsApp (tùy chọn)",
+    "mapsUrl": "Liên kết Google Maps (tùy chọn)",
+    "address": "Địa chỉ",
+    "country": "Quốc gia",
+    "timezone": "Múi giờ",
+    "currency": "Tiền tệ",
+    "defaultLocale": "Ngôn ngữ mặc định",
+    "enabledLocales": "Ngôn ngữ đã bật",
+    "regionalWarning": "Đổi múi giờ hoặc tiền tệ không chuyển đổi booking, session hay giá đã có. Dữ liệu cũ giữ nguyên giá trị ban đầu.",
+    "customDomain": "Tên miền riêng (tùy chọn)",
+    "customDomainHint": "Landing page được phục vụ tại tên miền này thay cho {slug}.{tên miền nền tảng}; địa chỉ của nền tảng vẫn dùng được. Để trống để gỡ tên miền.",
+    "cancel": "Hủy",
+    "save": "Lưu",
+    "saving": "Đang lưu...",
+    "failed": "Không lưu được shop. Vui lòng thử lại.",
+    "errors": {
+      "required": "Vui lòng nhập thông tin này.",
+      "invalid": "Giá trị này không hợp lệ.",
+      "tooLong": "Nội dung quá dài.",
+      "defaultMustBeEnabled": "Ngôn ngữ mặc định phải được bật.",
+      "platform": "Tên miền này thuộc về nền tảng. Hãy nhập tên miền riêng của shop.",
+      "taken": "Một shop khác đang dùng tên miền này."
+    }
+  },
+  "settings": {
+    "title": "Cài đặt",
+    "description": "Giá trị áp dụng cho toàn nền tảng. Thay đổi có hiệu lực ngay và được ghi vào audit log.",
+    "loadFailed": "Không tải được cài đặt.",
+    "saved": "Đã lưu cài đặt.",
+    "failed": "Không lưu được cài đặt.",
+    "save": "Lưu",
+    "saving": "Đang lưu...",
+    "withdrawalTitle": "Rút tiền",
+    "withdrawalDesc": "Số tiền tối thiểu và tối đa mà customer có thể yêu cầu rút trong một lần (Affiliate và Referrals).",
+    "withdrawalMin": "Số tiền rút tối thiểu",
+    "withdrawalMax": "Số tiền rút tối đa",
+    "zeroNone": "0 nghĩa là không giới hạn.",
+    "noLimit": "không giới hạn",
+    "current": "Hiện tại: từ {min} đến {max}.",
+    "resetTitle": "Link đặt lại mật khẩu",
+    "resetDesc": "Thời gian link do admin gửi để đặt lại mật khẩu còn hiệu lực, tính từ lúc gửi.",
+    "resetLinkHours": "Có hiệu lực",
+    "resetHint": "Mặc định 24 giờ.",
+    "hours": "giờ",
+    "contactTitle": "Form liên hệ",
+    "contactDesc": "Số tin nhắn một người truy cập được gửi bằng form Contact của website công khai.",
+    "contactPerHour": "Số tin nhắn",
+    "contactHint": "Mặc định 5 tin mỗi giờ. Vượt quá sẽ bị từ chối cho tới hết giờ.",
+    "perHour": "mỗi giờ",
+    "errors": {
+      "invalid": "Nhập số tiền từ 0 trở lên.",
+      "order": "Số tiền rút tối đa không được nhỏ hơn mức tối thiểu.",
+      "range": "Nhập số nguyên từ {min} đến {max}."
     }
   }
 }

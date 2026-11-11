@@ -22,19 +22,19 @@ export const shops: Shop[] = [
     id: "org-1", name: "Whisk & Ladle Kitchen", slug: "whiskladle", status: "ACTIVE", country: "VN", timezone: TZ, currency: "VND",
     defaultLocale: "en", enabledLocales: ["en", "vi", "ko", "ja", "zh"], contactEmail: "hello@whiskladle.example", contactPhone: "+84 90 000 0000",
     whatsapp: "+84 90 000 0000", address: "12 Nguyen Hue, District 1, Ho Chi Minh City", mapsUrl: "https://maps.app.goo.gl/example",
-    plan: "FREE", ownerName: "Linh Tran", ownerEmail: "linh@whiskladle.example", createdAt: at(-60, 9), showOnCustomerPage: true,
+    ownerName: "Linh Tran", ownerEmail: "linh@whiskladle.example", createdAt: at(-60, 9), showOnCustomerPage: true,
   },
   {
     id: "org-2", name: "Sugar & Sift Bakery", slug: "sugarsift", status: "DRAFT", country: "VN", timezone: TZ, currency: "VND",
     defaultLocale: "en", enabledLocales: ["en", "ja"], contactEmail: "hi@sugarsift.example", contactPhone: "+84 91 111 1111",
     address: "5 Le Loi, Hoi An", mapsUrl: "https://maps.app.goo.gl/example2",
-    plan: "FREE", ownerName: "Minh Pham", ownerEmail: "minh@sugarsift.example", createdAt: at(-3, 10),
+    ownerName: "Minh Pham", ownerEmail: "minh@sugarsift.example", createdAt: at(-3, 10),
   },
   {
     id: "org-3", name: "Golden Noodle House", slug: "goldennoodle", status: "SUSPENDED", statusReason: "Reported as misleading", country: "VN", timezone: TZ, currency: "USD",
     defaultLocale: "en", enabledLocales: ["en"], contactEmail: "contact@goldennoodle.example", contactPhone: "+84 92 222 2222",
     address: "88 Hang Bac, Hanoi", mapsUrl: "https://maps.app.goo.gl/example3",
-    plan: "PRO", ownerName: "An Nguyen", ownerEmail: "an@goldennoodle.example", createdAt: at(-120, 10),
+    ownerName: "An Nguyen", ownerEmail: "an@goldennoodle.example", createdAt: at(-120, 10),
   },
   // Two more ACTIVE shops with workshops of their own (other-shops.ts), for the Workshops page of the guest area.
   ...otherShops,

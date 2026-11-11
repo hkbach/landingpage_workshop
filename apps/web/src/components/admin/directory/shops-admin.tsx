@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Eye, EyeOff, Power } from "lucide-react";
+import { Eye, EyeOff, Pencil, Power } from "lucide-react";
 import { ORG_STATUSES, type OrgStatus } from "@workshop/shared";
 import { Button, buttonVariants } from "@/components/ui/button";
 import type { AdminShop } from "@/lib/mock/admin-directory";
 import { ReasonDialog } from "../reason-dialog";
+import { ShopEditDialog } from "./shop-edit-dialog";
 import { StatusBadge } from "../status-badge";
 import { fmt, landingUrl } from "../utils";
 import { DetailDialog, DirectoryTable, FilterBox, Notice, Toolbar, selectClass, useDebounced, useDirectory, type Column } from "./kit";
@@ -28,6 +29,7 @@ export function ShopsAdmin() {
   const { items, error, reload } = useDirectory<AdminShop>("shops", { q: typed, status });
   const [detail, setDetail] = useState<AdminShop | null>(null);
   const [toggle, setToggle] = useState<AdminShop | null>(null);
+  const [editing, setEditing] = useState<AdminShop | null>(null);
   const [message, setMessage] = useState<Message>(null);
 
   async function post(url: string, body: unknown, ok: string) {
@@ -38,6 +40,7 @@ export function ShopsAdmin() {
 
   const columns: Column<AdminShop>[] = [
     { key: "name", header: t("col.name"), cell: (s) => <><div className="font-medium">{s.name}</div><div className="font-mono text-xs text-muted-foreground">{s.slug}</div></> },
+    { key: "domain", header: t("col.domain"), cell: (s) => (s.customDomain ? <span className="font-mono text-xs" data-testid="shop-domain">{s.customDomain}</span> : <span className="text-muted-foreground">—</span>) },
     { key: "owner", header: t("col.owner"), cell: (s) => <><div>{s.ownerName}</div><div className="text-xs text-muted-foreground">{s.ownerEmail}</div></> },
     { key: "status", header: t("col.status"), cell: (s) => <StatusBadge status={s.status} /> },
     { key: "workshops", header: t("col.workshops"), className: "text-right", cell: (s) => s.workshops },
@@ -49,6 +52,7 @@ export function ShopsAdmin() {
       cell: (s) => (
         <div className="flex flex-wrap justify-end gap-1.5">
           <Button size="sm" variant="outline" onClick={() => setDetail(s)}>{t("view")}</Button>
+          <Button size="sm" variant="outline" onClick={() => setEditing(s)} data-testid="shop-edit"><Pencil aria-hidden /> {t("edit")}<span className="sr-only"> {s.name}</span></Button>
           {s.status === "ACTIVE" || s.status === "SUSPENDED" ? (
             <Button size="sm" variant="outline" onClick={() => setToggle(s)}><Power aria-hidden /> {s.status === "ACTIVE" ? t("deactivate") : t("activate")}</Button>
           ) : null}
@@ -83,11 +87,12 @@ export function ShopsAdmin() {
         rows={detail ? [
           [t("col.status"), <StatusBadge key="s" status={detail.status} />], [t("reason"), detail.statusReason ?? ""],
           [t("col.owner"), detail.ownerName], [t("ownerEmail"), detail.ownerEmail], [t("contact"), `${detail.contactEmail} · ${detail.contactPhone}`], [t("address"), detail.address],
-          [t("country"), detail.country], [t("timezone"), detail.timezone], [t("currency"), detail.currency], [t("plan"), detail.plan], [t("created"), fmt(detail.createdAt, locale)],
+          [t("country"), detail.country], [t("timezone"), detail.timezone], [t("currency"), detail.currency], [t("languages"), detail.enabledLocales.join(", ")], [t("domain"), detail.customDomain], [t("created"), fmt(detail.createdAt, locale)],
           [t("col.workshops"), detail.workshops], [t("col.sessions"), detail.sessions], [t("col.bookings"), detail.bookings], [t("col.guests"), detail.showOnCustomerPage ? t("shown") : t("hidden")],
-          [t("landing"), detail.status === "ACTIVE" ? <a key="l" href={landingUrl(detail.slug)} target="_blank" rel="noreferrer" className="text-primary underline underline-offset-4">{landingUrl(detail.slug)}</a> : ""],
+          [t("landing"), detail.status === "ACTIVE" ? <a key="l" href={landingUrl(detail.slug, detail.customDomain)} target="_blank" rel="noreferrer" className="text-primary underline underline-offset-4">{landingUrl(detail.slug, detail.customDomain)}</a> : ""],
         ] : []}
       />
+      <ShopEditDialog shop={editing} onClose={() => setEditing(null)} onSaved={(name) => { setMessage({ text: t("edited", { name }), tone: "ok" }); reload(); }} />
       <ReasonDialog
         open={toggle !== null} onOpenChange={(o) => { if (!o) setToggle(null); }} reason={toggle?.status === "ACTIVE" ? "required" : "none"} destructive={toggle?.status === "ACTIVE"}
         title={toggle ? t(toggle.status === "ACTIVE" ? "deactivateTitle" : "activateTitle", { name: toggle.name }) : ""} description={toggle ? t(toggle.status === "ACTIVE" ? "deactivateBody" : "activateBody") : ""}

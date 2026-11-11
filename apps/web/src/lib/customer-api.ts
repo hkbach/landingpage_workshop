@@ -66,7 +66,7 @@ export interface CustomerInvite {
   id: string; name: string; email: string; registeredAt: string; status: "REGISTERED" | "EARNED"; bonus: number; bookingCode?: string; paidAt?: string;
 }
 /** The one invite link of the guest, the bonus rate (basis points of the original price of the friend's first paid booking) and the friends. */
-export interface CustomerInvitesResponse { code: string; link: string; bonusBps: number; currency: string; items: CustomerInvite[]; total: number }
+export interface CustomerInvitesResponse { code: string; /** An administrator switched the code off: friends who register with it are not counted. */ disabled: boolean; link: string; bonusBps: number; currency: string; items: CustomerInvite[]; total: number }
 
 export const fetchCustomerInvites = async (id: string, email?: string): Promise<CustomerInvitesResponse> =>
   parse(await fetch(`${url(id)}/invites`, { headers: emailHeader(email), cache: "no-store" }));
@@ -77,7 +77,7 @@ export type WithdrawalStatus = "PENDING" | "PAID" | "REJECTED";
 /** An invoice: a withdrawal the guest asked for. `reason` is why the platform rejected it. */
 export interface CustomerWithdrawal { id: string; code: string; amount: number; currency: string; status: WithdrawalStatus; requestedAt: string; processedAt?: string; reason?: string }
 /** What the guest earned from a program (minor units), what waits to be paid, what was withdrawn, what is left to withdraw, and the invoices (newest first). */
-export interface CustomerWallet { source: WalletSource; currency: string; earned: number; pending: number; withdrawn: number; available: number; items: CustomerWithdrawal[] }
+export interface CustomerWallet { source: WalletSource; currency: string; earned: number; pending: number; withdrawn: number; available: number; /** The smallest and the largest amount of one withdrawal, set by the platform (0 = no limit). */ limits: { min: number; max: number }; items: CustomerWithdrawal[] }
 
 export const fetchCustomerWallet = async (id: string, email: string | undefined, source: WalletSource): Promise<CustomerWallet> =>
   parse(await fetch(`${url(id)}/wallet?source=${source}`, { headers: emailHeader(email), cache: "no-store" }));

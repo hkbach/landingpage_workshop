@@ -28,6 +28,6 @@ export async function POST(request: Request, ctx: RouteContext<"/api/v1/public/s
   if (!parsed.success) return apiError(422, "VALIDATION", "Please check the highlighted fields.", { fields: fieldCodes(parsed.error.issues) });
   const link = recordClick(parsed.data.code, shop.id, parsed.data.count ?? true);
   if (!link) return apiError(404, "NOT_FOUND", "Link not found.");
-  const active = workshopsWithShop().some((x) => x.workshop.id === link.workshopId && x.workshop.status === "ACTIVE");
+  const active = !link.disabled && workshopsWithShop().some((x) => x.workshop.id === link.workshopId && x.workshop.status === "ACTIVE"); // a link switched off by an administrator is DEACTIVE too
   return Response.json({ workshopId: link.workshopId, status: active ? "ON_GOING" : "DEACTIVE" }, { headers: { "cache-control": "no-store" } });
 }

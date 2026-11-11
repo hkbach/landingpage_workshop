@@ -65,7 +65,7 @@ export function WalletOverview({ source, onRequested }: { source: WalletSource; 
       </div>
       {open && w ? (
         <WithdrawDialog
-          source={source} available={w.available} currency={w.currency} onClose={() => setOpen(false)}
+          source={source} available={w.available} currency={w.currency} limits={w.limits} onClose={() => setOpen(false)}
           onDone={(code) => { setOpen(false); setNote(t("done", { code })); onRequested?.(); }}
         />
       ) : null}
@@ -73,12 +73,12 @@ export function WalletOverview({ source, onRequested }: { source: WalletSource; 
   );
 }
 
-function WithdrawDialog({ source, available, currency, onClose, onDone }: { source: WalletSource; available: number; currency: string; onClose: () => void; onDone: (code: string) => void }) {
+function WithdrawDialog({ source, available, currency, limits, onClose, onDone }: { source: WalletSource; available: number; currency: string; limits: { min: number; max: number }; onClose: () => void; onDone: (code: string) => void }) {
   const t = useTranslations("customer.wallet");
   const locale = useLocale() as Locale;
   const { accountId, email, refresh } = useWallet(source);
   const [text, setText] = useState("");
-  const [error, setError] = useState<"" | "required" | "invalid" | "exceeds" | "failed">("");
+  const [error, setError] = useState<"" | "required" | "invalid" | "exceeds" | "belowMin" | "aboveMax" | "failed">("");
   const [busy, setBusy] = useState(false);
   const money = (n: number) => formatMoney(n, currency, locale);
 
@@ -89,6 +89,8 @@ function WithdrawDialog({ source, available, currency, onClose, onDone }: { sour
     const amount = parseMoney(typed, currency);
     if (amount === null || amount <= 0) { setError("invalid"); return; }
     if (amount > available) { setError("exceeds"); return; }
+    if (limits.min > 0 && amount < limits.min) { setError("belowMin"); return; }
+    if (limits.max > 0 && amount > limits.max) { setError("aboveMax"); return; }
     setBusy(true);
     try {
       const made = await requestCustomerWithdrawal(accountId, email, source, amount);
@@ -96,13 +98,13 @@ function WithdrawDialog({ source, available, currency, onClose, onDone }: { sour
       onDone(made.code);
     } catch (err) {
       const field = err instanceof CustomerApiError ? err.fields.amount : undefined;
-      setError(field === "exceeds" ? "exceeds" : field === "invalid" ? "invalid" : "failed");
+      setError(field === "exceeds" || field === "belowMin" || field === "aboveMax" || field === "invalid" ? field : "failed");
     } finally {
       setBusy(false);
     }
   }
 
-  const message = error === "required" ? t("errors.required") : error === "invalid" ? t("errors.invalid") : error === "exceeds" ? t("errors.exceeds", { amount: money(available) }) : error === "failed" ? t("errors.failed") : undefined;
+  const message = error === "required" ? t("errors.required") : error === "invalid" ? t("errors.invalid") : error === "exceeds" ? t("errors.exceeds", { amount: money(available) }) : error === "belowMin" ? t("errors.belowMin", { amount: money(limits.min) }) : error === "aboveMax" ? t("errors.aboveMax", { amount: money(limits.max) }) : error === "failed" ? t("errors.failed") : undefined;
   return (
     <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent data-testid="wallet-dialog">
@@ -111,7 +113,7 @@ function WithdrawDialog({ source, available, currency, onClose, onDone }: { sour
             <DialogTitle>{t("dialogTitle")}</DialogTitle>
             <DialogDescription>{t("dialogBody", { program: t(`program.${source}`), amount: money(available) })}</DialogDescription>
           </DialogHeader>
-          <Field htmlFor="wd-amount" label={t("amountLabel", { currency })} error={message} hint={t("amountHint", { amount: money(available) })}>
+          <Field htmlFor="wd-amount" label={t("amountLabel", { currency })} error={message} hint={<>{t("amountHint", { amount: money(available) })}{limits.min > 0 || limits.max > 0 ? <span className="block" data-testid="wallet-limits">{limits.min > 0 && limits.max > 0 ? t("limitsBoth", { min: money(limits.min), max: money(limits.max) }) : limits.min > 0 ? t("limitsMin", { min: money(limits.min) }) : t("limitsMax", { max: money(limits.max) })}</span> : null}</>}>
             <Input id="wd-amount" inputMode="decimal" autoComplete="off" value={text} aria-invalid={Boolean(message)} onChange={(e) => { setText(e.target.value); setError(""); }} />
           </Field>
           <DialogFooter>

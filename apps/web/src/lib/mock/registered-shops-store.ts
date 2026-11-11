@@ -27,7 +27,7 @@ export function registerShop(input: { name: string; ownerEmail: string; ownerNam
   const base = shops[0]!;
   const shop: Shop = {
     id: `org-${everyShop().length + 1}`, name: input.name.trim(), slug, status: "DRAFT", country: base.country, timezone: base.timezone, currency: base.currency,
-    defaultLocale: "en", enabledLocales: ["en"], contactEmail: input.ownerEmail, contactPhone: "", address: "", mapsUrl: "", plan: "FREE",
+    defaultLocale: "en", enabledLocales: ["en"], contactEmail: input.ownerEmail, contactPhone: "", address: "", mapsUrl: "",
     ownerName: input.ownerName, ownerEmail: input.ownerEmail, createdAt: now.toISOString(),
   };
   list().push(shop);

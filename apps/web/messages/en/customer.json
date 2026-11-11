@@ -200,7 +200,8 @@
     },
     "forBooking": "For booking {code}",
     "note": "You earn the bonus only once for each referral: when your friend registers through your link and pays their first booking, you earn {rate} of that booking's price. Their later bookings do not earn more.",
-    "tabFriends": "Referrals"
+    "tabFriends": "Referrals",
+    "disabledNote": "The platform switched your invite link off. Friends who register with it are not counted for now. The friends and the bonuses you already earned stay. Contact support if you think this is a mistake."
   },
   "wallet": {
     "overview": "Your earnings",
@@ -226,7 +227,9 @@
       "required": "Enter the amount.",
       "invalid": "Enter a valid amount.",
       "exceeds": "The amount is more than what you can withdraw ({amount}).",
-      "failed": "The request could not be sent. Please try again."
+      "failed": "The request could not be sent. Please try again.",
+      "belowMin": "The smallest withdrawal is {amount}.",
+      "aboveMax": "The largest withdrawal is {amount}."
     },
     "done": "Request {code} was sent. Follow it in History.",
     "tabHistory": "History",
@@ -243,7 +246,10 @@
       "PAID": "Paid",
       "REJECTED": "Rejected"
     },
-    "reason": "Reason: {reason}"
+    "reason": "Reason: {reason}",
+    "limitsBoth": "One withdrawal: from {min} to {max}.",
+    "limitsMin": "One withdrawal: at least {min}.",
+    "limitsMax": "One withdrawal: at most {max}."
   },
   "support": {
     "title": "Need help?",

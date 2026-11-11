@@ -1,6 +1,7 @@
 import { apiError } from "@/lib/api-error";
 import { customerLoginRequired } from "@/lib/customer-access";
 import { accountOfGuest } from "@/lib/mock/booking-store";
+import { getPlatformSettings } from "@/lib/mock/app-settings-store";
 import { WALLET_SOURCES, walletOf, withdrawalsOf, type WalletSource } from "@/lib/mock/wallet-store";
 
 // What a customer earned from a program, what is waiting to be paid, what was withdrawn, and the invoices (the History). MOCK implementation inside Next until apps/api exists.
@@ -10,7 +11,7 @@ const headers = { "cache-control": "no-store", "x-robots-tag": "noindex" };
 const emailOf = (request: Request): string | null => (customerLoginRequired() ? (request.headers.get("x-guest-email") ?? "") : null);
 
 /**
- * GET ?source=AFFILIATE|REFERRAL -> { source, currency, earned, pending, withdrawn, available, items }: `items` are the invoices, newest first
+ * GET ?source=AFFILIATE|REFERRAL -> { source, currency, earned, pending, withdrawn, available, limits: { min, max } (one withdrawal, 0 = none), items }: `items` are the invoices, newest first
  * { id, code, amount, currency, status: PENDING | PAID | REJECTED, requestedAt, processedAt?, reason? }. 404 NOT_FOUND, 422 for another source.
  */
 export async function GET(request: Request, ctx: RouteContext<"/api/v1/customer/[id]/wallet">) {
@@ -20,5 +21,6 @@ export async function GET(request: Request, ctx: RouteContext<"/api/v1/customer/
   if (!(WALLET_SOURCES as readonly string[]).includes(source)) return apiError(422, "VALIDATION", "The source must be AFFILIATE or REFERRAL.", { fields: { source: "invalid" } }, headers);
   const s = source as WalletSource;
   const items = withdrawalsOf(id, s).map(({ id: wid, code, amount, currency, status, requestedAt, processedAt, reason }) => ({ id: wid, code, amount, currency, status, requestedAt, ...(processedAt ? { processedAt } : {}), ...(reason ? { reason } : {}) }));
-  return Response.json({ ...walletOf(id, s), items }, { headers });
+  const { withdrawalMin, withdrawalMax } = getPlatformSettings();
+  return Response.json({ ...walletOf(id, s), limits: { min: withdrawalMin, max: withdrawalMax }, items }, { headers });
 }

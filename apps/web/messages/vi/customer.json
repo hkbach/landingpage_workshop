@@ -200,7 +200,8 @@
     },
     "forBooking": "Cho booking {code}",
     "note": "Bạn chỉ nhận thưởng một lần cho mỗi referral: khi bạn bè đăng ký qua liên kết của bạn và thanh toán booking đầu tiên, bạn nhận {rate} giá của booking đó. Các booking sau của người bạn đó không được thưởng thêm.",
-    "tabFriends": "Referrals"
+    "tabFriends": "Referrals",
+    "disabledNote": "Nền tảng đã tắt link mời của bạn. Bạn bè đăng ký bằng link này tạm thời không được tính. Bạn bè và thưởng bạn đã có vẫn được giữ. Hãy liên hệ hỗ trợ nếu bạn thấy đây là nhầm lẫn."
   },
   "wallet": {
     "overview": "Thu nhập của bạn",
@@ -226,7 +227,9 @@
       "required": "Nhập số tiền.",
       "invalid": "Nhập số tiền hợp lệ.",
       "exceeds": "Số tiền vượt quá số có thể rút ({amount}).",
-      "failed": "Không thể gửi yêu cầu. Vui lòng thử lại."
+      "failed": "Không thể gửi yêu cầu. Vui lòng thử lại.",
+      "belowMin": "Số tiền rút tối thiểu là {amount}.",
+      "aboveMax": "Số tiền rút tối đa là {amount}."
     },
     "done": "Đã gửi yêu cầu {code}. Theo dõi trong History.",
     "tabHistory": "History",
@@ -243,7 +246,10 @@
       "PAID": "Đã thanh toán",
       "REJECTED": "Bị từ chối"
     },
-    "reason": "Lý do: {reason}"
+    "reason": "Lý do: {reason}",
+    "limitsBoth": "Mỗi lần rút: từ {min} đến {max}.",
+    "limitsMin": "Mỗi lần rút: tối thiểu {min}.",
+    "limitsMax": "Mỗi lần rút: tối đa {max}."
   },
   "support": {
     "title": "Cần hỗ trợ?",

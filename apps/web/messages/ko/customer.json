@@ -200,7 +200,8 @@
     },
     "forBooking": "예약 {code} 기준",
     "note": "보너스는 추천 친구 한 명당 한 번만 받습니다. 친구가 내 링크로 가입하고 첫 예약을 결제하면 그 예약 가격의 {rate}를 받습니다. 이후 예약에는 추가 보너스가 없습니다.",
-    "tabFriends": "추천 친구"
+    "tabFriends": "추천 친구",
+    "disabledNote": "플랫폼이 내 초대 링크를 꺼 두었어요. 이 링크로 가입한 친구는 당분간 집계되지 않아요. 이미 받은 친구와 보너스는 그대로예요. 잘못이라고 생각되면 지원팀에 문의하세요."
   },
   "wallet": {
     "overview": "내 수익",
@@ -226,7 +227,9 @@
       "required": "금액을 입력하세요.",
       "invalid": "올바른 금액을 입력하세요.",
       "exceeds": "출금 가능 금액({amount})을 초과했습니다.",
-      "failed": "요청을 보낼 수 없습니다. 다시 시도해 주세요."
+      "failed": "요청을 보낼 수 없습니다. 다시 시도해 주세요.",
+      "belowMin": "최소 출금 금액은 {amount}이에요.",
+      "aboveMax": "최대 출금 금액은 {amount}이에요."
     },
     "done": "요청 {code}을(를) 보냈습니다. 내역에서 확인하세요.",
     "tabHistory": "내역",
@@ -243,7 +246,10 @@
       "PAID": "지급 완료",
       "REJECTED": "거절됨"
     },
-    "reason": "사유: {reason}"
+    "reason": "사유: {reason}",
+    "limitsBoth": "1회 출금: {min}부터 {max}까지.",
+    "limitsMin": "1회 출금: 최소 {min}.",
+    "limitsMax": "1회 출금: 최대 {max}."
   },
   "support": {
     "title": "도움이 필요하신가요?",

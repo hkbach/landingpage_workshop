@@ -62,7 +62,6 @@ export function OrganizationDetail({
     [t("country"), shop.country],
     [t("timezone"), shop.timezone],
     [t("currency"), shop.currency],
-    [t("plan"), shop.plan],
     [t("workshops"), stats.workshops],
     [t("bookings"), stats.bookings30d],
     [

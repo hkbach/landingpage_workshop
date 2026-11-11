@@ -39,7 +39,7 @@ function view(request: Request, accountId: string) {
       // What the customer earns: the referral rate of the shop x the original price of the paid bookings that came through the link.
       referralBps: getReferralBps(w.shop.id), bookings: e.bookings, referralFee: e.fee, currency: w.shop.currency,
       // ON_GOING while the workshop and its shop are active; DEACTIVE once the workshop was deactivated (or its shop): the link stays in the list but no longer leads to a booking.
-      status: w.workshop.status === "ACTIVE" && w.shop.status === "ACTIVE" ? "ON_GOING" as const : "DEACTIVE" as const,
+      status: w.workshop.status === "ACTIVE" && w.shop.status === "ACTIVE" && !r.disabled ? "ON_GOING" as const : "DEACTIVE" as const,
     }] : [];
   });
 }

@@ -31,7 +31,8 @@
       "operations": "Operations",
       "finance": "Money",
       "platform": "Platform"
-    }
+    },
+    "settings": "Settings"
   },
   "guard": {
     "mockNotice": "Prototype: the role check is simulated. Real authentication is added later.",
@@ -85,7 +86,6 @@
     "country": "Country",
     "timezone": "Timezone",
     "currency": "Currency",
-    "plan": "Plan",
     "workshops": "Workshops",
     "bookings": "Bookings (last 30 days)",
     "landing": "Landing page",
@@ -331,7 +331,8 @@
       "sessions": "Sessions",
       "bookings": "Bookings",
       "guests": "On the guests' Workshops page",
-      "actions": "Actions"
+      "actions": "Actions",
+      "domain": "Own domain"
     },
     "shown": "Listed",
     "hidden": "Not listed",
@@ -350,7 +351,6 @@
     "country": "Country",
     "timezone": "Time zone",
     "currency": "Currency",
-    "plan": "Plan",
     "created": "Created",
     "landing": "Landing page",
     "deactivateTitle": "Deactivate {name}?",
@@ -358,7 +358,11 @@
     "activateTitle": "Activate {name}?",
     "activateBody": "The shop works again.",
     "deactivated": "{name} is deactivated.",
-    "activated": "{name} is active."
+    "activated": "{name} is active.",
+    "edit": "Edit",
+    "edited": "{name} was updated.",
+    "languages": "Languages",
+    "domain": "Own domain"
   },
   "workshops": {
     "title": "Workshops",
@@ -575,9 +579,20 @@
       "created": "Made",
       "clicks": "Clicks",
       "bookings": "Paid bookings",
-      "fee": "Affiliate fee"
+      "fee": "Affiliate fee",
+      "state": "Status",
+      "actions": "Actions"
     },
-    "opensNewTab": "(opens in a new tab)"
+    "opensNewTab": "(opens in a new tab)",
+    "on": "On",
+    "off": "Off",
+    "enable": "Switch on",
+    "disable": "Switch off",
+    "disableTitle": "Switch off the link {code}?",
+    "disableBody": "The link stops leading to a booking and nothing new is attributed to it. The customer sees it as deactivated. What it earned before stays. A reason is needed.",
+    "disabledDone": "The link {code} is off.",
+    "enabledDone": "The link {code} is on again.",
+    "failed": "The link could not be changed."
   },
   "referrals": {
     "title": "Referrals",
@@ -594,7 +609,8 @@
       "registered": "Friends registered",
       "earned": "With a paid booking",
       "bonus": "Bonus earned",
-      "actions": "Actions"
+      "actions": "Actions",
+      "state": "Status"
     },
     "view": "Details",
     "noFriends": "No friend has registered through this link yet.",
@@ -604,7 +620,16 @@
     },
     "registeredOn": "registered {date}",
     "bonusOn": "Bonus {amount} for booking {code}",
-    "rule": "Referral bonus = the referral bonus rate of the shop (Config fees) x the original price of the first paid booking the friend made after registering. It is earned once for each friend and is paid by the platform: it is taken off the profit of the platform."
+    "rule": "Referral bonus = the referral bonus rate of the shop (Config fees) x the original price of the first paid booking the friend made after registering. It is earned once for each friend and is paid by the platform: it is taken off the profit of the platform.",
+    "on": "On",
+    "off": "Off",
+    "enable": "Switch on",
+    "disable": "Switch off",
+    "disableTitle": "Switch off the invite link of {email}?",
+    "disableBody": "A friend who registers with this link is no longer counted. The friends and the bonuses earned before stay. A reason is needed.",
+    "disabledDone": "The invite link of {email} is off.",
+    "enabledDone": "The invite link of {email} is on again.",
+    "failed": "The invite link could not be changed."
   },
   "withdrawals": {
     "title": "Withdrawals",
@@ -691,6 +716,69 @@
       "site": "Back to Landing pages",
       "sessions": "Back to Sessions",
       "workshops": "Back to Workshops"
+    }
+  },
+  "shopEdit": {
+    "title": "Edit {name}",
+    "description": "Changes are recorded in the audit log as made by an administrator. The slug of a shop never changes.",
+    "name": "Shop name",
+    "slug": "Slug",
+    "slugHint": "Part of the addresses of the shop: it cannot be changed, not even by an administrator.",
+    "contactEmail": "Contact email",
+    "contactPhone": "Phone",
+    "whatsapp": "WhatsApp (optional)",
+    "mapsUrl": "Google Maps URL (optional)",
+    "address": "Address",
+    "country": "Country",
+    "timezone": "Timezone",
+    "currency": "Currency",
+    "defaultLocale": "Default language",
+    "enabledLocales": "Enabled languages",
+    "regionalWarning": "Changing the timezone or currency does not convert existing bookings, sessions or prices. Existing data keeps its original values.",
+    "customDomain": "Own domain (optional)",
+    "customDomainHint": "The landing page is served at this domain instead of {slug}.{platform domain}; the address of the platform keeps working. Leave empty to remove it.",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving...",
+    "failed": "The shop could not be saved. Please try again.",
+    "errors": {
+      "required": "This field is required.",
+      "invalid": "This value is not valid.",
+      "tooLong": "This is too long.",
+      "defaultMustBeEnabled": "The default language must be enabled.",
+      "platform": "This domain belongs to the platform. Enter the own domain of the shop.",
+      "taken": "Another shop already uses this domain."
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Values for the whole platform. A change applies at once and is recorded in the audit log.",
+    "loadFailed": "The settings could not be loaded.",
+    "saved": "Settings saved.",
+    "failed": "The settings could not be saved.",
+    "save": "Save",
+    "saving": "Saving...",
+    "withdrawalTitle": "Withdrawals",
+    "withdrawalDesc": "The smallest and the largest amount a customer can ask to withdraw at once (Affiliate and Referrals).",
+    "withdrawalMin": "Smallest withdrawal",
+    "withdrawalMax": "Largest withdrawal",
+    "zeroNone": "0 means no limit.",
+    "noLimit": "no limit",
+    "current": "Now: from {min} to {max}.",
+    "resetTitle": "Password reset link",
+    "resetDesc": "How long the link that an administrator sends for a password reset works, counted from the moment it is sent.",
+    "resetLinkHours": "Valid for",
+    "resetHint": "24 hours by default.",
+    "hours": "hours",
+    "contactTitle": "Contact form",
+    "contactDesc": "How many messages one visitor can send with the Contact form of the public site.",
+    "contactPerHour": "Messages",
+    "contactHint": "5 an hour by default. More than that is refused until the hour is over.",
+    "perHour": "per hour",
+    "errors": {
+      "invalid": "Enter an amount of 0 or more.",
+      "order": "The largest withdrawal cannot be less than the smallest.",
+      "range": "Enter a whole number from {min} to {max}."
     }
   }
 }

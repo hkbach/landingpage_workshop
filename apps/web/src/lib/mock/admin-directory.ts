@@ -2,6 +2,7 @@
 // search typed by the admin and returns plain rows. A search ignores case and accents and looks at every field named in its doc. The mock keeps the bookings,
 // the customers and the payments of the demo shop only; the other shops have workshops and sessions of their own.
 // TODO(api): GET /admin/{shops,workshops,bookings,customers,sessions,landing-pages} with the same filters, page and pageSize, SUPER_ADMIN only.
+import { getCustomDomain } from "./shop-domain-store";
 import { closeCount, closeIfEnded, SESSION_STATUSES, type OrgStatus, type SessionStatus, type WorkshopStatus } from "@workshop/shared";
 import { listAccounts, type Account } from "./accounts-store";
 import { liveAuditLogs } from "./admin-audit-store";
@@ -9,7 +10,7 @@ import { referralEarnings } from "./admin-income";
 import { liveBookings, liveCustomers, shopSessions } from "./booking-store";
 import { currentShop, workshops as demoWorkshops } from "./data";
 import { otherShopSites } from "./other-shops";
-import { inviteBonuses, inviteCodeOf, listInviteCodes, listInvites } from "./invite-store";
+import { inviteBonuses, inviteCodeOf, isInviteDisabled, inviteDisabledReason, listInviteCodes, listInvites } from "./invite-store";
 import { listReferrals } from "./referral-store";
 import { listWithdrawals, walletOf, type WalletSource, type WithdrawalStatus } from "./wallet-store";
 import { withAdminChanges } from "./session-admin-store";
@@ -60,8 +61,8 @@ export function adminWorkshops(q = "", shopId = ""): AdminWorkshop[] {
 // ---- shops -------------------------------------------------------------------------------------------------------------------
 
 export interface AdminShop {
-  id: string; name: string; slug: string; status: OrgStatus; statusReason?: string; ownerName: string; ownerEmail: string; plan: string; country: string; currency: string; timezone: string;
-  contactEmail: string; contactPhone: string; address: string; createdAt: string; showOnCustomerPage: boolean; workshops: number; sessions: number; bookings: number;
+  id: string; name: string; slug: string; status: OrgStatus; statusReason?: string; ownerName: string; ownerEmail: string; country: string; currency: string; timezone: string;
+  contactEmail: string; contactPhone: string; whatsapp: string; mapsUrl: string; address: string; defaultLocale: string; enabledLocales: string[]; /** The own domain of the shop ("" when it has none). */ customDomain: string; createdAt: string; showOnCustomerPage: boolean; workshops: number; sessions: number; bookings: number;
 }
 
 /** Search: the name (or slug) of the shop, or the email of its owner. */
@@ -72,8 +73,9 @@ export function adminShops(q = "", status = ""): AdminShop[] {
   return liveShops()
     .filter((s) => (!status || s.status === status) && matchesSearch(hay(s.name, s.slug, s.ownerEmail), q))
     .map((s) => ({
-      id: s.id, name: s.name, slug: s.slug, status: s.status, ...(s.statusReason ? { statusReason: s.statusReason } : {}), ownerName: s.ownerName, ownerEmail: s.ownerEmail, plan: s.plan,
-      country: s.country, currency: s.currency, timezone: s.timezone, contactEmail: s.contactEmail, contactPhone: s.contactPhone, address: s.address, createdAt: s.createdAt,
+      id: s.id, name: s.name, slug: s.slug, status: s.status, ...(s.statusReason ? { statusReason: s.statusReason } : {}), ownerName: s.ownerName, ownerEmail: s.ownerEmail,
+      country: s.country, currency: s.currency, timezone: s.timezone, contactEmail: s.contactEmail, contactPhone: s.contactPhone, whatsapp: s.whatsapp ?? "", mapsUrl: s.mapsUrl, address: s.address,
+      defaultLocale: s.defaultLocale, enabledLocales: s.enabledLocales, customDomain: getCustomDomain(s.slug), createdAt: s.createdAt,
       showOnCustomerPage: Boolean(s.showOnCustomerPage),
       workshops: ws.filter((x) => x.shop.id === s.id).length, sessions: sessions.filter((x) => x.shopId === s.id).length,
       bookings: s.id === currentShop.id ? bookings.length : 0,
@@ -171,14 +173,14 @@ export function adminCustomers(q = ""): AdminCustomer[] {
 
 // ---- landing pages -----------------------------------------------------------------------------------------------------------
 
-export interface AdminLandingPage { shopId: string; shopName: string; slug: string; status: OrgStatus; ownerEmail: string; workshops: number; editable: boolean }
+export interface AdminLandingPage { shopId: string; shopName: string; slug: string; status: OrgStatus; ownerEmail: string; workshops: number; editable: boolean; customDomain: string }
 
 /** Search: the name (or slug) of the shop. `editable`: the shop has a page to edit (the mock has the builder data of the demo shop only). */
 export function adminLandingPages(q = ""): AdminLandingPage[] {
   const ws = workshopsWithShop();
   return liveShops()
     .filter((s) => matchesSearch(hay(s.name, s.slug), q))
-    .map((s) => ({ shopId: s.id, shopName: s.name, slug: s.slug, status: s.status, ownerEmail: s.ownerEmail, workshops: ws.filter((x) => x.shop.id === s.id).length, editable: s.id === currentShop.id }));
+    .map((s) => ({ shopId: s.id, shopName: s.name, slug: s.slug, status: s.status, ownerEmail: s.ownerEmail, workshops: ws.filter((x) => x.shop.id === s.id).length, editable: s.id === currentShop.id, customDomain: getCustomDomain(s.slug) }));
 }
 
 // ---- users -------------------------------------------------------------------------------------------------------------------
@@ -198,6 +200,8 @@ export function adminUsers(q = "", type = "", status = ""): AdminUser[] {
 export interface AdminAffiliate {
   id: string; code: string; accountId: string; accountEmail: string; accountName: string; workshopId: string; workshopTitle: string; shopId: string; shopName: string; shopSlug: string;
   createdAt: string; clicks: number; bookings: number; referralFee: number; currency: string;
+  /** An administrator switched the link off, and why. */
+  disabled: boolean; disabledReason: string;
 }
 
 /** Search: the email (or name) of the person who registered the account and shares the link, the code of the link, the workshop or the shop. `from` / `to`: the days the link was made. */
@@ -214,7 +218,7 @@ export function adminAffiliate(q = "", from = "", to = ""): AdminAffiliate[] {
     const e = earned.get(r.id) ?? { bookings: 0, fee: 0 };
     const row: AdminAffiliate = {
       id: r.id, code: r.code, accountId: a.id, accountEmail: a.email, accountName: a.fullName, workshopId: r.workshopId, workshopTitle: titleOf(w.workshop.title), shopId: w.shop.id, shopName: w.shop.name, shopSlug: w.shop.slug,
-      createdAt: r.createdAt, clicks: r.clicks, bookings: e.bookings, referralFee: e.fee, currency: w.shop.currency,
+      createdAt: r.createdAt, clicks: r.clicks, bookings: e.bookings, referralFee: e.fee, currency: w.shop.currency, disabled: Boolean(r.disabled), disabledReason: r.disabledReason ?? "",
     };
     return matchesSearch(hay(row.accountEmail, row.accountName, row.code, row.workshopTitle, row.shopName), q) ? [row] : [];
   });
@@ -228,6 +232,8 @@ export interface AdminReferralFriend {
 }
 export interface AdminReferralLink {
   inviterId: string; inviterEmail: string; inviterName: string;
+  /** An administrator switched the code off, and why. */
+  disabled: boolean; disabledReason: string;
   /** The one invite code of the customer. */
   code: string; currency: string;
   /** How many friends registered through it, how many of them earned the bonus (a paid booking), and the bonus earned in all. */
@@ -255,7 +261,7 @@ export function adminReferralLinks(q = "", from = "", to = ""): AdminReferralLin
     if ((from || to) && friends.length === 0) return [];
     const code = inviteCodeOf(id);
     const row: AdminReferralLink = {
-      inviterId: id, inviterEmail: a.email, inviterName: a.fullName, code, currency: currentShop.currency,
+      inviterId: id, inviterEmail: a.email, inviterName: a.fullName, code, currency: currentShop.currency, disabled: isInviteDisabled(id), disabledReason: inviteDisabledReason(id),
       registered: friends.length, earned: friends.filter((f) => f.status === "EARNED").length, bonusTotal: friends.reduce((n, f) => n + f.bonus, 0), friends,
     };
     return matchesSearch(hay(row.inviterEmail, row.inviterName, row.code, ...friends.flatMap((f) => [f.email, f.name])), q) ? [row] : [];

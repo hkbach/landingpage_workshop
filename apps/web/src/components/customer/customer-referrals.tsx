@@ -124,6 +124,7 @@ export function CustomerReferrals() {
           </>
         )}
         {/* The rule, always under the list: the bonus is earned once for each referral. */}
+        {query.data?.disabled ? <p role="alert" className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950" data-testid="referral-disabled">{tr("disabledNote")}</p> : null}
         <p role="note" className="flex items-start gap-2 rounded-lg border bg-muted/40 p-3 text-sm text-muted-foreground" data-testid="referral-note">
           <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
           <span>{tr("note", { rate })}</span>

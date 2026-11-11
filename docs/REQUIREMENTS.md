@@ -19,7 +19,7 @@ Các mục dưới đây là **giả định** để có thể bắt đầu code
 | A1 | Khách du lịch **thanh toán tại shop**. MVP không có thanh toán online. | Lớn: thanh toán online cần Stripe Connect (hoặc tương đương), KYC, refund, phí nền tảng |
 | A2 | Mỗi shop có **tối đa 2 landing page, 1 page public tại một thời điểm** (FR-SITE-07), page public dùng địa chỉ của shop | Trung bình: schema đã chuẩn bị cho nhiều page |
 | A3 | Shop tự đăng ký; **publish landing page có hiệu lực ngay, không cần admin duyệt** (không có hàng đợi duyệt) | Thấp |
-| A4 | Tính phí shop **chưa làm**, chỉ có cột `plan` và giới hạn theo gói trong code | Thấp |
+| A4 | Tính phí shop **chưa làm**; **không có gói trả phí (plan FREE/PRO)**, đã loại bỏ hoàn toàn (cột `plan`, giới hạn theo gói) | Thấp |
 | A5 | Chỉ có lịch **cố định** (fixed schedule) và **instant booking**. Request booking và lịch linh hoạt để phase sau | Trung bình |
 | A6 | Ngôn ngữ hỗ trợ: EN (mặc định), VI, KO, JA, **ZH (tiếng Trung, một ngôn ngữ duy nhất; shop tự điền chữ giản thể hoặc phồn thể tùy ý)** *(v1.2: thêm tiếng Trung)*. Shop tự chọn bật ngôn ngữ nào. Mã locale trong URL: `/ja`, `/zh`. `hreflang`: `zh`. Dữ liệu cũ lưu dưới khóa `zh-TW` được tự gộp vào `zh`. Giao diện nền tảng (dashboard, modal đặt chỗ…) mới dịch EN và một phần VI/KO/JA; ZH tạm fallback EN, riêng chính sách đến trễ (BR-09) có đủ bản dịch | Thấp |
 | A7 | Shop chỉ có 1 role là `OWNER` trong MVP. Schema vẫn hỗ trợ nhiều member/role | Thấp |
@@ -353,7 +353,7 @@ Browser ────────────────────────
 - Chỉ cho phép `image/jpeg`, `image/png`, `image/webp`; tối đa **5 MB**/ảnh. Backend kiểm tra lại size và mime thật (đọc magic bytes) khi complete.
 - Object key: `org/{orgId}/{purpose}/{uuid}.{ext}`; purpose ∈ `site`, `workshop`, `branding`.
 - Ảnh public phục vụ qua `media.{PLATFORM_DOMAIN}`. Dùng `next/image` (hoặc Cloudflare Image Resizing nếu có) để resize.
-- Giới hạn dung lượng theo plan (ví dụ FREE: 200 MB/shop). Đặt trong `PLAN_LIMITS`.
+- Giới hạn dung lượng ảnh theo shop: giá trị cấu hình chung (chưa có gói trả phí).
 - Ảnh không còn được tham chiếu sau 7 ngày: job dọn dẹp (Should).
 
 ### 5.4 Workshop, lịch và session
@@ -633,7 +633,7 @@ Browser ────────────────────────
 - Mock: dữ liệu khởi đầu và kho lưu trong bộ nhớ tại `apps/web/src/lib/mock/platform.ts`. TODO(api): bảng `platform_settings`.
 
 
-**Khu vực quản trị `/systemadmin` (FR-ADM-08 đến FR-ADM-17).** Mỗi danh mục là một trang riêng trong menu bên trái; mọi danh sách có ô tìm kiếm (không phân biệt hoa thường và dấu), phân trang 10/20/50 dòng và xem chi tiết. Chỉ en + vi. Các hành động của admin (sửa, đổi trạng thái, reset mật khẩu, đóng/mở session, đổi phí, sửa landing page) được ghi vào audit log (FR-ADM-05) với actor "Platform Admin", không bao giờ ghi mật khẩu hay token. MVP frontend: API mock trong Next (`/api/v1/admin/*`), chưa kiểm tra quyền; backend thật chỉ cho `SUPER_ADMIN`.
+**Khu vực quản trị `/systemadmin` (FR-ADM-08 đến FR-ADM-20).** Mỗi danh mục là một trang riêng trong menu bên trái; mọi danh sách có ô tìm kiếm (không phân biệt hoa thường và dấu), phân trang 10/20/50 dòng và xem chi tiết. Chỉ en + vi. Các hành động của admin (sửa, đổi trạng thái, reset mật khẩu, đóng/mở session, đổi phí, sửa landing page) được ghi vào audit log (FR-ADM-05) với actor "Platform Admin", không bao giờ ghi mật khẩu hay token. MVP frontend: API mock trong Next (`/api/v1/admin/*`), chưa kiểm tra quyền; backend thật chỉ cho `SUPER_ADMIN`.
 
 **Website công khai của nền tảng (Home, About Us, Contact).** Ba trang giới thiệu nền tảng ở host chính, dùng chung thanh trên tối (tên nền tảng, Home / About Us / Contact, chọn ngôn ngữ, Log in, Sign up; điện thoại gom vào nút 3 sọc) và chân trang (Explore, Account, Legal). Phong cách hero tối có ánh sáng xanh lam / tím và nền sao, tiêu đề lớn với từ khóa màu xanh có gạch chân và phần còn lại chữ nghiêng nhạt, nút CTA tròn xanh nhạt; Privacy và Terms giữ bố cục đơn giản cũ.
 - **Home** (`/`): hero (tiêu đề "Turn Your Workshops into Full Classrooms", CTA **Create your shop** → `/signup`, nút xem cách hoạt động), ba số liệu thật của sản phẩm (5 ngôn ngữ, 0 session bị đặt quá chỗ, trang đặt chỗ 24/7), **Vì sao chọn nền tảng** (6 lợi ích cho shop: trang tự bán, booking không bao giờ vượt chỗ, đa ngôn ngữ, theo dõi thanh toán, khách quay lại, tăng trưởng qua affiliate / referral), **Cách hoạt động** (3 bước, publish không cần duyệt), **Dành cho khách** (đặt chỗ nhanh, trang Today, workshop theo danh mục yêu thích và luân phiên công bằng giữa các shop, thưởng khi chia sẻ), **FAQ** (5 câu, dạng `details`), dải CTA cuối trang.
@@ -651,6 +651,8 @@ Browser ────────────────────────
 - API: `GET /admin/directory/users`, `GET/PATCH /admin/users/{id}`, `POST /admin/users/{id}/status`, `POST /admin/users/{id}/reset-password`.
 
 **FR-ADM-09 – Shop (Must, mở rộng FR-ADM-01 và FR-ADM-03)** (`/systemadmin/organizations`)
+- **Sửa thông tin shop (admin):** nút **Edit** trên mỗi shop mở form: tên, email và điện thoại liên hệ, WhatsApp (tùy chọn), địa chỉ, Google Maps URL (https), quốc gia, múi giờ, tiền tệ, ngôn ngữ mặc định và các ngôn ngữ bật, **tên miền riêng**. **Slug không sửa được, kể cả admin (BR-21)** (ô chỉ đọc). Quy tắc: `trim()` (BR-16), Save chỉ bật khi có thay đổi (BR-17), múi giờ phải là IANA hợp lệ, tiền tệ phải là mã ISO có thật, ngôn ngữ mặc định phải nằm trong các ngôn ngữ bật; đổi múi giờ / tiền tệ khi shop đã có booking thì hiện cảnh báo và **không chuyển đổi dữ liệu cũ**. Thay đổi hiện ngay ở landing page công khai, trang Settings của shop và các danh sách admin. API `PATCH /admin/organizations/{id}` (`422` kèm `fields`, `409 DOMAIN_TAKEN`, `404`). Audit `shop.profile_update` (chỉ tên các trường đã đổi, không ghi giá trị) và `shop.domain_set` / `shop.domain_remove` (`cũ -> mới`).
+- **Tên miền riêng trong quản lý shop:** danh sách Shops có cột **Own domain**, chi tiết shop hiện tên miền và liên kết landing page dùng tên miền đó (cũng áp dụng ở danh sách Landing pages). Admin **gắn, sửa hoặc gỡ** tên miền trong form Edit (khi có tranh chấp hoặc vi phạm); một tên miền chỉ thuộc một shop (`409`); trống = gỡ. Quy tắc kiểm tra như FR-ORG-02.
 - Tìm theo tên (hoặc slug) shop **và email của shop owner**, lọc theo status; xem chi tiết; **Activate / Deactivate** (`SUSPENDED` ↔ `ACTIVE`, deactivate bắt buộc lý do; shop `DRAFT` lên `ACTIVE` khi chủ shop publish landing page, admin không kích hoạt thay); bật/tắt hiển thị workshops của shop trên trang Workshops của customer (`show_on_customer_page`).
 - Trạng thái shop do admin đổi được lưu ở mock backend: danh sách của khách (Workshops, Favorites) đọc theo trạng thái này.
 
@@ -665,18 +667,26 @@ Browser ────────────────────────
 **FR-ADM-14 – Landing pages (Should)** (`/systemadmin/landing-pages`): tìm theo tên shop; **Edit** mở danh sách landing page và trình dựng của shop **ngay trong khu admin** tại `/systemadmin/shops/{slug}/site` (giao diện và chức năng y như trang của shop owner: danh sách, builder, preview, publish), **không chuyển sang `/shopowner`**, vẫn trong khung menu admin; đầu trang có banner "bạn đang sửa {shop} với tư cách admin hệ thống" kèm nút quay lại danh sách. Audit log ghi `landing_page.edit` khi mở và mọi thao tác ghi sau đó (publish, ...) được ghi là do **System Admin** (không phải shop owner). *Giới hạn MVP:* mock chỉ có dữ liệu builder của shop demo, các shop khác hiển thị "chưa có trang để sửa".
 
 **FR-ADM-15 – Referrals (Should)** (`/systemadmin/referrals`)
+- **Vô hiệu hóa affiliate link (trang `/systemadmin/affiliate`):** cột **Status** và nút **Switch off** (bắt buộc lý do) / **Switch on** cho từng link. Link đã tắt: landing page báo link bị vô hiệu như workshop đã kết thúc, **không tính thêm booking** cho link, customer thấy trạng thái **Deactive**; khoản đã kiếm trước đó giữ nguyên. API `POST /admin/affiliate/{id}` `{disabled, reason?}`; audit `affiliate.disable` / `affiliate.enable`.
 - Affiliate (còn gọi referral) là cách thu hút người dùng: customer có tài khoản thấy danh sách workshops, bấm **Register Affiliate** để lấy link (`{shop}.domain/?ref=CODE&book=WORKSHOP_ID`, mỗi cặp tài khoản + workshop một link; chỉ workshop của shop `ACTIVE`; xem FR-CUST-02). API khách: `GET/POST /customer/{id}/referrals`. Trong giao diện, menu admin là **Affiliate** (`/systemadmin/affiliate`) và khoản phí trả cho customer là **Affiliate fee**. Danh sách referral (mời bạn bè) là mục **Referrals** riêng (FR-ADM-18).
 - Admin xem danh sách link: tìm theo **email của người đăng ký tài khoản** (hoặc mã, workshop, shop), lọc theo ngày tạo; mỗi link có lượt nhấp, số booking đã thanh toán và phí referral đã tạo ra.
 - **Phí referral = tỷ lệ referral của shop × giá booking gốc** (giá gốc = đơn giá × số lượng, trước voucher; cùng cơ sở tính với phí duy trì và phí dịch vụ). Chỉ booking đã thanh toán và đến từ link mới có phí referral.
 - Phía customer: menu **Affiliate** (`/customer/{id}/affiliate`, xem FR-CUST-02). Booking đặt qua link được ghi nhận thật (mã `ref` gửi kèm booking). Ngoài ra, để có số liệu xem thử, mock gán mỗi booking thứ hai của workshop đã được chia sẻ (không phải của chính người chia sẻ) cho link **đã có lượt nhấp** (bỏ khi có backend).
 
 **FR-ADM-18 – Referrals (Should)** (`/systemadmin/referrals`): danh sách **link referrals** (mỗi customer một link) với số bạn bè đã đăng ký, số bạn có booking đã thanh toán và tổng bonus đã nhận; **tìm theo email của customer (hoặc mã link, hoặc email/tên của một người bạn)**, lọc theo ngày bạn bè đăng ký; chi tiết liệt kê từng người bạn (ngày đăng ký, trạng thái, mã booking và bonus). Bonus do nền tảng chi trả và **trừ vào lợi nhuận của nền tảng** (FR-ADM-16). API: `GET /admin/directory/referrals`; danh sách affiliate chuyển sang `GET /admin/directory/affiliate`.
+- **Vô hiệu hóa link giới thiệu (referral) của customer:** mỗi dòng có cột **Status** (On / Off, rê chuột xem lý do) và nút **Switch off** (bắt buộc nhập lý do) / **Switch on**. Link mời đã tắt: bạn bè đăng ký bằng link đó **không được tính** nữa; bạn bè và thưởng đã có trước đó vẫn giữ; customer thấy cảnh báo trong trang Referrals. API `POST /admin/referrals/{accountId}` `{disabled, reason?}`; audit `referral.disable` / `referral.enable`.
 
 **FR-ADM-19 – Withdrawals: xử lý rút tiền của customer (Should)** (`/systemadmin/withdrawals`): danh sách invoice rút tiền của cả hai chương trình, **invoice đang chờ xếp trước**; tìm theo số invoice hoặc email/tên customer, lọc theo trạng thái, chương trình và ngày yêu cầu; ba ô tổng (đang chờ thanh toán, đã thanh toán, số invoice bị từ chối). Với invoice **Pending**: **Mark as paid** (xác nhận đã chuyển tiền) hoặc **Reject** (**bắt buộc lý do**, customer thấy lý do, số tiền quay lại số có thể rút). **Mỗi invoice chỉ xử lý một lần** (`409 NOT_PENDING`). Ghi audit log `withdrawal.pay` / `withdrawal.reject` (không chứa thông tin nhạy cảm). Affiliate fee và Referral bonus đã được trừ vào lợi nhuận khi phát sinh (FR-ADM-16) nên việc thanh toán invoice **không đổi lợi nhuận**. API: `GET /admin/directory/withdrawals`, `POST /admin/withdrawals/{id}` `{action: "pay" | "reject", reason?}`.
 
 **FR-ADM-16 – Income của nền tảng (Should)** (`/systemadmin/income`): **Income của admin = Maintenance Fee + Service Fee** thu từ booking của từng shop (giá gốc × Maintenance Fee + giá gốc × Service Fee). **Lợi nhuận của hệ thống = Income của admin − Affiliate fee − Referral bonus = (giá gốc × Maintenance Fee + giá gốc × Service Fee) − giá gốc × Affiliate fee (chỉ booking đến từ link affiliate) − Referral bonus (một lần cho mỗi bạn bè được mời, FR-CUST-03)**. Bảng có cột doanh thu của shop (số shop đã nhận từ khách), giá gốc của các booking đã thanh toán, phí duy trì, phí dịch vụ, **Income của admin**, Affiliate fee, **Referral bonus** và lợi nhuận; mọi phí đều tính trên giá gốc theo đúng quy tắc của FR-PAY-02. Lọc theo khoảng ngày thanh toán (múi giờ shop). Tổng theo từng loại tiền (không cộng lẫn tiền tệ).
 
 **FR-ADM-17 – Config Fee (Must, mở rộng FR-PAY-02)** (`/systemadmin/fees`): cấu hình **phí duy trì, phí dịch vụ, Affiliate fee (link của workshop) và Referral bonus (mời bạn bè đăng ký)** theo phần trăm (0–100, tối đa 2 số lẻ, nhập được dấu phẩy; duy trì + dịch vụ không quá 100%; lưu bằng basis points). Đặt cho **từng shop** (mỗi dòng có Save, chỉ bật khi có thay đổi) hoặc **bulk action áp dụng cùng tỷ lệ cho tất cả shop** (có xác nhận, tất cả hoặc không gì cả). Mọi tỷ lệ là phần trăm của **giá booking gốc**. Mặc định (giá trị tròn để thử giao diện): 10% / 10% / 10% / 10% (duy trì / dịch vụ / affiliate / referral bonus). Referral bonus là tỷ lệ của shop nơi người bạn thanh toán booking đầu tiên; bulk action áp dụng cả bốn tỷ lệ. Hệ thống không chặn tỷ lệ referral lớn hơn tổng hai phí còn lại (lợi nhuận có thể âm, hiển thị đúng như tính). API: `GET /admin/fees`, `PUT /admin/fees/{id}`, `POST /admin/fees/bulk` (trường `referralBps` là Affiliate fee, `inviteBonusBps` là Referral bonus); form phí theo shop trong chi tiết shop vẫn dùng `PUT /admin/organizations/{id}/finance-settings`.
+
+**FR-ADM-20 – Cài đặt nền tảng / Settings (Must)** (`/systemadmin/settings`, nhóm Nền tảng trong menu): giá trị áp dụng cho toàn nền tảng, có hiệu lực ngay, ghi audit `platform.settings_update` (tên giá trị, cũ -> mới).
+- **Rút tiền:** số tiền **tối thiểu** và **tối đa** cho một lần rút (đơn vị tiền của nền tảng; **0 = không giới hạn**). Customer thấy giới hạn trong popup Rút tiền, vượt giới hạn bị từ chối (`422`, `fields.amount` = `belowMin | aboveMax`). Tối đa không được nhỏ hơn tối thiểu. Mặc định: không giới hạn.
+- **Link đặt lại mật khẩu (admin gửi):** hiệu lực **24 giờ kể từ lúc gửi** (mặc định, chỉnh được 1 đến 168 giờ). Link dùng một lần; quá hạn thì báo không còn hiệu lực.
+- **Form Contact:** **5 tin mỗi giờ** cho một người truy cập (mặc định, chỉnh được 1 đến 100); vượt quá trả `429` kèm `Retry-After`.
+- API `GET` / `PUT /admin/settings` (`422` kèm `fields`). Mock lưu trong bộ nhớ (`apps/web/src/lib/mock/app-settings-store.ts`); TODO(api): bảng `platform_settings`.
 
 ---
 
@@ -788,17 +798,9 @@ COMMIT;
 - Ghi `outbox_events` trong cùng transaction với thay đổi nghiệp vụ.
 - Worker poll mỗi 5 giây (`SELECT ... FOR UPDATE SKIP LOCKED LIMIT 20`), dispatch sang pg-boss job, đánh dấu `DISPATCHED`.
 
-### 7.4 Plan limits (chuẩn bị cho billing)
+### 7.4 Plan limits (đã loại bỏ)
 
-```ts
-// packages/shared/src/plans.ts
-export const PLAN_LIMITS = {
-  FREE: { maxWorkshops: 3, maxSessionCapacity: 20, storageMb: 200, enabledLocales: 2 },
-  PRO:  { maxWorkshops: 50, maxSessionCapacity: 50, storageMb: 5000, enabledLocales: 6 },
-} as const;
-```
-
-Các con số là **placeholder**, cần PO chốt. Backend kiểm tra giới hạn tại service layer, trả HTTP 402/403 với code `PLAN_LIMIT_REACHED`.
+**Không có gói thanh toán (FREE / PRO).** Shop không có cột `plan`, không có giới hạn theo gói và không có lỗi `PLAN_LIMIT_REACHED`; mọi shop dùng cùng một bộ giới hạn chung do hệ thống đặt. Nếu sau này cần billing sẽ thiết kế lại (câu hỏi Q3 đã đóng).
 
 ### 7.5 Chuẩn API
 
@@ -825,7 +827,7 @@ Quy ước: PK `uuid` (UUIDv7 sinh ở app nếu có, không thì `gen_random_uu
 
 **user_tokens**: `id`, `user_id`, `type` (`EMAIL_VERIFY|PASSWORD_RESET`), `token_hash` (unique), `expires_at`, `used_at`.
 
-**organizations**: `id`, `name`, `slug` (unique, **bất biến**: trigger / API từ chối mọi cập nhật, kể cả admin), `status` (`DRAFT|ACTIVE|SUSPENDED`), `status_reason`, `country`, `timezone`, `currency`, `default_locale`, `enabled_locales text[]`, `plan` (`FREE` mặc định), `contact_email`, `contact_phone`, `whatsapp`, `address`, `maps_url`, (mặc định 120), `approved_at`, `approved_by`.
+**organizations**: `id`, `name`, `slug` (unique, **bất biến**: trigger / API từ chối mọi cập nhật, kể cả admin), `status` (`DRAFT|ACTIVE|SUSPENDED`), `status_reason`, `country`, `timezone`, `currency`, `default_locale`, `enabled_locales text[]` (`FREE` mặc định), `contact_email`, `contact_phone`, `whatsapp`, `address`, `maps_url`, (mặc định 120), `approved_at`, `approved_by`.
 
 **organization_members**: `organization_id`, `user_id`, `role` (`OWNER`), `status`. PK `(organization_id, user_id)`.
 
@@ -1144,7 +1146,7 @@ Mỗi milestone: code → test → `pnpm lint && pnpm typecheck && pnpm test` pa
 |---|---|---|
 | Q1 | Thanh toán online ở phase nào? Mô hình (Stripe Connect, cổng nội địa…)? | Chưa làm (A1) |
 | Q2 | Tên nền tảng và domain chính thức? | `{PLATFORM_DOMAIN}` |
-| Q3 | Giá trị plan limits và giá gói? | Placeholder Mục 7.4 |
+| Q3 | Giá trị plan limits và giá gói? | **Đã đóng**: loại bỏ gói thanh toán |
 | Q4 | Booking cutoff mặc định (2 giờ) có phù hợp? | 120 phút mặc định; **cấu hình theo từng session khi tạo session** (không còn theo shop) |
 | Q5 | Số khách tối đa mỗi booking mặc định? | 6 |
 | Q6 | Nội dung Terms, Privacy Policy và nghĩa vụ pháp lý về dữ liệu cá nhân? | Pháp chế cung cấp |

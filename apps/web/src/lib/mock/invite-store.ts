@@ -56,6 +56,19 @@ const store = (): Invite[] => (g.__invites ??= seed());
 export function resetInviteStore(): void {
   g.__inviteCodes = undefined;
   g.__invites = undefined;
+  (globalThis as unknown as { __inviteOff?: Map<string, string> }).__inviteOff = undefined;
+}
+
+/** Invite codes an administrator switched off: customer id -> reason. A friend who registers with such a code is not counted. */
+const off = (): Map<string, string> => ((globalThis as unknown as { __inviteOff?: Map<string, string> }).__inviteOff ??= new Map());
+export const isInviteDisabled = (accountId: string): boolean => off().has(accountId);
+export const inviteDisabledReason = (accountId: string): string => off().get(accountId) ?? "";
+
+/** An administrator switches the invite code of a customer off (with a reason) or on again. False when the customer is not known. */
+export function setInviteDisabled(accountId: string, disabled: boolean, reason = ""): boolean {
+  if (!liveCustomers().some((c) => c.id === accountId && c.account)) return false;
+  if (disabled) off().set(accountId, reason.trim().slice(0, 300)); else off().delete(accountId);
+  return true;
 }
 
 /** The one invite code of a customer (made the first time it is asked for, then always the same). */
@@ -79,7 +92,7 @@ export function inviterOfCode(code: string): string | undefined {
  */
 export function recordInvite(code: string, inviteeId: string, now: Date = new Date()): boolean {
   const inviterId = inviterOfCode(code);
-  if (!inviterId || inviterId === inviteeId || store().some((i) => i.inviteeId === inviteeId)) return false;
+  if (!inviterId || isInviteDisabled(inviterId) || inviterId === inviteeId || store().some((i) => i.inviteeId === inviteeId)) return false;
   if (!liveCustomers().some((c) => c.id === inviterId && c.account)) return false;
   store().push({ id: `iv-${newUuid().slice(0, 8)}`, inviterId, inviteeId, registeredAt: now.toISOString() });
   return true;

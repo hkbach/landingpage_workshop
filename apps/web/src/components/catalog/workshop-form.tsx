@@ -22,7 +22,7 @@ import { useEditingLanguage } from "@/lib/use-shop-language";
 import { useDirty } from "@/lib/use-dirty";
 import { ShopLink } from "@/components/dashboard/shell/shop-link";
 
-/** Upper bound for capacity until PLAN_LIMITS is wired to the plan (FR-WS-01: 1-50). */
+/** Upper bound for capacity (FR-WS-01: 1-50). */
 export const MAX_CAPACITY = 50;
 const MAX_GALLERY = 6;
 

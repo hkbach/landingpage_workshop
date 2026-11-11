@@ -4,7 +4,12 @@ import type { OrgStatus } from "@workshop/shared";
 import type { Shop } from "@/lib/types";
 import { everyShop } from "./registered-shops-store";
 
-interface Change { status?: OrgStatus; statusReason?: string | null; showOnCustomerPage?: boolean }
+/** What an administrator can edit of a shop (never the slug): see updateShopProfile. */
+export interface ShopProfile {
+  name: string; contactEmail: string; contactPhone: string; whatsapp: string; address: string; mapsUrl: string;
+  country: string; timezone: string; currency: string; defaultLocale: Shop["defaultLocale"]; enabledLocales: Shop["enabledLocales"];
+}
+interface Change { status?: OrgStatus; statusReason?: string | null; showOnCustomerPage?: boolean; profile?: ShopProfile }
 const g = globalThis as unknown as { __shopAdmin?: Map<string, Change> };
 const changes = () => (g.__shopAdmin ??= new Map<string, Change>());
 
@@ -18,8 +23,11 @@ export function liveShops(): Shop[] {
   return everyShop().map((s) => {
     const c = changes().get(s.id);
     if (!c) return s;
-    const { statusReason: _reason, ...rest } = s;
-    void _reason;
+    const { statusReason: _reason, whatsapp: _wa, ...base } = s;
+    void _reason; void _wa;
+    // The profile an administrator edited replaces the one of the shop; an empty WhatsApp is no WhatsApp.
+    const { whatsapp, ...profile } = c.profile ?? { whatsapp: s.whatsapp ?? "" };
+    const rest = { ...base, ...(c.profile ? profile : {}), ...(whatsapp ? { whatsapp } : {}) };
     const reason = c.statusReason === undefined ? s.statusReason : (c.statusReason ?? undefined);
     return { ...rest, status: c.status ?? s.status, ...(reason ? { statusReason: reason } : {}), ...(c.showOnCustomerPage === undefined ? (s.showOnCustomerPage === undefined ? {} : { showOnCustomerPage: s.showOnCustomerPage }) : { showOnCustomerPage: c.showOnCustomerPage }) };
   });
@@ -56,4 +64,19 @@ export function setShowOnCustomerPage(id: string, show: boolean): boolean {
   if (!everyShop().some((s) => s.id === id)) return false;
   changes().set(id, { ...changes().get(id), showOnCustomerPage: show });
   return true;
+}
+
+export type UpdateProfileResult = { ok: true; shop: Shop; changed: (keyof ShopProfile)[] } | { ok: false; code: "NOT_FOUND" };
+
+const PROFILE_KEYS: (keyof ShopProfile)[] = ["name", "contactEmail", "contactPhone", "whatsapp", "address", "mapsUrl", "country", "timezone", "currency", "defaultLocale", "enabledLocales"];
+
+/** An administrator edits the profile of a shop (everything but the slug, which never changes). `changed` names the fields that are different now. */
+export function updateShopProfile(id: string, profile: ShopProfile): UpdateProfileResult {
+  const shop = liveShop(id);
+  if (!shop) return { ok: false, code: "NOT_FOUND" };
+  const now = { ...profile, whatsapp: profile.whatsapp ?? "" };
+  const before: ShopProfile = { name: shop.name, contactEmail: shop.contactEmail, contactPhone: shop.contactPhone, whatsapp: shop.whatsapp ?? "", address: shop.address, mapsUrl: shop.mapsUrl, country: shop.country, timezone: shop.timezone, currency: shop.currency, defaultLocale: shop.defaultLocale, enabledLocales: shop.enabledLocales };
+  const changed = PROFILE_KEYS.filter((k) => JSON.stringify(before[k]) !== JSON.stringify(now[k]));
+  if (changed.length) changes().set(id, { ...changes().get(id), profile: now });
+  return { ok: true, shop: liveShop(id)!, changed };
 }

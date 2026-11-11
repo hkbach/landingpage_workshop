@@ -3,7 +3,8 @@ import { ownAddressNote, workshopAddress } from "@workshop/shared";
 import type { Session, Shop, Workshop, PageContent, PageTheme, Booking, Customer } from "../types";
 import { reservedSeats } from "../booking-state";
 import { liveBookings, liveCustomers } from "./booking-store";
-import { currentShop, sessions, shops, sitePage, workshops } from "./data";
+import { currentShop, sessions, sitePage, workshops } from "./data";
+import { liveShops } from "./shop-admin-store";
 import { otherShopSites } from "./other-shops";
 import { withAdminChanges } from "./session-admin-store";
 import { withWorkshopStatus } from "./workshop-status-store";
@@ -26,7 +27,7 @@ export interface PublicSite {
 
 /** Only ACTIVE shops are public (non-ACTIVE and SUSPENDED => 404, BR-13 / 3.3). */
 export function getPublicSite(slug: string): PublicSite | null {
-  const shop = shops.find((s) => s.slug === slug);
+  const shop = liveShops().find((s) => s.slug === slug);
   if (!shop || shop.status !== "ACTIVE") return null;
   // Mock: the demo shop and the shops of other-shops.ts have content; published content == draft here.
   if (shop.id !== currentShop.id) {

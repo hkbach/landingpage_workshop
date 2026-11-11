@@ -3,7 +3,7 @@ import { customerLoginRequired } from "@/lib/customer-access";
 import { accountOfGuest, liveCustomers } from "@/lib/mock/booking-store";
 import { currentShop } from "@/lib/mock/data";
 import { getInviteBonusBps } from "@/lib/mock/fee-rates-store";
-import { inviteBonuses, inviteCodeOf, listInvites } from "@/lib/mock/invite-store";
+import { inviteBonuses, inviteCodeOf, isInviteDisabled, listInvites } from "@/lib/mock/invite-store";
 import { shareLink } from "@/lib/mock/share-link";
 
 // The referrals of a customer: the friends they invited to register an account. Every customer has ONE invite link. A friend is a referral once registered through the link; the
@@ -35,6 +35,6 @@ export async function GET(request: Request, ctx: RouteContext<"/api/v1/customer/
   }).sort((a, b) => b.registeredAt.localeCompare(a.registeredAt));
   const code = inviteCodeOf(id);
   return Response.json({
-    code, link: shareLink(currentShop.slug, request, { invite: code }), bonusBps: getInviteBonusBps(currentShop.id), currency: currentShop.currency, items, total: items.reduce((n, i) => n + i.bonus, 0),
+    code, disabled: isInviteDisabled(id), link: shareLink(currentShop.slug, request, { invite: code }), bonusBps: getInviteBonusBps(currentShop.id), currency: currentShop.currency, items, total: items.reduce((n, i) => n + i.bonus, 0),
   }, { headers });
 }

@@ -61,7 +61,7 @@ function sessionOf(list: readonly Workshop[], s: Pick<Session, "id" | "code" | "
 const brewbean: Shop = {
   id: "org-4", name: "Brew & Bean Coffee Lab", slug: "brewbean", status: "ACTIVE", country: "VN", timezone: "Asia/Ho_Chi_Minh", currency: "VND",
   defaultLocale: "en", enabledLocales: ["en", "vi", "ko"], contactEmail: "hello@brewbean.example", contactPhone: "+84 28 3000 4444", address: "27 Dong Khoi, District 1, Ho Chi Minh City",
-  mapsUrl: "https://maps.app.goo.gl/example4", plan: "PRO", ownerName: "Hoang Le", ownerEmail: "hoang@brewbean.example", createdAt: new Date(Date.now() - 45 * DAY).toISOString(), showOnCustomerPage: true,
+  mapsUrl: "https://maps.app.goo.gl/example4", ownerName: "Hoang Le", ownerEmail: "hoang@brewbean.example", createdAt: new Date(Date.now() - 45 * DAY).toISOString(), showOnCustomerPage: true,
 };
 const brewWorkshops: Workshop[] = [
   workshop({
@@ -102,7 +102,7 @@ const brewSessions: Session[] = [
 const greentable: Shop = {
   id: "org-5", name: "Green Table Vegan Kitchen", slug: "greentable", status: "ACTIVE", country: "SG", timezone: "Asia/Singapore", currency: "USD",
   defaultLocale: "en", enabledLocales: ["en", "ja", "zh"], contactEmail: "hello@greentable.example", contactPhone: "+65 6000 5555", address: "18 Tiong Bahru Road, Singapore",
-  mapsUrl: "https://maps.app.goo.gl/example5", plan: "FREE", ownerName: "Mei Tan", ownerEmail: "mei@greentable.example", createdAt: new Date(Date.now() - 70 * DAY).toISOString(), showOnCustomerPage: true,
+  mapsUrl: "https://maps.app.goo.gl/example5", ownerName: "Mei Tan", ownerEmail: "mei@greentable.example", createdAt: new Date(Date.now() - 70 * DAY).toISOString(), showOnCustomerPage: true,
 };
 const greenWorkshops: Workshop[] = [
   workshop({
