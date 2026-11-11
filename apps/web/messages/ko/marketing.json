@@ -19,7 +19,8 @@
     "closeMenu": "메뉴 닫기",
     "language": "언어",
     "skip": "본문으로 건너뛰기",
-    "label": "주 메뉴"
+    "label": "주 메뉴",
+    "workshops": "워크숍"
   },
   "hero": {
     "badge": "워크숍 스튜디오를 위해 만들었어요",
@@ -270,5 +271,15 @@
     "aboutDescription": "워크숍 스튜디오를 위한 단순하고 믿을 수 있는 예약 도구를 만드는 이유와 우리가 지키는 가치.",
     "contactTitle": "문의하기 | Workshop Platform",
     "contactDescription": "궁금한 점, 아이디어, 둘러보기가 필요하신가요? 메시지를 보내 주세요."
+  },
+  "workshops": {
+    "eyebrow": "둘러보기",
+    "title": "우리 스튜디오의 워크숍",
+    "intro": "플랫폼 샵에서 무작위로 골랐어요. 올 때마다 새로운 워크숍을 만나요.",
+    "price": "1인 {price}",
+    "minutes": "{n}분",
+    "rating": "평점",
+    "empty": "아직 보여 드릴 워크숍이 없어요.",
+    "open": "{shop}의 {title} 열기"
   }
 }

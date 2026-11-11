@@ -80,6 +80,10 @@ const brewWorkshops: Workshop[] = [
     id: "ws-b4", title: { en: "Coffee Roasting Day" }, shortDescription: { en: "Roast a batch of beans from green to cup." }, description: { en: "Draft." },
     durationMinutes: 180, priceAmount: 950_000, currency: "VND", defaultCapacity: 6, maxPerBooking: 3, status: "DRAFT", sortOrder: 4,
   }, "roasting", 5, ["COFFEE_TEA", "COOKING"]),
+  workshop({
+    id: "ws-b5", title: { en: "Pour-Over Masterclass", vi: "Pour-over chuyên sâu", ko: "푸어오버 마스터클래스" }, shortDescription: { en: "Dial in a V60 and a Chemex, and learn why the same beans taste different." },
+    durationMinutes: 90, priceAmount: 450_000, currency: "VND", defaultCapacity: 8, maxPerBooking: 4, status: "ACTIVE", sortOrder: 5,
+  }, "pourover", 12, ["COFFEE_TEA"], { average: 4.8, count: 17 }),
 ];
 const brewAt = localAt(7);
 const brewSessions: Session[] = [
@@ -90,6 +94,7 @@ const brewSessions: Session[] = [
   sessionOf(brewWorkshops, { id: "se-b5", code: "SES-0205", workshopId: "ws-b3", capacity: 10, reservedCount: 4, status: "RUNNING", bookingCutoffMinutes: 60, imageUrl: photo("session-cupping", 400, 300) }, brewAt(4, 14)),
   sessionOf(brewWorkshops, { id: "se-b6", code: "SES-0206", workshopId: "ws-b3", capacity: 10, reservedCount: 1, status: "RUNNING", bookingCutoffMinutes: 1440 }, brewAt(8, 14)),
   sessionOf(brewWorkshops, { id: "se-b7", code: "SES-0207", workshopId: "ws-b1", capacity: 6, reservedCount: 0, status: "OPEN", bookingCutoffMinutes: 120 }, brewAt(10, 10)),
+  sessionOf(brewWorkshops, { id: "se-b8", code: "SES-0208", workshopId: "ws-b5", capacity: 8, reservedCount: 2, status: "RUNNING", bookingCutoffMinutes: 120 }, brewAt(5, 16)),
 ];
 
 // ---- Green Table Vegan Kitchen (Singapore, USD: amounts in cents) ----------------------------------------------------------------------------------------------

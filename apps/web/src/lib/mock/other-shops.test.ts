@@ -18,12 +18,12 @@ describe("the other shops", () => {
     expect(new Set(shops.map((s) => s.slug)).size).toBe(shops.length);
     expect(otherShops.some((s) => s.currency !== currentShop.currency)).toBe(true); // another currency to look at
   });
-  it("have three ACTIVE workshops and a draft each, whose ids and session codes never meet those of the demo shop", () => {
+  it("have at least three ACTIVE workshops and a draft each, whose ids and session codes never meet those of the demo shop", () => {
     const ids = new Set([...demoWorkshops.map((w) => w.id), ...demoSessions.map((s) => s.id)]);
     const codes = new Set(demoSessions.map((s) => s.code));
     for (const shop of otherShops) {
       const site = otherShopSites[shop.id]!;
-      expect(site.workshops.filter((w) => w.status === "ACTIVE")).toHaveLength(3);
+      expect(site.workshops.filter((w) => w.status === "ACTIVE").length).toBeGreaterThanOrEqual(3);
       expect(site.workshops.filter((w) => w.status === "DRAFT")).toHaveLength(1);
       for (const w of site.workshops) { expect(w.currency).toBe(shop.currency); expect(ids.has(w.id), w.id).toBe(false); ids.add(w.id); }
       for (const s of site.sessions) {

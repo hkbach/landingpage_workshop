@@ -19,7 +19,8 @@
     "closeMenu": "Đóng menu",
     "language": "Ngôn ngữ",
     "skip": "Chuyển đến nội dung",
-    "label": "Điều hướng chính"
+    "label": "Điều hướng chính",
+    "workshops": "Workshop"
   },
   "hero": {
     "badge": "Dành cho studio workshop",
@@ -270,5 +271,15 @@
     "aboutDescription": "Vì sao chúng tôi xây công cụ đặt chỗ đơn giản, đáng tin cậy cho studio workshop và điều chúng tôi theo đuổi.",
     "contactTitle": "Liên hệ | Workshop Platform",
     "contactDescription": "Có câu hỏi, ý tưởng hoặc muốn xem demo? Hãy gửi tin nhắn cho chúng tôi."
+  },
+  "workshops": {
+    "eyebrow": "Khám phá",
+    "title": "Workshop từ các studio của chúng tôi",
+    "intro": "Lựa chọn ngẫu nhiên từ các shop trên nền tảng. Mỗi lần ghé lại bạn sẽ thấy một gợi ý mới.",
+    "price": "{price} / khách",
+    "minutes": "{n} phút",
+    "rating": "Đánh giá",
+    "empty": "Chưa có workshop để hiển thị.",
+    "open": "Mở {title} của {shop}"
   }
 }

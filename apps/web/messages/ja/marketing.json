@@ -19,7 +19,8 @@
     "closeMenu": "メニューを閉じる",
     "language": "言語",
     "skip": "本文へスキップ",
-    "label": "メインメニュー"
+    "label": "メインメニュー",
+    "workshops": "ワークショップ"
   },
   "hero": {
     "badge": "ワークショップスタジオのために",
@@ -270,5 +271,15 @@
     "aboutDescription": "ワークショップスタジオのためにシンプルで信頼できる予約ツールを作る理由と、私たちが大切にしていること。",
     "contactTitle": "お問い合わせ | Workshop Platform",
     "contactDescription": "ご質問、ご相談、デモのご希望など、メッセージをお送りください。"
+  },
+  "workshops": {
+    "eyebrow": "発見",
+    "title": "スタジオのワークショップ",
+    "intro": "プラットフォームのショップからランダムに選びました。訪れるたびに新しい出会いがあります。",
+    "price": "1名 {price}",
+    "minutes": "{n}分",
+    "rating": "評価",
+    "empty": "表示できるワークショップはまだありません。",
+    "open": "{shop}の{title}を開く"
   }
 }

@@ -3,7 +3,11 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { ArrowRight, CalendarClock, Gift, Heart, Languages, LayoutTemplate, MousePointerClick, ShieldCheck, Sparkles, TrendingUp, Users, Wallet } from "lucide-react";
 import { AuthTrigger } from "@/components/marketing/auth-dialog";
+import { WorkshopShowcase } from "@/components/marketing/workshop-showcase";
 import { ctaPrimary, ctaSecondary, FeatureCard, Hero, heroRich, SectionHeading } from "@/components/marketing/marketing-ui";
+
+// The Workshops section is a different pick at every visit: the page is built on every request.
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("marketing.meta");
@@ -42,7 +46,7 @@ export default async function MarketingHome() {
         <ul className="mx-auto mt-14 grid max-w-4xl gap-6 border-t border-white/10 pt-8 text-left sm:grid-cols-3" data-testid="home-stats">
           {STATS.map((k) => (
             <li key={k} className="flex items-center gap-4 sm:block">
-              <p className="text-4xl font-semibold tracking-tight text-white">{t(`stats.${k}.value`)}</p>
+              <p className="w-20 shrink-0 text-4xl font-semibold tracking-tight text-white sm:w-auto">{t(`stats.${k}.value`)}</p>
               <p className="text-sm text-white/65 sm:mt-1">{t(`stats.${k}.label`)}</p>
             </li>
           ))}
@@ -57,6 +61,8 @@ export default async function MarketingHome() {
           </ul>
         </div>
       </section>
+
+      <WorkshopShowcase />
 
       <section id="how" aria-labelledby="how-title" className="scroll-mt-20 bg-white/[0.03] px-4 py-16 sm:px-6 sm:py-24" data-testid="home-how">
         <div className="mx-auto max-w-6xl">
@@ -87,12 +93,12 @@ export default async function MarketingHome() {
           <SectionHeading id="faq-title" title={t("faq.title")} />
           <div className="mt-10 grid gap-3">
             {FAQ.map((q) => (
-              <details key={q} className="group rounded-2xl border border-white/10 bg-[#07122e] p-5 open:border-cyan-400/40">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-base font-medium text-white marker:content-none">
+              <details key={q} className="group rounded-2xl border border-white/10 bg-[#07122e] open:border-cyan-400/40">
+                <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 rounded-2xl p-5 text-base font-medium text-white outline-none marker:content-none focus-visible:ring-2 focus-visible:ring-cyan-300">
                   {t(`faq.items.${q}.q`)}
                   <span aria-hidden className="text-xl leading-none text-cyan-300 transition group-open:rotate-45">+</span>
                 </summary>
-                <p className="mt-3 text-sm leading-relaxed text-white/70">{t(`faq.items.${q}.a`)}</p>
+                <p className="px-5 pb-5 text-sm leading-relaxed text-white/70">{t(`faq.items.${q}.a`)}</p>
               </details>
             ))}
           </div>

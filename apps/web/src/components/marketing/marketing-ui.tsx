@@ -21,7 +21,8 @@ export function Hero({ badge, title, subtitle, children, compact = false }: { ba
       }} />
       <div className={cn("mx-auto max-w-5xl px-4 text-center sm:px-6", compact ? "pb-14 pt-16 sm:pb-20 sm:pt-24" : "pb-16 pt-16 sm:pb-24 sm:pt-24")}>
         <span className="inline-flex items-center rounded-full border border-white/25 bg-white/10 px-4 py-1.5 text-xs font-medium text-white/90 shadow-[0_0_24px_rgba(34,211,238,0.25)] backdrop-blur">{badge}</span>
-        <h1 className={cn("mt-6 font-semibold leading-[1.08] tracking-tight text-white", compact ? "text-4xl sm:text-5xl lg:text-6xl" : "text-[2.5rem] sm:text-6xl lg:text-7xl")}>{title}</h1>
+        {/* The size comes before the line height: tailwind-merge drops a line height that comes before a font size. */}
+        <h1 className={cn("mt-6 font-semibold tracking-tight text-white", compact ? "text-4xl sm:text-5xl lg:text-6xl" : "text-[2.5rem] sm:text-6xl lg:text-7xl", "leading-[1.1]")}>{title}</h1>
         <p className="mx-auto mt-6 max-w-2xl text-base text-white/75 sm:text-lg">{subtitle}</p>
         {children}
       </div>
@@ -30,8 +31,8 @@ export function Hero({ badge, title, subtitle, children, compact = false }: { ba
 }
 
 /** The call to action of the reference design: a light-blue pill. */
-export const ctaPrimary = "inline-flex h-12 items-center justify-center gap-2 rounded-full bg-cyan-400 px-8 text-base font-semibold text-slate-950 shadow-[0_0_32px_rgba(34,211,238,0.35)] outline-none transition hover:bg-cyan-300 focus-visible:ring-2 focus-visible:ring-white";
-export const ctaSecondary = "inline-flex h-12 items-center justify-center gap-2 rounded-full border border-white/25 bg-white/5 px-8 text-base font-medium text-white outline-none transition hover:bg-white/15 focus-visible:ring-2 focus-visible:ring-cyan-300";
+export const ctaPrimary = "inline-flex h-12 w-full items-center justify-center sm:w-auto gap-2 rounded-full bg-cyan-400 px-8 text-base font-semibold text-slate-950 shadow-[0_0_32px_rgba(34,211,238,0.35)] outline-none transition hover:bg-cyan-300 focus-visible:ring-2 focus-visible:ring-white";
+export const ctaSecondary = "inline-flex h-12 w-full items-center justify-center sm:w-auto gap-2 rounded-full border border-white/25 bg-white/5 px-8 text-base font-medium text-white outline-none transition hover:bg-white/15 focus-visible:ring-2 focus-visible:ring-cyan-300";
 
 export function SectionHeading({ eyebrow, title, intro, id }: { eyebrow?: string; title: string; intro?: string; id: string }) {
   return (

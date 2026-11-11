@@ -15,17 +15,17 @@ export async function MarketingShell({ children }: { children: ReactNode }) {
       <MarketingNav appName={name} />
       <main id="main" className="flex-1">{children}</main>
       <footer className="border-t border-white/10 bg-[#030712]">
-        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
-          <div>
+        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 sm:px-6 grid-cols-2 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
+          <div className="col-span-2 md:col-span-1">
             <p className="text-lg font-semibold">{name}</p>
             <p className="mt-2 max-w-xs text-sm text-white/65">{t("footer.tagline")}</p>
           </div>
-          <FooterGroup title={t("footer.product")} links={[["/", t("nav.home")], ["/about", t("nav.about")], ["/contact", t("nav.contact")]]} />
+          <FooterGroup title={t("footer.product")} links={[["/", t("nav.home")], ["/#workshops", t("nav.workshops")], ["/about", t("nav.about")], ["/contact", t("nav.contact")]]} />
           <nav aria-label={t("footer.company")}>
             <p className="text-sm font-semibold text-white">{t("footer.company")}</p>
-            <ul className="mt-3 grid gap-2">
-              <li><AuthTrigger mode="login" className="text-sm text-white/65 transition hover:text-white">{t("nav.login")}</AuthTrigger></li>
-              <li><AuthTrigger mode="signup" className="text-sm text-white/65 transition hover:text-white">{t("nav.signup")}</AuthTrigger></li>
+            <ul className="mt-2 grid">
+              <li><AuthTrigger mode="login" className="inline-flex min-h-10 items-center text-sm text-white/65 transition hover:text-white">{t("nav.login")}</AuthTrigger></li>
+              <li><AuthTrigger mode="signup" className="inline-flex min-h-10 items-center text-sm text-white/65 transition hover:text-white">{t("nav.signup")}</AuthTrigger></li>
             </ul>
           </nav>
           <FooterGroup title={t("footer.legal")} links={[["/privacy", t("footer.privacy")], ["/terms", t("footer.terms")]]} />
@@ -40,9 +40,9 @@ function FooterGroup({ title, links }: { title: string; links: [string, string][
   return (
     <nav aria-label={title}>
       <p className="text-sm font-semibold text-white">{title}</p>
-      <ul className="mt-3 grid gap-2">
+      <ul className="mt-2 grid">
         {links.map(([href, label]) => (
-          <li key={href}><Link href={href} className="text-sm text-white/65 transition hover:text-white">{label}</Link></li>
+          <li key={href}><Link href={href} className="inline-flex min-h-10 items-center text-sm text-white/65 transition hover:text-white">{label}</Link></li>
         ))}
       </ul>
     </nav>

@@ -19,7 +19,8 @@
     "closeMenu": "关闭菜单",
     "language": "语言",
     "skip": "跳到主要内容",
-    "label": "主导航"
+    "label": "主导航",
+    "workshops": "工作坊"
   },
   "hero": {
     "badge": "专为工作坊工作室打造",
@@ -270,5 +271,15 @@
     "aboutDescription": "我们为什么为工作坊工作室打造简单可靠的预订工具，以及我们的理念。",
     "contactTitle": "联系我们 | Workshop Platform",
     "contactDescription": "有问题、有想法或想要演示？请给我们留言。"
+  },
+  "workshops": {
+    "eyebrow": "发现",
+    "title": "来自我们工作室的工作坊",
+    "intro": "从平台店铺中随机精选。每次访问都有新的惊喜。",
+    "price": "每位 {price}",
+    "minutes": "{n} 分钟",
+    "rating": "评分",
+    "empty": "暂时没有可展示的工作坊。",
+    "open": "打开 {shop} 的 {title}"
   }
 }

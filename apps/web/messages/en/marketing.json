@@ -19,7 +19,8 @@
     "closeMenu": "Close menu",
     "language": "Language",
     "skip": "Skip to content",
-    "label": "Main"
+    "label": "Main",
+    "workshops": "Workshops"
   },
   "hero": {
     "badge": "Built for workshop studios",
@@ -270,5 +271,15 @@
     "aboutDescription": "Why we build simple, reliable booking tools for workshop studios, and what we stand for.",
     "contactTitle": "Contact | Workshop Platform",
     "contactDescription": "Questions, ideas or a walkthrough? Send us a message."
+  },
+  "workshops": {
+    "eyebrow": "Discover",
+    "title": "Workshops from our studios",
+    "intro": "A random pick from the shops on the platform. Come back for a new selection every time.",
+    "price": "{price} / guest",
+    "minutes": "{n} min",
+    "rating": "Rating",
+    "empty": "There is no workshop to show yet.",
+    "open": "Open {title} by {shop}"
   }
 }
