@@ -6,7 +6,9 @@
     "logout": "退出登录",
     "openSite": "返回 {shop}",
     "loading": "正在打开您的账户…",
-    "account": "{name} 的账户"
+    "account": "{name} 的账户",
+    "openMenu": "打开菜单",
+    "closeMenu": "关闭菜单"
   },
   "menu": {
     "profile": "我的资料",

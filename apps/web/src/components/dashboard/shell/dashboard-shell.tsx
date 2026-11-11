@@ -3,7 +3,8 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Menu, X } from "lucide-react";
+import Link from "next/link";
+import { LogOut, Menu, X } from "lucide-react";
 import type { OrgStatus } from "@workshop/shared";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -84,6 +85,12 @@ export function DashboardShell({ shop, banner, support, children }: { shop: Shel
             })}
           </ul>
         </nav>
+        <div className="border-t p-2">
+          <Link href="/login" className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-foreground outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50" data-testid="sidebar-logout">
+            <LogOut className="size-4 shrink-0" aria-hidden />
+            {t("dashboard.shell.logout")}
+          </Link>
+        </div>
         {/* How to reach the platform admin team: the same contact as in the Publish card of the landing page builder. */}
         {support ? <div className="border-t p-3"><SupportContactBox contact={support} variant="sidebar" /></div> : null}
       </aside>

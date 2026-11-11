@@ -6,7 +6,9 @@
     "logout": "Đăng xuất",
     "openSite": "Quay lại {shop}",
     "loading": "Đang mở tài khoản của bạn…",
-    "account": "Tài khoản của {name}"
+    "account": "Tài khoản của {name}",
+    "openMenu": "Mở menu",
+    "closeMenu": "Đóng menu"
   },
   "menu": {
     "profile": "Hồ sơ của tôi",

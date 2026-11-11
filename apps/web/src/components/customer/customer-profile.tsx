@@ -16,6 +16,7 @@ import { CustomerApiError, saveCustomerProfile } from "@/lib/customer-api";
 import { AVATAR_MAX, NAME_MAX, PHONE_MAX, SOCIAL_MAX, toDraft, toInput, trimDraft, validateDraft, type ProfileDraft } from "@/lib/customer-profile-form";
 import { useDirty } from "@/lib/use-dirty";
 import { cn } from "@/lib/utils";
+import { LogOut } from "lucide-react";
 import { useCustomer } from "./customer-shell";
 
 /** Brand names: written the same in every language. */
@@ -30,8 +31,9 @@ const SOCIAL_NAMES: Record<SocialPlatform, string> = {
 export function CustomerProfileView() {
   const t = useTranslations("customer.profile");
   const tc = useTranslations("site.categories");
+  const tShell = useTranslations("customer.shell");
   const locale = useLocale();
-  const { accountId, email, shop, profile, setProfile } = useCustomer();
+  const { accountId, email, shop, profile, setProfile, logout } = useCustomer();
   const [draft, setDraft] = useState<ProfileDraft>(() => toDraft(profile));
   const [savedCount, setSavedCount] = useState(0); // the form is "clean" again after each save
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -157,6 +159,7 @@ export function CustomerProfileView() {
         </CardContent>
       </Card>
       <div className="flex flex-wrap items-center justify-end gap-3">
+        <Button type="button" variant="outline" className="mr-auto" onClick={logout} data-testid="customer-profile-logout"><LogOut aria-hidden />{tShell("logout")}</Button>
         {message === "saved" ? <p role="status" className="text-sm text-emerald-700" data-testid="customer-profile-saved">{t("saved")}</p> : null}
         {message === "failed" ? <p role="alert" className="text-sm text-destructive">{t("saveFailed")}</p> : null}
         <Button type="submit" disabled={!dirty || saving}>{saving ? t("saving") : t("save")}</Button>

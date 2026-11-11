@@ -6,7 +6,9 @@
     "logout": "Log out",
     "openSite": "Back to {shop}",
     "loading": "Opening your account…",
-    "account": "Account of {name}"
+    "account": "Account of {name}",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
   },
   "menu": {
     "profile": "My Profile",

@@ -6,7 +6,9 @@
     "logout": "로그아웃",
     "openSite": "{shop}(으)로 돌아가기",
     "loading": "계정을 여는 중…",
-    "account": "{name}님의 계정"
+    "account": "{name}님의 계정",
+    "openMenu": "메뉴 열기",
+    "closeMenu": "메뉴 닫기"
   },
   "menu": {
     "profile": "내 프로필",

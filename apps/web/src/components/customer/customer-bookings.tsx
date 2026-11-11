@@ -130,14 +130,14 @@ export function CustomerBookings() {
       </ul>
 
       {/* Search and filters: the code, the workshop or the shop; a workshop; a range of days. */}
-      <form role="search" className="grid gap-3 rounded-2xl border bg-background p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-4" onSubmit={(e) => e.preventDefault()}>
-        <Field htmlFor="cb-search" label={tb("searchLabel")} className="sm:col-span-2 lg:col-span-1">
+      <form role="search" className="grid grid-cols-2 gap-3 rounded-2xl border bg-background p-3 shadow-sm sm:p-4 lg:grid-cols-4" onSubmit={(e) => e.preventDefault()}>
+        <Field htmlFor="cb-search" label={tb("searchLabel")} className="col-span-2 lg:col-span-1">
           <div className="relative">
             <Search className="pointer-events-none absolute start-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
             <Input id="cb-search" type="search" value={text} onChange={(e) => setText(e.target.value)} placeholder={tb("searchPlaceholder")} autoComplete="off" className="ps-8" />
           </div>
         </Field>
-        <Field htmlFor="cb-workshop" label={tb("workshopLabel")}>
+        <Field htmlFor="cb-workshop" label={tb("workshopLabel")} className="col-span-2 lg:col-span-1">
           <NativeSelect id="cb-workshop" value={workshopId} onChange={(e) => setWorkshopId(e.target.value)}>
             <option value="">{tb("allWorkshops")}</option>
             {workshops.map((w) => <option key={w.id} value={w.id}>{w.title}</option>)}
@@ -145,7 +145,7 @@ export function CustomerBookings() {
         </Field>
         <Field htmlFor="cb-from" label={tb("from")}><DateInput id="cb-from" value={from} max={to || undefined} onChange={setFrom} /></Field>
         <Field htmlFor="cb-to" label={tb("to")}><DateInput id="cb-to" value={to} min={from || undefined} onChange={setTo} /></Field>
-        {filtered ? <div className="sm:col-span-2 lg:col-span-4"><Button type="button" variant="outline" size="sm" onClick={clear}>{tb("clear")}</Button></div> : null}
+        {filtered ? <div className="col-span-2 lg:col-span-4"><Button type="button" variant="outline" size="sm" onClick={clear}>{tb("clear")}</Button></div> : null}
       </form>
 
       {cancelled ? <p role="status" className="rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-900" data-testid="customer-bookings-cancelled">{tb("cancelledDone", { code: cancelled })}</p> : null}
