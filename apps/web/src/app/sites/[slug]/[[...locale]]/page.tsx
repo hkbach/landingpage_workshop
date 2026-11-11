@@ -4,7 +4,8 @@ import { SiteBody } from "@/components/site/SiteBody";
 import { SiteFrame } from "@/components/site/SiteFrame";
 import { SiteIntlProvider } from "@/components/site/SiteIntlProvider";
 import { getSiteBase } from "@/components/site/site-base";
-import { localePath, siteOrigin } from "@/components/site/site-url";
+import { localePath } from "@/components/site/site-url";
+import { shopOrigin } from "@/lib/mock/shop-domain-store";
 import { requireSite, resolveLocale } from "@/components/site/resolve";
 import { safeImage } from "@/components/sections/safe-url";
 import type { PageContent } from "@/lib/types";
@@ -22,7 +23,7 @@ export async function generateMetadata({ params }: PageProps<"/sites/[slug]/[[..
   const site = requireSite(slug);
   const locale = resolveLocale(site, segs);
   const { shop, content } = site;
-  const origin = siteOrigin(slug);
+  const origin = shopOrigin(slug); // canonical and hreflang use the own domain of the shop when it has one
   const title = pickLocalized(content.seo.title, locale, shop.defaultLocale) || shop.name;
   const description = pickLocalized(content.seo.description, locale, shop.defaultLocale);
   const image = heroImage(content);

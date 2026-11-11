@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { DEMO_SHOP_SLUG, SHOP_SECTIONS } from "@/lib/shop-path";
+import { slugForDomain } from "@/lib/mock/shop-domain-store";
 
 const PLATFORM_DOMAIN = process.env.PLATFORM_DOMAIN ?? "localtest.me";
 
@@ -13,6 +14,13 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
   const host = (request.headers.get("host") ?? "").split(":")[0]!.toLowerCase();
+  // The own domain of a shop (shop.example.com): the whole host is the landing page of that shop, like {slug}.PLATFORM_DOMAIN (so never the admin or the owner area on that origin).
+  const own = slugForDomain(host);
+  if (own) {
+    const url = request.nextUrl.clone();
+    url.pathname = `/sites/${own}${url.pathname === "/" ? "" : url.pathname}`;
+    return NextResponse.rewrite(url);
+  }
   const platformHost = host === PLATFORM_DOMAIN || host === `app.${PLATFORM_DOMAIN}` || !host.endsWith(`.${PLATFORM_DOMAIN}`);
   // The system admin area has its own set of languages: the i18n request config reads this header (see i18n/request.ts). It is only served on the
   // platform's own hosts: on a shop's host the path is a page of the shop site (so a 404), never the admin area on the shop's origin.

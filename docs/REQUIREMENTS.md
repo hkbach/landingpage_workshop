@@ -64,7 +64,7 @@ Giá trị cốt lõi:
 
 - Thanh toán online, refund online, tính phí shop (billing).
 - Request booking, lịch linh hoạt, promotion/khuyến mãi.
-- Nhiều page/shop, revision/rollback đầy đủ, custom domain.
+- Nhiều page/shop, revision/rollback đầy đủ. (*Custom domain đã được đưa vào phạm vi ở mức hạn chế, xem FR-ORG-02.*)
 - Nhân viên shop (Manager/Staff), Product Order, Custom Order.
 - Marketplace tổng hợp shop, tài khoản khách, app mobile native.
 - Khách tự hủy booking.
@@ -269,6 +269,13 @@ Browser ────────────────────────
 **FR-ORG-02 – Cài đặt shop (Must)**
 - Sửa thông tin shop, timezone, currency, ngôn ngữ.
 - **Đổi currency hoặc timezone** khi đã có booking: hiển thị cảnh báo; không chuyển đổi dữ liệu cũ.
+- **Tên miền riêng (custom domain):** ở Settings có thẻ **"Your own domain"** với ô **Domain** (tùy chọn). Khi shop nhập `www.studio-cua-ban.com`, **landing page được phục vụ tại tên miền đó** thay cho `{slug}.{PLATFORM_DOMAIN}` (địa chỉ hệ thống vẫn dùng được, không bị tắt).
+  - Chuẩn hóa và kiểm tra (`checkCustomDomain` trong `packages/shared`, dùng chung ở form và server): `trim`, chữ thường, bỏ `https://`, đường dẫn, query, cổng, dấu chấm cuối (dán nguyên URL vẫn được); tên Unicode đổi sang punycode; từ chối IP, `localhost`, tên một nhãn, nhãn > 63 ký tự hoặc bắt đầu / kết thúc bằng `-`, tên > 253 ký tự, đuôi không phải chữ, và **tên miền của nền tảng cùng mọi subdomain** (`PLATFORM`). Để trống = bỏ tên miền riêng.
+  - Mỗi tên miền chỉ thuộc **một shop** (`409 DOMAIN_TAKEN`). Nút Save theo BR-17; chuỗi được `trim()` (BR-16).
+  - Form hiển thị hướng dẫn DNS: tạo bản ghi **CNAME trỏ tới `{slug}.{PLATFORM_DOMAIN}`**; tới khi tên miền hoạt động khách vẫn dùng địa chỉ hệ thống.
+  - Proxy: host trùng tên miền riêng của một shop được viết lại thành `/sites/{slug}` (như subdomain), nên **chỉ có landing page của shop**; `/systemadmin`, `/shopowner`, `/customer`... trả 404 trên host đó. Canonical, hreflang, sitemap, robots, link xác nhận trong email booking, link affiliate / referral dùng tên miền riêng khi có.
+  - API: `GET /shop/domain`, `PUT /shop/domain` `{domain}` (`422` kèm `fields.domain` = `invalid | platform | tooLong`). Ghi audit `shop.domain_set` / `shop.domain_remove` (`cũ -> mới`); admin sửa từ khu admin được ghi là System Admin.
+  - *Giới hạn MVP (mock):* chưa kiểm tra DNS thật, chưa cấp chứng chỉ TLS cho tên miền (TODO(api): Caddy on-demand TLS có hỏi trước tên miền nào được cấp, cột `organizations.custom_domain` unique, tùy chọn chuyển hướng `{slug}.{PLATFORM_DOMAIN}` sang tên miền riêng). Danh sách admin (Landing pages, Shops) vẫn hiện địa chỉ hệ thống. **Cần người duyệt** trước khi bật ở production vì ảnh hưởng hạ tầng (DNS, TLS, bảo mật host).
 - **Slug không bao giờ đổi:** sau khi shop được tạo, slug **không thể thay đổi trong suốt quá trình sử dụng hệ thống, kể cả admin** (không có màn hình hay API đổi slug; backend từ chối mọi cập nhật `organizations.slug`, nên cũng không cần redirect slug cũ).
 
 ### 5.2 Landing page builder

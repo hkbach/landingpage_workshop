@@ -129,7 +129,9 @@
       "regional": "Region and currency",
       "regionalDesc": "Used for session times and prices.",
       "languages": "Languages",
-      "languagesDesc": "Languages offered on your public landing page."
+      "languagesDesc": "Languages offered on your public landing page.",
+      "domain": "Your own domain",
+      "domainDesc": "Use your own web address for your landing page instead of the one we create for you."
     },
     "fields": {
       "name": "Shop name",
@@ -143,10 +145,12 @@
       "currency": "Currency",
       "defaultLocale": "Default language",
       "enabledLocales": "Enabled languages",
-      "enabledLocalesHint": "Text already written in a language you turn off is kept, but it is not shown or edited."
+      "enabledLocalesHint": "Text already written in a language you turn off is kept, but it is not shown or edited.",
+      "customDomain": "Domain (optional)"
     },
     "hints": {
-      "mapsUrl": "Must start with https://"
+      "mapsUrl": "Must start with https://",
+      "customDomain": "For example www.your-studio.com. Type only the name, without https:// or a path. Leave empty to use the address we create."
     },
     "warning": {
       "regional": "Changing the timezone or currency does not convert existing bookings, sessions or prices. Existing data keeps its original values."
@@ -161,7 +165,16 @@
       "addressRequired": "Enter an address.",
       "urlInvalid": "Enter a URL starting with https://",
       "required": "This field is required.",
-      "defaultMustBeEnabled": "The default language must be enabled."
+      "defaultMustBeEnabled": "The default language must be enabled.",
+      "domainInvalid": "Enter a domain name such as www.your-studio.com.",
+      "domainPlatform": "This domain belongs to the platform. Enter your own domain.",
+      "domainTaken": "Another shop already uses this domain.",
+      "domainFailed": "The domain could not be saved. Please try again."
+    },
+    "domain": {
+      "dnsTitle": "How to connect it",
+      "dnsBody": "At your domain provider, add a CNAME record for this name that points to {target}. Guests keep using {target} until your domain works.",
+      "systemAddress": "Your address {host} keeps working too."
     }
   },
   "onboarding": {

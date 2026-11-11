@@ -1,6 +1,7 @@
 import { LandingPageList } from "@/components/builder/LandingPageList";
 import { countWorkshopsWithUpcomingSessions } from "@/components/builder/prereqs";
 import { PLATFORM_DOMAIN } from "@/components/site/site-url";
+import { getCustomDomain } from "@/lib/mock/shop-domain-store";
 import { currentShop, mockLandingPages, sessions, sitePage, workshops } from "@/lib/mock/data";
 
 // The shop owner's landing pages (up to MAX_LANDING_PAGES_PER_SHOP, one public at a time). Each is edited at /shopowner/site/{pageId}.
@@ -8,7 +9,7 @@ export default function LandingPagesPage() {
   return (
     <LandingPageList
       mainPage={{ name: currentShop.name, template: sitePage.template, seed: mockLandingPages }}
-      shopHost={`${currentShop.slug}.${PLATFORM_DOMAIN}`}
+      shopHost={getCustomDomain(currentShop.slug) || `${currentShop.slug}.${PLATFORM_DOMAIN}`}
       shop={{ name: currentShop.name, defaultLocale: currentShop.defaultLocale, contactEmail: currentShop.contactEmail, contactPhone: currentShop.contactPhone }}
       shopStatus={currentShop.status}
       upcomingWorkshopCount={countWorkshopsWithUpcomingSessions(workshops, sessions)}

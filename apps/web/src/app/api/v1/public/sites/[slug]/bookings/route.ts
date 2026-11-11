@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { LOCALES } from "@workshop/shared";
 import { apiError, fieldCodes } from "@/lib/api-error";
-import { siteOrigin } from "@/components/site/site-url";
+import { shopOrigin } from "@/lib/mock/shop-domain-store";
 import { currentShop } from "@/lib/mock/data";
 import { createGuestBooking, demoConfirmToken } from "@/lib/mock/booking-store";
 import { attributeBooking } from "@/lib/mock/referral-store";
@@ -40,7 +40,7 @@ export async function POST(request: Request, ctx: RouteContext<"/api/v1/public/s
   // The link in the email points at the site of the shop ({slug}.PLATFORM_DOMAIN), with the port of the server in development.
   const raw = (request.headers.get("host") ?? new URL(request.url).host).split(":")[1];
   const port = raw && /^\d{1,5}$/.test(raw) ? raw : undefined; // only a port number goes into the link (the Host header comes from the client)
-  const base = siteOrigin(slug);
+  const base = shopOrigin(slug); // its own domain when the shop has one
   const origin = port && base.startsWith("http:") ? `${base}:${port}` : base;
   const res = createGuestBooking(parsed.data, (token) => `${origin}/booking/confirm/${token}`, request.headers.get("idempotency-key") ?? undefined);
   if (!res.ok) {

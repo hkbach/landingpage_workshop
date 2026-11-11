@@ -1,6 +1,7 @@
 import { hreflangOf } from "@workshop/shared";
 import { getPublicSite } from "@/lib/mock/site";
-import { localePath, siteOrigin } from "@/components/site/site-url";
+import { localePath } from "@/components/site/site-url";
+import { shopOrigin } from "@/lib/mock/shop-domain-store";
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
@@ -10,7 +11,7 @@ export async function GET(_req: Request, ctx: RouteContext<"/sites/[slug]/sitema
   const site = getPublicSite(slug);
   if (!site) return new Response("Not found", { status: 404 });
   const { shop } = site;
-  const origin = siteOrigin(slug);
+  const origin = shopOrigin(slug);
   const alternates = (): string =>
     shop.enabledLocales
       .map((l) => `<xhtml:link rel="alternate" hreflang="${hreflangOf(l)}" href="${esc(origin + localePath("", l, shop.defaultLocale))}"/>`)

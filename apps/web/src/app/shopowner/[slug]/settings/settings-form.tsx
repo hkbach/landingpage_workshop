@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { AlertTriangle } from "lucide-react";
-import { LOCALES, type Locale } from "@workshop/shared";
+import { checkCustomDomain, LOCALES, type Locale } from "@workshop/shared";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { zodResolver } from "@/lib/zod-resolver";
 
 const localeEnum = z.enum(LOCALES);
+const PLATFORM_DOMAIN = process.env.NEXT_PUBLIC_PLATFORM_DOMAIN || "localtest.me";
 
 const schema = z
   .object({
@@ -32,18 +33,24 @@ const schema = z
     currency: z.string().min(1, "errors.required"),
     defaultLocale: localeEnum,
     enabledLocales: z.array(localeEnum),
+    /** The own domain of the shop; empty = none. Cleaned the same way on the server (checkCustomDomain). */
+    customDomain: z.string().max(300).superRefine((v, ctx) => {
+      const r = checkCustomDomain(v, PLATFORM_DOMAIN);
+      if (!r.ok) ctx.addIssue({ code: "custom", message: r.error === "PLATFORM" ? "errors.domainPlatform" : "errors.domainInvalid" });
+    }),
   })
   .refine((v) => v.enabledLocales.includes(v.defaultLocale), { path: ["enabledLocales"], message: "errors.defaultMustBeEnabled" });
 
 type Values = z.infer<typeof schema>;
 
-export function SettingsForm({ initial, hasBookings, readOnly }: { initial: Values; hasBookings: boolean; readOnly: boolean }) {
+export function SettingsForm({ initial, hasBookings, readOnly, systemHost }: { initial: Values; hasBookings: boolean; readOnly: boolean; /** {slug}.{PLATFORM_DOMAIN}: the address the shop always has, and where the DNS record of its own domain points. */ systemHost: string }) {
   const t = useTranslations("dashboard.settings");
   const tc = useTranslations("common");
   const uiLocale = useLocale();
   const [saved, setSaved] = useState(false);
+  const [savedDomain, setSavedDomain] = useState(initial.customDomain); // the domain the server has: the next Save compares with it
   const form = useForm<Values>({ resolver: zodResolver(schema), defaultValues: initial });
-  const { register, handleSubmit, control, setValue, reset, formState: { errors, isSubmitting, isDirty } } = form;
+  const { register, handleSubmit, control, setValue, setError, reset, formState: { errors, isSubmitting, isDirty } } = form;
 
   const timezone = useWatch({ control, name: "timezone" });
   const currency = useWatch({ control, name: "currency" });
@@ -90,7 +97,19 @@ export function SettingsForm({ initial, hasBookings, readOnly }: { initial: Valu
       onSubmit={handleSubmit(async (values) => {
         setSaved(false);
         await new Promise((r) => setTimeout(r, 700));
-        reset(values);
+        // The own domain is the one setting that is kept by the server (it changes where the landing page is served); the server cleans and checks it again.
+        const cleaned = checkCustomDomain(values.customDomain, PLATFORM_DOMAIN);
+        const domain = cleaned.ok ? cleaned.domain : "";
+        if (domain !== savedDomain) {
+          const res = await fetch("/api/v1/shop/domain", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ domain }) }).catch(() => null);
+          if (!res?.ok) {
+            const code = res?.status === 409 ? "errors.domainTaken" : res?.status === 422 ? "errors.domainInvalid" : "errors.domainFailed";
+            setError("customDomain", { message: code });
+            return;
+          }
+        }
+        setSavedDomain(domain);
+        reset({ ...values, customDomain: domain });
         setSaved(true);
       })}
     >
@@ -150,6 +169,24 @@ export function SettingsForm({ initial, hasBookings, readOnly }: { initial: Valu
               <p>{t("warning.regional")}</p>
             </div>
           ) : null}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("sections.domain")}</CardTitle>
+          <CardDescription>{t("sections.domainDesc")}</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          <Field htmlFor="s-domain" label={t("fields.customDomain")} hint={t("hints.customDomain")} error={err("customDomain")} className="sm:max-w-md">
+            <Input inputMode="url" autoComplete="off" autoCapitalize="none" spellCheck={false} placeholder="www.your-studio.com" {...common("s-domain", "customDomain", true)} {...register("customDomain")} />
+          </Field>
+          <div className="grid gap-2 rounded-lg border bg-muted/40 p-3 text-sm" data-testid="domain-help">
+            <p className="font-medium">{t("domain.dnsTitle")}</p>
+            <p>{t("domain.dnsBody", { target: systemHost })}</p>
+            <p className="font-mono text-xs" data-testid="domain-target">CNAME → {systemHost}</p>
+            <p className="text-muted-foreground">{t("domain.systemAddress", { host: systemHost })}</p>
+          </div>
         </CardContent>
       </Card>
 

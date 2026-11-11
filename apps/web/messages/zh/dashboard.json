@@ -129,7 +129,9 @@
       "regional": "地区与货币",
       "regionalDesc": "用于场次时间和价格。",
       "languages": "语言",
-      "languagesDesc": "您的公开落地页提供的语言。"
+      "languagesDesc": "您的公开落地页提供的语言。",
+      "domain": "自有域名",
+      "domainDesc": "为您的落地页使用自己的网址，而不是系统自动生成的地址。"
     },
     "fields": {
       "name": "店铺名称",
@@ -143,10 +145,12 @@
       "currency": "货币",
       "defaultLocale": "默认语言",
       "enabledLocales": "已启用的语言",
-      "enabledLocalesHint": "已用被关闭语言写好的文字会保留，但不会显示或编辑。"
+      "enabledLocalesHint": "已用被关闭语言写好的文字会保留，但不会显示或编辑。",
+      "customDomain": "域名（可选）"
     },
     "hints": {
-      "mapsUrl": "必须以 https:// 开头"
+      "mapsUrl": "必须以 https:// 开头",
+      "customDomain": "例如 www.your-studio.com。只填写域名，不要带 https:// 或路径。留空则使用系统生成的地址。"
     },
     "warning": {
       "regional": "更改时区或货币不会转换现有的预订、场次或价格。现有数据保持其原始值。"
@@ -161,7 +165,16 @@
       "addressRequired": "请输入地址。",
       "urlInvalid": "请输入以 https:// 开头的网址",
       "required": "此项为必填项。",
-      "defaultMustBeEnabled": "默认语言必须处于启用状态。"
+      "defaultMustBeEnabled": "默认语言必须处于启用状态。",
+      "domainInvalid": "请输入域名，例如 www.your-studio.com。",
+      "domainPlatform": "该域名属于平台，请输入您自己的域名。",
+      "domainTaken": "另一家店铺已在使用该域名。",
+      "domainFailed": "域名保存失败，请重试。"
+    },
+    "domain": {
+      "dnsTitle": "如何连接",
+      "dnsBody": "在您的域名服务商处，为该域名添加一条指向 {target} 的 CNAME 记录。在您的域名生效之前，顾客会继续使用 {target}。",
+      "systemAddress": "您的地址 {host} 仍然可以使用。"
     }
   },
   "onboarding": {

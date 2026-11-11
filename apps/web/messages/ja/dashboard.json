@@ -129,7 +129,9 @@
       "regional": "地域と通貨",
       "regionalDesc": "セッションの時刻と料金に使用されます。",
       "languages": "言語",
-      "languagesDesc": "公開ランディングページで提供する言語です。"
+      "languagesDesc": "公開ランディングページで提供する言語です。",
+      "domain": "独自ドメイン",
+      "domainDesc": "自動で作られるアドレスの代わりに、ご自身のウェブアドレスをランディングページに使えます。"
     },
     "fields": {
       "name": "ショップ名",
@@ -143,10 +145,12 @@
       "currency": "通貨",
       "defaultLocale": "デフォルト言語",
       "enabledLocales": "有効な言語",
-      "enabledLocalesHint": "オフにした言語で入力済みのテキストは保持されますが、表示や編集はされません。"
+      "enabledLocalesHint": "オフにした言語で入力済みのテキストは保持されますが、表示や編集はされません。",
+      "customDomain": "ドメイン(任意)"
     },
     "hints": {
-      "mapsUrl": "https:// で始まる必要があります"
+      "mapsUrl": "https:// で始まる必要があります",
+      "customDomain": "例: www.your-studio.com。https:// やパスは付けず、名前だけを入力してください。空欄の場合は自動で作られるアドレスを使います。"
     },
     "warning": {
       "regional": "タイムゾーンや通貨を変更しても、既存の予約、セッション、料金は換算されません。既存のデータは元の値のままです。"
@@ -161,7 +165,16 @@
       "addressRequired": "住所を入力してください。",
       "urlInvalid": "https:// で始まる URL を入力してください",
       "required": "この項目は必須です。",
-      "defaultMustBeEnabled": "デフォルト言語は有効にする必要があります。"
+      "defaultMustBeEnabled": "デフォルト言語は有効にする必要があります。",
+      "domainInvalid": "www.your-studio.com のようなドメイン名を入力してください。",
+      "domainPlatform": "このドメインはプラットフォームのものです。ご自身のドメインを入力してください。",
+      "domainTaken": "このドメインはすでに別のショップが使っています。",
+      "domainFailed": "ドメインを保存できませんでした。もう一度お試しください。"
+    },
+    "domain": {
+      "dnsTitle": "接続方法",
+      "dnsBody": "ドメインの管理会社で、この名前の CNAME レコードを追加し、{target} を指定してください。ドメインが有効になるまで、ゲストは {target} を使い続けます。",
+      "systemAddress": "{host} のアドレスも引き続き使えます。"
     }
   },
   "onboarding": {

@@ -22,3 +22,4 @@ export * from "./workshop-categories";
 export * from "./workshop-address";
 export * from "./password-rules";
 export * from "./workshop-ranking";
+export * from "./custom-domain";

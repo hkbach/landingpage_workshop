@@ -129,7 +129,9 @@
       "regional": "Khu vực và tiền tệ",
       "regionalDesc": "Dùng cho giờ của buổi và giá.",
       "languages": "Ngôn ngữ",
-      "languagesDesc": "Các ngôn ngữ cung cấp trên trang giới thiệu công khai của bạn."
+      "languagesDesc": "Các ngôn ngữ cung cấp trên trang giới thiệu công khai của bạn.",
+      "domain": "Tên miền riêng",
+      "domainDesc": "Dùng địa chỉ web riêng cho landing page thay cho địa chỉ hệ thống tự tạo."
     },
     "fields": {
       "name": "Tên cửa hàng",
@@ -143,10 +145,12 @@
       "currency": "Tiền tệ",
       "defaultLocale": "Ngôn ngữ mặc định",
       "enabledLocales": "Ngôn ngữ đã bật",
-      "enabledLocalesHint": "Nội dung đã nhập bằng một ngôn ngữ bạn tắt vẫn được giữ lại, nhưng sẽ không được hiển thị hay chỉnh sửa."
+      "enabledLocalesHint": "Nội dung đã nhập bằng một ngôn ngữ bạn tắt vẫn được giữ lại, nhưng sẽ không được hiển thị hay chỉnh sửa.",
+      "customDomain": "Tên miền (tùy chọn)"
     },
     "hints": {
-      "mapsUrl": "Phải bắt đầu bằng https://"
+      "mapsUrl": "Phải bắt đầu bằng https://",
+      "customDomain": "Ví dụ www.studio-cua-ban.com. Chỉ nhập tên miền, không có https:// hay đường dẫn. Để trống để dùng địa chỉ hệ thống tạo."
     },
     "warning": {
       "regional": "Thay đổi múi giờ hoặc tiền tệ không chuyển đổi các đặt chỗ, buổi hoặc giá hiện có. Dữ liệu hiện có giữ nguyên giá trị ban đầu."
@@ -161,7 +165,16 @@
       "addressRequired": "Vui lòng nhập địa chỉ.",
       "urlInvalid": "Vui lòng nhập URL bắt đầu bằng https://",
       "required": "Trường này là bắt buộc.",
-      "defaultMustBeEnabled": "Ngôn ngữ mặc định phải được bật."
+      "defaultMustBeEnabled": "Ngôn ngữ mặc định phải được bật.",
+      "domainInvalid": "Nhập tên miền, ví dụ www.studio-cua-ban.com.",
+      "domainPlatform": "Tên miền này thuộc về nền tảng. Hãy nhập tên miền của bạn.",
+      "domainTaken": "Một shop khác đang dùng tên miền này.",
+      "domainFailed": "Không lưu được tên miền. Vui lòng thử lại."
+    },
+    "domain": {
+      "dnsTitle": "Cách kết nối",
+      "dnsBody": "Tại nhà cung cấp tên miền, thêm bản ghi CNAME cho tên này trỏ tới {target}. Khách vẫn truy cập qua {target} cho đến khi tên miền của bạn hoạt động.",
+      "systemAddress": "Địa chỉ {host} vẫn dùng được."
     }
   },
   "onboarding": {
