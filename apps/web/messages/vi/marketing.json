@@ -2,39 +2,273 @@
   "legal": {
     "back": "Về trang chủ",
     "pendingNotice": "Trang này chỉ là nội dung tạm. Nội dung chính thức sẽ do bộ phận pháp lý cung cấp trước khi ra mắt.",
-    "terms": { "title": "Điều khoản dịch vụ" },
-    "privacy": { "title": "Chính sách quyền riêng tư" }
-  },
-  "nav": { "label": "Chính", "login": "Đăng nhập", "signup": "Bắt đầu" },
-  "hero": {
-    "title": "Trang giới thiệu sẵn sàng nhận đặt chỗ cho studio workshop của bạn",
-    "subtitle": "Xuất bản trang đa ngôn ngữ trong vài phút, nhận đặt chỗ cho các buổi workshop và quản lý chỗ ngồi, khách hàng và thanh toán ở một nơi.",
-    "cta": "Tạo cửa hàng của bạn",
-    "secondary": "Đăng nhập"
-  },
-  "how": {
-    "title": "Cách hoạt động",
-    "steps": {
-      "create": { "title": "Tạo cửa hàng của bạn", "body": "Đăng ký, chọn địa chỉ và ngôn ngữ, rồi thêm thông tin liên hệ." },
-      "design": { "title": "Xây dựng trang của bạn", "body": "Chọn mẫu, chỉnh sửa các phần, thêm workshop và lên lịch các buổi." },
-      "share": { "title": "Chia sẻ và nhận đặt chỗ", "body": "Xuất bản trang. Khách đặt chỗ và bạn quản lý mọi thứ từ bảng điều khiển." }
+    "terms": {
+      "title": "Điều khoản dịch vụ"
+    },
+    "privacy": {
+      "title": "Chính sách quyền riêng tư"
     }
   },
-  "features": {
-    "title": "Mọi thứ một studio nhỏ cần",
+  "nav": {
+    "home": "Trang chủ",
+    "about": "Về chúng tôi",
+    "contact": "Liên hệ",
+    "login": "Đăng nhập",
+    "signup": "Đăng ký",
+    "openMenu": "Mở menu",
+    "closeMenu": "Đóng menu",
+    "language": "Ngôn ngữ",
+    "skip": "Chuyển đến nội dung",
+    "label": "Điều hướng chính"
+  },
+  "hero": {
+    "badge": "Dành cho studio workshop",
+    "title": "Biến <hl>Workshop</hl> <em>thành lớp học kín chỗ</em>",
+    "subtitle": "Tạo trang đa ngôn ngữ thật đẹp, nhận booking không bao giờ vượt quá số chỗ, và quản lý khách, thanh toán, tăng trưởng trong một bảng điều khiển gọn gàng.",
+    "cta": "Tạo shop của bạn",
+    "secondary": "Xem cách hoạt động",
+    "note": "Trang của bạn. Địa chỉ của bạn. Khách của bạn."
+  },
+  "stats": {
+    "languages": {
+      "value": "5",
+      "label": "ngôn ngữ cho trang của bạn và khách hàng"
+    },
+    "seats": {
+      "value": "0",
+      "label": "session bị đặt quá chỗ: sức chứa được kiểm soát ở mỗi booking"
+    },
+    "always": {
+      "value": "24/7",
+      "label": "trang đặt chỗ hoạt động ngay cả khi bạn đang dạy"
+    }
+  },
+  "why": {
+    "eyebrow": "Vì sao chọn Workshop Platform",
+    "title": "Mọi thứ studio cần, không thừa thứ nào",
+    "intro": "Chúng tôi xây những công cụ mà các studio nhỏ luôn cần và bỏ đi mọi thứ rườm rà.",
     "items": {
-      "builder": { "title": "Trình tạo trang giới thiệu", "body": "Các mẫu có sẵn với những phần bạn có thể sắp xếp lại, chỉnh sửa và xem trước." },
-      "booking": { "title": "Đặt chỗ an toàn", "body": "Sức chứa của buổi được kiểm soát nên một buổi không bao giờ bị đặt quá chỗ." },
-      "multilingual": { "title": "Trang đa ngôn ngữ", "body": "Cung cấp trang của bạn bằng tiếng Anh, tiếng Việt, tiếng Hàn và tiếng Nhật." },
-      "payments": { "title": "Theo dõi thanh toán", "body": "Ghi lại các khoản thanh toán tiền mặt, thẻ, chuyển khoản và hoàn tiền cho từng đặt chỗ." },
-      "customers": { "title": "Danh sách khách hàng", "body": "Lưu khách và lịch sử đặt chỗ của họ cùng một nơi." },
-      "subdomain": { "title": "Địa chỉ riêng của bạn", "body": "Mỗi cửa hàng có một tên miền phụ riêng cho trang công khai." }
+      "page": {
+        "title": "Một trang biết cách bán hàng",
+        "body": "Chọn mẫu, chỉnh sửa các mục có sẵn và xuất bản chỉ trong vài phút. Studio của bạn có trang giới thiệu chuyên nghiệp với địa chỉ riêng, không cần nhà thiết kế hay lập trình viên."
+      },
+      "seats": {
+        "title": "Booking không bao giờ vượt chỗ",
+        "body": "Mỗi booking giữ chỗ an toàn, kể cả khi nhiều khách đặt cùng lúc. Khi session đã đầy, hệ thống báo rõ và bạn không phải xin lỗi ai."
+      },
+      "languages": {
+        "title": "Nói ngôn ngữ của khách",
+        "body": "Xuất bản bằng tiếng Anh, Việt, Hàn, Nhật và Trung. Khách đọc và đặt chỗ bằng ngôn ngữ họ chọn."
+      },
+      "payments": {
+        "title": "Biết ai đã thanh toán",
+        "body": "Ghi nhận thanh toán tiền mặt, thẻ, chuyển khoản và hoàn tiền cho từng booking, xem thu nhập chỉ trong một cái nhìn."
+      },
+      "guests": {
+        "title": "Khách quay lại",
+        "body": "Lưu khách cùng lịch sử booking ở một nơi. Check-in khách trong ngày và biết ai sắp đến."
+      },
+      "growth": {
+        "title": "Tăng trưởng có sẵn",
+        "body": "Khách có thể kiếm tiền khi chia sẻ workshop bằng liên kết affiliate hoặc mời bạn bè, để cộng đồng của bạn cùng giúp bạn phát triển."
+      }
+    }
+  },
+  "how": {
+    "eyebrow": "Cách hoạt động",
+    "title": "Từ ý tưởng đến booking đầu tiên trong ba bước",
+    "steps": {
+      "create": {
+        "title": "Tạo shop",
+        "body": "Đăng ký, chọn địa chỉ và ngôn ngữ, thêm thông tin liên hệ."
+      },
+      "design": {
+        "title": "Xây trang của bạn",
+        "body": "Chọn mẫu, chỉnh sửa các mục, thêm workshop và lên lịch session."
+      },
+      "share": {
+        "title": "Xuất bản và nhận booking",
+        "body": "Xuất bản chỉ với một cú nhấp, không cần chờ duyệt. Khách đặt chỗ và bạn quản lý mọi thứ từ bảng điều khiển."
+      }
+    }
+  },
+  "guests": {
+    "eyebrow": "Dành cho khách của bạn",
+    "title": "Trải nghiệm đặt chỗ khiến khách yêu thích",
+    "intro": "Khách hài lòng sẽ đặt lại và giới thiệu bạn bè. Chúng tôi làm mọi bước thật dễ dàng cho họ.",
+    "items": {
+      "book": {
+        "title": "Đặt chỗ chỉ vài chạm",
+        "body": "Chọn session, chọn số chỗ là xong. Email xác nhận được gửi ngay."
+      },
+      "today": {
+        "title": "Trang Today riêng cho khách",
+        "body": "Khách xem workshop hôm nay, check-in đúng ngày và mở chỉ đường chỉ với một chạm."
+      },
+      "favorites": {
+        "title": "Workshop được chọn cho họ",
+        "body": "Khách chọn danh mục yêu thích và thấy workshop phù hợp trước, trong khi shop nào cũng có lượt được hiển thị nổi bật."
+      },
+      "earn": {
+        "title": "Thưởng khi chia sẻ",
+        "body": "Khách nhận thưởng khi bạn bè đặt chỗ qua liên kết của họ hoặc đăng ký bằng lời mời, và có thể yêu cầu rút tiền."
+      }
+    }
+  },
+  "faq": {
+    "title": "Giải đáp thắc mắc",
+    "items": {
+      "q1": {
+        "q": "Tôi có cần biết kỹ thuật không?",
+        "a": "Không. Chọn một mẫu rồi chỉnh sửa chữ và hình ảnh trong trình dựng trang. Chúng tôi lo hosting, địa chỉ và việc đặt chỗ."
+      },
+      "q2": {
+        "q": "Session có thể bị đặt quá chỗ không?",
+        "a": "Không. Chỗ được giữ an toàn ngay khi đặt, nên session đã đầy sẽ luôn đầy."
+      },
+      "q3": {
+        "q": "Hỗ trợ những ngôn ngữ nào?",
+        "a": "Trang của bạn và khu vực của khách hoạt động bằng tiếng Anh, Việt, Hàn, Nhật và Trung."
+      },
+      "q4": {
+        "q": "Trang của tôi có cần được duyệt không?",
+        "a": "Không. Khi bạn xuất bản, trang lên sóng ngay."
+      },
+      "q5": {
+        "q": "Tôi theo dõi thanh toán thế nào?",
+        "a": "Bạn ghi nhận từng khoản thanh toán (tiền mặt, thẻ hoặc chuyển khoản) và hoàn tiền trên booking, nên luôn biết ai đã trả."
+      }
     }
   },
   "cta": {
-    "title": "Sẵn sàng lấp đầy buổi tiếp theo?",
-    "body": "Thiết lập cửa hàng của bạn trong vài phút.",
-    "button": "Tạo cửa hàng của bạn"
+    "title": "Sẵn sàng lấp đầy session tiếp theo?",
+    "body": "Tạo shop chỉ trong vài phút và cho khách một lý do để đặt chỗ ngay hôm nay.",
+    "button": "Tạo shop của bạn",
+    "secondary": "Trao đổi với chúng tôi"
   },
-  "footer": "© {year} {name}"
+  "footer": {
+    "tagline": "Nền tảng đặt chỗ cho các studio workshop.",
+    "product": "Khám phá",
+    "company": "Tài khoản",
+    "legal": "Pháp lý",
+    "privacy": "Quyền riêng tư",
+    "terms": "Điều khoản",
+    "rights": "© {year} {name}. Bảo lưu mọi quyền."
+  },
+  "about": {
+    "hero": {
+      "badge": "Về chúng tôi",
+      "title": "Chúng tôi giúp người sáng tạo <hl>chia sẻ</hl> <em>điều họ yêu thích</em>",
+      "subtitle": "Workshop Platform ra đời để mọi studio, từ góc làm gốm nhỏ đến trường dạy nấu ăn đông khách, đều đón khách bằng sự chu đáo như cách họ làm nghề."
+    },
+    "mission": {
+      "title": "Sứ mệnh của chúng tôi",
+      "body1": "Tổ chức workshop vốn vất vả: giảng dạy, chuẩn bị, trả lời tin nhắn, đòi thanh toán. Quá thường xuyên, phần đặt chỗ lấy mất thời gian đáng ra thuộc về nghề.",
+      "body2": "Chúng tôi xây những công cụ đơn giản, đáng tin cậy để gỡ gánh nặng đó: một trang biết bán hàng, một lịch không bao giờ đặt trùng và một bảng điều khiển cho bạn biết hôm nay cần làm gì."
+    },
+    "values": {
+      "title": "Chúng tôi theo đuổi điều gì",
+      "items": {
+        "craft": {
+          "title": "Tôn trọng nghề",
+          "body": "Workshop do những người tâm huyết tạo nên. Phần mềm của chúng tôi đứng ngoài và giúp công việc của họ tỏa sáng."
+        },
+        "trust": {
+          "title": "Tin cậy từ mặc định",
+          "body": "Chỗ ngồi, thanh toán và dữ liệu cá nhân được xử lý cẩn thận. Các thao tác quan trọng được ghi vào nhật ký kiểm toán, nên mọi thắc mắc đều có câu trả lời."
+        },
+        "simple": {
+          "title": "Đơn giản có chủ đích",
+          "body": "Mỗi tính năng phải giúp studio tiết kiệm thời gian. Nếu chỉ thêm rườm rà, nó sẽ không được phát hành."
+        },
+        "fair": {
+          "title": "Công bằng với mọi shop",
+          "body": "Khách khám phá workshop từ nhiều studio, và chúng tôi luân phiên người được hiển thị trước để các shop nhỏ cũng được nhìn thấy."
+        }
+      }
+    },
+    "difference": {
+      "title": "Vì sao studio chọn chúng tôi",
+      "items": {
+        "a": {
+          "title": "Làm riêng cho workshop, không phải sự kiện chung chung",
+          "body": "Session, chỗ ngồi, lịch, check-in và trang workshop là cốt lõi của sản phẩm, không phải thứ làm thêm."
+        },
+        "b": {
+          "title": "Nhiều ngôn ngữ, một nơi",
+          "body": "Phục vụ khách bằng năm ngôn ngữ mà không phải giữ năm website."
+        },
+        "c": {
+          "title": "Hỗ trợ bởi con người",
+          "body": "Cần giúp đỡ? Đội ngũ nền tảng chỉ cách bạn một tin nhắn, từ bảng điều khiển hoặc từ trang này."
+        }
+      }
+    },
+    "cta": {
+      "title": "Cùng nhau xây dựng điều tuyệt vời",
+      "body": "Hãy kể về studio của bạn, hoặc bắt đầu trang của bạn ngay hôm nay.",
+      "button": "Tạo shop của bạn",
+      "secondary": "Liên hệ chúng tôi"
+    }
+  },
+  "contact": {
+    "hero": {
+      "badge": "Liên hệ",
+      "title": "Cùng trò chuyện về <hl>studio</hl> <em>workshop của bạn</em>",
+      "subtitle": "Có câu hỏi, ý tưởng hoặc muốn xem demo? Hãy gửi tin nhắn, một người thật sẽ đọc nó."
+    },
+    "form": {
+      "title": "Gửi tin nhắn cho chúng tôi",
+      "intro": "Điền vào biểu mẫu, chúng tôi sẽ phản hồi qua email.",
+      "name": "Tên của bạn",
+      "email": "Email",
+      "topic": "Bạn cần trao đổi về điều gì?",
+      "topics": {
+        "general": "Câu hỏi chung",
+        "demo": "Tôi muốn xem hướng dẫn sử dụng",
+        "support": "Tôi cần hỗ trợ về tài khoản",
+        "partnership": "Hợp tác hoặc báo chí"
+      },
+      "message": "Nội dung",
+      "messagePlaceholder": "Hãy cho chúng tôi biết đôi điều về studio của bạn và điều bạn cần.",
+      "send": "Gửi tin nhắn",
+      "sending": "Đang gửi...",
+      "successTitle": "Cảm ơn bạn! Tin nhắn đã được gửi.",
+      "successBody": "Chúng tôi sẽ trả lời {email} sớm nhất có thể.",
+      "another": "Gửi tin nhắn khác",
+      "errors": {
+        "required": "Vui lòng nhập thông tin này.",
+        "email": "Nhập địa chỉ email hợp lệ.",
+        "short": "Vui lòng viết ít nhất 10 ký tự.",
+        "tooLong": "Nội dung quá dài.",
+        "failed": "Không gửi được tin nhắn. Vui lòng thử lại.",
+        "rateLimited": "Bạn đã gửi nhiều tin nhắn. Vui lòng thử lại sau."
+      }
+    },
+    "side": {
+      "title": "Trước khi bạn viết",
+      "items": {
+        "studio": {
+          "title": "Bạn đã có shop?",
+          "body": "Đăng nhập và dùng khối Need help? trong bảng điều khiển để liên hệ đội ngũ nền tảng."
+        },
+        "guest": {
+          "title": "Câu hỏi về một workshop?",
+          "body": "Hãy liên hệ trực tiếp studio từ trang của họ: họ hiểu rõ session của mình nhất."
+        },
+        "privacy": {
+          "title": "Thông tin của bạn được giữ kín",
+          "body": "Chúng tôi chỉ dùng tên và email của bạn để trả lời tin nhắn."
+        }
+      }
+    }
+  },
+  "meta": {
+    "homeTitle": "Workshop Platform: biến workshop thành lớp học kín chỗ",
+    "homeDescription": "Trang giới thiệu đa ngôn ngữ, booking không bao giờ vượt chỗ và một bảng điều khiển cho khách, thanh toán và tăng trưởng. Dành cho studio workshop.",
+    "aboutTitle": "Về chúng tôi | Workshop Platform",
+    "aboutDescription": "Vì sao chúng tôi xây công cụ đặt chỗ đơn giản, đáng tin cậy cho studio workshop và điều chúng tôi theo đuổi.",
+    "contactTitle": "Liên hệ | Workshop Platform",
+    "contactDescription": "Có câu hỏi, ý tưởng hoặc muốn xem demo? Hãy gửi tin nhắn cho chúng tôi."
+  }
 }

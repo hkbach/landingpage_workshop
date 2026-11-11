@@ -2,39 +2,273 @@
   "legal": {
     "back": "Back to home",
     "pendingNotice": "This page is a placeholder. The final text will be provided by the legal team before launch.",
-    "terms": { "title": "Terms of Service" },
-    "privacy": { "title": "Privacy Policy" }
-  },
-  "nav": { "label": "Main", "login": "Log in", "signup": "Get started" },
-  "hero": {
-    "title": "A booking-ready landing page for your workshop studio",
-    "subtitle": "Publish a multilingual page in minutes, take bookings for your sessions, and keep seats, customers and payments in one place.",
-    "cta": "Create your shop",
-    "secondary": "Log in"
-  },
-  "how": {
-    "title": "How it works",
-    "steps": {
-      "create": { "title": "Create your shop", "body": "Sign up, pick your address and languages, and add your contact details." },
-      "design": { "title": "Build your page", "body": "Choose a template, edit sections, add your workshops and schedule sessions." },
-      "share": { "title": "Share and take bookings", "body": "Publish your page. Guests book a seat and you manage everything from the dashboard." }
+    "terms": {
+      "title": "Terms of Service"
+    },
+    "privacy": {
+      "title": "Privacy Policy"
     }
   },
-  "features": {
-    "title": "Everything a small studio needs",
+  "nav": {
+    "home": "Home",
+    "about": "About Us",
+    "contact": "Contact",
+    "login": "Log in",
+    "signup": "Sign up",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "language": "Language",
+    "skip": "Skip to content",
+    "label": "Main"
+  },
+  "hero": {
+    "badge": "Built for workshop studios",
+    "title": "Turn Your <hl>Workshops</hl> <em>into Full Classrooms</em>",
+    "subtitle": "Launch a beautiful multilingual page, take bookings that can never overbook a session, and run guests, payments and growth from one calm dashboard.",
+    "cta": "Create your shop",
+    "secondary": "See how it works",
+    "note": "Your page. Your address. Your guests."
+  },
+  "stats": {
+    "languages": {
+      "value": "5",
+      "label": "languages for your page and your guests"
+    },
+    "seats": {
+      "value": "0",
+      "label": "overbooked sessions: capacity is enforced on every booking"
+    },
+    "always": {
+      "value": "24/7",
+      "label": "a booking page that works while you teach"
+    }
+  },
+  "why": {
+    "eyebrow": "Why Workshop Platform",
+    "title": "Everything a studio needs, nothing it doesn't",
+    "intro": "We built the tools small studios keep asking for, and left out the clutter.",
     "items": {
-      "builder": { "title": "Landing page builder", "body": "Ready-made templates with sections you can reorder, edit and preview." },
-      "booking": { "title": "Seat-safe bookings", "body": "Session capacity is enforced so a session can never be overbooked." },
-      "multilingual": { "title": "Multilingual pages", "body": "Offer your page in English, Vietnamese, Korean and Japanese." },
-      "payments": { "title": "Payment tracking", "body": "Record cash, card and transfer payments and refunds for each booking." },
-      "customers": { "title": "Customer list", "body": "Keep guests and their booking history together." },
-      "subdomain": { "title": "Your own address", "body": "Each shop gets its own subdomain for its public page." }
+      "page": {
+        "title": "A page that does the selling",
+        "body": "Pick a template, edit ready-made sections and publish in minutes. Your studio gets a professional landing page with its own address, no designer or developer required."
+      },
+      "seats": {
+        "title": "Bookings that never overbook",
+        "body": "Every booking reserves its seat safely, even when many guests book at once. When a session is full, it says so, and you never have to apologise."
+      },
+      "languages": {
+        "title": "Speak your guests' language",
+        "body": "Publish in English, Vietnamese, Korean, Japanese and Chinese. Guests read and book in the language they choose."
+      },
+      "payments": {
+        "title": "Know who has paid",
+        "body": "Record cash, card and transfer payments and refunds on every booking, and see your income at a glance."
+      },
+      "guests": {
+        "title": "Guests who come back",
+        "body": "Keep every guest and their booking history together. Check guests in on the day and see who is coming."
+      },
+      "growth": {
+        "title": "Growth built in",
+        "body": "Guests can earn by sharing your workshops with an affiliate link or by inviting friends, so your community helps you grow."
+      }
+    }
+  },
+  "how": {
+    "eyebrow": "How it works",
+    "title": "From idea to first booking in three steps",
+    "steps": {
+      "create": {
+        "title": "Create your shop",
+        "body": "Sign up, choose your address and languages, add your contact details."
+      },
+      "design": {
+        "title": "Build your page",
+        "body": "Choose a template, edit sections, add your workshops and schedule sessions."
+      },
+      "share": {
+        "title": "Publish and take bookings",
+        "body": "Publish with one click, no review needed. Guests book a seat and you manage everything from your dashboard."
+      }
+    }
+  },
+  "guests": {
+    "eyebrow": "For your guests",
+    "title": "A booking experience guests love",
+    "intro": "Happy guests book again and tell their friends. We make every step easy for them.",
+    "items": {
+      "book": {
+        "title": "Book in a few taps",
+        "body": "Pick a session, choose how many seats and you are done. A confirmation arrives by email."
+      },
+      "today": {
+        "title": "A personal Today page",
+        "body": "Guests see today's workshops, check in on the day and get directions in one tap."
+      },
+      "favorites": {
+        "title": "Workshops picked for them",
+        "body": "Guests choose favorite categories and see matching workshops first, while every shop gets its turn in the spotlight."
+      },
+      "earn": {
+        "title": "Rewards for sharing",
+        "body": "Guests earn when friends book through their link or sign up with their invitation, and can request a withdrawal."
+      }
+    }
+  },
+  "faq": {
+    "title": "Questions, answered",
+    "items": {
+      "q1": {
+        "q": "Do I need technical skills?",
+        "a": "No. Pick a template and edit text and images in the builder. We take care of hosting, your address and bookings."
+      },
+      "q2": {
+        "q": "Can a session be overbooked?",
+        "a": "No. Seats are reserved safely at the moment of booking, so a full session stays full."
+      },
+      "q3": {
+        "q": "Which languages are supported?",
+        "a": "Your page and the guest area work in English, Vietnamese, Korean, Japanese and Chinese."
+      },
+      "q4": {
+        "q": "Does my landing page need approval?",
+        "a": "No. When you publish, your page goes live right away."
+      },
+      "q5": {
+        "q": "How do I keep track of payments?",
+        "a": "You record each payment (cash, card or bank transfer) and any refund on the booking, so you always know who has paid."
+      }
     }
   },
   "cta": {
     "title": "Ready to fill your next session?",
-    "body": "Set up your shop in a few minutes.",
-    "button": "Create your shop"
+    "body": "Create your shop in a few minutes and give your guests a reason to book today.",
+    "button": "Create your shop",
+    "secondary": "Talk to us"
   },
-  "footer": "© {year} {name}"
+  "footer": {
+    "tagline": "The booking platform for workshop studios.",
+    "product": "Explore",
+    "company": "Account",
+    "legal": "Legal",
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "rights": "© {year} {name}. All rights reserved."
+  },
+  "about": {
+    "hero": {
+      "badge": "About us",
+      "title": "We help makers <hl>share</hl> <em>what they love</em>",
+      "subtitle": "Workshop Platform exists so that every studio, from a pottery corner to a busy cooking school, can welcome guests with the same care it puts into its craft."
+    },
+    "mission": {
+      "title": "Our mission",
+      "body1": "Running a workshop is hard work: teaching, preparing, answering messages, chasing payments. Too often the booking side steals the time that belongs to the craft.",
+      "body2": "We build simple, reliable tools that take that weight away: a page that sells, a calendar that never double-books and a dashboard that tells you what matters today."
+    },
+    "values": {
+      "title": "What we stand for",
+      "items": {
+        "craft": {
+          "title": "Respect for craft",
+          "body": "Workshops are made by people who care. Our software stays out of the way and makes their work look its best."
+        },
+        "trust": {
+          "title": "Trust by default",
+          "body": "Seats, payments and personal data are handled with care. Important actions are recorded in an audit trail, so questions always have answers."
+        },
+        "simple": {
+          "title": "Simple on purpose",
+          "body": "Every feature has to save a studio time. If it only adds clutter, it does not ship."
+        },
+        "fair": {
+          "title": "Fair to every shop",
+          "body": "Guests discover workshops from many studios, and we rotate who is shown first so small shops get seen too."
+        }
+      }
+    },
+    "difference": {
+      "title": "Why studios choose us",
+      "items": {
+        "a": {
+          "title": "Made for workshops, not generic events",
+          "body": "Sessions, seats, schedules, check-in and workshop pages are the heart of the product, not an afterthought."
+        },
+        "b": {
+          "title": "Many languages, one place",
+          "body": "Serve guests in five languages without keeping five websites."
+        },
+        "c": {
+          "title": "Support that is human",
+          "body": "Need help? The platform team is one message away, from your dashboard or from this site."
+        }
+      }
+    },
+    "cta": {
+      "title": "Let's build something together",
+      "body": "Tell us about your studio, or start your page today.",
+      "button": "Create your shop",
+      "secondary": "Contact us"
+    }
+  },
+  "contact": {
+    "hero": {
+      "badge": "Contact us",
+      "title": "Let's talk about <hl>your</hl> <em>workshop studio</em>",
+      "subtitle": "Questions, ideas or want a walkthrough? Send us a message and a real person will read it."
+    },
+    "form": {
+      "title": "Send us a message",
+      "intro": "Fill in the form and we will get back to you by email.",
+      "name": "Your name",
+      "email": "Email",
+      "topic": "What is it about?",
+      "topics": {
+        "general": "A general question",
+        "demo": "I would like a walkthrough",
+        "support": "I need help with my account",
+        "partnership": "Partnership or press"
+      },
+      "message": "Message",
+      "messagePlaceholder": "Tell us a little about your studio and what you need.",
+      "send": "Send message",
+      "sending": "Sending...",
+      "successTitle": "Thank you! Your message is on its way.",
+      "successBody": "We will reply to {email} as soon as we can.",
+      "another": "Send another message",
+      "errors": {
+        "required": "This field is required.",
+        "email": "Enter a valid email address.",
+        "short": "Please write at least 10 characters.",
+        "tooLong": "This is too long.",
+        "failed": "We could not send your message. Please try again.",
+        "rateLimited": "You have sent several messages already. Please try again later."
+      }
+    },
+    "side": {
+      "title": "Before you write",
+      "items": {
+        "studio": {
+          "title": "Already have a shop?",
+          "body": "Log in and use the Need help? block of your dashboard to reach the platform team."
+        },
+        "guest": {
+          "title": "Questions about a workshop?",
+          "body": "Contact the studio directly from its page: they know their sessions best."
+        },
+        "privacy": {
+          "title": "Your details stay with us",
+          "body": "We only use your name and email to answer your message."
+        }
+      }
+    }
+  },
+  "meta": {
+    "homeTitle": "Workshop Platform: turn your workshops into full classrooms",
+    "homeDescription": "A multilingual landing page, bookings that never overbook, and one dashboard for guests, payments and growth. Built for workshop studios.",
+    "aboutTitle": "About us | Workshop Platform",
+    "aboutDescription": "Why we build simple, reliable booking tools for workshop studios, and what we stand for.",
+    "contactTitle": "Contact | Workshop Platform",
+    "contactDescription": "Questions, ideas or a walkthrough? Send us a message."
+  }
 }
