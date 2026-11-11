@@ -70,10 +70,10 @@ export function LoginForm() {
             return;
           }
           const me = (await res.json()) as { type: "SHOP_OWNER" | "CUSTOMER"; id: string; email: string; slug?: string; guestSlug?: string };
-          if (me.type === "SHOP_OWNER") router.push(`/shopowner/${me.slug}`);
+          if (me.type === "SHOP_OWNER") router.push(`/shopowner/${me.slug}`); // the shop owner lands on Overview
           else {
             writeGuestEmail(me.guestSlug ?? "", me.email); // the customer area looks the account up with the email of the guest session
-            router.push(`/customer/${me.id}`);
+            router.push(`/customer/${me.id}/today`); // the customer lands on Today
           }
         } catch {
           setFailure("login.failed");
