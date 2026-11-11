@@ -8,7 +8,7 @@ import { allPromotions, promotionHold, shopToday } from "./promotion-store";
 import { listMedia } from "./media-store";
 import { listRatings } from "./rating-store";
 import { deliveryOf, outboxEmails } from "./outbox-store";
-import { closeCount, closeIfEnded, SESSION_STATUSES, type OrgStatus, type SessionStatus, type WorkshopStatus } from "@workshop/shared";
+import { closeCount, closeIfEnded, priceBooking, promotionStatus, SESSION_STATUSES, type OrgStatus, type SessionStatus, type WorkshopStatus } from "@workshop/shared";
 import { listAccounts, type Account } from "./accounts-store";
 import { liveAuditLogs } from "./admin-audit-store";
 import { referralEarnings } from "./admin-income";
@@ -89,7 +89,7 @@ export function adminShops(q = "", status = ""): AdminShop[] {
 
 // ---- sessions ----------------------------------------------------------------------------------------------------------------
 
-export interface AdminSession extends Session { shopId: string; shopName: string; shopSlug: string; editable: boolean; workshopTitle: string; closes: number; noteTexts: string[] }
+export interface AdminSession extends Session { shopId: string; shopName: string; shopSlug: string; /** The time zone of the shop: the times are shown in it. */ timezone: string; editable: boolean; workshopTitle: string; closes: number; noteTexts: string[] }
 
 /** Every session of every shop as the administrator sees it now (the changes of the administrators and the end of the time applied). */
 export function allSessions(now: Date = new Date()): AdminSession[] {
@@ -101,7 +101,7 @@ export function allSessions(now: Date = new Date()): AdminSession[] {
     const w = ws.find((x) => x.workshop.id === s.workshopId)?.workshop;
     const notes = live.notes ?? [];
     return {
-      ...live, shopId: shop.id, shopName: shop.name, shopSlug: shop.slug, editable: shop.id === currentShop.id, workshopTitle: w ? titleOf(w.title) : s.workshopId,
+      ...live, shopId: shop.id, shopName: shop.name, shopSlug: shop.slug, timezone: shop.timezone, editable: shop.id === currentShop.id, workshopTitle: w ? titleOf(w.title) : s.workshopId,
       closes: closeCount(notes), // the closes of the OWNER (the ones of an administrator are not counted in the limit)
       noteTexts: notes.flatMap((n) => [n.type, "reason" in n && n.reason ? `${n.reason.code} ${n.reason.note ?? ""}` : ""]).filter(Boolean),
     };
@@ -375,10 +375,17 @@ export function adminVouchers(q = "", status = ""): AdminVoucher[] {
     .map((p): AdminVoucher => {
       const bookings = used.filter((b) => b.promotionIds?.includes(p.id));
       const hold = promotionHold(p.id);
-      const st = p.enabled ? (p.endDate < today ? "EXPIRED" : p.startDate > today ? "SCHEDULED" : "ACTIVE") : (p.endDate < today ? "EXPIRED" : "PAUSED");
+      const st = promotionStatus(p, today); // as the shop owner sees it
+      // What THIS promotion took off each booking (a booking may use several: its whole discount is not counted for each of them).
+      const promos = allPromotions();
+      const lineOf = (b: (typeof bookings)[number]): number => {
+        const used = (b.promotionIds ?? []).flatMap((id) => promos.filter((x) => x.id === id));
+        const priced = priceBooking({ unitPrice: b.unitPriceAmount, quantity: b.quantity, promotions: used });
+        return priced.ok ? (priced.discounts.find((d) => d.id === p.id)?.amount ?? 0) : 0;
+      };
       return {
         id: p.id, code: p.code, title: titleOf(p.title), shopId: shop.id, shopName: shop.name, discountType: p.discountType, discountValue: p.discountValue, currency: shop.currency, startDate: p.startDate, endDate: p.endDate,
-        appliesTo: p.appliesTo, workshops: p.workshopIds.length, stacking: p.stacking, status: st, bookings: bookings.length, discountTotal: bookings.reduce((n, b) => n + (b.discountAmount ?? 0), 0), heldReason: hold?.reason ?? "", heldAt: hold?.at ?? "",
+        appliesTo: p.appliesTo, workshops: p.workshopIds.length, stacking: p.stacking, status: st, bookings: bookings.length, discountTotal: bookings.reduce((n, b) => n + lineOf(b), 0), heldReason: hold?.reason ?? "", heldAt: hold?.at ?? "",
       };
     })
     .filter((v) => (!status || v.status === status) && matchesSearch(hay(v.code, v.title, v.shopName, ...allPromotions().filter((p) => p.id === v.id).map((p) => allTitles(p.title))), q))

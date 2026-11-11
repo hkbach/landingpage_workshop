@@ -32,7 +32,7 @@ describe("POST /sessions/{id}/closed", () => {
     expect(codes).not.toContain(cancelled.bookingCode);
     expect(codes.every((c) => live("se-3").includes(c))).toBe(true);
     expect(codes.length).toBeGreaterThan(0);
-    expect(outboxEmails()[0]).toMatchObject({ type: "SESSION_CLOSED", auto: false, reason: REASON, startsAt: dates.startsAt });
+    expect(outboxEmails()[0]).toMatchObject({ type: "SESSION_CLOSED", auto: false, reason: REASON, startsAt: new Date(dates.startsAt).toISOString() });
   });
   it("a guest who cancels after the booking is not emailed, a guest who checked in is", async () => {
     const [first] = bookings.filter((b) => b.sessionId === "se-11");

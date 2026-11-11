@@ -35,5 +35,7 @@
     "previous": "上一页",
     "next": "下一页",
     "page": "第 {page} 页，共 {pages} 页"
-  }
+  },
+  "close": "关闭",
+  "appDescription": "为工作坊工作室提供着陆页和预订。"
 }

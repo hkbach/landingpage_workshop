@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { ImagePlus, LoaderCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,18 +20,23 @@ export function MultiImageUpload({ id, current, max, onAdd, purpose = "site", up
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [report, setReport] = useState<UploadManyResult | null>(null);
 
+  // The images arrive one after another: each is added to the list as it is NOW (an image removed meanwhile does not come back), with the latest callback.
+  const latest = useRef({ current, onAdd });
+  useEffect(() => { latest.current = { current, onAdd }; });
   const remaining = Math.max(0, max - current.length);
   const busy = progress !== null;
 
   async function onFiles(list: FileList | null) {
     const files = list ? Array.from(list) : [];
     if (files.length === 0 || busy) return;
-    const base = current;
+    let sent = 0;
     setReport(null);
     setProgress({ done: 0, total: Math.min(files.length, remaining) });
     const result = await uploadMany(files, uploader, purpose, remaining, (done, total, urls) => {
       setProgress({ done, total });
-      onAdd([...base, ...urls]);
+      const fresh = urls.slice(sent);
+      sent = urls.length;
+      if (fresh.length) latest.current.onAdd([...latest.current.current, ...fresh]);
     });
     setProgress(null);
     setReport(result);

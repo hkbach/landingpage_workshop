@@ -111,7 +111,7 @@ export function GuestLoginForm({ slug, shopName, initialStep = "login", onLogged
   const [consent, setConsent] = useState(false);
   /** The three fields of workshops the guest likes. */
   const [categories, setCategories] = useState<WorkshopCategory[]>([]);
-  const [errors, setErrors] = useState<{ fullName?: boolean; country?: boolean; birthDate?: boolean; categories?: boolean; consent?: boolean; password?: boolean; confirm?: boolean }>({});
+  const [errors, setErrors] = useState<{ email?: boolean; fullName?: boolean; country?: boolean; birthDate?: boolean; categories?: boolean; consent?: boolean; password?: boolean; confirm?: boolean }>({});
   const [failed, setFailed] = useState(false);
   const [merged, setMerged] = useState(0);
   const clean = normalizeGuestEmail(email);
@@ -143,7 +143,7 @@ export function GuestLoginForm({ slug, shopName, initialStep = "login", onLogged
 
   async function register() {
     const next = {
-      fullName: !fullName.trim(), country: !COUNTRY_CODES.includes(country), birthDate: !birthDate || birthDate > today || birthDate < "1900-01-01",
+      email: !EMAIL_RE.test(clean), fullName: !fullName.trim(), country: !COUNTRY_CODES.includes(country), birthDate: !birthDate || birthDate > today || birthDate < "1900-01-01",
       categories: categories.length !== FAVORITE_CATEGORY_COUNT, consent: !consent, password: checkPassword(password) !== "OK", confirm: confirm !== password,
     };
     setErrors(next);
@@ -205,7 +205,7 @@ export function GuestLoginForm({ slug, shopName, initialStep = "login", onLogged
         <div className="space-y-3" data-testid="favorites-register-step">
           <h3 className="text-base font-semibold">{t("registerTitle")}</h3>
           <p className="text-sm">{t("registerIntro")}</p>
-          {field("fav-reg-email", t("emailLabel"), !EMAIL_RE.test(clean), <Input id="fav-reg-email" type="text" inputMode="email" autoComplete="email" className="h-11 text-base" value={email} aria-required aria-invalid={!EMAIL_RE.test(clean)} onChange={(e) => setEmail(e.target.value)} />, t("emailInvalid"))}
+          {field("fav-reg-email", t("emailLabel"), Boolean(errors.email), <Input id="fav-reg-email" type="text" inputMode="email" autoComplete="email" className="h-11 text-base" value={email} aria-required aria-invalid={Boolean(errors.email)} onChange={(e) => setEmail(e.target.value)} />, t("emailInvalid"))}
           {field("fav-reg-password", t("passwordLabel"), errors.password, <Input id="fav-reg-password" type="password" autoComplete="new-password" className="h-11 text-base" value={password} aria-required aria-invalid={errors.password} onChange={(e) => setPassword(e.target.value)} />, t("passwordInvalid"))}
           {field("fav-reg-confirm", t("confirmPasswordLabel"), errors.confirm, <Input id="fav-reg-confirm" type="password" autoComplete="new-password" className="h-11 text-base" value={confirm} aria-required aria-invalid={errors.confirm} onChange={(e) => setConfirm(e.target.value)} />, t("passwordMismatch"))}
           {field("fav-name", t("fullNameLabel"), errors.fullName, <Input id="fav-name" autoComplete="name" className="h-11 text-base" value={fullName} aria-required aria-invalid={errors.fullName} onChange={(e) => setFullName(e.target.value)} />)}

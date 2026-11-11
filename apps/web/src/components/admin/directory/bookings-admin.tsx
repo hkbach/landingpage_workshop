@@ -8,7 +8,7 @@ import { DateInput } from "@/components/ui/date-input";
 import { formatDateTime } from "@/lib/format";
 import type { AdminBooking } from "@/lib/mock/admin-directory";
 import { fmt } from "../utils";
-import { DetailDialog, DirectoryTable, FilterBox, Pill, Toolbar, humanize, useDebounced, useDirectory, type Column } from "./kit";
+import { DetailDialog, DirectoryTable, FilterBox, Pill, Toolbar, useCodeLabel, useDebounced, useDirectory, type Column } from "./kit";
 
 const TONE = { NOT_CONFIRMED: "amber", CONFIRMED: "sky", CHECKED_IN: "green", CANCELLED: "red" } as const;
 
@@ -19,6 +19,7 @@ const TONE = { NOT_CONFIRMED: "amber", CONFIRMED: "sky", CHECKED_IN: "green", CA
 export function BookingsAdmin() {
   const t = useTranslations("admin.bookings");
   const locale = useLocale();
+  const label = useCodeLabel();
   const [q, setQ] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -54,12 +55,12 @@ export function BookingsAdmin() {
       <DetailDialog
         open={detail !== null} onClose={() => setDetail(null)} title={detail?.bookingCode ?? ""} description={detail ? `${detail.workshopTitle} · ${detail.shopName}` : ""}
         rows={detail ? [
-          [t("col.status"), t(`status.${detail.status}`)], [t("col.payment"), t(`payment.${detail.paymentStatus}`)], [t("source"), humanize(detail.source)],
+          [t("col.status"), t(`status.${detail.status}`)], [t("col.payment"), t(`payment.${detail.paymentStatus}`)], [t("source"), label("source", detail.source)],
           [t("col.guest"), detail.guestName], [t("email"), detail.customerEmail], [t("phone"), detail.customerPhone], [t("customerId"), detail.customerId], [t("accountId"), detail.accountId],
           [t("col.session"), `${detail.sessionCode} · ${formatDateTime(detail.startsAt, detail.timezone, locale)}`], [t("quantity"), detail.quantity],
           [t("unitPrice"), formatMoney(detail.unitPriceAmount, detail.currency, locale)], [t("discount"), formatMoney(detail.discountAmount, detail.currency, locale)], [t("col.total"), formatMoney(detail.totalAmount, detail.currency, locale)],
           [t("col.made"), fmt(detail.createdAt, locale)], [t("checkedIn"), detail.checkedInAt ? fmt(detail.checkedInAt, locale) : ""], [t("request"), detail.specialRequest], [t("cancelReason"), detail.cancelReason],
-          [t("payments"), detail.payments.length ? detail.payments.map((p) => `${p.type === "REFUND" ? "−" : "+"}${formatMoney(p.amount, detail.currency, locale)} ${humanize(p.method)} · ${fmt(p.recordedAt, locale)}`).join("; ") : ""],
+          [t("payments"), detail.payments.length ? detail.payments.map((p) => `${p.type === "REFUND" ? "−" : "+"}${formatMoney(p.amount, detail.currency, locale)} ${label("method", p.method)} · ${fmt(p.recordedAt, locale)}`).join("; ") : ""],
         ] : []}
       />
     </div>

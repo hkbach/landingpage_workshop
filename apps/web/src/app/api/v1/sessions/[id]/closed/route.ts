@@ -9,7 +9,8 @@ import { ownerActor, DEMO_ORG } from "@/lib/mock/audit-actors";
 // The owner closed a session: tell the guests who booked it. MOCK implementation inside Next until apps/api exists.
 // TODO(api): POST /dashboard/sessions/{id}/close changes the status and writes the outbox events in ONE transaction (OWNER / MANAGER only, audited).
 
-const isoDate = z.string().refine((v) => !Number.isNaN(Date.parse(v)), "dateInvalid");
+// An instant with its offset (Z or +07:00), stored and mailed as UTC ISO.
+const isoDate = z.string().refine((v) => /(?:Z|[+-]\d{2}:\d{2})$/.test(v) && !Number.isNaN(Date.parse(v)), "dateInvalid").transform((v) => new Date(v).toISOString());
 const bodySchema = z.object({
   startsAt: isoDate,
   endsAt: isoDate,

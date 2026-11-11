@@ -1056,5 +1056,56 @@
     "removed": "Đã gỡ đánh giá của booking {code}.",
     "restored": "Đã đưa lại đánh giá của booking {code}.",
     "failed": "Không thay đổi được đánh giá."
+  },
+  "enums": {
+    "source": {
+      "ONLINE": "Trực tuyến",
+      "WALK_IN": "Khách vãng lai",
+      "PHONE": "Điện thoại / WhatsApp",
+      "OTHER": "Khác"
+    },
+    "method": {
+      "CASH": "Tiền mặt",
+      "CARD": "Thẻ",
+      "BANK_TRANSFER": "Chuyển khoản",
+      "E_WALLET": "Ví điện tử",
+      "OTHER": "Khác"
+    },
+    "reason": {
+      "NOT_ENOUGH_GUESTS": "Không đủ khách",
+      "INSTRUCTOR_UNAVAILABLE": "Giảng viên không có mặt",
+      "VENUE_ISSUE": "Sự cố về studio hoặc địa điểm",
+      "SCHEDULE_CHANGE": "Thay đổi lịch",
+      "WORKSHOP_COMPLETED": "Buổi workshop đã hoàn thành",
+      "OTHER": "Khác"
+    },
+    "noteType": {
+      "CLOSED": "Đã đóng",
+      "REOPENED": "Mở lại",
+      "RESCHEDULED": "Dời lịch",
+      "AUTO_CLOSED": "Tự đóng (hết giờ)",
+      "COMPLETED": "Hoàn tất"
+    },
+    "entity": {
+      "booking": "Booking",
+      "session": "Session",
+      "workshop": "Workshop",
+      "organization": "Shop",
+      "user": "Người dùng",
+      "account": "Tài khoản",
+      "withdrawal": "Rút tiền",
+      "promotion": "Khuyến mãi",
+      "rating": "Đánh giá",
+      "media": "Hình ảnh",
+      "contact_message": "Tin nhắn hỗ trợ",
+      "email": "Email",
+      "landing_page": "Landing page",
+      "page": "Trang",
+      "affiliate_link": "Link affiliate",
+      "referral": "Giới thiệu",
+      "report": "Báo cáo vi phạm",
+      "platform_settings": "Cài đặt nền tảng",
+      "legal": "Điều khoản và quyền riêng tư"
+    }
   }
 }

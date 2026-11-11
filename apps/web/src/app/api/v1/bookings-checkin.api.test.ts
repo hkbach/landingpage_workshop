@@ -21,8 +21,17 @@ describe("the time of a check-in", () => {
     expect(at("bk-14")).toBe("2026-11-03T09:10:00.000Z");
     expect((await patch("bk-14", { status: "CANCELLED", cancelReason: "x" })).status).toBe(409);
     expect(at("bk-14")).toBe("2026-11-03T09:10:00.000Z");
-    await patch("bk-14", { status: "CONFIRMED" });
+    // An uncheck-in goes back to exactly the status before the check-in; another one is refused.
+    const back = liveBookings().find((b) => b.id === "bk-14")!.statusBeforeCheckIn ?? "CONFIRMED";
+    expect((await patch("bk-14", { status: back === "CONFIRMED" ? "NOT_CONFIRMED" : "CONFIRMED" })).status).toBe(409);
+    expect((await patch("bk-14", { status: back })).status).toBe(200);
     expect(at("bk-14")).toBeUndefined();
+  });
+
+  it("the shop cancels only with a reason (BR-11)", async () => {
+    const res = await patch("bk-13", { status: "CANCELLED" });
+    expect(res.status).toBe(422);
+    expect(liveBookings().find((b) => b.id === "bk-13")!.status).not.toBe("CANCELLED");
   });
   it("a time in the future is not taken: the check-in is now", async () => {
     await patch("bk-13", { status: "CHECKED_IN", checkedInAt: "2999-01-01T00:00:00.000Z" });

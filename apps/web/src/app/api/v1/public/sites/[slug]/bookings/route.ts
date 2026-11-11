@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { LOCALES } from "@workshop/shared";
+import { liveShop } from "@/lib/mock/shop-admin-store";
 import { apiError, fieldCodes } from "@/lib/api-error";
 import { shopOrigin } from "@/lib/mock/shop-domain-store";
 import { currentShop } from "@/lib/mock/data";
@@ -28,7 +29,8 @@ const bodySchema = z.object({
 /** POST -> 201 { code, status: "NOT_CONFIRMED", demoConfirmUrl? }. A repeated Idempotency-Key gives 200 and the same booking. 409 SESSION_FULL / SESSION_CLOSED. */
 export async function POST(request: Request, ctx: RouteContext<"/api/v1/public/sites/[slug]/bookings">) {
   const { slug } = await ctx.params;
-  if (slug !== currentShop.slug) return apiError(404, "NOT_FOUND", "Shop not found.");
+  // Only the shop that has data in the mock, and only while it is ACTIVE (a suspended or draft shop shows no page and takes no booking).
+  if (slug !== currentShop.slug || liveShop(currentShop.id)?.status !== "ACTIVE") return apiError(404, "NOT_FOUND", "Shop not found.");
   let body: unknown;
   try {
     body = await request.json();

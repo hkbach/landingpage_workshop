@@ -35,5 +35,7 @@
     "previous": "Trang trước",
     "next": "Trang sau",
     "page": "Trang {page} / {pages}"
-  }
+  },
+  "close": "Đóng",
+  "appDescription": "Landing page và đặt chỗ cho các studio workshop."
 }

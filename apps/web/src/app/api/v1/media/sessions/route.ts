@@ -1,5 +1,7 @@
 import { apiError } from "@/lib/api-error";
 import { MAX_IMAGE_BYTES, saveImage } from "@/lib/mock/media-store";
+import { recordAudit } from "@/lib/mock/admin-audit-store";
+import { DEMO_ORG, ownerActor } from "@/lib/mock/audit-actors";
 
 // Upload of a session image (one per session). MOCK of POST /media/presign-upload + complete (FR-MEDIA-01): the browser sends the resized image
 // as a data URL, the server checks it and answers with the path the image is served at. TODO(api): OWNER / MANAGER session, per organization.
@@ -20,5 +22,6 @@ export async function POST(request: Request) {
       ? apiError(413, "IMAGE_TOO_LARGE", `The image can be at most ${MAX_IMAGE_BYTES / 1_000_000} MB.`)
       : apiError(422, "VALIDATION", "The file must be a JPEG, PNG or WebP image.", { fields: { dataUrl: "imageInvalid" } });
   }
+  recordAudit({ ...ownerActor(request), action: "media.upload", entityType: "Media", entityId: res.id, organizationId: DEMO_ORG, details: "session image" });
   return Response.json({ id: res.id, url: `/api/v1/media/sessions/${res.id}` }, { status: 201 });
 }

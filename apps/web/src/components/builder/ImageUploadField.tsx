@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { ImagePlus, LoaderCircle, RefreshCw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,9 @@ export function ImageUploadField({ id, label, value, onChange, purpose = "site",
   const t = useTranslations("builder");
   const input = useRef<HTMLInputElement>(null);
   const request = useRef(0);
+  // The upload ends later: by then the section may have changed, so the callback of the latest render is used, not the one of the click.
+  const latest = useRef(onChange);
+  useEffect(() => { latest.current = onChange; });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,7 +36,7 @@ export function ImageUploadField({ id, label, value, onChange, purpose = "site",
     setBusy(true);
     try {
       const media = await uploader.upload(file, purpose);
-      if (ticket === request.current) onChange(media.url);
+      if (ticket === request.current) latest.current(media.url);
     } catch (e) {
       if (ticket === request.current) setError(e instanceof MediaUploadError ? e.code : "failed");
     } finally {

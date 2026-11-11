@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { apiError } from "@/lib/api-error";
-import { shops } from "@/lib/mock/data";
+import { liveShop } from "@/lib/mock/shop-admin-store";
 import { getFeeRates, setFeeRates } from "@/lib/mock/fee-rates-store";
 import { recordAdminAction } from "@/lib/mock/admin-audit-store";
 
@@ -12,14 +12,14 @@ const NOT_FOUND = () => apiError(404, "NOT_FOUND", "Organization not found.");
 
 export async function GET(_request: Request, ctx: RouteContext<"/api/v1/admin/organizations/[id]/finance-settings">) {
   const { id } = await ctx.params;
-  if (!shops.some((s) => s.id === id)) return NOT_FOUND();
+  if (!liveShop(id)) return NOT_FOUND();
   return Response.json(getFeeRates(id), { headers: { "cache-control": "no-store" } });
 }
 
 /** PUT { maintenanceBps, serviceBps } -> 200 the saved rates of this shop. 404 unknown shop, 422 with `fields` naming the rate that is wrong. */
 export async function PUT(request: Request, ctx: RouteContext<"/api/v1/admin/organizations/[id]/finance-settings">) {
   const { id } = await ctx.params;
-  if (!shops.some((s) => s.id === id)) return NOT_FOUND();
+  if (!liveShop(id)) return NOT_FOUND();
   let body: unknown;
   try {
     body = await request.json();

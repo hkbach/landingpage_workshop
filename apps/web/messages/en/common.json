@@ -35,5 +35,7 @@
     "previous": "Previous page",
     "next": "Next page",
     "page": "Page {page} of {pages}"
-  }
+  },
+  "close": "Close",
+  "appDescription": "Landing pages and bookings for workshop studios."
 }

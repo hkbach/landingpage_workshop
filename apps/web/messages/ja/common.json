@@ -35,5 +35,7 @@
     "previous": "前のページ",
     "next": "次のページ",
     "page": "{page} / {pages} ページ"
-  }
+  },
+  "close": "閉じる",
+  "appDescription": "ワークショップスタジオのためのランディングページと予約。"
 }

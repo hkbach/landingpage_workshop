@@ -6,6 +6,14 @@ import { cn } from "@/lib/utils"
 
 import { Button } from "@/components/ui/button"
 import { XIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
+
+/** The name of the close button, in the language of the page: the app areas have `common.close`, the public site `site.booking.close`. */
+function CloseLabel() {
+  const t = useTranslations()
+  const key = t.has("common.close") ? "common.close" : t.has("site.booking.close") ? "site.booking.close" : null
+  return <span className="sr-only">{key ? t(key as never) : "Close"}</span>
+}
 
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />
@@ -72,7 +80,7 @@ function DialogContent({
           >
             <XIcon
             />
-            <span className="sr-only">Close</span>
+            <CloseLabel />
           </DialogPrimitive.Close>
         )}
       </DialogPrimitive.Popup>

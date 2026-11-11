@@ -190,6 +190,8 @@ export function updatePromotion(id: string, input: PromotionInput): SaveResult {
   if (imageProblem(input.imageUrl)) return { ok: false, code: "UNKNOWN_IMAGE" };
   if (isPromotionCodeTaken(store(), input.code, id)) return { ok: false, code: "CODE_TAKEN" };
   const prev = store()[i]!;
+  // Paused by an administrator: the owner may edit it but not switch it on again (only an administrator resumes it).
+  if (input.enabled && holds().has(id)) return { ok: false, code: "HELD_BY_ADMIN" };
   if (!canEditPromotion(promotionStatus(prev, shopToday()))) return { ok: false, code: "EDIT_ACTIVE" };
   if (input.endDate < shopToday()) return { ok: false, code: "END_IN_PAST" };
   const next: PromotionRecord = { id, ...fromInput(input), createdAt: prev.createdAt, updatedAt: new Date().toISOString() };
@@ -262,7 +264,10 @@ export function holdPromotion(id: string, hold: boolean, reason = "", now = new 
     const h = holds().get(id);
     if (!h) return { ok: false, code: "NOT_HELD" };
     holds().delete(id);
-    p.enabled = h.wasEnabled && p.endDate >= shopToday(); // it runs again if it was running before and is not over
+    // It runs again if it was running before and is not over, and only when that keeps the rules of a resume (no free workshop, not more running at once than allowed);
+    // otherwise the hold is lifted but the promotion stays paused, and the shop owner can resume it once the rules allow.
+    const wanted = h.wasEnabled && p.endDate >= shopToday();
+    p.enabled = wanted && freeWorkshops({ ...p, enabled: true }, store().filter((x) => x.id !== id)).length === 0 && !firstOverloadedDay(store().map((x) => (x.id === id ? { ...x, enabled: true } : x)), shopToday());
   }
   p.updatedAt = now.toISOString();
   return { ok: true, promotion: { ...p } };

@@ -41,7 +41,7 @@ export async function POST(request: Request) {
   }
   const results = recipients.map((to) => sendAdminEmail({ to, subject: v.subject, body: v.body, sentBy: ADMIN_EMAIL }));
   const failed = results.filter((r) => r.delivery.status === "FAILED").length;
-  if (v.messageId) updateContactMessage(v.messageId, { status: "DONE" });
+  if (v.messageId && updateContactMessage(v.messageId, { status: "DONE" })) recordAdminAction({ action: "message.set_status", entityType: "ContactMessage", entityId: v.messageId, details: "status: DONE (answered by email)" });
   recordAdminAction({ action: "email.send", entityType: "Email", entityId: results[0]!.email.id, ...(v.audience === "ONE" ? { targetEmail: recipients[0] } : {}), details: `${v.audience}: ${recipients.length} recipient(s), ${failed} failed; subject: ${v.subject}`.slice(0, 200) });
   return Response.json({ total: recipients.length, sent: recipients.length - failed, failed, ids: results.map((r) => r.email.id) }, { status: 201, headers: { "cache-control": "no-store" } });
 }

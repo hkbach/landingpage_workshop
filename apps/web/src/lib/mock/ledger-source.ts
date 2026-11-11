@@ -16,7 +16,19 @@ function priceReader() {
     const used = (b.promotionIds ?? []).flatMap((id) => { const p = promotions.find((x) => x.id === id); return p ? [p] : []; });
     const subtotal = b.unitPriceAmount * b.quantity;
     const priced = priceBooking({ unitPrice: b.unitPriceAmount, quantity: b.quantity, promotions: used });
-    const lines = priced.ok ? priced.discounts : used.map((p) => ({ id: p.id, amount: discountAmount(subtotal, p) }));
+    let lines = priced.ok ? priced.discounts : used.map((p) => ({ id: p.id, amount: discountAmount(subtotal, p) }));
+    // The booking keeps what its promotions took off when it was made (BR-05: history is not recalculated). A promotion edited or deleted later must not change the
+    // fees of a past booking, so the lines are scaled to that snapshot; a deleted promotion keeps its id as the label.
+    const snapshot = Math.max(0, Math.min(subtotal, b.discountAmount ?? subtotal - b.totalAmount));
+    const sum = lines.reduce((n, l) => n + l.amount, 0);
+    if (sum !== snapshot) {
+      if (snapshot === 0) lines = [];
+      else if (sum > 0) {
+        const scaled = lines.map((l) => ({ id: l.id, amount: Math.floor((l.amount * snapshot) / sum) }));
+        scaled[scaled.length - 1]!.amount += snapshot - scaled.reduce((n, l) => n + l.amount, 0);
+        lines = scaled;
+      } else lines = [{ id: b.promotionIds?.[0] ?? "discount", amount: snapshot }];
+    }
     return { subtotal, discounts: lines.map((l) => ({ code: codeOf(l.id) ?? l.id, amount: l.amount })) };
   };
   return priceOf;

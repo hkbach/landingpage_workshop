@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { AUDIT_ROLES, type AuditRole } from "@/lib/types";
 import type { AdminAuditRow } from "@/lib/mock/admin-directory";
 import { fmt } from "../utils";
-import { DetailDialog, DirectoryTable, FilterBox, Pill, humanize, selectClass, useDebounced, useDirectory, type Column } from "./kit";
+import { DetailDialog, DirectoryTable, FilterBox, Pill, selectClass, useCodeLabel, useDebounced, useDirectory, type Column } from "./kit";
 
 const TONE: Record<AuditRole, "sky" | "slate" | "green" | "amber" | "red"> = { CUSTOMER: "slate", SHOP_OWNER: "sky", GUEST: "amber", SYSTEM_ADMIN: "green", SYSTEM: "red" };
 
@@ -20,6 +20,7 @@ const TONE: Record<AuditRole, "sky" | "slate" | "green" | "amber" | "red"> = { C
 export function AuditLogsAdmin() {
   const t = useTranslations("admin.audit");
   const locale = useLocale();
+  const label = useCodeLabel();
   const [email, setEmail] = useState("");
   const [org, setOrg] = useState("");
   const [action, setAction] = useState("");
@@ -50,7 +51,7 @@ export function AuditLogsAdmin() {
       ),
     },
     { key: "action", header: t("col.action"), cell: (e) => <span className="font-mono text-xs">{e.action}</span> },
-    { key: "entity", header: t("col.entity"), cell: (e) => <><div>{humanize(e.entityType)}</div><div className="font-mono text-xs text-muted-foreground">{e.entityId}</div></> },
+    { key: "entity", header: t("col.entity"), cell: (e) => <><div>{label("entity", e.entityType)}</div><div className="font-mono text-xs text-muted-foreground">{e.entityId}</div></> },
     { key: "org", header: t("col.org"), cell: (e) => e.organizationName || <span className="text-muted-foreground">{t("platform")}</span> },
     { key: "details", header: t("col.details"), className: "max-w-56 whitespace-normal", cell: (e) => (e.details ? <span className="text-xs">{e.details}</span> : e.targetEmail ? <span className="text-xs">{t("target", { email: e.targetEmail })}</span> : "—") },
     { key: "view", header: <span className="sr-only">{t("col.actions")}</span>, className: "text-right", cell: (e) => <Button size="sm" variant="outline" onClick={() => setDetail(e)}>{t("view")}<span className="sr-only"> {e.action}</span></Button> },
@@ -107,7 +108,7 @@ export function AuditLogsAdmin() {
         open={detail !== null} onClose={() => setDetail(null)} title={detail?.action ?? ""} description={detail ? fmt(detail.createdAt, locale) : ""}
         rows={detail ? [
           [t("col.user"), detail.actor], [t("email"), detail.actorEmail ?? ""], [t("role.label"), detail.actorRole ? t(`role.${detail.actorRole}`) : ""], [t("userId"), detail.actorId ?? ""],
-          [t("col.entity"), `${humanize(detail.entityType)} ${detail.entityId}`], [t("targetUser"), detail.targetEmail ?? ""],
+          [t("col.entity"), `${label("entity", detail.entityType)} ${detail.entityId}`], [t("targetUser"), detail.targetEmail ?? ""],
           [t("col.org"), detail.organizationName ? `${detail.organizationName} (${detail.organizationSlug})` : t("platform")], [t("col.details"), detail.details ?? ""], [t("logId"), detail.id],
         ] : []}
       />

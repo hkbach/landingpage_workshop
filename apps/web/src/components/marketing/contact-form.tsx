@@ -83,7 +83,7 @@ export function ContactForm() {
       </div>
       <div className="grid gap-5 sm:grid-cols-2">
         {row("name", t("name"), <input {...bind("name")} type="text" autoComplete="name" maxLength={120} className={field} value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />)}
-        {row("email", t("email"), <input {...bind("email")} type="email" autoComplete="email" maxLength={254} className={field} value={draft.email} onChange={(e) => setDraft({ ...draft, email: e.target.value })} />)}
+        {row("email", t("email"), <input {...bind("email")} type="text" inputMode="email" autoComplete="email" maxLength={254} className={field} value={draft.email} onChange={(e) => setDraft({ ...draft, email: e.target.value })} />)}
       </div>
       <div className="grid gap-1.5">
         <label htmlFor="ct-topic" className="text-sm font-medium text-white/90">{t("topic")}</label>

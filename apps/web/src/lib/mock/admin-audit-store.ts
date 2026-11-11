@@ -17,12 +17,16 @@ export function resetAdminAudit(): void {
   g.__adminAudit = [];
 }
 
+/** "ContactMessage", "contact message" and "contact_message" are the same record type: the audit log keeps one spelling (snake_case) so the filter finds them all. */
+export const entityTypeKey = (t: string): string => t.trim().replace(/([a-z0-9])([A-Z])/g, "$1_$2").replace(/[\s-]+/g, "_").toLowerCase();
+
 /** Who did it, as the helpers of audit-actors.ts give it. */
 export type AuditActor = Pick<AuditEntry, "actor" | "actorEmail" | "actorRole" | "actorId">;
 
 /** Writes one line (the newest first). `details` is cut to 200 characters. */
 export function recordAudit(entry: AuditActor & { action: string; entityType: string; entityId: string; organizationId?: string; targetEmail?: string; details?: string }): void {
   const { details, ...rest } = entry;
+  rest.entityType = entityTypeKey(rest.entityType);
   log().unshift({ id: `au-${newUuid().slice(0, 8)}`, createdAt: new Date().toISOString(), ...rest, ...(details ? { details: details.slice(0, 200) } : {}) });
 }
 

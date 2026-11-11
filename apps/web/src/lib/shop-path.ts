@@ -10,7 +10,7 @@ export const ADMIN_SHOP_ROOT = "/systemadmin/shops";
 /** Where the paths written as "/shopowner/..." lead: the shop owner area, or the admin area while an administrator edits the shop. */
 export type ShopArea = "shopowner" | "admin";
 /** The sections of the shop owner area: an old address such as /shopowner/bookings is sent to /shopowner/{slug}/bookings. */
-export const SHOP_SECTIONS = ["today", "bookings", "customers", "workshops", "sessions", "finance", "promotions", "site", "settings"] as const;
+export const SHOP_SECTIONS = ["today", "bookings", "customers", "workshops", "sessions", "finance", "promotions", "ratings", "site", "settings"] as const;
 
 /** `/shopowner/bookings?x=1#y` -> `/shopowner/whiskladle/bookings?x=1#y`. Other paths, and paths that already have the slug, are returned as they are. */
 export function withShopSlug(slug: string | null | undefined, path: string, area: ShopArea = "shopowner"): string {

@@ -17,7 +17,7 @@ describe("POST /sessions/{id}/reschedule", () => {
     expect(await res.json()).toEqual({ notified: 1, withoutEmail: 1 }); // bk-9 has an email, bk-10 is a walk-in
     const mail = outboxEmails();
     expect(mail).toHaveLength(1);
-    expect(mail[0]).toMatchObject({ type: "SESSION_RESCHEDULED", to: "emma@example.com", locale: "en", bookingCode: "SES-0011-001", newStartsAt: GOOD.newStartsAt, reason: { code: "SCHEDULE_CHANGE" } });
+    expect(mail[0]).toMatchObject({ type: "SESSION_RESCHEDULED", to: "emma@example.com", locale: "en", bookingCode: "SES-0011-001", newStartsAt: new Date(GOOD.newStartsAt).toISOString(), reason: { code: "SCHEDULE_CHANGE" } });
     expect(((await (await listOutbox()).json()) as { items: unknown[] }).items).toHaveLength(1);
   });
   it("a session without bookings, or one the server does not know, emails nobody", async () => {

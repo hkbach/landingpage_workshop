@@ -1056,5 +1056,56 @@
     "removed": "The rating of booking {code} is removed.",
     "restored": "The rating of booking {code} is back.",
     "failed": "The rating could not be changed."
+  },
+  "enums": {
+    "source": {
+      "ONLINE": "Online",
+      "WALK_IN": "Walk-in",
+      "PHONE": "Phone / WhatsApp",
+      "OTHER": "Other"
+    },
+    "method": {
+      "CASH": "Cash",
+      "CARD": "Card",
+      "BANK_TRANSFER": "Bank transfer",
+      "E_WALLET": "E-wallet",
+      "OTHER": "Other"
+    },
+    "reason": {
+      "NOT_ENOUGH_GUESTS": "Not enough guests",
+      "INSTRUCTOR_UNAVAILABLE": "Instructor is not available",
+      "VENUE_ISSUE": "Studio or venue problem",
+      "SCHEDULE_CHANGE": "Schedule changed",
+      "WORKSHOP_COMPLETED": "The workshop has been completed",
+      "OTHER": "Other"
+    },
+    "noteType": {
+      "CLOSED": "Closed",
+      "REOPENED": "Reopened",
+      "RESCHEDULED": "Re-scheduled",
+      "AUTO_CLOSED": "Closed automatically (time over)",
+      "COMPLETED": "Completed"
+    },
+    "entity": {
+      "booking": "Booking",
+      "session": "Session",
+      "workshop": "Workshop",
+      "organization": "Shop",
+      "user": "User",
+      "account": "Account",
+      "withdrawal": "Withdrawal",
+      "promotion": "Promotion",
+      "rating": "Rating",
+      "media": "Image",
+      "contact_message": "Support message",
+      "email": "Email",
+      "landing_page": "Landing page",
+      "page": "Page",
+      "affiliate_link": "Affiliate link",
+      "referral": "Referral",
+      "report": "Report",
+      "platform_settings": "Platform settings",
+      "legal": "Terms & Privacy"
+    }
   }
 }

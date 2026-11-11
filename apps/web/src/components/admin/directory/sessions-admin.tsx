@@ -11,7 +11,7 @@ import { formatDateTime } from "@/lib/format";
 import type { AdminSession } from "@/lib/mock/admin-directory";
 import { ReasonDialog } from "../reason-dialog";
 import { fmt } from "../utils";
-import { DetailDialog, DirectoryTable, FilterBox, Notice, Pill, Toolbar, humanize, selectClass, useDebounced, useDirectory, type Column } from "./kit";
+import { DetailDialog, DirectoryTable, FilterBox, Notice, Pill, Toolbar, selectClass, useCodeLabel, useDebounced, useDirectory, type Column } from "./kit";
 
 type Message = { text: string; tone: "ok" | "error" } | null;
 const TONE: Record<SessionStatus, "sky" | "slate" | "green" | "amber"> = { OPEN: "sky", PAUSED: "slate", RUNNING: "green", CLOSED: "amber", COMPLETED: "green" };
@@ -23,6 +23,7 @@ const TONE: Record<SessionStatus, "sky" | "slate" | "green" | "amber"> = { OPEN:
 export function SessionsAdmin() {
   const t = useTranslations("admin.sessionsAll");
   const locale = useLocale();
+  const label = useCodeLabel();
   const [q, setQ] = useState("");
   const [status, setStatus] = useState("");
   const [forGood, setForGood] = useState(false);
@@ -44,7 +45,7 @@ export function SessionsAdmin() {
   const columns: Column<AdminSession>[] = [
     { key: "code", header: t("col.code"), cell: (s) => <span className="font-mono text-xs">{s.code}</span> },
     { key: "workshop", header: t("col.workshop"), cell: (s) => <><div className="font-medium">{s.workshopTitle}</div><div className="text-xs text-muted-foreground">{s.shopName}</div></> },
-    { key: "start", header: t("col.start"), cell: (s) => <span className="whitespace-nowrap">{fmt(s.startsAt, locale)}</span> },
+    { key: "start", header: t("col.start"), cell: (s) => <span className="whitespace-nowrap" title={s.timezone}>{formatDateTime(s.startsAt, s.timezone, locale)}</span> },
     { key: "seats", header: t("col.seats"), className: "text-right tabular-nums", cell: (s) => `${s.reservedCount} / ${s.capacity}` },
     { key: "status", header: t("col.status"), cell: (s) => <span className="inline-flex flex-wrap items-center gap-1"><Pill tone={TONE[s.status]}>{t(`status.${s.status}`)}</Pill>{closedForGood(s) ? <span className="text-xs text-muted-foreground">{t("forGood")}</span> : null}</span> },
     { key: "closes", header: t("col.closes"), className: "text-right tabular-nums", cell: (s) => `${s.closes} / 4` },
@@ -81,11 +82,11 @@ export function SessionsAdmin() {
       <DetailDialog
         open={detail !== null} onClose={() => setDetail(null)} title={detail?.code ?? ""} description={detail ? `${detail.workshopTitle} · ${detail.shopName}` : ""}
         rows={detail ? [
-          [t("col.status"), t(`status.${detail.status}`)], [t("col.start"), formatDateTime(detail.startsAt, "UTC", locale)], [t("end"), formatDateTime(detail.endsAt, "UTC", locale)],
+          [t("col.status"), t(`status.${detail.status}`)], [t("col.start"), `${formatDateTime(detail.startsAt, detail.timezone, locale)} (${detail.timezone})`], [t("end"), formatDateTime(detail.endsAt, detail.timezone, locale)],
           [t("col.seats"), `${detail.reservedCount} / ${detail.capacity}`], [t("cutoff"), t("minutes", { n: detail.bookingCutoffMinutes })], [t("col.closes"), `${detail.closes} / 4`],
           [t("history"), detail.notes?.length ? (
             <ul key="h" className="grid gap-1">
-              {detail.notes.map((n, i) => <li key={i}>{fmt(n.at, locale)} · {humanize(n.type)}{n.by === "ADMIN" ? ` (${t("byAdmin")})` : ""}{n.reason ? ` — ${humanize(n.reason.code)}${n.reason.note ? `: ${n.reason.note}` : ""}` : ""}</li>)}
+              {detail.notes.map((n, i) => <li key={i}>{fmt(n.at, locale)} · {label("noteType", n.type)}{n.by === "ADMIN" ? ` (${t("byAdmin")})` : ""}{n.reason ? ` — ${label("reason", n.reason.code)}${n.reason.note ? `: ${n.reason.note}` : ""}` : ""}</li>)}
             </ul>
           ) : ""],
         ] : []}

@@ -262,7 +262,7 @@ function CreateDialog({ open, onOpenChange, pageCount, onCreate }: {
           </div>
           <p role="alert" className="min-h-5 text-sm text-destructive">{error}</p>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{t("cancel")}</Button>
+            <Button type="button" variant="outline" onClick={() => { setName(""); setError(null); onOpenChange(false); }}>{t("cancel")}</Button>
             <Button type="submit" disabled={!dirty}>{t("submit")}</Button>
           </DialogFooter>
         </form>

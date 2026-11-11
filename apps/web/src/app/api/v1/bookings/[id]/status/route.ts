@@ -35,10 +35,14 @@ export async function PATCH(request: Request, ctx: RouteContext<"/api/v1/booking
     : to === "CANCELLED" ? isOpen(before.status)
     : before.status === "CHECKED_IN" && !closed;
   if (!allowed) return apiError(409, "INVALID_STATE", "This change is not allowed for this booking.");
+  // An uncheck-in goes back to exactly the status the booking had before the check-in (the server knows it; the browser is not trusted).
+  if (before.status === "CHECKED_IN" && to !== "CANCELLED" && to !== "CHECKED_IN" && to !== (before.statusBeforeCheckIn ?? "CONFIRMED")) return apiError(409, "INVALID_STATE", "An uncheck-in goes back to the status the booking had before.");
+  // BR-11: the shop cancels with a reason.
+  if (to === "CANCELLED" && !parsed.data.cancelReason) return apiError(422, "VALIDATION", "A reason is required to cancel a booking.", { fields: { cancelReason: "required" } });
   // The time of the check-in: the one the screen sent, never later than now.
   const sent = parsed.data.checkedInAt;
   const at = to === "CHECKED_IN" ? (sent && Date.parse(sent) <= now.getTime() ? new Date(sent).toISOString() : now.toISOString()) : undefined;
-  setBookingStatus(id, to, to === "CANCELLED" ? parsed.data.cancelReason : undefined, at, parsed.data.statusBeforeCheckIn, "SHOP");
+  setBookingStatus(id, to, to === "CANCELLED" ? parsed.data.cancelReason : undefined, at, undefined, "SHOP"); // the status before a check-in is the one the server has
   // The shop cancelled the booking: the guest is told.
   const guestEmail = liveCustomers().find((c) => c.id === before.customerId)?.email?.toLowerCase();
   recordAudit({ ...ownerActor(request), action: `booking.${to === "CHECKED_IN" ? "check_in" : to === "CANCELLED" ? "cancel_by_shop" : "undo_check_in"}`, entityType: "Booking", entityId: id, organizationId: DEMO_ORG, ...(guestEmail ? { targetEmail: guestEmail } : {}), details: before.bookingCode });

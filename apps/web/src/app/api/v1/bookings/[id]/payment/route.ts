@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { apiError, fieldCodes } from "@/lib/api-error";
-import { recordPaid } from "@/lib/mock/booking-store";
+import { liveBookings, recordPaid } from "@/lib/mock/booking-store";
 import { currentShop } from "@/lib/mock/data";
 import { recordAudit } from "@/lib/mock/admin-audit-store";
 import { ownerActor, DEMO_ORG } from "@/lib/mock/audit-actors";
@@ -21,7 +21,10 @@ export async function PATCH(request: Request, ctx: RouteContext<"/api/v1/booking
   }
   const parsed = bodySchema.safeParse(body);
   if (!parsed.success) return apiError(422, "VALIDATION", "Please check the highlighted fields.", { fields: fieldCodes(parsed.error.issues) });
-  if (!recordPaid(id, parsed.data.paid, currentShop.ownerName)) return apiError(404, "NOT_FOUND", "Booking not found, or it has nothing to pay.");
-  recordAudit({ ...ownerActor(request), action: parsed.data.paid ? "booking.mark_paid" : "booking.mark_unpaid", entityType: "Booking", entityId: id, organizationId: DEMO_ORG });
+  const before = liveBookings().find((b) => b.id === id);
+  if (!before) return apiError(404, "NOT_FOUND", "Booking not found.");
+  if (!recordPaid(id, parsed.data.paid, currentShop.ownerName)) return apiError(409, "INVALID_STATE", "This booking takes no payment (cancelled, nothing to pay, or its session is completed).");
+  // Only a real change is recorded (setting Paid on a paid booking changes nothing).
+  if (liveBookings().find((b) => b.id === id)?.paymentStatus !== before.paymentStatus) recordAudit({ ...ownerActor(request), action: parsed.data.paid ? "booking.mark_paid" : "booking.mark_unpaid", entityType: "Booking", entityId: id, organizationId: DEMO_ORG });
   return Response.json({ id, paid: parsed.data.paid });
 }

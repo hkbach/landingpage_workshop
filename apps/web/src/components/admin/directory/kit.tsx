@@ -137,6 +137,12 @@ export function Pill({ tone, children }: { tone: keyof typeof TONES; children: R
   return <Badge className={TONES[tone]}>{children}</Badge>;
 }
 
+/** A code of the platform in the language of the admin area (`admin.enums.{group}.{code}`); a code without a message is shown readable. */
+export function useCodeLabel(): (group: string, code: string) => string {
+  const t = useTranslations("admin.enums");
+  return (group, code) => (t.has(`${group}.${code}` as never) ? t(`${group}.${code}` as never) : humanize(code));
+}
+
 /** "SHOP_OWNER" -> "Shop owner" for a value that has no message of its own. */
 export const humanize = (code: string): string => { const s = code.toLowerCase().replace(/_/g, " "); return s.charAt(0).toUpperCase() + s.slice(1); };
 

@@ -5,6 +5,8 @@ export const RESERVED_SLUGS = [
   "status", "blog", "docs", "cdn", "assets", "dashboard", "login", "signup",
   // Parts of the app host paths (/shopowner/{slug}, /shopowner/onboarding, /systemadmin).
   "shopowner", "systemadmin", "onboarding",
+  // The sections of the owner area: /shopowner/{section} is an old address without the slug, so a shop cannot be called that.
+  "today", "bookings", "customers", "workshops", "sessions", "finance", "promotions", "ratings", "site", "settings",
 ] as const;
 
 export type SlugCheck = "OK" | "INVALID_FORMAT" | "RESERVED";
