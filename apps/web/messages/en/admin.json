@@ -26,7 +26,12 @@
     "fees": "Config fees",
     "affiliate": "Affiliate",
     "withdrawals": "Withdrawals",
-    "supportContact": "Support contact"
+    "supportContact": "Support contact",
+    "group": {
+      "operations": "Operations",
+      "finance": "Money",
+      "platform": "Platform"
+    }
   },
   "guard": {
     "mockNotice": "Prototype: the role check is simulated. Real authentication is added later.",

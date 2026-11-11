@@ -45,8 +45,8 @@ export function useDirectory<T>(name: string, params: Record<string, string>): {
 /** A search box with an icon, and the filters of the list beside it. */
 export function Toolbar({ value, onChange, placeholder, label, children }: { value: string; onChange: (v: string) => void; placeholder: string; label: string; children?: ReactNode }) {
   return (
-    <div className="flex flex-wrap items-end gap-3">
-      <div className="grid min-w-64 flex-1 gap-1.5">
+    <div className="flex flex-wrap items-end gap-3 rounded-xl border bg-card p-3 shadow-xs">
+      <div className="grid min-w-64 flex-1 gap-1.5 lg:max-w-md">
         <label htmlFor="dir-search" className="text-sm font-medium">{label}</label>
         <div className="relative">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
@@ -76,7 +76,7 @@ export function DirectoryTable<T>({ rows, error, columns, rowKey, resetKey, test
   const pg = usePagination(rows ?? [], resetKey);
   return (
     <div className="grid gap-3" data-testid={testId}>
-      <div className="rounded-xl border bg-card">
+      <div className="overflow-hidden rounded-xl border bg-card shadow-xs [&_thead]:bg-muted/50 [&_th]:h-10 [&_th]:text-xs [&_th]:font-semibold [&_th]:uppercase [&_th]:tracking-wide [&_th]:text-muted-foreground lg:[&_td]:py-2.5">
         <Table>
           <TableHeader>
             <TableRow>{columns.map((c) => <TableHead key={c.key} className={c.className}>{c.header}</TableHead>)}</TableRow>

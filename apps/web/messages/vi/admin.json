@@ -26,7 +26,12 @@
     "fees": "Cấu hình phí",
     "affiliate": "Affiliate",
     "withdrawals": "Rút tiền",
-    "supportContact": "Liên hệ hỗ trợ"
+    "supportContact": "Liên hệ hỗ trợ",
+    "group": {
+      "operations": "Vận hành",
+      "finance": "Tài chính",
+      "platform": "Nền tảng"
+    }
   },
   "guard": {
     "mockNotice": "Bản thử nghiệm: việc kiểm tra vai trò chỉ là giả lập. Xác thực thật sẽ được thêm sau.",

@@ -27,8 +27,8 @@ export default async function AdminLayout({ children }: LayoutProps<"/systemadmi
           {t("skip")}
         </a>
 
-        <aside className="border-b bg-background md:sticky md:top-0 md:h-screen md:w-60 md:shrink-0 md:border-r md:border-b-0">
-          <div className="flex flex-col gap-3 p-3 md:h-full md:gap-6 md:p-4">
+        <aside className="border-b bg-background md:sticky md:top-0 md:h-screen md:w-64 md:shrink-0 md:border-r md:border-b-0 xl:w-72">
+          <div className="flex flex-col gap-3 p-3 md:h-full md:gap-5 md:p-4">
             <div className="flex items-center justify-between gap-2 md:block">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="size-5 text-primary" aria-hidden />
@@ -39,20 +39,20 @@ export default async function AdminLayout({ children }: LayoutProps<"/systemadmi
                   </p>
                 </div>
               </div>
-              <Link
-                href="/login"
-                className={buttonVariants({ variant: "outline", size: "sm", className: "md:mt-3 md:w-full" })}
-              >
+              <Link href="/login" className={buttonVariants({ variant: "outline", size: "sm", className: "md:hidden" })}>
                 <LogOut aria-hidden /> {t("logout")}
               </Link>
             </div>
             <LocaleSwitcher locales={ADMIN_LOCALES} labelKey="admin.shell.language" />
             <AdminNav />
+            <Link href="/login" className={buttonVariants({ variant: "outline", size: "sm", className: "hidden w-full md:inline-flex" })}>
+              <LogOut aria-hidden /> {t("logout")}
+            </Link>
           </div>
         </aside>
 
-        <main id="admin-main" className="min-w-0 flex-1 p-4 md:p-8">
-          <div className="mx-auto max-w-6xl">
+        <main id="admin-main" className="min-w-0 flex-1 p-4 md:p-6 xl:p-8 2xl:px-12">
+          <div className="mx-auto max-w-[1600px]">
             <AdminGuard>{children}</AdminGuard>
           </div>
         </main>
