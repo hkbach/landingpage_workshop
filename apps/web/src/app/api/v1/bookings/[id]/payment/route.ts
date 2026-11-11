@@ -2,6 +2,8 @@ import { z } from "zod";
 import { apiError, fieldCodes } from "@/lib/api-error";
 import { recordPaid } from "@/lib/mock/booking-store";
 import { currentShop } from "@/lib/mock/data";
+import { recordAudit } from "@/lib/mock/admin-audit-store";
+import { ownerActor, DEMO_ORG } from "@/lib/mock/audit-actors";
 
 // The shop set a booking Paid or Unpaid after the session. MOCK implementation inside Next until apps/api exists. The amount is worked out here, from the
 // booking (nothing about the amount comes from the browser). The Income page counts only the bookings that are Paid.
@@ -20,5 +22,6 @@ export async function PATCH(request: Request, ctx: RouteContext<"/api/v1/booking
   const parsed = bodySchema.safeParse(body);
   if (!parsed.success) return apiError(422, "VALIDATION", "Please check the highlighted fields.", { fields: fieldCodes(parsed.error.issues) });
   if (!recordPaid(id, parsed.data.paid, currentShop.ownerName)) return apiError(404, "NOT_FOUND", "Booking not found, or it has nothing to pay.");
+  recordAudit({ ...ownerActor(), action: parsed.data.paid ? "booking.mark_paid" : "booking.mark_unpaid", entityType: "Booking", entityId: id, organizationId: DEMO_ORG });
   return Response.json({ id, paid: parsed.data.paid });
 }

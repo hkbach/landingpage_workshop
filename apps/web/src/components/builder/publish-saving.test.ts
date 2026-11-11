@@ -20,9 +20,9 @@ describe("publishAction while the draft is being saved", () => {
     expect(publishAction({ ...base, status: "ACTIVE", saving: false })).toEqual({ kind: "publish", disabled: false, reason: null });
     expect(publishAction({ ...base, status: "ACTIVE" })).toEqual({ kind: "publish", disabled: false, reason: null });
   });
-  it("a draft shop cannot submit for review while saving", () => {
-    expect(publishAction({ ...base, status: "DRAFT", saving: true })).toEqual({ kind: "submit", disabled: true, reason: "saving" });
-    expect(publishAction({ ...base, status: "DRAFT", saving: false })).toEqual({ kind: "submit", disabled: false, reason: null });
+  it("a draft shop cannot publish while saving", () => {
+    expect(publishAction({ ...base, status: "DRAFT", saving: true })).toEqual({ kind: "publish", disabled: true, reason: "saving" });
+    expect(publishAction({ ...base, status: "DRAFT", saving: false })).toEqual({ kind: "publish", disabled: false, reason: null });
   });
   it("saving is reported first, the other reasons come back once the save is done", () => {
     const broken = { ...base, invalidSections: 2, invalidTheme: true, prerequisites: ready.map((p) => ({ ...p, met: false })) };
@@ -31,8 +31,7 @@ describe("publishAction while the draft is being saved", () => {
     expect(publishAction({ ...broken, status: "DRAFT", saving: true })).toMatchObject({ reason: "saving" });
     expect(publishAction({ ...broken, status: "DRAFT", saving: false })).toMatchObject({ reason: "checklist" });
   });
-  it("pending review and suspended shops are unaffected", () => {
-    expect(publishAction({ ...base, status: "PENDING_REVIEW", saving: true })).toEqual({ kind: "pending" });
+  it("a suspended shop is unaffected", () => {
     expect(publishAction({ ...base, status: "SUSPENDED", saving: true })).toEqual({ kind: "suspended" });
   });
 });
@@ -40,13 +39,13 @@ describe("publishAction while the draft is being saved", () => {
 const Provider = NextIntlClientProvider as unknown as ComponentType<{ locale: string; messages: { builder: typeof builder }; children?: ReactNode }>;
 const render = (node: ReactNode) => renderToStaticMarkup(createElement(Provider, { locale: "en", messages: { builder } }, node));
 
-/** The last button of the header (Publish / Submit) and of the card. */
+/** The last button of the header (Publish) and of the card. */
 const lastButton = (html: string) => [...html.matchAll(/<button\b[^>]*>[\s\S]*?<\/button>/g)].map((m) => m[0]).pop() ?? "";
 
 describe("the Publish button in the sticky header", () => {
   const header = (status: OrgStatus, saveState: SaveState) => {
     const action = publishAction({ ...base, status, saving: saveState === "pending" });
-    return render(createElement(BuilderHeader, { pageId: "main", pageName: "Clay & Co Studio", saveState, status, action, message: null, onPublish: () => {}, onSubmit: () => {} }));
+    return render(createElement(BuilderHeader, { pageId: "main", pageName: "Clay & Co Studio", saveState, status, action, message: null, onPublish: () => {} }));
   };
 
   it("is disabled while the draft is saving, with the reason, and a spinner instead of the icon", () => {
@@ -64,7 +63,7 @@ describe("the Publish button in the sticky header", () => {
       expect(btn, s).not.toMatch(/\bdisabled=""/);
     }
   });
-  it("the Submit for review button of a draft shop follows the same rule", () => {
+  it("the Publish button of a draft shop follows the same rule", () => {
     expect(lastButton(header("DRAFT", "pending"))).toMatch(/\bdisabled=""/);
     expect(lastButton(header("DRAFT", "saved"))).not.toMatch(/\bdisabled=""/);
   });
@@ -72,7 +71,7 @@ describe("the Publish button in the sticky header", () => {
 
 describe("the Publish button in the Publish card", () => {
   const card = (status: OrgStatus, saving: boolean) =>
-    render(createElement(PublishPanel, { status, prerequisites: ready, invalidSections: 0, invalidTheme: false, saving, message: null, onSubmitForReview: () => {}, onPublish: () => {} }));
+    render(createElement(PublishPanel, { status, prerequisites: ready, invalidSections: 0, invalidTheme: false, saving, message: null, onPublish: () => {} }));
 
   it("is disabled while saving and says why", () => {
     const html = card("ACTIVE", true);
@@ -86,7 +85,7 @@ describe("the Publish button in the Publish card", () => {
     expect(lastButton(html)).not.toMatch(/\bdisabled=""/);
     expect(html).not.toContain("Saving your changes");
   });
-  it("Submit for review is disabled while saving", () => {
+  it("Publish of a draft shop is disabled while saving", () => {
     expect(lastButton(card("DRAFT", true))).toMatch(/\bdisabled=""/);
     expect(lastButton(card("DRAFT", false))).not.toMatch(/\bdisabled=""/);
   });

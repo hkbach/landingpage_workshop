@@ -17,18 +17,17 @@ describe("publishAction", () => {
   it("publishing a live shop does not depend on the first-submission checklist", () => {
     expect(publishAction({ ...base, status: "ACTIVE", prerequisites: met(false) })).toEqual({ kind: "publish", disabled: false, reason: null });
   });
-  it("a draft shop submits for review once the checklist is complete", () => {
-    expect(publishAction({ ...base, status: "DRAFT" })).toEqual({ kind: "submit", disabled: false, reason: null });
+  it("a draft shop publishes (and goes live) once the checklist is complete: there is no review", () => {
+    expect(publishAction({ ...base, status: "DRAFT" })).toEqual({ kind: "publish", disabled: false, reason: null });
   });
-  it("submission waits for the checklist and reports it first", () => {
-    expect(publishAction({ ...base, status: "DRAFT", prerequisites: met(false) })).toEqual({ kind: "submit", disabled: true, reason: "checklist" });
-    expect(publishAction({ ...base, status: "DRAFT", prerequisites: met(false), invalidSections: 1 })).toEqual({ kind: "submit", disabled: true, reason: "checklist" });
+  it("the first publish waits for the checklist and reports it first", () => {
+    expect(publishAction({ ...base, status: "DRAFT", prerequisites: met(false) })).toEqual({ kind: "publish", disabled: true, reason: "checklist" });
+    expect(publishAction({ ...base, status: "DRAFT", prerequisites: met(false), invalidSections: 1 })).toEqual({ kind: "publish", disabled: true, reason: "checklist" });
   });
-  it("submission is also blocked by errors once the checklist is complete", () => {
-    expect(publishAction({ ...base, status: "DRAFT", invalidTheme: true })).toEqual({ kind: "submit", disabled: true, reason: "errors" });
+  it("the first publish is also blocked by errors once the checklist is complete", () => {
+    expect(publishAction({ ...base, status: "DRAFT", invalidTheme: true })).toEqual({ kind: "publish", disabled: true, reason: "errors" });
   });
-  it("a pending or suspended shop cannot publish or submit", () => {
-    expect(publishAction({ ...base, status: "PENDING_REVIEW" })).toEqual({ kind: "pending" });
+  it("a suspended shop cannot publish", () => {
     expect(publishAction({ ...base, status: "SUSPENDED" })).toEqual({ kind: "suspended" });
   });
 });

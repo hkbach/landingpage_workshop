@@ -2,6 +2,8 @@ import { z } from "zod";
 import { checkRescheduleReason } from "@workshop/shared";
 import { apiError, fieldCodes } from "@/lib/api-error";
 import { mailSessionRescheduled } from "@/lib/mock/session-mail";
+import { recordAudit } from "@/lib/mock/admin-audit-store";
+import { ownerActor, DEMO_ORG } from "@/lib/mock/audit-actors";
 
 // A session was re-scheduled: tell the guests who booked it. MOCK implementation inside Next until apps/api exists.
 // TODO(api): POST /dashboard/sessions/{id}/reschedule changes the session, moves its bookings and writes the outbox events in ONE transaction
@@ -30,6 +32,7 @@ export async function POST(request: Request, ctx: RouteContext<"/api/v1/sessions
   if (!reason.ok) return apiError(422, "VALIDATION", "A reason is required.", { fields: { reason: reason.error === "NOTE_REQUIRED" ? "noteRequired" : "required" } });
 
   // Every guest who booked the session is told, except the ones who cancelled their booking (sessions made in the browser only have no bookings here).
+  recordAudit({ ...ownerActor(), action: "session.reschedule", entityType: "Session", entityId: id, organizationId: DEMO_ORG, details: reason.reason.code });
   return Response.json(mailSessionRescheduled(id, {
     oldStartsAt: parsed.data.oldStartsAt, newStartsAt: parsed.data.newStartsAt, newEndsAt: parsed.data.newEndsAt, reason: reason.reason,
   }));

@@ -1,6 +1,6 @@
 // Extra mock data for the platform admin area (the shared mock file is read-only). Replaced by API calls later.
 import type { AbuseReport, AuditEntry } from "../types";
-import { abuseReports, auditLogs } from "./data";
+import { abuseReports, AUDIT_WHO, auditLogs } from "./data";
 
 const HOUR = 3_600_000;
 const ago = (hours: number) => new Date(Date.now() - hours * HOUR).toISOString();
@@ -24,16 +24,25 @@ export const adminReports: AbuseReport[] = [...abuseReports, ...extraReports].so
   b.createdAt.localeCompare(a.createdAt),
 );
 
-const GENERATED: Array<Pick<AuditEntry, "actor" | "action" | "entityType" | "organizationId">> = [
-  { actor: "Linh Tran", action: "workshop.create", entityType: "workshop", organizationId: "org-1" },
-  { actor: "Linh Tran", action: "session.cancel", entityType: "session", organizationId: "org-1" },
-  { actor: "Minh Pham", action: "page.submit_review", entityType: "organization", organizationId: "org-2" },
-  { actor: "An Nguyen", action: "booking.cancel", entityType: "booking", organizationId: "org-3" },
-  { actor: "Platform Admin", action: "organization.reject", entityType: "organization", organizationId: "org-2" },
-  { actor: "Linh Tran", action: "page.publish", entityType: "page", organizationId: "org-1" },
+type Generated = Omit<AuditEntry, "id" | "entityId" | "createdAt">;
+const GENERATED: Generated[] = [
+  { ...AUDIT_WHO.linh, action: "workshop.create", entityType: "workshop", organizationId: "org-1" },
+  { ...AUDIT_WHO.emma, action: "auth.login", entityType: "user", organizationId: "org-1", details: "Logged in with email and password" },
+  { ...AUDIT_WHO.linh, action: "session.close", entityType: "session", organizationId: "org-1" },
+  { ...AUDIT_WHO.thu, action: "booking.create", entityType: "booking", organizationId: "org-1", details: "2 guests" },
+  { ...AUDIT_WHO.minh, action: "shop.publish", entityType: "organization", organizationId: "org-2" },
+  { ...AUDIT_WHO.an, action: "booking.cancel", entityType: "booking", organizationId: "org-3" },
+  { ...AUDIT_WHO.yuki, action: "affiliate.register", entityType: "affiliate_link", organizationId: "org-1" },
+  { ...AUDIT_WHO.admin, action: "user.reset_password", entityType: "user", organizationId: "org-1", targetEmail: "emma@example.com" },
+  { ...AUDIT_WHO.emma, action: "booking.cancel", entityType: "booking", organizationId: "org-1", details: "Reason: My plans changed" },
+  { ...AUDIT_WHO.hoang, action: "page.publish", entityType: "page", organizationId: "org-4" },
+  { ...AUDIT_WHO.guest, action: "booking.create", entityType: "booking", organizationId: "org-1", details: "1 guest" },
+  { ...AUDIT_WHO.thu, action: "withdrawal.request", entityType: "withdrawal", organizationId: "org-1", details: "Affiliate" },
+  { ...AUDIT_WHO.linh, action: "page.publish", entityType: "page", organizationId: "org-1" },
+  { ...AUDIT_WHO.yuki, action: "booking.check_in", entityType: "booking", organizationId: "org-1" },
 ];
 
-const generated: AuditEntry[] = Array.from({ length: 22 }, (_, i) => {
+const generated: AuditEntry[] = Array.from({ length: 28 }, (_, i) => {
   const g = GENERATED[i % GENERATED.length]!;
   return { id: `au-g${i + 1}`, ...g, entityId: `${g.entityType}-${i + 1}`, createdAt: ago(6 + i * 19) };
 });

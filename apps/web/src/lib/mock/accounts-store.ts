@@ -172,6 +172,12 @@ export function completePasswordReset(token: string, tempPassword: string, newPa
   return { ok: true };
 }
 
+/** The account a reset link belongs to (for the audit log, read before the link is used up); undefined for an unknown link. */
+export function resetTokenAccount(token: string): Account | undefined {
+  const r = store().resets.get(hashToken(token));
+  return r ? findAccount(r.accountId) : undefined;
+}
+
 /** Whether a link of a reset can still be used (the page tells the person at once when it is not). */
 export function resetLinkValid(token: string, now = Date.now()): boolean {
   const r = store().resets.get(hashToken(token));

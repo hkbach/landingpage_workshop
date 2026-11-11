@@ -2,11 +2,12 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { CalendarClock, CalendarDays, CheckCircle2, Circle, ClipboardList, HandCoins, MailQuestion, Sparkles, Users, Wallet } from "lucide-react";
 import { closeIfEnded, isSessionFinished, ledgerFromPayments, type TrendBucket, type TrendPeriod } from "@workshop/shared";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { SubmitForReview } from "@/components/dashboard/shell/submit-for-review";
 import { BookingTrend } from "@/components/dashboard/booking-trend";
 import { LiveSummary } from "@/components/dashboard/live-summary";
 import { SummaryCard } from "@/components/dashboard/summary-card";
+import { buttonVariants } from "@/components/ui/button";
 import { ShopLink } from "@/components/dashboard/shell/shop-link";
+import { liveShop } from "@/lib/mock/shop-admin-store";
 import { dayKey } from "@/lib/format";
 import { liveBookings, liveCustomers, shopSessions } from "@/lib/mock/booking-store";
 import { withWorkshopStatus } from "@/lib/mock/workshop-status-store";
@@ -67,6 +68,7 @@ const CHECKLIST_LINKS = {
 
 export default async function OverviewPage() {
   const t = await getTranslations("dashboard.overview");
+  const shopStatus = (liveShop(currentShop.id) ?? currentShop).status;
   const ts = await getTranslations("dashboard.overview.summary");
   const locale = await getLocale();
   const o = computeOverview();
@@ -129,7 +131,7 @@ export default async function OverviewPage() {
           />
           <LiveSummary
             rows={ledgerFromPayments(paymentSources(bookings), getFeeRates(currentShop.id))} currency={currentShop.currency} timezone={currentShop.timezone}
-            mainPage={{ name: currentShop.name, template: sitePage.template, seed: mockLandingPages }} shopStatus={currentShop.status}
+            mainPage={{ name: currentShop.name, template: sitePage.template, seed: mockLandingPages }} shopStatus={shopStatus}
           />
         </ul>
       </section>
@@ -153,8 +155,13 @@ export default async function OverviewPage() {
                 </li>
               ))}
             </ul>
-            {currentShop.status === "DRAFT" || currentShop.status === "PENDING_REVIEW" ? (
-              <SubmitForReview ready={allDone} status={currentShop.status} />
+            {shopStatus === "DRAFT" ? (
+              <div className="grid gap-2">
+                <div>
+                  <ShopLink href="/shopowner/site" className={buttonVariants({ variant: allDone ? "default" : "outline" })} data-testid="checklist-publish">{t("checklist.publish")}</ShopLink>
+                </div>
+                <p role="status" className="text-xs text-muted-foreground">{allDone ? t("checklist.readyNote") : t("checklist.notReadyNote")}</p>
+              </div>
             ) : null}
           </CardContent>
         </Card>

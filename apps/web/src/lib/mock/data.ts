@@ -25,7 +25,7 @@ export const shops: Shop[] = [
     plan: "FREE", ownerName: "Linh Tran", ownerEmail: "linh@whiskladle.example", createdAt: at(-60, 9), showOnCustomerPage: true,
   },
   {
-    id: "org-2", name: "Sugar & Sift Bakery", slug: "sugarsift", status: "PENDING_REVIEW", country: "VN", timezone: TZ, currency: "VND",
+    id: "org-2", name: "Sugar & Sift Bakery", slug: "sugarsift", status: "DRAFT", country: "VN", timezone: TZ, currency: "VND",
     defaultLocale: "en", enabledLocales: ["en", "ja"], contactEmail: "hi@sugarsift.example", contactPhone: "+84 91 111 1111",
     address: "5 Le Loi, Hoi An", mapsUrl: "https://maps.app.goo.gl/example2",
     plan: "FREE", ownerName: "Minh Pham", ownerEmail: "minh@sugarsift.example", createdAt: at(-3, 10),
@@ -483,11 +483,24 @@ bookings.push(...accountBookings());
 // The seats a session has taken come from its bookings (a cancelled booking holds none).
 for (const session of sessions) session.reservedCount = reservedSeats(bookings, session.id);
 
+/** The people of the demo audit log (name, email, role, id), so the log can be searched by email. */
+export const AUDIT_WHO = {
+  linh: { actor: "Linh Tran", actorEmail: "linh@whiskladle.example", actorRole: "SHOP_OWNER", actorId: "owner-org-1" },
+  minh: { actor: "Minh Pham", actorEmail: "minh@sugarsift.example", actorRole: "SHOP_OWNER", actorId: "owner-org-2" },
+  an: { actor: "An Nguyen", actorEmail: "an@goldennoodle.example", actorRole: "SHOP_OWNER", actorId: "owner-org-3" },
+  hoang: { actor: "Hoang Le", actorEmail: "hoang@brewbean.example", actorRole: "SHOP_OWNER", actorId: "owner-org-4" },
+  admin: { actor: "Platform Admin", actorEmail: "admin@workshopkit.example", actorRole: "SYSTEM_ADMIN", actorId: "admin" },
+  emma: { actor: "Emma Johnson", actorEmail: "emma@example.com", actorRole: "CUSTOMER", actorId: "cu-1" },
+  thu: { actor: "Nguyen Thu", actorEmail: "thu@example.com", actorRole: "CUSTOMER", actorId: "cu-4" },
+  yuki: { actor: "Sato Yuki", actorEmail: "yuki@example.com", actorRole: "CUSTOMER", actorId: "cu-5" },
+  guest: { actor: "Guest", actorEmail: "visitor@example.com", actorRole: "GUEST" },
+} as const satisfies Record<string, Pick<AuditEntry, "actor" | "actorEmail" | "actorRole" | "actorId">>;
+
 export const auditLogs: AuditEntry[] = [
-  { id: "au-1", organizationId: "org-1", actor: "Linh Tran", action: "booking.check_in", entityType: "booking", entityId: "bk-2", createdAt: at(0, 9) },
-  { id: "au-2", organizationId: "org-1", actor: "Linh Tran", action: "payment.record", entityType: "booking", entityId: "bk-2", createdAt: at(0, 9.2) },
-  { id: "au-3", organizationId: "org-3", actor: "Platform Admin", action: "organization.suspend", entityType: "organization", entityId: "org-3", createdAt: at(-5, 15) },
-  { id: "au-4", organizationId: "org-1", actor: "Platform Admin", action: "organization.approve", entityType: "organization", entityId: "org-1", createdAt: at(-58, 11) },
+  { id: "au-1", organizationId: "org-1", ...AUDIT_WHO.linh, action: "booking.check_in", entityType: "booking", entityId: "bk-2", createdAt: at(0, 9) },
+  { id: "au-2", organizationId: "org-1", ...AUDIT_WHO.linh, action: "payment.record", entityType: "booking", entityId: "bk-2", createdAt: at(0, 9.2) },
+  { id: "au-3", organizationId: "org-3", ...AUDIT_WHO.admin, action: "organization.suspend", entityType: "organization", entityId: "org-3", targetEmail: "an@goldennoodle.example", details: "Reported as misleading", createdAt: at(-5, 15) },
+  { id: "au-4", organizationId: "org-1", ...AUDIT_WHO.linh, action: "shop.publish", entityType: "organization", entityId: "org-1", createdAt: at(-58, 11) },
 ];
 
 export const abuseReports: AbuseReport[] = [

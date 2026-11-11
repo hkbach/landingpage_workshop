@@ -2,6 +2,8 @@ import { z } from "zod";
 import { apiError, fieldCodes } from "@/lib/api-error";
 import { currentShop } from "@/lib/mock/data";
 import { cancelBookingByGuest } from "@/lib/mock/booking-store";
+import { recordAudit } from "@/lib/mock/admin-audit-store";
+import { guestActor, DEMO_ORG } from "@/lib/mock/audit-actors";
 
 // A guest cancels their booking on the page where they look it up (booking code + the email of the booking). MOCK implementation inside Next until apps/api exists.
 // TODO(api): POST /public/sites/{slug}/bookings/cancel checks the code and the email, the state machine (until the session starts), frees the seats, writes the audit log and
@@ -27,5 +29,6 @@ export async function POST(request: Request, ctx: RouteContext<"/api/v1/public/s
   if (!parsed.success) return apiError(422, "VALIDATION", "Please check the highlighted fields.", { fields: fieldCodes(parsed.error.issues) });
   const res = cancelBookingByGuest(parsed.data.code, parsed.data.email, parsed.data.reason);
   if (!res.ok) return res.code === "NOT_FOUND" ? apiError(404, "NOT_FOUND", "Booking not found.") : apiError(409, "NOT_CANCELLABLE", "This booking cannot be cancelled any more.");
+  recordAudit({ ...guestActor(parsed.data.email), action: "booking.cancel", entityType: "Booking", entityId: res.booking.id, organizationId: DEMO_ORG, details: res.booking.bookingCode });
   return Response.json({ code: res.booking.bookingCode, status: res.booking.status });
 }

@@ -2,6 +2,8 @@ import { z } from "zod";
 import { checkCloseReasonFor } from "@workshop/shared";
 import { apiError, fieldCodes } from "@/lib/api-error";
 import { mailSessionClosed } from "@/lib/mock/session-mail";
+import { recordAudit } from "@/lib/mock/admin-audit-store";
+import { ownerActor, DEMO_ORG } from "@/lib/mock/audit-actors";
 
 // The owner closed a session: tell the guests who booked it. MOCK implementation inside Next until apps/api exists.
 // TODO(api): POST /dashboard/sessions/{id}/close changes the status and writes the outbox events in ONE transaction (OWNER / MANAGER only, audited).
@@ -25,5 +27,6 @@ export async function POST(request: Request, ctx: RouteContext<"/api/v1/sessions
   if (!parsed.success) return apiError(422, "VALIDATION", "Please check the highlighted fields.", { fields: fieldCodes(parsed.error.issues) });
   const reason = checkCloseReasonFor(parsed.data, new Date(), parsed.data.reason.code, parsed.data.reason.note ?? "");
   if (!reason.ok) return apiError(422, "VALIDATION", "A reason is required.", { fields: { reason: reason.error === "NOTE_REQUIRED" ? "noteRequired" : "required" } });
+  recordAudit({ ...ownerActor(), action: "session.close", entityType: "Session", entityId: id, organizationId: DEMO_ORG, details: reason.reason.code });
   return Response.json(mailSessionClosed(id, { startsAt: parsed.data.startsAt, endsAt: parsed.data.endsAt, reason: reason.reason }));
 }

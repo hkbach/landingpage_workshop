@@ -3,14 +3,15 @@ import { isTemplateKey } from "@/components/sections/templates";
 import { SiteBuilder } from "@/components/builder/SiteBuilder";
 import { countWorkshopsWithUpcomingSessions } from "@/components/builder/prereqs";
 import { currentShop, mockLandingPages, sessions, sitePage, workshops } from "@/lib/mock/data";
+import { liveShop } from "@/lib/mock/shop-admin-store";
 import { platformSupport } from "@/lib/mock/platform";
 
-// Frontend-only: mock draft + shop. `?status=DRAFT|PENDING_REVIEW|ACTIVE|SUSPENDED` previews the submit/publish states.
+// Frontend-only: mock draft + shop. `?status=DRAFT|ACTIVE|SUSPENDED` previews the publish states.
 export default async function SiteBuilderPage({ params, searchParams }: PageProps<"/shopowner/[slug]/site/[pageId]">) {
   const { pageId } = await params;
   const sp = await searchParams;
   const requested = typeof sp.status === "string" ? sp.status : undefined;
-  const status: OrgStatus = (ORG_STATUSES as readonly string[]).includes(requested ?? "") ? (requested as OrgStatus) : currentShop.status;
+  const status: OrgStatus = (ORG_STATUSES as readonly string[]).includes(requested ?? "") ? (requested as OrgStatus) : (liveShop(currentShop.id) ?? currentShop).status;
   // ?apply=KEY (from the template preview banner) opens the "Switch template?" confirmation for that template.
   const apply = typeof sp.apply === "string" && isTemplateKey(sp.apply) ? sp.apply : undefined;
   return (

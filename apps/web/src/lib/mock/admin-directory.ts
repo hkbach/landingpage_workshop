@@ -4,6 +4,7 @@
 // TODO(api): GET /admin/{shops,workshops,bookings,customers,sessions,landing-pages} with the same filters, page and pageSize, SUPER_ADMIN only.
 import { closeCount, closeIfEnded, SESSION_STATUSES, type OrgStatus, type SessionStatus, type WorkshopStatus } from "@workshop/shared";
 import { listAccounts, type Account } from "./accounts-store";
+import { liveAuditLogs } from "./admin-audit-store";
 import { referralEarnings } from "./admin-income";
 import { liveBookings, liveCustomers, shopSessions } from "./booking-store";
 import { currentShop, workshops as demoWorkshops } from "./data";
@@ -15,7 +16,7 @@ import { withAdminChanges } from "./session-admin-store";
 import { liveShops } from "./shop-admin-store";
 import { withWorkshopStatus } from "./workshop-status-store";
 import { matchesSearch } from "../text-search";
-import type { Booking, Session, Shop, Workshop } from "../types";
+import type { AuditEntry, Booking, Session, Shop, Workshop } from "../types";
 
 const titleOf = (l: Record<string, string | undefined>): string => l.en ?? Object.values(l).find(Boolean) ?? "";
 const allTitles = (l: Record<string, string | undefined>): string => Object.values(l).filter(Boolean).join(" ");
@@ -283,4 +284,30 @@ export function adminWithdrawals(q = "", status = "", from = "", to = "", source
     };
     return matchesSearch(hay(row.code, row.accountEmail, row.accountName), q) ? [row] : [];
   }).sort((x, y) => Number(y.status === "PENDING") - Number(x.status === "PENDING") || y.requestedAt.localeCompare(x.requestedAt));
+}
+
+// ---- audit log ----
+
+export interface AdminAuditRow extends AuditEntry { organizationName: string; organizationSlug: string }
+export interface AuditFilters { email?: string; org?: string; action?: string; entity?: string; role?: string; from?: string; to?: string }
+
+/**
+ * The audit log, newest first. `email`: the email of the user who did it, or of the user it was done to (an administrator resets an account); `org`: the name, the slug or the id of
+ * the organization (the shop) it happened in. The rest narrows by action, record type, role of the user and the days (UTC, both included).
+ */
+export function adminAuditRows(f: AuditFilters = {}): AdminAuditRow[] {
+  const shops = new Map(liveShops().map((s) => [s.id, s]));
+  return liveAuditLogs()
+    .filter((e) => {
+      const day = e.createdAt.slice(0, 10);
+      return (!f.action || e.action === f.action) && (!f.entity || e.entityType === f.entity) && (!f.role || e.actorRole === f.role) && (!f.from || day >= f.from) && (!f.to || day <= f.to);
+    })
+    .flatMap((e): AdminAuditRow[] => {
+      const shop = e.organizationId ? shops.get(e.organizationId) : undefined;
+      const row: AdminAuditRow = { ...e, organizationName: shop?.name ?? "", organizationSlug: shop?.slug ?? "" };
+      if (f.email && !matchesSearch(hay(e.actorEmail, e.targetEmail), f.email)) return [];
+      if (f.org && !matchesSearch(hay(e.organizationId, row.organizationName, row.organizationSlug), f.org)) return [];
+      return [row];
+    })
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }

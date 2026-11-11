@@ -7,6 +7,8 @@ import { customerLoginRequired } from "@/lib/customer-access";
 import { accountOfGuest, updateGuestAccount } from "@/lib/mock/booking-store";
 import type { CustomerProfile } from "@/lib/customer-api";
 import type { Customer } from "@/lib/types";
+import { recordAudit } from "@/lib/mock/admin-audit-store";
+import { customerActor, DEMO_ORG } from "@/lib/mock/audit-actors";
 
 // The account of a guest, seen by the guest themselves (/customer/{id}). MOCK implementation inside Next until apps/api exists.
 // The guest is identified by the email of the account in the `x-guest-email` header (what the browser keeps after the OTP login); any other email, an unknown id
@@ -66,5 +68,6 @@ export async function PATCH(request: Request, ctx: RouteContext<"/api/v1/custome
   const { preferredLocale, ...rest } = parsed.data;
   const res = updateGuestAccount(id, emailOf(request), { ...rest, locale: preferredLocale });
   if (!res.ok) return notFound();
+  recordAudit({ ...customerActor(id), action: "customer.profile_update", entityType: "Customer", entityId: id, organizationId: DEMO_ORG });
   return Response.json(profileOf(res.customer), { headers });
 }

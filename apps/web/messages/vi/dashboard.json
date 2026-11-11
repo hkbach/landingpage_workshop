@@ -22,11 +22,7 @@
     "banner": {
       "draft": {
         "title": "Chưa hoàn tất thiết lập.",
-        "body": "Hoàn thành danh sách kiểm tra ở trang tổng quan và gửi cửa hàng để duyệt nhằm xuất bản trang giới thiệu."
-      },
-      "pending": {
-        "title": "Đang chờ duyệt.",
-        "body": "Cửa hàng của bạn đã được gửi và đang được xem xét. Bạn vẫn có thể tiếp tục chỉnh sửa bản nháp trong thời gian này."
+        "body": "Hoàn thành danh sách kiểm tra ở trang tổng quan và xuất bản trang giới thiệu để hoạt động. Không cần chờ duyệt."
       },
       "suspended": {
         "title": "Cửa hàng bị tạm ngưng.",
@@ -57,11 +53,9 @@
         "contact": "Thông tin liên hệ (email, điện thoại, địa chỉ)",
         "workshop": "Ít nhất một workshop đang hoạt động có buổi sắp tới"
       },
-      "submit": "Gửi để duyệt",
-      "submitting": "Đang gửi...",
-      "submitted": "Đã gửi. Chúng tôi sẽ xem xét cửa hàng của bạn và thông báo qua email.",
-      "readyNote": "Đã đáp ứng tất cả yêu cầu.",
-      "notReadyNote": "Hoàn thành tất cả yêu cầu để gửi."
+      "readyNote": "Đã đáp ứng tất cả yêu cầu. Xuất bản trang giới thiệu để hoạt động.",
+      "notReadyNote": "Hoàn thành tất cả yêu cầu để xuất bản.",
+      "publish": "Xuất bản trang giới thiệu"
     },
     "summary": {
       "title": "Tóm tắt",

@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { apiError, fieldCodes } from "@/lib/api-error";
 import { createManualBooking } from "@/lib/mock/booking-store";
+import { recordAudit } from "@/lib/mock/admin-audit-store";
+import { ownerActor, DEMO_ORG } from "@/lib/mock/audit-actors";
 
 // The shop owner makes a booking for a guest who comes to the studio or calls (walk-in, phone, other). MOCK implementation inside Next until apps/web has the API.
 // The booking is CONFIRMED at once (the shop confirmed it with the guest). A guest who gave an email gets an information email (no link to confirm).
@@ -33,5 +35,6 @@ export async function POST(request: Request) {
     if (res.code === "UNKNOWN_SESSION") return apiError(404, "NOT_FOUND", "Session not found.");
     return apiError(422, "VALIDATION", "Please check the highlighted fields.", { fields: { [res.code === "QUANTITY" ? "quantity" : "email"]: res.code === "QUANTITY" ? "invalid" : "required" } });
   }
+  recordAudit({ ...ownerActor(), action: "booking.manual_create", entityType: "Booking", entityId: res.booking.id, organizationId: DEMO_ORG, ...(parsed.data.email ? { targetEmail: parsed.data.email.toLowerCase() } : {}), details: `${res.booking.bookingCode} ${parsed.data.source}` });
   return Response.json({ id: res.booking.id, code: res.booking.bookingCode, emailed: res.emailed }, { status: 201 });
 }

@@ -127,18 +127,16 @@
   "publish": {
     "title": "Xuất bản",
     "status": {
-      "DRAFT": "Chưa gửi",
-      "PENDING_REVIEW": "Chờ duyệt",
+      "DRAFT": "Chưa xuất bản",
       "ACTIVE": "Đang hoạt động",
       "SUSPENDED": "Bị tạm ngưng"
     },
     "suspended": "Website này đang bị tạm ngưng. Hãy liên hệ bộ phận hỗ trợ để khôi phục.",
-    "pending": "Website của bạn đã được gửi và đang chờ duyệt. Bạn vẫn có thể tiếp tục chỉnh sửa bản nháp.",
     "publish": "Xuất bản",
     "publishHint": "Xuất bản sẽ đưa bản nháp hiện tại lên website ngay lập tức.",
     "fixErrors": "Hãy sửa {count, plural, other {# phần}} được đánh dấu cần chú ý trước.",
     "publishedMock": "Đã xuất bản bản nháp (chỉ là bản demo, chưa gửi gì lên máy chủ).",
-    "checklistTitle": "Trước khi gửi duyệt",
+    "checklistTitle": "Trước khi xuất bản",
     "prereq": {
       "identity": "Tên cửa hàng hoặc logo",
       "hero": "Banner đầu trang có tiêu đề",
@@ -147,14 +145,12 @@
     },
     "done": "xong",
     "missing": "còn thiếu",
-    "submit": "Gửi duyệt",
-    "submitDisabled": "Hãy hoàn thành danh sách kiểm tra để gửi website của bạn đi duyệt.",
-    "submittedMock": "Đã gửi duyệt (chỉ là bản demo).",
+    "submitDisabled": "Hoàn thành danh sách kiểm tra để xuất bản website.",
     "fixTheme": "Hãy sửa các màu giao diện có độ tương phản thấp trước.",
     "blockedHint": "Hãy sửa các phần hoặc màu sắc được đánh dấu cần chú ý trước.",
     "publishedShort": "Đã xuất bản (bản demo)",
-    "submittedShort": "Đã gửi duyệt (bản demo)",
-    "savingHint": "Đang lưu thay đổi của bạn. Bạn có thể xuất bản trong giây lát."
+    "savingHint": "Đang lưu thay đổi của bạn. Bạn có thể xuất bản trong giây lát.",
+    "firstPublishHint": "Xuất bản sẽ đưa website của bạn đến khách ngay lập tức. Không cần chờ duyệt."
   },
   "editor": {
     "title": "Chỉnh sửa: {name}",

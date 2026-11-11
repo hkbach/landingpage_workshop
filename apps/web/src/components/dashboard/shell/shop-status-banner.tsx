@@ -1,5 +1,5 @@
 import { getTranslations } from "next-intl/server";
-import { AlertTriangle, Clock, Lock } from "lucide-react";
+import { AlertTriangle, Lock } from "lucide-react";
 import type { OrgStatus } from "@workshop/shared";
 
 export async function ShopStatusBanner({ status, reason }: { status: OrgStatus; reason?: string }) {
@@ -7,7 +7,6 @@ export async function ShopStatusBanner({ status, reason }: { status: OrgStatus; 
   const t = await getTranslations("dashboard.shell.banner");
   const cfg = {
     DRAFT: { Icon: AlertTriangle, key: "draft", tone: "border-amber-300 bg-amber-50 text-amber-950" },
-    PENDING_REVIEW: { Icon: Clock, key: "pending", tone: "border-sky-300 bg-sky-50 text-sky-950" },
     SUSPENDED: { Icon: Lock, key: "suspended", tone: "border-red-300 bg-red-50 text-red-950" },
   }[status];
   return (

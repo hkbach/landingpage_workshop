@@ -99,7 +99,7 @@ function BuilderInner({ shop, initial, initialSource = "starter", initialStatus,
   const [status, setStatus] = useState<OrgStatus>(initialStatus);
   // Only one landing page is public at a time: publishing this one takes the current public page offline.
   const [liveId, setLiveId] = useState<string | null>(() => loadLivePageId(initialSource === "published"));
-  const [publishMessage, setPublishMessage] = useState<"published" | "submitted" | null>(null);
+  const [publishMessage, setPublishMessage] = useState<"published" | null>(null);
   const [activeLang, setLang] = useEditingLanguage(shop.enabledLocales, shop.defaultLocale);
   const [selectedId, setSelectedId] = useState<string>(() => draft.content.sections[0]?.id ?? SEO_ID);
   const [pendingTemplate, setPendingTemplate] = useState<TemplateKey | null>(() => (applyTemplate && applyTemplate !== draft.template ? applyTemplate : null));
@@ -209,8 +209,13 @@ function BuilderInner({ shop, initial, initialSource = "starter", initialStatus,
     setLiveId(pageId);
     setView("published");
     setPublishMessage("published");
+    // The first publish of a shop that is not live yet makes the shop ACTIVE at once (no review): the server does it and writes the audit line.
+    if (status === "DRAFT") {
+      void fetch("/api/v1/site/publish", { method: "POST" })
+        .then((res) => { if (res.ok) setStatus("ACTIVE"); })
+        .catch(() => { /* the page is saved; the shop stays DRAFT and the next publish tries again */ });
+    }
   };
-  const submitNow = () => { if (saving) return; saveDraft(trimmed(), pageId); setStatus("PENDING_REVIEW"); setPublishMessage("submitted"); };
 
   const names = (types: SectionType[]) => types.map((ty) => t(`sectionTypes.${ty}`)).join(", ");
   const editorLabel = selected ? t(`sectionTypes.${selected.type}`) : t("seo.title");
@@ -220,7 +225,7 @@ function BuilderInner({ shop, initial, initialSource = "starter", initialStatus,
       <BuilderHeader
         pageId={pageId} pageName={page.name}
         saveState={saveState} status={status} action={headerAction} message={publishMessage}
-        onPublish={publishNow} onSubmit={submitNow}
+        onPublish={publishNow}
       />
 
       <div className="flex items-start gap-2 rounded-lg border bg-muted/40 p-3 text-sm">
@@ -306,7 +311,7 @@ function BuilderInner({ shop, initial, initialSource = "starter", initialStatus,
           <CardContent>
             <PublishPanel
               status={status} prerequisites={prerequisites} invalidSections={invalidSections} invalidTheme={invalidTheme}
-              saving={saving} message={publishMessage} onSubmitForReview={submitNow} onPublish={publishNow}
+              saving={saving} message={publishMessage} onPublish={publishNow}
             />
             <SupportContactBox contact={support} />
           </CardContent>

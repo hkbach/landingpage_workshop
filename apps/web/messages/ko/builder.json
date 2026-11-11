@@ -127,18 +127,16 @@
   "publish": {
     "title": "게시",
     "status": {
-      "DRAFT": "미제출",
-      "PENDING_REVIEW": "검토 대기 중",
+      "DRAFT": "게시 전",
       "ACTIVE": "게시 중",
       "SUSPENDED": "정지됨"
     },
     "suspended": "이 웹사이트는 정지되었습니다. 복구하려면 지원팀에 문의하세요.",
-    "pending": "웹사이트를 제출했으며 검토를 기다리고 있습니다. 초안은 계속 수정할 수 있습니다.",
     "publish": "게시",
     "publishHint": "게시하면 현재 초안이 즉시 공개됩니다.",
     "fixErrors": "먼저 확인이 필요하다고 표시된 섹션 {count}개를 수정하세요.",
     "publishedMock": "초안이 게시되었습니다(데모 전용, 서버로 전송되지 않았습니다).",
-    "checklistTitle": "검토 요청 전 확인 사항",
+    "checklistTitle": "게시하기 전에",
     "prereq": {
       "identity": "가게 이름 또는 로고",
       "hero": "제목이 있는 히어로 섹션",
@@ -147,14 +145,12 @@
     },
     "done": "완료",
     "missing": "누락",
-    "submit": "검토 요청",
-    "submitDisabled": "체크리스트를 모두 완료해야 웹사이트 검토를 요청할 수 있습니다.",
-    "submittedMock": "검토를 요청했습니다(데모 전용).",
+    "submitDisabled": "체크리스트를 완료해야 웹사이트를 게시할 수 있어요.",
     "fixTheme": "먼저 대비가 낮은 테마 색상을 수정하세요.",
     "blockedHint": "먼저 주의가 필요하다고 표시된 섹션이나 색상을 수정하세요.",
     "publishedShort": "게시됨 (데모)",
-    "submittedShort": "검토 요청됨 (데모)",
-    "savingHint": "변경 사항을 저장하는 중입니다. 잠시 후 게시할 수 있습니다."
+    "savingHint": "변경 사항을 저장하는 중입니다. 잠시 후 게시할 수 있습니다.",
+    "firstPublishHint": "게시하면 웹사이트가 손님에게 바로 공개돼요. 검토는 필요하지 않아요."
   },
   "editor": {
     "title": "편집: {name}",

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Banknote, BookOpen, Building2, CalendarClock, ClipboardCheck, Coins, Flag, Globe, Percent, ScrollText, Share2, Ticket, UserCog, UserPlus, Users } from "lucide-react";
+import { Banknote, BookOpen, Building2, CalendarClock, Coins, Flag, Globe, Percent, ScrollText, Share2, Ticket, UserCog, UserPlus, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ITEMS = [
@@ -19,7 +19,6 @@ const ITEMS = [
   { href: "/systemadmin/income", key: "income", Icon: Coins },
   { href: "/systemadmin/withdrawals", key: "withdrawals", Icon: Banknote },
   { href: "/systemadmin/fees", key: "fees", Icon: Percent },
-  { href: "/systemadmin/reviews", key: "reviews", Icon: ClipboardCheck },
   { href: "/systemadmin/reports", key: "reports", Icon: Flag },
   { href: "/systemadmin/audit-logs", key: "auditLogs", Icon: ScrollText },
 ] as const;

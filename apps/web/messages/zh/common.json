@@ -15,7 +15,6 @@
   },
   "orgStatus": {
     "DRAFT": "草稿",
-    "PENDING_REVIEW": "待审核",
     "ACTIVE": "已启用",
     "SUSPENDED": "已暂停"
   },

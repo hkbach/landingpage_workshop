@@ -14,7 +14,6 @@ export function statusBadgeVariant(status: OrgStatus): "default" | "secondary" |
   switch (status) {
     case "ACTIVE": return "default";
     case "DRAFT": return "secondary";
-    case "PENDING_REVIEW": return "outline";
     case "SUSPENDED": return "destructive";
   }
 }

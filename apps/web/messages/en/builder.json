@@ -127,18 +127,16 @@
   "publish": {
     "title": "Publish",
     "status": {
-      "DRAFT": "Not submitted",
-      "PENDING_REVIEW": "Pending review",
+      "DRAFT": "Not published",
       "ACTIVE": "Live",
       "SUSPENDED": "Suspended"
     },
     "suspended": "This website is suspended. Contact support to restore it.",
-    "pending": "Your website was submitted and is waiting for review. You can keep editing the draft.",
     "publish": "Publish",
     "publishHint": "Publishing makes the current draft live immediately.",
     "fixErrors": "Fix {count, plural, one {# section} other {# sections}} marked as needing attention first.",
     "publishedMock": "Draft published (demo only, nothing was sent to a server).",
-    "checklistTitle": "Before you submit for review",
+    "checklistTitle": "Before you publish",
     "prereq": {
       "identity": "Shop name or logo",
       "hero": "Hero section with a title",
@@ -147,14 +145,12 @@
     },
     "done": "done",
     "missing": "missing",
-    "submit": "Submit for review",
-    "submitDisabled": "Complete the checklist to submit your website for review.",
-    "submittedMock": "Submitted for review (demo only).",
+    "submitDisabled": "Complete the checklist to publish your website.",
     "fixTheme": "Fix the theme colours with low contrast first.",
     "blockedHint": "Fix the sections or colours marked as needing attention first.",
     "publishedShort": "Published (demo)",
-    "submittedShort": "Submitted for review (demo)",
-    "savingHint": "Saving your changes. You can publish in a moment."
+    "savingHint": "Saving your changes. You can publish in a moment.",
+    "firstPublishHint": "Publishing makes your website live for guests at once. No review is needed."
   },
   "editor": {
     "title": "Edit: {name}",

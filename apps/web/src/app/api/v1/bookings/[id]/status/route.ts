@@ -1,8 +1,10 @@
 import { z } from "zod";
 import { BOOKING_STATUSES, isSessionFinished } from "@workshop/shared";
 import { apiError, fieldCodes } from "@/lib/api-error";
-import { liveBookings, liveSession, setBookingStatus } from "@/lib/mock/booking-store";
+import { liveBookings, liveCustomers, liveSession, setBookingStatus } from "@/lib/mock/booking-store";
 import { mailBookingCancelledByShop } from "@/lib/mock/booking-mail";
+import { recordAudit } from "@/lib/mock/admin-audit-store";
+import { ownerActor, DEMO_ORG } from "@/lib/mock/audit-actors";
 
 // Status of one booking, as the ops screens change it. MOCK implementation inside Next until apps/api exists.
 // TODO(api): the real endpoints are the booking actions (check-in, cancel with a reason, ...), each checked by the state machine.
@@ -38,6 +40,8 @@ export async function PATCH(request: Request, ctx: RouteContext<"/api/v1/booking
   const at = to === "CHECKED_IN" ? (sent && Date.parse(sent) <= now.getTime() ? new Date(sent).toISOString() : now.toISOString()) : undefined;
   setBookingStatus(id, to, to === "CANCELLED" ? parsed.data.cancelReason : undefined, at, parsed.data.statusBeforeCheckIn, "SHOP");
   // The shop cancelled the booking: the guest is told.
+  const guestEmail = liveCustomers().find((c) => c.id === before.customerId)?.email?.toLowerCase();
+  recordAudit({ ...ownerActor(), action: `booking.${to === "CHECKED_IN" ? "check_in" : to === "CANCELLED" ? "cancel_by_shop" : "undo_check_in"}`, entityType: "Booking", entityId: id, organizationId: DEMO_ORG, ...(guestEmail ? { targetEmail: guestEmail } : {}), details: before.bookingCode });
   if (to === "CANCELLED") mailBookingCancelledByShop(id);
   return Response.json({ id, status: to });
 }

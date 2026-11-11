@@ -2,6 +2,7 @@ import { z } from "zod";
 import { apiError } from "@/lib/api-error";
 import { shops } from "@/lib/mock/data";
 import { getFeeRates, setFeeRates } from "@/lib/mock/fee-rates-store";
+import { recordAdminAction } from "@/lib/mock/admin-audit-store";
 
 // The fees taken from the income of ONE shop: a maintenance fee and a service fee, as basis points (SUPER_ADMIN only; TODO(api): check the role,
 // write an audit log). Each shop has its own rates.
@@ -31,5 +32,6 @@ export async function PUT(request: Request, ctx: RouteContext<"/api/v1/admin/org
   if (check === "MAINTENANCE_INVALID") return apiError(422, "VALIDATION", "The maintenance fee must be from 0% to 100%.", { fields: { maintenanceBps: "invalid" } });
   if (check === "SERVICE_INVALID") return apiError(422, "VALIDATION", "The service fee must be from 0% to 100%.", { fields: { serviceBps: "invalid" } });
   if (check === "TOTAL_TOO_HIGH") return apiError(422, "VALIDATION", "The two fees together cannot be more than 100%.", { fields: { serviceBps: "totalTooHigh" } });
+  recordAdminAction({ action: "fees.update", entityType: "Organization", entityId: id, organizationId: id, details: `maintenance ${parsed.data.maintenanceBps} bps, service ${parsed.data.serviceBps} bps` });
   return Response.json(getFeeRates(id));
 }

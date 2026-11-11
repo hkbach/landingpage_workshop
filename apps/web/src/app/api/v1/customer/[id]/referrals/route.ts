@@ -8,6 +8,8 @@ import { getReferralBps } from "@/lib/mock/fee-rates-store";
 import { createReferral, listReferrals } from "@/lib/mock/referral-store";
 import { shareLink } from "@/lib/mock/share-link";
 import { liveShops } from "@/lib/mock/shop-admin-store";
+import { recordAudit } from "@/lib/mock/admin-audit-store";
+import { customerActor, DEMO_ORG } from "@/lib/mock/audit-actors";
 
 // The referral (affiliate) links of a customer: they pick a workshop and share the link; a booking that comes through it earns them a referral fee. MOCK implementation
 // inside Next until apps/api exists. Identified like the rest of /customer/{id}: the email of the account in `x-guest-email`. TODO(api): the account of the session.
@@ -65,6 +67,7 @@ export async function POST(request: Request, ctx: RouteContext<"/api/v1/customer
   if (!parsed.success) return apiError(422, "VALIDATION", "Please check the highlighted fields.", { fields: fieldCodes(parsed.error.issues) }, headers);
   const res = createReferral(id, parsed.data.workshopId);
   if (!res.ok) return res.code === "SHOP_INACTIVE" || res.code === "WORKSHOP_INACTIVE" ? apiError(409, res.code, "This workshop is not active.", {}, headers) : apiError(404, res.code === "NO_WORKSHOP" ? "NO_WORKSHOP" : "NOT_FOUND", "Not found.", {}, headers);
+  if (res.created) recordAudit({ ...customerActor(id), action: "affiliate.register", entityType: "AffiliateLink", entityId: res.referral.id, organizationId: DEMO_ORG, details: `workshop ${parsed.data.workshopId}` });
   const mine = view(request, id).find((x) => x.id === res.referral.id)!;
   return Response.json(mine, { status: res.created ? 201 : 200, headers });
 }

@@ -16,19 +16,18 @@ interface Props {
   invalidTheme: boolean;
   /** The draft is still being saved after an edit: the publish / submit button stays disabled until it is done. */
   saving?: boolean;
-  /** Confirmation shown after the last publish / submit (state lives in the builder, shared with the sticky header). */
-  message: "published" | "submitted" | null;
-  onSubmitForReview: () => void;
+  /** Confirmation shown after the last publish (state lives in the builder, shared with the sticky header). */
+  message: "published" | null;
   onPublish: () => void;
 }
 
-/** FR-SITE-04: first time "Submit for review" (with prerequisites), afterwards "Publish". Mock only: nothing is sent. */
-export function PublishPanel({ status, prerequisites, invalidSections, invalidTheme, saving = false, message, onSubmitForReview, onPublish }: Props) {
+/** FR-SITE-04: "Publish" makes the page public at once (no review); a shop that is not live yet sees the checklist it has to complete first. */
+export function PublishPanel({ status, prerequisites, invalidSections, invalidTheme, saving = false, message, onPublish }: Props) {
   const t = useTranslations("builder");
   const action = publishAction({ status, prerequisites, invalidSections, invalidTheme, saving });
   const issues = (
     <>
-      {action.kind !== "pending" && action.kind !== "suspended" && action.reason === "saving" ? <p role="status" className="text-xs text-muted-foreground">{t("publish.savingHint")}</p> : null}
+      {action.kind === "publish" && action.reason === "saving" ? <p role="status" className="text-xs text-muted-foreground">{t("publish.savingHint")}</p> : null}
       {invalidSections > 0 ? <p className="text-xs text-amber-800">{t("publish.fixErrors", { count: invalidSections })}</p> : null}
       {invalidTheme ? <p className="text-xs text-amber-800">{t("publish.fixTheme")}</p> : null}
     </>
@@ -37,46 +36,31 @@ export function PublishPanel({ status, prerequisites, invalidSections, invalidTh
   if (action.kind === "suspended") {
     return <p role="status" className="text-sm text-destructive">{t("publish.suspended")}</p>;
   }
-  if (action.kind === "pending") {
-    return <p role="status" className="text-sm text-muted-foreground">{t("publish.pending")}</p>;
-  }
-
-  if (action.kind === "publish") {
-    return (
-      <div className="space-y-2">
-        <Button type="button" disabled={action.disabled} onClick={onPublish}>
-          {t("publish.publish")}
-        </Button>
-        <p className="text-xs text-muted-foreground">{t("publish.publishHint")}</p>
-        {issues}
-        {message === "published" ? <p role="status" className="text-sm text-green-800">{t("publish.publishedMock")}</p> : null}
-      </div>
-    );
-  }
-
-  // DRAFT: first submission with the prerequisites checklist.
   return (
     <div className="space-y-3">
-      <div>
-        <h3 className="text-sm font-medium">{t("publish.checklistTitle")}</h3>
-        <ul className="mt-2 space-y-1.5">
-          {prerequisites.map((p) => (
-            <li key={p.key} className="flex items-start gap-2 text-sm">
-              {p.met ? <CircleCheck className="mt-0.5 size-4 shrink-0 text-green-700" aria-hidden /> : <Circle className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />}
-              <span>
-                {t(`publish.prereq.${p.key}`)}
-                <span className="sr-only"> — {p.met ? t("publish.done") : t("publish.missing")}</span>
-              </span>
-            </li>
-          ))}
-        </ul>
-      </div>
-      <Button type="button" disabled={action.disabled} onClick={onSubmitForReview}>
-        {t("publish.submit")}
+      {status === "DRAFT" ? (
+        <div>
+          <h3 className="text-sm font-medium">{t("publish.checklistTitle")}</h3>
+          <ul className="mt-2 space-y-1.5">
+            {prerequisites.map((p) => (
+              <li key={p.key} className="flex items-start gap-2 text-sm">
+                {p.met ? <CircleCheck className="mt-0.5 size-4 shrink-0 text-green-700" aria-hidden /> : <Circle className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />}
+                <span>
+                  {t(`publish.prereq.${p.key}`)}
+                  <span className="sr-only"> — {p.met ? t("publish.done") : t("publish.missing")}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      <Button type="button" disabled={action.disabled} onClick={onPublish}>
+        {t("publish.publish")}
       </Button>
+      <p className="text-xs text-muted-foreground">{t(status === "DRAFT" ? "publish.firstPublishHint" : "publish.publishHint")}</p>
       {action.reason === "checklist" ? <p className="text-xs text-muted-foreground">{t("publish.submitDisabled")}</p> : null}
       {issues}
-      {message === "submitted" ? <p role="status" className="text-sm text-green-800">{t("publish.submittedMock")}</p> : null}
+      {message === "published" ? <p role="status" className="text-sm text-green-800">{t("publish.publishedMock")}</p> : null}
     </div>
   );
 }

@@ -15,7 +15,6 @@
   },
   "orgStatus": {
     "DRAFT": "Draft",
-    "PENDING_REVIEW": "Pending review",
     "ACTIVE": "Active",
     "SUSPENDED": "Suspended"
   },

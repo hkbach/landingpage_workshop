@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { ArrowLeft, CircleCheck, Eye, LoaderCircle, Rocket, Send, TriangleAlert } from "lucide-react";
+import { ArrowLeft, CircleCheck, Eye, LoaderCircle, Rocket, TriangleAlert } from "lucide-react";
 import type { OrgStatus } from "@workshop/shared";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -15,23 +15,22 @@ import { ShopLink } from "@/components/dashboard/shell/shop-link";
  * scrolls, so the shop always sees the autosave state and can preview or publish without scrolling back up.
  * On phones it collapses to a single row: the autosave state and Preview show only their icons.
  */
-export function BuilderHeader({ pageId, pageName, saveState, status, action, message, onPublish, onSubmit }: {
+export function BuilderHeader({ pageId, pageName, saveState, status, action, message, onPublish }: {
   pageId: string;
   pageName: string;
   saveState: SaveState;
   status: OrgStatus;
   action: PublishAction;
-  message: "published" | "submitted" | null;
+  message: "published" | null;
   onPublish: () => void;
-  onSubmit: () => void;
 }) {
   const t = useTranslations("builder");
   const disabledHint =
-    action.kind === "submit" || action.kind === "publish"
+    action.kind === "publish"
       ? action.reason === "saving" ? t("publish.savingHint") : action.reason === "checklist" ? t("publish.submitDisabled") : action.reason === "errors" ? t("publish.blockedHint") : undefined
       : undefined;
   // The confirmation disappears as soon as the shop edits again (autosave pending).
-  const confirmation = saveState === "pending" ? null : message === "published" ? t("publish.publishedShort") : message === "submitted" ? t("publish.submittedShort") : null;
+  const confirmation = saveState === "pending" ? null : message === "published" ? t("publish.publishedShort") : null;
 
   const save =
     saveState === "pending" ? { icon: <LoaderCircle className="size-4 animate-spin" aria-hidden />, text: t("autosave.saving") }
@@ -62,18 +61,18 @@ export function BuilderHeader({ pageId, pageName, saveState, status, action, mes
           <ShopLink href={`/shopowner/site/preview?page=${pageId}`} className={cn(buttonVariants({ variant: "outline" }), "px-2.5 sm:px-3")} title={t("preview")}>
             <Eye /><span className="sr-only sm:not-sr-only">{t("preview")}</span>
           </ShopLink>
-          {action.kind === "publish" || action.kind === "submit" ? (
+          {action.kind === "publish" ? (
             <Button
               type="button" disabled={action.disabled} title={action.disabled ? disabledHint : undefined}
               aria-describedby={action.disabled && disabledHint ? "builder-publish-hint" : undefined}
-              onClick={action.kind === "publish" ? onPublish : onSubmit}
+              onClick={onPublish}
             >
-              {action.reason === "saving" ? <LoaderCircle className="animate-spin" aria-hidden /> : action.kind === "publish" ? <Rocket /> : <Send />}
-              {action.kind === "publish" ? t("publish.publish") : t("publish.submit")}
+              {action.reason === "saving" ? <LoaderCircle className="animate-spin" aria-hidden /> : <Rocket />}
+              {t("publish.publish")}
             </Button>
           ) : (
             <Button type="button" variant="outline" disabled>
-              {action.kind === "pending" ? t("publish.status.PENDING_REVIEW") : t("publish.status.SUSPENDED")}
+              {t("publish.status.SUSPENDED")}
             </Button>
           )}
           {disabledHint ? <span id="builder-publish-hint" className="sr-only">{disabledHint}</span> : null}

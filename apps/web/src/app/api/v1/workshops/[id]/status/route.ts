@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { apiError } from "@/lib/api-error";
 import { switchWorkshop } from "@/lib/mock/workshop-status-store";
+import { recordAudit } from "@/lib/mock/admin-audit-store";
+import { ownerActor, DEMO_ORG } from "@/lib/mock/audit-actors";
 
 // Activate / deactivate a workshop of the shop. MOCK implementation inside Next until apps/api exists.
 // TODO(api): POST /dashboard/workshops/{id}/status (OWNER / MANAGER only, organization_id from the session, audited).
@@ -20,7 +22,10 @@ export async function POST(request: Request, ctx: RouteContext<"/api/v1/workshop
   const parsed = bodySchema.safeParse(body);
   if (!parsed.success) return apiError(422, "VALIDATION", "The status must be ACTIVE or DRAFT.", { fields: { status: "invalid" } });
   const res = switchWorkshop(id, parsed.data.status);
-  if (res.ok) return Response.json({ workshop: res.workshop });
+  if (res.ok) {
+    recordAudit({ ...ownerActor(), action: parsed.data.status === "ACTIVE" ? "workshop.activate" : "workshop.deactivate", entityType: "Workshop", entityId: id, organizationId: DEMO_ORG });
+    return Response.json({ workshop: res.workshop });
+  }
   if (res.code === "NOT_FOUND") return apiError(404, "NOT_FOUND", "Workshop not found.");
   if (res.code === "SESSIONS_OPEN") return apiError(409, "SESSIONS_OPEN", "A workshop can only be deactivated when all its sessions are closed.", { open: res.open });
   return apiError(409, "STATUS", "This workshop cannot be switched to that status now.");

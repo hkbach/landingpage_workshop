@@ -6,6 +6,8 @@ import { currentShop } from "@/lib/mock/data";
 import { setPassword } from "@/lib/mock/accounts-store";
 import { registerGuestAccount } from "@/lib/mock/booking-store";
 import { recordInvite } from "@/lib/mock/invite-store";
+import { recordAudit } from "@/lib/mock/admin-audit-store";
+import { customerActor, DEMO_ORG } from "@/lib/mock/audit-actors";
 
 // A guest registers an account on the site of the shop, with the email and a password (10 to 72 characters) they will log in with. MOCK implementation inside Next until
 // apps/api exists. Every booking made before with the same email (a guest who booked without an account) is merged into the new account.
@@ -44,6 +46,7 @@ export async function POST(request: Request, ctx: RouteContext<"/api/v1/public/s
   const res = registerGuestAccount({ ...profile, consentAt: new Date().toISOString() });
   if (!res.ok) return apiError(409, "ALREADY_REGISTERED", "This email already has an account.");
   setPassword(res.customerId, password);
+  recordAudit({ ...customerActor(res.customerId), action: "customer.register", entityType: "Customer", entityId: res.customerId, organizationId: DEMO_ORG, targetEmail: profile.email.toLowerCase(), details: res.merged ? "merged with the bookings made as a guest" : undefined });
   if (inviteCode) recordInvite(inviteCode, res.customerId); // an unknown code, the own code or a friend who was already invited is simply ignored
   return Response.json({ customerId: res.customerId, created: res.created, merged: res.merged }, { status: 201 });
 }

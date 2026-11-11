@@ -15,7 +15,6 @@
   },
   "orgStatus": {
     "DRAFT": "Bản nháp",
-    "PENDING_REVIEW": "Chờ duyệt",
     "ACTIVE": "Đang hoạt động",
     "SUSPENDED": "Bị tạm ngưng"
   },

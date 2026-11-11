@@ -1,6 +1,9 @@
 import { z } from "zod";
 import { apiError, fieldCodes } from "@/lib/api-error";
 import { completePasswordReset, resetLinkValid } from "@/lib/mock/accounts-store";
+import { resetTokenAccount } from "@/lib/mock/accounts-store";
+import { recordAudit } from "@/lib/mock/admin-audit-store";
+import { accountActor, DEMO_ORG } from "@/lib/mock/audit-actors";
 
 // The page of the link in the reset email: the temporary password of the email plus a new password. MOCK implementation inside Next until apps/api exists.
 // TODO(api): rate limit per IP and per token; the token is looked up by its hash.
@@ -27,7 +30,9 @@ export async function POST(request: Request) {
   }
   const parsed = bodySchema.safeParse(body);
   if (!parsed.success) return apiError(422, "VALIDATION", "Please check the highlighted fields.", { fields: fieldCodes(parsed.error.issues) });
+  const owner = resetTokenAccount(parsed.data.token);
   const res = completePasswordReset(parsed.data.token, parsed.data.tempPassword, parsed.data.newPassword);
+  if (res.ok && owner) recordAudit({ ...accountActor(owner), action: "auth.password_reset_completed", entityType: "Account", entityId: owner.id, organizationId: owner.type === "SHOP_OWNER" && owner.shop ? owner.shop.id : DEMO_ORG });
   if (res.ok) return new Response(null, { status: 204 });
   if (res.code === "INVALID_LINK") return apiError(400, "INVALID_LINK", "This link has expired or was already used.");
   if (res.code === "WRONG_TEMP_PASSWORD") return apiError(422, "VALIDATION", "The temporary password is wrong.", { fields: { tempPassword: "wrong" } });

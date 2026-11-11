@@ -36,13 +36,13 @@ describe("listedShops", () => {
     expect(listedShops(others({ showOnCustomerPage: undefined })).map((l) => l.shop.slug)).toEqual(["brewbean", "greentable"]);
     expect(listedShops(shops.map((s) => ({ ...s, showOnCustomerPage: false })))).toEqual([]);
   });
-  it("leaves out a chosen shop that is not ACTIVE (draft, pending review, suspended)", () => {
-    for (const status of ["DRAFT", "PENDING_REVIEW", "SUSPENDED"] as const) {
+  it("leaves out a chosen shop that is not ACTIVE (draft, suspended)", () => {
+    for (const status of ["DRAFT", "SUSPENDED"] as const) {
       expect(listedShops(shops.map((s) => (s.id === currentShop.id ? { ...s, status } : s))).map((l) => l.shop.slug), status).toEqual(["brewbean", "greentable"]);
     }
   });
   it("leaves out a chosen shop that has no public site", () => {
-    const org2 = shops.find((s) => s.id === "org-2")!; // pending review, and the mock has no content for it
+    const org2 = shops.find((s) => s.id === "org-2")!; // a draft, and the mock has no content for it
     expect(listedShops([{ ...org2, status: "ACTIVE", showOnCustomerPage: true }])).toEqual([]);
   });
   it("lists the promotions of the shop, and the workshops with the seats of the live bookings", () => {

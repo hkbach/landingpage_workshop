@@ -1,6 +1,7 @@
 
 import { notFound } from "next/navigation";
 import { currentShop } from "@/lib/mock/data";
+import { liveShop } from "@/lib/mock/shop-admin-store";
 import { platformSupport } from "@/lib/mock/platform";
 import { DashboardShell } from "@/components/dashboard/shell/dashboard-shell";
 import { AdminModeBanner } from "@/components/dashboard/shell/admin-mode-banner";
@@ -10,7 +11,7 @@ import { ShopStatusBanner } from "@/components/dashboard/shell/shop-status-banne
 export default async function DashboardLayout({ children, params }: LayoutProps<"/shopowner/[slug]">) {
   const { slug } = await params;
   if (slug !== currentShop.slug) notFound();
-  const shop = currentShop;
+  const shop = liveShop(currentShop.id) ?? currentShop; // the live shop: publishing the landing page makes a DRAFT shop ACTIVE
   return (
     <DashboardShell
       shop={{ name: shop.name, slug: shop.slug, status: shop.status, ownerName: shop.ownerName, ownerEmail: shop.ownerEmail }}

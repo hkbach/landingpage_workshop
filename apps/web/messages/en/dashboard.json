@@ -22,11 +22,7 @@
     "banner": {
       "draft": {
         "title": "Setup incomplete.",
-        "body": "Finish the checklist on the overview page and submit your shop for review to publish your landing page."
-      },
-      "pending": {
-        "title": "Awaiting review.",
-        "body": "Your shop was submitted and is being reviewed. You can keep editing your draft in the meantime."
+        "body": "Finish the checklist on the overview page and publish your landing page to go live. No review is needed."
       },
       "suspended": {
         "title": "Shop suspended.",
@@ -57,11 +53,9 @@
         "contact": "Contact information (email, phone, address)",
         "workshop": "At least one active workshop with an upcoming session"
       },
-      "submit": "Submit for review",
-      "submitting": "Submitting...",
-      "submitted": "Submitted. We will review your shop and let you know by email.",
-      "readyNote": "All requirements are met.",
-      "notReadyNote": "Complete all requirements to submit."
+      "readyNote": "All requirements are met. Publish your landing page to go live.",
+      "notReadyNote": "Complete all requirements to publish.",
+      "publish": "Publish your landing page"
     },
     "summary": {
       "title": "Summary",

@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { ArrowLeft } from "lucide-react";
 import { OrganizationDetail } from "@/components/admin/organization-detail";
-import { adminAuditLogs, orgStats } from "@/lib/mock/admin";
+import { orgStats } from "@/lib/mock/admin";
+import { liveAuditLogs } from "@/lib/mock/admin-audit-store";
 import { AdminSessions } from "@/components/admin/admin-sessions";
 import { PlatformFeesForm } from "@/components/admin/platform-fees-form";
 import { currentShop } from "@/lib/mock/data";
@@ -18,7 +19,7 @@ export default async function OrganizationDetailPage({ params }: PageProps<"/sys
   if (!shop) notFound();
 
   const t = await getTranslations("admin.orgDetail");
-  const audit = adminAuditLogs.filter((a) => a.organizationId === shop.id).slice(0, 8);
+  const audit = liveAuditLogs().filter((a) => a.organizationId === shop.id).slice(0, 8);
 
   return (
     <div className="grid gap-4">

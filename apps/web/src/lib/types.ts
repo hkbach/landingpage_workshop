@@ -112,8 +112,18 @@ export interface PageTheme {
   radius?: ThemeRadius; density?: ThemeDensity; logoUrl?: string; faviconUrl?: string;
 }
 
+/** Who did it: a customer, a shop owner, a guest who is not logged in (an email typed in a form), a system administrator, or the system itself (a timer). */
+export type AuditRole = "CUSTOMER" | "SHOP_OWNER" | "GUEST" | "SYSTEM_ADMIN" | "SYSTEM";
+export const AUDIT_ROLES: readonly AuditRole[] = ["CUSTOMER", "SHOP_OWNER", "GUEST", "SYSTEM_ADMIN", "SYSTEM"];
+
+/**
+ * One line of the audit log: the trace of an action of a user, to trace what happened when a user asks for help. `actor*` is who did it, `targetEmail` the user it was done TO (an
+ * administrator edits or resets an account), `organizationId` the shop it happened in, `details` a short plain text. Never a password, a token, a link with a secret or a
+ * card number: only what was done and to which record.
+ */
 export interface AuditEntry {
-  id: string; organizationId?: string; actor: string; action: string; entityType: string; entityId: string; createdAt: string; ip?: string;
+  id: string; organizationId?: string; actor: string; actorEmail?: string; actorRole?: AuditRole; actorId?: string; action: string; entityType: string; entityId: string;
+  targetEmail?: string; details?: string; createdAt: string; ip?: string;
 }
 /** A report of a landing page (see @workshop/shared reports). */
 export type AbuseReport = ReportRecord;

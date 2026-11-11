@@ -127,18 +127,16 @@
   "publish": {
     "title": "公開",
     "status": {
-      "DRAFT": "未提出",
-      "PENDING_REVIEW": "審査待ち",
+      "DRAFT": "未公開",
       "ACTIVE": "公開中",
       "SUSPENDED": "停止中"
     },
     "suspended": "このウェブサイトは停止されています。復旧するにはサポートにお問い合わせください。",
-    "pending": "ウェブサイトを提出しました。審査をお待ちください。下書きの編集は続けられます。",
     "publish": "公開",
     "publishHint": "公開すると、現在の下書きがすぐにライブになります。",
     "fixErrors": "先に「要確認」と表示された{count, plural, other {#件のセクション}}を修正してください。",
     "publishedMock": "下書きを公開しました（デモのみ。サーバーには何も送信されていません）。",
-    "checklistTitle": "審査に提出する前に",
+    "checklistTitle": "公開する前に",
     "prereq": {
       "identity": "ショップ名またはロゴ",
       "hero": "タイトル付きのヒーローセクション",
@@ -147,14 +145,12 @@
     },
     "done": "完了",
     "missing": "未完了",
-    "submit": "審査に提出",
-    "submitDisabled": "チェックリストをすべて完了すると、ウェブサイトを審査に提出できます。",
-    "submittedMock": "審査に提出しました（デモのみ）。",
+    "submitDisabled": "ウェブサイトを公開するには、チェックリストを完了してください。",
     "fixTheme": "先にコントラストの低いテーマカラーを修正してください。",
     "blockedHint": "先に「要確認」と表示されたセクションまたは色を修正してください。",
     "publishedShort": "公開しました（デモ）",
-    "submittedShort": "審査に提出しました（デモ）",
-    "savingHint": "変更を保存しています。まもなく公開できます。"
+    "savingHint": "変更を保存しています。まもなく公開できます。",
+    "firstPublishHint": "公開すると、ウェブサイトはすぐにお客様に表示されます。審査は不要です。"
   },
   "editor": {
     "title": "編集：{name}",

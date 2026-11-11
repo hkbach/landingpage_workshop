@@ -127,18 +127,16 @@
   "publish": {
     "title": "发布",
     "status": {
-      "DRAFT": "未提交",
-      "PENDING_REVIEW": "待审核",
+      "DRAFT": "未发布",
       "ACTIVE": "已上线",
       "SUSPENDED": "已停用"
     },
     "suspended": "此网站已被停用。请联系客服以恢复。",
-    "pending": "您的网站已提交，正在等待审核。您可以继续编辑草稿。",
     "publish": "发布",
     "publishHint": "发布后，当前草稿将立即上线。",
     "fixErrors": "请先修复标记为需要处理的 {count, plural, other {# 个版块}}。",
     "publishedMock": "草稿已发布（仅为演示，未向服务器发送任何内容）。",
-    "checklistTitle": "提交审核之前",
+    "checklistTitle": "发布之前",
     "prereq": {
       "identity": "店铺名称或徽标",
       "hero": "带标题的主横幅版块",
@@ -147,14 +145,12 @@
     },
     "done": "已完成",
     "missing": "缺失",
-    "submit": "提交审核",
-    "submitDisabled": "请先完成清单，才能提交网站审核。",
-    "submittedMock": "已提交审核（仅为演示）。",
+    "submitDisabled": "请先完成清单，再发布您的网站。",
     "fixTheme": "请先修复对比度过低的主题颜色。",
     "blockedHint": "请先修复标记为需要处理的版块或颜色。",
     "publishedShort": "已发布（演示）",
-    "submittedShort": "已提交审核（演示）",
-    "savingHint": "正在保存您的更改，稍后即可发布。"
+    "savingHint": "正在保存您的更改，稍后即可发布。",
+    "firstPublishHint": "发布后，您的网站将立即对顾客可见，无需审核。"
   },
   "editor": {
     "title": "编辑：{name}",

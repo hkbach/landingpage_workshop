@@ -18,7 +18,7 @@ Các mục dưới đây là **giả định** để có thể bắt đầu code
 |---|---|---|
 | A1 | Khách du lịch **thanh toán tại shop**. MVP không có thanh toán online. | Lớn: thanh toán online cần Stripe Connect (hoặc tương đương), KYC, refund, phí nền tảng |
 | A2 | Mỗi shop có **tối đa 2 landing page, 1 page public tại một thời điểm** (FR-SITE-07), page public dùng địa chỉ của shop | Trung bình: schema đã chuẩn bị cho nhiều page |
-| A3 | Shop tự đăng ký; **lần publish đầu tiên cần admin duyệt** | Thấp |
+| A3 | Shop tự đăng ký; **publish landing page có hiệu lực ngay, không cần admin duyệt** (không có hàng đợi duyệt) | Thấp |
 | A4 | Tính phí shop **chưa làm**, chỉ có cột `plan` và giới hạn theo gói trong code | Thấp |
 | A5 | Chỉ có lịch **cố định** (fixed schedule) và **instant booking**. Request booking và lịch linh hoạt để phase sau | Trung bình |
 | A6 | Ngôn ngữ hỗ trợ: EN (mặc định), VI, KO, JA, **ZH (tiếng Trung, một ngôn ngữ duy nhất; shop tự điền chữ giản thể hoặc phồn thể tùy ý)** *(v1.2: thêm tiếng Trung)*. Shop tự chọn bật ngôn ngữ nào. Mã locale trong URL: `/ja`, `/zh`. `hreflang`: `zh`. Dữ liệu cũ lưu dưới khóa `zh-TW` được tự gộp vào `zh`. Giao diện nền tảng (dashboard, modal đặt chỗ…) mới dịch EN và một phần VI/KO/JA; ZH tạm fallback EN, riêng chính sách đến trễ (BR-09) có đủ bản dịch | Thấp |
@@ -53,11 +53,11 @@ Giá trị cốt lõi:
 
 - Shop đăng ký, xác minh email, đăng nhập, quên mật khẩu.
 - Onboarding: tên shop, subdomain, timezone, currency, ngôn ngữ.
-- Landing page builder theo **template + section** (không cho viết HTML/JS tùy ý), preview desktop/mobile theo từng ngôn ngữ, gửi duyệt, publish.
+- Landing page builder theo **template + section** (không cho viết HTML/JS tùy ý), preview desktop/mobile theo từng ngôn ngữ, publish (có hiệu lực ngay, không qua duyệt).
 - Quản lý workshop, schedule rule (lịch cố định), session, capacity.
 - Trang public: render landing page, xem lịch còn chỗ, đặt chỗ instant, email xác nhận.
 - Dashboard shop: danh sách booking, tạo booking thủ công (walk-in/điện thoại), check-in / uncheck-in, hủy có lý do, đổi session, ghi nhận thanh toán, hủy session hàng loạt.
-- Admin: duyệt/khóa shop, xem danh sách shop, xử lý báo cáo vi phạm, audit log.
+- Admin: khóa/mở khóa shop, xem danh sách shop, xử lý báo cáo vi phạm, audit log (ghi lại hành động của mọi người dùng, tìm theo email và theo Organization).
 - Anti-spam: Cloudflare Turnstile và rate limit.
 
 ### 1.3 Ngoài phạm vi MVP (KHÔNG code)
@@ -311,11 +311,11 @@ Browser ────────────────────────
 - Preview desktop/mobile, chọn ngôn ngữ, render bằng **cùng component** với trang public, dùng `draft_content`.
 - URL preview chỉ truy cập được khi đã đăng nhập và là member của shop.
 
-**FR-SITE-04 – Gửi duyệt và publish (Must)**
-- Lần đầu: shop bấm **"Submit for review"**. `organizations.status` chuyển sang `PENDING_REVIEW`. Admin duyệt thì chuyển sang `ACTIVE` và publish bản nháp tại thời điểm duyệt.
-- Điều kiện submit: có logo hoặc tên shop, hero, thông tin liên hệ, ít nhất 1 workshop ACTIVE có session sắp tới.
-- Từ lần thứ hai (shop đã ACTIVE): bấm **"Publish"** thì có hiệu lực ngay. Publish là thao tác **atomic**: copy `draft_content` sang `published_content`, ghi một dòng `site_page_versions`, tăng `version`.
-- Admin từ chối: lưu lý do, gửi email cho shop, status về `DRAFT`.
+**FR-SITE-04 – Publish (Must)**
+- **Không có bước duyệt của admin.** Shop bấm **"Publish"** thì landing page public ngay. Với shop chưa public (`DRAFT`), lần Publish đầu tiên chuyển `organizations.status` sang `ACTIVE` ngay trong cùng thao tác (`POST /site/publish`), ghi audit `shop.publish`.
+- Điều kiện lần Publish đầu (shop `DRAFT`): có logo hoặc tên shop, hero, thông tin liên hệ, ít nhất 1 workshop ACTIVE có session sắp tới, không có section / màu cần sửa. Màn hình builder và trang tổng quan hiện checklist này; nút Publish bị khóa kèm lý do cho tới khi đủ điều kiện. Shop đã `ACTIVE` chỉ cần không có section / màu cần sửa.
+- Shop `SUSPENDED` không publish được (`403 SUSPENDED`).
+- Publish là thao tác **atomic**: copy `draft_content` sang `published_content`, ghi một dòng `site_page_versions`, tăng `version`.
 - Should: rollback về một version trước đó.
 
 **FR-SITE-07 – Danh sách landing page của shop (Should)**
@@ -575,8 +575,8 @@ Browser ────────────────────────
 **FR-ADM-01 – Danh sách shop (Must)**
 - Lọc theo status; xem chi tiết (owner, ngày tạo, số workshop, số booking 30 ngày, link landing page).
 
-**FR-ADM-02 – Duyệt shop (Must)**
-- Hàng đợi `PENDING_REVIEW`. Admin xem preview bản nháp, chọn **Approve** hoặc **Reject** (bắt buộc lý do).
+**FR-ADM-02 – Duyệt shop (đã bỏ)**
+- Chức năng hàng đợi duyệt (Review queue, `/systemadmin/reviews`), Approve / Reject đã **bỏ**: shop owner publish landing page thì public ngay (FR-SITE-04). Trạng thái `PENDING_REVIEW` không còn; admin vẫn kiểm soát qua khóa shop (FR-ADM-03) và xử lý báo cáo vi phạm (FR-ADM-04).
 
 **FR-ADM-03 – Khóa / mở khóa shop (Must)**
 - `ACTIVE ↔ SUSPENDED`, bắt buộc lý do. Shop bị khóa: landing page trả 404, dashboard chỉ đọc + banner thông báo, không nhận booking mới. Booking đã có vẫn giữ.
@@ -589,7 +589,16 @@ Browser ────────────────────────
 - Ngoài phạm vi hiện tại: shop owner xem báo cáo về shop của mình; thông báo email cho admin.
 
 **FR-ADM-05 – Audit log (Must)**
-- Admin xem audit log toàn hệ thống; shop owner xem audit log của shop mình (Should).
+- Audit log **ghi lại hành động của mọi người dùng** trên hệ thống để theo dõi (tracking) và truy vết khi cần hỗ trợ: **Customer**, **Shop Owner**, **khách chưa đăng nhập (Guest)**, **System Admin** và **hệ thống** (tác vụ tự động, ví dụ tự đóng session hết giờ). Chỉ ghi, không sửa, không xóa; chỉ `SUPER_ADMIN` xem. Shop owner xem audit log của shop mình (Should).
+- Mỗi dòng gồm: **ai** (tên, **email**, vai trò `CUSTOMER | SHOP_OWNER | GUEST | SYSTEM_ADMIN | SYSTEM`), **làm gì** (`action`, ví dụ `booking.create`), trên **bản ghi nào** (`entity_type`, `entity_id`), thuộc **Organization (shop)** nào, **email người bị tác động** (khi admin sửa / reset / khóa tài khoản của ai đó), **chi tiết ngắn** (≤ 200 ký tự) và **thời điểm**. **Không bao giờ ghi bí mật**: mật khẩu, token, link có bí mật, số thẻ.
+- Các hành động được ghi:
+  - **Customer:** đăng nhập (thành công / thất bại), hoàn tất đặt lại mật khẩu, đăng ký tài khoản, sửa hồ sơ, check-in, đăng ký affiliate, yêu cầu rút tiền.
+  - **Guest:** tạo booking, xác nhận booking, hủy booking, gửi báo cáo vi phạm.
+  - **Shop Owner:** đăng nhập, tạo booking thủ công, đổi trạng thái booking (check-in, hủy bởi shop), đánh dấu đã thanh toán, đổi trạng thái workshop (Activate / Deactivate), đóng / dời session, tạo / sửa / tạm dừng / tiếp tục / xóa promotion, tải ảnh lên, **publish landing page** (`shop.publish`).
+  - **System Admin:** đổi trạng thái / sửa / reset mật khẩu tài khoản, khóa / mở khóa shop, bật / tắt hiển thị shop, đổi tỉ lệ phí, đóng session, xử lý landing page, xử lý báo cáo vi phạm, duyệt / từ chối yêu cầu rút tiền.
+  - **Hệ thống:** tự đóng session hết giờ (`session.auto_close`).
+- Trang `/systemadmin/audit-logs`: **tìm theo email của người dùng** (khớp email người thực hiện **hoặc** email người bị tác động; không phân biệt hoa thường, khớp một phần) và **tìm theo Organization** (tên, slug hoặc id của shop); có thêm lọc theo vai trò, hành động, loại bản ghi và khoảng ngày; mới nhất ở trên; xem chi tiết một dòng. API: `GET /admin/directory/audit-logs?email=&org=&role=&action=&entity=&from=&to=`.
+- Ghi chú mock: chưa có session thật nên người thực hiện ở các route của shop owner là chủ shop demo, route của customer lấy theo id trong đường dẫn, route public chỉ biết email khách nhập. Builder lưu bản nháp ở trình duyệt nên chỉ thao tác **publish** của landing page được ghi vào audit log. TODO(api): người thực hiện lấy từ session, kèm IP, ghi trong cùng transaction.
 
 **FR-ADM-06 – Template (Should)**
 - MVP: template định nghĩa trong code (`packages/shared`). Admin chỉ bật/tắt template.
@@ -610,7 +619,7 @@ Browser ────────────────────────
 - API: `GET /admin/directory/users`, `GET/PATCH /admin/users/{id}`, `POST /admin/users/{id}/status`, `POST /admin/users/{id}/reset-password`.
 
 **FR-ADM-09 – Shop (Must, mở rộng FR-ADM-01 và FR-ADM-03)** (`/systemadmin/organizations`)
-- Tìm theo tên (hoặc slug) shop **và email của shop owner**, lọc theo status; xem chi tiết; **Activate / Deactivate** (`SUSPENDED` ↔ `ACTIVE`, deactivate bắt buộc lý do; shop `PENDING_REVIEW`/`DRAFT` đổi qua hàng đợi duyệt); bật/tắt hiển thị workshops của shop trên trang Workshops của customer (`show_on_customer_page`).
+- Tìm theo tên (hoặc slug) shop **và email của shop owner**, lọc theo status; xem chi tiết; **Activate / Deactivate** (`SUSPENDED` ↔ `ACTIVE`, deactivate bắt buộc lý do; shop `DRAFT` lên `ACTIVE` khi chủ shop publish landing page, admin không kích hoạt thay); bật/tắt hiển thị workshops của shop trên trang Workshops của customer (`show_on_customer_page`).
 - Trạng thái shop do admin đổi được lưu ở mock backend: danh sách của khách (Workshops, Favorites) đọc theo trạng thái này.
 
 **FR-ADM-10 – Workshops (Should)** (`/systemadmin/workshops`): workshops của mọi shop; tìm theo tên workshop (mọi ngôn ngữ) hoặc tên shop; xem chi tiết (giá, thời lượng, sức chứa, địa chỉ, đánh giá, số session và booking).
@@ -655,7 +664,7 @@ Browser ────────────────────────
 | BR-10 | Customer nhận diện bằng `email_normalized` (trim + lowercase) trong một organization; không tự gộp theo tên/phone. **Khách chưa đăng nhập đặt chỗ:** hệ thống tra email; email đã từng booking thì booking được ghi vào customer đó (không tạo customer mới, giữ tên cũ); email đã đăng ký tài khoản thì booking tính vào tài khoản đó. **Khách đăng ký tài khoản mới:** hệ thống tra email đăng ký; nếu email đã từng booking thì customer đó trở thành tài khoản và **toàn bộ booking trước đó của email được gộp vào tài khoản** (số booking được báo cho khách); email chưa từng booking thì tạo customer mới có tài khoản; email đã có tài khoản thì không đăng ký lại (đăng nhập). |
 | BR-11 | Khách tự hủy được booking của mình (mã booking + email) cho đến khi session bắt đầu, lý do tùy chọn; shop hủy thì bắt buộc lý do; mọi thao tác đổi lịch do shop thực hiện. Server kiểm tra máy trạng thái của booking: check-in / bỏ check-in chỉ khi session chưa đóng, hủy chỉ từ Not confirmed / Confirmed, booking đã hủy không quay lại trạng thái khác (ghế có thể đã có người đặt). |
 | BR-12 | Token (verify, reset) dùng một lần, lưu hash (SHA-256), có hạn. |
-| BR-13 | Shop chỉ public được sau khi admin duyệt lần đầu. |
+| BR-13 | Shop public được ngay khi owner publish landing page lần đầu (đủ checklist); **không có bước admin duyệt**. Admin chỉ khóa shop hoặc xử lý báo cáo khi có vi phạm. |
 | BR-14 | Tiền lưu bằng `BIGINT` minor units + `currency`. Số chữ số thập phân lấy theo ISO 4217 (VND = 0, USD = 2, JPY = 0, KRW = 0). Không dùng float. |
 | BR-15 | Mọi timestamp lưu `timestamptz` (UTC). Giờ hiển thị và giờ trong schedule rule hiểu theo timezone IANA của shop. |
 | BR-16 | **Nhập liệu:** mọi ô nhập văn bản trong hệ thống cho phép người dùng gõ khoảng trắng ở **hai đầu**; khi bấm nút submit, mọi chuỗi được `trim()` rồi mới kiểm tra và lưu (trong builder, "submit" là Publish / Submit for review). Backend cũng trim lại và không tin client. Ngoại lệ: **mật khẩu không bị trim** (khoảng trắng ở hai đầu là một phần của mật khẩu). Khoảng trắng ở giữa chuỗi được giữ nguyên, trừ các trường có quy tắc riêng (mã khuyến mãi, slug không cho khoảng trắng ở giữa). |
@@ -699,7 +708,7 @@ Implement state machine trong **một chỗ** (`bookings/booking-state.ts`) và 
 
 ### 6.2 State organization
 
-`DRAFT → PENDING_REVIEW → ACTIVE ↔ SUSPENDED`; `PENDING_REVIEW → DRAFT` (bị từ chối).
+`DRAFT → ACTIVE ↔ SUSPENDED`. `DRAFT → ACTIVE` xảy ra khi owner publish landing page lần đầu (không qua duyệt); `ACTIVE ↔ SUSPENDED` do admin.
 
 ### 6.3 State session
 
@@ -784,7 +793,7 @@ Quy ước: PK `uuid` (UUIDv7 sinh ở app nếu có, không thì `gen_random_uu
 
 **user_tokens**: `id`, `user_id`, `type` (`EMAIL_VERIFY|PASSWORD_RESET`), `token_hash` (unique), `expires_at`, `used_at`.
 
-**organizations**: `id`, `name`, `slug` (unique, **bất biến**: trigger / API từ chối mọi cập nhật, kể cả admin), `status` (`DRAFT|PENDING_REVIEW|ACTIVE|SUSPENDED`), `status_reason`, `country`, `timezone`, `currency`, `default_locale`, `enabled_locales text[]`, `plan` (`FREE` mặc định), `contact_email`, `contact_phone`, `whatsapp`, `address`, `maps_url`, (mặc định 120), `approved_at`, `approved_by`.
+**organizations**: `id`, `name`, `slug` (unique, **bất biến**: trigger / API từ chối mọi cập nhật, kể cả admin), `status` (`DRAFT|ACTIVE|SUSPENDED`), `status_reason`, `country`, `timezone`, `currency`, `default_locale`, `enabled_locales text[]`, `plan` (`FREE` mặc định), `contact_email`, `contact_phone`, `whatsapp`, `address`, `maps_url`, (mặc định 120), `approved_at`, `approved_by`.
 
 **organization_members**: `organization_id`, `user_id`, `role` (`OWNER`), `status`. PK `(organization_id, user_id)`.
 
@@ -869,7 +878,7 @@ Prefix `/api/v1`. Auth: cookie session. `{org}` lấy từ session (active organ
 |---|---|
 | POST | `/organizations` (onboarding) · GET/PATCH `/organization` |
 | GET | `/organization/slug-availability?slug=` |
-| GET/PUT | `/site/page` (draft) · POST `/site/page/submit-review` · POST `/site/page/publish` |
+| GET/PUT | `/site/page` (draft) · POST `/site/page/publish` (mock: `POST /site/publish`, public ngay, không có bước duyệt) |
 | GET | `/site/page/versions` · POST `/site/page/rollback/{version}` (Should) |
 | POST | `/media/presign-upload` · POST `/media/{id}/complete` · GET `/media` · DELETE `/media/{id}` |
 | GET, POST, PUT (không có DELETE: workshop không xóa được) | `/workshops` · POST `/workshops/{id}/status` |
@@ -896,7 +905,7 @@ Rate limit public: availability 60 req/phút/IP; tạo booking 10 req/phút/IP; 
 | Method | Path |
 |---|---|
 | GET | `/admin/organizations?status=` · GET `/admin/organizations/{id}` |
-| POST | `/admin/organizations/{id}/approve` · `/reject` · `/suspend` · `/reactivate` |
+| POST | `/admin/organizations/{id}/suspend` · `/reactivate` |
 | GET | `/admin/organizations/{id}/preview` |
 | GET/PATCH | `/admin/reports` |
 | GET | `/admin/audit-logs` |
@@ -992,7 +1001,7 @@ SENTRY_DSN=
 |---|---|
 | Unit (Vitest) | Booking state machine; tính giá; tính payment_status; validate slug; Zod schema của section; sinh session từ rule (bao gồm timezone); localization fallback |
 | Integration (Vitest + Testcontainers Postgres) | **Concurrency**: 20 request đồng thời tranh 1 chỗ cuối → đúng 1 thành công, `reserved_count` không vượt capacity; idempotency (gửi lại cùng key); check-in / uncheck-in; Close và đổi lịch session kèm email cho khách; **tenant isolation**: shop A gọi API với id tài nguyên của shop B → 404 cho mọi module |
-| E2E (Playwright) | Shop đăng ký → onboarding → tạo workshop + rule → chỉnh landing → submit; admin duyệt; khách mở landing → đặt chỗ → thấy trang xác nhận; email xuất hiện trong Mailpit; shop check-in + ghi nhận thanh toán |
+| E2E (Playwright) | Shop đăng ký → onboarding → tạo workshop + rule → chỉnh landing → publish (public ngay); khách mở landing → đặt chỗ → thấy trang xác nhận; email xuất hiện trong Mailpit; shop check-in + ghi nhận thanh toán |
 
 Mục tiêu coverage: ≥ 80% cho `bookings`, `sessions`, `payments`, `auth`; các module khác ưu tiên test hành vi quan trọng thay vì chạy theo con số.
 
@@ -1002,7 +1011,7 @@ Mục tiêu coverage: ≥ 80% cho `bookings`, `sessions`, `payments`, `auth`; c�
 |---|---|
 | AC-01 | Shop tự đăng ký, xác minh email, hoàn tất onboarding và có subdomain riêng. |
 | AC-02 | Shop tạo landing page từ template, chỉnh section, preview đa ngôn ngữ mà không cần deploy code. |
-| AC-03 | Landing page chỉ public sau khi admin duyệt; shop bị khóa thì landing page trả 404. |
+| AC-03 | Landing page public ngay khi shop publish (không cần admin duyệt); shop bị khóa thì landing page trả 404. |
 | AC-04 | Khách đặt chỗ không cần tài khoản; nhận email có đủ 6 ngôn ngữ (Anh, Việt, Thái, Trung, Hàn, Nhật) trong cùng một email, không phụ thuộc quốc gia của khách. |
 | AC-05 | Không overbooking khi có request đồng thời (có test chứng minh). |
 | AC-06 | Giá do backend tính; booking giữ snapshot khi workshop đổi giá. |
@@ -1064,7 +1073,7 @@ Mỗi milestone: code → test → `pnpm lint && pnpm typecheck && pnpm test` pa
 - [ ] (Should) Đổi session, email nhắc lịch 24h, file .ics
 
 ### M6 – Admin
-- [ ] Danh sách shop, hàng đợi duyệt, approve/reject/suspend/reactivate + email
+- [ ] Danh sách shop, suspend/reactivate + email (không có hàng đợi duyệt)
 - [ ] Audit log viewer
 - [ ] (Should) Abuse reports
 

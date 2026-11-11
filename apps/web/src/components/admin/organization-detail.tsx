@@ -1,12 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { ExternalLink } from "lucide-react";
 import type { OrgStatus } from "@workshop/shared";
 import type { AuditEntry, Shop } from "@/lib/types";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PaginationBar } from "@/components/ui/pagination-bar";
@@ -131,11 +130,6 @@ export function OrganizationDetail({
                 </Button>
               )}
               {status === "SUSPENDED" && <Button onClick={() => setDialog("reactivate")}>{t("reactivate")}</Button>}
-              {status === "PENDING_REVIEW" && (
-                <Link href={`/systemadmin/reviews/${shop.id}`} className={buttonVariants({ variant: "secondary" })}>
-                  {t("viewReview")}
-                </Link>
-              )}
             </div>
           </CardContent>
         </Card>

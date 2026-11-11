@@ -4,7 +4,7 @@ export const DEFAULT_LOCALE: Locale = "en";
 /** The system admin area (/systemadmin) is only available in these languages. */
 export const ADMIN_LOCALES = ["en", "vi"] as const satisfies readonly Locale[];
 
-export const ORG_STATUSES = ["DRAFT", "PENDING_REVIEW", "ACTIVE", "SUSPENDED"] as const;
+export const ORG_STATUSES = ["DRAFT", "ACTIVE", "SUSPENDED"] as const;
 export type OrgStatus = (typeof ORG_STATUSES)[number];
 
 export const WORKSHOP_STATUSES = ["DRAFT", "ACTIVE"] as const;

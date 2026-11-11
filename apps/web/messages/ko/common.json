@@ -15,7 +15,6 @@
   },
   "orgStatus": {
     "DRAFT": "초안",
-    "PENDING_REVIEW": "검토 대기 중",
     "ACTIVE": "활성",
     "SUSPENDED": "정지됨"
   },
