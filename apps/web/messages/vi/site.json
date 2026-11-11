@@ -304,5 +304,10 @@
     "MUSIC_DANCE": "Âm nhạc & khiêu vũ",
     "WELLNESS": "Sức khỏe & thiền định",
     "OTHER": "Khác"
+  },
+  "affiliate": {
+    "endedTitle": "Workshop này đã kết thúc",
+    "endedBody": "Workshop mà bạn được mời tham gia không còn tại {shop}. Hãy xem các workshop khác trên trang này.",
+    "close": "Đóng"
   }
 }

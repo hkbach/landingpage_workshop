@@ -304,5 +304,10 @@
     "MUSIC_DANCE": "Music & dance",
     "WELLNESS": "Wellness & mindfulness",
     "OTHER": "Other"
+  },
+  "affiliate": {
+    "endedTitle": "This workshop has ended",
+    "endedBody": "The workshop you were invited to is no longer available at {shop}. Have a look at the other workshops on this page.",
+    "close": "Close"
   }
 }

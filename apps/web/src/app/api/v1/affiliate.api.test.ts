@@ -4,7 +4,9 @@ import { resetAccountsStore } from "@/lib/mock/accounts-store";
 import { liveBookings, resetBookingStore } from "@/lib/mock/booking-store";
 import { sessions, workshops } from "@/lib/mock/data";
 import { resetOutbox } from "@/lib/mock/outbox-store";
+import { adminChangeSession, resetSessionAdminStore } from "@/lib/mock/session-admin-store";
 import { resetShopAdminStore, setShopActive } from "@/lib/mock/shop-admin-store";
+import { resetWorkshopStatusStore, switchWorkshop } from "@/lib/mock/workshop-status-store";
 import { attributedBookings, createReferral, listReferrals, resetReferralStore } from "@/lib/mock/referral-store";
 import { POST as book } from "./public/sites/[slug]/bookings/route";
 import { POST as click } from "./public/sites/[slug]/referrals/click/route";
@@ -17,7 +19,7 @@ const body = async (res: Response) => (await res.json()) as Record<string, any>;
 const FREE = sessions.find((s) => s.status === "RUNNING" && Date.parse(s.startsAt) > Date.now() + 86_400_000 && s.capacity - s.reservedCount >= 4 && workshops.find((w) => w.id === s.workshopId)?.status === "ACTIVE")!;
 const guest = (email: string, ref?: string) => ({ sessionId: FREE.id, quantity: 1, fullName: "Guest", email, phone: "+84 90 111 2222", ...(ref ? { ref } : {}) });
 
-beforeEach(() => { resetBookingStore(); resetOutbox(); resetAccountsStore(); resetAccountStatus(); resetReferralStore(); resetShopAdminStore(); });
+beforeEach(() => { resetBookingStore(); resetOutbox(); resetAccountsStore(); resetAccountStatus(); resetReferralStore(); resetShopAdminStore(); resetSessionAdminStore(); resetWorkshopStatusStore(); });
 
 describe("an affiliate link", () => {
   it("opens the booking of its workshop at its shop and carries the code", async () => {
@@ -30,15 +32,18 @@ describe("an affiliate link", () => {
   });
   it("counts a click, once for each call, and ignores a code that is not a link", async () => {
     const { referral } = createReferral("cu-9", FREE.workshopId) as { ok: true; referral: { code: string } };
-    expect((await click(json({ code: referral.code }), ctx({ slug: "whiskladle" }))).status).toBe(204);
-    expect((await click(json({ code: referral.code }), ctx({ slug: "whiskladle" }))).status).toBe(204);
+    const first = await click(json({ code: referral.code }), ctx({ slug: "whiskladle" }));
+    expect([first.status, await body(first)]).toEqual([200, { workshopId: FREE.workshopId, status: "ON_GOING" }]);
+    expect((await click(json({ code: referral.code }), ctx({ slug: "whiskladle" }))).status).toBe(200);
+    expect(listReferrals().find((r) => r.code === referral.code)!.clicks).toBe(2);
+    await click(json({ code: referral.code, count: false }), ctx({ slug: "whiskladle" })); // the same visit looking again (a reload) is not counted
     expect(listReferrals().find((r) => r.code === referral.code)!.clicks).toBe(2);
     expect((await click(json({ code: "NOPE" }), ctx({ slug: "whiskladle" }))).status).toBe(404);
     expect((await click(json({}), ctx({ slug: "whiskladle" }))).status).toBe(422);
     expect((await click(json({ code: referral.code }), ctx({ slug: "other" }))).status).toBe(404);
     expect((await click(json({ code: referral.code }), ctx({ slug: "brewbean" }))).status).toBe(404); // the link belongs to another shop
     const brew = (createReferral("cu-9", "ws-b1") as { ok: true; referral: { code: string } }).referral;
-    expect((await click(json({ code: brew.code }), ctx({ slug: "brewbean" }))).status).toBe(204); // a link of another shop is counted at its own shop
+    expect((await click(json({ code: brew.code }), ctx({ slug: "brewbean" }))).status).toBe(200); // a link of another shop is counted at its own shop
   });
 });
 
@@ -79,6 +84,29 @@ describe("the status of a link", () => {
     expect((await list()).find((r) => r.workshopId === FREE.workshopId)!.status).toBe("DEACTIVE");
     setShopActive("org-1", true);
     expect((await list()).find((r) => r.workshopId === FREE.workshopId)!.status).toBe("ON_GOING");
+  });
+});
+
+describe("a link of a workshop that was deactivated", () => {
+  /** Closes every session of the workshop (an administrator can) and deactivates it, as the shop owner does once nothing is open. */
+  function deactivate(workshopId: string) {
+    for (const s of sessions.filter((x) => x.workshopId === workshopId)) adminChangeSession(s.id, "close", "test");
+    expect(switchWorkshop(workshopId, "DRAFT").ok).toBe(true);
+  }
+
+  it("becomes Deactive in the list of the customer and tells the landing page that the workshop has ended", async () => {
+    const link = (createReferral("cu-9", FREE.workshopId) as { ok: true; referral: { code: string } }).referral;
+    const list = async () => (await body(await myLinks(new Request("http://x/api/v1/customer/cu-9/referrals"), ctx({ id: "cu-9" })))).items as { workshopId: string; status: string }[];
+    expect((await list()).find((r) => r.workshopId === FREE.workshopId)!.status).toBe("ON_GOING");
+    deactivate(FREE.workshopId);
+    expect((await list()).find((r) => r.workshopId === FREE.workshopId)!.status).toBe("DEACTIVE");
+    const res = await click(json({ code: link.code }), ctx({ slug: "whiskladle" }));
+    expect([res.status, await body(res)]).toEqual([200, { workshopId: FREE.workshopId, status: "DEACTIVE" }]);
+  });
+  it("cannot be registered for again once the workshop is not active", async () => {
+    deactivate(FREE.workshopId);
+    const res = await makeLink(json({ workshopId: FREE.workshopId }), ctx({ id: "cu-9" }));
+    expect(res.status).toBe(409);
   });
 });
 

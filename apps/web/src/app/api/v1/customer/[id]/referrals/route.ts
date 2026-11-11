@@ -66,7 +66,7 @@ export async function POST(request: Request, ctx: RouteContext<"/api/v1/customer
   const parsed = bodySchema.safeParse(body);
   if (!parsed.success) return apiError(422, "VALIDATION", "Please check the highlighted fields.", { fields: fieldCodes(parsed.error.issues) }, headers);
   const res = createReferral(id, parsed.data.workshopId);
-  if (!res.ok) return res.code === "SHOP_INACTIVE" ? apiError(409, "SHOP_INACTIVE", "This shop is not active.", {}, headers) : apiError(404, res.code === "NO_WORKSHOP" ? "NO_WORKSHOP" : "NOT_FOUND", "Not found.", {}, headers);
+  if (!res.ok) return res.code === "SHOP_INACTIVE" || res.code === "WORKSHOP_INACTIVE" ? apiError(409, res.code, "This workshop is not active.", {}, headers) : apiError(404, res.code === "NO_WORKSHOP" ? "NO_WORKSHOP" : "NOT_FOUND", "Not found.", {}, headers);
   const mine = view(request, id).find((x) => x.id === res.referral.id)!;
   return Response.json(mine, { status: res.created ? 201 : 200, headers });
 }

@@ -7,6 +7,7 @@ import { liveBookings, liveCustomers } from "./booking-store";
 import { currentShop, workshops as demoWorkshops } from "./data";
 import { otherShopSites } from "./other-shops";
 import { liveShops } from "./shop-admin-store";
+import { withWorkshopStatus } from "./workshop-status-store";
 import type { Booking } from "../types";
 import { newUuid } from "../uuid";
 
@@ -33,6 +34,13 @@ function workshopShop(workshopId: string): string | undefined {
   return Object.entries(otherShopSites).find(([, s]) => s.workshops.some((w) => w.id === workshopId))?.[0];
 }
 
+/** Whether the workshop is active now (the status the shop owner gave it). */
+function workshopActive(workshopId: string): boolean {
+  const demo = withWorkshopStatus(demoWorkshops).find((w) => w.id === workshopId);
+  if (demo) return demo.status === "ACTIVE";
+  return Object.values(otherShopSites).some((s) => s.workshops.some((w) => w.id === workshopId && w.status === "ACTIVE"));
+}
+
 /** A few links to look at: customers of the demo data share a workshop of the demo shop and one of another shop. */
 function seed(): Referral[] {
   const demo = demoWorkshops.filter((w) => w.status === "ACTIVE");
@@ -57,7 +65,7 @@ export function resetReferralStore(): void {
 
 export const listReferrals = (): Referral[] => store().map((r) => ({ ...r }));
 
-export type CreateReferralResult = { ok: true; referral: Referral; created: boolean } | { ok: false; code: "NO_ACCOUNT" | "NO_WORKSHOP" | "SHOP_INACTIVE" };
+export type CreateReferralResult = { ok: true; referral: Referral; created: boolean } | { ok: false; code: "NO_ACCOUNT" | "NO_WORKSHOP" | "SHOP_INACTIVE" | "WORKSHOP_INACTIVE" };
 
 /** A customer with an account gets the link of a workshop (the same link when they already have one for it). Only the workshops of an ACTIVE shop can be shared. */
 export function createReferral(accountId: string, workshopId: string): CreateReferralResult {
@@ -67,17 +75,22 @@ export function createReferral(accountId: string, workshopId: string): CreateRef
   if (liveShops().find((s) => s.id === shopId)?.status !== "ACTIVE") return { ok: false, code: "SHOP_INACTIVE" };
   const existing = store().find((r) => r.accountId === accountId && r.workshopId === workshopId);
   if (existing) return { ok: true, referral: { ...existing }, created: false };
+  if (!workshopActive(workshopId)) return { ok: false, code: "WORKSHOP_INACTIVE" }; // only an active workshop can be registered for
   const code = `R${newUuid().replace(/-/g, "").slice(0, 8).toUpperCase()}`;
   const referral: Referral = { id: `rf-${newUuid().slice(0, 8)}`, code, accountId, workshopId, shopId, createdAt: new Date().toISOString(), clicks: 0 };
   store().push(referral);
   return { ok: true, referral: { ...referral }, created: true };
 }
 
-/** Someone opened the link (the landing page of the shop `shopId` was loaded with `?ref=CODE`): false when there is no such link at that shop. */
-export function recordClick(code: string, shopId: string): boolean {
+/**
+ * Someone opened the link (the landing page of the shop `shopId` was loaded with `?ref=CODE`): the link, or null when there is no such link at that shop. The click is counted
+ * unless `count` is false (the same visit looking again, for example after a reload).
+ */
+export function recordClick(code: string, shopId: string, count = true): Referral | null {
   const r = store().find((x) => x.code === code && x.shopId === shopId);
-  if (r) r.clicks += 1;
-  return Boolean(r);
+  if (!r) return null;
+  if (count) r.clicks += 1;
+  return { ...r };
 }
 
 /**

@@ -304,5 +304,10 @@
     "MUSIC_DANCE": "音乐与舞蹈",
     "WELLNESS": "身心健康与正念",
     "OTHER": "其他"
+  },
+  "affiliate": {
+    "endedTitle": "此工作坊已结束",
+    "endedBody": "您受邀参加的工作坊在 {shop} 已不再提供。请查看本页的其他工作坊。",
+    "close": "关闭"
   }
 }

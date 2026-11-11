@@ -304,5 +304,10 @@
     "MUSIC_DANCE": "음악·댄스",
     "WELLNESS": "웰니스·마음챙김",
     "OTHER": "기타"
+  },
+  "affiliate": {
+    "endedTitle": "이 워크숍은 종료되었습니다",
+    "endedBody": "초대받은 워크숍은 더 이상 {shop}에서 진행되지 않습니다. 이 페이지의 다른 워크숍을 살펴보세요.",
+    "close": "닫기"
   }
 }

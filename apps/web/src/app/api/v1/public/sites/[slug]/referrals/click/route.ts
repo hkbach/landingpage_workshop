@@ -1,14 +1,19 @@
 import { z } from "zod";
 import { apiError, fieldCodes } from "@/lib/api-error";
+import { workshopsWithShop } from "@/lib/mock/admin-directory";
 import { liveShops } from "@/lib/mock/shop-admin-store";
 import { recordClick } from "@/lib/mock/referral-store";
 
 // Someone opened an affiliate link: the landing page of the shop tells the server once per visit, so the person who shared the link sees the clicks. MOCK implementation inside
 // Next until apps/api exists. TODO(api): rate limit per IP, count a visitor once a day, no personal data kept.
 
-const bodySchema = z.object({ code: z.string().trim().min(1, "required").max(40, "invalid") });
+// `count` is false when the same visit asks again (a reload): the click is not counted twice.
+const bodySchema = z.object({ code: z.string().trim().min(1, "required").max(40, "invalid"), count: z.boolean().optional() });
 
-/** POST { code } -> 204. 404 for an unknown shop or link (the page ignores it), 422 with `fields`. */
+/**
+ * POST { code, count? } -> 200 { workshopId, status }: `status` is ON_GOING while the workshop of the link is active and DEACTIVE once it was deactivated (the landing page then tells
+ * the guest that the workshop has ended instead of opening its booking). 404 for an unknown shop or link (the page ignores it), 422 with `fields`.
+ */
 export async function POST(request: Request, ctx: RouteContext<"/api/v1/public/sites/[slug]/referrals/click">) {
   const { slug } = await ctx.params;
   const shop = liveShops().find((s) => s.slug === slug && s.status === "ACTIVE");
@@ -21,6 +26,8 @@ export async function POST(request: Request, ctx: RouteContext<"/api/v1/public/s
   }
   const parsed = bodySchema.safeParse(body);
   if (!parsed.success) return apiError(422, "VALIDATION", "Please check the highlighted fields.", { fields: fieldCodes(parsed.error.issues) });
-  if (!recordClick(parsed.data.code, shop.id)) return apiError(404, "NOT_FOUND", "Link not found.");
-  return new Response(null, { status: 204 });
+  const link = recordClick(parsed.data.code, shop.id, parsed.data.count ?? true);
+  if (!link) return apiError(404, "NOT_FOUND", "Link not found.");
+  const active = workshopsWithShop().some((x) => x.workshop.id === link.workshopId && x.workshop.status === "ACTIVE");
+  return Response.json({ workshopId: link.workshopId, status: active ? "ON_GOING" : "DEACTIVE" }, { headers: { "cache-control": "no-store" } });
 }

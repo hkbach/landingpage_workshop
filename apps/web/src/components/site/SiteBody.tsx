@@ -18,7 +18,7 @@ export function SiteBody({ content, theme, ctx, shop, workshops, sessions, local
 }) {
   return (
     <BookingProvider shop={shop} workshops={workshops} sessions={sessions} theme={theme} locale={locale} basePath={basePath} promotions={promotions}>
-      <AffiliateEntry slug={shop.slug} workshopIds={workshops.map((w) => w.id)} />
+      <AffiliateEntry slug={shop.slug} shopName={shop.name} theme={theme} workshopIds={workshops.map((w) => w.id)} />
       <FavoritesProvider slug={shop.slug} shopName={shop.name} theme={theme}>
         <ReportProvider slug={shop.slug} theme={theme}>
           <PageRenderer content={content} theme={theme} ctx={ctx} />
