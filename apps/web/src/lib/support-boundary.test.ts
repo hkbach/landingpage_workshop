@@ -28,12 +28,16 @@ describe("platform support contact stays out of the public landing page", () => 
     expect(offenders).toEqual([]);
   });
 
-  it("only the shop owner builder, its page, the shop owner menu (sidebar) and the menu of the customer area use it", () => {
+  it("only the admin page that edits it, the shop owner builder, its page, the shop owner menu (sidebar) and the menu of the customer area use it", () => {
     const users = all.filter((f) => SUPPORT_IDENTIFIERS.test(read(f))).map(rel).filter((f) => f !== "lib/support-contact.ts" && f !== "lib/mock/platform.ts");
     expect(users.sort()).toEqual([
+      "app/api/v1/admin/support-contact/route.ts",
       "app/customer/[accountId]/layout.tsx",
       "app/shopowner/[slug]/layout.tsx",
       "app/shopowner/[slug]/site/[pageId]/page.tsx",
+      "app/systemadmin/support-contact/page.tsx",
+      "components/admin/admin-nav.tsx",
+      "components/admin/directory/support-contact-admin.tsx",
       "components/builder/SiteBuilder.tsx",
       "components/builder/SupportContactBox.tsx",
       "components/customer/customer-shell.tsx",

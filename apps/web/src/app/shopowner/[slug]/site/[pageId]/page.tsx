@@ -4,7 +4,7 @@ import { SiteBuilder } from "@/components/builder/SiteBuilder";
 import { countWorkshopsWithUpcomingSessions } from "@/components/builder/prereqs";
 import { currentShop, mockLandingPages, sessions, sitePage, workshops } from "@/lib/mock/data";
 import { liveShop } from "@/lib/mock/shop-admin-store";
-import { platformSupport } from "@/lib/mock/platform";
+import { getPlatformSupport } from "@/lib/mock/platform";
 
 // Frontend-only: mock draft + shop. `?status=DRAFT|ACTIVE|SUSPENDED` previews the publish states.
 export default async function SiteBuilderPage({ params, searchParams }: PageProps<"/shopowner/[slug]/site/[pageId]">) {
@@ -28,7 +28,7 @@ export default async function SiteBuilderPage({ params, searchParams }: PageProp
       initialStatus={status}
       applyTemplate={apply}
       upcomingWorkshopCount={countWorkshopsWithUpcomingSessions(workshops, sessions)}
-      support={platformSupport}
+      support={getPlatformSupport()}
     />
   );
 }

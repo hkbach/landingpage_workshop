@@ -2,7 +2,7 @@
 import { notFound } from "next/navigation";
 import { currentShop } from "@/lib/mock/data";
 import { liveShop } from "@/lib/mock/shop-admin-store";
-import { platformSupport } from "@/lib/mock/platform";
+import { getPlatformSupport } from "@/lib/mock/platform";
 import { DashboardShell } from "@/components/dashboard/shell/dashboard-shell";
 import { AdminModeBanner } from "@/components/dashboard/shell/admin-mode-banner";
 import { ShopStatusBanner } from "@/components/dashboard/shell/shop-status-banner";
@@ -16,7 +16,7 @@ export default async function DashboardLayout({ children, params }: LayoutProps<
     <DashboardShell
       shop={{ name: shop.name, slug: shop.slug, status: shop.status, ownerName: shop.ownerName, ownerEmail: shop.ownerEmail }}
       banner={<><AdminModeBanner slug={shop.slug} /><ShopStatusBanner status={shop.status} reason={shop.statusReason} /></>}
-      support={platformSupport}
+      support={getPlatformSupport()}
     >
       {children}
     </DashboardShell>

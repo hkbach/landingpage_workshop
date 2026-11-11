@@ -603,12 +603,14 @@ Browser ────────────────────────
 **FR-ADM-06 – Template (Should)**
 - MVP: template định nghĩa trong code (`packages/shared`). Admin chỉ bật/tắt template.
 
-**FR-ADM-07 – Thông tin liên hệ hỗ trợ của nền tảng (Should, phát triển sau)**
+**FR-ADM-07 – Thông tin liên hệ hỗ trợ của nền tảng (Should)**
 - Admin cấu hình các kênh hỗ trợ của nền tảng: **WhatsApp, Phone, Zalo, Email** (giá trị toàn nền tảng, không theo shop; lưu trong `platform_settings`).
 - Đây là kênh để **shop owner liên hệ admin hệ thống khi cần hỗ trợ**. Hoàn toàn **không liên quan đến thông tin liên hệ của shop** (`contact_email`, `contact_phone`, `whatsapp` của organization, section `contact`) và **không bao giờ hiển thị trên landing page của shop** hay bất kỳ trang public nào; chỉ hiển thị trong khu vực `/shopowner` **và khu vực `/customer`** (khách hàng cũng liên hệ được đội ngũ nền tảng).
 - **Customer** thấy cùng các kênh này trong khối **"Need help?" ở cuối menu bên trái của khu vực `/customer`** (dưới các mục My Profile, Today, My Booking, Favorites, Workshops, Affiliate, Referrals; trên màn hình nhỏ khối nằm dưới thanh menu); liên kết dựng và kiểm tra bằng cùng hàm như phía shop owner, chỉ hiện kênh đã nhập, text i18n đủ 5 ngôn ngữ.
 - Shop owner thấy các kênh này trong khung **Publish** của trình dựng trang ("Need help?") và ở **cuối menu bên trái, dưới mục Settings** (cùng dữ liệu, dạng cột hẹp không có đoạn mô tả), ở mọi trạng thái shop. Chỉ hiển thị kênh đã nhập; liên kết được dựng ở phía ứng dụng sau khi kiểm tra định dạng (`wa.me`, `tel:`, `zalo.me`, `mailto:`), giá trị sai bị bỏ qua.
-- Hiện tại (MVP, chưa có trang admin này) dùng dữ liệu mock tại `apps/web/src/lib/mock/platform.ts`.
+- **Trang admin `/systemadmin/support-contact` ("Support contact" trong menu):** form 4 ô WhatsApp, Phone, Zalo, Email; để trống một ô thì kênh đó bị ẩn (không còn kênh nào thì khối "Need help?" ẩn). Giá trị được `trim()` (BR-16); nút Save chỉ bật khi có thay đổi (BR-17). Kiểm tra: số điện thoại gồm 7 đến 15 chữ số (chỉ số, khoảng trắng, `+ ( ) . -`), email hợp lệ; sai thì báo lỗi ngay dưới ô và không lưu gì. Có khung xem trước các kênh đang hiển thị. Lưu xong, shop owner và customer thấy ngay (cùng hàm dựng liên kết ở trên).
+- API: `GET /admin/support-contact` và `PUT /admin/support-contact` `{whatsapp, phone, zalo, email}` (chuỗi rỗng = xóa kênh; `422` kèm `fields` khi sai; chỉ `SUPER_ADMIN`, mock chưa kiểm tra quyền). Mỗi lần đổi ghi audit `platform.support_contact_update` với danh sách kênh đã đổi (không ghi giá trị).
+- Mock: dữ liệu khởi đầu và kho lưu trong bộ nhớ tại `apps/web/src/lib/mock/platform.ts`. TODO(api): bảng `platform_settings`.
 
 
 **Khu vực quản trị `/systemadmin` (FR-ADM-08 đến FR-ADM-17).** Mỗi danh mục là một trang riêng trong menu bên trái; mọi danh sách có ô tìm kiếm (không phân biệt hoa thường và dấu), phân trang 10/20/50 dòng và xem chi tiết. Chỉ en + vi. Các hành động của admin (sửa, đổi trạng thái, reset mật khẩu, đóng/mở session, đổi phí, sửa landing page) được ghi vào audit log (FR-ADM-05) với actor "Platform Admin", không bao giờ ghi mật khẩu hay token. MVP frontend: API mock trong Next (`/api/v1/admin/*`), chưa kiểm tra quyền; backend thật chỉ cho `SUPER_ADMIN`.

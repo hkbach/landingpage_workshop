@@ -25,7 +25,8 @@
     "income": "Thu nhập",
     "fees": "Cấu hình phí",
     "affiliate": "Affiliate",
-    "withdrawals": "Rút tiền"
+    "withdrawals": "Rút tiền",
+    "supportContact": "Liên hệ hỗ trợ"
   },
   "guard": {
     "mockNotice": "Bản thử nghiệm: việc kiểm tra vai trò chỉ là giả lập. Xác thực thật sẽ được thêm sau.",
@@ -643,5 +644,38 @@
     "rejectedDone": "Đã từ chối invoice {code}.",
     "failed": "Không thể xử lý invoice.",
     "rule": "Phí affiliate và tiền thưởng referral đã được trừ vào lợi nhuận của nền tảng ngay khi phát sinh (Income), nên việc thanh toán invoice không làm thay đổi lợi nhuận."
+  },
+  "supportContact": {
+    "title": "Liên hệ hỗ trợ",
+    "description": "Cách shop owner và customer liên hệ đội ngũ nền tảng khi cần hỗ trợ.",
+    "cardTitle": "Các kênh hỗ trợ của nền tảng",
+    "boundary": "Đây là thông tin liên hệ của nền tảng, không phải của một shop. Chỉ hiển thị trong khu vực shop owner và menu customer, không bao giờ hiển thị trên landing page.",
+    "invalidNumber": "Nhập số điện thoại có 7 đến 15 chữ số (chỉ gồm số, khoảng trắng, + ( ) . -).",
+    "invalidEmail": "Nhập địa chỉ email hợp lệ.",
+    "save": "Lưu",
+    "saved": "Đã lưu liên hệ hỗ trợ. Shop owner và customer sẽ thấy ngay.",
+    "failed": "Không lưu được liên hệ hỗ trợ.",
+    "loadFailed": "Không tải được liên hệ hỗ trợ.",
+    "previewTitle": "Người dùng sẽ thấy",
+    "previewIntro": "Các kênh dưới đây được hiển thị theo thứ tự này.",
+    "previewEmpty": "Chưa có kênh nào: khối Need help? sẽ ẩn.",
+    "channel": {
+      "whatsapp": "WhatsApp",
+      "phone": "Điện thoại",
+      "zalo": "Zalo",
+      "email": "Email"
+    },
+    "placeholder": {
+      "whatsapp": "+84 90 000 0001",
+      "phone": "+84 28 0000 0002",
+      "zalo": "0900000003",
+      "email": "support@example.com"
+    },
+    "hint": {
+      "whatsapp": "Số kèm mã quốc gia. Để trống để ẩn kênh này.",
+      "phone": "Số mà mọi người có thể gọi. Để trống để ẩn kênh này.",
+      "zalo": "Số điện thoại Zalo. Để trống để ẩn kênh này.",
+      "email": "Để trống để ẩn kênh này."
+    }
   }
 }

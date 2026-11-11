@@ -29,6 +29,13 @@ const validNumber = (v: string) => /^[+\d\s().-]+$/.test(v) && digitsOf(v).lengt
 // Plain ASCII addresses only: letters, digits and . _ % + - in the local part, a dotted domain with a letters-only TLD.
 const validEmail = (v: string) => v.length <= 254 && /^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$/.test(v);
 
+/** Whether a value an administrator typed is acceptable for a channel (an empty value is: it clears the channel). The same rules decide which links are shown. */
+export function isValidSupportValue(channel: SupportChannel, raw: string): boolean {
+  const value = raw.trim();
+  if (!value) return true;
+  return channel === "email" ? validEmail(value) : validNumber(value);
+}
+
 /** The links to show, in order. Empty, invalid or unsafe values are left out instead of producing a broken or unsafe link. */
 export function supportLinks(contact: SupportContact | null | undefined): SupportLink[] {
   const links: SupportLink[] = [];

@@ -25,7 +25,8 @@
     "income": "Income",
     "fees": "Config fees",
     "affiliate": "Affiliate",
-    "withdrawals": "Withdrawals"
+    "withdrawals": "Withdrawals",
+    "supportContact": "Support contact"
   },
   "guard": {
     "mockNotice": "Prototype: the role check is simulated. Real authentication is added later.",
@@ -643,5 +644,38 @@
     "rejectedDone": "Invoice {code} was rejected.",
     "failed": "The invoice could not be processed.",
     "rule": "The affiliate fees and the referral bonuses are already taken off the profit of the platform when they are earned (Income), so paying an invoice does not change the profit."
+  },
+  "supportContact": {
+    "title": "Support contact",
+    "description": "How shop owners and customers reach the platform team when they need help.",
+    "cardTitle": "Platform support channels",
+    "boundary": "These are the contacts of the platform, not of a shop. They show in the shop owner area and in the customer menu, and never on a landing page.",
+    "invalidNumber": "Enter a phone number with 7 to 15 digits (digits, spaces, + ( ) . - only).",
+    "invalidEmail": "Enter a valid email address.",
+    "save": "Save",
+    "saved": "Support contact saved. Shop owners and customers now see it.",
+    "failed": "The support contact could not be saved.",
+    "loadFailed": "The support contact could not be loaded.",
+    "previewTitle": "What people see",
+    "previewIntro": "The channels below are shown, in this order.",
+    "previewEmpty": "No channel is set: the Need help? block is hidden.",
+    "channel": {
+      "whatsapp": "WhatsApp",
+      "phone": "Phone",
+      "zalo": "Zalo",
+      "email": "Email"
+    },
+    "placeholder": {
+      "whatsapp": "+84 90 000 0001",
+      "phone": "+84 28 0000 0002",
+      "zalo": "0900000003",
+      "email": "support@example.com"
+    },
+    "hint": {
+      "whatsapp": "Number with the country code. Leave empty to hide this channel.",
+      "phone": "Number people can call. Leave empty to hide this channel.",
+      "zalo": "Zalo phone number. Leave empty to hide this channel.",
+      "email": "Leave empty to hide this channel."
+    }
   }
 }
