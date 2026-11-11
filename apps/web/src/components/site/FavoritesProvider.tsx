@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { FAVORITE_CATEGORY_COUNT, WORKSHOP_CATEGORIES, checkPassword, toggleCategory, type WorkshopCategory } from "@workshop/shared";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { COUNTRY_CODES, countryName } from "@/components/booking/countries";
+import { captureInvite, clearInviteCode, readInviteCode } from "@/lib/affiliate";
 import { FavoritesContext } from "@/components/sections/favorites-context";
 import { siteFontClass } from "@/components/sections/site-fonts";
 import { modalThemeStyle } from "@/components/sections/theme";
@@ -31,6 +32,21 @@ export function FavoritesProvider({ slug, shopName, theme, children }: { slug: s
   const ids = useMemo(() => parseFavorites(raw), [raw]);
   const [pending, setPending] = useState<string | null>(null); // the workshop to save once the guest has logged in
   const [open, setOpen] = useState(false);
+  /** The guest came through the invite link of a friend: the popup opens on the registration. */
+  const [registerFirst, setRegisterFirst] = useState(false);
+
+  // `?invite=CODE`: the code is kept (the registration sends it) and a guest who is not logged in is shown the registration at once. The code is taken off the address.
+  useEffect(() => {
+    if (slug === "preview") return;
+    const code = captureInvite(slug, window.location.search);
+    if (!new URLSearchParams(window.location.search).has("invite")) return;
+    const url = new URL(window.location.href);
+    url.searchParams.delete("invite");
+    window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+    if (code && !readGuestEmail(slug)) queueMicrotask(() => { setRegisterFirst(true); setOpen(true); }); // after the effect, so the popup opens on a render of its own
+    // Only on arrival: the address was read once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const toggle = useCallback((workshopId: string) => {
     if (!email) { setPending(workshopId); setOpen(true); return; }
@@ -52,7 +68,7 @@ export function FavoritesProvider({ slug, shopName, theme, children }: { slug: s
         <DialogContent style={modalThemeStyle(theme)} className={cn("max-h-[92dvh] gap-4 overflow-y-auto p-5 sm:max-w-md", siteFontClass(theme.font))}>
           <LoginHeader shopName={shopName} />
           {/* Mounted only while open, so the form starts empty every time. */}
-          {open ? <GuestLoginForm slug={slug} shopName={shopName} onLoggedIn={onLoggedIn} onCancel={() => { setOpen(false); setPending(null); }} /> : null}
+          {open ? <GuestLoginForm slug={slug} shopName={shopName} initialStep={registerFirst ? "profile" : "login"} onLoggedIn={onLoggedIn} onCancel={() => { setOpen(false); setPending(null); setRegisterFirst(false); }} /> : null}
         </DialogContent>
       </Dialog>
     </FavoritesContext.Provider>
@@ -77,11 +93,11 @@ const selectClass =
  * fields). Creating it merges into it the bookings that were made before with the same email, and the last step says how many. The builder preview (slug
  * "preview") has no server to ask, so it only logs in with the email.
  */
-export function GuestLoginForm({ slug, shopName, onLoggedIn, onCancel }: { slug: string; shopName: string; onLoggedIn: (email: string) => void; onCancel: () => void }) {
+export function GuestLoginForm({ slug, shopName, initialStep = "login", onLoggedIn, onCancel }: { slug: string; shopName: string; initialStep?: "login" | "profile"; onLoggedIn: (email: string) => void; onCancel: () => void }) {
   const t = useTranslations("site.favorites");
   const tc = useTranslations("site.categories");
   const locale = useLocale();
-  const [step, setStep] = useState<"login" | "profile" | "done">("login");
+  const [step, setStep] = useState<"login" | "profile" | "done">(initialStep);
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState(false);
   const [password, setPassword] = useState("");
@@ -137,10 +153,11 @@ export function GuestLoginForm({ slug, shopName, onLoggedIn, onCancel }: { slug:
     try {
       const res = await fetch(base, {
         method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ email: clean, password, fullName: fullName.trim(), country, birthDate, categories, locale, consent: true }),
+        body: JSON.stringify({ email: clean, password, fullName: fullName.trim(), country, birthDate, categories, locale, consent: true, ...(readInviteCode(slug) ? { inviteCode: readInviteCode(slug) } : {}) }),
       });
       if (res.status === 409) { setStep("login"); setLoginError("alreadyRegistered"); return; } // the email has an account after all: log in with its password
       if (!res.ok) { setFailed(true); return; }
+      clearInviteCode(slug); // the invitation is used
       setMerged(((await res.json()) as { merged: number }).merged);
       setStep("done");
     } catch {

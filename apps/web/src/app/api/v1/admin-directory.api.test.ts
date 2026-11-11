@@ -25,7 +25,7 @@ beforeEach(() => { resetBookingStore(); resetAccountsStore(); resetAccountStatus
 
 describe("GET /admin/directory/{name}", () => {
   it("gives every list and filters it with q", async () => {
-    for (const name of ["users", "shops", "workshops", "bookings", "customers", "sessions", "landing-pages", "referrals"]) {
+    for (const name of ["users", "shops", "workshops", "bookings", "customers", "sessions", "landing-pages", "affiliate", "referrals"]) {
       const res = await list(get(`/api/v1/admin/directory/${name}`), ctx({ name }));
       expect(res.status, name).toBe(200);
       expect((await body(res)).items.length, name).toBeGreaterThan(0);
@@ -58,7 +58,7 @@ describe("a shop is deactivated and activated", () => {
 describe("the fees", () => {
   it("saves the three rates of a shop and applies rates to all, all or none", async () => {
     const ok = await putFees(json({ maintenanceBps: 100, serviceBps: 200, referralBps: 300 }, "PUT"), ctx({ id: "org-1" }));
-    expect(await body(ok)).toEqual({ shopId: "org-1", maintenanceBps: 100, serviceBps: 200, referralBps: 300 });
+    expect(await body(ok)).toEqual({ shopId: "org-1", maintenanceBps: 100, serviceBps: 200, referralBps: 300, inviteBonusBps: 1000 });
     const bad = await putFees(json({ maintenanceBps: 100, serviceBps: 200, referralBps: 20_000 }, "PUT"), ctx({ id: "org-1" }));
     expect([bad.status, (await body(bad)).error.details.fields]).toEqual([422, { referralBps: "invalid" }]);
     expect((await putFees(json({ maintenanceBps: 100 }, "PUT"), ctx({ id: "org-1" }))).status).toBe(422);
@@ -79,7 +79,7 @@ describe("GET /admin/income", () => {
   it("gives the fees, the referral fee and the profit of each shop", async () => {
     const res = await body(await income(get("/api/v1/admin/income")));
     const demo = res.shops.find((s: { shopId: string }) => s.shopId === "org-1");
-    expect(demo.profit).toBe(demo.fees - demo.referralFee);
+    expect(demo.profit).toBe(demo.fees - demo.referralFee - demo.inviteBonus);
     expect(res.totals.length).toBeGreaterThan(0);
     expect((await income(get("/api/v1/admin/income?from=x"))).status).toBe(422);
     expect((await income(get("/api/v1/admin/income?from=2026-02-01&to=2026-01-01"))).status).toBe(422);

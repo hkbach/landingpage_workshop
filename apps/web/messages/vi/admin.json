@@ -22,9 +22,10 @@
     "customers": "Khách hàng",
     "sessions": "Session",
     "landingPages": "Landing page",
-    "referrals": "Affiliate",
+    "referrals": "Referrals",
     "income": "Thu nhập",
-    "fees": "Cấu hình phí"
+    "fees": "Cấu hình phí",
+    "affiliate": "Affiliate"
   },
   "guard": {
     "mockNotice": "Bản thử nghiệm: việc kiểm tra vai trò chỉ là giả lập. Xác thực thật sẽ được thêm sau.",
@@ -528,7 +529,57 @@
     "notEditable": "Chưa có trang để sửa",
     "opensNewTab": "(mở trong tab mới)"
   },
-  "referrals": {
+  "income": {
+    "title": "Thu nhập",
+    "description": "Income của admin (nền tảng) là phí duy trì + phí dịch vụ thu từ booking của các shop. Lợi nhuận của hệ thống = Income của admin - phí affiliate - tiền thưởng referral.",
+    "from": "Từ ngày",
+    "to": "Đến ngày",
+    "clearDates": "Xóa ngày",
+    "dateOrder": "Ngày đầu sau ngày cuối.",
+    "col": {
+      "shop": "Shop",
+      "bookings": "Booking đã thanh toán",
+      "income": "Doanh thu của shop",
+      "maintenance": "Phí duy trì",
+      "service": "Phí dịch vụ",
+      "fees": "Income của admin",
+      "referral": "Phí affiliate",
+      "profit": "Lợi nhuận",
+      "basePrice": "Giá gốc",
+      "inviteBonus": "Thưởng referral"
+    },
+    "totalIn": "Tổng theo {currency}",
+    "formula": "Lợi nhuận = Income của admin - phí affiliate - thưởng referral",
+    "totalFees": "Income của admin (duy trì + dịch vụ)",
+    "note": "Income của admin là phí duy trì cộng phí dịch vụ, mỗi phí là phần trăm của GIÁ GỐC của booking (trước voucher) theo tỷ lệ của từng shop (Cấu hình phí). Phí affiliate chỉ trả cho booking đến từ liên kết affiliate. Thưởng referral trả một lần cho mỗi người bạn được mời, trên booking đầu tiên đã thanh toán của người đó. Cả hai cũng là phần trăm của giá gốc. Doanh thu của shop là số tiền shop đã nhận từ khách.",
+    "totalBase": "Giá gốc của các booking"
+  },
+  "feesAll": {
+    "title": "Cấu hình phí",
+    "description": "Phí duy trì, phí dịch vụ, phí affiliate và thưởng referral, tính theo phần trăm của giá gốc của booking. Đặt cho từng shop, hoặc áp dụng cùng một tỷ lệ cho tất cả shop cùng lúc.",
+    "bulkTitle": "Áp dụng cho tất cả shop",
+    "bulkIntro": "Bốn tỷ lệ dưới đây sẽ thay thế tỷ lệ của mọi shop.",
+    "applyAll": "Áp dụng cho tất cả shop",
+    "invalid": "Nhập phần trăm từ 0 đến 100 (tối đa 2 chữ số thập phân).",
+    "totalTooHigh": "Phí duy trì và phí dịch vụ cộng lại không được quá 100%.",
+    "defaults": "Khi chưa đặt, shop dùng phí duy trì {m}%, phí dịch vụ {s}%, phí affiliate {r}% và thưởng referral {b}%, đều tính trên giá gốc.",
+    "col": {
+      "shop": "Shop",
+      "maintenance": "Phí duy trì (%)",
+      "service": "Phí dịch vụ (%)",
+      "referral": "Phí affiliate (%)",
+      "actions": "Thao tác",
+      "bonus": "Thưởng referral (%)"
+    },
+    "loading": "Đang tải...",
+    "save": "Lưu",
+    "saved": "Đã lưu phí của {name}.",
+    "failed": "Không thể lưu phí.",
+    "bulkDone": "Đã áp dụng tỷ lệ cho {n} shop.",
+    "confirmTitle": "Áp dụng các tỷ lệ này cho tất cả shop?",
+    "confirmBody": "Phí duy trì {m}%, phí dịch vụ {s}%, affiliate {r}%, thưởng referral {b}% cho {n} shop. Các tỷ lệ hiện tại của họ sẽ bị thay thế."
+  },
+  "affiliate": {
     "title": "Affiliate",
     "description": "Các liên kết affiliate (affiliate). Khách hàng có tài khoản chọn một workshop và chia sẻ liên kết; booking đã thanh toán đến từ liên kết đó giúp họ nhận phí affiliate = tỷ lệ affiliate của shop x giá gốc của booking.",
     "search": "Tìm kiếm",
@@ -548,52 +599,31 @@
     },
     "opensNewTab": "(mở trong tab mới)"
   },
-  "income": {
-    "title": "Thu nhập",
-    "description": "Income của admin (nền tảng) là phí duy trì + phí dịch vụ thu từ booking của các shop. Lợi nhuận của hệ thống = Income của admin - phí affiliate.",
-    "from": "Từ ngày",
-    "to": "Đến ngày",
+  "referrals": {
+    "title": "Referrals",
+    "description": "Chương trình referral: customer mời bạn bè đăng ký tài khoản customer bằng một liên kết duy nhất. Khi bạn bè thanh toán booking đầu tiên sau khi đăng ký, customer nhận tiền thưởng referral, một lần cho mỗi người bạn.",
+    "search": "Tìm kiếm",
+    "searchPlaceholder": "Email của customer, mã, hoặc một người bạn",
+    "from": "Bạn đăng ký từ ngày",
+    "to": "Bạn đăng ký đến ngày",
     "clearDates": "Xóa ngày",
     "dateOrder": "Ngày đầu sau ngày cuối.",
     "col": {
-      "shop": "Shop",
-      "bookings": "Booking đã thanh toán",
-      "income": "Doanh thu của shop",
-      "maintenance": "Phí duy trì",
-      "service": "Phí dịch vụ",
-      "fees": "Income của admin",
-      "referral": "Phí affiliate",
-      "profit": "Lợi nhuận",
-      "basePrice": "Giá gốc"
-    },
-    "totalIn": "Tổng theo {currency}",
-    "formula": "Lợi nhuận = Income của admin - phí affiliate",
-    "totalFees": "Income của admin (duy trì + dịch vụ)",
-    "note": "Income của admin là phí duy trì cộng phí dịch vụ, mỗi phí là phần trăm của GIÁ GỐC của booking (trước voucher) theo tỷ lệ của từng shop (Cấu hình phí). Phí affiliate chỉ trả cho booking đến từ liên kết affiliate và cũng là phần trăm của giá gốc. Doanh thu của shop là số tiền shop đã nhận từ khách.",
-    "totalBase": "Giá gốc của các booking"
-  },
-  "feesAll": {
-    "title": "Cấu hình phí",
-    "description": "Phí duy trì, phí dịch vụ và phí affiliate, tính theo phần trăm của giá gốc của booking. Đặt cho từng shop, hoặc áp dụng cùng một tỷ lệ cho tất cả shop cùng lúc.",
-    "bulkTitle": "Áp dụng cho tất cả shop",
-    "bulkIntro": "Ba tỷ lệ dưới đây sẽ thay thế tỷ lệ của mọi shop.",
-    "applyAll": "Áp dụng cho tất cả shop",
-    "invalid": "Nhập phần trăm từ 0 đến 100 (tối đa 2 chữ số thập phân).",
-    "totalTooHigh": "Phí duy trì và phí dịch vụ cộng lại không được quá 100%.",
-    "defaults": "Khi chưa đặt, shop dùng phí duy trì {m}%, phí dịch vụ {s}% và phí affiliate {r}%, đều tính trên giá gốc.",
-    "col": {
-      "shop": "Shop",
-      "maintenance": "Phí duy trì (%)",
-      "service": "Phí dịch vụ (%)",
-      "referral": "Phí affiliate (%)",
+      "customer": "Customer",
+      "link": "Liên kết",
+      "registered": "Bạn bè đã đăng ký",
+      "earned": "Có booking đã thanh toán",
+      "bonus": "Tiền thưởng đã nhận",
       "actions": "Thao tác"
     },
-    "loading": "Đang tải...",
-    "save": "Lưu",
-    "saved": "Đã lưu phí của {name}.",
-    "failed": "Không thể lưu phí.",
-    "bulkDone": "Đã áp dụng tỷ lệ cho {n} shop.",
-    "confirmTitle": "Áp dụng các tỷ lệ này cho tất cả shop?",
-    "confirmBody": "Phí duy trì {m}%, phí dịch vụ {s}%, phí affiliate {r}% cho {n} shop. Các tỷ lệ hiện tại của họ sẽ bị thay thế."
+    "view": "Chi tiết",
+    "noFriends": "Chưa có người bạn nào đăng ký qua liên kết này.",
+    "status": {
+      "REGISTERED": "Chờ booking được thanh toán",
+      "EARNED": "Đã nhận thưởng"
+    },
+    "registeredOn": "đăng ký {date}",
+    "bonusOn": "Thưởng {amount} cho booking {code}",
+    "rule": "Tiền thưởng referral = tỷ lệ thưởng referral của shop (Cấu hình phí) x giá gốc của booking đầu tiên đã thanh toán mà người bạn đặt sau khi đăng ký. Chỉ nhận một lần cho mỗi người bạn và do nền tảng chi trả: khoản này được trừ vào lợi nhuận của nền tảng."
   }
 }

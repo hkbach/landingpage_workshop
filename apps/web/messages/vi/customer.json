@@ -14,7 +14,8 @@
     "bookings": "Booking của tôi",
     "favorites": "Yêu thích",
     "workshops": "Workshop",
-    "affiliate": "Affiliate"
+    "affiliate": "Affiliate",
+    "referrals": "Referrals"
   },
   "gate": {
     "loginTitle": "Đăng nhập để xem tài khoản",
@@ -166,5 +167,29 @@
     "deactiveHint": "Workshop này đã bị deactivate: link không còn dẫn tới việc đặt chỗ.",
     "colBookings": "Booking đã thanh toán",
     "colEarned": "Đã nhận"
+  },
+  "referrals": {
+    "intro": "Mời bạn bè đăng ký tài khoản customer bằng liên kết của bạn. Bạn chỉ có một liên kết và liên kết này không đổi.",
+    "linkTitle": "Liên kết referral của bạn",
+    "linkHint": "Gửi cho bạn bè. Khi họ đăng ký qua liên kết này, họ trở thành referral của bạn.",
+    "copy": "Sao chép liên kết referral",
+    "copied": "Đã sao chép",
+    "copyFailed": "Không thể sao chép liên kết.",
+    "totalTitle": "Tiền thưởng referral đã nhận",
+    "totalHint": "{rate} giá booking, tính trên booking đầu tiên đã thanh toán của mỗi người bạn.",
+    "listTitle": "Danh sách referral",
+    "empty": "Chưa có người bạn nào đăng ký qua liên kết của bạn.",
+    "col": {
+      "friend": "Người bạn",
+      "registered": "Ngày đăng ký",
+      "status": "Trạng thái",
+      "bonus": "Tiền thưởng"
+    },
+    "status": {
+      "REGISTERED": "Đã đăng ký, chờ booking được thanh toán",
+      "EARNED": "Đã nhận thưởng"
+    },
+    "forBooking": "Cho booking {code}",
+    "note": "Bạn chỉ nhận thưởng một lần cho mỗi referral: khi bạn bè đăng ký qua liên kết của bạn và thanh toán booking đầu tiên, bạn nhận {rate} giá của booking đó. Các booking sau của người bạn đó không được thưởng thêm."
   }
 }

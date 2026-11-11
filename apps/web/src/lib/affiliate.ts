@@ -37,3 +37,31 @@ export function captureAffiliate(slug: string, search: string): { code: string |
   }
   return { code, workshopId: workshopId && workshopId.length <= 100 ? workshopId : null, fresh };
 }
+
+// ---- the invitation of a friend: `{shop site}/?invite=CODE` opens the registration of a customer account; the code is kept until the account is made ----
+const INVITE_KEY = (slug: string) => `wk:invite:${slug}`;
+
+/** The invite code the guest came through at this shop, when there is one. */
+export function readInviteCode(slug: string): string | null {
+  try {
+    const code = window.localStorage.getItem(INVITE_KEY(slug));
+    return code && CODE_RE.test(code) ? code : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Reads `?invite=` of the address of the page: a valid code is kept for the shop and returned (null when there is none). */
+export function captureInvite(slug: string, search: string): string | null {
+  const raw = new URLSearchParams(search).get("invite");
+  const code = raw && CODE_RE.test(raw) ? raw : null;
+  if (code) {
+    try { window.localStorage.setItem(INVITE_KEY(slug), code); } catch { /* the code is only kept for the registration that follows */ }
+  }
+  return code;
+}
+
+/** The invitation was used (the account is made): the code is not kept any longer. */
+export function clearInviteCode(slug: string): void {
+  try { window.localStorage.removeItem(INVITE_KEY(slug)); } catch { /* nothing to clear */ }
+}

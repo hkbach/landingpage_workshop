@@ -61,5 +61,15 @@ export const fetchCustomerReferrals = async (id: string, email?: string): Promis
 export const createCustomerReferral = async (id: string, email: string | undefined, workshopId: string): Promise<CustomerReferral> =>
   parse(await fetch(`${url(id)}/referrals`, { method: "POST", headers: { "content-type": "application/json", ...emailHeader(email) }, body: JSON.stringify({ workshopId }) }));
 
+/** A friend the guest invited to register: the name and the masked email, when they registered, and the bonus earned on their first paid booking (0 until then). */
+export interface CustomerInvite {
+  id: string; name: string; email: string; registeredAt: string; status: "REGISTERED" | "EARNED"; bonus: number; bookingCode?: string; paidAt?: string;
+}
+/** The one invite link of the guest, the bonus rate (basis points of the original price of the friend's first paid booking) and the friends. */
+export interface CustomerInvitesResponse { code: string; link: string; bonusBps: number; currency: string; items: CustomerInvite[]; total: number }
+
+export const fetchCustomerInvites = async (id: string, email?: string): Promise<CustomerInvitesResponse> =>
+  parse(await fetch(`${url(id)}/invites`, { headers: emailHeader(email), cache: "no-store" }));
+
 export const saveCustomerProfile = async (id: string, email: string | undefined, input: CustomerProfileInput): Promise<CustomerProfile> =>
   parse(await fetch(url(id), { method: "PATCH", headers: { "content-type": "application/json", ...emailHeader(email) }, body: JSON.stringify(input) }));

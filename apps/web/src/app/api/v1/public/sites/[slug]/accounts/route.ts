@@ -5,6 +5,7 @@ import { COUNTRY_CODES } from "@/components/booking/countries";
 import { currentShop } from "@/lib/mock/data";
 import { setPassword } from "@/lib/mock/accounts-store";
 import { registerGuestAccount } from "@/lib/mock/booking-store";
+import { recordInvite } from "@/lib/mock/invite-store";
 
 // A guest registers an account on the site of the shop, with the email and a password (10 to 72 characters) they will log in with. MOCK implementation inside Next until
 // apps/api exists. Every booking made before with the same email (a guest who booked without an account) is merged into the new account.
@@ -23,6 +24,8 @@ const bodySchema = z.object({
   categories: z.array(z.enum(WORKSHOP_CATEGORIES, "categories"), "categories").refine((c) => isFavoriteCategories(c), "categories"),
   /** The guest has to agree that the shop keeps the country and the date of birth. */
   consent: z.literal(true, { error: "consent" }),
+  /** The invite code of the customer whose link the guest came through (`?invite=` of the landing page), when there was one. */
+  inviteCode: z.string().trim().max(40, "invalid").optional(),
 });
 
 /** POST -> 201 { customerId, created, merged }: `merged` is the number of earlier bookings with this email now in the account. 409 ALREADY_REGISTERED. */
@@ -37,9 +40,10 @@ export async function POST(request: Request, ctx: RouteContext<"/api/v1/public/s
   }
   const parsed = bodySchema.safeParse(body);
   if (!parsed.success) return apiError(422, "VALIDATION", "Please check the highlighted fields.", { fields: fieldCodes(parsed.error.issues) });
-  const { password, ...profile } = parsed.data;
+  const { password, inviteCode, ...profile } = parsed.data;
   const res = registerGuestAccount({ ...profile, consentAt: new Date().toISOString() });
   if (!res.ok) return apiError(409, "ALREADY_REGISTERED", "This email already has an account.");
   setPassword(res.customerId, password);
+  if (inviteCode) recordInvite(inviteCode, res.customerId); // an unknown code, the own code or a friend who was already invited is simply ignored
   return Response.json({ customerId: res.customerId, created: res.created, merged: res.merged }, { status: 201 });
 }

@@ -12,25 +12,28 @@ import { usePagination } from "@/lib/pagination";
 import { ReasonDialog } from "../reason-dialog";
 import { Notice } from "./kit";
 
-interface Rates { maintenanceBps: number; serviceBps: number; referralBps: number }
+/** `referralBps` is the affiliate fee (the link of a workshop), `inviteBonusBps` the referral bonus (a friend a customer invited to register). */
+interface Rates { maintenanceBps: number; serviceBps: number; referralBps: number; inviteBonusBps: number }
 interface Item extends Rates { shopId: string; shopName: string }
-type Texts = { maintenance: string; service: string; referral: string };
+type Texts = { maintenance: string; service: string; referral: string; bonus: string };
+const FIELDS = ["maintenance", "service", "referral", "bonus"] as const;
 type Message = { text: string; tone: "ok" | "error" } | null;
-const toTexts = (r: Rates): Texts => ({ maintenance: bpsToPercent(r.maintenanceBps), service: bpsToPercent(r.serviceBps), referral: bpsToPercent(r.referralBps) });
+const toTexts = (r: Rates): Texts => ({ maintenance: bpsToPercent(r.maintenanceBps), service: bpsToPercent(r.serviceBps), referral: bpsToPercent(r.referralBps), bonus: bpsToPercent(r.inviteBonusBps) });
 
 /** The three percentages as typed to basis points; the name of the field that is wrong, or the three rates. */
 function parse(x: Texts): { ok: true; rates: Rates } | { ok: false; field: keyof Texts | "total" } {
-  const maintenanceBps = percentToBps(x.maintenance), serviceBps = percentToBps(x.service), referralBps = percentToBps(x.referral);
+  const maintenanceBps = percentToBps(x.maintenance), serviceBps = percentToBps(x.service), referralBps = percentToBps(x.referral), inviteBonusBps = percentToBps(x.bonus);
   if (maintenanceBps === null) return { ok: false, field: "maintenance" };
   if (serviceBps === null) return { ok: false, field: "service" };
   if (referralBps === null || !isValidFeeBps(referralBps)) return { ok: false, field: "referral" };
+  if (inviteBonusBps === null || !isValidFeeBps(inviteBonusBps)) return { ok: false, field: "bonus" };
   if (checkFeeRates({ maintenanceBps, serviceBps }) !== "OK") return { ok: false, field: "total" };
-  return { ok: true, rates: { maintenanceBps, serviceBps, referralBps } };
+  return { ok: true, rates: { maintenanceBps, serviceBps, referralBps, inviteBonusBps } };
 }
 
 /**
- * The fees of the platform, in percent: the maintenance fee and the service fee charged on the bookings of a shop, and the referral fee (the part of those fees that is paid to
- * the person whose referral link brought the booking). Set for one shop at a time, or by a bulk action that applies the same rates to every shop.
+ * The fees of the platform, in percent: the maintenance fee and the service fee charged on the bookings of a shop, and the affiliate fee (paid to the customer whose workshop link brought the booking) and the referral bonus (paid to the customer for a friend they invited, on the friend's first paid
+ * booking), each a percentage of the original price of the booking. Set for one shop at a time, or by a bulk action that applies the same rates to every shop.
  */
 export function FeesAdmin() {
   const t = useTranslations("admin.feesAll");
@@ -38,7 +41,7 @@ export function FeesAdmin() {
   const [defaults, setDefaults] = useState<Rates | null>(null);
   const [token, setToken] = useState(0);
   const [message, setMessage] = useState<Message>(null);
-  const [bulk, setBulk] = useState<Texts>({ maintenance: "", service: "", referral: "" });
+  const [bulk, setBulk] = useState<Texts>({ maintenance: "", service: "", referral: "", bonus: "" });
   const [bulkError, setBulkError] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<Rates | null>(null);
 
@@ -54,7 +57,7 @@ export function FeesAdmin() {
 
   function startBulk(e: React.FormEvent) {
     e.preventDefault();
-    const p = parse({ maintenance: bulk.maintenance.trim(), service: bulk.service.trim(), referral: bulk.referral.trim() });
+    const p = parse({ maintenance: bulk.maintenance.trim(), service: bulk.service.trim(), referral: bulk.referral.trim(), bonus: bulk.bonus.trim() });
     if (!p.ok) { setBulkError(p.field); return; }
     setBulkError(null);
     setConfirm(p.rates);
@@ -83,17 +86,17 @@ export function FeesAdmin() {
         </CardHeader>
         <CardContent>
           <form onSubmit={startBulk} noValidate className="flex flex-wrap items-start gap-3" data-testid="fees-bulk">
-            {(["maintenance", "service", "referral"] as const).map((k) => (
+            {FIELDS.map((k) => (
               <div key={k} className="grid w-40 gap-1.5">
                 <label htmlFor={`bulk-${k}`} className="text-sm font-medium">{t(`col.${k}`)}</label>
-                <Input id={`bulk-${k}`} inputMode="decimal" value={bulk[k]} aria-invalid={bulkError === k || (bulkError === "total" && k !== "referral")} onChange={(e) => { setBulk({ ...bulk, [k]: e.target.value }); setBulkError(null); }} />
+                <Input id={`bulk-${k}`} inputMode="decimal" value={bulk[k]} aria-invalid={bulkError === k || (bulkError === "total" && k !== "referral" && k !== "bonus")} onChange={(e) => { setBulk({ ...bulk, [k]: e.target.value }); setBulkError(null); }} />
                 {err(bulkError, k) ? <p role="alert" className="text-xs text-destructive">{err(bulkError, k)}</p> : null}
               </div>
             ))}
             <Button type="submit" className="mt-6">{t("applyAll")}</Button>
             {bulkError === "total" ? <p role="alert" className="mt-7 text-xs text-destructive">{t("totalTooHigh")}</p> : null}
           </form>
-          {defaults ? <p className="mt-3 text-xs text-muted-foreground">{t("defaults", { m: bpsToPercent(defaults.maintenanceBps), s: bpsToPercent(defaults.serviceBps), r: bpsToPercent(defaults.referralBps) })}</p> : null}
+          {defaults ? <p className="mt-3 text-xs text-muted-foreground">{t("defaults", { m: bpsToPercent(defaults.maintenanceBps), s: bpsToPercent(defaults.serviceBps), r: bpsToPercent(defaults.referralBps), b: bpsToPercent(defaults.inviteBonusBps) })}</p> : null}
         </CardContent>
       </Card>
       <div className="rounded-xl border bg-card" data-testid="fees-table">
@@ -104,14 +107,15 @@ export function FeesAdmin() {
               <TableHead>{t("col.maintenance")}</TableHead>
               <TableHead>{t("col.service")}</TableHead>
               <TableHead>{t("col.referral")}</TableHead>
+              <TableHead>{t("col.bonus")}</TableHead>
               <TableHead><span className="sr-only">{t("col.actions")}</span></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {items === null ? (
-              <TableRow><TableCell colSpan={5} className="py-8 text-center text-muted-foreground">{t("loading")}</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="py-8 text-center text-muted-foreground">{t("loading")}</TableCell></TableRow>
             ) : (
-              pg.items.map((it) => <FeeRow key={`${it.shopId}-${it.maintenanceBps}-${it.serviceBps}-${it.referralBps}`} item={it} onDone={(m) => { setMessage(m); setToken((n) => n + 1); }} />)
+              pg.items.map((it) => <FeeRow key={`${it.shopId}-${it.maintenanceBps}-${it.serviceBps}-${it.referralBps}-${it.inviteBonusBps}`} item={it} onDone={(m) => { setMessage(m); setToken((n) => n + 1); }} />)
             )}
           </TableBody>
         </Table>
@@ -119,7 +123,7 @@ export function FeesAdmin() {
       <PaginationBar {...pg.bar} />
       <ReasonDialog
         open={confirm !== null} onOpenChange={(o) => { if (!o) setConfirm(null); }} reason="none"
-        title={t("confirmTitle")} description={confirm ? t("confirmBody", { m: bpsToPercent(confirm.maintenanceBps), s: bpsToPercent(confirm.serviceBps), r: bpsToPercent(confirm.referralBps), n: items?.length ?? 0 }) : ""}
+        title={t("confirmTitle")} description={confirm ? t("confirmBody", { m: bpsToPercent(confirm.maintenanceBps), s: bpsToPercent(confirm.serviceBps), r: bpsToPercent(confirm.referralBps), b: bpsToPercent(confirm.inviteBonusBps), n: items?.length ?? 0 }) : ""}
         confirmLabel={t("applyAll")} onConfirm={() => { if (confirm) void applyAll(confirm); }}
       />
     </div>
@@ -132,9 +136,9 @@ function FeeRow({ item, onDone }: { item: Item; onDone: (m: Message) => void }) 
   const [x, setX] = useState<Texts>(toTexts(item));
   const [field, setField] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const clean = { maintenance: x.maintenance.trim(), service: x.service.trim(), referral: x.referral.trim() }; // BR-16
+  const clean = { maintenance: x.maintenance.trim(), service: x.service.trim(), referral: x.referral.trim(), bonus: x.bonus.trim() }; // BR-16
   const base = toTexts(item);
-  const dirty = clean.maintenance !== base.maintenance || clean.service !== base.service || clean.referral !== base.referral;
+  const dirty = clean.maintenance !== base.maintenance || clean.service !== base.service || clean.referral !== base.referral || clean.bonus !== base.bonus;
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
@@ -149,10 +153,10 @@ function FeeRow({ item, onDone }: { item: Item; onDone: (m: Message) => void }) 
   return (
     <TableRow>
       <TableCell className="font-medium">{item.shopName}</TableCell>
-      {(["maintenance", "service", "referral"] as const).map((k) => (
+      {FIELDS.map((k) => (
         <TableCell key={k} className="align-top">
           <Input
-            aria-label={`${item.shopName}: ${t(`col.${k}`)}`} inputMode="decimal" className="w-24" value={x[k]} aria-invalid={field === k || (field === "total" && k !== "referral")}
+            aria-label={`${item.shopName}: ${t(`col.${k}`)}`} inputMode="decimal" className="w-24" value={x[k]} aria-invalid={field === k || (field === "total" && k !== "referral" && k !== "bonus")}
             onChange={(e) => { setX({ ...x, [k]: e.target.value }); setField(null); }}
           />
           {field === k || (field === "total" && k === "service") ? <p role="alert" className="mt-1 text-xs text-destructive">{t(field === "total" ? "totalTooHigh" : "invalid")}</p> : null}

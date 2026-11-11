@@ -22,9 +22,10 @@
     "customers": "Customers",
     "sessions": "Sessions",
     "landingPages": "Landing pages",
-    "referrals": "Affiliate",
+    "referrals": "Referrals",
     "income": "Income",
-    "fees": "Config fees"
+    "fees": "Config fees",
+    "affiliate": "Affiliate"
   },
   "guard": {
     "mockNotice": "Prototype: the role check is simulated. Real authentication is added later.",
@@ -528,7 +529,57 @@
     "notEditable": "No page to edit yet",
     "opensNewTab": "(opens in a new tab)"
   },
-  "referrals": {
+  "income": {
+    "title": "Income",
+    "description": "The income of the platform (admin) is the maintenance fee + the service fee charged on the bookings of the shops. Profit of the platform = income of the admin - affiliate fee - referral bonus.",
+    "from": "From",
+    "to": "To",
+    "clearDates": "Clear dates",
+    "dateOrder": "The first day is after the last day.",
+    "col": {
+      "shop": "Shop",
+      "bookings": "Paid bookings",
+      "income": "Shop revenue",
+      "maintenance": "Maintenance fee",
+      "service": "Service fee",
+      "fees": "Income of the admin",
+      "referral": "Affiliate fee",
+      "profit": "Profit",
+      "basePrice": "Original price",
+      "inviteBonus": "Referral bonus"
+    },
+    "totalIn": "Total in {currency}",
+    "formula": "Profit = income of the admin - affiliate fee - referral bonus",
+    "totalFees": "Income of the admin (maintenance + service)",
+    "note": "The income of the admin is the maintenance fee plus the service fee, each a percentage of the ORIGINAL price of the booking (before vouchers) at the rates of each shop (Config fees). The affiliate fee is paid only for bookings that came through an affiliate link. The referral bonus is paid once for each invited friend, on the first paid booking of the friend. Both are also a percentage of the original price. Shop revenue is what the shops received from the guests.",
+    "totalBase": "Original price of the bookings"
+  },
+  "feesAll": {
+    "title": "Config fees",
+    "description": "The maintenance fee, the service fee, the affiliate fee and the referral bonus, in percent of the original price of a booking. Set them for one shop, or apply the same rates to every shop at once.",
+    "bulkTitle": "Apply to all shops",
+    "bulkIntro": "The four rates below replace the rates of every shop.",
+    "applyAll": "Apply to all shops",
+    "invalid": "Enter a percentage from 0 to 100 (at most 2 decimals).",
+    "totalTooHigh": "The maintenance and the service fee together cannot be more than 100%.",
+    "defaults": "Until set, a shop uses {m}% maintenance, {s}% service, {r}% affiliate and {b}% referral bonus, all of the original price.",
+    "col": {
+      "shop": "Shop",
+      "maintenance": "Maintenance fee (%)",
+      "service": "Service fee (%)",
+      "referral": "Affiliate fee (%)",
+      "actions": "Actions",
+      "bonus": "Referral bonus (%)"
+    },
+    "loading": "Loading...",
+    "save": "Save",
+    "saved": "The fees of {name} were saved.",
+    "failed": "The fees could not be saved.",
+    "bulkDone": "The rates were applied to {n} shops.",
+    "confirmTitle": "Apply these rates to all shops?",
+    "confirmBody": "Maintenance {m}%, service {s}%, affiliate {r}%, referral bonus {b}% for {n} shops. The rates they have now are replaced."
+  },
+  "affiliate": {
     "title": "Affiliate",
     "description": "The affiliate links. A customer with an account picks a workshop and shares its link; a paid booking that comes through it earns them an affiliate fee = affiliate fee of the shop x the original price of the booking.",
     "search": "Search",
@@ -548,52 +599,31 @@
     },
     "opensNewTab": "(opens in a new tab)"
   },
-  "income": {
-    "title": "Income",
-    "description": "The income of the platform (admin) is the maintenance fee + the service fee charged on the bookings of the shops. Profit of the platform = income of the admin - affiliate fee.",
-    "from": "From",
-    "to": "To",
+  "referrals": {
+    "title": "Referrals",
+    "description": "The referral program: a customer invites friends to register a customer account with their one link. When a friend pays their first booking after registering, the customer earns the referral bonus, once for each friend.",
+    "search": "Search",
+    "searchPlaceholder": "Email of the customer, code, or a friend",
+    "from": "Friend registered from",
+    "to": "Friend registered to",
     "clearDates": "Clear dates",
     "dateOrder": "The first day is after the last day.",
     "col": {
-      "shop": "Shop",
-      "bookings": "Paid bookings",
-      "income": "Shop revenue",
-      "maintenance": "Maintenance fee",
-      "service": "Service fee",
-      "fees": "Income of the admin",
-      "referral": "Affiliate fee",
-      "profit": "Profit",
-      "basePrice": "Original price"
-    },
-    "totalIn": "Total in {currency}",
-    "formula": "Profit = income of the admin - affiliate fee",
-    "totalFees": "Income of the admin (maintenance + service)",
-    "note": "The income of the admin is the maintenance fee plus the service fee, each a percentage of the ORIGINAL price of the booking (before vouchers) at the rates of each shop (Config fees). The affiliate fee is paid only for bookings that came through an affiliate link, and is also a percentage of the original price. Shop revenue is what the shops received from the guests.",
-    "totalBase": "Original price of the bookings"
-  },
-  "feesAll": {
-    "title": "Config fees",
-    "description": "The maintenance fee, the service fee and the affiliate fee, in percent of the original price of a booking. Set them for one shop, or apply the same rates to every shop at once.",
-    "bulkTitle": "Apply to all shops",
-    "bulkIntro": "The three rates below replace the rates of every shop.",
-    "applyAll": "Apply to all shops",
-    "invalid": "Enter a percentage from 0 to 100 (at most 2 decimals).",
-    "totalTooHigh": "The maintenance and the service fee together cannot be more than 100%.",
-    "defaults": "Until set, a shop uses {m}% maintenance, {s}% service and {r}% affiliate, all of the original price.",
-    "col": {
-      "shop": "Shop",
-      "maintenance": "Maintenance fee (%)",
-      "service": "Service fee (%)",
-      "referral": "Affiliate fee (%)",
+      "customer": "Customer",
+      "link": "Link",
+      "registered": "Friends registered",
+      "earned": "With a paid booking",
+      "bonus": "Bonus earned",
       "actions": "Actions"
     },
-    "loading": "Loading...",
-    "save": "Save",
-    "saved": "The fees of {name} were saved.",
-    "failed": "The fees could not be saved.",
-    "bulkDone": "The rates were applied to {n} shops.",
-    "confirmTitle": "Apply these rates to all shops?",
-    "confirmBody": "Maintenance {m}%, service {s}%, affiliate {r}% for {n} shops. The rates they have now are replaced."
+    "view": "Details",
+    "noFriends": "No friend has registered through this link yet.",
+    "status": {
+      "REGISTERED": "Waiting for a paid booking",
+      "EARNED": "Bonus earned"
+    },
+    "registeredOn": "registered {date}",
+    "bonusOn": "Bonus {amount} for booking {code}",
+    "rule": "Referral bonus = the referral bonus rate of the shop (Config fees) x the original price of the first paid booking the friend made after registering. It is earned once for each friend and is paid by the platform: it is taken off the profit of the platform."
   }
 }

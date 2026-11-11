@@ -14,7 +14,8 @@
     "bookings": "My Booking",
     "favorites": "Favorites",
     "workshops": "Workshops",
-    "affiliate": "Affiliate"
+    "affiliate": "Affiliate",
+    "referrals": "Referrals"
   },
   "gate": {
     "loginTitle": "Log in to see your account",
@@ -166,5 +167,29 @@
     "deactiveHint": "This workshop is deactivated: its link no longer leads to a booking.",
     "colBookings": "Paid bookings",
     "colEarned": "Earned"
+  },
+  "referrals": {
+    "intro": "Invite friends to register a customer account with your link. You have one link, and it stays the same.",
+    "linkTitle": "Your referral link",
+    "linkHint": "Send it to a friend. When they register through it, they become your referral.",
+    "copy": "Copy referral link",
+    "copied": "Copied",
+    "copyFailed": "The link could not be copied.",
+    "totalTitle": "Referral bonus earned",
+    "totalHint": "{rate} of the booking price, on the first paid booking of each friend.",
+    "listTitle": "Your referrals",
+    "empty": "No friend has registered through your link yet.",
+    "col": {
+      "friend": "Friend",
+      "registered": "Registered",
+      "status": "Status",
+      "bonus": "Bonus"
+    },
+    "status": {
+      "REGISTERED": "Registered, waiting for a paid booking",
+      "EARNED": "Bonus earned"
+    },
+    "forBooking": "For booking {code}",
+    "note": "You earn the bonus only once for each referral: when your friend registers through your link and pays their first booking, you earn {rate} of that booking's price. Their later bookings do not earn more."
   }
 }

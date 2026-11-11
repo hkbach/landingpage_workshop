@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { resetAccountStatus } from "./account-status";
 import { resetAccountsStore } from "./accounts-store";
-import { adminBookings, adminCustomers, adminLandingPages, adminReferrals, adminSessions, adminShops, adminUsers, adminWorkshops } from "./admin-directory";
+import { adminBookings, adminCustomers, adminLandingPages, adminAffiliate, adminSessions, adminShops, adminUsers, adminWorkshops } from "./admin-directory";
 import { adminIncome, checkIncomeRange, referralEarnings } from "./admin-income";
 import { liveBookings, registerGuestAccount, resetBookingStore } from "./booking-store";
 import { currentShop, shops } from "./data";
@@ -118,10 +118,10 @@ describe("landing pages", () => {
 
 describe("referrals", () => {
   it("lists the links with the account and finds them by the email of the person", () => {
-    const all = adminReferrals();
+    const all = adminAffiliate();
     expect(all.length).toBe(listReferrals().length);
-    expect(adminReferrals("emma@example.com").every((r) => r.accountEmail === "emma@example.com")).toBe(true);
-    expect(adminReferrals("nobody@example.com")).toEqual([]);
+    expect(adminAffiliate("emma@example.com").every((r) => r.accountEmail === "emma@example.com")).toBe(true);
+    expect(adminAffiliate("nobody@example.com")).toEqual([]);
   });
   it("makes one link per account and workshop, for ACTIVE shops only", () => {
     const wid = adminWorkshops("pasta")[0]!.id;
@@ -166,12 +166,12 @@ describe("income of the platform", () => {
     const inc = adminIncome();
     const demo = inc.shops.find((s) => s.shopId === "org-1")!;
     expect(demo.fees).toBe(demo.maintenanceFee + demo.serviceFee);
-    expect(demo.profit).toBe(demo.fees - demo.referralFee);
+    expect(demo.profit).toBe(demo.fees - demo.referralFee - demo.inviteBonus);
     expect(demo.fees).toBeGreaterThan(0);
     expect(demo.referralFee).toBeGreaterThanOrEqual(0);
     expect(inc.shops.filter((s) => s.shopId !== "org-1").every((s) => s.fees === 0 && s.profit === 0)).toBe(true);
     const total = inc.totals.find((t) => t.currency === demo.currency)!;
-    expect(total.profit).toBe(total.fees - total.referralFee);
+    expect(total.profit).toBe(total.fees - total.referralFee - total.inviteBonus);
   });
   it("follows the rates of each shop and the referral rate", () => {
     const base = adminIncome().shops.find((s) => s.shopId === "org-1")!;
@@ -179,24 +179,24 @@ describe("income of the platform", () => {
     const zero = adminIncome().shops.find((s) => s.shopId === "org-1")!;
     expect(zero.fees).toBe(0);
     expect(zero.referralFee).toBeGreaterThan(0); // the referral fee does not depend on the other fees: it is a percentage of the original price
-    expect(zero.profit).toBe(-zero.referralFee);
+    expect(zero.profit).toBe(-zero.referralFee - zero.inviteBonus);
     expect(zero.income).toBe(base.income);
     setAllRates("org-1", { maintenanceBps: 200, serviceBps: 300, referralBps: 0 });
     const noRef = adminIncome().shops.find((s) => s.shopId === "org-1")!;
     expect(noRef.referralFee).toBe(0);
-    expect(noRef.profit).toBe(noRef.fees);
+    expect(noRef.profit).toBe(noRef.fees - noRef.inviteBonus);
   });
   it("the referral fee is a percentage of the ORIGINAL price: at 100% it is the original price of the referred bookings, and the profit of the platform is then minus that", () => {
     setAllRates("org-1", { maintenanceBps: 0, serviceBps: 0, referralBps: 10_000 });
     const d = adminIncome().shops.find((s) => s.shopId === "org-1")!;
     expect(d.referralFee).toBeGreaterThan(0);
     expect(d.referralFee).toBeLessThan(d.basePrice);
-    expect(d.profit).toBe(-d.referralFee);
+    expect(d.profit).toBe(-d.referralFee - d.inviteBonus);
     setAllRates("org-1", { maintenanceBps: 500, serviceBps: 0, referralBps: 100 });
     const e = adminIncome().shops.find((s) => s.shopId === "org-1")!;
     expect(Math.abs(e.maintenanceFee - e.basePrice * 0.05)).toBeLessThan(e.bookings + 1); // 5% of the original price (rounded per payment)
     expect(Math.abs(e.referralFee - d.referralFee / 100)).toBeLessThan(e.bookings + 1); // 1% of the same bookings
-    expect(e.profit).toBe(e.fees - e.referralFee);
+    expect(e.profit).toBe(e.fees - e.referralFee - e.inviteBonus);
   });
   it("narrows to a range of days and checks it", () => {
     expect(adminIncome("2999-01-01").shops.every((s) => s.income === 0)).toBe(true);

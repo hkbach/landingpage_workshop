@@ -45,6 +45,7 @@ export function IncomeAdmin() {
     { key: "service", header: t("col.service"), className: "text-right tabular-nums", cell: (s) => money(s.serviceFee, s.currency) },
     { key: "fees", header: t("col.fees"), className: "text-right tabular-nums", cell: (s) => money(s.fees, s.currency) },
     { key: "referral", header: t("col.referral"), className: "text-right tabular-nums", cell: (s) => `−${money(s.referralFee, s.currency)}` },
+    { key: "bonus", header: t("col.inviteBonus"), className: "text-right tabular-nums", cell: (s) => `−${money(s.inviteBonus, s.currency)}` },
     { key: "profit", header: t("col.profit"), className: "text-right tabular-nums font-semibold", cell: (s) => money(s.profit, s.currency) },
   ];
 
@@ -72,6 +73,7 @@ export function IncomeAdmin() {
               <div className="flex justify-between"><span>{t("totalBase")}</span><span className="tabular-nums">{money(tot.basePrice, tot.currency)}</span></div>
               <div className="flex justify-between"><span>{t("totalFees")}</span><span className="tabular-nums" data-testid="total-fees">{money(tot.fees, tot.currency)}</span></div>
               <div className="flex justify-between"><span>{t("col.referral")}</span><span className="tabular-nums" data-testid="total-referral">−{money(tot.referralFee, tot.currency)}</span></div>
+              <div className="flex justify-between"><span>{t("col.inviteBonus")}</span><span className="tabular-nums" data-testid="total-invite-bonus">−{money(tot.inviteBonus, tot.currency)}</span></div>
               <div className="flex justify-between border-t pt-1 font-semibold"><span>{t("col.profit")}</span><span className="tabular-nums" data-testid="total-profit">{money(tot.profit, tot.currency)}</span></div>
             </CardContent>
           </Card>

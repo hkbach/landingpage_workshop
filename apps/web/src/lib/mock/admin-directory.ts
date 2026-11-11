@@ -8,6 +8,7 @@ import { referralEarnings } from "./admin-income";
 import { liveBookings, liveCustomers, shopSessions } from "./booking-store";
 import { currentShop, workshops as demoWorkshops } from "./data";
 import { otherShopSites } from "./other-shops";
+import { inviteBonuses, inviteCodeOf, listInviteCodes, listInvites } from "./invite-store";
 import { listReferrals } from "./referral-store";
 import { withAdminChanges } from "./session-admin-store";
 import { liveShops } from "./shop-admin-store";
@@ -190,29 +191,71 @@ export function adminUsers(q = "", type = "", status = ""): AdminUser[] {
     .map((a) => ({ ...a, shopName: a.shop?.name ?? "", bookings: a.type === "CUSTOMER" ? bookings.filter((b) => b.customerId === a.id).length : 0 }));
 }
 
-// ---- referrals ---------------------------------------------------------------------------------------------------------------
+// ---- affiliate (the links of a workshop) ---------------------------------------------------------------------------------------------------------------
 
-export interface AdminReferral {
+export interface AdminAffiliate {
   id: string; code: string; accountId: string; accountEmail: string; accountName: string; workshopId: string; workshopTitle: string; shopId: string; shopName: string; shopSlug: string;
   createdAt: string; clicks: number; bookings: number; referralFee: number; currency: string;
 }
 
 /** Search: the email (or name) of the person who registered the account and shares the link, the code of the link, the workshop or the shop. `from` / `to`: the days the link was made. */
-export function adminReferrals(q = "", from = "", to = ""): AdminReferral[] {
+export function adminAffiliate(q = "", from = "", to = ""): AdminAffiliate[] {
   const accounts = new Map(listAccounts().map((a) => [a.id, a]));
   const ws = new Map(workshopsWithShop().map((x) => [x.workshop.id, x]));
   const earned = referralEarnings();
-  return listReferrals().flatMap((r): AdminReferral[] => {
+  return listReferrals().flatMap((r): AdminAffiliate[] => {
     const a = accounts.get(r.accountId);
     const w = ws.get(r.workshopId);
     if (!a || !w) return [];
     const day = r.createdAt.slice(0, 10);
     if ((from && day < from) || (to && day > to)) return [];
     const e = earned.get(r.id) ?? { bookings: 0, fee: 0 };
-    const row: AdminReferral = {
+    const row: AdminAffiliate = {
       id: r.id, code: r.code, accountId: a.id, accountEmail: a.email, accountName: a.fullName, workshopId: r.workshopId, workshopTitle: titleOf(w.workshop.title), shopId: w.shop.id, shopName: w.shop.name, shopSlug: w.shop.slug,
       createdAt: r.createdAt, clicks: r.clicks, bookings: e.bookings, referralFee: e.fee, currency: w.shop.currency,
     };
     return matchesSearch(hay(row.accountEmail, row.accountName, row.code, row.workshopTitle, row.shopName), q) ? [row] : [];
   });
+}
+
+// ---- referrals (the friends a customer invited to register) ----
+
+export interface AdminReferralFriend {
+  inviteId: string; inviteeId: string; email: string; name: string; registeredAt: string;
+  status: "REGISTERED" | "EARNED"; bookingCode: string; bonus: number; paidAt: string;
+}
+export interface AdminReferralLink {
+  inviterId: string; inviterEmail: string; inviterName: string;
+  /** The one invite code of the customer. */
+  code: string; currency: string;
+  /** How many friends registered through it, how many of them earned the bonus (a paid booking), and the bonus earned in all. */
+  registered: number; earned: number; bonusTotal: number;
+  friends: AdminReferralFriend[];
+}
+
+/**
+ * The invite links (one for each customer who has one) with the friends who registered through them. Search: the email or the name of the customer who owns the link, the code, or the
+ * email or the name of a friend. `from` / `to` ("YYYY-MM-DD"): the friends who registered on those days (a link keeps only those friends).
+ */
+export function adminReferralLinks(q = "", from = "", to = ""): AdminReferralLink[] {
+  const accounts = new Map(listAccounts().map((a) => [a.id, a]));
+  const bonus = new Map(inviteBonuses().map((b) => [b.inviteId, b]));
+  const invites = listInvites();
+  const inviters = new Set([...listInviteCodes().map(([id]) => id), ...invites.map((i) => i.inviterId)]);
+  return [...inviters].flatMap((id): AdminReferralLink[] => {
+    const a = accounts.get(id);
+    if (!a) return [];
+    const friends = invites.filter((i) => i.inviterId === id && (!from || i.registeredAt.slice(0, 10) >= from) && (!to || i.registeredAt.slice(0, 10) <= to)).flatMap((i): AdminReferralFriend[] => {
+      const f = accounts.get(i.inviteeId);
+      const b = bonus.get(i.id);
+      return f ? [{ inviteId: i.id, inviteeId: f.id, email: f.email, name: f.fullName, registeredAt: i.registeredAt, status: b ? "EARNED" : "REGISTERED", bookingCode: b?.bookingCode ?? "", bonus: b?.amount ?? 0, paidAt: b?.paidAt ?? "" }] : [];
+    });
+    if ((from || to) && friends.length === 0) return [];
+    const code = inviteCodeOf(id);
+    const row: AdminReferralLink = {
+      inviterId: id, inviterEmail: a.email, inviterName: a.fullName, code, currency: currentShop.currency,
+      registered: friends.length, earned: friends.filter((f) => f.status === "EARNED").length, bonusTotal: friends.reduce((n, f) => n + f.bonus, 0), friends,
+    };
+    return matchesSearch(hay(row.inviterEmail, row.inviterName, row.code, ...friends.flatMap((f) => [f.email, f.name])), q) ? [row] : [];
+  }).sort((x, y) => y.bonusTotal - x.bonusTotal || x.inviterEmail.localeCompare(y.inviterEmail));
 }

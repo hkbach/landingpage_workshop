@@ -5,13 +5,14 @@ import { useLocale, useTranslations } from "next-intl";
 import { formatMoney } from "@workshop/shared";
 import { Button } from "@/components/ui/button";
 import { DateInput } from "@/components/ui/date-input";
-import type { AdminReferral } from "@/lib/mock/admin-directory";
-import { fmt, landingUrl } from "../utils";
-import { DirectoryTable, FilterBox, Toolbar, useDebounced, useDirectory, type Column } from "./kit";
+import type { AdminReferralLink } from "@/lib/mock/admin-directory";
+import { fmt } from "../utils";
+import { DetailDialog, DirectoryTable, FilterBox, Pill, Toolbar, useDebounced, useDirectory, type Column } from "./kit";
 
 /**
- * The referral (affiliate) links: a customer with an account picks a workshop and shares its link; a booking that comes through it earns them a referral fee. Search by the
- * email of the person who registered the account (or the code, the workshop, the shop) and by the day the link was made.
+ * The referral program: a customer invites friends to register a customer account with their ONE invite link. The friend is the customer's referral; when the friend pays their first
+ * booking after registering, the customer earns the referral bonus (a percentage of the original price of that booking, set in Config fees), once for each friend. Search by the email of
+ * the customer (or the code, or a friend), and by the day the friends registered; the detail lists the friends.
  */
 export function ReferralsAdmin() {
   const t = useTranslations("admin.referrals");
@@ -21,16 +22,17 @@ export function ReferralsAdmin() {
   const [to, setTo] = useState("");
   const typed = useDebounced(q);
   const bad = Boolean(from && to && from > to);
-  const { items, error } = useDirectory<AdminReferral>("referrals", { q: typed, from, to: bad ? "" : to });
+  const { items, error } = useDirectory<AdminReferralLink>("referrals", { q: typed, from, to: bad ? "" : to });
+  const [detail, setDetail] = useState<AdminReferralLink | null>(null);
+  const money = (n: number, currency: string) => formatMoney(n, currency, locale);
 
-  const columns: Column<AdminReferral>[] = [
-    { key: "account", header: t("col.account"), cell: (r) => <><div className="font-medium">{r.accountEmail}</div><div className="text-xs text-muted-foreground">{r.accountName}</div></> },
-    { key: "link", header: t("col.link"), cell: (r) => <a href={`${landingUrl(r.shopSlug)}/?ref=${encodeURIComponent(r.code)}`} target="_blank" rel="noreferrer" className="font-mono text-xs text-primary underline underline-offset-4">{r.code}<span className="sr-only"> {t("opensNewTab")}</span></a> },
-    { key: "workshop", header: t("col.workshop"), cell: (r) => <><div>{r.workshopTitle}</div><div className="text-xs text-muted-foreground">{r.shopName}</div></> },
-    { key: "created", header: t("col.created"), cell: (r) => fmt(r.createdAt, locale) },
-    { key: "clicks", header: t("col.clicks"), className: "text-right tabular-nums", cell: (r) => r.clicks },
-    { key: "bookings", header: t("col.bookings"), className: "text-right tabular-nums", cell: (r) => r.bookings },
-    { key: "fee", header: t("col.fee"), className: "text-right tabular-nums", cell: (r) => formatMoney(r.referralFee, r.currency, locale) },
+  const columns: Column<AdminReferralLink>[] = [
+    { key: "customer", header: t("col.customer"), cell: (r) => <><div className="font-medium">{r.inviterEmail}</div><div className="text-xs text-muted-foreground">{r.inviterName}</div></> },
+    { key: "link", header: t("col.link"), cell: (r) => <span className="font-mono text-xs">{r.code}</span> },
+    { key: "registered", header: t("col.registered"), className: "text-right tabular-nums", cell: (r) => r.registered },
+    { key: "earned", header: t("col.earned"), className: "text-right tabular-nums", cell: (r) => r.earned },
+    { key: "bonus", header: t("col.bonus"), className: "text-right tabular-nums", cell: (r) => money(r.bonusTotal, r.currency) },
+    { key: "actions", header: <span className="sr-only">{t("col.actions")}</span>, className: "text-right", cell: (r) => <Button size="sm" variant="outline" onClick={() => setDetail(r)}>{t("view")}<span className="sr-only"> {r.inviterEmail}</span></Button> },
   ];
 
   return (
@@ -40,12 +42,32 @@ export function ReferralsAdmin() {
         <p className="text-sm text-muted-foreground">{t("description")}</p>
       </header>
       <Toolbar label={t("search")} placeholder={t("searchPlaceholder")} value={q} onChange={setQ}>
-        <FilterBox id="rf-from" label={t("from")}><DateInput id="rf-from" value={from} onChange={setFrom} max={to || undefined} lenient /></FilterBox>
-        <FilterBox id="rf-to" label={t("to")}><DateInput id="rf-to" value={to} onChange={setTo} min={from || undefined} lenient /></FilterBox>
+        <FilterBox id="rl-from" label={t("from")}><DateInput id="rl-from" value={from} onChange={setFrom} max={to || undefined} lenient /></FilterBox>
+        <FilterBox id="rl-to" label={t("to")}><DateInput id="rl-to" value={to} onChange={setTo} min={from || undefined} lenient /></FilterBox>
         {from || to ? <Button type="button" variant="outline" onClick={() => { setFrom(""); setTo(""); }}>{t("clearDates")}</Button> : null}
       </Toolbar>
       {bad ? <p role="alert" className="text-sm text-destructive">{t("dateOrder")}</p> : null}
-      <DirectoryTable rows={items} error={error} columns={columns} rowKey={(r) => r.id} resetKey={`${typed}|${from}|${to}`} testId="referrals-table" />
+      <DirectoryTable rows={items} error={error} columns={columns} rowKey={(r) => r.inviterId} resetKey={`${typed}|${from}|${to}`} testId="referrals-table" />
+      <p className="text-xs text-muted-foreground">{t("rule")}</p>
+      <DetailDialog
+        open={detail !== null} onClose={() => setDetail(null)} title={detail?.inviterEmail ?? ""} description={detail ? `${detail.inviterName} · ${detail.code}` : ""}
+        rows={detail ? [[t("col.registered"), detail.registered], [t("col.earned"), detail.earned], [t("col.bonus"), money(detail.bonusTotal, detail.currency)]] : []}
+      >
+        {detail && detail.friends.length > 0 ? (
+          <ul className="grid gap-2 text-sm" data-testid="referral-friends">
+            {detail.friends.map((f) => (
+              <li key={f.inviteId} className="grid gap-0.5 rounded-lg border p-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-medium">{f.email}</span>
+                  <Pill tone={f.status === "EARNED" ? "green" : "slate"}>{t(`status.${f.status}`)}</Pill>
+                </div>
+                <span className="text-xs text-muted-foreground">{f.name} · {t("registeredOn", { date: fmt(f.registeredAt, locale) })}</span>
+                {f.status === "EARNED" ? <span className="text-xs">{t("bonusOn", { amount: money(f.bonus, detail.currency), code: f.bookingCode })}</span> : null}
+              </li>
+            ))}
+          </ul>
+        ) : detail ? <p className="text-sm text-muted-foreground">{t("noFriends")}</p> : null}
+      </DetailDialog>
     </div>
   );
 }

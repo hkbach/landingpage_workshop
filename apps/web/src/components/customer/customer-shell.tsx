@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarClock, Heart, LogOut, Share2, Sparkles, Ticket, UserRound, type LucideIcon } from "lucide-react";
+import { CalendarClock, Heart, LogOut, Share2, Sparkles, Ticket, UserPlus, UserRound, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CustomerAvatar } from "@/components/ops/customer-avatar";
 import { LocaleSwitcher } from "@/components/dashboard/shell/locale-switcher";
@@ -35,13 +35,14 @@ export function useCustomer(): CustomerContextValue {
 }
 
 /** The menus of the guest area, in order: the path below /customer/{id} and the key of its text. */
-export const CUSTOMER_MENUS: { path: string; key: "profile" | "today" | "bookings" | "favorites" | "workshops" | "affiliate"; icon: LucideIcon }[] = [
+export const CUSTOMER_MENUS: { path: string; key: "profile" | "today" | "bookings" | "favorites" | "workshops" | "affiliate" | "referrals"; icon: LucideIcon }[] = [
   { path: "profile", key: "profile", icon: UserRound },
   { path: "today", key: "today", icon: CalendarClock },
   { path: "bookings", key: "bookings", icon: Ticket },
   { path: "favorites", key: "favorites", icon: Heart },
   { path: "workshops", key: "workshops", icon: Sparkles },
   { path: "affiliate", key: "affiliate", icon: Share2 },
+  { path: "referrals", key: "referrals", icon: UserPlus },
 ];
 
 const card = "mx-auto mt-16 w-full max-w-md rounded-xl border bg-background p-6 shadow-sm";

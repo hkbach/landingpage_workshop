@@ -14,7 +14,8 @@
     "bookings": "내 예약",
     "favorites": "즐겨찾기",
     "workshops": "워크숍",
-    "affiliate": "제휴"
+    "affiliate": "제휴",
+    "referrals": "추천"
   },
   "gate": {
     "loginTitle": "로그인하여 계정 보기",
@@ -166,5 +167,29 @@
     "deactiveHint": "이 워크숍은 비활성화되어 링크로 더 이상 예약할 수 없습니다.",
     "colBookings": "결제된 예약",
     "colEarned": "적립액"
+  },
+  "referrals": {
+    "intro": "내 링크로 친구를 초대해 고객 계정을 등록하게 하세요. 링크는 하나이며 바뀌지 않습니다.",
+    "linkTitle": "내 추천 링크",
+    "linkHint": "친구에게 보내세요. 이 링크로 가입하면 내 추천 친구가 됩니다.",
+    "copy": "추천 링크 복사",
+    "copied": "복사됨",
+    "copyFailed": "링크를 복사할 수 없습니다.",
+    "totalTitle": "받은 추천 보너스",
+    "totalHint": "친구마다 첫 번째 결제 완료 예약 가격의 {rate}입니다.",
+    "listTitle": "내 추천 친구",
+    "empty": "아직 내 링크로 가입한 친구가 없습니다.",
+    "col": {
+      "friend": "친구",
+      "registered": "가입일",
+      "status": "상태",
+      "bonus": "보너스"
+    },
+    "status": {
+      "REGISTERED": "가입 완료, 결제된 예약 대기 중",
+      "EARNED": "보너스 적립됨"
+    },
+    "forBooking": "예약 {code} 기준",
+    "note": "보너스는 추천 친구 한 명당 한 번만 받습니다. 친구가 내 링크로 가입하고 첫 예약을 결제하면 그 예약 가격의 {rate}를 받습니다. 이후 예약에는 추가 보너스가 없습니다."
   }
 }

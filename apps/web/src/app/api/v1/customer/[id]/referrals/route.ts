@@ -1,12 +1,12 @@
 import { z } from "zod";
 import { apiError, fieldCodes } from "@/lib/api-error";
-import { siteOrigin } from "@/components/site/site-url";
 import { customerLoginRequired } from "@/lib/customer-access";
 import { workshopsWithShop } from "@/lib/mock/admin-directory";
 import { referralEarnings } from "@/lib/mock/admin-income";
 import { accountOfGuest } from "@/lib/mock/booking-store";
 import { getReferralBps } from "@/lib/mock/fee-rates-store";
 import { createReferral, listReferrals } from "@/lib/mock/referral-store";
+import { shareLink } from "@/lib/mock/share-link";
 import { liveShops } from "@/lib/mock/shop-admin-store";
 
 // The referral (affiliate) links of a customer: they pick a workshop and share the link; a booking that comes through it earns them a referral fee. MOCK implementation
@@ -23,9 +23,7 @@ const bodySchema = z.object({ workshopId: z.string().min(1, "required").max(100,
  * through it is the link's (the port of the server is kept in development).
  */
 function linkOf(slug: string, code: string, workshopId: string, request: Request): string {
-  const base = siteOrigin(slug);
-  const port = (request.headers.get("host") ?? "").split(":")[1];
-  return `${port && /^\d{1,5}$/.test(port) && base.startsWith("http:") ? `${base}:${port}` : base}/?ref=${encodeURIComponent(code)}&book=${encodeURIComponent(workshopId)}`;
+  return shareLink(slug, request, { ref: code, book: workshopId });
 }
 
 function view(request: Request, accountId: string) {

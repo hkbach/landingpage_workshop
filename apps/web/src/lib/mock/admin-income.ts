@@ -2,12 +2,14 @@
 // (maintenance + service, each shop with its own rates, both a percentage of the ORIGINAL price of the booking) minus the referral fees paid to the people whose
 // links brought the bookings (the referral rate of the shop, also a percentage of the original price):
 // The sum of the maintenance and the service fee is called the income of the admin (`fees` here and in the API):
-//   profit of the platform = original price x maintenance + original price x service - original price x referral (the last one only for referred bookings).
+//   profit of the platform = original price x maintenance + original price x service - original price x affiliate fee (the last one only for bookings that came through an affiliate link)
+//                            - the referral bonus (once for each invited friend: the bonus rate of the shop x the original price of the friend's first paid booking).
 import { dayKeyOf, feeBase, feeOf, isDayKey, ledgerFromPayments, type LedgerRow } from "@workshop/shared";
 import { liveBookings } from "./booking-store";
 import { currentShop } from "./data";
 import { getFeeRates, getReferralBps } from "./fee-rates-store";
 import { paymentSources } from "./ledger-source";
+import { inviteBonuses } from "./invite-store";
 import { attributedBookings, listReferrals } from "./referral-store";
 import { liveShops } from "./shop-admin-store";
 
@@ -20,9 +22,11 @@ export interface ShopIncome {
   maintenanceFee: number; serviceFee: number;
   /** maintenanceFee + serviceFee: the INCOME OF THE ADMIN (what the platform charged the shop). */
   fees: number;
-  /** What the platform pays for the bookings that came through referral links. */
+  /** What the platform pays for the bookings that came through affiliate links (the affiliate fee). */
   referralFee: number;
-  /** fees - referralFee. */
+  /** What the platform pays customers for the friends they invited whose first booking was paid (the referral bonus). */
+  inviteBonus: number;
+  /** fees - referralFee - inviteBonus. */
   profit: number;
   bookings: number;
 }
@@ -31,7 +35,7 @@ export interface Income {
   from: string | null; to: string | null;
   shops: ShopIncome[];
   /** The totals, one per currency (amounts of different currencies are never added together). */
-  totals: { currency: string; income: number; basePrice: number; fees: number; referralFee: number; profit: number }[];
+  totals: { currency: string; income: number; basePrice: number; fees: number; referralFee: number; inviteBonus: number; profit: number }[];
 }
 
 /** The payments of a shop as ledger rows with the fees of ITS rates, in the days asked for (shop time zone; no range = all of them). */
@@ -55,6 +59,7 @@ function referredCodes(): Map<string, string> {
 
 export function adminIncome(from?: string, to?: string): Income {
   const referred = referredCodes();
+  const bonuses = inviteBonuses();
   const shops = liveShops().map((s): ShopIncome => {
     const rows = shopRows(s.id, s.timezone, from, to);
     const referralBps = getReferralBps(s.id);
@@ -65,12 +70,13 @@ export function adminIncome(from?: string, to?: string): Income {
       if (referred.has(r.bookingCode)) referralFee += feeOf(base, referralBps);
     }
     const fees = maintenanceFee + serviceFee;
-    return { shopId: s.id, shopName: s.name, currency: s.currency, income, basePrice, maintenanceFee, serviceFee, fees, referralFee, profit: fees - referralFee, bookings: new Set(rows.map((r) => r.bookingCode)).size };
+    const inviteBonus = bonuses.filter((b) => b.shopId === s.id && (!from || dayKeyOf(b.paidAt, s.timezone) >= from) && (!to || dayKeyOf(b.paidAt, s.timezone) <= to)).reduce((n, b) => n + b.amount, 0);
+    return { shopId: s.id, shopName: s.name, currency: s.currency, income, basePrice, maintenanceFee, serviceFee, fees, referralFee, inviteBonus, profit: fees - referralFee - inviteBonus, bookings: new Set(rows.map((r) => r.bookingCode)).size };
   });
   const totals = [...new Set(shops.map((s) => s.currency))].map((currency) => {
     const mine = shops.filter((s) => s.currency === currency);
-    const sum = (k: "income" | "basePrice" | "fees" | "referralFee" | "profit") => mine.reduce((n, s) => n + s[k], 0);
-    return { currency, income: sum("income"), basePrice: sum("basePrice"), fees: sum("fees"), referralFee: sum("referralFee"), profit: sum("profit") };
+    const sum = (k: "income" | "basePrice" | "fees" | "referralFee" | "inviteBonus" | "profit") => mine.reduce((n, s) => n + s[k], 0);
+    return { currency, income: sum("income"), basePrice: sum("basePrice"), fees: sum("fees"), referralFee: sum("referralFee"), inviteBonus: sum("inviteBonus"), profit: sum("profit") };
   });
   return { from: from ?? null, to: to ?? null, shops, totals };
 }

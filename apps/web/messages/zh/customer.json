@@ -14,7 +14,8 @@
     "bookings": "我的预订",
     "favorites": "收藏",
     "workshops": "工作坊",
-    "affiliate": "联盟推广"
+    "affiliate": "联盟推广",
+    "referrals": "推荐"
   },
   "gate": {
     "loginTitle": "登录以查看您的账户",
@@ -166,5 +167,29 @@
     "deactiveHint": "此工作坊已停用，链接不再通向预订。",
     "colBookings": "已付款预订",
     "colEarned": "已获得"
+  },
+  "referrals": {
+    "intro": "通过您的链接邀请好友注册客户账户。您只有一个链接，并且不会改变。",
+    "linkTitle": "您的推荐链接",
+    "linkHint": "发送给好友。好友通过此链接注册后，即成为您的推荐对象。",
+    "copy": "复制推荐链接",
+    "copied": "已复制",
+    "copyFailed": "无法复制链接。",
+    "totalTitle": "已获得的推荐奖励",
+    "totalHint": "每位好友首笔已付款预订价格的 {rate}。",
+    "listTitle": "您的推荐",
+    "empty": "还没有好友通过您的链接注册。",
+    "col": {
+      "friend": "好友",
+      "registered": "注册日期",
+      "status": "状态",
+      "bonus": "奖励"
+    },
+    "status": {
+      "REGISTERED": "已注册，等待已付款预订",
+      "EARNED": "已获得奖励"
+    },
+    "forBooking": "预订 {code}",
+    "note": "每位被推荐好友的奖励只计一次：好友通过您的链接注册并支付首笔预订后，您将获得该预订价格的 {rate}。该好友之后的预订不再产生奖励。"
   }
 }
