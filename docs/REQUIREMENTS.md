@@ -245,16 +245,21 @@ Browser ────────────────────────
 
 ### 5.1 Auth và onboarding shop
 
-**FR-AUTH-01 – Đăng ký shop owner (Must)**
-- Form: email, mật khẩu (tối thiểu 10 ký tự), họ tên, đồng ý Terms và Privacy Policy, Turnstile.
-- Tạo `users` với status `UNVERIFIED` và gửi email xác minh (token một lần, lưu **hash**, hết hạn sau 24 giờ).
-- Email đã tồn tại: trả về thông báo chung, không tiết lộ email đã đăng ký.
-- AC: user chưa xác minh không đăng nhập được dashboard; link xác minh dùng lần hai báo hết hiệu lực.
+**FR-AUTH-01 – Đăng ký (Must)**
+- **Log in và Sign up là popup (dialog) của website công khai, không phải trang riêng.** Nút Log in / Sign up trên thanh trên, chân trang và các nút "Create your shop" mở popup ngay trên trang đang xem. Địa chỉ `/?auth=login`, `/?auth=signup` (thêm `&tab=owner` hoặc `&tab=customer`) mở popup khi vào trang; `/login` và `/signup` chỉ chuyển hướng tới đó (nên link trong email và nút Log out vẫn đúng). Esc hoặc bấm ra ngoài thì đóng và bỏ `?auth`. Quên mật khẩu vẫn là trang `/forgot-password`.
+- **Popup Sign up có 2 tab** (thông tin tối thiểu, không có họ tên, Terms checkbox hay Turnstile trong form; có dòng chữ "tạo tài khoản nghĩa là bạn đồng ý Terms và Privacy"):
+  - **Customer** (khách cá nhân): **email, mật khẩu, nhập lại mật khẩu**. Tên hiển thị tạm là phần trước `@` của email; khách bổ sung hồ sơ (quốc gia, ngày sinh, danh mục yêu thích) trong My Profile.
+  - **Shop owner**: **tên shop, email, mật khẩu, nhập lại mật khẩu**. **Slug của shop tự sinh từ tên shop** (FR-ORG-01: bỏ dấu, `-`, tối đa 32 ký tự; trùng hoặc reserved thì thêm `-2`, `-3`…), form xem trước địa chỉ `{slug}.{PLATFORM_DOMAIN}`. Tạo shop ở trạng thái `DRAFT` và tài khoản owner.
+  - Mật khẩu 10–72 ký tự; nhập lại phải khớp; mọi chuỗi `trim()` (BR-16); lỗi hiện ngay dưới từng ô. Email đã có tài khoản: `409 EMAIL_TAKEN`, báo "đã có tài khoản, hãy đăng nhập".
+- **Đăng ký xong được đăng nhập luôn** và chuyển tới khu vực của mình: customer tới **Today** (`/customer/{id}/today`), shop owner tới `/shopowner/{slug}`. Shop mới chưa có dữ liệu mock nên khu vực owner của shop vừa tạo hiện **trang chào mừng** (tên shop, địa chỉ, email, ghi chú prototype) cho tới khi có backend; công cụ đầy đủ chỉ có ở shop demo.
+- API `POST /auth/signup` `{type: CUSTOMER | SHOP_OWNER, email, password, confirmPassword, shopName?}` → `201` cùng dạng với login (`{type, id, email, slug | guestSlug}`), `422` kèm `fields` (`required | invalid | tooLong | weak | mismatch`), `409`. Audit `auth.signup` (không ghi mật khẩu). Shop mới hiện trong danh sách Shops và Users của admin.
+- *Chưa làm (TODO(api)):* email xác minh một lần (token lưu hash, hết hạn 24 giờ) và chặn đăng nhập khi chưa xác minh, Turnstile, rate limit đăng ký, tạo `users` + `organizations` + `organization_members` trong một transaction. Trước khi có các mục này, đăng ký chưa an toàn cho production.
 
 **FR-AUTH-02 – Đăng nhập, đăng xuất, quên mật khẩu (Must)**
 - Session lưu bảng `auth_sessions`; cookie `httpOnly`, `Secure`, `SameSite=Lax`; hết hạn sau 7 ngày không hoạt động.
 - Reset password: token một lần, lưu hash, hết hạn 1 giờ; reset xong thì xóa toàn bộ session cũ.
 - Rate limit login: 5 lần sai / 15 phút / IP+email.
+- **Đăng nhập trong popup Log in:** nhập email + mật khẩu; theo loại tài khoản hệ thống chuyển tới **Overview của shop owner** (`/shopowner/{slug}`) hoặc **Today của customer** (`/customer/{id}/today`).
 - **Mọi tài khoản (shop owner và customer) đăng nhập bằng email + mật khẩu** (mật khẩu 10 đến 72 ký tự, lưu dạng hash có salt). Sai email hay sai mật khẩu đều trả cùng một thông báo; tài khoản bị vô hiệu hóa chỉ được báo sau khi nhập đúng mật khẩu. Sau khi đăng nhập: shop owner vào `/shopowner/{slug}`, customer vào `/customer/{id}`. Customer đăng ký trên popup của landing page (email, mật khẩu + xác nhận mật khẩu, họ tên, quốc gia, ngày sinh, 3 lĩnh vực yêu thích) và không còn đăng nhập bằng OTP; OTP chỉ còn ở bước 5 của booking modal.
 - **Reset mật khẩu bởi quản trị viên (FR-ADM-08):** khi admin bấm Reset Password, tài khoản bị **deactivate** và hệ thống gửi email (6 ngôn ngữ) gồm **mật khẩu tạm thời** và **link** `/reset-password?token=…`. Trang link yêu cầu nhập mật khẩu tạm thời, mật khẩu mới và xác nhận mật khẩu mới; thành công thì tài khoản active lại. Mật khẩu tạm thời (14 ký tự ngẫu nhiên) và token chỉ nằm trong email, chỉ lưu hash; dùng được **một lần**, hết hạn sau **3 ngày**, nhập sai mật khẩu tạm thời 5 lần thì link bị hủy; admin activate/deactivate sau đó cũng hủy link; reset mới thay thế reset cũ. API không bao giờ trả mật khẩu tạm thời hay token.
 - *Giả định cần xác nhận:* gửi mật khẩu tạm thời qua email là thiết kế do yêu cầu; rủi ro được giảm bằng hash, một lần, hết hạn, giới hạn số lần thử và việc tài khoản bị deactivate cho tới khi đổi mật khẩu. MVP frontend dùng mật khẩu demo chung cho các tài khoản mẫu cho đến khi người dùng đặt mật khẩu riêng (backend thật dùng identity provider).

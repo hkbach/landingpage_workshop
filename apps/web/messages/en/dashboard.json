@@ -236,5 +236,12 @@
       "addressRequired": "Enter an address.",
       "urlInvalid": "Enter a URL starting with https://"
     }
+  },
+  "newShop": {
+    "title": "Welcome, {shop}!",
+    "intro": "Your shop was created. Its address was made from the name of your shop.",
+    "address": "Your address",
+    "email": "Owner email",
+    "prototype": "Prototype: the tools of the shop owner area (bookings, workshops, sessions, landing pages) are available for the demo shop only. They will work for your shop with the backend."
   }
 }

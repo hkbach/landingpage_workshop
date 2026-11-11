@@ -3,7 +3,7 @@
 // it. Lives on globalThis like the other mock stores. TODO(api): the identity provider; the audit log of the administrator's actions.
 import { checkPassword } from "@workshop/shared";
 import { liveCustomers, adminUpdateGuestProfile } from "./booking-store";
-import { shops } from "./data";
+import { everyShop } from "./registered-shops-store";
 import { accountStatus, setAccountStatus, type AccountStatus, type DeactivationReason } from "./account-status";
 import { hashPassword, hashToken, generateTempPassword, newToken, verifyPassword } from "./passwords";
 import { queuePasswordReset } from "./outbox-store";
@@ -53,7 +53,7 @@ const norm = (email: string) => email.trim().toLowerCase();
 const ownerId = (orgId: string) => `owner-${orgId}`;
 
 function ownerAccounts(): Account[] {
-  return shops.map((s) => {
+  return everyShop().map((s) => {
     const id = ownerId(s.id);
     const edit = store().owners.get(id);
     const st = accountStatus(id);
@@ -143,7 +143,7 @@ export function startPasswordReset(id: string, resetUrlFor: (token: string) => s
   store().resets.set(hashToken(token), { accountId: id, tokenHash: hashToken(token), tempHash: hashPassword(temp), expiresAt, attempts: 0 });
   setAccountStatus(id, "DEACTIVATED", "PASSWORD_RESET");
   const customer = a.type === "CUSTOMER" ? liveCustomers().find((c) => c.id === id) : undefined;
-  const locale = customer?.preferredLocale ?? shops.find((s) => ownerId(s.id) === id)?.defaultLocale ?? "en";
+  const locale = customer?.preferredLocale ?? everyShop().find((s) => ownerId(s.id) === id)?.defaultLocale ?? "en";
   queuePasswordReset({ to: a.email, locale, accountName: a.fullName, accountEmail: a.email, tempPassword: temp, resetUrl: resetUrlFor(token), expiresAt: new Date(expiresAt).toISOString() });
   return { ok: true, expiresAt: new Date(expiresAt).toISOString() };
 }

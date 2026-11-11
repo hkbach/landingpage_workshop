@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { ArrowRight, CalendarClock, Gift, Heart, Languages, LayoutTemplate, MousePointerClick, ShieldCheck, Sparkles, TrendingUp, Users, Wallet } from "lucide-react";
+import { AuthTrigger } from "@/components/marketing/auth-dialog";
 import { ctaPrimary, ctaSecondary, FeatureCard, Hero, heroRich, SectionHeading } from "@/components/marketing/marketing-ui";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -33,7 +34,7 @@ export default async function MarketingHome() {
     <>
       <Hero badge={t("hero.badge")} title={t.rich("hero.title", heroRich)} subtitle={t("hero.subtitle")}>
         <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Link href="/signup" className={ctaPrimary} data-testid="home-cta">{t("hero.cta")}<Sparkles className="size-4" aria-hidden /></Link>
+          <AuthTrigger mode="signup" kind="owner" className={ctaPrimary} testId="home-cta">{t("hero.cta")}<Sparkles className="size-4" aria-hidden /></AuthTrigger>
           <a href="#how" className={ctaSecondary}>{t("hero.secondary")}<ArrowRight className="size-4" aria-hidden /></a>
         </div>
         <p className="mt-5 text-sm text-white/55">{t("hero.note")}</p>
@@ -103,7 +104,7 @@ export default async function MarketingHome() {
           <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">{t("cta.title")}</h2>
           <p className="mx-auto mt-4 max-w-xl text-white/75">{t("cta.body")}</p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Link href="/signup" className={ctaPrimary}>{t("cta.button")}<Sparkles className="size-4" aria-hidden /></Link>
+            <AuthTrigger mode="signup" kind="owner" className={ctaPrimary}>{t("cta.button")}<Sparkles className="size-4" aria-hidden /></AuthTrigger>
             <Link href="/contact" className={ctaSecondary}>{t("cta.secondary")}</Link>
           </div>
         </div>

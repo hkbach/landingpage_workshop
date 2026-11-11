@@ -7,7 +7,7 @@
 // The public site is not listed: it has its own provider (components/site/SiteIntlProvider) that sends only `site`,
 // in the language of the visitor.
 export const AREA_MESSAGES = {
-  marketing: ["common", "marketing"],
+  marketing: ["common", "marketing", "auth"], // the popups Log in and Sign up are on the public site
   auth: ["common", "auth"],
   shopowner: ["common", "dashboard", "ops", "catalog", "builder"],
   admin: ["common", "admin"],

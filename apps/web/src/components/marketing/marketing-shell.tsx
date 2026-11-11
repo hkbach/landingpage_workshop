@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
+import { AuthTrigger } from "./auth-dialog";
 import { MarketingNav } from "./marketing-nav";
 
 /** The frame of the three public pages (Home, About Us, Contact): the dark bar on top, the page, and the footer. */
@@ -20,7 +21,13 @@ export async function MarketingShell({ children }: { children: ReactNode }) {
             <p className="mt-2 max-w-xs text-sm text-white/65">{t("footer.tagline")}</p>
           </div>
           <FooterGroup title={t("footer.product")} links={[["/", t("nav.home")], ["/about", t("nav.about")], ["/contact", t("nav.contact")]]} />
-          <FooterGroup title={t("footer.company")} links={[["/login", t("nav.login")], ["/signup", t("nav.signup")]]} />
+          <nav aria-label={t("footer.company")}>
+            <p className="text-sm font-semibold text-white">{t("footer.company")}</p>
+            <ul className="mt-3 grid gap-2">
+              <li><AuthTrigger mode="login" className="text-sm text-white/65 transition hover:text-white">{t("nav.login")}</AuthTrigger></li>
+              <li><AuthTrigger mode="signup" className="text-sm text-white/65 transition hover:text-white">{t("nav.signup")}</AuthTrigger></li>
+            </ul>
+          </nav>
           <FooterGroup title={t("footer.legal")} links={[["/privacy", t("footer.privacy")], ["/terms", t("footer.terms")]]} />
         </div>
         <p className="border-t border-white/10 px-4 py-5 text-center text-xs text-white/55">{t("footer.rights", { year: 2026, name })}</p>

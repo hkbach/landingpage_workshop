@@ -236,5 +236,12 @@
       "addressRequired": "Vui lòng nhập địa chỉ.",
       "urlInvalid": "Vui lòng nhập URL bắt đầu bằng https://"
     }
+  },
+  "newShop": {
+    "title": "Chào mừng, {shop}!",
+    "intro": "Shop của bạn đã được tạo. Địa chỉ được tạo từ tên shop của bạn.",
+    "address": "Địa chỉ của bạn",
+    "email": "Email chủ shop",
+    "prototype": "Bản thử nghiệm: các công cụ của khu vực shop owner (booking, workshop, session, landing page) chỉ có cho shop demo. Chúng sẽ hoạt động cho shop của bạn khi có backend."
   }
 }

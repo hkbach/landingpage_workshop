@@ -2,7 +2,7 @@
 // mock reads the shops through `liveShops`. Lives on globalThis like the other mock stores. TODO(api): SUPER_ADMIN only, audited, one transaction.
 import type { OrgStatus } from "@workshop/shared";
 import type { Shop } from "@/lib/types";
-import { shops } from "./data";
+import { everyShop } from "./registered-shops-store";
 
 interface Change { status?: OrgStatus; statusReason?: string | null; showOnCustomerPage?: boolean }
 const g = globalThis as unknown as { __shopAdmin?: Map<string, Change> };
@@ -15,7 +15,7 @@ export function resetShopAdminStore(): void {
 
 /** The shops with the changes of the administrators applied. */
 export function liveShops(): Shop[] {
-  return shops.map((s) => {
+  return everyShop().map((s) => {
     const c = changes().get(s.id);
     if (!c) return s;
     const { statusReason: _reason, ...rest } = s;
@@ -53,7 +53,7 @@ export function publishShop(id: string): PublishShopResult {
 
 /** Whether the workshops of the shop are listed on the Workshops page of the guests (only an ACTIVE shop appears there anyway). */
 export function setShowOnCustomerPage(id: string, show: boolean): boolean {
-  if (!shops.some((s) => s.id === id)) return false;
+  if (!everyShop().some((s) => s.id === id)) return false;
   changes().set(id, { ...changes().get(id), showOnCustomerPage: show });
   return true;
 }

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { Feather, Gem, Scale, ShieldCheck, Sparkles, Languages, LayoutTemplate, LifeBuoy } from "lucide-react";
+import { AuthTrigger } from "@/components/marketing/auth-dialog";
 import { ctaPrimary, ctaSecondary, FeatureCard, Hero, heroRich, SectionHeading } from "@/components/marketing/marketing-ui";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -60,7 +61,7 @@ export default async function AboutPage() {
           <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">{t("cta.title")}</h2>
           <p className="mx-auto mt-4 max-w-xl text-white/75">{t("cta.body")}</p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Link href="/signup" className={ctaPrimary}>{t("cta.button")}<Sparkles className="size-4" aria-hidden /></Link>
+            <AuthTrigger mode="signup" kind="owner" className={ctaPrimary}>{t("cta.button")}<Sparkles className="size-4" aria-hidden /></AuthTrigger>
             <Link href="/contact" className={ctaSecondary}>{t("cta.secondary")}</Link>
           </div>
         </div>

@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Menu, Sparkles, X } from "lucide-react";
 import { LocaleSwitcher } from "@/components/dashboard/shell/locale-switcher";
+import { AuthTrigger } from "./auth-dialog";
 import { cn } from "@/lib/utils";
 
 const LINKS = [
@@ -42,14 +43,14 @@ export function MarketingNav({ appName }: { appName: string }) {
     );
   };
   const signup = (
-    <Link href="/signup" onClick={() => setOpen(false)} className="inline-flex h-10 items-center gap-1.5 rounded-full bg-white px-5 text-sm font-semibold text-slate-900 outline-none transition hover:bg-cyan-100 focus-visible:ring-2 focus-visible:ring-cyan-300">
+    <AuthTrigger mode="signup" onOpen={() => setOpen(false)} testId="nav-signup" className="inline-flex h-10 items-center gap-1.5 rounded-full bg-white px-5 text-sm font-semibold text-slate-900 outline-none transition hover:bg-cyan-100 focus-visible:ring-2 focus-visible:ring-cyan-300">
       {t("signup")}<Sparkles className="size-4" aria-hidden />
-    </Link>
+    </AuthTrigger>
   );
   const login = (
-    <Link href="/login" onClick={() => setOpen(false)} className="inline-flex h-10 items-center rounded-full px-4 text-sm font-medium text-white/85 outline-none transition hover:text-white focus-visible:ring-2 focus-visible:ring-cyan-300">
+    <AuthTrigger mode="login" onOpen={() => setOpen(false)} testId="nav-login" className="inline-flex h-10 items-center rounded-full px-4 text-sm font-medium text-white/85 outline-none transition hover:text-white focus-visible:ring-2 focus-visible:ring-cyan-300">
       {t("login")}
-    </Link>
+    </AuthTrigger>
   );
 
   return (

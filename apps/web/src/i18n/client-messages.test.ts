@@ -28,9 +28,9 @@ describe("message areas per part of the app", () => {
   it("the shop owner tool texts go only to the shop owner area", () => {
     for (const a of ["dashboard", "ops", "catalog", "builder"]) expect(setsWith(a), a).toEqual(["shopowner"]);
   });
-  it("marketing and auth texts go only to their own area", () => {
+  it("marketing texts go only to the public site; the auth texts go to the auth pages and to the public site (Log in and Sign up are popups of it)", () => {
     expect(setsWith("marketing")).toEqual(["marketing"]);
-    expect(setsWith("auth")).toEqual(["auth"]);
+    expect(setsWith("auth")).toEqual(["marketing", "auth"]);
   });
   it("the public site texts are only part of the guest area set (the site has its own provider; the guest area reuses the login form of the site)", () => {
     expect(setsWith("site")).toEqual(["customer"]);

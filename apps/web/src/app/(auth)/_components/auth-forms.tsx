@@ -6,12 +6,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
-import { PASSWORD_MAX, PASSWORD_MIN } from "@workshop/shared";
+import { Store, UserRound } from "lucide-react";
+import { generateShopSlug, PASSWORD_MAX, PASSWORD_MIN } from "@workshop/shared";
 import { writeGuestEmail } from "@/lib/favorites";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Field, describedBy } from "@/components/dashboard/shell/field";
 import { zodResolver } from "@/lib/zod-resolver";
 
@@ -21,12 +21,11 @@ const email = z.string().trim().min(1, "errors.emailRequired").pipe(z.email("err
 const password = z.string().min(PASSWORD_MIN, "errors.passwordMin");
 
 const loginSchema = z.object({ email, password: z.string().min(1, "errors.passwordRequired") });
-const signupSchema = z.object({
-  fullName: z.string().trim().min(1, "errors.fullNameRequired").max(120),
-  email,
-  password,
-  acceptTerms: z.boolean().refine((v) => v, "errors.termsRequired"),
-});
+const passwordPair = { password: password.max(PASSWORD_MAX, "errors.passwordMax"), confirm: z.string().min(1, "errors.confirmRequired") };
+const samePair = (v: { password: string; confirm: string }) => v.password === v.confirm;
+// The popup Sign up has two kinds: a customer (email + password twice) and a shop owner (the same + the name of the shop, which gives the slug of the shop).
+const customerSchema = z.object({ email, ...passwordPair }).refine(samePair, { path: ["confirm"], message: "errors.passwordMismatch" });
+const ownerSchema = z.object({ email, ...passwordPair, shopName: z.string().trim().min(1, "errors.shopNameRequired").max(120, "errors.shopNameTooLong") }).refine(samePair, { path: ["confirm"], message: "errors.passwordMismatch" });
 const forgotSchema = z.object({ email });
 // The page of the link an administrator's reset emails: the temporary password of the email, then the new password twice.
 const resetSchema = z
@@ -35,7 +34,7 @@ const resetSchema = z
   .refine((v) => v.password !== v.tempPassword, { path: ["password"], message: "errors.samePassword" });
 
 type LoginValues = z.infer<typeof loginSchema>;
-type SignupValues = z.infer<typeof signupSchema>;
+type OwnerValues = z.infer<typeof ownerSchema>;
 type ForgotValues = z.infer<typeof forgotSchema>;
 type ResetValues = z.infer<typeof resetSchema>;
 
@@ -69,12 +68,7 @@ export function LoginForm() {
             setFailure(code === "DEACTIVATED" ? "login.deactivated" : code === "TOO_MANY_ATTEMPTS" ? "login.tooMany" : code === "INVALID_CREDENTIALS" ? "login.invalid" : "login.failed");
             return;
           }
-          const me = (await res.json()) as { type: "SHOP_OWNER" | "CUSTOMER"; id: string; email: string; slug?: string; guestSlug?: string };
-          if (me.type === "SHOP_OWNER") router.push(`/shopowner/${me.slug}`); // the shop owner lands on Overview
-          else {
-            writeGuestEmail(me.guestSlug ?? "", me.email); // the customer area looks the account up with the email of the guest session
-            router.push(`/customer/${me.id}/today`); // the customer lands on Today
-          }
+          goHome(router, (await res.json()) as Me);
         } catch {
           setFailure("login.failed");
         }
@@ -97,69 +91,108 @@ export function LoginForm() {
   );
 }
 
-export function SignupForm() {
-  const t = useTranslations("auth");
-  const [done, setDone] = useState(false);
-  const form = useForm<SignupValues>({
-    resolver: zodResolver(signupSchema),
-    defaultValues: { fullName: "", email: "", password: "", acceptTerms: false },
-  });
-  const { register, handleSubmit, setValue, control, formState: { errors, isSubmitting } } = form;
-  const acceptTerms = useWatch({ control, name: "acceptTerms" });
-  const err = (k: keyof SignupValues) => (errors[k]?.message ? t(errors[k]!.message as string) : undefined);
+/** What the server answers to a login or a signup: where the person goes next. */
+type Me = { type: "SHOP_OWNER" | "CUSTOMER"; id: string; email: string; slug?: string; guestSlug?: string };
 
-  // FR-AUTH-01: the same generic message is shown whether or not the email is already registered.
-  if (done) return <SuccessNotice title={t("signup.checkEmailTitle")} body={t("signup.checkEmailBody")} />;
+/** The person is logged in: a shop owner goes to the shop, a customer to Today of the customer area (the customer area looks the account up with the email of the guest session). */
+function goHome(router: ReturnType<typeof useRouter>, me: Me) {
+  if (me.type === "SHOP_OWNER") {
+    router.push(`/shopowner/${me.slug}`);
+    return;
+  }
+  writeGuestEmail(me.guestSlug ?? "", me.email);
+  router.push(`/customer/${me.id}/today`);
+}
+
+type SignupKind = "customer" | "owner";
+const PLATFORM_DOMAIN = process.env.NEXT_PUBLIC_PLATFORM_DOMAIN || "localtest.me";
+
+/** The popup Sign up: two tabs, one for a customer and one for a shop owner. A new account is logged in at once and sent to its own area. */
+export function SignupForm({ initialTab = "customer" }: { initialTab?: SignupKind }) {
+  const t = useTranslations("auth");
+  const [tab, setTab] = useState<SignupKind>(initialTab);
+  return (
+    <Tabs value={tab} onValueChange={(v) => setTab(v as SignupKind)} className="gap-4" data-testid="signup-tabs">
+      <TabsList className="grid w-full grid-cols-2" aria-label={t("signup.tabsLabel")}>
+        <TabsTrigger value="customer" data-testid="signup-tab-customer"><UserRound aria-hidden />{t("signup.tabCustomer")}</TabsTrigger>
+        <TabsTrigger value="owner" data-testid="signup-tab-owner"><Store aria-hidden />{t("signup.tabOwner")}</TabsTrigger>
+      </TabsList>
+      <TabsContent value="customer" className="grid gap-3"><p className="text-muted-foreground">{t("signup.customerIntro")}</p><SignupKindForm kind="customer" /></TabsContent>
+      <TabsContent value="owner" className="grid gap-3"><p className="text-muted-foreground">{t("signup.ownerIntro")}</p><SignupKindForm kind="owner" /></TabsContent>
+    </Tabs>
+  );
+}
+
+function SignupKindForm({ kind }: { kind: SignupKind }) {
+  const t = useTranslations("auth");
+  const router = useRouter();
+  const [failure, setFailure] = useState<string | null>(null);
+  const owner = kind === "owner";
+  const form = useForm<OwnerValues>({
+    resolver: zodResolver(owner ? ownerSchema : customerSchema) as never,
+    defaultValues: { email: "", password: "", confirm: "", shopName: "" },
+  });
+  const { register, handleSubmit, setError, control, formState: { errors, isSubmitting } } = form;
+  const shopName = useWatch({ control, name: "shopName" });
+  const err = (k: keyof OwnerValues) => (errors[k]?.message ? t(errors[k]!.message as string) : undefined);
+  const id = (k: string) => `signup-${kind}-${k}`;
+  // The address the shop will get (the server adds a number when the name is already taken).
+  const slug = owner && shopName.trim() ? generateShopSlug(shopName, () => false) : "";
 
   return (
     <form
       noValidate
       className="grid gap-4"
-      onSubmit={handleSubmit(async () => {
-        await fakeRequest();
-        setDone(true);
+      data-testid={`signup-form-${kind}`}
+      onSubmit={handleSubmit(async (v) => {
+        setFailure(null);
+        const body = { type: owner ? "SHOP_OWNER" : "CUSTOMER", email: v.email, password: v.password, confirmPassword: v.confirm, ...(owner ? { shopName: v.shopName } : {}) };
+        try {
+          const res = await fetch("/api/v1/auth/signup", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+          if (res.status === 201) return goHome(router, (await res.json()) as Me);
+          const j = (await res.json().catch(() => null)) as { error?: { code?: string; details?: { fields?: Record<string, string> } } } | null;
+          const f = j?.error?.details?.fields ?? {};
+          if (res.status === 409) return setError("email", { message: "errors.emailTaken" });
+          if (res.status === 422 && (f.email || f.password || f.confirmPassword || f.shopName)) {
+            if (f.email) setError("email", { message: "errors.emailInvalid" });
+            if (f.password) setError("password", { message: "errors.passwordMin" });
+            if (f.confirmPassword) setError("confirm", { message: "errors.passwordMismatch" });
+            if (f.shopName) setError("shopName", { message: "errors.shopNameRequired" });
+            return;
+          }
+          setFailure("signup.failed");
+        } catch {
+          setFailure("signup.failed");
+        }
       })}
     >
-      <Field htmlFor="signup-name" label={t("fields.fullName")} error={err("fullName")}>
-        <Input id="signup-name" autoComplete="name" aria-invalid={!!errors.fullName}
-          aria-describedby={describedBy("signup-name", { error: !!errors.fullName })} {...register("fullName")} />
+      {failure ? <p role="alert" className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">{t(failure)}</p> : null}
+      {owner ? (
+        <Field htmlFor={id("shop")} label={t("fields.shopName")} error={err("shopName")}>
+          <Input id={id("shop")} autoComplete="organization" maxLength={120} aria-invalid={!!errors.shopName}
+            aria-describedby={describedBy(id("shop"), { error: !!errors.shopName })} {...register("shopName")} />
+          {slug ? <p className="text-xs text-muted-foreground" data-testid="signup-slug-preview">{t("signup.addressPreview", { address: `${slug}.${PLATFORM_DOMAIN}` })}</p> : <p className="text-xs text-muted-foreground">{t("signup.shopNameHint")}</p>}
+        </Field>
+      ) : null}
+      <Field htmlFor={id("email")} label={t("fields.email")} error={err("email")}>
+        <Input id={id("email")} type="email" autoComplete="email" aria-invalid={!!errors.email}
+          aria-describedby={describedBy(id("email"), { error: !!errors.email })} {...register("email")} />
       </Field>
-      <Field htmlFor="signup-email" label={t("fields.email")} error={err("email")}>
-        <Input id="signup-email" type="email" autoComplete="email" aria-invalid={!!errors.email}
-          aria-describedby={describedBy("signup-email", { error: !!errors.email })} {...register("email")} />
+      <Field htmlFor={id("password")} label={t("fields.password")} hint={t("signup.passwordHint")} error={err("password")}>
+        <Input id={id("password")} type="password" autoComplete="new-password" aria-invalid={!!errors.password}
+          aria-describedby={describedBy(id("password"), { error: !!errors.password, hint: true })} {...register("password")} />
       </Field>
-      <Field htmlFor="signup-password" label={t("fields.password")} hint={t("signup.passwordHint")} error={err("password")}>
-        <Input id="signup-password" type="password" autoComplete="new-password" aria-invalid={!!errors.password}
-          aria-describedby={describedBy("signup-password", { error: !!errors.password, hint: true })} {...register("password")} />
+      <Field htmlFor={id("confirm")} label={t("fields.confirmPassword")} error={err("confirm")}>
+        <Input id={id("confirm")} type="password" autoComplete="new-password" aria-invalid={!!errors.confirm}
+          aria-describedby={describedBy(id("confirm"), { error: !!errors.confirm })} {...register("confirm")} />
       </Field>
-
-      <div className="grid content-start gap-1.5">
-        <div className="flex items-start gap-2">
-          <Checkbox
-            id="signup-terms"
-            checked={acceptTerms}
-            onCheckedChange={(v) => setValue("acceptTerms", v === true, { shouldValidate: true })}
-            aria-invalid={!!errors.acceptTerms}
-            aria-describedby={describedBy("signup-terms", { error: !!errors.acceptTerms })}
-            className="mt-0.5"
-          />
-          <Label htmlFor="signup-terms" className="text-sm font-normal leading-snug">
-            {t.rich("signup.acceptTerms", {
-              terms: (c) => <Link href="/terms" className="underline underline-offset-4">{c}</Link>,
-              privacy: (c) => <Link href="/privacy" className="underline underline-offset-4">{c}</Link>,
-            })}
-          </Label>
-        </div>
-        {err("acceptTerms") ? <p id="signup-terms-error" role="alert" className="text-xs text-destructive">{err("acceptTerms")}</p> : null}
-      </div>
-
-      {/* Placeholder only: the real Cloudflare Turnstile widget is wired up with the backend. */}
-      <div role="group" aria-label={t("signup.turnstileLabel")}
-        className="flex h-16 items-center justify-center rounded-lg border border-dashed bg-muted/40 text-xs text-muted-foreground">
-        {t("signup.turnstilePlaceholder")}
-      </div>
-
-      <Button type="submit" size="lg" disabled={isSubmitting}>{isSubmitting ? t("signup.submitting") : t("signup.submit")}</Button>
+      <p className="text-xs text-muted-foreground">
+        {t.rich("signup.consent", {
+          terms: (c) => <Link href="/terms" className="underline underline-offset-4">{c}</Link>,
+          privacy: (c) => <Link href="/privacy" className="underline underline-offset-4">{c}</Link>,
+        })}
+      </p>
+      <Button type="submit" size="lg" disabled={isSubmitting} data-testid={`signup-submit-${kind}`}>{isSubmitting ? t("signup.submitting") : t("signup.submit")}</Button>
     </form>
   );
 }
