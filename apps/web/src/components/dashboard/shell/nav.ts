@@ -1,4 +1,4 @@
-import { CalendarClock, CalendarDays, ClipboardList, LayoutDashboard, Palette, Settings, Sparkles, Tag, Users, Wallet, type LucideIcon } from "lucide-react";
+import { CalendarClock, CalendarDays, ClipboardList, LayoutDashboard, Palette, Settings, Sparkles, Star, Tag, Users, Wallet, type LucideIcon } from "lucide-react";
 
 export interface NavItem { href: string; key: string; icon: LucideIcon }
 
@@ -11,6 +11,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/shopowner/sessions", key: "sessions", icon: CalendarDays },
   { href: "/shopowner/finance", key: "finance", icon: Wallet },
   { href: "/shopowner/promotions", key: "promotions", icon: Tag },
+  { href: "/shopowner/ratings", key: "ratings", icon: Star },
   { href: "/shopowner/site", key: "site", icon: Palette },
   { href: "/shopowner/settings", key: "settings", icon: Settings },
 ];

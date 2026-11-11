@@ -151,7 +151,7 @@
       "closed": "此场次已关闭，无法在此签到。请咨询工作室。"
     },
     "completed": "评价工作坊",
-    "completedNote": "您在该预订签到后，才能评价此工作坊。",
+    "completedNote": "您签到且场次结束后，才能评价此工作坊。",
     "rated": "您已评分 {stars}/5",
     "rateTitle": "评价工作坊",
     "rateBody": "{title}怎么样？您打的星级会显示在工作坊上。",
@@ -168,7 +168,8 @@
       "stars": "请选择 1 到 5 星。",
       "failed": "评价保存失败，请重试。",
       "notCheckedIn": "签到该预订后才能评价。",
-      "already": "您已评价过此预订。"
+      "already": "您已评价过此预订。",
+      "notEnded": "场次结束后才能评价。"
     }
   },
   "favorites": {

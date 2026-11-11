@@ -151,7 +151,7 @@
       "closed": "This session is closed, so you cannot check in here. Please ask the studio."
     },
     "completed": "Rate this workshop",
-    "completedNote": "You can rate this workshop once you have checked in to the booking.",
+    "completedNote": "You can rate this workshop after you check in and the session has ended.",
     "rated": "You rated {stars}/5",
     "rateTitle": "Rate this workshop",
     "rateBody": "How was {title}? Your stars show on the workshop.",
@@ -168,7 +168,8 @@
       "stars": "Choose from 1 to 5 stars.",
       "failed": "The rating could not be saved. Please try again.",
       "notCheckedIn": "You can rate after you check in to this booking.",
-      "already": "You already rated this booking."
+      "already": "You already rated this booking.",
+      "notEnded": "You can rate after the session has ended."
     }
   },
   "favorites": {

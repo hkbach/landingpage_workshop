@@ -37,7 +37,8 @@
     "emails": "Emails",
     "legal": "Terms & Privacy",
     "promotions": "Promotions",
-    "media": "Images"
+    "media": "Images",
+    "ratings": "Ratings"
   },
   "guard": {
     "mockNotice": "Prototype: the role check is simulated. Real authentication is added later.",
@@ -1023,5 +1024,33 @@
     "removeBody": "The file is deleted for good and what showed it has no image. A reason is needed.",
     "removed": "The image was removed.",
     "failed": "The image could not be removed."
+  },
+  "ratings": {
+    "title": "Ratings",
+    "description": "What guests wrote about the workshops they attended. Remove a rating that breaks the rules: it stops counting in the rating of the workshop and the shop owner no longer sees it. You can put it back.",
+    "search": "Search",
+    "searchPlaceholder": "Comment, workshop, shop, booking code or guest",
+    "all": "All",
+    "noComment": "No comment",
+    "col": {
+      "workshop": "Workshop",
+      "guest": "Guest",
+      "stars": "Stars",
+      "comment": "Comment",
+      "date": "Date",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "status": {
+      "VISIBLE": "Shown",
+      "REMOVED": "Removed"
+    },
+    "remove": "Remove",
+    "restore": "Put back",
+    "removeTitle": "Remove the rating of booking {code}?",
+    "removeBody": "The rating stops counting in the rating of the workshop and the shop owner no longer sees it. A reason is needed. You can put it back later.",
+    "removed": "The rating of booking {code} is removed.",
+    "restored": "The rating of booking {code} is back.",
+    "failed": "The rating could not be changed."
   }
 }

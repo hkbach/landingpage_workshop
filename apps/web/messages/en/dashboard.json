@@ -10,7 +10,8 @@
       "finance": "Income & expenses",
       "promotions": "Promotions",
       "site": "Landing pages",
-      "settings": "Settings"
+      "settings": "Settings",
+      "ratings": "Ratings"
     },
     "mainNav": "Dashboard navigation",
     "skipToContent": "Skip to main content",
@@ -243,5 +244,15 @@
     "address": "Your address",
     "email": "Owner email",
     "prototype": "Prototype: the tools of the shop owner area (bookings, workshops, sessions, landing pages) are available for the demo shop only. They will work for your shop with the backend."
+  },
+  "ratings": {
+    "title": "Ratings",
+    "description": "What guests rated and wrote about your workshops after the session ended. You can read them here; the platform removes a rating that breaks the rules.",
+    "loading": "Loading...",
+    "failed": "The ratings could not be loaded.",
+    "summary": "Average {average}/5 from {count} ratings",
+    "empty": "No ratings yet. Guests can rate a workshop after they checked in and the session has ended.",
+    "noComment": "No comment",
+    "starsOf": "{n} of 5 stars"
   }
 }

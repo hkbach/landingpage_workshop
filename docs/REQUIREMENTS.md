@@ -463,7 +463,8 @@ Cấu trúc đích khi có backend thật (chưa làm):
   - **Tìm kiếm và lọc:** ô tìm theo mã booking, tên workshop (mọi ngôn ngữ shop đã viết) hoặc tên shop (không phân biệt hoa thường và dấu); lọc theo workshop và khoảng ngày (theo múi giờ của booking). Phân trang như các danh sách khác (10 / 20 / 50).
   - **Thứ tự:** booking sắp tới trước, gần nhất lên đầu và có nhãn **Next up**; sau đó booking đã qua / đã hủy, mới nhất trước.
   - **Mỗi booking có ba nút: Check in, Completed và Cancel** (booking chưa dùng được nút nào thì nút bị khóa và dòng chữ dưới nút nói lý do).
-  - **Completed (đánh giá workshop):** nút **Completed** có trên **mọi** booking nhưng **chỉ đọc (khóa)** kèm dòng chú thích "Bạn đánh giá được workshop này sau khi đã check-in booking" cho tới khi khách **đã check-in** booking (`CHECKED_IN`). Khi đã check-in và chưa đánh giá, nút **bật** (nền xanh lam) và mở popup **Đánh giá workshop**: chọn **1 đến 5 sao** (bắt buộc, chọn được bằng bàn phím) và **nhận xét tùy chọn** (≤ 500 ký tự, `trim()` theo BR-16). Mỗi booking **chỉ đánh giá một lần**; sau khi gửi, nút lại chỉ đọc và hiện số sao khách đã chấm ("Bạn đã đánh giá 4/5"), có thông báo cảm ơn. Server kiểm tra lại: `POST /customer/{id}/bookings/{code}/rating` `{stars, comment?}` → `201`; `409 NOT_CHECKED_IN`, `409 ALREADY_RATED`; `404` cho booking không phải của khách (cùng câu trả lời); `422` kèm `fields` khi sao không hợp lệ hoặc nhận xét quá dài. Booking trả về thêm `canRate` và `rating`. **Điểm của workshop** = trung bình của điểm shop đã có (kèm số lượt) cộng các sao khách chấm, làm tròn 1 chữ số thập phân; hiển thị ở landing page, trang Workshops / Favorites của khách, mục Workshops của Home và khu admin. **Admin chỉ xem** (cột / chi tiết rating ở FR-ADM-10), không duyệt hay sửa. Audit `booking.rate` (mã booking và số sao, **không ghi nhận xét**). TODO(api): bảng `workshop_ratings` (booking_id unique), báo cáo nhận xét vi phạm.
+  - **Rate this workshop (đánh giá workshop):** nút **Rate this workshop** (trước đây tên "Completed", đổi để không nhầm với trạng thái `COMPLETED` của session) có trên **mọi** booking nhưng **chỉ đọc (khóa)** kèm dòng chú thích "Bạn đánh giá được workshop này sau khi đã check-in và session đã kết thúc" cho tới khi khách **đã check-in** booking (`CHECKED_IN`) **và session của booking đã kết thúc** (`ends_at` đã qua). Khi đủ hai điều kiện và chưa đánh giá, nút **bật** (nền xanh lam) và mở popup **Đánh giá workshop**: chọn **1 đến 5 sao** (bắt buộc, chọn được bằng bàn phím) và **nhận xét tùy chọn** (≤ 500 ký tự, `trim()` theo BR-16). Mỗi booking **chỉ đánh giá một lần và khách không sửa được**; sau khi gửi, nút lại chỉ đọc và hiện số sao khách đã chấm ("Bạn đã đánh giá 4/5"), có thông báo cảm ơn. Server kiểm tra lại: `POST /customer/{id}/bookings/{code}/rating` `{stars, comment?}` → `201`; `409 NOT_CHECKED_IN`, `409 NOT_ENDED`, `409 ALREADY_RATED`; `404` cho booking không phải của khách (cùng câu trả lời); `422` kèm `fields` khi sao không hợp lệ hoặc nhận xét quá dài. Booking trả về thêm `canRate` và `rating`. **Điểm của workshop** = trung bình của điểm shop đã có (kèm số lượt) cộng các sao khách chấm **chưa bị gỡ**, làm tròn 1 chữ số thập phân; hiển thị ở landing page, trang Workshops / Favorites của khách, mục Workshops của Home và khu admin.
+  - **Nhận xét của khách (quyết định D7):** **shop owner xem** các đánh giá và nhận xét của workshop của mình ở trang **Ratings** (`/shopowner/{slug}/ratings`, chỉ đọc, `GET /ratings` -> `{items, average, count}`, không có đánh giá đã bị gỡ). **Admin xem** tất cả ở `/systemadmin/ratings` (FR-ADM-27) và **gỡ** được đánh giá vi phạm (bắt buộc lý do, đưa lại được). Nhận xét **chưa** hiển thị công khai trên landing page. Audit `booking.rate` (mã booking và số sao, **không ghi nhận xét**). TODO(api): bảng `workshop_ratings` (booking_id unique, `removed_at`, `removed_reason`), thông báo cho khách khi nhận xét bị gỡ.
   - **Màu nút:** khi bấm được, **Check in nền xanh lá** và **Cancel booking nền đỏ**; khi không bấm được, nút xám (khóa).
   - **Dữ liệu mẫu:** mỗi khi server khởi động, **mọi customer có tài khoản** đều có sẵn booking để thử hai nút: một booking check-in được ngay (session đang diễn ra hoặc bắt đầu trong vòng 1 giờ), một Confirmed và một Not confirmed còn hủy được, một booking đã tham dự và một booking khách đã hủy (kèm lý do cơ bản). Các booking này không thanh toán nên không đổi số liệu thu nhập, và không session nào vượt sức chứa.
   - **Check in (khách tự check-in):** bật khi booking **`CONFIRMED`** (đã mở link trong email xác nhận), **từ 60 phút trước giờ bắt đầu đến khi session kết thúc**, và session chưa đóng (server quyết định, `canCheckIn`; cũng kiểm tra lại khi bấm). Bấm xong booking thành `CHECKED_IN` (lưu giờ check-in và trạng thái trước đó là `CONFIRMED`, nên shop vẫn Uncheck-in được), danh sách cập nhật ngay và báo "You are checked in for booking …". Khóa kèm lý do: đã check-in, chưa tới giờ ("Check-in opens at <giờ>, an hour before…"), booking `NOT_CONFIRMED` ("Open the link in your confirmation email…"), workshop đã kết thúc, session đã đóng. Booking đã hủy thì nút khóa. Shop vẫn có thể check-in khách ở studio. API: `POST /customer/{id}/bookings/{code}/check-in` (404 nếu booking không phải của khách, 409 `NOT_CHECKABLE`).
@@ -740,6 +741,11 @@ Cấu trúc đích khi có backend thật (chưa làm):
 - Danh sách ảnh theo shop: xem trước (thumbnail), shop, dùng cho (khuyến mãi / session / ảnh bìa workshop), ảnh nào đang hiển thị ở đâu (mã khuyến mãi, mã session, tên workshop), **nơi lưu** (**Uploaded file**: file nền tảng giữ, sau này trên **Cloudflare R2**; **From a link**: ảnh trỏ tới bằng địa chỉ), loại file và dung lượng, ngày tải lên. Tìm theo shop hoặc nơi hiển thị; lọc theo mục đích và nơi lưu.
 - **Xóa file** đã tải lên khi vi phạm (bắt buộc lý do): file bị xóa hẳn, khuyến mãi đang dùng ảnh đó không còn ảnh; session đang dùng ảnh lưu trong trình duyệt của shop hiện ảnh trống tới khi shop owner chọn ảnh khác. Ảnh hiển thị từ liên kết chỉ xem, không xóa (không phải file của nền tảng). Audit `media.remove` (loại, lý do). API `POST /admin/media/{id}` `{reason}` (`404`, `422`).
 - *Chưa làm (TODO(api)):* đối tượng trong R2 và cache CDN thật, thông báo email cho shop khi ảnh bị xóa, quản lý ảnh landing page (hiện nằm trong trình duyệt của shop), dung lượng đã dùng theo shop.
+
+**FR-ADM-27 – Ratings (Should)** (`/systemadmin/ratings`, nhóm Dữ liệu trong menu): các **đánh giá và nhận xét** khách gửi cho workshop (FR-CUST-01, nút Rate this workshop).
+- Danh sách: workshop, shop, mã booking, khách (tên, email), số sao, nhận xét (hiển thị dạng text thuần), ngày, trạng thái **Shown / Removed**; tìm theo nhận xét, workshop, shop, mã booking hoặc khách; lọc theo trạng thái và số sao. API `GET /admin/directory/ratings`.
+- **Gỡ** đánh giá vi phạm (bắt buộc lý do ≤ 300 ký tự): đánh giá **thôi được tính** vào điểm của workshop và shop owner **không còn thấy**; **Đưa lại** (không cần lý do) khôi phục. Khách không đánh giá lại được booking đó. API `POST /admin/ratings/{id}` `{removed, reason?}` → `200`; `422` thiếu lý do, `404`, `409 ALREADY_REMOVED | NOT_REMOVED`. Audit `rating.remove` / `rating.restore` (mã booking và lý do, **không ghi nhận xét**).
+- *Chưa làm (TODO(api)):* thông báo cho khách và shop khi gỡ, báo cáo nhận xét vi phạm từ phía shop.
 
 ---
 
@@ -1040,7 +1046,7 @@ Các route dưới đây chạy **trong Next.js** (`apps/web/src/app/api/v1/**`)
 | GET | `/customer/{id}/wallet` |
 | POST | `/customer/{id}/withdrawals` |
 
-**Shop owner và dùng chung** (18 route)
+**Shop owner và dùng chung** (19 route)
 
 | Method | Path |
 |---|---|
@@ -1056,6 +1062,7 @@ Các route dưới đây chạy **trong Next.js** (`apps/web/src/app/api/v1/**`)
 | GET | `/outbox` |
 | PUT · PATCH · DELETE | `/promotions/{id}` |
 | GET · POST | `/promotions` |
+| GET | `/ratings` |
 | POST | `/sessions/{id}/closed` |
 | POST | `/sessions/{id}/reschedule` |
 | POST | `/sessions/auto-closed` |
@@ -1063,7 +1070,7 @@ Các route dưới đây chạy **trong Next.js** (`apps/web/src/app/api/v1/**`)
 | POST | `/site/publish` |
 | POST | `/workshops/{id}/status` |
 
-**Admin hệ thống (`SUPER_ADMIN`, mock chưa kiểm tra quyền)** (30 route)
+**Admin hệ thống (`SUPER_ADMIN`, mock chưa kiểm tra quyền)** (31 route)
 
 | Method | Path |
 |---|---|
@@ -1096,6 +1103,7 @@ Các route dưới đây chạy **trong Next.js** (`apps/web/src/app/api/v1/**`)
 | GET · PATCH | `/admin/users/{id}` |
 | POST | `/admin/users/{id}/status` |
 | POST | `/admin/promotions/{id}` |
+| POST | `/admin/ratings/{id}` |
 | POST | `/admin/withdrawals/{id}` |
 
 ---
@@ -1222,7 +1230,7 @@ Các ô `[ ]` bên dưới là việc của **backend và hạ tầng thật**, 
 | M3 Landing page builder | Section registry, template, theme, builder, preview, autosave (trình duyệt), publish ngay, tối đa 2 page | Chưa: `site_page_versions`, publish atomic trên server |
 | M4 Trang public và booking | Host / proxy, renderer, SEO (meta, OG, hreflang, sitemap, robots), lịch còn chỗ, booking, trang xác nhận, tên miền riêng | Chưa: ISR, Turnstile, `SessionCapacityService` + khóa dòng + **test đồng thời**, email thật |
 | M5 Vận hành booking | Booking list, Today, thủ công, check-in, hủy, thanh toán, customers, đổi session | Chưa: state machine ở server, file `.ics`, email nhắc 24h |
-| M6 Admin | Đầy đủ các màn hình ở FR-ADM-01 đến FR-ADM-26 (mock) | Chưa: kiểm tra vai trò thật, một transaction |
+| M6 Admin | Đầy đủ các màn hình ở FR-ADM-01 đến FR-ADM-27 (mock) | Chưa: kiểm tra vai trò thật, một transaction |
 | M7 Hardening và deploy | Chưa | Chưa: security headers / CSP, E2E Playwright, Docker, Caddy, backup, Sentry, rà soát AC |
 
 Các tính năng làm thêm ngoài danh sách milestone gốc (đã có ở bản mock): khu vực customer, affiliate / referral, rút tiền, khuyến mãi, tên miền riêng, website công khai, hộp thư hỗ trợ, email hệ thống, settings, Terms & Privacy.
@@ -1333,7 +1341,7 @@ Các quyết định dưới đây do chủ sản phẩm chọn khi rà soát to
 | D4 | Vai trò của một email | Một email chỉ một vai trò (customer **hoặc** shop owner) | Đã đúng |
 | D5 | Onboarding shop mới | Sau khi đăng ký bằng popup, chủ shop vào wizard `/shopowner/onboarding` để điền khu vực, ngôn ngữ, liên hệ; dữ liệu đầy đủ cho nhiều shop làm khi có backend | Frontend (wizard); TODO(api) |
 | D6 | Phạm vi tài khoản customer | **Toàn nền tảng** (đặt chỗ ở mọi shop, ví chung); ví, phí và giới hạn rút tiền tính **theo từng đồng tiền** | TODO(api) cho ví nhiều đồng tiền |
-| D7 | Nhận xét của khách | Shop owner và admin **xem được**; admin **gỡ** được nhận xét vi phạm | Frontend |
+| D7 | Nhận xét của khách | Shop owner và admin **xem được**; admin **gỡ** được nhận xét vi phạm | Frontend (đã làm: trang Ratings của shop, FR-ADM-27) |
 | D8 | Khi nào được đánh giá | Chỉ **sau khi session kết thúc** (và đã check-in); mỗi booking một lần, khách không sửa | Frontend |
 | D9 | Tên nút đánh giá | Đổi "Completed" thành **"Rate this workshop"** (tránh nhầm với trạng thái `COMPLETED` của session) | Frontend |
 | D10 | Unpaid sau khi thanh toán | Giữ khoản điều chỉnh giảm (reversal); **chặn Unpaid** khi tháng của khoản thanh toán đã kết sổ | Kiểm tra theo tháng đã chốt: TODO(api) |

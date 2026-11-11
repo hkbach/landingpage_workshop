@@ -6,6 +6,7 @@ import { getCustomDomain } from "./shop-domain-store";
 import { contactMessages, type ContactMessage } from "./contact-store";
 import { allPromotions, promotionHold, shopToday } from "./promotion-store";
 import { listMedia } from "./media-store";
+import { listRatings } from "./rating-store";
 import { deliveryOf, outboxEmails } from "./outbox-store";
 import { closeCount, closeIfEnded, SESSION_STATUSES, type OrgStatus, type SessionStatus, type WorkshopStatus } from "@workshop/shared";
 import { listAccounts, type Account } from "./accounts-store";
@@ -418,4 +419,31 @@ export function adminMedia(q = "", kind = "", source = ""): AdminMedia[] {
   return rows
     .filter((r) => (!kind || r.kind === kind) && (!source || r.source === source) && matchesSearch(hay(r.shopName, r.usedBy, r.kind), q))
     .sort((a, b) => (a.source === b.source ? b.uploadedAt.localeCompare(a.uploadedAt) : a.source === "UPLOAD" ? -1 : 1));
+}
+
+
+// ---- ratings (what the guests wrote about a workshop) ----
+
+export interface AdminRating {
+  id: string; bookingCode: string; workshopId: string; workshopTitle: string; shopId: string; shopName: string; customerName: string; customerEmail: string;
+  stars: number; comment: string; createdAt: string;
+  /** VISIBLE counts in the rating of the workshop and is shown to the shop; REMOVED (by an administrator, with a reason) does neither. */
+  status: "VISIBLE" | "REMOVED"; removedReason: string; removedAt: string;
+}
+
+/** Search: the comment, the workshop, the shop, the booking code or the guest (name or email); filters: the status and the stars. Newest first. The mock keeps the ratings of the demo shop only. */
+export function adminRatings(q = "", status = "", stars = ""): AdminRating[] {
+  const shop = liveShops().find((s) => s.id === currentShop.id)!;
+  return listRatings()
+    .map((r): AdminRating => {
+      const w = demoWorkshops.find((x) => x.id === r.workshopId);
+      const account = listAccounts().find((a) => a.id === r.customerId);
+      return {
+        id: r.id, bookingCode: r.bookingCode, workshopId: r.workshopId, workshopTitle: w ? titleOf(w.title) : r.workshopId, shopId: shop.id, shopName: shop.name,
+        customerName: account?.fullName ?? "", customerEmail: account?.email ?? "", stars: r.stars, comment: r.comment, createdAt: r.createdAt,
+        status: r.removedAt ? "REMOVED" : "VISIBLE", removedReason: r.removedReason ?? "", removedAt: r.removedAt ?? "",
+      };
+    })
+    .filter((r) => (!status || r.status === status) && (!stars || String(r.stars) === stars) && matchesSearch(hay(r.comment, r.workshopTitle, r.shopName, r.bookingCode, r.customerName, r.customerEmail), q))
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id));
 }

@@ -10,7 +10,8 @@
       "finance": "Thu chi",
       "promotions": "Khuyến mãi",
       "site": "Trang giới thiệu",
-      "settings": "Cài đặt"
+      "settings": "Cài đặt",
+      "ratings": "Đánh giá"
     },
     "mainNav": "Điều hướng bảng điều khiển",
     "skipToContent": "Chuyển đến nội dung chính",
@@ -243,5 +244,15 @@
     "address": "Địa chỉ của bạn",
     "email": "Email chủ shop",
     "prototype": "Bản thử nghiệm: các công cụ của khu vực shop owner (booking, workshop, session, landing page) chỉ có cho shop demo. Chúng sẽ hoạt động cho shop của bạn khi có backend."
+  },
+  "ratings": {
+    "title": "Đánh giá",
+    "description": "Khách đánh giá và nhận xét về workshop của bạn sau khi session kết thúc. Bạn xem được ở đây; nền tảng sẽ gỡ đánh giá vi phạm.",
+    "loading": "Đang tải...",
+    "failed": "Không tải được các đánh giá.",
+    "summary": "Trung bình {average}/5 từ {count} đánh giá",
+    "empty": "Chưa có đánh giá. Khách đánh giá được workshop sau khi đã check-in và session đã kết thúc.",
+    "noComment": "Không có nhận xét",
+    "starsOf": "{n} trên 5 sao"
   }
 }

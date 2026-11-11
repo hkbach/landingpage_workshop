@@ -4,7 +4,7 @@ Nền tảng cho các shop workshop (gốm, nến, nấu ăn, bánh...) tự t�
 
 - **Website công khai của nền tảng:** Home, About Us, Contact, Terms, Privacy; đăng nhập và đăng ký bằng **popup** (đăng ký có 2 tab: khách cá nhân và chủ shop).
 - **Khu vực chủ shop (shop owner):** landing page builder, workshop, session, booking, khuyến mãi, thu nhập, cài đặt (kể cả tên miền riêng).
-- **Khu vực khách hàng (customer):** Today, hồ sơ, booking (check-in, đánh giá workshop, hủy), yêu thích, workshops, Affiliate, Referrals và rút tiền.
+- **Khu vực khách hàng (customer):** Today, hồ sơ, booking (check-in, đánh giá workshop sau khi session kết thúc, hủy), yêu thích, workshops, Affiliate, Referrals và rút tiền.
 - **Khu admin hệ thống:** quản lý người dùng, shop (sửa, khóa, tên miền riêng), workshop, session, booking, landing page, hình ảnh, khuyến mãi, thu nhập, rút tiền, phí, affiliate, referrals, báo cáo vi phạm, hộp thư hỗ trợ, email hệ thống, Terms & Privacy, cài đặt nền tảng và audit log.
 
 > **Trạng thái hiện tại (phiên bản 2.0-MVP, 11/11/2026):** đây là bản **MVP chỉ có giao diện (frontend)**. Dữ liệu là **dữ liệu mẫu (mock)** nằm trong bộ nhớ, **không cần database, không cần Docker, không cần backend**. Các API chạy ngay trong Next.js (`/api/v1/*`) nhưng **giữ đúng hợp đồng** của backend thật sẽ làm sau. Yêu cầu đầy đủ của dự án nằm ở [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) (tiếng Việt, là nguồn sự thật duy nhất; có bảng tình trạng triển khai và danh sách API mock).
@@ -202,7 +202,7 @@ pnpm test
   Tests  377 passed (377)
   ...
   Test Files  104 passed (104)
-  Tests  1120 passed (1120)
+  Tests  1122 passed (1122)
   ```
   (Con số có thể khác khi dự án thêm test mới. Quan trọng là **không có chữ `failed`** và không có `FAIL`.)
 - Trong lúc chạy bạn có thể thấy nhiều dòng `IntlError ...` màu đỏ/vàng. **Đó là cảnh báo của bài test, không phải lỗi.** Chỉ cần xem dòng tổng kết ở cuối.

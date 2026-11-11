@@ -13,14 +13,13 @@ import { useCustomer } from "./customer-shell";
 const MAX_COMMENT = 500;
 
 /**
- * The Completed button of a booking in My Booking: the guest rates the workshop (1 to 5 stars, a comment is optional). It is on every booking but READ-ONLY (disabled, with a note under it) until the guest has
- * checked in to the booking, because only someone who came can rate; the server checks it again. A booking can be rated once: after that the button stays read-only and the stars the guest gave are shown.
+ * The Rate this workshop button of a booking in My Booking: the guest rates the workshop (1 to 5 stars, a comment is optional). It is on every booking but READ-ONLY (disabled, with a note under it) until the guest has
+ * checked in to the booking AND its session has ended, because only someone who came can rate and the workshop must be over; the server checks it again. A booking can be rated once: after that the button stays read-only and the stars the guest gave are shown.
  */
 export function RateBooking({ code, title, status, canRate, rating, onRated }: { code: string; title: string; status: string; canRate: boolean; rating?: { stars: number; comment: string }; onRated: () => void }) {
   const t = useTranslations("customer.bookings");
   const [open, setOpen] = useState(false);
-  const checkedIn = status === "CHECKED_IN";
-  const note = rating ? null : !checkedIn ? (status === "CANCELLED" ? null : t("completedNote")) : null;
+  const note = rating || canRate ? null : status === "CANCELLED" ? null : t("completedNote");
   return (
     <span className="grid gap-1">
       <Button
@@ -45,7 +44,7 @@ function RateDialog({ code, title, onClose, onRated }: { code: string; title: st
   const { accountId, email } = useCustomer();
   const [stars, setStars] = useState(0);
   const [comment, setComment] = useState("");
-  const [error, setError] = useState<"" | "stars" | "failed" | "notCheckedIn" | "already">("");
+  const [error, setError] = useState<"" | "stars" | "failed" | "notCheckedIn" | "notEnded" | "already">("");
   const [busy, setBusy] = useState(false);
 
   async function submit(e: React.FormEvent) {
@@ -58,7 +57,7 @@ function RateDialog({ code, title, onClose, onRated }: { code: string; title: st
       });
       if (res.status === 201) { onRated(); return; }
       const j = (await res.json().catch(() => null)) as { error?: { code?: string } } | null;
-      setError(j?.error?.code === "NOT_CHECKED_IN" ? "notCheckedIn" : j?.error?.code === "ALREADY_RATED" ? "already" : "failed");
+      setError(j?.error?.code === "NOT_CHECKED_IN" ? "notCheckedIn" : j?.error?.code === "NOT_ENDED" ? "notEnded" : j?.error?.code === "ALREADY_RATED" ? "already" : "failed");
     } catch {
       setError("failed");
     } finally {

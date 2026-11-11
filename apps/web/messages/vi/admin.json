@@ -37,7 +37,8 @@
     "emails": "Email hệ thống",
     "legal": "Terms & Privacy",
     "promotions": "Khuyến mãi",
-    "media": "Hình ảnh"
+    "media": "Hình ảnh",
+    "ratings": "Đánh giá"
   },
   "guard": {
     "mockNotice": "Bản thử nghiệm: việc kiểm tra vai trò chỉ là giả lập. Xác thực thật sẽ được thêm sau.",
@@ -1023,5 +1024,33 @@
     "removeBody": "File bị xóa hẳn và nơi đang hiển thị sẽ không còn ảnh. Cần nhập lý do.",
     "removed": "Đã xóa hình ảnh.",
     "failed": "Không xóa được hình ảnh."
+  },
+  "ratings": {
+    "title": "Đánh giá",
+    "description": "Những gì khách viết về workshop họ đã tham gia. Gỡ đánh giá vi phạm: đánh giá thôi được tính vào điểm của workshop và shop owner không còn thấy. Bạn có thể đưa lại.",
+    "search": "Tìm kiếm",
+    "searchPlaceholder": "Nhận xét, workshop, shop, mã booking hoặc khách",
+    "all": "Tất cả",
+    "noComment": "Không có nhận xét",
+    "col": {
+      "workshop": "Workshop",
+      "guest": "Khách",
+      "stars": "Số sao",
+      "comment": "Nhận xét",
+      "date": "Ngày",
+      "status": "Trạng thái",
+      "actions": "Thao tác"
+    },
+    "status": {
+      "VISIBLE": "Đang hiển thị",
+      "REMOVED": "Đã gỡ"
+    },
+    "remove": "Gỡ",
+    "restore": "Đưa lại",
+    "removeTitle": "Gỡ đánh giá của booking {code}?",
+    "removeBody": "Đánh giá thôi được tính vào điểm của workshop và shop owner không còn thấy. Bắt buộc nhập lý do. Bạn có thể đưa lại sau.",
+    "removed": "Đã gỡ đánh giá của booking {code}.",
+    "restored": "Đã đưa lại đánh giá của booking {code}.",
+    "failed": "Không thay đổi được đánh giá."
   }
 }

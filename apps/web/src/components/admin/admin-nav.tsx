@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Banknote, BookOpen, Building2, CalendarClock, Coins, Flag, Globe, Headset, ImageIcon, Inbox, Tag, Mail, Scale, Settings, Percent, ScrollText, Share2, Ticket, UserCog, UserPlus, Users } from "lucide-react";
+import { Banknote, BookOpen, Building2, CalendarClock, Coins, Flag, Globe, Headset, ImageIcon, Inbox, Tag, Mail, Scale, Settings, Percent, ScrollText, Share2, Star, Ticket, UserCog, UserPlus, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // The pages of the admin area in three groups (shown as headings on a PC; a phone shows one scrolling row).
@@ -19,6 +19,7 @@ const GROUPS = [
       { href: "/systemadmin/bookings", key: "bookings", Icon: Ticket },
       { href: "/systemadmin/landing-pages", key: "landingPages", Icon: Globe },
       { href: "/systemadmin/media", key: "media", Icon: ImageIcon },
+      { href: "/systemadmin/ratings", key: "ratings", Icon: Star },
     ],
   },
   {

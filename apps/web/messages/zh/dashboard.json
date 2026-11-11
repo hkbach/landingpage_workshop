@@ -10,7 +10,8 @@
       "finance": "收入与支出",
       "promotions": "优惠",
       "site": "落地页",
-      "settings": "设置"
+      "settings": "设置",
+      "ratings": "评价"
     },
     "mainNav": "管理后台导航",
     "skipToContent": "跳到主要内容",
@@ -243,5 +244,15 @@
     "address": "您的地址",
     "email": "店主邮箱",
     "prototype": "原型说明：店主区域的工具（预订、工作坊、场次、落地页）目前仅适用于演示店铺。接入后端后，您的店铺也可使用。"
+  },
+  "ratings": {
+    "title": "评价",
+    "description": "场次结束后，客人对您的工作坊给出的评分和评语。您可以在此查看；违反规则的评价将由平台删除。",
+    "loading": "加载中...",
+    "failed": "无法加载评价。",
+    "summary": "平均 {average}/5，共 {count} 条评价",
+    "empty": "暂无评价。客人签到且场次结束后即可评价工作坊。",
+    "noComment": "无评语",
+    "starsOf": "5 星中的 {n} 星"
   }
 }

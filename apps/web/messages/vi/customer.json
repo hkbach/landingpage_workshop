@@ -151,7 +151,7 @@
       "closed": "Session này đã đóng nên bạn không thể check-in tại đây. Vui lòng hỏi studio."
     },
     "completed": "Đánh giá workshop",
-    "completedNote": "Bạn đánh giá được workshop này sau khi đã check-in booking.",
+    "completedNote": "Bạn đánh giá được workshop này sau khi đã check-in và session đã kết thúc.",
     "rated": "Bạn đã đánh giá {stars}/5",
     "rateTitle": "Đánh giá workshop",
     "rateBody": "{title} thế nào? Số sao của bạn sẽ hiển thị trên workshop.",
@@ -168,7 +168,8 @@
       "stars": "Hãy chọn từ 1 đến 5 sao.",
       "failed": "Không lưu được đánh giá. Vui lòng thử lại.",
       "notCheckedIn": "Bạn đánh giá được sau khi check-in booking này.",
-      "already": "Bạn đã đánh giá booking này."
+      "already": "Bạn đã đánh giá booking này.",
+      "notEnded": "Bạn đánh giá được sau khi session kết thúc."
     }
   },
   "favorites": {
