@@ -163,6 +163,8 @@
     "colStatus": "Trạng thái",
     "statusOngoing": "On-going",
     "statusDeactive": "Deactive",
-    "deactiveHint": "Workshop này đã bị deactivate: link không còn dẫn tới việc đặt chỗ."
+    "deactiveHint": "Workshop này đã bị deactivate: link không còn dẫn tới việc đặt chỗ.",
+    "colBookings": "Booking đã thanh toán",
+    "colEarned": "Đã nhận"
   }
 }

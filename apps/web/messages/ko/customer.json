@@ -163,6 +163,8 @@
     "colStatus": "상태",
     "statusOngoing": "진행 중",
     "statusDeactive": "비활성",
-    "deactiveHint": "이 워크숍은 비활성화되어 링크로 더 이상 예약할 수 없습니다."
+    "deactiveHint": "이 워크숍은 비활성화되어 링크로 더 이상 예약할 수 없습니다.",
+    "colBookings": "결제된 예약",
+    "colEarned": "적립액"
   }
 }

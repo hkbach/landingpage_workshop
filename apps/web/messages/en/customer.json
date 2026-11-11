@@ -163,6 +163,8 @@
     "colStatus": "Status",
     "statusOngoing": "On-going",
     "statusDeactive": "Deactive",
-    "deactiveHint": "This workshop is deactivated: its link no longer leads to a booking."
+    "deactiveHint": "This workshop is deactivated: its link no longer leads to a booking.",
+    "colBookings": "Paid bookings",
+    "colEarned": "Earned"
   }
 }

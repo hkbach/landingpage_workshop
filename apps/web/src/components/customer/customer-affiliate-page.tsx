@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Check, Copy } from "lucide-react";
+import { formatMoney, type Locale } from "@workshop/shared";
 import { Button } from "@/components/ui/button";
 import { PaginationBar } from "@/components/ui/pagination-bar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -17,7 +18,8 @@ type Tab = "program" | "links";
 
 /**
  * The Affiliate page. Program lists the workshops that are active (a workshop that was deactivated is not in it) with Register Affiliate / Copy Affiliate link; Affiliate link
- * lists the links the guest made by registering, each with its status: On-going, or Deactive once the workshop was deactivated.
+ * lists the links the guest made by registering, each with the paid bookings that came through it, the affiliate fee earned on it and its status: On-going, or Deactive once the
+ * workshop was deactivated.
  */
 export function CustomerAffiliatePage({ shops }: { shops: ListedShop[] }) {
   const t = useTranslations("customer");
@@ -43,6 +45,7 @@ export function CustomerAffiliatePage({ shops }: { shops: ListedShop[] }) {
 function AffiliateLinks() {
   const t = useTranslations("customer");
   const ta = useTranslations("customer.affiliate");
+  const locale = useLocale() as Locale;
   const { query } = useAffiliates();
   const items = query.data?.items ?? [];
   const pg = usePagination(items, "");
@@ -78,6 +81,8 @@ function AffiliateLinks() {
           <TableHeader>
             <TableRow>
               <TableHead>{ta("colLink")}</TableHead>
+              <TableHead className="text-right">{ta("colBookings")}</TableHead>
+              <TableHead className="text-right">{ta("colEarned")}</TableHead>
               <TableHead>{ta("colStatus")}</TableHead>
             </TableRow>
           </TableHeader>
@@ -96,6 +101,8 @@ function AffiliateLinks() {
                       </Button>
                     </div>
                   </TableCell>
+                  <TableCell className="text-right tabular-nums" data-testid="affiliate-link-bookings">{r.bookings}</TableCell>
+                  <TableCell className="text-right tabular-nums" data-testid="affiliate-link-earned">{formatMoney(r.referralFee, r.currency, locale)}</TableCell>
                   <TableCell>
                     <span data-testid="affiliate-link-status" className={cn("inline-flex rounded-md px-2 py-0.5 text-xs font-medium", live ? "bg-emerald-100 text-emerald-900" : "bg-slate-200 text-slate-800")}>
                       {ta(live ? "statusOngoing" : "statusDeactive")}

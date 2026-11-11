@@ -163,6 +163,8 @@
     "colStatus": "ステータス",
     "statusOngoing": "進行中",
     "statusDeactive": "無効",
-    "deactiveHint": "このワークショップは無効化されており、リンクから予約できません。"
+    "deactiveHint": "このワークショップは無効化されており、リンクから予約できません。",
+    "colBookings": "支払い済み予約",
+    "colEarned": "獲得額"
   }
 }

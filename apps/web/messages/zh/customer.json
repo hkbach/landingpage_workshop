@@ -163,6 +163,8 @@
     "colStatus": "状态",
     "statusOngoing": "进行中",
     "statusDeactive": "已停用",
-    "deactiveHint": "此工作坊已停用，链接不再通向预订。"
+    "deactiveHint": "此工作坊已停用，链接不再通向预订。",
+    "colBookings": "已付款预订",
+    "colEarned": "已获得"
   }
 }
