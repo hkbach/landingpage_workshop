@@ -3,10 +3,12 @@
 import { newUuid } from "../uuid";
 import { getPlatformSettings } from "./app-settings-store";
 
-export const CONTACT_TOPICS = ["general", "demo", "support", "partnership"] as const;
-export type ContactTopic = (typeof CONTACT_TOPICS)[number];
+import { CONTACT_TOPICS, MESSAGE_STATUSES, type ContactTopic, type MessageStatus } from "./contact-types";
+export { CONTACT_TOPICS, MESSAGE_STATUSES };
+export type { ContactTopic, MessageStatus };
 
-export interface ContactMessage { id: string; name: string; email: string; topic: ContactTopic; message: string; createdAt: string }
+/** A message of the support inbox. `status` and `note` (internal, never shown to the sender) are set by the administrators who handle it. */
+export interface ContactMessage { id: string; name: string; email: string; topic: ContactTopic; message: string; createdAt: string; status: MessageStatus; note: string; updatedAt: string }
 
 const g = globalThis as unknown as { __contactMessages?: ContactMessage[]; __contactHits?: Map<string, number[]> };
 const messages = () => (g.__contactMessages ??= []);
@@ -33,11 +35,29 @@ export function recordContactHit(key: string, now = Date.now()): void {
   hits().set(key, [...(hits().get(key) ?? []).filter((t) => now - t < CONTACT_RATE_LIMIT.windowMs), now]);
 }
 
-export function addContactMessage(input: Omit<ContactMessage, "id" | "createdAt">, now = new Date()): ContactMessage {
-  const m: ContactMessage = { id: `ct-${newUuid().slice(0, 8)}`, createdAt: now.toISOString(), ...input };
+export function addContactMessage(input: Pick<ContactMessage, "name" | "email" | "topic" | "message">, now = new Date()): ContactMessage {
+  const m: ContactMessage = { id: `ct-${newUuid().slice(0, 8)}`, createdAt: now.toISOString(), updatedAt: now.toISOString(), status: "NEW", note: "", ...input };
   messages().unshift(m);
   return m;
 }
 
 /** The messages received in this session, newest first. */
 export const contactMessages = (): ContactMessage[] => [...messages()];
+
+/** An administrator handles a message: its status and/or the internal note (at most 2000 characters). Null for an unknown message. */
+export function updateContactMessage(id: string, patch: { status?: MessageStatus; note?: string }, now = new Date()): ContactMessage | null {
+  const m = messages().find((x) => x.id === id);
+  if (!m) return null;
+  if (patch.status) m.status = patch.status;
+  if (patch.note !== undefined) m.note = patch.note.trim().slice(0, 2000);
+  m.updatedAt = now.toISOString();
+  return { ...m };
+}
+
+/** An administrator deletes a message (personal data: it is not kept). False for an unknown message. */
+export function deleteContactMessage(id: string): boolean {
+  const i = messages().findIndex((x) => x.id === id);
+  if (i < 0) return false;
+  messages().splice(i, 1);
+  return true;
+}

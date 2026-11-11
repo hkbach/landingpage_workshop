@@ -7,7 +7,9 @@
     },
     "privacy": {
       "title": "Chính sách quyền riêng tư"
-    }
+    },
+    "updated": "Cập nhật lần cuối {date} · phiên bản {version}",
+    "fallback": "Nội dung này chưa có bằng ngôn ngữ của bạn. Đang hiển thị bản tiếng Anh."
   },
   "nav": {
     "home": "Trang chủ",

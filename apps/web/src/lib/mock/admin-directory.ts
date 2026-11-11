@@ -3,6 +3,8 @@
 // the customers and the payments of the demo shop only; the other shops have workshops and sessions of their own.
 // TODO(api): GET /admin/{shops,workshops,bookings,customers,sessions,landing-pages} with the same filters, page and pageSize, SUPER_ADMIN only.
 import { getCustomDomain } from "./shop-domain-store";
+import { contactMessages, type ContactMessage } from "./contact-store";
+import { deliveryOf, outboxEmails } from "./outbox-store";
 import { closeCount, closeIfEnded, SESSION_STATUSES, type OrgStatus, type SessionStatus, type WorkshopStatus } from "@workshop/shared";
 import { listAccounts, type Account } from "./accounts-store";
 import { liveAuditLogs } from "./admin-audit-store";
@@ -315,5 +317,34 @@ export function adminAuditRows(f: AuditFilters = {}): AdminAuditRow[] {
       if (f.org && !matchesSearch(hay(e.organizationId, row.organizationName, row.organizationSlug), f.org)) return [];
       return [row];
     })
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+
+// ---- support inbox (the messages of the Contact form) ----
+
+export type AdminMessage = ContactMessage;
+
+/** Search: the name, the email, the topic or the text of the message; filters: the status and the topic. Newest first. */
+export function adminMessages(q = "", status = "", topic = ""): AdminMessage[] {
+  return contactMessages().filter((m) => (!status || m.status === status) && (!topic || m.topic === topic) && matchesSearch(hay(m.name, m.email, m.topic, m.message, m.note), q));
+}
+
+// ---- emails of the system (the outbox) ----
+
+export interface AdminEmail {
+  id: string; type: string; to: string; subject: string; createdAt: string; status: "SENT" | "FAILED"; attempts: number; error: string;
+  /** Whether an administrator wrote it (its text can be read); the emails of the system carry secret links and are never shown. */
+  written: boolean;
+}
+
+/** Search: the address, the subject or the type; filters: the type and the delivery (SENT / FAILED). Newest first. */
+export function adminEmails(q = "", type = "", status = ""): AdminEmail[] {
+  return outboxEmails()
+    .map((e): AdminEmail => {
+      const d = deliveryOf(e.id);
+      return { id: e.id, type: e.type, to: e.to, subject: e.subject, createdAt: e.createdAt, status: d.status, attempts: d.attempts, error: d.error ?? "", written: e.type === "ADMIN_MESSAGE" };
+    })
+    .filter((e) => (!type || e.type === type) && (!status || e.status === status) && matchesSearch(hay(e.to, e.subject, e.type), q))
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }

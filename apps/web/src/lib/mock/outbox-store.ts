@@ -106,9 +106,22 @@ export interface PasswordResetEmail extends RenderedEmail {
   createdAt: string;
 }
 
-export type OutboxEmail = PasswordResetEmail | SessionRescheduledEmail | SessionClosedEmail | BookingConfirmationEmail | BookingInfoEmail | BookingCancelledEmail | ShopBookingNoticeEmail | PaymentReceivedEmail;
+/** An email an administrator wrote (an announcement, an answer to a message of the support inbox): the body is plain text, kept in the email so the administrators can read it again. */
+export interface AdminMessageEmail extends RenderedEmail {
+  id: string;
+  type: "ADMIN_MESSAGE";
+  to: string;
+  locale: Locale;
+  createdAt: string;
+  /** The text the administrator typed (the same as `text`), and who wrote it. */
+  body: string;
+  sentBy: string;
+}
+
+export type OutboxEmail = AdminMessageEmail | PasswordResetEmail | SessionRescheduledEmail | SessionClosedEmail | BookingConfirmationEmail | BookingInfoEmail | BookingCancelledEmail | ShopBookingNoticeEmail | PaymentReceivedEmail;
 
 const g = globalThis as unknown as { __outbox?: OutboxEmail[] };
+const gd = globalThis as unknown as { __delivery?: Map<string, Delivery> };
 const box = () => (g.__outbox ??= []);
 
 type Queued<T extends { type: string }> = Omit<T, "id" | "type" | "createdAt" | keyof RenderedEmail>;
@@ -179,4 +192,46 @@ export function demoConfirmationEmailId(bookingCode: string): string | undefined
 /** Test helper. */
 export function resetOutbox(): void {
   g.__outbox = [];
+  gd.__delivery = new Map();
+}
+
+// ---- delivery: what happened when the worker tried to send each email, and the emails written by an administrator ----------------------------------------------------------------
+
+export type DeliveryStatus = "SENT" | "FAILED";
+export interface Delivery { status: DeliveryStatus; attempts: number; error?: string; lastAttemptAt: string }
+const deliveries = () => (gd.__delivery ??= new Map<string, Delivery>());
+
+/** The mock has no mail server: an address in a domain that cannot receive mail (`.invalid`, `fail.example`) makes the delivery FAIL, so the failed state and the resend can be looked at. */
+export const mailboxExists = (to: string): boolean => !/(?:\.invalid|@fail\.example)$/i.test(to.trim());
+
+/** What happened to an email: sent unless a delivery failed. */
+export function deliveryOf(id: string): Delivery {
+  return deliveries().get(id) ?? { status: "SENT", attempts: 1, lastAttemptAt: outboxEmail(id)?.createdAt ?? new Date().toISOString() };
+}
+
+function attempt(id: string, to: string, now: Date): Delivery {
+  const before = deliveries().get(id);
+  const d: Delivery = mailboxExists(to)
+    ? { status: "SENT", attempts: (before?.attempts ?? 0) + 1, lastAttemptAt: now.toISOString() }
+    : { status: "FAILED", attempts: (before?.attempts ?? 0) + 1, error: "The mailbox does not exist or cannot receive mail (simulated).", lastAttemptAt: now.toISOString() };
+  deliveries().set(id, d);
+  return d;
+}
+
+const escapeHtml = (v: string) => v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+const toHtml = (body: string) => `<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.5">${body.split(/\n{2,}/).map((p) => `<p>${escapeHtml(p).replace(/\n/g, "<br>")}</p>`).join("")}</div>`;
+
+/** An administrator sends an email to one address. The subject (1 to 200 characters) and the body (1 to 10000) are plain text. The result tells whether it was delivered. */
+export function sendAdminEmail(input: { to: string; subject: string; body: string; sentBy: string }, now = new Date()): { email: AdminMessageEmail; delivery: Delivery } {
+  const body = input.body.trim();
+  const email: AdminMessageEmail = { id: newUuid(), type: "ADMIN_MESSAGE", to: input.to.trim().toLowerCase(), locale: "en", subject: input.subject.trim(), text: body, html: toHtml(body), body, sentBy: input.sentBy, createdAt: now.toISOString() };
+  box().push(email);
+  return { email, delivery: attempt(email.id, email.to, now) };
+}
+
+/** The worker tries again an email whose delivery failed. Null when the email is not known or was delivered. */
+export function resendEmail(id: string, now = new Date()): Delivery | null {
+  const email = outboxEmail(id);
+  if (!email || deliveryOf(id).status !== "FAILED") return null;
+  return attempt(id, email.to, now);
 }

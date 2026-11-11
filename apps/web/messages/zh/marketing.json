@@ -7,7 +7,9 @@
     },
     "privacy": {
       "title": "隐私政策"
-    }
+    },
+    "updated": "最后更新 {date} · 版本 {version}",
+    "fallback": "此内容暂无您所用语言的版本，当前显示英文版。"
   },
   "nav": {
     "home": "首页",

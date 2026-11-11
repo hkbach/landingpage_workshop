@@ -7,7 +7,9 @@
     },
     "privacy": {
       "title": "Privacy Policy"
-    }
+    },
+    "updated": "Last updated {date} · version {version}",
+    "fallback": "This text is not available in your language yet. The English text is shown."
   },
   "nav": {
     "home": "Home",

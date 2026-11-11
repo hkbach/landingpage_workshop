@@ -1,11 +1,11 @@
 import { apiError } from "@/lib/api-error";
-import { adminAffiliate, adminAuditRows, adminBookings, adminCustomers, adminLandingPages, adminReferralLinks, adminSessions, adminShops, adminUsers, adminWithdrawals, adminWorkshops } from "@/lib/mock/admin-directory";
+import { adminAffiliate, adminAuditRows, adminEmails, adminMessages, adminBookings, adminCustomers, adminLandingPages, adminReferralLinks, adminSessions, adminShops, adminUsers, adminWithdrawals, adminWorkshops } from "@/lib/mock/admin-directory";
 
 // The lists of the system admin area: GET /api/v1/admin/directory/{users|shops|workshops|bookings|customers|sessions|landing-pages|affiliate|referrals|withdrawals|audit-logs}?q=... (audit-logs: email, org, action, entity, role instead of q)
 // Filters: q (the search typed), type / status (users, shops, sessions), shopId (workshops, sessions), from / to ("YYYY-MM-DD": bookings, affiliate and referrals). MOCK implementation
 // inside Next until apps/api exists. TODO(api): SUPER_ADMIN only; page and pageSize; the audit log of the reads of personal data.
 
-const NAMES = ["users", "shops", "workshops", "bookings", "customers", "sessions", "landing-pages", "affiliate", "referrals", "withdrawals", "audit-logs"] as const;
+const NAMES = ["users", "shops", "workshops", "bookings", "customers", "sessions", "landing-pages", "affiliate", "referrals", "withdrawals", "audit-logs", "messages", "emails"] as const;
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 
 export async function GET(request: Request, ctx: RouteContext<"/api/v1/admin/directory/[name]">) {
@@ -27,6 +27,8 @@ export async function GET(request: Request, ctx: RouteContext<"/api/v1/admin/dir
     : name === "affiliate" ? adminAffiliate(q, from, to)
     : name === "referrals" ? adminReferralLinks(q, from, to)
     : name === "withdrawals" ? adminWithdrawals(q, get("status"), from, to, get("source"))
+    : name === "messages" ? adminMessages(q, get("status"), get("topic"))
+    : name === "emails" ? adminEmails(q, get("type"), get("status"))
     : name === "audit-logs" ? adminAuditRows({ email: get("email").slice(0, 200), org: get("org").slice(0, 200), action: get("action"), entity: get("entity"), role: get("role"), from, to })
     : adminLandingPages(q);
   return Response.json({ items }, { headers: { "cache-control": "no-store" } });
