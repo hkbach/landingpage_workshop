@@ -7,7 +7,7 @@ import { resetBookingStore } from "@/lib/mock/booking-store";
 import { resetFeeRates } from "@/lib/mock/fee-rates-store";
 import { resetInviteStore } from "@/lib/mock/invite-store";
 import { resetReferralStore } from "@/lib/mock/referral-store";
-import { resetWalletStore, walletOf } from "@/lib/mock/wallet-store";
+import { listWithdrawals, resetWalletStore, walletOf } from "@/lib/mock/wallet-store";
 import { POST as process } from "./admin/withdrawals/[id]/route";
 import { GET as wallet } from "./customer/[id]/wallet/route";
 import { POST as withdraw } from "./customer/[id]/withdrawals/route";
@@ -46,10 +46,10 @@ describe("a withdrawal", () => {
     const amount = Math.min(70_000, before.available);
     const res = await ask("cu-4", "REFERRAL", amount);
     expect(res.status).toBe(201);
-    expect(await body(res)).toMatchObject({ code: "WD-0004", amount, status: "PENDING", currency: "VND" });
+    expect(await body(res)).toMatchObject({ code: `WD-${String(listWithdrawals().length).padStart(4, "0")}`, amount, status: "PENDING", currency: "VND" });
     const after = await walletOf$("cu-4", "REFERRAL");
     expect([after.pending, after.available, after.earned]).toEqual([amount, before.available - amount, before.earned]);
-    expect(after.items[0]).toMatchObject({ code: "WD-0004", status: "PENDING" });
+    expect(after.items[0]).toMatchObject({ status: "PENDING", amount });
   });
   it("is refused for an amount that is not a whole positive number, and for more than is available", async () => {
     for (const amount of [0, -5, 1.5, "100", null]) {
@@ -100,13 +100,15 @@ describe("the admin processes an invoice", () => {
 describe("the list of the admin", () => {
   it("puts the pending invoices first and searches by invoice number, email and name", async () => {
     const all = adminWithdrawals();
-    expect(all.map((w) => w.code)).toEqual(["WD-0002", "WD-0003", "WD-0001"]); // pending, then newest
+    expect(all.slice(0, 3).every((w) => w.status === "PENDING")).toBe(true); // the pending ones first
+    expect(adminWithdrawals("thu@example.com").map((w) => w.code)).toEqual(["WD-0002", "WD-0003", "WD-0001"]); // pending, then newest
     expect(adminWithdrawals("wd-0001").map((w) => w.code)).toEqual(["WD-0001"]);
     expect(adminWithdrawals("thu@example").length).toBe(3);
     expect(adminWithdrawals("nobody@example.com")).toEqual([]);
-    expect(adminWithdrawals("", "PAID").map((w) => w.code)).toEqual(["WD-0001"]);
-    expect(adminWithdrawals("", "", "", "", "REFERRAL").map((w) => w.code)).toEqual(["WD-0003"]);
+    expect(adminWithdrawals("thu@example.com", "PAID").map((w) => w.code)).toEqual(["WD-0001"]);
+    expect(adminWithdrawals("thu@example.com", "", "", "", "REFERRAL").map((w) => w.code)).toEqual(["WD-0003"]);
+    expect(adminWithdrawals("", "REJECTED").length).toBeGreaterThanOrEqual(2);
     expect(adminWithdrawals("", "", "2999-01-01")).toEqual([]);
-    expect(all[0]).toMatchObject({ accountEmail: "thu@example.com", source: "AFFILIATE", status: "PENDING" });
+    expect(adminWithdrawals("thu@example.com")[0]).toMatchObject({ accountEmail: "thu@example.com", source: "AFFILIATE", status: "PENDING" });
   });
 });

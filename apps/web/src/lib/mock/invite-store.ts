@@ -35,10 +35,20 @@ const DAY = 86_400_000;
 const g = globalThis as unknown as { __inviteCodes?: Map<string, string>; __invites?: Invite[] };
 const codes = (): Map<string, string> => (g.__inviteCodes ??= new Map());
 
-/** A few friends to look at: customers of the demo data invited by other customers, registered long before the demo bookings. */
+/**
+ * Friends to look at, one row each: [inviter, friend, days ago the friend registered]. They cover every case of the Referrals page: a friend who paid a booking after registering (the bonus
+ * is earned), friends still waiting for a first paid booking, and a friend whose only paid booking was made BEFORE registering (it does not count: Registered). Customers with no row
+ * (for example cu-9, cu-12, cu-14, cu-16, cu-17, cu-18) have invited nobody: the empty page.
+ */
 function seed(): Invite[] {
-  const rows: Array<[string, string]> = [["cu-1", "cu-2"], ["cu-1", "cu-7"], ["cu-1", "cu-12"], ["cu-4", "cu-5"], ["cu-4", "cu-6"]];
-  return rows.map(([inviterId, inviteeId], i) => ({ id: `iv-${i + 1}`, inviterId, inviteeId, registeredAt: new Date(Date.now() - 400 * DAY).toISOString() }));
+  const rows: Array<[string, string, number]> = [
+    ["cu-1", "cu-2", 400], ["cu-1", "cu-7", 400], ["cu-1", "cu-12", 400], ["cu-4", "cu-5", 400], ["cu-4", "cu-6", 400],
+    ["cu-1", "cu-14", 2], // paid a booking long before registering: does not count
+    ["cu-5", "cu-15", 300], // paid a booking after registering: earned
+    ["cu-5", "cu-17", 20], // no paid booking yet
+    ["cu-6", "cu-18", 10], // the only friend of cu-6, no paid booking yet
+  ];
+  return rows.map(([inviterId, inviteeId, days], i) => ({ id: `iv-${i + 1}`, inviterId, inviteeId, registeredAt: new Date(Date.now() - days * DAY).toISOString() }));
 }
 const store = (): Invite[] => (g.__invites ??= seed());
 

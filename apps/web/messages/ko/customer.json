@@ -242,5 +242,16 @@
       "REJECTED": "거절됨"
     },
     "reason": "사유: {reason}"
+  },
+  "support": {
+    "title": "도움이 필요하신가요?",
+    "hint": "플랫폼 팀에 문의하세요.",
+    "channels": {
+      "whatsapp": "WhatsApp",
+      "phone": "전화",
+      "zalo": "Zalo",
+      "email": "이메일"
+    },
+    "opensNewTab": "새 탭에서 열림"
   }
 }

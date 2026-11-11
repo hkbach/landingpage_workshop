@@ -242,5 +242,16 @@
       "REJECTED": "却下"
     },
     "reason": "理由：{reason}"
+  },
+  "support": {
+    "title": "サポートが必要ですか？",
+    "hint": "プラットフォームのチームにご連絡ください。",
+    "channels": {
+      "whatsapp": "WhatsApp",
+      "phone": "電話",
+      "zalo": "Zalo",
+      "email": "メール"
+    },
+    "opensNewTab": "新しいタブで開きます"
   }
 }

@@ -242,5 +242,16 @@
       "REJECTED": "已拒绝"
     },
     "reason": "原因：{reason}"
+  },
+  "support": {
+    "title": "需要帮助？",
+    "hint": "请联系平台团队。",
+    "channels": {
+      "whatsapp": "WhatsApp",
+      "phone": "电话",
+      "zalo": "Zalo",
+      "email": "邮箱"
+    },
+    "opensNewTab": "在新标签页中打开"
   }
 }

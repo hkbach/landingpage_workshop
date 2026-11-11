@@ -242,5 +242,16 @@
       "REJECTED": "Bị từ chối"
     },
     "reason": "Lý do: {reason}"
+  },
+  "support": {
+    "title": "Cần hỗ trợ?",
+    "hint": "Liên hệ đội ngũ của nền tảng.",
+    "channels": {
+      "whatsapp": "WhatsApp",
+      "phone": "Điện thoại",
+      "zalo": "Zalo",
+      "email": "Email"
+    },
+    "opensNewTab": "mở trong tab mới"
   }
 }

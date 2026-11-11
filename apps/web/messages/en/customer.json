@@ -242,5 +242,16 @@
       "REJECTED": "Rejected"
     },
     "reason": "Reason: {reason}"
+  },
+  "support": {
+    "title": "Need help?",
+    "hint": "Contact the platform team.",
+    "channels": {
+      "whatsapp": "WhatsApp",
+      "phone": "Phone",
+      "zalo": "Zalo",
+      "email": "Email"
+    },
+    "opensNewTab": "opens in a new tab"
   }
 }

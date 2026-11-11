@@ -41,17 +41,29 @@ function workshopActive(workshopId: string): boolean {
   return Object.values(otherShopSites).some((s) => s.workshops.some((w) => w.id === workshopId && w.status === "ACTIVE"));
 }
 
-/** A few links to look at: customers of the demo data share a workshop of the demo shop and one of another shop. */
+/**
+ * Links to look at, one row each: [code, workshop, customer number, days ago it was made, clicks]. They cover every case of the Affiliate pages: a link that earns (its workshop has
+ * paid bookings of other people), one that has clicks and no booking, one nobody opened yet, a link of a workshop at another shop, and links of workshops that were deactivated (Deactive).
+ * Customers with none (for example cu-9, cu-12, cu-14 to cu-18) show the empty page.
+ */
 function seed(): Referral[] {
   const demo = demoWorkshops.filter((w) => w.status === "ACTIVE");
   const other = Object.values(otherShopSites).flatMap((s) => s.workshops);
-  const rows: Array<[string, string | undefined, number, number]> = [
-    ["EMMA-FRESH", demo[0]?.id, 1, 12], ["EMMA-WHEEL", demo[1]?.id, 1, 6], ["THU-SHARE", demo[0]?.id, 4, 3], ["YUKI-CRAFT", demo[1]?.id, 5, 5],
-    ["WEI-BREW", other[0]?.id, 6, 2], ["KHOA-GREEN", other[other.length - 1]?.id, 7, 1],
+  const rows: Array<[string, string | undefined, number, number, number]> = [
+    ["EMMA-FRESH", demo[0]?.id, 1, 12, 20], ["EMMA-WHEEL", demo[1]?.id, 1, 6, 27], ["THU-SHARE", demo[0]?.id, 4, 3, 34], ["YUKI-CRAFT", demo[1]?.id, 5, 5, 41],
+    ["WEI-BREW", other[0]?.id, 6, 2, 48], ["KHOA-GREEN", other[other.length - 1]?.id, 7, 1, 55],
+    ["EMMA-SOUR", "ws-3", 1, 40, 35], // its workshop was deactivated: Deactive
+    ["EMMA-BEAN", "ws-b1", 1, 9, 18], // at another shop: clicks, no paid booking
+    ["EMMA-NEW", "ws-g1", 1, 0, 0], // made today: nobody opened it yet
+    ["THU-DIMSUM", "ws-4", 4, 7, 41],
+    ["THU-DINNER", "ws-5", 4, 25, 12], // deactivated workshop
+    ["YUKI-DIMSUM", "ws-4", 5, 15, 26],
+    ["WEI-PASTA", "ws-1", 6, 1, 0],
+    ["KHOA-LATTE", "ws-b3", 7, 4, 9],
   ];
-  return rows.flatMap(([code, workshopId, n, days], i) => {
+  return rows.flatMap(([code, workshopId, n, days, clicks], i) => {
     const shopId = workshopId ? workshopShop(workshopId) : undefined;
-    return workshopId && shopId ? [{ id: `rf-${i + 1}`, code, accountId: `cu-${n}`, workshopId, shopId, createdAt: new Date(Date.now() - days * DAY).toISOString(), clicks: 20 + i * 7 }] : [];
+    return workshopId && shopId ? [{ id: `rf-${i + 1}`, code, accountId: `cu-${n}`, workshopId, shopId, createdAt: new Date(Date.now() - days * DAY).toISOString(), clicks }] : [];
   });
 }
 

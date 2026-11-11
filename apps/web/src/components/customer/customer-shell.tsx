@@ -11,6 +11,8 @@ import { CustomerAvatar } from "@/components/ops/customer-avatar";
 import { LocaleSwitcher } from "@/components/dashboard/shell/locale-switcher";
 import { siteFontClass } from "@/components/sections/site-fonts";
 import { modalThemeStyle } from "@/components/sections/theme";
+import { CustomerSupport } from "./customer-support";
+import type { SupportContact } from "@/lib/support-contact";
 import { GuestLoginForm } from "@/components/site/FavoritesProvider";
 import { CustomerApiError, fetchCustomerProfile, type CustomerProfile } from "@/lib/customer-api";
 import { readGuestEmail, subscribeFavorites, writeGuestEmail } from "@/lib/favorites";
@@ -53,7 +55,7 @@ const card = "mx-auto mt-16 w-full max-w-md rounded-xl border bg-background p-6 
  * says 404 for both). The login is the one of the landing page of the shop. While the prototype is tested the login is switched off and the area opens by its address.
  * TODO(api): the guest session is a cookie checked by the server; here the browser keeps the email of the OTP login and sends it with each request.
  */
-export function CustomerShell({ accountId, shop, theme, loginRequired, children }: { accountId: string; shop: CustomerShop; theme: PageTheme; loginRequired: boolean; children: ReactNode }) {
+export function CustomerShell({ accountId, shop, theme, loginRequired, support, children }: { accountId: string; shop: CustomerShop; theme: PageTheme; loginRequired: boolean; /** How to reach the platform team (shown under the menu). */ support?: SupportContact; children: ReactNode }) {
   const t = useTranslations("customer");
   const router = useRouter();
   const pathname = usePathname();
@@ -119,6 +121,7 @@ export function CustomerShell({ accountId, shop, theme, loginRequired, children 
           </div>
         </header>
         <div className="mx-auto grid max-w-6xl gap-4 px-4 py-6 md:grid-cols-[13rem_minmax(0,1fr)]">
+          <div className="min-w-0">
           <nav aria-label={t("shell.menuLabel")}>
             <ul className="flex gap-1 overflow-x-auto md:flex-col">
               {CUSTOMER_MENUS.map(({ path, key, icon: Icon }) => {
@@ -137,6 +140,8 @@ export function CustomerShell({ accountId, shop, theme, loginRequired, children 
               })}
             </ul>
           </nav>
+          <CustomerSupport contact={support} />
+          </div>
           <main id="main" className="min-w-0">{children}</main>
         </div>
       </div>

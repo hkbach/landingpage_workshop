@@ -39,14 +39,29 @@ export interface Wallet { source: WalletSource; currency: string; earned: number
 const DAY = 86_400_000;
 const g = globalThis as unknown as { __withdrawals?: Withdrawal[] };
 
-/** A few invoices to look at: a paid one and a pending one for the affiliate fee, a rejected one for the referral bonus. */
+/**
+ * Invoices to look at, in every state: PAID, PENDING and REJECTED (with a reason), for each program. cu-4 has one of each kind; cu-1 has a long history; cu-5 has a pending
+ * affiliate invoice and a referral balance that is withdrawn in full (nothing left to withdraw); cu-6 and the others have none (the empty History).
+ */
 function seed(): Withdrawal[] {
   const at = (days: number) => new Date(Date.now() - days * DAY).toISOString();
   const cur = currentShop.currency;
+  const row = (n: number, accountId: string, source: WalletSource, amount: number, status: WithdrawalStatus, requestedDaysAgo: number, processedDaysAgo?: number, reason?: string): Withdrawal => ({
+    id: `wd-${n}`, code: `WD-${String(n).padStart(4, "0")}`, accountId, source, amount, currency: cur, status, requestedAt: at(requestedDaysAgo),
+    ...(processedDaysAgo === undefined ? {} : { processedAt: at(processedDaysAgo) }), ...(reason ? { reason } : {}),
+  });
   return [
-    { id: "wd-1", code: "WD-0001", accountId: "cu-4", source: "AFFILIATE", amount: 200_000, currency: cur, status: "PAID", requestedAt: at(12), processedAt: at(10) },
-    { id: "wd-2", code: "WD-0002", accountId: "cu-4", source: "AFFILIATE", amount: 100_000, currency: cur, status: "PENDING", requestedAt: at(2) },
-    { id: "wd-3", code: "WD-0003", accountId: "cu-4", source: "REFERRAL", amount: 50_000, currency: cur, status: "REJECTED", requestedAt: at(8), processedAt: at(6), reason: "Bank account details do not match the name of the account." },
+    row(1, "cu-4", "AFFILIATE", 200_000, "PAID", 12, 10),
+    row(2, "cu-4", "AFFILIATE", 100_000, "PENDING", 2),
+    row(3, "cu-4", "REFERRAL", 50_000, "REJECTED", 8, 6, "Bank account details do not match the name of the account."),
+    row(4, "cu-1", "AFFILIATE", 100_000, "PAID", 30, 28),
+    row(5, "cu-1", "AFFILIATE", 50_000, "PAID", 18, 16),
+    row(6, "cu-1", "AFFILIATE", 50_000, "REJECTED", 11, 9, "The payout details are incomplete."),
+    row(7, "cu-1", "AFFILIATE", 100_000, "PENDING", 1),
+    row(8, "cu-1", "REFERRAL", 70_000, "PAID", 10, 8),
+    row(9, "cu-1", "REFERRAL", 40_000, "PENDING", 3),
+    row(10, "cu-5", "AFFILIATE", 20_000, "PENDING", 1),
+    row(11, "cu-5", "REFERRAL", 65_000, "PAID", 5, 3), // the whole referral balance: nothing left to withdraw
   ];
 }
 const store = (): Withdrawal[] => (g.__withdrawals ??= seed());
