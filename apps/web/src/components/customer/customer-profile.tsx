@@ -85,6 +85,7 @@ export function CustomerProfileView() {
           <p className="text-sm text-muted-foreground">{t("intro", { shop: shop.name })}</p>
         </div>
       </div>
+      {!profile.account.birthDate ? <p role="status" className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950" data-testid="profile-incomplete">{t("completeBanner")}</p> : null}
       <Card>
         <CardContent className="grid gap-4 pt-4 sm:grid-cols-2">
           <Field htmlFor="cp-email" label={t("email")} hint={t("emailHint")}>

@@ -63,7 +63,8 @@
     },
     "categories": "Ngành nghề yêu thích",
     "categoriesHint": "Chọn đúng 3 ngành nghề workshop bạn thích.",
-    "categoriesCount": "Đã chọn {count}/{max}"
+    "categoriesCount": "Đã chọn {count}/{max}",
+    "completeBanner": "Hồ sơ của bạn chưa đầy đủ. Hãy thêm quốc gia và ngày sinh để các studio bạn đặt chỗ biết ai sẽ đến."
   },
   "workshops": {
     "shopLine": "Shop: {shop}",

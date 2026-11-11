@@ -63,7 +63,8 @@
     },
     "categories": "お気に入りの分野",
     "categoriesHint": "好きなワークショップの分野をちょうど3つ選んでください。",
-    "categoriesCount": "{max}個中{count}個を選択"
+    "categoriesCount": "{max}個中{count}個を選択",
+    "completeBanner": "プロフィールがまだ完成していません。国と生年月日を追加すると、予約したスタジオが来場者を把握できます。"
   },
   "workshops": {
     "shopLine": "ショップ：{shop}",

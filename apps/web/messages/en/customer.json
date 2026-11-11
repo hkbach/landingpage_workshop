@@ -63,7 +63,8 @@
     },
     "categories": "Favorite categories",
     "categoriesHint": "Choose exactly 3 categories of workshops you like.",
-    "categoriesCount": "{count} of {max} chosen"
+    "categoriesCount": "{count} of {max} chosen",
+    "completeBanner": "Your profile is not complete yet. Add your country and date of birth so the studios you book with know who is coming."
   },
   "workshops": {
     "shopLine": "Shop: {shop}",

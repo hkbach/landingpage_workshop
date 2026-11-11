@@ -63,7 +63,8 @@
     },
     "categories": "喜欢的类别",
     "categoriesHint": "请恰好选择 3 个您喜欢的工作坊类别。",
-    "categoriesCount": "已选 {count}/{max}"
+    "categoriesCount": "已选 {count}/{max}",
+    "completeBanner": "您的资料尚未完善。请补充国家和出生日期，让您预订的工作室知道来的是谁。"
   },
   "workshops": {
     "shopLine": "商店：{shop}",

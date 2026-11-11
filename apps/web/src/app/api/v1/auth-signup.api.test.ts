@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
 import { resetAccountStatus } from "@/lib/mock/account-status";
 import { findAccountByEmail, resetAccountsStore } from "@/lib/mock/accounts-store";
@@ -104,5 +106,15 @@ describe("POST /auth/signup: checks for both kinds", () => {
     const [line] = liveAuditLogs();
     expect(line).toMatchObject({ action: "auth.signup", actorRole: "SHOP_OWNER", actorEmail: "maker@example.com", details: "shop clay-co-studio" });
     expect(JSON.stringify(line)).not.toContain(PW);
+  });
+});
+
+describe("a customer who signed up with the popup completes the profile later", () => {
+  it("the account starts without a date of birth, and My Profile shows a banner until it is filled in", async () => {
+    await post(signup, customer());
+    expect(findAccountByEmail("new.person@example.com")).toBeTruthy();
+    const source = readFileSync(join(__dirname, "..", "..", "..", "components/customer/customer-profile.tsx"), "utf8");
+    expect(source).toContain("!profile.account.birthDate");
+    expect(source).toContain('data-testid="profile-incomplete"');
   });
 });
