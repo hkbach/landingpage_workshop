@@ -754,7 +754,11 @@
       "site": "Quay lại Landing pages",
       "sessions": "Quay lại Sessions",
       "workshops": "Quay lại Workshops"
-    }
+    },
+    "reasonLabel": "Lý do cho các thay đổi (bắt buộc)",
+    "reasonPlaceholder": "Ví dụ: shop owner nhờ chúng tôi sửa giờ mở cửa",
+    "reasonHint": "Nhập lý do trước khi thay đổi bất cứ điều gì: shop owner được báo qua email về thay đổi và lý do.",
+    "reasonSet": "Shop owner sẽ được báo qua email, kèm lý do này, về mỗi thay đổi bạn thực hiện."
   },
   "shopEdit": {
     "title": "Chỉnh sửa {name}",

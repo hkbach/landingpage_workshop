@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { apiError } from "@/lib/api-error";
 import { switchWorkshop } from "@/lib/mock/workshop-status-store";
+import { adminEditGate, noteAdminEdit } from "@/lib/mock/admin-edit";
 import { recordAudit } from "@/lib/mock/admin-audit-store";
 import { ownerActor, DEMO_ORG } from "@/lib/mock/audit-actors";
 
@@ -13,6 +14,8 @@ const bodySchema = z.object({ status: z.enum(["ACTIVE", "DRAFT"], { error: "inva
  * only deactivated when all its sessions are Closed; `details.open` says how many are not). */
 export async function POST(request: Request, ctx: RouteContext<"/api/v1/workshops/[id]/status">) {
   const { id } = await ctx.params;
+  const refused = adminEditGate(request);
+  if (refused) return refused;
   let body: unknown;
   try {
     body = await request.json();
@@ -24,6 +27,7 @@ export async function POST(request: Request, ctx: RouteContext<"/api/v1/workshop
   const res = switchWorkshop(id, parsed.data.status);
   if (res.ok) {
     recordAudit({ ...ownerActor(request), action: parsed.data.status === "ACTIVE" ? "workshop.activate" : "workshop.deactivate", entityType: "Workshop", entityId: id, organizationId: DEMO_ORG });
+    noteAdminEdit(request, { action: parsed.data.status === "ACTIVE" ? "workshop.activate" : "workshop.deactivate", entityType: "Workshop", entityId: id, summary: `a workshop was ${parsed.data.status === "ACTIVE" ? "activated" : "deactivated"}` });
     return Response.json({ workshop: res.workshop });
   }
   if (res.code === "NOT_FOUND") return apiError(404, "NOT_FOUND", "Workshop not found.");

@@ -754,7 +754,11 @@
       "site": "Back to Landing pages",
       "sessions": "Back to Sessions",
       "workshops": "Back to Workshops"
-    }
+    },
+    "reasonLabel": "Reason for your changes (required)",
+    "reasonPlaceholder": "For example: the shop owner asked us to fix the opening hours",
+    "reasonHint": "Enter the reason before you change anything: the shop owner is told by email what changed and why.",
+    "reasonSet": "The shop owner will be told by email, with this reason, about each change you make."
   },
   "shopEdit": {
     "title": "Edit {name}",

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { checkRescheduleReason } from "@workshop/shared";
 import { apiError, fieldCodes } from "@/lib/api-error";
 import { mailSessionRescheduled } from "@/lib/mock/session-mail";
+import { adminEditGate, noteAdminEdit } from "@/lib/mock/admin-edit";
 import { recordAudit } from "@/lib/mock/admin-audit-store";
 import { ownerActor, DEMO_ORG } from "@/lib/mock/audit-actors";
 
@@ -19,6 +20,8 @@ const bodySchema = z.object({
 
 export async function POST(request: Request, ctx: RouteContext<"/api/v1/sessions/[id]/reschedule">) {
   const { id } = await ctx.params;
+  const refused = adminEditGate(request);
+  if (refused) return refused;
   let body: unknown;
   try {
     body = await request.json();
@@ -33,6 +36,7 @@ export async function POST(request: Request, ctx: RouteContext<"/api/v1/sessions
 
   // Every guest who booked the session is told, except the ones who cancelled their booking (sessions made in the browser only have no bookings here).
   recordAudit({ ...ownerActor(request), action: "session.reschedule", entityType: "Session", entityId: id, organizationId: DEMO_ORG, details: reason.reason.code });
+  noteAdminEdit(request, { action: "session.reschedule", entityType: "Session", entityId: id, summary: "a session was moved to another time" });
   return Response.json(mailSessionRescheduled(id, {
     oldStartsAt: parsed.data.oldStartsAt, newStartsAt: parsed.data.newStartsAt, newEndsAt: parsed.data.newEndsAt, reason: reason.reason,
   }));

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { checkCloseReasonFor } from "@workshop/shared";
 import { apiError, fieldCodes } from "@/lib/api-error";
 import { mailSessionClosed } from "@/lib/mock/session-mail";
+import { adminEditGate, noteAdminEdit } from "@/lib/mock/admin-edit";
 import { recordAudit } from "@/lib/mock/admin-audit-store";
 import { ownerActor, DEMO_ORG } from "@/lib/mock/audit-actors";
 
@@ -17,6 +18,8 @@ const bodySchema = z.object({
 
 export async function POST(request: Request, ctx: RouteContext<"/api/v1/sessions/[id]/closed">) {
   const { id } = await ctx.params;
+  const refused = adminEditGate(request);
+  if (refused) return refused;
   let body: unknown;
   try {
     body = await request.json();
@@ -28,5 +31,6 @@ export async function POST(request: Request, ctx: RouteContext<"/api/v1/sessions
   const reason = checkCloseReasonFor(parsed.data, new Date(), parsed.data.reason.code, parsed.data.reason.note ?? "");
   if (!reason.ok) return apiError(422, "VALIDATION", "A reason is required.", { fields: { reason: reason.error === "NOTE_REQUIRED" ? "noteRequired" : "required" } });
   recordAudit({ ...ownerActor(request), action: "session.close", entityType: "Session", entityId: id, organizationId: DEMO_ORG, details: reason.reason.code });
+  noteAdminEdit(request, { action: "session.close", entityType: "Session", entityId: id, summary: "a session was closed" });
   return Response.json(mailSessionClosed(id, { startsAt: parsed.data.startsAt, endsAt: parsed.data.endsAt, reason: reason.reason }));
 }
