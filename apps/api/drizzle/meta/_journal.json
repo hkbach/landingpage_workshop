@@ -36,6 +36,20 @@
       "when": 1794473010554,
       "tag": "0004_session_origin_slot",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794473967402,
+      "tag": "0005_customers_bookings_payments",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794473968523,
+      "tag": "0006_booking_triggers",
+      "breakpoints": true
     }
   ]
 }

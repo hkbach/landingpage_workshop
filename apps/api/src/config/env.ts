@@ -15,6 +15,8 @@ const schema = z
 
     // Where the web app lives: the origin the browser sends in `Origin` (CSRF check) and the base of the links in the emails.
     APP_URL: z.url().default("http://app.localtest.me:3000"),
+    /** The domain the landing pages live under: a shop is at `{slug}.{PLATFORM_DOMAIN}` (same scheme and port as APP_URL). Used for the links of the emails sent to guests. */
+    PLATFORM_DOMAIN: z.string().regex(/^[a-z0-9.-]+$/i, "invalid").default("localtest.me"),
     SESSION_COOKIE_NAME: z.string().regex(/^[A-Za-z0-9_-]{1,40}$/).default("wsp_sid"),
     SESSION_TTL_DAYS: z.coerce.number().int().min(1).max(90).default(14),
     /** How many reverse proxies stand in front of the API (0 = none: the client is the socket). Never trust a header the client can write. */

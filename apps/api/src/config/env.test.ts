@@ -7,7 +7,7 @@ describe("parseEnv", () => {
   it("applies the defaults and keeps the database url", () => {
     expect(parseEnv({ DATABASE_URL: URL })).toMatchObject({
       NODE_ENV: "development", API_PORT: 4000, LOG_LEVEL: "info", DATABASE_URL: URL, SESSION_COOKIE_NAME: "wsp_sid", SESSION_TTL_DAYS: 14, TRUST_PROXY_HOPS: 0,
-      REQUIRE_EMAIL_VERIFICATION: false, RESET_LINK_HOURS: 24, EMAIL_PROVIDER: "mailpit", JOBS_ENABLED: true,
+      REQUIRE_EMAIL_VERIFICATION: false, PLATFORM_DOMAIN: "localtest.me", RESET_LINK_HOURS: 24, EMAIL_PROVIDER: "mailpit", JOBS_ENABLED: true,
     });
   });
 

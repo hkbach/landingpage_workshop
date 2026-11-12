@@ -94,6 +94,8 @@ export const workshopSessions = pgTable(
     capacity: integer("capacity").notNull(),
     /** Changed ONLY by SessionCapacityService under a row lock (CLAUDE.md); never written elsewhere. */
     reservedCount: integer("reserved_count").notNull().default(0),
+    /** The last booking number given in this session: "SES-0003-042" is 42. Bumped under the row lock of the session, so codes never repeat. */
+    bookingSeq: integer("booking_seq").notNull().default(0),
     status: sessionStatus("status").notNull().default("OPEN"),
     /** True when the system closed the session because its time was over. */
     autoClosed: boolean("auto_closed").notNull().default(false),

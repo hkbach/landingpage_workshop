@@ -1,4 +1,5 @@
-import { type CanActivate, type ExecutionContext, ForbiddenException, Inject, Injectable, UnauthorizedException, createParamDecorator } from "@nestjs/common";
+import { type CanActivate, type ExecutionContext, ForbiddenException, Inject, Injectable, SetMetadata, UnauthorizedException, createParamDecorator } from "@nestjs/common";
+import { Reflector } from "@nestjs/core";
 import { and, eq } from "drizzle-orm";
 import type { FastifyRequest } from "fastify";
 import type { Env } from "../config/env";
@@ -20,6 +21,13 @@ declare module "fastify" {
 
 const MUTATING = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
+export const PUBLIC_ROUTE = "publicRoute";
+/**
+ * Marks an endpoint of the PUBLIC site (the landing page of a shop: booking, report, contact). It never reads the session cookie, so another site cannot forge anything with it, and its
+ * callers are the landing pages of every shop and every custom domain (each a different origin): the Origin check does not apply. Other protections (Turnstile, rate limits) do.
+ */
+export const PublicRoute = (): MethodDecorator & ClassDecorator => SetMetadata(PUBLIC_ROUTE, true);
+
 /**
  * CSRF (REQUIREMENTS 7.5), on top of SameSite=Lax: a request that changes something must come from the web app. The browser always sends `Origin` on such a request, so an `Origin`
  * of another site is refused. Without `Origin` (and `Referer`) only a request that carries NO session cookie is let through (a script or a tool: it has nothing to forge).
@@ -27,13 +35,14 @@ const MUTATING = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 @Injectable()
 export class OriginGuard implements CanActivate {
   private readonly allowed: string;
-  constructor(@Inject(ENV) private readonly env: Env) {
+  constructor(@Inject(ENV) private readonly env: Env, @Inject(Reflector) private readonly reflector: Reflector) {
     this.allowed = new URL(env.APP_URL).origin;
   }
 
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest<FastifyRequest>();
     if (!MUTATING.has(request.method)) return true;
+    if (this.reflector.getAllAndOverride<boolean | undefined>(PUBLIC_ROUTE, [context.getHandler(), context.getClass()])) return true;
     const origin = request.headers.origin;
     let seen: string | undefined = typeof origin === "string" && origin !== "null" ? origin : undefined;
     if (!seen && typeof request.headers.referer === "string") {
