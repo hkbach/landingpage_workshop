@@ -22,8 +22,17 @@ export async function createApp(env: Pick<Env, "LOG_LEVEL" | "NODE_ENV"> & Parti
     trustProxy: (env.TRUST_PROXY_HOPS ?? 0) > 0 ? (_address: string, hop: number) => hop < (env.TRUST_PROXY_HOPS ?? 0) : false,
   });
   const app = await NestFactory.create<NestFastifyApplication>(AppModule.forRoot(options), adapter, { bufferLogs: true, ...(env.NODE_ENV === "test" ? { logger: false } : {}) });
+  const production = env.NODE_ENV === "production";
   app.getHttpAdapter().getInstance().addHook("onSend", async (request, reply) => {
     void reply.header("x-request-id", request.id);
+    // An API answer is data for the web app, never a page: no sniffing, no framing, no referrer, nothing cached by a shared cache (it can hold personal data), and HTTPS only in production.
+    void reply.header("x-content-type-options", "nosniff");
+    void reply.header("referrer-policy", "no-referrer");
+    void reply.header("content-security-policy", "default-src 'none'; frame-ancestors 'none'");
+    void reply.header("cross-origin-resource-policy", "same-site");
+    if (!reply.hasHeader("cache-control")) void reply.header("cache-control", "no-store");
+    if (production) void reply.header("strict-transport-security", "max-age=31536000; includeSubDomains");
+    reply.removeHeader("x-powered-by");
   });
   // The endpoints of the product are under /api/v1; the checks of the infrastructure are not.
   app.setGlobalPrefix("api/v1", { exclude: ["health", "ready"] });

@@ -35,6 +35,18 @@ describe("the API application", () => {
     expect(res.json().error).toMatchObject({ code: "NOT_FOUND", requestId: "abc-12345678" });
   });
 
+  it("sets the security headers on every answer, an error included, and never caches", async () => {
+    for (const url of ["/health", "/api/v1/nothing-here", "/ready"]) {
+      const res = await app.inject({ method: "GET", url });
+      expect(res.headers["x-content-type-options"], url).toBe("nosniff");
+      expect(res.headers["referrer-policy"], url).toBe("no-referrer");
+      expect(res.headers["content-security-policy"], url).toContain("frame-ancestors 'none'");
+      expect(res.headers["cache-control"], url).toBe("no-store");
+      expect(res.headers["strict-transport-security"], url).toBeUndefined(); // only in production (http in development)
+      expect(res.headers["x-powered-by"], url).toBeUndefined();
+    }
+  });
+
   it("replaces a request id that is not a plain token, and keeps the product under /api/v1 only", async () => {
     const own = await app.inject({ method: "GET", url: "/health", headers: { "x-request-id": "bad id with spaces" } });
     expect(own.headers["x-request-id"]).toMatch(/^[0-9a-f-]{36}$/);
