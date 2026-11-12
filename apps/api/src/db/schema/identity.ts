@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { check, index, pgTable, primaryKey, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { check, index, integer, pgTable, primaryKey, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { memberRole, memberStatus, orgStatus, platformRole, userStatus, userTokenType } from "./enums";
 
 // Identity and tenant (REQUIREMENTS 8.1). Every id is a uuid; every time is timestamptz (UTC); names are snake_case.
@@ -45,6 +45,8 @@ export const organizations = pgTable(
     whatsapp: text("whatsapp"),
     address: text("address").notNull().default(""),
     mapsUrl: text("maps_url").notNull().default(""),
+    /** The last session number used by the shop: "SES-0007" is 7. Bumped atomically (UPDATE ... RETURNING) so two sessions made at once never get the same code. */
+    sessionSeq: integer("session_seq").notNull().default(0),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

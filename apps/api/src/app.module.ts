@@ -1,6 +1,8 @@
 import { type DynamicModule, Inject, Module, type OnApplicationShutdown } from "@nestjs/common";
 import { APP_FILTER, APP_GUARD } from "@nestjs/core";
 import { AuditService } from "./audit/audit.service";
+import { WorkshopsController } from "./catalog/workshops.controller";
+import { WorkshopsService } from "./catalog/workshops.service";
 import { AuthController } from "./auth/auth.controller";
 import { AuthGuard, OriginGuard, PlatformAdminGuard, TenantGuard } from "./auth/auth.guards";
 import { AuthService } from "./auth/auth.service";
@@ -29,11 +31,11 @@ export class AppModule implements OnApplicationShutdown {
     return {
       module: AppModule,
       imports: [EnvModule, DbModule],
-      controllers: [HealthController, AuthController, OrganizationController],
+      controllers: [HealthController, AuthController, OrganizationController, WorkshopsController],
       providers: [
         { provide: EMAIL_PROVIDER, inject: [ENV], useFactory: (env: Env) => options.emailProvider ?? createEmailProvider(env) },
         { provide: JOBS, inject: [ENV], useFactory: (env: Env) => options.jobs ?? createJobs(env) },
-        ...CORE_PROVIDERS, AuthService, TurnstileService, AuthGuard, TenantGuard, PlatformAdminGuard,
+        ...CORE_PROVIDERS, WorkshopsService, AuthService, TurnstileService, AuthGuard, TenantGuard, PlatformAdminGuard,
         { provide: APP_FILTER, useClass: ErrorFilter },
         { provide: APP_GUARD, useClass: OriginGuard },
       ],

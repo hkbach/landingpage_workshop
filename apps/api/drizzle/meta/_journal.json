@@ -15,6 +15,20 @@
       "when": 1794470211137,
       "tag": "0001_immutable_slug_and_append_only_audit",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794472620920,
+      "tag": "0002_workshops_and_sessions",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1794472622418,
+      "tag": "0003_session_code_immutable",
+      "breakpoints": true
     }
   ]
 }
