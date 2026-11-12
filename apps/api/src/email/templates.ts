@@ -10,7 +10,9 @@ export type EmailTemplate =
   | { name: "booking-created"; to: string; data: BookingMailData & { name: string; confirmLink: string } }
   | { name: "booking-notice"; to: string; data: BookingMailData & { guestName: string; guestEmail: string; guestPhone: string; request: string } }
   | { name: "booking-cancelled-guest"; to: string; data: BookingMailData & { name: string; by: "GUEST" | "SHOP"; reason: string } }
-  | { name: "booking-cancelled-shop"; to: string; data: BookingMailData & { guestName: string; reason: string } };
+  | { name: "booking-cancelled-shop"; to: string; data: BookingMailData & { guestName: string; reason: string } }
+  | { name: "booking-info"; to: string; data: BookingMailData & { name: string } }
+  | { name: "payment-received"; to: string; data: BookingMailData & { name: string; paid: string } };
 
 /** What every booking email says about the booking: already formatted (the time in the time zone of the shop, the money with its currency). */
 export interface BookingMailData { shop: string; code: string; workshop: string; when: string; timezone: string; quantity: number; total: string; address: string }
@@ -103,6 +105,28 @@ Reason: ${t.data.reason}` : ""}
 
 ${details(t.data)}`,
         html: wrap(`<p>${escapeHtml(t.data.guestName)} cancelled a booking.${t.data.reason ? ` Reason: ${escapeHtml(t.data.reason)}` : ""}</p>${detailsHtml(t.data)}`),
+      };
+    case "booking-info":
+      return {
+        to: t.to, subject: `Your booking ${t.data.code} at ${t.data.shop}`,
+        text: `Hello ${t.data.name},
+
+The studio booked a spot for you.
+
+${details(t.data)}
+
+${LATE_POLICY}`,
+        html: wrap(`<p>Hello ${name},</p><p>The studio booked a spot for you.</p>${detailsHtml(t.data)}<p>${escapeHtml(LATE_POLICY)}</p>`),
+      };
+    case "payment-received":
+      return {
+        to: t.to, subject: `Payment received for booking ${t.data.code}`,
+        text: `Hello ${t.data.name},
+
+The studio received your payment of ${t.data.paid}. Thank you!
+
+${details(t.data)}`,
+        html: wrap(`<p>Hello ${name},</p><p>The studio received your payment of ${escapeHtml(t.data.paid)}. Thank you!</p>${detailsHtml(t.data)}`),
       };
     case "password-changed":
       return {
