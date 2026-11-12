@@ -1214,7 +1214,7 @@ SENTRY_DSN=
 ### 11.2 Dev local
 
 - `docker compose -f infra/docker-compose.yml --env-file infra/.env up -d` chạy postgres + mailpit (xem thư ở http://127.0.0.1:8025).
-- API: `pnpm dev:api`; worker (gửi email): `pnpm --filter api dev:worker`; tạo bảng: `pnpm db:migrate`; dữ liệu demo: `pnpm db:seed` (cần `SEED_PASSWORD` do bạn đặt, không có mật khẩu mặc định trong mã).
+- API: `pnpm dev:api`; worker (gửi email): `pnpm --filter api dev:worker`; tạo bảng: `pnpm db:migrate`; dữ liệu demo: `pnpm db:seed` (3 shop ở 3 trạng thái, workshop, lịch, session, booking, thanh toán, khách; mật khẩu do bạn đặt qua `SEED_PASSWORD` hoặc được sinh ngẫu nhiên và ghi vào `apps/api/.seed-credentials`, không có mật khẩu mặc định trong mã).
 - `pnpm dev` chạy web (3000) + api (4000) + worker.
 - Test subdomain: `http://{slug}.localtest.me:3000`.
 - Seed: 1 super admin, 2 shop mẫu (1 ACTIVE có workshop, schedule và booking mẫu; 1 DRAFT).

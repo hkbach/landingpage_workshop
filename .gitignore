@@ -10,3 +10,6 @@ test-results/
 .env.*
 !.env.example
 .DS_Store
+
+# demo accounts made by pnpm db:seed (the password is in it)
+.seed-credentials
