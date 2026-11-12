@@ -64,13 +64,13 @@ describe("the settings are applied", () => {
     const a = available();
     expect(a).toBeGreaterThan(100_000);
     await put({ ...ok, withdrawalMin: 60_000, withdrawalMax: 90_000 });
-    const body = (amount: number) => withdraw(new Request("http://app.localtest.me:3000/x", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ source: "AFFILIATE", amount }) }), { params: Promise.resolve({ id: ADAM }) } as never);
+    const body = (amount: number) => withdraw(new Request("http://app.localtest.me:3000/x", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ source: "AFFILIATE", amount, bankName: "Demo Bank", bankAccountNumber: "0123456789" }) }), { params: Promise.resolve({ id: ADAM }) } as never);
     const low = await body(50_000);
     expect(low.status).toBe(422);
     expect((await json(low)).error.details.fields).toEqual({ amount: "belowMin" });
     expect((await json(await body(100_000))).error.details.fields).toEqual({ amount: "aboveMax" });
     expect((await body(70_000)).status).toBe(201);
-    expect(requestWithdrawal(ADAM, "AFFILIATE", 10).ok).toBe(false);
+    expect(requestWithdrawal(ADAM, "AFFILIATE", 10, { bankName: "Demo Bank", accountNumber: "000011112222" }).ok).toBe(false);
   });
 
   it("the wallet tells the customer the limits", async () => {

@@ -686,7 +686,8 @@
       "amount": "Amount",
       "requested": "Asked on",
       "status": "Status",
-      "actions": "Actions"
+      "actions": "Actions",
+      "bank": "Pay to"
     },
     "program": {
       "AFFILIATE": "Affiliate",
@@ -708,12 +709,14 @@
     "reject": "Reject",
     "payTitle": "Mark {code} as paid?",
     "payBody": "Confirm that {amount} was sent to {email}. An invoice is processed once.",
+    "payBodyBank": "Confirm that {amount} was sent to {bank}, account {number} (customer {email}). An invoice is processed once.",
     "rejectTitle": "Reject {code}?",
     "rejectBody": "The amount of {amount} goes back to what the customer can withdraw. Please give the reason; the customer sees it.",
     "paidDone": "Invoice {code} was marked as paid.",
     "rejectedDone": "Invoice {code} was rejected.",
     "failed": "The invoice could not be processed.",
-    "rule": "The affiliate fees and the referral bonuses are already taken off the profit of the platform when they are earned (Income), so paying an invoice does not change the profit."
+    "rule": "The affiliate fees and the referral bonuses are already taken off the profit of the platform when they are earned (Income), so paying an invoice does not change the profit.",
+    "bankMissing": "Not given (asked before bank details were required)"
   },
   "supportContact": {
     "title": "Support contact",

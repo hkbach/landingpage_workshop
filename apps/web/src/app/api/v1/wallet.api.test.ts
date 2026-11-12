@@ -17,7 +17,8 @@ const json = (body: unknown) => new Request("http://x", { method: "POST", header
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const body = async (res: Response) => (await res.json()) as Record<string, any>;
 const walletOf$ = async (id: string, source: string) => body(await wallet(new Request(`http://x/api/v1/customer/${id}/wallet?source=${source}`), ctx({ id })));
-const ask = (id: string, source: string, amount: unknown) => withdraw(json({ source, amount }), ctx({ id }));
+const BANK = { bankName: "Demo Bank", bankAccountNumber: "0123 4567 89" };
+const ask = (id: string, source: string, amount: unknown, bank: Record<string, unknown> = BANK) => withdraw(json({ source, amount, ...bank }), ctx({ id }));
 
 beforeEach(() => { resetBookingStore(); resetAccountsStore(); resetAccountStatus(); resetFeeRates(); resetReferralStore(); resetInviteStore(); resetWalletStore(); resetAdminAudit(); });
 
@@ -68,6 +69,31 @@ describe("a withdrawal", () => {
     const aff = await walletOf$("cu-9", "AFFILIATE"); // earned nothing
     expect(aff.available).toBe(0);
     expect((await ask("cu-9", "AFFILIATE", 1)).status).toBe(422);
+  });
+});
+
+describe("the bank details of a withdrawal", () => {
+  it("asks for the bank name and the account number, and reports every wrong field at once", async () => {
+    const fields = async (bank: Record<string, unknown>) => (await body(await ask("cu-4", "AFFILIATE", 1000, bank))).error?.details?.fields;
+    expect(await fields({})).toEqual({ bankName: "required", bankAccountNumber: "required" });
+    expect(await fields({ bankName: "  ", bankAccountNumber: "" })).toEqual({ bankName: "required", bankAccountNumber: "required" });
+    expect(await fields({ bankName: "Vietcombank", bankAccountNumber: "12 34" })).toEqual({ bankAccountNumber: "invalid" });
+    expect(await fields({ bankName: "<b>", bankAccountNumber: "0123456789" })).toEqual({ bankName: "invalid" });
+    expect(await fields({ bankName: "B".repeat(101), bankAccountNumber: "1".repeat(35) })).toEqual({ bankName: "tooLong", bankAccountNumber: "tooLong" });
+    expect(await fields({ bankName: 7, bankAccountNumber: "0123456789" })).toEqual({ bankName: "invalid" });
+    expect(listWithdrawals().filter((w) => w.accountId === "cu-4")).toHaveLength(3); // nothing was made
+  });
+  it("keeps them tidy, gives the owner the number masked only, and shows it whole to the admin who pays", async () => {
+    const res = await ask("cu-4", "REFERRAL", 1000, { bankName: "  Ngân hàng   Vietcombank ", bankAccountNumber: " 0123 4567-8901 " });
+    expect(res.status).toBe(201);
+    const made = await body(res);
+    expect(made).toMatchObject({ bankName: "Ngân hàng Vietcombank", accountNumberMasked: "****8901" });
+    expect(JSON.stringify(made)).not.toContain("012345678901");
+    const mine = await walletOf$("cu-4", "REFERRAL");
+    expect(mine.items[0]).toMatchObject({ bankName: "Ngân hàng Vietcombank", accountNumberMasked: "****8901" });
+    expect(JSON.stringify(mine)).not.toContain("012345678901");
+    expect(adminWithdrawals("WD-").find((w) => w.id === made.id)).toMatchObject({ bankName: "Ngân hàng Vietcombank", accountNumber: "012345678901" });
+    expect(JSON.stringify(liveAuditLogs())).not.toMatch(/012345678901|Vietcombank/); // personal data stays out of the audit log
   });
 });
 

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { checkAccountNumber, checkBankName, maskAccountNumber, normalizeAccountNumber, normalizeBankName } from "@workshop/shared";
 import { apiError, fieldCodes } from "@/lib/api-error";
 import { customerLoginRequired } from "@/lib/customer-access";
 import { accountOfGuest } from "@/lib/mock/booking-store";
@@ -11,9 +12,13 @@ import { customerActor, DEMO_ORG } from "@/lib/mock/audit-actors";
 
 const headers = { "cache-control": "no-store", "x-robots-tag": "noindex" };
 const emailOf = (request: Request): string | null => (customerLoginRequired() ? (request.headers.get("x-guest-email") ?? "") : null);
-const bodySchema = z.object({ source: z.enum(WALLET_SOURCES, { error: "invalid" }), amount: z.number({ error: "required" }).int("invalid").positive("invalid") });
+const text = z.string({ error: (issue) => (issue.input === undefined ? "required" : "invalid") });
+const bodySchema = z.object({ source: z.enum(WALLET_SOURCES, { error: "invalid" }), amount: z.number({ error: "required" }).int("invalid").positive("invalid"), bankName: text, bankAccountNumber: text });
 
-/** POST { source, amount } (minor units) -> 201 { id, code, amount, currency, status: "PENDING", requestedAt }. 404 NOT_FOUND, 422 with `fields.amount`: invalid | exceeds. */
+/**
+ * POST { source, amount, bankName, bankAccountNumber } (minor units) -> 201 { id, code, amount, currency, status: "PENDING", requestedAt, bankName, accountNumberMasked }. 404 NOT_FOUND, 422 with `fields`:
+ * amount (invalid | exceeds | belowMin | aboveMax), bankName and bankAccountNumber (required | invalid | tooLong). The bank details are where the admin pays (outside the system): they are never audited or logged.
+ */
 export async function POST(request: Request, ctx: RouteContext<"/api/v1/customer/[id]/withdrawals">) {
   const { id } = await ctx.params;
   if (!accountOfGuest(id, emailOf(request))) return apiError(404, "NOT_FOUND", "Account not found.", {}, headers);
@@ -25,7 +30,15 @@ export async function POST(request: Request, ctx: RouteContext<"/api/v1/customer
   }
   const parsed = bodySchema.safeParse(body);
   if (!parsed.success) return apiError(422, "VALIDATION", "Please check the highlighted fields.", { fields: fieldCodes(parsed.error.issues) }, headers);
-  const res = requestWithdrawal(id, parsed.data.source, parsed.data.amount);
+  const bankFields: Record<string, string> = {};
+  const nameIssue = checkBankName(parsed.data.bankName);
+  const numberIssue = checkAccountNumber(parsed.data.bankAccountNumber);
+  if (nameIssue) bankFields.bankName = nameIssue;
+  if (numberIssue) bankFields.bankAccountNumber = numberIssue;
+  if (Object.keys(bankFields).length > 0) return apiError(422, "VALIDATION", "Please check the highlighted fields.", { fields: bankFields }, headers);
+  const bankName = normalizeBankName(parsed.data.bankName);
+  const accountNumber = normalizeAccountNumber(parsed.data.bankAccountNumber);
+  const res = requestWithdrawal(id, parsed.data.source, parsed.data.amount, { bankName, accountNumber });
   if (!res.ok) {
     if (res.code === "EXCEEDS_AVAILABLE") return apiError(422, "VALIDATION", "The amount is more than what is available.", { fields: { amount: "exceeds" } }, headers);
     if (res.code === "BELOW_MIN" || res.code === "ABOVE_MAX") return apiError(422, "VALIDATION", "The amount is outside the limits of one withdrawal.", { fields: { amount: res.code === "BELOW_MIN" ? "belowMin" : "aboveMax" } }, headers);
@@ -33,5 +46,5 @@ export async function POST(request: Request, ctx: RouteContext<"/api/v1/customer
   }
   const { id: wid, code, amount, currency, status, requestedAt } = res.withdrawal;
   recordAudit({ ...customerActor(id), action: "withdrawal.request", entityType: "Withdrawal", entityId: wid, organizationId: DEMO_ORG, details: `${code} ${parsed.data.source} ${amount} ${currency}` });
-  return Response.json({ id: wid, code, amount, currency, status, requestedAt }, { status: 201, headers });
+  return Response.json({ id: wid, code, amount, currency, status, requestedAt, bankName, accountNumberMasked: maskAccountNumber(accountNumber) }, { status: 201, headers });
 }

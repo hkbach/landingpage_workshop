@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Banknote } from "lucide-react";
-import { formatMoney, parseMoney, type Locale } from "@workshop/shared";
+import { checkAccountNumber, checkBankName, formatMoney, normalizeAccountNumber, normalizeBankName, parseMoney, type BankFieldIssue, type Locale } from "@workshop/shared";
 import { Field } from "@/components/dashboard/shell/field";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -73,32 +73,55 @@ export function WalletOverview({ source, onRequested }: { source: WalletSource; 
   );
 }
 
+type AmountError = "" | "required" | "invalid" | "exceeds" | "belowMin" | "aboveMax" | "failed";
+const BANK_NAME_KEY = { required: "bankNameRequired", invalid: "bankNameInvalid", tooLong: "bankNameTooLong" } as const;
+const ACCOUNT_KEY = { required: "accountRequired", invalid: "accountInvalid", tooLong: "accountTooLong" } as const;
+const isIssue = (v: unknown): v is BankFieldIssue => v === "required" || v === "invalid" || v === "tooLong";
+
+/**
+ * The popup of a withdrawal: the amount and where to pay it (the name of the bank and the account number). The platform pays by bank transfer OUTSIDE the system, so an administrator
+ * needs these. Everything is trimmed (BR-16) and checked here with the rules of `packages/shared` and again by the server; every wrong field is shown at once.
+ */
 function WithdrawDialog({ source, available, currency, limits, onClose, onDone }: { source: WalletSource; available: number; currency: string; limits: { min: number; max: number }; onClose: () => void; onDone: (code: string) => void }) {
   const t = useTranslations("customer.wallet");
   const locale = useLocale() as Locale;
   const { accountId, email, refresh } = useWallet(source);
   const [text, setText] = useState("");
-  const [error, setError] = useState<"" | "required" | "invalid" | "exceeds" | "belowMin" | "aboveMax" | "failed">("");
+  const [bankName, setBankName] = useState("");
+  const [account, setAccount] = useState("");
+  const [error, setError] = useState<AmountError>("");
+  const [bankError, setBankError] = useState<BankFieldIssue | "">("");
+  const [accountError, setAccountError] = useState<BankFieldIssue | "">("");
   const [busy, setBusy] = useState(false);
   const money = (n: number) => formatMoney(n, currency, locale);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     const typed = text.trim(); // BR-16
-    if (!typed) { setError("required"); return; }
-    const amount = parseMoney(typed, currency);
-    if (amount === null || amount <= 0) { setError("invalid"); return; }
-    if (amount > available) { setError("exceeds"); return; }
-    if (limits.min > 0 && amount < limits.min) { setError("belowMin"); return; }
-    if (limits.max > 0 && amount > limits.max) { setError("aboveMax"); return; }
+    const nameIssue = checkBankName(bankName);
+    const numberIssue = checkAccountNumber(account);
+    let amountIssue: AmountError = "";
+    const amount = typed ? parseMoney(typed, currency) : null;
+    if (!typed) amountIssue = "required";
+    else if (amount === null || amount <= 0) amountIssue = "invalid";
+    else if (amount > available) amountIssue = "exceeds";
+    else if (limits.min > 0 && amount < limits.min) amountIssue = "belowMin";
+    else if (limits.max > 0 && amount > limits.max) amountIssue = "aboveMax";
+    setError(amountIssue);
+    setBankError(nameIssue ?? "");
+    setAccountError(numberIssue ?? "");
+    if (amountIssue || nameIssue || numberIssue || amount === null) return;
     setBusy(true);
     try {
-      const made = await requestCustomerWithdrawal(accountId, email, source, amount);
+      const made = await requestCustomerWithdrawal(accountId, email, source, amount, { bankName: normalizeBankName(bankName), bankAccountNumber: normalizeAccountNumber(account) });
       await refresh();
       onDone(made.code);
     } catch (err) {
-      const field = err instanceof CustomerApiError ? err.fields.amount : undefined;
-      setError(field === "exceeds" || field === "belowMin" || field === "aboveMax" || field === "invalid" ? field : "failed");
+      const fields = err instanceof CustomerApiError ? err.fields : {};
+      const field = fields.amount;
+      setError(field === "exceeds" || field === "belowMin" || field === "aboveMax" || field === "invalid" ? field : fields.bankName || fields.bankAccountNumber ? "" : "failed");
+      if (isIssue(fields.bankName)) setBankError(fields.bankName);
+      if (isIssue(fields.bankAccountNumber)) setAccountError(fields.bankAccountNumber);
     } finally {
       setBusy(false);
     }
@@ -115,6 +138,12 @@ function WithdrawDialog({ source, available, currency, limits, onClose, onDone }
           </DialogHeader>
           <Field htmlFor="wd-amount" label={t("amountLabel", { currency })} error={message} hint={<>{t("amountHint", { amount: money(available) })}{limits.min > 0 || limits.max > 0 ? <span className="block" data-testid="wallet-limits">{limits.min > 0 && limits.max > 0 ? t("limitsBoth", { min: money(limits.min), max: money(limits.max) }) : limits.min > 0 ? t("limitsMin", { min: money(limits.min) }) : t("limitsMax", { max: money(limits.max) })}</span> : null}</>}>
             <Input id="wd-amount" inputMode="decimal" autoComplete="off" value={text} aria-invalid={Boolean(message)} onChange={(e) => { setText(e.target.value); setError(""); }} />
+          </Field>
+          <Field htmlFor="wd-bank" label={t("bankNameLabel")} error={bankError ? t(`errors.${BANK_NAME_KEY[bankError]}`) : undefined}>
+            <Input id="wd-bank" autoComplete="off" maxLength={120} value={bankName} aria-invalid={Boolean(bankError)} onChange={(e) => { setBankName(e.target.value); setBankError(""); }} />
+          </Field>
+          <Field htmlFor="wd-account" label={t("accountNumberLabel")} error={accountError ? t(`errors.${ACCOUNT_KEY[accountError]}`) : undefined} hint={t("bankHint")}>
+            <Input id="wd-account" autoComplete="off" inputMode="text" maxLength={60} value={account} aria-invalid={Boolean(accountError)} onChange={(e) => { setAccount(e.target.value); setAccountError(""); }} />
           </Field>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>{t("cancel")}</Button>
@@ -156,6 +185,7 @@ export function WalletHistory({ source }: { source: WalletSource }) {
               <TableHead>{t("col.invoice")}</TableHead>
               <TableHead>{t("col.requested")}</TableHead>
               <TableHead className="text-right">{t("col.amount")}</TableHead>
+              <TableHead>{t("col.bank")}</TableHead>
               <TableHead>{t("col.status")}</TableHead>
               <TableHead>{t("col.processed")}</TableHead>
             </TableRow>
@@ -166,6 +196,7 @@ export function WalletHistory({ source }: { source: WalletSource }) {
                 <TableCell className="font-mono text-xs">{i.code}</TableCell>
                 <TableCell className="whitespace-nowrap">{formatDate(i.requestedAt, "UTC", locale)}</TableCell>
                 <TableCell className="text-right tabular-nums">{formatMoney(i.amount, i.currency, locale)}</TableCell>
+                <TableCell className="whitespace-normal text-xs" data-testid="wallet-invoice-bank">{i.bankName ? <>{i.bankName}<div className="font-mono text-muted-foreground">{i.accountNumberMasked}</div></> : "—"}</TableCell>
                 <TableCell className="whitespace-normal">
                   <span data-testid="wallet-invoice-status" className={cn("inline-flex rounded-md px-2 py-0.5 text-xs font-medium", STATUS_TONE[i.status])}>{t(`status.${i.status}`)}</span>
                   {i.reason ? <div className="mt-0.5 max-w-xs text-xs text-muted-foreground">{t("reason", { reason: i.reason })}</div> : null}

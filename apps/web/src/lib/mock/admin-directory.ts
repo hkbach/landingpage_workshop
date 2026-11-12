@@ -278,6 +278,8 @@ export function adminReferralLinks(q = "", from = "", to = ""): AdminReferralLin
 export interface AdminWithdrawal {
   id: string; code: string; accountId: string; accountEmail: string; accountName: string; source: WalletSource; amount: number; currency: string;
   status: WithdrawalStatus; requestedAt: string; processedAt: string; reason: string;
+  /** Where to pay it (outside the system): the whole account number, because the admin who pays needs it. */
+  bankName: string; accountNumber: string;
   /** What the customer has earned from the program and still can withdraw (to decide with). */
   available: number;
 }
@@ -291,7 +293,7 @@ export function adminWithdrawals(q = "", status = "", from = "", to = "", source
     if (!a || (status && w.status !== status) || (source && w.source !== source) || (from && day < from) || (to && day > to)) return [];
     const row: AdminWithdrawal = {
       id: w.id, code: w.code, accountId: a.id, accountEmail: a.email, accountName: a.fullName, source: w.source, amount: w.amount, currency: w.currency, status: w.status,
-      requestedAt: w.requestedAt, processedAt: w.processedAt ?? "", reason: w.reason ?? "", available: walletOf(a.id, w.source).available,
+      requestedAt: w.requestedAt, processedAt: w.processedAt ?? "", reason: w.reason ?? "", bankName: w.bankName, accountNumber: w.accountNumber, available: walletOf(a.id, w.source).available,
     };
     return matchesSearch(hay(row.code, row.accountEmail, row.accountName), q) ? [row] : [];
   }).sort((x, y) => Number(y.status === "PENDING") - Number(x.status === "PENDING") || y.requestedAt.localeCompare(x.requestedAt));

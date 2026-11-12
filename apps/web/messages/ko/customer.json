@@ -242,6 +242,9 @@
     },
     "amountLabel": "금액 ({currency})",
     "amountHint": "최대 {amount}.",
+    "bankNameLabel": "은행 이름",
+    "accountNumberLabel": "계좌번호",
+    "bankHint": "플랫폼이 이 웹사이트 밖에서 계좌이체로 지급합니다. 요청을 보낸 뒤에는 수정할 수 없으니 정보를 꼼꼼히 확인하세요.",
     "submit": "요청 보내기",
     "submitting": "보내는 중...",
     "cancel": "취소",
@@ -251,7 +254,13 @@
       "exceeds": "출금 가능 금액({amount})을 초과했습니다.",
       "failed": "요청을 보낼 수 없습니다. 다시 시도해 주세요.",
       "belowMin": "최소 출금 금액은 {amount}이에요.",
-      "aboveMax": "최대 출금 금액은 {amount}이에요."
+      "aboveMax": "최대 출금 금액은 {amount}이에요.",
+      "bankNameRequired": "은행 이름을 입력하세요.",
+      "bankNameInvalid": "올바른 은행 이름을 입력하세요(문자와 숫자만).",
+      "bankNameTooLong": "은행 이름이 너무 깁니다(최대 100자).",
+      "accountRequired": "계좌번호를 입력하세요.",
+      "accountInvalid": "올바른 계좌번호를 입력하세요(영문자 또는 숫자 6~34자, 공백과 하이픈은 무시됩니다).",
+      "accountTooLong": "계좌번호가 너무 깁니다(최대 34자)."
     },
     "done": "요청 {code}을(를) 보냈습니다. 내역에서 확인하세요.",
     "tabHistory": "내역",
@@ -261,7 +270,8 @@
       "requested": "요청일",
       "amount": "금액",
       "status": "상태",
-      "processed": "처리일"
+      "processed": "처리일",
+      "bank": "입금 계좌"
     },
     "status": {
       "PENDING": "대기 중",

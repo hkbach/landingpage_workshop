@@ -242,6 +242,9 @@
     },
     "amountLabel": "金額（{currency}）",
     "amountHint": "最大{amount}。",
+    "bankNameLabel": "銀行名",
+    "accountNumberLabel": "口座番号",
+    "bankHint": "プラットフォームがこのウェブサイトの外で銀行振込により支払います。リクエスト送信後は変更できないため、内容をよくご確認ください。",
     "submit": "申請する",
     "submitting": "送信中...",
     "cancel": "キャンセル",
@@ -251,7 +254,13 @@
       "exceeds": "出金可能額（{amount}）を超えています。",
       "failed": "申請を送信できませんでした。もう一度お試しください。",
       "belowMin": "最低出金額は{amount}です。",
-      "aboveMax": "最大出金額は{amount}です。"
+      "aboveMax": "最大出金額は{amount}です。",
+      "bankNameRequired": "銀行名を入力してください。",
+      "bankNameInvalid": "有効な銀行名を入力してください（文字と数字のみ）。",
+      "bankNameTooLong": "銀行名が長すぎます（100文字まで）。",
+      "accountRequired": "口座番号を入力してください。",
+      "accountInvalid": "有効な口座番号を入力してください（英字または数字6〜34文字。スペースとハイフンは無視されます）。",
+      "accountTooLong": "口座番号が長すぎます（34文字まで）。"
     },
     "done": "申請 {code} を送信しました。履歴で確認できます。",
     "tabHistory": "履歴",
@@ -261,7 +270,8 @@
       "requested": "申請日",
       "amount": "金額",
       "status": "ステータス",
-      "processed": "処理日"
+      "processed": "処理日",
+      "bank": "振込先口座"
     },
     "status": {
       "PENDING": "処理待ち",

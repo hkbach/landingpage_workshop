@@ -35,6 +35,9 @@ export const withdrawals = pgTable(
     source: walletSource("source").notNull(),
     currency: text("currency").notNull(),
     amount: bigint("amount", { mode: "number" }).notNull(),
+    /** Where an administrator pays the invoice (outside the system): personal data, shown only to the owner (masked) and to the administrator, never logged or audited. Empty only on an invoice made before these were asked. */
+    bankName: text("bank_name").notNull().default(""),
+    bankAccountNumber: text("bank_account_number").notNull().default(""),
     status: withdrawalStatus("status").notNull().default("PENDING"),
     /** Why it was rejected (the customer sees it). */
     reason: text("reason"),
@@ -44,6 +47,7 @@ export const withdrawals = pgTable(
   },
   (t) => [
     check("withdrawals_amount", sql`${t.amount} > 0`),
+    check("withdrawals_bank", sql`char_length(${t.bankName}) <= 100 AND char_length(${t.bankAccountNumber}) <= 34`),
     check("withdrawals_processed", sql`(${t.status} = 'PENDING') = (${t.processedAt} IS NULL)`),
     index("withdrawals_user_idx").on(t.userId, t.source, t.currency),
     index("withdrawals_status_idx").on(t.status, t.requestedAt),

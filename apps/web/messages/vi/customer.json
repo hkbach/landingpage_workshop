@@ -242,6 +242,9 @@
     },
     "amountLabel": "Số tiền ({currency})",
     "amountHint": "Tối đa {amount}.",
+    "bankNameLabel": "Tên ngân hàng",
+    "accountNumberLabel": "Số tài khoản",
+    "bankHint": "Nền tảng sẽ chuyển khoản cho bạn ngoài website này. Hãy kiểm tra kỹ thông tin: bạn không thể sửa sau khi gửi yêu cầu.",
     "submit": "Gửi yêu cầu",
     "submitting": "Đang gửi...",
     "cancel": "Hủy",
@@ -251,7 +254,13 @@
       "exceeds": "Số tiền vượt quá số có thể rút ({amount}).",
       "failed": "Không thể gửi yêu cầu. Vui lòng thử lại.",
       "belowMin": "Số tiền rút tối thiểu là {amount}.",
-      "aboveMax": "Số tiền rút tối đa là {amount}."
+      "aboveMax": "Số tiền rút tối đa là {amount}.",
+      "bankNameRequired": "Nhập tên ngân hàng của bạn.",
+      "bankNameInvalid": "Nhập tên ngân hàng hợp lệ (chỉ gồm chữ và số).",
+      "bankNameTooLong": "Tên ngân hàng quá dài (tối đa 100 ký tự).",
+      "accountRequired": "Nhập số tài khoản của bạn.",
+      "accountInvalid": "Nhập số tài khoản hợp lệ (6 đến 34 chữ cái hoặc chữ số; dấu cách và dấu gạch ngang được bỏ qua).",
+      "accountTooLong": "Số tài khoản quá dài (tối đa 34 ký tự)."
     },
     "done": "Đã gửi yêu cầu {code}. Theo dõi trong History.",
     "tabHistory": "History",
@@ -261,7 +270,8 @@
       "requested": "Ngày yêu cầu",
       "amount": "Số tiền",
       "status": "Trạng thái",
-      "processed": "Ngày xử lý"
+      "processed": "Ngày xử lý",
+      "bank": "Tài khoản nhận"
     },
     "status": {
       "PENDING": "Chờ xử lý",

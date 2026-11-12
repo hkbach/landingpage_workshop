@@ -242,6 +242,9 @@
     },
     "amountLabel": "金额（{currency}）",
     "amountHint": "最多 {amount}。",
+    "bankNameLabel": "银行名称",
+    "accountNumberLabel": "银行账号",
+    "bankHint": "平台将在本网站之外通过银行转账向您付款。提交申请后无法修改，请仔细核对信息。",
     "submit": "提交申请",
     "submitting": "正在发送...",
     "cancel": "取消",
@@ -251,7 +254,13 @@
       "exceeds": "金额超过可提现金额（{amount}）。",
       "failed": "无法发送申请，请重试。",
       "belowMin": "最低提现金额为 {amount}。",
-      "aboveMax": "最高提现金额为 {amount}。"
+      "aboveMax": "最高提现金额为 {amount}。",
+      "bankNameRequired": "请输入银行名称。",
+      "bankNameInvalid": "请输入有效的银行名称（仅限文字和数字）。",
+      "bankNameTooLong": "银行名称过长（最多 100 个字符）。",
+      "accountRequired": "请输入银行账号。",
+      "accountInvalid": "请输入有效的银行账号（6 至 34 位字母或数字，空格和连字符会被忽略）。",
+      "accountTooLong": "银行账号过长（最多 34 个字符）。"
     },
     "done": "申请 {code} 已发送，可在“历史记录”中查看。",
     "tabHistory": "历史记录",
@@ -261,7 +270,8 @@
       "requested": "申请日期",
       "amount": "金额",
       "status": "状态",
-      "processed": "处理日期"
+      "processed": "处理日期",
+      "bank": "收款账户"
     },
     "status": {
       "PENDING": "待处理",

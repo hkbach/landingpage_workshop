@@ -57,6 +57,7 @@ export function WithdrawalsAdmin() {
     { key: "customer", header: t("col.customer"), cell: (w) => <><div className="font-medium">{w.accountEmail}</div><div className="text-xs text-muted-foreground">{w.accountName}</div></> },
     { key: "program", header: t("col.program"), cell: (w) => t(`program.${w.source}`) },
     { key: "amount", header: t("col.amount"), className: "text-right tabular-nums", cell: (w) => money(w.amount, w.currency) },
+    { key: "bank", header: t("col.bank"), cell: (w) => (w.bankName ? <><div>{w.bankName}</div><div className="font-mono text-xs" data-testid="withdrawal-account">{w.accountNumber}</div></> : <span className="text-xs text-muted-foreground">{t("bankMissing")}</span>) },
     { key: "requested", header: t("col.requested"), cell: (w) => fmt(w.requestedAt, locale) },
     {
       key: "status", header: t("col.status"),
@@ -113,7 +114,7 @@ export function WithdrawalsAdmin() {
       <p className="text-xs text-muted-foreground">{t("rule")}</p>
       <ReasonDialog
         open={paying !== null} onOpenChange={(o) => { if (!o) setPaying(null); }} reason="none"
-        title={paying ? t("payTitle", { code: paying.code }) : ""} description={paying ? t("payBody", { amount: money(paying.amount, paying.currency), email: paying.accountEmail }) : ""} confirmLabel={t("pay")}
+        title={paying ? t("payTitle", { code: paying.code }) : ""} description={paying ? (paying.bankName ? t("payBodyBank", { amount: money(paying.amount, paying.currency), bank: paying.bankName, number: paying.accountNumber, email: paying.accountEmail }) : t("payBody", { amount: money(paying.amount, paying.currency), email: paying.accountEmail })) : ""} confirmLabel={t("pay")}
         onConfirm={() => { if (paying) void process(paying, "pay"); }}
       />
       <ReasonDialog

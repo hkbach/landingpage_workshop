@@ -686,7 +686,8 @@
       "amount": "Số tiền",
       "requested": "Ngày yêu cầu",
       "status": "Trạng thái",
-      "actions": "Thao tác"
+      "actions": "Thao tác",
+      "bank": "Chuyển đến"
     },
     "program": {
       "AFFILIATE": "Affiliate",
@@ -708,12 +709,14 @@
     "reject": "Từ chối",
     "payTitle": "Đánh dấu {code} đã thanh toán?",
     "payBody": "Xác nhận đã chuyển {amount} cho {email}. Mỗi invoice chỉ xử lý một lần.",
+    "payBodyBank": "Xác nhận đã chuyển {amount} đến {bank}, tài khoản {number} (khách hàng {email}). Mỗi invoice chỉ xử lý một lần.",
     "rejectTitle": "Từ chối {code}?",
     "rejectBody": "Số tiền {amount} sẽ quay lại phần customer có thể rút. Vui lòng nhập lý do; customer sẽ thấy lý do này.",
     "paidDone": "Đã đánh dấu invoice {code} đã thanh toán.",
     "rejectedDone": "Đã từ chối invoice {code}.",
     "failed": "Không thể xử lý invoice.",
-    "rule": "Phí affiliate và tiền thưởng referral đã được trừ vào lợi nhuận của nền tảng ngay khi phát sinh (Income), nên việc thanh toán invoice không làm thay đổi lợi nhuận."
+    "rule": "Phí affiliate và tiền thưởng referral đã được trừ vào lợi nhuận của nền tảng ngay khi phát sinh (Income), nên việc thanh toán invoice không làm thay đổi lợi nhuận.",
+    "bankMissing": "Chưa có (yêu cầu tạo trước khi bắt buộc nhập thông tin ngân hàng)"
   },
   "supportContact": {
     "title": "Liên hệ hỗ trợ",

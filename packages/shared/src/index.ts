@@ -24,3 +24,4 @@ export * from "./password-rules";
 export * from "./workshop-ranking";
 export * from "./custom-domain";
 export * from "./booking-state";
+export * from "./bank-details";

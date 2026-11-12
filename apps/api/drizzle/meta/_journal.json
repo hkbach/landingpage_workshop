@@ -85,6 +85,20 @@
       "when": 1794477809337,
       "tag": "0011_wallet_triggers",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1794478336290,
+      "tag": "0012_withdrawal_bank",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1794478339826,
+      "tag": "0013_withdrawal_bank_guard",
+      "breakpoints": true
     }
   ]
 }

@@ -12,7 +12,9 @@ const currency = z.string({ error: "required" }).trim().toUpperCase().regex(/^[A
 // Whole minor units, at most 10^12 (a limit that keeps the sums far from the range of a number).
 const money = (min: number) => z.number({ error: (i) => (i.input === undefined ? "required" : "invalid") }).int("invalid").min(min, "invalid").max(1_000_000_000_000, "invalid");
 const walletQuery = z.object({ source: source.optional() });
-const requestBody = z.object({ source, currency, amount: money(1) });
+// The bank details are checked (and made tidy) by the service with the rules of `packages/shared`, the same ones the popup uses: here only a missing or non-text value is reported.
+const text = z.string({ error: (issue) => (issue.input === undefined ? "required" : "invalid") });
+const requestBody = z.object({ source, currency, amount: money(1), bankName: text, bankAccountNumber: text });
 const listQuery = z.object({
   q: z.string().trim().max(100).optional(), status: z.enum(["PENDING", "PAID", "REJECTED"]).optional(), source: source.optional(),
   from: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, "invalid").optional(), to: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, "invalid").optional(),
@@ -40,7 +42,7 @@ export class WalletController {
   }
 
   @Post(":id/withdrawals")
-  request(@CurrentUser() auth: AuthContext, @Client() client: ClientContext, @Param("id", new UuidPipe()) id: string, @Body(new ZodPipe(requestBody)) body: { source: WalletSource; currency: string; amount: number }) {
+  request(@CurrentUser() auth: AuthContext, @Client() client: ClientContext, @Param("id", new UuidPipe()) id: string, @Body(new ZodPipe(requestBody)) body: { source: WalletSource; currency: string; amount: number; bankName: string; bankAccountNumber: string }) {
     return this.wallet.request(this.own(auth, id), body, actorOf(auth, client));
   }
 }

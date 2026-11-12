@@ -75,16 +75,19 @@ export const fetchCustomerInvites = async (id: string, email?: string): Promise<
 export type WalletSource = "AFFILIATE" | "REFERRAL";
 export type WithdrawalStatus = "PENDING" | "PAID" | "REJECTED";
 /** An invoice: a withdrawal the guest asked for. `reason` is why the platform rejected it. */
-export interface CustomerWithdrawal { id: string; code: string; amount: number; currency: string; status: WithdrawalStatus; requestedAt: string; processedAt?: string; reason?: string }
+export interface CustomerWithdrawal { id: string; code: string; amount: number; currency: string; status: WithdrawalStatus; requestedAt: string; processedAt?: string; reason?: string; /** Where it is paid; the number is masked ("****6789"). */ bankName: string; accountNumberMasked: string }
 /** What the guest earned from a program (minor units), what waits to be paid, what was withdrawn, what is left to withdraw, and the invoices (newest first). */
 export interface CustomerWallet { source: WalletSource; currency: string; earned: number; pending: number; withdrawn: number; available: number; /** The smallest and the largest amount of one withdrawal, set by the platform (0 = no limit). */ limits: { min: number; max: number }; items: CustomerWithdrawal[] }
 
 export const fetchCustomerWallet = async (id: string, email: string | undefined, source: WalletSource): Promise<CustomerWallet> =>
   parse(await fetch(`${url(id)}/wallet?source=${source}`, { headers: emailHeader(email), cache: "no-store" }));
 
-/** Asks to withdraw `amount` (minor units): a new invoice that waits for the platform. The server refuses more than is available (422, `fields.amount` = "exceeds"). */
-export const requestCustomerWithdrawal = async (id: string, email: string | undefined, source: WalletSource, amount: number): Promise<CustomerWithdrawal> =>
-  parse(await fetch(`${url(id)}/withdrawals`, { method: "POST", headers: { "content-type": "application/json", ...emailHeader(email) }, body: JSON.stringify({ source, amount }) }));
+/** Where the platform pays a withdrawal (outside the system). */
+export interface BankDetailsInput { bankName: string; bankAccountNumber: string }
+
+/** Asks to withdraw `amount` (minor units) to a bank account: a new invoice that waits for the platform. The server refuses more than is available (422, `fields.amount` = "exceeds") and bad bank details (`fields.bankName`, `fields.bankAccountNumber`). */
+export const requestCustomerWithdrawal = async (id: string, email: string | undefined, source: WalletSource, amount: number, bank: BankDetailsInput): Promise<CustomerWithdrawal> =>
+  parse(await fetch(`${url(id)}/withdrawals`, { method: "POST", headers: { "content-type": "application/json", ...emailHeader(email) }, body: JSON.stringify({ source, amount, ...bank }) }));
 
 export const saveCustomerProfile = async (id: string, email: string | undefined, input: CustomerProfileInput): Promise<CustomerProfile> =>
   parse(await fetch(url(id), { method: "PATCH", headers: { "content-type": "application/json", ...emailHeader(email) }, body: JSON.stringify(input) }));

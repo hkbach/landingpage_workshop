@@ -242,6 +242,9 @@
     },
     "amountLabel": "Amount ({currency})",
     "amountHint": "At most {amount}.",
+    "bankNameLabel": "Bank name",
+    "accountNumberLabel": "Account number",
+    "bankHint": "The platform pays you by bank transfer, outside this website. Check the details carefully: you cannot change them after you send the request.",
     "submit": "Submit request",
     "submitting": "Sending...",
     "cancel": "Cancel",
@@ -251,7 +254,13 @@
       "exceeds": "The amount is more than what you can withdraw ({amount}).",
       "failed": "The request could not be sent. Please try again.",
       "belowMin": "The smallest withdrawal is {amount}.",
-      "aboveMax": "The largest withdrawal is {amount}."
+      "aboveMax": "The largest withdrawal is {amount}.",
+      "bankNameRequired": "Enter the name of your bank.",
+      "bankNameInvalid": "Enter a valid bank name (letters and numbers only).",
+      "bankNameTooLong": "The bank name is too long (100 characters at most).",
+      "accountRequired": "Enter your account number.",
+      "accountInvalid": "Enter a valid account number (6 to 34 letters or digits; spaces and hyphens are ignored).",
+      "accountTooLong": "The account number is too long (34 characters at most)."
     },
     "done": "Request {code} was sent. Follow it in History.",
     "tabHistory": "History",
@@ -261,7 +270,8 @@
       "requested": "Requested",
       "amount": "Amount",
       "status": "Status",
-      "processed": "Processed"
+      "processed": "Processed",
+      "bank": "Bank account"
     },
     "status": {
       "PENDING": "Pending",
