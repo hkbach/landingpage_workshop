@@ -14,6 +14,7 @@ import { bookingConfirmations, bookingOtps, bookings, customers, organizations, 
 import { isUniqueViolation } from "../auth/auth.service";
 import type { BookingMailData } from "../email/templates";
 import { OutboxService } from "../outbox/outbox.service";
+import { SitePagesService } from "../site/site-pages.service";
 import type { BookingCreateInput } from "./booking.schemas";
 import { SessionCapacityService } from "./session-capacity.service";
 
@@ -64,6 +65,7 @@ export class PublicBookingsService {
     @Inject(AuditService) private readonly audit: AuditService,
     @Inject(TurnstileService) private readonly turnstile: TurnstileService,
     @Inject(SessionCapacityService) private readonly capacity: SessionCapacityService,
+    @Inject(SitePagesService) private readonly pages: SitePagesService,
   ) {}
 
   // ---- the shop and what it offers ------------------------------------------------------------------------------------------------------------------------
@@ -78,7 +80,9 @@ export class PublicBookingsService {
   async site(slug: string) {
     const o = await this.shop(slug);
     const list = await this.db.select().from(workshops).where(and(eq(workshops.organizationId, o.id), eq(workshops.status, "ACTIVE"))).orderBy(asc(workshops.sortOrder), asc(workshops.id));
+    const page = await this.pages.livePage(o.id); // what the owner published (null while there is none)
     return {
+      page: page ? { templateKey: page.templateKey, theme: page.theme, content: page.content, version: page.version, publishedAt: page.publishedAt } : null,
       shop: { name: o.name, slug: o.slug, country: o.country, timezone: o.timezone, currency: o.currency, defaultLocale: o.defaultLocale, enabledLocales: o.enabledLocales, contactEmail: o.contactEmail, contactPhone: o.contactPhone, whatsapp: o.whatsapp, address: o.address, mapsUrl: o.mapsUrl },
       workshops: list.map((w) => ({
         id: w.id, title: w.title, shortDescription: w.shortDescription, description: w.description, includes: w.includes, notes: w.notes, durationMinutes: w.durationMinutes, priceAmount: w.priceAmount, currency: w.currency,

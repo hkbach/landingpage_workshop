@@ -50,6 +50,13 @@
       "when": 1794473968523,
       "tag": "0006_booking_triggers",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1794475389129,
+      "tag": "0007_site_pages",
+      "breakpoints": true
     }
   ]
 }
