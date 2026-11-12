@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { MAX_ATTEMPTS, retryDelayMs } from "../outbox/outbox.service";
-import { PASSWORD, TEST_DATABASE_URL, cookieOf, emailFor, linkIn, signupBody, startApp, type TestApp } from "../test/helpers";
+import { PASSWORD, TEST_DATABASE_URL, cookieOf, drain, emailFor, linkIn, signupBody, startApp, type TestApp } from "../test/helpers";
 
 // Email verification, forgot / reset password, the outbox and the bot check, on a real PostgreSQL. This is the PRODUCTION mode: a new account must verify its email first.
 const d = describe.skipIf(!TEST_DATABASE_URL);
@@ -29,7 +29,7 @@ d("email verification (production mode)", () => {
     expect(queued.rows[0]!.status).toBe("PENDING");
     expect(t.emails.sent.filter((m) => m.to === email)).toHaveLength(0);
 
-    expect(await t.outbox.dispatchPending()).toMatchObject({ failed: 0 });
+    await drain(t);
     const mail = t.emails.sent.find((m) => m.to === email)!;
     expect(mail.subject).toBe("Confirm your email");
     const { link, token } = linkIn(t.emails, email);
@@ -45,7 +45,7 @@ d("email verification (production mode)", () => {
   it("cannot log in before verifying; the link verifies once; then the login works", async () => {
     const email = emailFor("verify2");
     await t.post("/auth/signup", signupBody("CUSTOMER", email));
-    await t.outbox.dispatchPending();
+    await drain(t);
     const before = await t.post("/auth/login", { email, password: PASSWORD });
     expect(before.statusCode).toBe(403);
     expect(before.json().error.code).toBe("EMAIL_NOT_VERIFIED");
@@ -61,13 +61,13 @@ d("email verification (production mode)", () => {
   it("an expired link does not verify; asking again sends a new one and the old one stops working", async () => {
     const email = emailFor("verify3");
     await t.post("/auth/signup", signupBody("CUSTOMER", email));
-    await t.outbox.dispatchPending();
+    await drain(t);
     const first = linkIn(t.emails, email).token;
     await t.pool.query("update user_tokens set expires_at = now() - interval '1 minute' where user_id = (select id from users where email = $1)", [email]);
     expect((await t.post("/auth/verify-email", { token: first })).statusCode).toBe(400);
 
     expect((await t.post("/auth/resend-verification", { email })).statusCode).toBe(202);
-    await t.outbox.dispatchPending();
+    await drain(t);
     const second = linkIn(t.emails, email).token;
     expect(second).not.toBe(first);
     expect((await t.post("/auth/verify-email", { token: second })).statusCode).toBe(200);
@@ -79,7 +79,7 @@ d("email verification (production mode)", () => {
     const again = await t.post("/auth/signup", signupBody("CUSTOMER", email));
     expect(again.statusCode).toBe(202);
     expect(again.json()).toEqual({ status: "CHECK_EMAIL" });
-    await t.outbox.dispatchPending();
+    await drain(t);
     expect(t.emails.sent.some((m) => m.to === email && m.subject === "You already have an account")).toBe(true);
     expect((await t.pool.query("select count(*)::int as n from users where email = $1", [email])).rows[0]).toEqual({ n: 1 });
   });
@@ -87,7 +87,7 @@ d("email verification (production mode)", () => {
   it("resend answers 202 for an unknown email too and sends nothing", async () => {
     const email = emailFor("nobody");
     expect((await t.post("/auth/resend-verification", { email })).statusCode).toBe(202);
-    await t.outbox.dispatchPending();
+    await drain(t);
     expect(t.emails.sent.some((m) => m.to === email)).toBe(false);
   });
 });
@@ -103,7 +103,7 @@ d("forgot and reset password", () => {
     const email = emailFor("forgot");
     await t.post("/auth/signup", signupBody("CUSTOMER", email));
     expect((await t.post("/auth/forgot-password", { email: email.toUpperCase() })).json()).toEqual({ status: "ACCEPTED" });
-    await t.outbox.dispatchPending();
+    await drain(t);
     expect(t.emails.sent.some((m) => m.to === ghost)).toBe(false);
     const mail = t.emails.sent.filter((m) => m.to === email).at(-1)!;
     expect(mail.subject).toBe("Reset your password");
@@ -115,7 +115,7 @@ d("forgot and reset password", () => {
     const session = cookieOf(await t.post("/auth/signup", signupBody("CUSTOMER", email)));
     expect((await t.get("/auth/me", { cookie: session })).statusCode).toBe(200);
     await t.post("/auth/forgot-password", { email });
-    await t.outbox.dispatchPending();
+    await drain(t);
     const { token } = linkIn(t.emails, email);
 
     const weak = await t.post("/auth/reset-password", { token, password: "short", confirmPassword: "short" });
@@ -131,7 +131,7 @@ d("forgot and reset password", () => {
     expect(again.statusCode).toBe(400);
     expect(again.json().error.code).toBe("TOKEN_INVALID");
 
-    await t.outbox.dispatchPending();
+    await drain(t);
     expect(t.emails.sent.some((m) => m.to === email && m.subject === "Your password was changed")).toBe(true);
   });
 
@@ -139,7 +139,7 @@ d("forgot and reset password", () => {
     const email = emailFor("resetexp");
     await t.post("/auth/signup", signupBody("CUSTOMER", email));
     await t.post("/auth/forgot-password", { email });
-    await t.outbox.dispatchPending();
+    await drain(t);
     const { token } = linkIn(t.emails, email);
     await t.pool.query("update user_tokens set expires_at = now() - interval '1 second' where user_id = (select id from users where email = $1) and type = 'PASSWORD_RESET'", [email]);
     expect((await t.post("/auth/reset-password", { token, password: "Another-pass-2027", confirmPassword: "Another-pass-2027" })).statusCode).toBe(400);
@@ -158,7 +158,7 @@ d("forgot and reset password", () => {
     const email = emailFor("auditreset");
     await t.post("/auth/signup", signupBody("CUSTOMER", email));
     await t.post("/auth/forgot-password", { email });
-    await t.outbox.dispatchPending();
+    await drain(t);
     const { token } = linkIn(t.emails, email);
     await t.post("/auth/reset-password", { token, password: "Another-pass-2027", confirmPassword: "Another-pass-2027" });
     const { rows } = await t.pool.query<{ action: string; before: unknown; after: unknown }>("select action, before, after from audit_logs where actor_user_id = (select id from users where email = $1) order by created_at", [email]);
@@ -177,16 +177,15 @@ d("the outbox: retries and the end of retries", () => {
     const email = emailFor("retry");
     await t.post("/auth/signup", signupBody("CUSTOMER", email));
     t.emails.failWith = new Error("SMTP is down");
-    const failed = await t.outbox.dispatchPending();
-    expect(failed.retried).toBeGreaterThanOrEqual(1);
+    await drain(t);
     const row = (await eventsFor(t, email)).rows[0]!;
     expect(row).toMatchObject({ status: "PENDING", attempts: 1, last_error: "SMTP is down" });
     expect(row.available_at.getTime()).toBeGreaterThan(Date.now()); // not tried again at once
 
     t.emails.failWith = null;
-    await t.outbox.dispatchPending(20, new Date()); // too early: its time has not come
+    await drain(t, new Date()); // too early: its time has not come
     expect(t.emails.sent.some((m) => m.to === email)).toBe(false);
-    await t.outbox.dispatchPending(20, new Date(Date.now() + retryDelayMs(1) + 1_000));
+    await drain(t, new Date(Date.now() + retryDelayMs(1) + 1_000));
     expect(t.emails.sent.some((m) => m.to === email)).toBe(true);
     // a sent event loses its payload (the secret link), so it is found by its id, not by the address
     const done = await t.pool.query("select status, attempts, last_error from outbox_events where id = $1", [row.id]);
@@ -199,12 +198,12 @@ d("the outbox: retries and the end of retries", () => {
     t.emails.failWith = new Error("mailbox unavailable");
     let when = Date.now();
     for (let i = 0; i < MAX_ATTEMPTS; i++) {
-      await t.outbox.dispatchPending(20, new Date(when));
+      await drain(t, new Date(when));
       when += 2 * 60 * 60_000;
     }
     expect((await eventsFor(t, email)).rows[0]).toMatchObject({ status: "FAILED", attempts: MAX_ATTEMPTS });
     t.emails.failWith = null;
-    await t.outbox.dispatchPending(20, new Date(when + 86_400_000));
+    await drain(t, new Date(when + 86_400_000));
     expect(t.emails.sent.some((m) => m.to === email)).toBe(false);
   });
 });

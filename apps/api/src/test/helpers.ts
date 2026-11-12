@@ -65,3 +65,14 @@ export function linkIn(emails: MemoryEmailProvider, to: string): { link: string;
 export const signupBody = (type: "CUSTOMER" | "SHOP_OWNER", email: string, shopName?: string, password = PASSWORD) => ({
   type, email, password, confirmPassword: password, ...(type === "SHOP_OWNER" ? { shopName: shopName ?? `Studio ${unique("s")}` } : {}),
 });
+
+/**
+ * Sends every email that is due, until none is left. The test database keeps the events of earlier runs (and of other tests), so one call of `dispatchPending` (at most 20, oldest first) may
+ * never reach the event a test just made.
+ */
+export async function drain(t: Pick<TestApp, "outbox">, now: Date = new Date()): Promise<void> {
+  for (let i = 0; i < 100; i++) {
+    const r = await t.outbox.dispatchPending(50, now);
+    if (r.sent + r.retried + r.failed === 0) return;
+  }
+}
