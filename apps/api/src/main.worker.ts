@@ -10,7 +10,8 @@ import type { Env } from "./config/env";
 import { AuditService } from "./audit/audit.service";
 import { ScheduleService } from "./catalog/schedule.service";
 import { JOBS, NoopJobs, OUTBOX_QUEUE, startBoss } from "./jobs/jobs";
-import { MaintenanceService, SESSIONS_GENERATE_QUEUE, SESSIONS_SWEEP_QUEUE } from "./jobs/maintenance";
+import { FinanceService } from "./finance/finance.service";
+import { MaintenanceService, FINANCE_CLOSE_QUEUE, SESSIONS_GENERATE_QUEUE, SESSIONS_SWEEP_QUEUE } from "./jobs/maintenance";
 import { OutboxService } from "./outbox/outbox.service";
 
 // The worker (REQUIREMENTS 3.2: a separate entry point, a separate container). It sends the emails of the outbox when the API wakes it (pg-boss job) and once a minute on its own,
@@ -20,7 +21,7 @@ import { OutboxService } from "./outbox/outbox.service";
   providers: [
     { provide: EMAIL_PROVIDER, inject: [ENV], useFactory: (env: Env) => createEmailProvider(env) },
     { provide: JOBS, useValue: new NoopJobs() },
-    AuditService, OutboxService, ScheduleService, MaintenanceService,
+    AuditService, OutboxService, ScheduleService, FinanceService, MaintenanceService,
   ],
 })
 class WorkerModule {}
@@ -54,10 +55,18 @@ async function bootstrap(): Promise<void> {
     const result = await maintenance.generateSessions();
     if (result.created > 0) logger.log(`Sessions: ${result.created} made from the weekly schedules of ${result.shops} shop(s)`);
   });
+  // Finance: close the months that are over (hourly: each shop has its own time zone, and a month is closed only once).
+  await boss.createQueue(FINANCE_CLOSE_QUEUE);
+  await boss.work(FINANCE_CLOSE_QUEUE, async () => {
+    const result = await maintenance.closeMonths();
+    if (result.closed > 0) logger.log(`Finance: ${result.closed} month(s) closed`);
+  });
+  await boss.schedule(FINANCE_CLOSE_QUEUE, "5 * * * *");
   await boss.schedule(SESSIONS_SWEEP_QUEUE, "* * * * *");
   await boss.schedule(SESSIONS_GENERATE_QUEUE, "0 * * * *");
   await maintenance.sweepSessions();
   await maintenance.generateSessions();
+  await maintenance.closeMonths();
   logger.log("The worker is running");
 
   const stop = async (): Promise<void> => {

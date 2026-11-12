@@ -23,6 +23,9 @@ import { ENV, EnvModule } from "./config/env.module";
 import type { Env } from "./config/env";
 import { DbModule } from "./db/db.module";
 import { createEmailProvider, EMAIL_PROVIDER, type EmailProvider } from "./email/email";
+import { FeesService } from "./finance/fees.service";
+import { AdminFinanceController, FinanceController } from "./finance/finance.controller";
+import { FinanceService } from "./finance/finance.service";
 import { HealthController } from "./health/health.controller";
 import { createJobs, JOBS, type JobsPort } from "./jobs/jobs";
 import { MaintenanceService } from "./jobs/maintenance";
@@ -45,11 +48,11 @@ export class AppModule implements OnApplicationShutdown {
     return {
       module: AppModule,
       imports: [EnvModule, DbModule],
-      controllers: [HealthController, AuthController, OrganizationController, WorkshopsController, SessionsController, ScheduleRulesController, PublicController, BookingsController, CustomersController, SitePagesController, AdminController],
+      controllers: [HealthController, AuthController, OrganizationController, WorkshopsController, SessionsController, ScheduleRulesController, PublicController, BookingsController, CustomersController, SitePagesController, AdminController, FinanceController, AdminFinanceController],
       providers: [
         { provide: EMAIL_PROVIDER, inject: [ENV], useFactory: (env: Env) => options.emailProvider ?? createEmailProvider(env) },
         { provide: JOBS, inject: [ENV], useFactory: (env: Env) => options.jobs ?? createJobs(env) },
-        ...CORE_PROVIDERS, WorkshopsService, SessionsService, ScheduleService, MaintenanceService, SessionCapacityService, PublicBookingsService, BookingsService, CustomersService, SitePagesService, AdminService, AuthService, TurnstileService, AuthGuard, TenantGuard, PlatformAdminGuard,
+        ...CORE_PROVIDERS, WorkshopsService, SessionsService, ScheduleService, MaintenanceService, SessionCapacityService, PublicBookingsService, BookingsService, CustomersService, SitePagesService, AdminService, FinanceService, FeesService, AuthService, TurnstileService, AuthGuard, TenantGuard, PlatformAdminGuard,
         { provide: APP_FILTER, useClass: ErrorFilter },
         { provide: APP_GUARD, useClass: OriginGuard },
       ],

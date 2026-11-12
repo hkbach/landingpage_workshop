@@ -5,7 +5,9 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import { hashPassword } from "../auth/crypto";
 import { addDays, dateIn, ruleStarts } from "../common/zoned-time";
+import { AuditService } from "../audit/audit.service";
 import { loadDotEnv } from "../config/env";
+import { FinanceService } from "../finance/finance.service";
 import type { Database, Executor } from "./db.module";
 import * as schema from "./schema";
 
@@ -180,12 +182,15 @@ export async function seed(db: Executor, password: string, now: Date = new Date(
             ? roll < 0.7 ? "CHECKED_IN" : roll < 0.85 ? "CONFIRMED" : "CANCELLED"
             : roll < 0.3 ? "NOT_CONFIRMED" : roll < 0.9 ? "CONFIRMED" : "CANCELLED";
           const paid = status2 === "CHECKED_IN" && rand() < 0.9;
-          const total = w.price * quantity;
+          // every fourth booking used the demo code WELCOME10 (10% off): the fees are taken on the price before it (FR-PAY-02)
+          const subtotal = w.price * quantity;
+          const discount = seq % 4 === 0 ? Math.round(subtotal / 10) : 0;
+          const total = subtotal - discount;
           const booking = await db.insert(schema.bookings).values({
             organizationId: org!.id, bookingCode: `${session!.code}-${String(seq).padStart(3, "0")}`, sessionId: session!.id, workshopId: row!.id, customerId: customerIds.get(g.email)!,
             source: rand() < 0.15 ? "WALK_IN" : "ONLINE", quantity, status: status2, paymentStatus: paid ? "PAID" : "UNPAID", statusBeforeCheckIn: status2 === "CHECKED_IN" ? "CONFIRMED" : null,
-            unitPriceAmount: w.price, totalAmount: total, currency: "VND", guestName: g.name, guestEmail: g.email, guestPhone: g.phone, guestCountry: g.country,
-            snapshot: { workshopTitle: w.title, sessionCode: session!.code, startsAt: starts_at.toISOString(), endsAt: ends.toISOString(), timezone: "Asia/Ho_Chi_Minh", address: input.address, subtotalAmount: total },
+            unitPriceAmount: w.price, totalAmount: total, discountAmount: discount, currency: "VND", guestName: g.name, guestEmail: g.email, guestPhone: g.phone, guestCountry: g.country,
+            snapshot: { workshopTitle: w.title, sessionCode: session!.code, startsAt: starts_at.toISOString(), endsAt: ends.toISOString(), timezone: "Asia/Ho_Chi_Minh", address: input.address, subtotalAmount: subtotal, ...(discount > 0 ? { discounts: [{ code: "WELCOME10", amount: discount }] } : {}) },
             locale: g.country === "VN" ? "vi" : "en", ...(status2 === "CHECKED_IN" ? { checkedInAt: addMs(starts_at, 5 * 60_000) } : {}),
             ...(status2 === "CANCELLED" ? { cancelledBy: rand() < 0.6 ? ("GUEST" as const) : ("SHOP" as const), cancelReason: "Change of plans" } : {}),
             createdAt: addMs(starts_at, -Math.floor(rand() * 10 + 2) * 86_400_000),
@@ -214,6 +219,17 @@ export async function seed(db: Executor, password: string, now: Date = new Date(
   return result;
 }
 
+/**
+ * The demo shop gets rates of its own (different from the defaults, so the screens show that each shop has its own) and the months that are over are closed, as the worker does every hour.
+ * Safe to run again: rates that exist are kept, a closed month is skipped.
+ */
+export async function seedFinance(db: Database): Promise<{ closed: number }> {
+  const [shop] = await db.select({ id: schema.organizations.id }).from(schema.organizations).where(eq(schema.organizations.slug, "whiskladle")).limit(1);
+  if (shop) await db.insert(schema.organizationFeeSettings).values({ organizationId: shop.id, maintenanceBps: 800, serviceBps: 1200, affiliateBps: 500, inviteBonusBps: 300 }).onConflictDoNothing();
+  const { closed } = await new FinanceService(db, new AuditService(db)).closeMonths();
+  return { closed };
+}
+
 async function main(): Promise<void> {
   loadDotEnv();
   const url = process.env.DATABASE_URL;
@@ -229,12 +245,13 @@ async function main(): Promise<void> {
   try {
     const db = drizzle(pool, { schema }) as Database;
     const result = await db.transaction((tx) => seed(tx, password!));
+    const finance = await seedFinance(db);
     if (written && result.created.length > 0) {
       const lines = ["Demo accounts (made by pnpm db:seed). They all use the same password. This file is ignored by git: do not share it.", "", `password: ${password}`, "", ...Object.values(DEMO_ACCOUNTS).map((e) => `  ${e}`), ""];
       writeFileSync(".seed-credentials", lines.join("\n"), { encoding: "utf8" });
       try { chmodSync(".seed-credentials", 0o600); } catch { /* not supported on every file system */ }
     }
-    console.log(`Seed done: ${result.created.length} accounts created (${result.existing.length} already there), ${result.sessions} sessions, ${result.bookings} bookings, ${result.payments} payments.`);
+    console.log(`Seed done: ${result.created.length} accounts created (${result.existing.length} already there), ${result.sessions} sessions, ${result.bookings} bookings, ${result.payments} payments, ${finance.closed} month(s) closed.`);
     if (written && result.created.length > 0) console.log("The password was written to apps/api/.seed-credentials (not shown here).");
     else if (result.created.length === 0) console.log("Nothing to do: the demo accounts already exist.");
   } finally {

@@ -3,9 +3,11 @@ import { AuditService } from "../audit/audit.service";
 import { autoCloseEnded } from "../catalog/session-sweeper";
 import { ScheduleService } from "../catalog/schedule.service";
 import { DB, type Database } from "../db/db.module";
+import { FinanceService } from "../finance/finance.service";
 
 export const SESSIONS_SWEEP_QUEUE = "sessions.sweep";
 export const SESSIONS_GENERATE_QUEUE = "sessions.generate";
+export const FINANCE_CLOSE_QUEUE = "finance.close";
 
 /**
  * The scheduled work of the worker besides the outbox: close the sessions whose time is over (every minute, for every shop: a screen of a shop also does it for itself when it asks)
@@ -18,6 +20,7 @@ export class MaintenanceService {
     @Inject(DB) private readonly db: Database,
     @Inject(AuditService) private readonly audit: AuditService,
     @Inject(ScheduleService) private readonly schedule: ScheduleService,
+    @Inject(FinanceService) private readonly finance: FinanceService,
   ) {}
 
   /** Closes every session of every shop whose end has passed. Returns how many. */
@@ -27,5 +30,10 @@ export class MaintenanceService {
 
   generateSessions(now = new Date()): Promise<{ shops: number; created: number }> {
     return this.schedule.generateAll(now);
+  }
+
+  /** Closes the months that are over (D11); a month is closed once, so running it often is harmless. */
+  closeMonths(now = new Date()): Promise<{ shops: number; closed: number }> {
+    return this.finance.closeMonths(now);
   }
 }

@@ -11,6 +11,7 @@ import { addDays, zonedToUtc } from "../common/zoned-time";
 import { DB, type Database, type Executor } from "../db/db.module";
 import { bookings, customers, organizations, payments, workshopSessions, workshops } from "../db/schema";
 import type { BookingMailData } from "../email/templates";
+import { assertMonthsOpen } from "../finance/ledger";
 import { OutboxService } from "../outbox/outbox.service";
 import { assertShopWritable } from "../tenant/shop-writable";
 import { tenantScope } from "../tenant/tenant-scope";
@@ -227,7 +228,7 @@ export class BookingsService {
   /**
    * Records that the booking was paid (a PAYMENT for what is still owed) or puts it back to unpaid (a REVERSAL of what was paid: not a refund, REQUIREMENTS 8.5). A booking that becomes paid
    * is also checked in (the guest came and paid), and goes back to the status it had when it becomes unpaid. A cancelled booking, one with nothing to pay and one of a COMPLETED session
-   * (final) take no payment. TODO(D10, D11): refuse a change of a month that was closed.
+   * (final) take no payment. D10: a booking with a payment in a month that was closed cannot be put back to unpaid (409 MONTH_CLOSED).
    */
   async setPaid(org: OrgContext, id: string, input: { paid: boolean; method?: PaymentRow["method"] | undefined; note?: string | undefined }, actor: Actor, now = new Date()): Promise<BookingView & { payments: PaymentView[] }> {
     assertShopWritable(org);
@@ -239,6 +240,7 @@ export class BookingsService {
       const entries = await tx.select().from(payments).where(and(tenantScope(payments, org.id), eq(payments.bookingId, id)));
       const net = netPaid(entries);
       if (input.paid ? b.paymentStatus === "PAID" : net <= 0) return false; // nothing changes
+      if (!input.paid) await assertMonthsOpen(tx, org.id, entries.filter((e) => e.type === "PAYMENT").map((e) => e.recordedAt)); // D10: a closed month is final
       const amount = input.paid ? b.totalAmount - Math.max(0, net) : net;
       const [entry] = await tx.insert(payments).values({
         organizationId: org.id, bookingId: id, type: input.paid ? "PAYMENT" : "REVERSAL", amount, currency: b.currency, method: input.method ?? "CASH",

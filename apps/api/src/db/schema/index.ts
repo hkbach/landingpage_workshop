@@ -3,4 +3,5 @@ export * from "./identity";
 export * from "./catalog";
 export * from "./booking";
 export * from "./site";
+export * from "./finance";
 export * from "./system";
