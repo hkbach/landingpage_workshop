@@ -1,0 +1,31 @@
+import { randomUUID } from "node:crypto";
+import { NestFactory } from "@nestjs/core";
+import { FastifyAdapter, type NestFastifyApplication } from "@nestjs/platform-fastify";
+import { AppModule } from "./app.module";
+import type { Env } from "./config/env";
+
+const REQUEST_ID = /^[A-Za-z0-9_-]{8,64}$/;
+
+/**
+ * Builds the Nest + Fastify application. Every request gets an id (the client's `x-request-id` when it is a plain token, a new one otherwise) that is in the log lines, in the
+ * error body and in the `x-request-id` answer header. The log never carries the cookie, the authorization header or a set-cookie.
+ */
+export async function createApp(env: Pick<Env, "LOG_LEVEL" | "NODE_ENV">): Promise<NestFastifyApplication> {
+  const adapter = new FastifyAdapter({
+    logger: { level: env.NODE_ENV === "test" ? "silent" : env.LOG_LEVEL, redact: ["req.headers.authorization", "req.headers.cookie", 'res.headers["set-cookie"]'] },
+    genReqId: (req: { headers: Record<string, string | string[] | undefined> }) => {
+      const sent = req.headers["x-request-id"];
+      return typeof sent === "string" && REQUEST_ID.test(sent) ? sent : randomUUID();
+    },
+    bodyLimit: 1_048_576,
+    trustProxy: false, // TODO(api): the hops of the reverse proxy (Caddy) once it exists, so request.ip is the real client
+  });
+  const app = await NestFactory.create<NestFastifyApplication>(AppModule, adapter, { bufferLogs: true });
+  app.getHttpAdapter().getInstance().addHook("onSend", async (request, reply) => {
+    void reply.header("x-request-id", request.id);
+  });
+  // The endpoints of the product are under /api/v1; the checks of the infrastructure are not.
+  app.setGlobalPrefix("api/v1", { exclude: ["health", "ready"] });
+  app.enableShutdownHooks();
+  return app;
+}

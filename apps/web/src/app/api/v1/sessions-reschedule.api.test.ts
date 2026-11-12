@@ -6,7 +6,10 @@ import { GET as listOutbox } from "./outbox/route";
 
 const ctxId = (id: string) => ({ params: Promise.resolve({ id }) }) as never;
 const call = (id: string, body: unknown) => POST(new Request("http://x", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }), ctxId(id));
-const GOOD = { oldStartsAt: "2026-11-09T07:00:00Z", newStartsAt: "2026-11-12T07:00:00Z", newEndsAt: "2026-11-12T09:00:00Z", reason: { code: "SCHEDULE_CHANGE" } };
+/** A moment in the future (the server refuses to move a session to the past): in 3 days, at 07:00 UTC. */
+const FUTURE_START = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate() + 3, 7)).toISOString();
+const FUTURE_END = new Date(Date.parse(FUTURE_START) + 2 * 3_600_000).toISOString();
+const GOOD = { oldStartsAt: "2026-11-09T07:00:00Z", newStartsAt: FUTURE_START, newEndsAt: FUTURE_END, reason: { code: "SCHEDULE_CHANGE" } };
 
 beforeEach(() => { resetBookingStore(); resetOutbox(); });
 

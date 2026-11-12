@@ -15,6 +15,10 @@ import { POST as adminChange } from "./admin/sessions/[id]/route";
 const ctxId = (id: string) => ({ params: Promise.resolve({ id }) }) as never;
 const json = (body: unknown) => new Request("http://x", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
 const dates = { startsAt: "2026-11-09T07:00:00Z", endsAt: "2026-11-09T09:00:00Z" };
+/** A moment in the future (the server refuses to move a session to the past): in 3 days, at 07:00 UTC. */
+const FUTURE_START = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate() + 3, 7)).toISOString();
+const FUTURE_END = new Date(Date.parse(FUTURE_START) + 2 * 3_600_000).toISOString();
+
 const REASON = { code: "VENUE_ISSUE" };
 
 /** Booking codes of a session that are not cancelled in the mock data. */
@@ -96,7 +100,7 @@ describe("re-schedule emails", () => {
   it("reach every guest who did not cancel, not only the confirmed ones", async () => {
     const [b] = bookings.filter((x) => x.sessionId === "se-11" && x.status === "CONFIRMED");
     setBookingStatus(b!.id, "CHECKED_IN");
-    await reschedule(json({ oldStartsAt: dates.startsAt, newStartsAt: "2026-11-12T07:00:00Z", newEndsAt: "2026-11-12T09:00:00Z", reason: REASON }), ctxId("se-11"));
+    await reschedule(json({ oldStartsAt: dates.startsAt, newStartsAt: FUTURE_START, newEndsAt: FUTURE_END, reason: REASON }), ctxId("se-11"));
     expect(sentTo("SESSION_RESCHEDULED")).toContain(b!.bookingCode);
   });
 });

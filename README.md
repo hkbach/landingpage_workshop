@@ -43,6 +43,9 @@ Các thành phần dự kiến cho giai đoạn sau (NestJS, PostgreSQL, Drizzle
 ```
 landingpage_workshop/
 ├── apps/
+│   ├── api/                  Backend NestJS (Fastify) + Drizzle + PostgreSQL (đang dựng: /health, /ready, 7 bảng đầu)
+│   │   ├── src/              Mã nguồn (config, db/schema, common, health)
+│   │   └── drizzle/          Migration SQL (đã merge thì không sửa, muốn đổi thì tạo migration mới)
 │   └── web/                  Ứng dụng Next.js (giao diện + API mock dưới /api/v1)
 │       ├── src/app/          Các trang: (marketing) website công khai, (auth), shopowner, customer,
 │       │                     systemadmin, sites (landing page của shop), api
@@ -51,7 +54,7 @@ landingpage_workshop/
 ├── packages/
 │   ├── shared/               Luật nghiệp vụ dùng chung (session, booking, phí, khuyến mãi, tên miền...), có test riêng
 │   └── config/               Chỗ dự phòng cho cấu hình dùng chung (hiện còn trống)
-├── infra/                    Dự phòng cho Docker, Caddy, backup (hiện còn trống)
+├── infra/                    docker-compose.yml (PostgreSQL 16 cho dev); Caddy, backup chưa có
 ├── docs/
 │   └── REQUIREMENTS.md       Tài liệu yêu cầu (tiếng Việt)
 ├── CLAUDE.md                 Quy tắc làm việc của dự án
@@ -249,7 +252,10 @@ pnpm exec vitest run src/lib/date-input.test.ts
 | `pnpm test` | Chạy toàn bộ test |
 | `pnpm lint` | Kiểm tra cách viết code |
 | `pnpm typecheck` | Kiểm tra kiểu TypeScript |
-| `pnpm dev` | Chạy ứng dụng để xem giao diện |
+| `pnpm dev` | Chạy ứng dụng để xem giao diện (chỉ `apps/web`, không cần database) |
+| `pnpm dev:api` | Chạy backend `apps/api` (cần PostgreSQL và `apps/api/.env`, xem [mục 7.1](#71-backend-và-database-postgresql-bằng-docker)) |
+| `pnpm db:generate` | Sinh migration SQL từ schema Drizzle (`apps/api/src/db/schema`) |
+| `pnpm db:migrate` | Áp migration lên database trong `DATABASE_URL` |
 | `pnpm build` | Đóng gói bản chạy thật (kiểm tra build) |
 
 ---
@@ -289,6 +295,28 @@ Dùng nút ngôn ngữ ở góc trên bên phải (English, Tiếng Việt, 한�
 - Bộ dữ liệu mẫu có **5 shop**: Whisk & Ladle Kitchen `whiskladle` (shop mẫu đầy đủ), Sugar & Sift Bakery `sugarsift` (bản nháp), Golden Noodle House `goldennoodle` (bị khóa), Brew & Bean Coffee Lab và Green Table Vegan Kitchen (có workshop riêng để xem trang Workshops của khách), kèm workshop, session, khách, booking ở đủ các trạng thái, khuyến mãi, thanh toán, affiliate / referral và yêu cầu rút tiền. Dữ liệu nằm trong `apps/web/src/lib/mock/`.
 - Những thay đổi bạn làm (ví dụ hủy booking, đổi tỷ lệ phí hay cài đặt của admin, tạo khuyến mãi, đăng ký tài khoản, gửi tin ở trang Contact) được giữ **trong bộ nhớ của máy chủ đang chạy** nên sẽ **mất khi tắt `pnpm dev` và chạy lại**. Một số thay đổi khác lưu trong trình duyệt (xóa dữ liệu trình duyệt là mất).
 - Vì vậy muốn "làm lại từ đầu" chỉ cần tắt (Ctrl + C) rồi chạy lại `pnpm dev`.
+
+---
+
+### 7.1. Backend và database (PostgreSQL bằng Docker)
+
+Bản giao diện ở trên **không cần** phần này. Chỉ làm khi bạn muốn chạy `apps/api` (backend thật đang được dựng từng bước theo [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) mục 13).
+
+1. Cài **Docker Desktop** và bật nó lên.
+2. Tạo `infra/.env` với một dòng `DB_PASSWORD=<mật-khẩu-bạn-tự-đặt>` (file này không được commit).
+3. Chạy database: `docker compose -f infra/docker-compose.yml --env-file infra/.env up -d`, rồi tạo thêm database cho test: `docker exec -it workshop-db psql -U workshop -d workshop -c "create database workshop_test;"`.
+4. Tạo `apps/api/.env` (không được commit) gồm các biến sau, thay `<mật-khẩu>` bằng mật khẩu ở bước 2:
+   ```
+   DATABASE_URL=postgres://workshop:<mật-khẩu>@localhost:5432/workshop
+   TEST_DATABASE_URL=postgres://workshop:<mật-khẩu>@localhost:5432/workshop_test
+   API_PORT=4000
+   LOG_LEVEL=info
+   ```
+5. Tạo bảng: `pnpm db:migrate`.
+6. Chạy backend: `pnpm dev:api`, rồi mở http://127.0.0.1:4000/health (còn sống) và http://127.0.0.1:4000/ready (kết nối được database).
+7. Có `TEST_DATABASE_URL` thì `pnpm test` chạy thêm các test trên PostgreSQL thật (mỗi test chạy trong một giao dịch rồi hoàn tác nên không để lại dữ liệu); thiếu nó thì các test đó được bỏ qua.
+
+Dừng database: `docker compose -f infra/docker-compose.yml stop`. **Không** thêm `-v` vào lệnh `down` nếu bạn muốn giữ dữ liệu.
 
 ---
 

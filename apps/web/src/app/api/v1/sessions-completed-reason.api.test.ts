@@ -52,7 +52,9 @@ describe("closing a session early because the workshop has been completed", () =
 });
 
 describe("re-scheduling a session", () => {
-  const GOOD = { oldStartsAt: "2026-11-09T07:00:00Z", newStartsAt: "2026-11-12T07:00:00Z", newEndsAt: "2026-11-12T09:00:00Z" };
+  // The server refuses a move to the past, so the new time is 3 days from now.
+  const start = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate() + 3, 7)).toISOString();
+  const GOOD = { oldStartsAt: "2026-11-09T07:00:00Z", newStartsAt: start, newEndsAt: new Date(Date.parse(start) + 2 * 3_600_000).toISOString() };
   it("does not take the workshop has been completed as a reason", async () => {
     const res = await reschedule(json({ ...GOOD, reason: { code: "WORKSHOP_COMPLETED" } }), ctxId("se-11"));
     expect(res.status).toBe(422);

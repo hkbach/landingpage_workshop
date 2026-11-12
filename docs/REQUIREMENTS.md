@@ -16,8 +16,8 @@
 | **Giao diện** (website công khai, khu shop owner, khu customer, khu admin) với **5 ngôn ngữ** (en, vi, ko, ja, zh; `/systemadmin` chỉ en + vi) | **Đã làm**, chạy bằng dữ liệu mẫu |
 | **API mock** trong Next.js (`/api/v1/*`, xem 9.5), dữ liệu trong bộ nhớ, mất khi khởi động lại | **Đã làm** (cùng hợp đồng với backend thật) |
 | **Test** (Vitest): luật nghiệp vụ trong `packages/shared`, API mock, giao diện, bản dịch đủ 5 ngôn ngữ | **Đã làm**, `pnpm lint`, `pnpm typecheck`, `pnpm test` phải xanh trước mỗi thay đổi |
-| **Backend thật** (NestJS, PostgreSQL, Drizzle, pg-boss, session cookie, R2, Resend, Turnstile) | **Chưa làm** (`apps/api` chưa tồn tại) |
-| **Hạ tầng** (Docker, Caddy, CI, backup, Sentry, E2E Playwright, Testcontainers) | **Chưa làm** (thư mục `infra/` còn trống) |
+| **Backend thật** (NestJS, PostgreSQL, Drizzle, pg-boss, session cookie, R2, Resend, Turnstile) | **Đang dựng** (từ 12/11/2026): `apps/api` đã có khung NestJS + Fastify, cấu hình đọc từ môi trường, lỗi chuẩn, request id, `/health` và `/ready`, Drizzle với 7 bảng của M1 và 2 migration (trigger giữ slug bất biến, audit log chỉ ghi thêm). **Chưa có:** auth, worker pg-boss, email, các bảng M2 trở đi, mọi endpoint nghiệp vụ; giao diện vẫn chạy bằng API mock |
+| **Hạ tầng** (Docker, Caddy, CI, backup, Sentry, E2E Playwright, Testcontainers) | **Một phần**: `infra/docker-compose.yml` chạy PostgreSQL 16 cho dev. **Chưa có:** mailpit, Caddy, CI, backup, Sentry, Playwright, Testcontainers |
 
 Mọi chỗ trong tài liệu ghi **TODO(api)** là phần chờ backend thật. Các mục ghi "*Giới hạn MVP (mock)*" nói rõ chỗ mock chưa làm hết (ví dụ chỉ shop demo có đủ dữ liệu).
 
@@ -901,6 +901,8 @@ Quy ước: PK `uuid` (UUIDv7 sinh ở app nếu có, không thì `gen_random_uu
 
 **organization_members**: `organization_id`, `user_id`, `role` (`OWNER`), `status`. PK `(organization_id, user_id)`.
 
+*Ghi chú triển khai (12/11/2026):* schema thật nằm ở `apps/api/src/db/schema/`. So với mô tả trên, bảng `organizations` **không có** `approved_at`, `approved_by` và cột plan (đã bỏ ở bản 2.0: không duyệt shop, không gói trả phí); thêm các ràng buộc `CHECK` (email người dùng viết thường, slug đúng định dạng, ngôn ngữ thuộc 5 ngôn ngữ và ngôn ngữ mặc định phải được bật) và trigger: slug bất biến (BR-21), audit log chỉ ghi thêm (cấm UPDATE, DELETE, TRUNCATE).
+
 ### 8.2 Site
 
 **site_pages**: `id`, `organization_id`, `slug` (MVP luôn là `home`), `template_key`, `theme jsonb`, `draft_content jsonb`, `published_content jsonb` (nullable), `version int`, `published_at`, `published_by`. `UNIQUE (organization_id, slug)`.
@@ -1236,8 +1238,8 @@ Các ô `[ ]` bên dưới là việc của **backend và hạ tầng thật**, 
 
 | Milestone | Giao diện + mock | Backend / hạ tầng thật |
 |---|---|---|
-| M0 Khởi tạo | Monorepo pnpm + Turborepo, `apps/web`, `packages/shared`, test, lint, typecheck, i18n 5 ngôn ngữ | Chưa: `apps/api`, Docker, Drizzle, pino, CI, `.nvmrc` kiểm tra bởi CI |
-| M1 Auth và tenant | Đăng ký (popup 2 tab), đăng nhập (chuyển theo loại tài khoản), quên / đặt lại mật khẩu, onboarding, slug sinh từ tên, audit log | Chưa: bảng, session cookie, Turnstile, xác minh email, guard tenant, pg-boss, outbox, Resend |
+| M0 Khởi tạo | Monorepo pnpm + Turborepo, `apps/web`, `packages/shared`, test, lint, typecheck, i18n 5 ngôn ngữ | Đã (12/11/2026): `apps/api` (NestJS + Fastify), Docker compose cho PostgreSQL, Drizzle + migration đầu, `/health` `/ready`, lỗi chuẩn, request id, `.nvmrc`. Chưa: pino riêng (đang dùng logger của Fastify, đã che cookie và authorization), mailpit, CI |
+| M1 Auth và tenant | Đăng ký (popup 2 tab), đăng nhập (chuyển theo loại tài khoản), quên / đặt lại mật khẩu, onboarding, slug sinh từ tên, audit log | Đã: 7 bảng (users, auth_sessions, user_tokens, organizations, organization_members, audit_logs, outbox_events) và 2 migration. Chưa: session cookie, Turnstile, xác minh email, guard tenant, pg-boss, outbox, Resend |
 | M2 Workshop và lịch | CRUD workshop (danh mục, địa chỉ, ảnh), schedule rule, session (thêm, đóng, dời, sức chứa), tải ảnh (mock) | Chưa: presign R2, job sinh session |
 | M3 Landing page builder | Section registry, template, theme, builder, preview, autosave (trình duyệt), publish ngay, tối đa 2 page | Chưa: `site_page_versions`, publish atomic trên server |
 | M4 Trang public và booking | Host / proxy, renderer, SEO (meta, OG, hreflang, sitemap, robots), lịch còn chỗ, booking, trang xác nhận, tên miền riêng | Chưa: ISR, Turnstile, `SessionCapacityService` + khóa dòng + **test đồng thời**, email thật |
