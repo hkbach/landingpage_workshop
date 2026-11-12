@@ -71,6 +71,20 @@
       "when": 1794476805182,
       "tag": "0009_finance_triggers",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1794477807922,
+      "tag": "0010_wallet",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1794477809337,
+      "tag": "0011_wallet_triggers",
+      "breakpoints": true
     }
   ]
 }

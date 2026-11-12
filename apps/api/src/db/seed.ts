@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { chmodSync, writeFileSync } from "node:fs";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import { hashPassword } from "../auth/crypto";
@@ -227,7 +227,29 @@ export async function seedFinance(db: Database): Promise<{ closed: number }> {
   const [shop] = await db.select({ id: schema.organizations.id }).from(schema.organizations).where(eq(schema.organizations.slug, "whiskladle")).limit(1);
   if (shop) await db.insert(schema.organizationFeeSettings).values({ organizationId: shop.id, maintenanceBps: 800, serviceBps: 1200, affiliateBps: 500, inviteBonusBps: 300 }).onConflictDoNothing();
   const { closed } = await new FinanceService(db, new AuditService(db)).closeMonths();
+  await seedWallet(db);
   return { closed };
+}
+
+/**
+ * The demo customer gets a wallet: what the affiliate and referral programs will write when a fee or a bonus is earned (the programs are not in the backend yet, so these credits are demo data),
+ * and one invoice of each state. Written once: when the customer already has credits nothing is added.
+ */
+async function seedWallet(db: Database): Promise<void> {
+  const [emma] = await db.select({ id: schema.users.id }).from(schema.users).where(eq(schema.users.email, DEMO_ACCOUNTS.customer)).limit(1);
+  const [root] = await db.select({ id: schema.users.id }).from(schema.users).where(eq(schema.users.email, DEMO_ACCOUNTS.admin)).limit(1);
+  if (!emma) return;
+  const [existing] = await db.select({ id: schema.walletCredits.id }).from(schema.walletCredits).where(eq(schema.walletCredits.userId, emma.id)).limit(1);
+  if (existing) return;
+  const credits: [("AFFILIATE" | "REFERRAL"), number, string][] = [["AFFILIATE", 160_000, "Whisk & Ladle: 4 paid bookings"], ["AFFILIATE", 90_000, "Whisk & Ladle: 2 paid bookings"], ["REFERRAL", 100_000, "Friend invited: first paid booking"], ["REFERRAL", 100_000, "Friend invited: first paid booking"]];
+  for (const [source, amount, note] of credits) await db.insert(schema.walletCredits).values({ userId: emma.id, source, currency: "VND", amount, note });
+  const number = sql`'WD-' || lpad(nextval('withdrawal_number_seq')::text, 4, '0')`;
+  const day = 86_400_000;
+  await db.insert(schema.withdrawals).values([
+    { number, userId: emma.id, source: "AFFILIATE", currency: "VND", amount: 100_000, status: "PAID", requestedAt: new Date(Date.now() - 20 * day), processedAt: new Date(Date.now() - 18 * day), processedBy: root?.id ?? null },
+    { number, userId: emma.id, source: "AFFILIATE", currency: "VND", amount: 50_000, status: "REJECTED", reason: "Bank details are missing (demo)", requestedAt: new Date(Date.now() - 9 * day), processedAt: new Date(Date.now() - 8 * day), processedBy: root?.id ?? null },
+    { number, userId: emma.id, source: "REFERRAL", currency: "VND", amount: 60_000, status: "PENDING", requestedAt: new Date(Date.now() - 1 * day) },
+  ]);
 }
 
 async function main(): Promise<void> {

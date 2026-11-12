@@ -5,3 +5,4 @@ export * from "./booking";
 export * from "./site";
 export * from "./finance";
 export * from "./system";
+export * from "./wallet";
