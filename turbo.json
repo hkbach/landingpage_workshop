@@ -5,6 +5,6 @@
     "build": { "dependsOn": ["^build"], "outputs": [".next/**", "dist/**"] },
     "lint": {},
     "typecheck": { "dependsOn": ["^build"] },
-    "test": {}
+    "test": { "inputs": ["$TURBO_DEFAULT$", ".env"] }
   }
 }
