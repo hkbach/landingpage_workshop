@@ -1,5 +1,7 @@
 import { type DynamicModule, Inject, Module, type OnApplicationShutdown } from "@nestjs/common";
 import { APP_FILTER, APP_GUARD } from "@nestjs/core";
+import { AdminController } from "./admin/admin.controller";
+import { AdminService } from "./admin/admin.service";
 import { AuditService } from "./audit/audit.service";
 import { BookingsController, CustomersController } from "./bookings/bookings.controller";
 import { BookingsService } from "./bookings/bookings.service";
@@ -43,11 +45,11 @@ export class AppModule implements OnApplicationShutdown {
     return {
       module: AppModule,
       imports: [EnvModule, DbModule],
-      controllers: [HealthController, AuthController, OrganizationController, WorkshopsController, SessionsController, ScheduleRulesController, PublicController, BookingsController, CustomersController, SitePagesController],
+      controllers: [HealthController, AuthController, OrganizationController, WorkshopsController, SessionsController, ScheduleRulesController, PublicController, BookingsController, CustomersController, SitePagesController, AdminController],
       providers: [
         { provide: EMAIL_PROVIDER, inject: [ENV], useFactory: (env: Env) => options.emailProvider ?? createEmailProvider(env) },
         { provide: JOBS, inject: [ENV], useFactory: (env: Env) => options.jobs ?? createJobs(env) },
-        ...CORE_PROVIDERS, WorkshopsService, SessionsService, ScheduleService, MaintenanceService, SessionCapacityService, PublicBookingsService, BookingsService, CustomersService, SitePagesService, AuthService, TurnstileService, AuthGuard, TenantGuard, PlatformAdminGuard,
+        ...CORE_PROVIDERS, WorkshopsService, SessionsService, ScheduleService, MaintenanceService, SessionCapacityService, PublicBookingsService, BookingsService, CustomersService, SitePagesService, AdminService, AuthService, TurnstileService, AuthGuard, TenantGuard, PlatformAdminGuard,
         { provide: APP_FILTER, useClass: ErrorFilter },
         { provide: APP_GUARD, useClass: OriginGuard },
       ],

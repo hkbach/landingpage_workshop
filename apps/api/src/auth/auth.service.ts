@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, HttpException, Inject, Injectable, UnauthorizedException, UnprocessableEntityException, ConflictException } from "@nestjs/common";
+import { BadRequestException, ForbiddenException, HttpException, Inject, Injectable, NotFoundException, UnauthorizedException, UnprocessableEntityException, ConflictException } from "@nestjs/common";
 import { and, eq, gt, isNull, like, sql } from "drizzle-orm";
 import { checkPassword, generateShopSlug, slugifyShopName } from "@workshop/shared";
 import { AuditService } from "../audit/audit.service";
@@ -309,6 +309,19 @@ export class AuthService {
       const token = await this.issueToken(tx, user.id, "PASSWORD_RESET", this.env.RESET_LINK_HOURS);
       await this.outbox.enqueueEmail(tx, { name: "password-reset", to: email, data: { name: user.fullName, link: this.link("/reset-password", token), hours: this.env.RESET_LINK_HOURS } });
       await this.audit.record({ actorUserId: user.id, action: "auth.password_reset_requested", entityType: "user", entityId: user.id, ip: ctx.ip }, tx);
+    });
+    void this.outbox.wake();
+  }
+
+  /** An administrator asks for a link to be sent to an account (the administrator never sees the link, the token or a password). */
+  async sendPasswordResetLink(userId: string, actorUserId: string, ip: string | null): Promise<void> {
+    const [user] = await this.db.select().from(users).where(eq(users.id, userId)).limit(1);
+    if (!user) throw new NotFoundException({ code: "NOT_FOUND", message: "User not found." });
+    if (user.status === "DISABLED") throw new ConflictException({ code: "STATUS", message: "A deactivated account cannot reset its password." });
+    await this.db.transaction(async (tx) => {
+      const token = await this.issueToken(tx, user.id, "PASSWORD_RESET", this.env.RESET_LINK_HOURS);
+      await this.outbox.enqueueEmail(tx, { name: "password-reset", to: user.email, data: { name: user.fullName, link: this.link("/reset-password", token), hours: this.env.RESET_LINK_HOURS } });
+      await this.audit.record({ actorUserId, action: "user.reset_password", entityType: "user", entityId: user.id, after: { targetEmail: user.email }, ip }, tx);
     });
     void this.outbox.wake();
   }
