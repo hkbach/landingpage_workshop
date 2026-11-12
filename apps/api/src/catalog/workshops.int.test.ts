@@ -97,7 +97,7 @@ d("workshops of a shop", () => {
     await t.post(`/workshops/${id}/status`, { status: "ACTIVE" }, { cookie: a.cookie });
     for (const [i, status] of (["OPEN", "RUNNING"] as const).entries()) {
       await t.pool.query(
-        `insert into workshop_sessions (organization_id, workshop_id, starts_at, ends_at, capacity, status, code) values ($1, $2, now() + interval '3 days' + $3::int * interval '1 day', now() + interval '3 days' + $3::int * interval '1 day' + interval '2 hours', 8, $4, $5)`,
+        `insert into workshop_sessions (organization_id, workshop_id, starts_at, origin_starts_at, ends_at, capacity, status, code) select $1, $2, s, s, s + interval '2 hours', 8, $4, $5 from (select now() + interval '3 days' + $3::int * interval '1 day' as s) x`,
         [a.orgId, id, i, status, `SES-${String(9000 + Math.floor(Math.random() * 900) + i * 1000).padStart(4, "0")}`],
       );
     }
@@ -112,7 +112,7 @@ d("workshops of a shop", () => {
   it("a session whose time is over counts as closed at once, even before the worker ran", async () => {
     const id = (await t.post("/workshops", body(), { cookie: a.cookie })).json().id;
     await t.post(`/workshops/${id}/status`, { status: "ACTIVE" }, { cookie: a.cookie });
-    await t.pool.query("insert into workshop_sessions (organization_id, workshop_id, starts_at, ends_at, capacity, status, code) values ($1, $2, now() - interval '3 hours', now() - interval '1 hour', 8, 'RUNNING', $3)", [a.orgId, id, `SES-${String(7000 + Math.floor(Math.random() * 999)).padStart(4, "0")}`]);
+    await t.pool.query("insert into workshop_sessions (organization_id, workshop_id, starts_at, origin_starts_at, ends_at, capacity, status, code) values ($1, $2, now() - interval '3 hours', now() - interval '3 hours', now() - interval '1 hour', 8, 'RUNNING', $3)", [a.orgId, id, `SES-${String(7000 + Math.floor(Math.random() * 999)).padStart(4, "0")}`]);
     expect((await t.post(`/workshops/${id}/status`, { status: "DRAFT" }, { cookie: a.cookie })).statusCode).toBe(200);
     const closed = await t.pool.query<{ status: string; auto_closed: boolean; session_notes: { type: string }[] }>("select status, auto_closed, session_notes from workshop_sessions where workshop_id = $1", [id]);
     expect(closed.rows[0]).toMatchObject({ status: "CLOSED", auto_closed: true });
@@ -129,7 +129,7 @@ d("workshops of a shop", () => {
     expect((await t.get(`/workshops?limit=100`, { cookie: b.cookie })).json().items.some((w: { id: string }) => w.id === mine.id)).toBe(false);
     expect((await t.get(`/workshops/${mine.id}`, { cookie: a.cookie })).json().status).toBe("DRAFT"); // untouched
     // the database refuses it too: a session cannot point at another shop's workshop
-    await expect(t.pool.query("insert into workshop_sessions (organization_id, workshop_id, starts_at, ends_at, capacity, code) values ($1, $2, now() + interval '9 days', now() + interval '9 days 2 hours', 5, 'SES-8888')", [b.orgId, mine.id])).rejects.toThrow(/workshop_sessions_workshop_fk/);
+    await expect(t.pool.query("insert into workshop_sessions (organization_id, workshop_id, starts_at, origin_starts_at, ends_at, capacity, code) values ($1, $2, now() + interval '9 days', now() + interval '9 days', now() + interval '9 days 2 hours', 5, 'SES-8888')", [b.orgId, mine.id])).rejects.toThrow(/workshop_sessions_workshop_fk/);
   });
 
   it("a suspended shop can read but not change", async () => {

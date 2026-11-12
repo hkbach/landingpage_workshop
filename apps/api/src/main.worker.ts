@@ -7,7 +7,10 @@ import { DbModule } from "./db/db.module";
 import { EMAIL_PROVIDER, createEmailProvider } from "./email/email";
 import { ENV } from "./config/env.module";
 import type { Env } from "./config/env";
+import { AuditService } from "./audit/audit.service";
+import { ScheduleService } from "./catalog/schedule.service";
 import { JOBS, NoopJobs, OUTBOX_QUEUE, startBoss } from "./jobs/jobs";
+import { MaintenanceService, SESSIONS_GENERATE_QUEUE, SESSIONS_SWEEP_QUEUE } from "./jobs/maintenance";
 import { OutboxService } from "./outbox/outbox.service";
 
 // The worker (REQUIREMENTS 3.2: a separate entry point, a separate container). It sends the emails of the outbox when the API wakes it (pg-boss job) and once a minute on its own,
@@ -17,7 +20,7 @@ import { OutboxService } from "./outbox/outbox.service";
   providers: [
     { provide: EMAIL_PROVIDER, inject: [ENV], useFactory: (env: Env) => createEmailProvider(env) },
     { provide: JOBS, useValue: new NoopJobs() },
-    OutboxService,
+    AuditService, OutboxService, ScheduleService, MaintenanceService,
   ],
 })
 class WorkerModule {}
@@ -26,9 +29,10 @@ async function bootstrap(): Promise<void> {
   loadDotEnv();
   const env = parseEnv();
   const logger = new Logger("Worker");
-  const app = await NestFactory.createApplicationContext(WorkerModule, { bufferLogs: true });
+  const app = await NestFactory.createApplicationContext(WorkerModule);
   app.enableShutdownHooks();
   const outbox = app.get(OutboxService);
+  const maintenance = app.get(MaintenanceService);
 
   const boss = await startBoss(env.DATABASE_URL, { supervise: true, schedule: true });
   const dispatch = async (): Promise<void> => {
@@ -38,6 +42,22 @@ async function bootstrap(): Promise<void> {
   await boss.work(OUTBOX_QUEUE, async () => dispatch());
   await boss.schedule(OUTBOX_QUEUE, "* * * * *"); // the safety net: look every minute
   await dispatch(); // and once at the start, for what waited while the worker was down
+
+  // Sessions: close the ones whose time is over (every minute) and make the ones of the weekly schedules (every hour, and once now).
+  await boss.createQueue(SESSIONS_SWEEP_QUEUE);
+  await boss.createQueue(SESSIONS_GENERATE_QUEUE);
+  await boss.work(SESSIONS_SWEEP_QUEUE, async () => {
+    const closed = await maintenance.sweepSessions();
+    if (closed > 0) logger.log(`Sessions: ${closed} closed because their time was over`);
+  });
+  await boss.work(SESSIONS_GENERATE_QUEUE, async () => {
+    const result = await maintenance.generateSessions();
+    if (result.created > 0) logger.log(`Sessions: ${result.created} made from the weekly schedules of ${result.shops} shop(s)`);
+  });
+  await boss.schedule(SESSIONS_SWEEP_QUEUE, "* * * * *");
+  await boss.schedule(SESSIONS_GENERATE_QUEUE, "0 * * * *");
+  await maintenance.sweepSessions();
+  await maintenance.generateSessions();
   logger.log("The worker is running");
 
   const stop = async (): Promise<void> => {

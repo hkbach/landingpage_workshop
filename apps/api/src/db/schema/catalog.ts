@@ -89,6 +89,8 @@ export const workshopSessions = pgTable(
     scheduleRuleId: uuid("schedule_rule_id"),
     startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
     endsAt: timestamp("ends_at", { withTimezone: true }).notNull(),
+    /** The slot the session was made for. Re-scheduling changes `starts_at` but never this, so a rule does not make the old slot again (and a slot is only ever made once). */
+    originStartsAt: timestamp("origin_starts_at", { withTimezone: true }).notNull(),
     capacity: integer("capacity").notNull(),
     /** Changed ONLY by SessionCapacityService under a row lock (CLAUDE.md); never written elsewhere. */
     reservedCount: integer("reserved_count").notNull().default(0),
@@ -111,6 +113,7 @@ export const workshopSessions = pgTable(
     unique("workshop_sessions_org_id_unique").on(t.organizationId, t.id),
     unique("workshop_sessions_org_code_unique").on(t.organizationId, t.code),
     unique("workshop_sessions_start_unique").on(t.organizationId, t.workshopId, t.startsAt),
+    unique("workshop_sessions_origin_unique").on(t.organizationId, t.workshopId, t.originStartsAt),
     check("workshop_sessions_capacity", sql`${t.capacity} BETWEEN 1 AND 50`),
     check("workshop_sessions_reserved", sql`${t.reservedCount} BETWEEN 0 AND ${t.capacity}`),
     check("workshop_sessions_time", sql`${t.endsAt} > ${t.startsAt}`),

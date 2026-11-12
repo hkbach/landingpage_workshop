@@ -1,6 +1,9 @@
 import { type DynamicModule, Inject, Module, type OnApplicationShutdown } from "@nestjs/common";
 import { APP_FILTER, APP_GUARD } from "@nestjs/core";
 import { AuditService } from "./audit/audit.service";
+import { ScheduleService } from "./catalog/schedule.service";
+import { ScheduleRulesController, SessionsController } from "./catalog/sessions.controller";
+import { SessionsService } from "./catalog/sessions.service";
 import { WorkshopsController } from "./catalog/workshops.controller";
 import { WorkshopsService } from "./catalog/workshops.service";
 import { AuthController } from "./auth/auth.controller";
@@ -14,6 +17,7 @@ import { DbModule } from "./db/db.module";
 import { createEmailProvider, EMAIL_PROVIDER, type EmailProvider } from "./email/email";
 import { HealthController } from "./health/health.controller";
 import { createJobs, JOBS, type JobsPort } from "./jobs/jobs";
+import { MaintenanceService } from "./jobs/maintenance";
 import { OrganizationController } from "./organization/organization.controller";
 import { OutboxService } from "./outbox/outbox.service";
 
@@ -31,11 +35,11 @@ export class AppModule implements OnApplicationShutdown {
     return {
       module: AppModule,
       imports: [EnvModule, DbModule],
-      controllers: [HealthController, AuthController, OrganizationController, WorkshopsController],
+      controllers: [HealthController, AuthController, OrganizationController, WorkshopsController, SessionsController, ScheduleRulesController],
       providers: [
         { provide: EMAIL_PROVIDER, inject: [ENV], useFactory: (env: Env) => options.emailProvider ?? createEmailProvider(env) },
         { provide: JOBS, inject: [ENV], useFactory: (env: Env) => options.jobs ?? createJobs(env) },
-        ...CORE_PROVIDERS, WorkshopsService, AuthService, TurnstileService, AuthGuard, TenantGuard, PlatformAdminGuard,
+        ...CORE_PROVIDERS, WorkshopsService, SessionsService, ScheduleService, MaintenanceService, AuthService, TurnstileService, AuthGuard, TenantGuard, PlatformAdminGuard,
         { provide: APP_FILTER, useClass: ErrorFilter },
         { provide: APP_GUARD, useClass: OriginGuard },
       ],
