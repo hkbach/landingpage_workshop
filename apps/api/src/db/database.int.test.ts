@@ -1,10 +1,6 @@
-import { join } from "node:path";
-import { drizzle } from "drizzle-orm/node-postgres";
-import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { Pool, type PoolClient } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createApp } from "../app";
-import { auditLogs, organizations, users } from "./schema";
 
 // Integration tests against a REAL PostgreSQL (the one of infra/docker-compose.yml, database `workshop_test`). They run only when TEST_DATABASE_URL is set, so a plain `pnpm test`
 // works without Docker. Every write below happens in a transaction that is rolled back, so the database stays clean (the audit log cannot be cleaned: it is append only).
@@ -15,7 +11,6 @@ d("the database (PostgreSQL)", () => {
   let pool: Pool;
   beforeAll(async () => {
     pool = new Pool({ connectionString: url! });
-    await migrate(drizzle(pool), { migrationsFolder: join(__dirname, "..", "..", "drizzle") });
   });
   afterAll(async () => { await pool.end(); });
 
@@ -46,7 +41,6 @@ d("the database (PostgreSQL)", () => {
   it("has the tables of M1", async () => {
     const { rows } = await pool.query<{ table_name: string }>("select table_name from information_schema.tables where table_schema = 'public' order by 1");
     expect(rows.map((r) => r.table_name)).toEqual(expect.arrayContaining(["users", "auth_sessions", "user_tokens", "organizations", "organization_members", "audit_logs", "outbox_events"]));
-    expect(Object.keys(users).length + Object.keys(organizations).length + Object.keys(auditLogs).length).toBeGreaterThan(0);
   });
 
   it("keeps the email lowercase and unique", async () => {

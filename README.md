@@ -43,7 +43,7 @@ Các thành phần dự kiến cho giai đoạn sau (NestJS, PostgreSQL, Drizzle
 ```
 landingpage_workshop/
 ├── apps/
-│   ├── api/                  Backend NestJS (Fastify) + Drizzle + PostgreSQL (đang dựng: /health, /ready, 7 bảng đầu)
+│   ├── api/                  Backend NestJS (Fastify) + Drizzle + PostgreSQL (đang dựng: đăng ký, đăng nhập, email, 7 bảng đầu)
 │   │   ├── src/              Mã nguồn (config, db/schema, common, health)
 │   │   └── drizzle/          Migration SQL (đã merge thì không sửa, muốn đổi thì tạo migration mới)
 │   └── web/                  Ứng dụng Next.js (giao diện + API mock dưới /api/v1)
@@ -54,7 +54,7 @@ landingpage_workshop/
 ├── packages/
 │   ├── shared/               Luật nghiệp vụ dùng chung (session, booking, phí, khuyến mãi, tên miền...), có test riêng
 │   └── config/               Chỗ dự phòng cho cấu hình dùng chung (hiện còn trống)
-├── infra/                    docker-compose.yml (PostgreSQL 16 cho dev); Caddy, backup chưa có
+├── infra/                    docker-compose.yml (PostgreSQL 16 và Mailpit cho dev); Caddy, backup chưa có
 ├── docs/
 │   └── REQUIREMENTS.md       Tài liệu yêu cầu (tiếng Việt)
 ├── CLAUDE.md                 Quy tắc làm việc của dự án
@@ -253,7 +253,8 @@ pnpm exec vitest run src/lib/date-input.test.ts
 | `pnpm lint` | Kiểm tra cách viết code |
 | `pnpm typecheck` | Kiểm tra kiểu TypeScript |
 | `pnpm dev` | Chạy ứng dụng để xem giao diện (chỉ `apps/web`, không cần database) |
-| `pnpm dev:api` | Chạy backend `apps/api` (cần PostgreSQL và `apps/api/.env`, xem [mục 7.1](#71-backend-và-database-postgresql-bằng-docker)) |
+| `pnpm dev:api` | Chạy backend `apps/api` (cần PostgreSQL và `apps/api/.env`, xem [mục 7.1](#71-backend-và-database-postgresql-bằng-docker)); gửi email cần thêm `pnpm --filter api dev:worker` |
+| `pnpm db:seed` | Nạp dữ liệu demo (cần `SEED_PASSWORD` do bạn đặt) |
 | `pnpm db:generate` | Sinh migration SQL từ schema Drizzle (`apps/api/src/db/schema`) |
 | `pnpm db:migrate` | Áp migration lên database trong `DATABASE_URL` |
 | `pnpm build` | Đóng gói bản chạy thật (kiểm tra build) |
@@ -304,7 +305,7 @@ Bản giao diện ở trên **không cần** phần này. Chỉ làm khi bạn m
 
 1. Cài **Docker Desktop** và bật nó lên.
 2. Tạo `infra/.env` với một dòng `DB_PASSWORD=<mật-khẩu-bạn-tự-đặt>` (file này không được commit).
-3. Chạy database: `docker compose -f infra/docker-compose.yml --env-file infra/.env up -d`, rồi tạo thêm database cho test: `docker exec -it workshop-db psql -U workshop -d workshop -c "create database workshop_test;"`.
+3. Chạy database và Mailpit: `docker compose -f infra/docker-compose.yml --env-file infra/.env up -d`, rồi tạo thêm database cho test: `docker exec -it workshop-db psql -U workshop -d workshop -c "create database workshop_test;"`.
 4. Tạo `apps/api/.env` (không được commit) gồm các biến sau, thay `<mật-khẩu>` bằng mật khẩu ở bước 2:
    ```
    DATABASE_URL=postgres://workshop:<mật-khẩu>@localhost:5432/workshop
@@ -312,9 +313,14 @@ Bản giao diện ở trên **không cần** phần này. Chỉ làm khi bạn m
    API_PORT=4000
    LOG_LEVEL=info
    ```
+   Các biến tùy chọn (đã có giá trị mặc định cho môi trường dev): `APP_URL` (mặc định `http://app.localtest.me:3000`), `REQUIRE_EMAIL_VERIFICATION` (dev mặc định `false`: đăng ký xong vào luôn; đặt `true` để bắt xác minh email như production), `EMAIL_PROVIDER` (`mailpit` hoặc `resend`), `TURNSTILE_SECRET_KEY` (trống thì bỏ qua kiểm tra bot, chỉ khi dev). Danh sách đầy đủ ở [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) mục 11.1.
 5. Tạo bảng: `pnpm db:migrate`.
 6. Chạy backend: `pnpm dev:api`, rồi mở http://127.0.0.1:4000/health (còn sống) và http://127.0.0.1:4000/ready (kết nối được database).
-7. Có `TEST_DATABASE_URL` thì `pnpm test` chạy thêm các test trên PostgreSQL thật (mỗi test chạy trong một giao dịch rồi hoàn tác nên không để lại dữ liệu); thiếu nó thì các test đó được bỏ qua.
+7. Gửi email (đăng ký có xác minh, quên mật khẩu): chạy thêm worker ở một terminal khác bằng `pnpm --filter api dev:worker`. Email được **giữ lại ở Mailpit**, xem tại http://127.0.0.1:8025 (không gửi ra ngoài).
+8. Dữ liệu demo (tùy chọn): đặt `SEED_PASSWORD=<mật-khẩu-bạn-tự-đặt>` (ít nhất 10 ký tự) trong `apps/api/.env`, rồi chạy `pnpm db:seed`. Sẽ có 1 admin, 2 shop (một ACTIVE, một DRAFT) và 1 khách; mọi tài khoản dùng mật khẩu bạn đặt. Chạy lại không ghi đè tài khoản đã có.
+9. Test: có `TEST_DATABASE_URL` thì `pnpm test` chạy thêm các test trên PostgreSQL thật (đăng ký, đăng nhập, cách ly dữ liệu giữa các shop, email, outbox). Thiếu nó thì các test đó được bỏ qua. Các test này **tạo dữ liệu có tên ngẫu nhiên** trong `workshop_test` (audit log không xóa được nên dữ liệu tích lũy; muốn dọn thì tạo lại database test).
+
+**Lưu ý:** đây là bản POC. Phần đăng nhập, session và phân quyền chưa được người review bảo mật, nên **không đưa lên production** khi chưa review.
 
 Dừng database: `docker compose -f infra/docker-compose.yml stop`. **Không** thêm `-v` vào lệnh `down` nếu bạn muốn giữ dữ liệu.
 

@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { NestFactory } from "@nestjs/core";
 import { FastifyAdapter, type NestFastifyApplication } from "@nestjs/platform-fastify";
-import { AppModule } from "./app.module";
+import { AppModule, type AppOptions } from "./app.module";
 import type { Env } from "./config/env";
 
 const REQUEST_ID = /^[A-Za-z0-9_-]{8,64}$/;
@@ -10,7 +10,7 @@ const REQUEST_ID = /^[A-Za-z0-9_-]{8,64}$/;
  * Builds the Nest + Fastify application. Every request gets an id (the client's `x-request-id` when it is a plain token, a new one otherwise) that is in the log lines, in the
  * error body and in the `x-request-id` answer header. The log never carries the cookie, the authorization header or a set-cookie.
  */
-export async function createApp(env: Pick<Env, "LOG_LEVEL" | "NODE_ENV">): Promise<NestFastifyApplication> {
+export async function createApp(env: Pick<Env, "LOG_LEVEL" | "NODE_ENV"> & Partial<Pick<Env, "TRUST_PROXY_HOPS">>, options: AppOptions = {}): Promise<NestFastifyApplication> {
   const adapter = new FastifyAdapter({
     logger: { level: env.NODE_ENV === "test" ? "silent" : env.LOG_LEVEL, redact: ["req.headers.authorization", "req.headers.cookie", 'res.headers["set-cookie"]'] },
     genReqId: (req: { headers: Record<string, string | string[] | undefined> }) => {
@@ -18,9 +18,10 @@ export async function createApp(env: Pick<Env, "LOG_LEVEL" | "NODE_ENV">): Promi
       return typeof sent === "string" && REQUEST_ID.test(sent) ? sent : randomUUID();
     },
     bodyLimit: 1_048_576,
-    trustProxy: false, // TODO(api): the hops of the reverse proxy (Caddy) once it exists, so request.ip is the real client
+    // How many reverse proxies stand in front (Caddy): request.ip is then the address the nearest one saw, never a header the client wrote. 0 = none: the socket.
+    trustProxy: (env.TRUST_PROXY_HOPS ?? 0) > 0 ? (_address: string, hop: number) => hop < (env.TRUST_PROXY_HOPS ?? 0) : false,
   });
-  const app = await NestFactory.create<NestFastifyApplication>(AppModule, adapter, { bufferLogs: true });
+  const app = await NestFactory.create<NestFastifyApplication>(AppModule.forRoot(options), adapter, { bufferLogs: true });
   app.getHttpAdapter().getInstance().addHook("onSend", async (request, reply) => {
     void reply.header("x-request-id", request.id);
   });

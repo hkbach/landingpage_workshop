@@ -16,7 +16,7 @@
 | **Giao diện** (website công khai, khu shop owner, khu customer, khu admin) với **5 ngôn ngữ** (en, vi, ko, ja, zh; `/systemadmin` chỉ en + vi) | **Đã làm**, chạy bằng dữ liệu mẫu |
 | **API mock** trong Next.js (`/api/v1/*`, xem 9.5), dữ liệu trong bộ nhớ, mất khi khởi động lại | **Đã làm** (cùng hợp đồng với backend thật) |
 | **Test** (Vitest): luật nghiệp vụ trong `packages/shared`, API mock, giao diện, bản dịch đủ 5 ngôn ngữ | **Đã làm**, `pnpm lint`, `pnpm typecheck`, `pnpm test` phải xanh trước mỗi thay đổi |
-| **Backend thật** (NestJS, PostgreSQL, Drizzle, pg-boss, session cookie, R2, Resend, Turnstile) | **Đang dựng** (từ 12/11/2026): `apps/api` đã có khung NestJS + Fastify, cấu hình đọc từ môi trường, lỗi chuẩn, request id, `/health` và `/ready`, Drizzle với 7 bảng của M1 và 2 migration (trigger giữ slug bất biến, audit log chỉ ghi thêm). **Chưa có:** auth, worker pg-boss, email, các bảng M2 trở đi, mọi endpoint nghiệp vụ; giao diện vẫn chạy bằng API mock |
+| **Backend thật** (NestJS, PostgreSQL, Drizzle, pg-boss, session cookie, R2, Resend, Turnstile) | **Đang dựng** (từ 12/11/2026): `apps/api` có khung NestJS + Fastify, 7 bảng của M1 và 2 migration, **auth đầy đủ** (đăng ký, đăng nhập bằng cookie session, đăng xuất, xác minh email, quên / đặt lại mật khẩu), guard (Origin / CSRF, đăng nhập, tenant, admin), `GET /organization` và `GET /audit-logs` của shop, outbox + worker pg-boss gửi email (Mailpit / Resend), seed demo. **Chưa có:** workshop, session, booking, payment, media (R2), mọi endpoint từ M2 trở đi. **Giao diện web vẫn chạy bằng API mock**, chưa gọi backend thật. **Đây là bản POC: mã bảo mật chưa được người review, không đưa lên production khi chưa review** |
 | **Hạ tầng** (Docker, Caddy, CI, backup, Sentry, E2E Playwright, Testcontainers) | **Một phần**: `infra/docker-compose.yml` chạy PostgreSQL 16 cho dev. **Chưa có:** mailpit, Caddy, CI, backup, Sentry, Playwright, Testcontainers |
 
 Mọi chỗ trong tài liệu ghi **TODO(api)** là phần chờ backend thật. Các mục ghi "*Giới hạn MVP (mock)*" nói rõ chỗ mock chưa làm hết (ví dụ chỉ shop demo có đủ dữ liệu).
@@ -977,7 +977,15 @@ Prefix `/api/v1`. Auth: cookie session. `{org}` lấy từ session (active organ
 | POST | `/auth/login` · `/auth/logout` | |
 | POST | `/auth/forgot-password` · `/auth/reset-password` | |
 | GET | `/auth/me` | User + danh sách membership |
-| POST | `/auth/switch-organization` | Đổi active organization |
+| POST | `/auth/resend-verification` | Gửi lại email xác minh (luôn 202, không lộ email nào có tài khoản) |
+| POST | `/auth/switch-organization` | Đổi active organization (**chưa làm**: mỗi tài khoản một shop) |
+
+*Triển khai thật (12/11/2026, `apps/api`, tiền tố `/api/v1`):*
+- `POST /auth/signup` `{type: CUSTOMER|SHOP_OWNER, email, password, confirmPassword, shopName?, turnstileToken?}`: bật `REQUIRE_EMAIL_VERIFICATION` thì luôn `202 {status: CHECK_EMAIL}` (email đã có tài khoản cũng vậy, chủ hộp thư nhận email báo, D3); tắt (dev) thì `201` kèm cookie và `409 EMAIL_TAKEN` khi trùng. Chủ shop tạo shop `DRAFT` với slug sinh từ tên (BR-21) và `OWNER`, trong một transaction cùng audit.
+- `POST /auth/login` `{email, password}` → `200 {type, id, email, fullName, uiLocale, organization?}` + cookie `wsp_sid` (`HttpOnly`, `SameSite=Lax`, `Secure` khi https). `401 INVALID_CREDENTIALS` (cùng câu trả lời và cùng thời gian cho email lạ và sai mật khẩu), `403 DEACTIVATED`, `403 EMAIL_NOT_VERIFIED`, `429 RATE_LIMITED` (5 lần sai / 15 phút theo cặp IP + email).
+- `POST /auth/logout`, `GET /auth/me`, `POST /auth/verify-email {token}` (`400 TOKEN_INVALID`, token dùng một lần), `POST /auth/forgot-password {email}` (luôn `202`), `POST /auth/reset-password {token, password, confirmPassword}` (đăng xuất mọi thiết bị, gửi email báo đổi mật khẩu).
+- `GET /organization` và `GET /audit-logs?limit=&cursor=` (shop của **session**, `403 NO_ORGANIZATION` cho khách, `401` khi chưa đăng nhập). Tenant luôn lấy từ session, không bao giờ từ body, query hay path.
+- `GET /health`, `GET /ready` (ngoài tiền tố `/api/v1`).
 
 ### 9.2 Dashboard (shop owner)
 | Method | Path |
@@ -1150,6 +1158,11 @@ Các route dưới đây chạy **trong Next.js** (`apps/web/src/app/api/v1/**`)
 
 ### 11.1 Biến môi trường (`.env.example`)
 
+*Biến của `apps/api` (12/11/2026; đặt trong `apps/api/.env`, không commit):* `DATABASE_URL`, `TEST_DATABASE_URL` (test tích hợp), `API_PORT` (4000), `LOG_LEVEL`, `APP_URL` (origin của web: dùng cho kiểm tra CSRF và link trong email), `SESSION_COOKIE_NAME` (`wsp_sid`), `SESSION_TTL_DAYS` (14), `TRUST_PROXY_HOPS` (0), `REQUIRE_EMAIL_VERIFICATION` (dev: `false`; **production bắt buộc `true`**), `EMAIL_VERIFY_HOURS` (48), `RESET_LINK_HOURS` (24), `EMAIL_PROVIDER` (`mailpit` | `resend`), `EMAIL_FROM`, `SMTP_HOST`, `SMTP_PORT`, `RESEND_API_KEY`, `TURNSTILE_SECRET_KEY` (**bắt buộc ở production**; trống khi dev thì bỏ qua kiểm tra), `JOBS_ENABLED`, `SEED_PASSWORD` (chỉ cho seed). Không dùng `SESSION_SECRET`: token session là 256 bit ngẫu nhiên và chỉ lưu hash SHA-256 nên không cần khóa. Production không khởi động nếu thiếu `TURNSTILE_SECRET_KEY`, `REQUIRE_EMAIL_VERIFICATION=true` hoặc `APP_URL` không phải https.
+
+*Giới hạn của bản POC (ghi nhận):* rate limit nằm trong bộ nhớ (đủ cho 1 instance, cần chuyển vào database khi chạy nhiều instance); email chỉ có tiếng Anh, viết bằng hàm thuần (chưa dùng React Email); payload của sự kiện outbox chứa link có token nên bị **xóa ngay sau khi gửi thành công**; một người chỉ có một shop; chưa có kiểm tra CSRF theo từng origin của shop (chỉ `APP_URL`).
+
+
 ```
 NODE_ENV=development
 PLATFORM_DOMAIN=localtest.me          # *.localtest.me trỏ về 127.0.0.1, dùng để test subdomain khi dev
@@ -1181,7 +1194,8 @@ SENTRY_DSN=
 
 ### 11.2 Dev local
 
-- `docker compose -f infra/docker-compose.dev.yml up -d` chạy postgres + mailpit.
+- `docker compose -f infra/docker-compose.yml --env-file infra/.env up -d` chạy postgres + mailpit (xem thư ở http://127.0.0.1:8025).
+- API: `pnpm dev:api`; worker (gửi email): `pnpm --filter api dev:worker`; tạo bảng: `pnpm db:migrate`; dữ liệu demo: `pnpm db:seed` (cần `SEED_PASSWORD` do bạn đặt, không có mật khẩu mặc định trong mã).
 - `pnpm dev` chạy web (3000) + api (4000) + worker.
 - Test subdomain: `http://{slug}.localtest.me:3000`.
 - Seed: 1 super admin, 2 shop mẫu (1 ACTIVE có workshop, schedule và booking mẫu; 1 DRAFT).
@@ -1238,8 +1252,8 @@ Các ô `[ ]` bên dưới là việc của **backend và hạ tầng thật**, 
 
 | Milestone | Giao diện + mock | Backend / hạ tầng thật |
 |---|---|---|
-| M0 Khởi tạo | Monorepo pnpm + Turborepo, `apps/web`, `packages/shared`, test, lint, typecheck, i18n 5 ngôn ngữ | Đã (12/11/2026): `apps/api` (NestJS + Fastify), Docker compose cho PostgreSQL, Drizzle + migration đầu, `/health` `/ready`, lỗi chuẩn, request id, `.nvmrc`. Chưa: pino riêng (đang dùng logger của Fastify, đã che cookie và authorization), mailpit, CI |
-| M1 Auth và tenant | Đăng ký (popup 2 tab), đăng nhập (chuyển theo loại tài khoản), quên / đặt lại mật khẩu, onboarding, slug sinh từ tên, audit log | Đã: 7 bảng (users, auth_sessions, user_tokens, organizations, organization_members, audit_logs, outbox_events) và 2 migration. Chưa: session cookie, Turnstile, xác minh email, guard tenant, pg-boss, outbox, Resend |
+| M0 Khởi tạo | Monorepo pnpm + Turborepo, `apps/web`, `packages/shared`, test, lint, typecheck, i18n 5 ngôn ngữ | Đã (12/11/2026): `apps/api` (NestJS + Fastify), Docker compose (PostgreSQL, Mailpit), Drizzle + migration, `/health` `/ready`, lỗi chuẩn, request id, `.nvmrc`, build bằng esbuild. Chưa: pino riêng (đang dùng logger của Fastify, đã che cookie và authorization), CI |
+| M1 Auth và tenant | Đăng ký (popup 2 tab), đăng nhập (chuyển theo loại tài khoản), quên / đặt lại mật khẩu, onboarding, slug sinh từ tên, audit log | **Backend đã làm (12/11/2026, POC):** 7 bảng; signup / login / logout / me / verify-email / resend-verification / forgot-password / reset-password; argon2id; session cookie lưu DB (chỉ lưu hash); `OriginGuard` (CSRF), `AuthGuard`, `TenantGuard`, `PlatformAdminGuard`, `@CurrentOrg()`, `tenantScope`; Turnstile (bỏ qua khi dev); outbox + worker pg-boss + `EmailProvider` (Mailpit / Resend); test cách ly dữ liệu giữa các shop. **Chưa:** `POST /auth/switch-organization` (mỗi người một shop trong MVP), `POST /organizations` onboarding (wizard vẫn chạy bằng mock), React Email và email đa ngôn ngữ (hiện chỉ tiếng Anh), giao diện gọi backend thật |
 | M2 Workshop và lịch | CRUD workshop (danh mục, địa chỉ, ảnh), schedule rule, session (thêm, đóng, dời, sức chứa), tải ảnh (mock) | Chưa: presign R2, job sinh session |
 | M3 Landing page builder | Section registry, template, theme, builder, preview, autosave (trình duyệt), publish ngay, tối đa 2 page | Chưa: `site_page_versions`, publish atomic trên server |
 | M4 Trang public và booking | Host / proxy, renderer, SEO (meta, OG, hreflang, sitemap, robots), lịch còn chỗ, booking, trang xác nhận, tên miền riêng | Chưa: ISR, Turnstile, `SessionCapacityService` + khóa dòng + **test đồng thời**, email thật |

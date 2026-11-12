@@ -16,5 +16,13 @@ services:
       timeout: 3s
       retries: 10
 
+  # Development only: catches every email the API sends (nothing leaves the machine). Read them at http://127.0.0.1:8025.
+  mailpit:
+    image: axllent/mailpit:v1.27
+    container_name: workshop-mailpit
+    ports:
+      - "127.0.0.1:1025:1025"   # SMTP (the API sends here)
+      - "127.0.0.1:8025:8025"   # web interface
+
 volumes:
   workshop-db-data:
