@@ -258,6 +258,8 @@ pnpm exec vitest run src/lib/date-input.test.ts
 | `pnpm db:generate` | Sinh migration SQL từ schema Drizzle (`apps/api/src/db/schema`) |
 | `pnpm db:migrate` | Áp migration lên database trong `DATABASE_URL` |
 | `pnpm build` | Đóng gói bản chạy thật (kiểm tra build) |
+| `pnpm test:e2e` | Chạy các test E2E bằng trình duyệt thật (Playwright; cài một lần bằng `pnpm exec playwright install chromium`; xem [e2e/README.md](e2e/README.md)) |
+| `pnpm db:encrypt-bank` | Mã hóa các số tài khoản ngân hàng còn ở dạng rõ (cần `APP_SECRET`; chạy lại an toàn) |
 
 ---
 
@@ -321,6 +323,8 @@ Bản giao diện ở trên **không cần** phần này. Chỉ làm khi bạn m
 9. Test: có `TEST_DATABASE_URL` thì `pnpm test` chạy thêm các test trên PostgreSQL thật (đăng ký, đăng nhập, cách ly dữ liệu giữa các shop, email, outbox). Thiếu nó thì các test đó được bỏ qua. Các test này **tạo dữ liệu có tên ngẫu nhiên** trong `workshop_test` (audit log không xóa được nên dữ liệu tích lũy; muốn dọn thì tạo lại database test).
 
 **Lưu ý:** đây là bản POC. Phần đăng nhập, session và phân quyền chưa được người review bảo mật, nên **không đưa lên production** khi chưa review. Những việc còn phải làm và cần người duyệt trước khi chạy thật (chuyển hướng 301 và chứng chỉ TLS cho tên miền riêng, Dockerfile, Caddy, backup, Sentry, CSP, mã hóa số tài khoản, rà soát bảo mật, pháp lý...) nằm ở [docs/PRODUCTION_CHECKLIST.md](docs/PRODUCTION_CHECKLIST.md).
+
+**Triển khai thật (chưa bật):** Dockerfile, `infra/docker-compose.prod.yml`, `infra/Caddyfile`, backup mã hóa lên R2 và cách khôi phục nằm ở [docs/RUNBOOK.md](docs/RUNBOOK.md). **Nối `apps/web` với API thật chưa làm**: hiện trạng, số liệu và kế hoạch theo từng lát cắt ở [docs/WEB_API_INTEGRATION.md](docs/WEB_API_INTEGRATION.md).
 
 **Điều khoản và Privacy (D17):** admin soạn bản **nháp**, rồi **công bố** từng ngôn ngữ; mọi phiên bản đã công bố được giữ lại (không sửa, không xóa) và có thể đưa về thành nháp mới. Công bố kiểu **major** buộc mọi người dùng đồng ý lại; mỗi lần đồng ý được ghi (phiên bản, ngôn ngữ, thời điểm). **Số tháng lưu tin Contact** và **số ngày lưu email đã gửi** chỉnh ở Settings. Khi session bị đóng hoặc dời (kể cả do admin), khách có booking còn hiệu lực nhận email báo.
 

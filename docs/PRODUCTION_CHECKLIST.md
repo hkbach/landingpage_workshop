@@ -24,7 +24,7 @@ Backend đã có: lưu `organizations.custom_domain` (unique), kiểm tra DNS (`
 - [ ] Giám sát và cảnh báo cơ bản, Sentry (cần DSN do người phụ trách cung cấp; không đưa vào repo).
 - [ ] Chạy worker (`dev:worker` → process production) cho outbox email, tự đóng session, sinh session, kết sổ tài chính, `maintenance.purge`.
 - [x] CSP đầy đủ cho web (nonce theo request) và che log: đã làm (13/11/2026). Còn: rà CSP bằng trình duyệt thật khi web đã nối API thật (Playwright kiểm tra không có vi phạm CSP), rate limit ở tầng proxy (Caddy), chuyển rate limit trong bộ nhớ vào database khi chạy nhiều instance.
-- [ ] E2E Playwright cho luồng chính.
+- [x] E2E Playwright cho luồng chính: 10 test (13/11/2026), chạy trong CI. Còn: chạy lại trên stack thật khi web đã nối API thật; thêm luồng rút tiền, thanh toán, admin sửa hộ.
 
 ## 3. Bảo mật và dữ liệu cá nhân
 
@@ -43,7 +43,7 @@ Backend đã có: lưu `organizations.custom_domain` (unique), kiểm tra DNS (`
 
 ## 5. Sản phẩm còn mở
 
-- [ ] Nối `apps/web` với API thật (hiện vẫn dùng mock trong bộ nhớ), gồm bắt đồng ý lại Terms / Privacy ở client.
+- [ ] Nối `apps/web` với API thật (hiện vẫn dùng mock trong bộ nhớ), gồm bắt đồng ý lại Terms / Privacy ở client. **Chưa làm**: đã đo phạm vi và có kế hoạch theo lát cắt ở `docs/WEB_API_INTEGRATION.md`; cần chủ sản phẩm chốt thứ tự và các quyết định ở mục 4 của tài liệu đó.
 - [x] Kiểm tra props theo từng section ở backend: đã làm (13/11/2026).
 - [x] Email đa ngôn ngữ: đã làm (13/11/2026): email booking 6 ngôn ngữ trong một email, email tài khoản theo ngôn ngữ UI. Còn: bản dịch Thai/Korean/Japanese/Chinese cần người bản ngữ rà soát trước khi chạy thật; email nhắc lịch và file `.ics`.
 
