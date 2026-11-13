@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, Inject, Param, Patch, Post, Put, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, HttpCode, Inject, Param, Patch, Post, Put, Query, UseGuards } from "@nestjs/common";
 import { z } from "zod";
 import { LOCALES } from "@workshop/shared";
 import { type OrgContext, Client, CurrentOrg, CurrentUser, PlatformAdminGuard, PublicRoute, TenantGuard } from "../auth/auth.guards";
@@ -86,5 +86,13 @@ export class PublicDomainController {
   @Get("domains/:host")
   lookup(@Param("host") host: string) {
     return this.settings.hostLookup(host);
+  }
+
+  /** The `ask` of the on-demand TLS of the front server (Caddy sends `?domain=`): 200 for a host the platform serves, 404 for any other. */
+  @Get("tls/ask")
+  @HttpCode(200)
+  async tlsAsk(@Query("domain") domain = ""): Promise<Record<string, never>> {
+    await this.settings.tlsAllowed(domain);
+    return {};
   }
 }

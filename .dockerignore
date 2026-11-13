@@ -1,0 +1,17 @@
+# Nothing of the working copy that is not needed to build an image: no installed packages, no build output, no secrets.
+**/node_modules
+**/.next
+**/dist
+**/.turbo
+**/coverage
+**/playwright-report
+**/test-results
+.git
+.env
+.env.*
+**/.env
+**/.env.*
+!**/.env.example
+**/.seed-credentials
+infra/.env
+**/*.log

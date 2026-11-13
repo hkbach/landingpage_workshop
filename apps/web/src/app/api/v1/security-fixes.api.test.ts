@@ -36,7 +36,10 @@ describe("security fixes of the review", () => {
     const config = readFileSync(join(__dirname, "..", "..", "..", "..", "next.config.ts"), "utf8");
     expect(config).toContain("poweredByHeader: false");
     expect(config).toContain('"X-Content-Type-Options", value: "nosniff"');
-    expect(config).toContain("frame-ancestors 'self'");
+    expect(config).toContain('"X-Frame-Options", value: "SAMEORIGIN"');
+    // the Content-Security-Policy (with frame-ancestors 'self') is built per request in the proxy, with a nonce
+    expect(readFileSync(join(__dirname, "..", "..", "..", "lib", "csp.ts"), "utf8")).toContain(`["frame-ancestors", ["'self'"]]`);
+    expect(readFileSync(join(__dirname, "..", "..", "..", "proxy.ts"), "utf8")).toContain('"content-security-policy"');
     for (const area of ["/systemadmin/:path*", "/shopowner/:path*", "/customer/:path*"]) expect(config).toContain(area);
   });
 });

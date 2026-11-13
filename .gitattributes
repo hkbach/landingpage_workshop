@@ -1,0 +1,4 @@
+# Files that run in a Linux container must keep LF line endings, whatever the system of the person who checks them out (a CRLF breaks a shell script and a Dockerfile).
+*.sh text eol=lf
+Dockerfile text eol=lf
+Caddyfile text eol=lf

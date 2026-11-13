@@ -9,6 +9,7 @@
     "build": "node build.mjs",
     "start": "node dist/main.js",
     "start:worker": "node dist/main.worker.js",
+    "migrate:prod": "node dist/migrate.js",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

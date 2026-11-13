@@ -17,13 +17,13 @@ Backend đã có: lưu `organizations.custom_domain` (unique), kiểm tra DNS (`
 
 ## 2. Hạ tầng và vận hành (M7)
 
-- [ ] Dockerfile production (multi-stage) cho `apps/web` và `apps/api`, docker-compose prod, Caddyfile.
+- [x] Dockerfile production (multi-stage) cho `apps/web` và `apps/api`, docker-compose prod, Caddyfile: đã viết (13/11/2026); image API đã chạy thử với database tạm (migrate, health, worker, user không phải root). Còn: chạy thử toàn bộ stack trên staging, đặt biến môi trường thật (`docs/RUNBOOK.md`), cần người duyệt.
 - [ ] Tách host theo D21: website công khai ở `{PLATFORM_DOMAIN}`, khu quản lý ở `app.{PLATFORM_DOMAIN}`; cookie đăng nhập chỉ đặt cho `app.`.
 - [ ] `APP_URL` dùng **https**; cookie `Secure`, `SameSite` đúng; kiểm tra `OriginGuard` với các host thật.
-- [ ] Backup `pg_dump` lên R2 và runbook khôi phục trong `docs/`; thử khôi phục thật ít nhất một lần.
+- [x] Backup `pg_dump` mã hóa lên R2 và runbook khôi phục (`infra/backup/`, `docs/RUNBOOK.md`): đã viết và thử với database tạm. Còn: thử với bucket R2 thật (cần khóa R2), bật khóa xóa / lifecycle cho bucket backup, diễn tập khôi phục trên máy khác.
 - [ ] Giám sát và cảnh báo cơ bản, Sentry (cần DSN do người phụ trách cung cấp; không đưa vào repo).
 - [ ] Chạy worker (`dev:worker` → process production) cho outbox email, tự đóng session, sinh session, kết sổ tài chính, `maintenance.purge`.
-- [ ] CSP đầy đủ cho web (hiện mới có header cơ bản), rate limit ở tầng proxy, che log.
+- [x] CSP đầy đủ cho web (nonce theo request) và che log: đã làm (13/11/2026). Còn: rà CSP bằng trình duyệt thật khi web đã nối API thật (Playwright kiểm tra không có vi phạm CSP), rate limit ở tầng proxy (Caddy), chuyển rate limit trong bộ nhớ vào database khi chạy nhiều instance.
 - [ ] E2E Playwright cho luồng chính.
 
 ## 3. Bảo mật và dữ liệu cá nhân

@@ -133,6 +133,27 @@ export class ShopSettingsService {
     return { domain: o.customDomain, verified: verified || Boolean(o.customDomainVerifiedAt), target, found };
   }
 
+  /**
+   * `GET /public/tls/ask?domain=`: may the front server (Caddy, on-demand TLS) ask a certificate for this host? Only for a host the platform really serves: the platform's own two hosts, the
+   * `{slug}.PLATFORM_DOMAIN` of an ACTIVE shop, or the verified own domain of an ACTIVE shop. Anything else is a `404`, so nobody can make the server ask for a certificate for an arbitrary
+   * name (it would burn the limits of the certificate authority). The answer holds no data. The front server calls it on the internal network; the public site does not route it.
+   */
+  async tlsAllowed(domain: string): Promise<void> {
+    const host = domain.trim().toLowerCase();
+    const notServed = () => new NotFoundException({ code: "NOT_FOUND", message: "Unknown host." });
+    if (host.length === 0 || host.length > 253 || !/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/.test(host)) throw notServed();
+    const platform = this.env.PLATFORM_DOMAIN.toLowerCase();
+    if (host === platform || host === `app.${platform}`) return;
+    if (host.endsWith(`.${platform}`)) {
+      const slug = host.slice(0, -(platform.length + 1));
+      if (slug.includes(".")) throw notServed();
+      const [o] = await this.db.select({ status: organizations.status }).from(organizations).where(eq(organizations.slug, slug)).limit(1);
+      if (!o || o.status !== "ACTIVE") throw notServed();
+      return;
+    }
+    await this.hostLookup(host);
+  }
+
   /** `GET /public/domains/{host}`: which shop an own domain belongs to (for the proxy that rewrites the host and for the certificate check of the front server). Only a verified domain of an ACTIVE shop. */
   async hostLookup(host: string): Promise<{ slug: string }> {
     const [o] = await this.db.select({ slug: organizations.slug, status: organizations.status, verifiedAt: organizations.customDomainVerifiedAt }).from(organizations).where(eq(organizations.customDomain, host.trim().toLowerCase())).limit(1);

@@ -1,4 +1,5 @@
 import { Logger } from "@nestjs/common";
+import { scrubLog } from "../common/log-scrub";
 import type { Env } from "../config/env";
 
 export const OUTBOX_QUEUE = "outbox.dispatch";
@@ -22,7 +23,7 @@ type Boss = import("pg-boss").PgBoss;
 export async function startBoss(databaseUrl: string, options: { supervise: boolean; schedule: boolean }): Promise<Boss> {
   const { PgBoss } = await import("pg-boss");
   const boss = new PgBoss({ connectionString: databaseUrl, supervise: options.supervise, schedule: options.schedule });
-  boss.on("error", (error: Error) => new Logger("pg-boss").error(`pg-boss error: ${error.message}`));
+  boss.on("error", (error: Error) => new Logger("pg-boss").error(`pg-boss error: ${scrubLog(error.message)}`));
   await boss.start();
   await boss.createQueue(OUTBOX_QUEUE);
   return boss;
@@ -45,7 +46,7 @@ export class PgBossJobs implements JobsPort {
       // `singletonKey` makes pg-boss keep one waiting job: ten signups in a second wake the worker once.
       await (await this.started).send(OUTBOX_QUEUE, {}, { singletonKey: "outbox", singletonSeconds: 1 });
     } catch (error) {
-      this.logger.warn(`Could not wake the worker: ${error instanceof Error ? error.message : "unknown error"}`);
+      this.logger.warn(`Could not wake the worker: ${error instanceof Error ? scrubLog(error.message) : "unknown error"}`);
     }
   }
 

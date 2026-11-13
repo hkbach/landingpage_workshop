@@ -1,6 +1,7 @@
 import { type ArgumentsHost, Catch, type ExceptionFilter, HttpException, HttpStatus, Logger } from "@nestjs/common";
 import type { FastifyReply, FastifyRequest } from "fastify";
 import { ZodError } from "zod";
+import { scrubLog, scrubUrl } from "./log-scrub";
 
 /** The error body of every endpoint (REQUIREMENTS 7.5): `{ "error": { "code", "message", "details" } }`. */
 export interface ErrorBody { error: { code: string; message: string; details: Record<string, unknown>; requestId?: string } }
@@ -41,7 +42,7 @@ export class ErrorFilter implements ExceptionFilter {
     const request = http.getRequest<FastifyRequest>();
     const reply = http.getResponse<FastifyReply>();
     const { status, body } = toErrorBody(exception, request.id);
-    if (status >= 500) this.logger.error(`${request.method} ${request.url.split("?")[0]} -> ${status} (request ${request.id})`, exception instanceof Error ? exception.stack : String(exception));
+    if (status >= 500) this.logger.error(`${request.method} ${scrubUrl(request.url)} -> ${status} (request ${request.id})`, scrubLog(exception instanceof Error ? (exception.stack ?? exception.message) : String(exception)));
     void reply.status(status).header("cache-control", "no-store").send(body);
   }
 }

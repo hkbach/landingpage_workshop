@@ -1,0 +1,51 @@
+# The front server of production (Caddy). It terminates HTTPS for every host the platform serves and sends /api/v1/* to the API and everything else to the web app.
+#
+# HOSTS: the platform domain, app.<platform domain>, <slug>.<platform domain> for every active shop, and the own domains of the shops. Certificates are asked ON DEMAND the first time a
+# host is visited, and ONLY when the API says the host is served (`ask`): the platform's two hosts, the host of an ACTIVE shop, or a verified own domain of an ACTIVE shop. Without that
+# check anybody could point any name at this server and make it burn the limits of the certificate authority.
+#
+# NEEDS HUMAN APPROVAL BEFORE IT IS TURNED ON IN PRODUCTION (see docs/PRODUCTION_CHECKLIST.md, section 1): DNS, TLS and the host checks are infrastructure and security. The 301 redirect from
+# <slug>.<platform domain> to a verified own domain is NOT done here yet (it is in the checklist).
+{
+	email {$ACME_EMAIL}
+	on_demand_tls {
+		# internal network only: the public side never routes this path (see the @tls matcher below)
+		ask http://api:4000/api/v1/public/tls/ask
+	}
+}
+
+http:// {
+	# the challenges of the certificate authority are answered by Caddy before this runs
+	redir https://{host}{uri} permanent
+}
+
+https:// {
+	tls {
+		on_demand
+	}
+	encode zstd gzip
+
+	header {
+		-Server
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+	}
+
+	# the question of the front server to the API is not a public endpoint
+	@tls path /api/v1/public/tls/*
+	respond @tls 404
+
+	# the API (the web app calls it on its own origin: the cookie is never sent to another host)
+	handle /api/v1/* {
+		reverse_proxy api:4000 {
+			# the API trusts ONE proxy (TRUST_PROXY_HOPS=1): it reads the address of the client from here, never from a header the client wrote
+			header_up X-Forwarded-For {remote_host}
+		}
+	}
+
+	handle {
+		reverse_proxy web:3000 {
+			header_up X-Forwarded-For {remote_host}
+		}
+	}
+}

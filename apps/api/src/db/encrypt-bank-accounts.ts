@@ -32,7 +32,7 @@ async function main(): Promise<void> {
   }
 }
 
-if (process.argv[1] && /encrypt-bank-accounts\.[cm]?[jt]s$/.test(process.argv[1])) {
+if (process.argv[1] && /encrypt-bank(-accounts)?\.[cm]?[jt]s$/.test(process.argv[1])) {
   main().catch((error: unknown) => {
     console.error(error instanceof Error ? error.message : "Failed");
     process.exit(1);

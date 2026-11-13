@@ -1,18 +1,23 @@
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 // Security headers (NFR-SEC): no MIME sniffing, a strict referrer, and the private areas cannot be framed by another site (clickjacking). HSTS only in production
-// (localtest.me runs on http). TODO(api): a Content-Security-Policy once the scripts and the media hosts are known.
+// (localtest.me runs on http). The Content-Security-Policy is built per request, with a nonce, in src/proxy.ts (lib/csp.ts).
 const common = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   ...(process.env.NODE_ENV === "production" ? [{ key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" }] : []),
 ];
-const noFraming = [{ key: "X-Frame-Options", value: "SAMEORIGIN" }, { key: "Content-Security-Policy", value: "frame-ancestors 'self'" }];
+const noFraming = [{ key: "X-Frame-Options", value: "SAMEORIGIN" }]; // (the Content-Security-Policy, with frame-ancestors, is set per request in src/proxy.ts)
 
 const nextConfig: NextConfig = {
+  // The production image runs the standalone build (a small server with only the files it needs). The monorepo root is the tracing root, so packages/shared is included.
+  output: "standalone",
+  outputFileTracingRoot: join(dirname(fileURLToPath(import.meta.url)), "..", ".."),
   transpilePackages: ["@workshop/shared"],
   poweredByHeader: false,
   async headers() {

@@ -168,4 +168,31 @@ d("settings and own domain of a shop", () => {
     expect(log.rows.map((r) => r.action)).toEqual(["shop.domain_set", "shop.domain_verify", "shop.domain_set", "shop.domain_remove"]);
     expect((await owner("PUT", { cookie: "" }, "/shop/domain", { domain: "x.example.com" })).statusCode).toBe(401);
   });
+
+  it("answers the front server which hosts may get a certificate: the platform, the active shops and the verified own domains, and nothing else", async () => {
+    const ask = async (domain: string) => (await t.get(`/public/tls/ask?domain=${encodeURIComponent(domain)}`)).statusCode;
+    // the platform's own hosts and the host of an ACTIVE shop
+    expect(await ask("localtest.me")).toBe(200);
+    expect(await ask("app.localtest.me")).toBe(200);
+    expect(await ask(`${a.slug}.localtest.me`)).toBe(200);
+    expect(await ask(`${a.slug.toUpperCase()}.LOCALTEST.ME`)).toBe(200);
+    // a host nobody owns, a shop that does not exist, a name with a dot before the platform domain, nonsense
+    expect(await ask("no-such-shop-anywhere.localtest.me")).toBe(404);
+    expect(await ask(`x.${a.slug}.localtest.me`)).toBe(404);
+    for (const bad of ["", "localhost", "evil.example.com", "a b.example.com", "-x.example.com", "x".repeat(300) + ".com", "../etc", "192.168.0.1"]) expect(await ask(bad), bad).toBe(404);
+    expect((await t.get("/public/tls/ask")).statusCode).toBe(404); // no domain at all
+    // a shop that is not ACTIVE gets nothing
+    await t.pool.query("update organizations set status = 'SUSPENDED' where id = $1", [a.orgId]);
+    expect(await ask(`${a.slug}.localtest.me`)).toBe(404);
+    await t.pool.query("update organizations set status = 'ACTIVE' where id = $1", [a.orgId]);
+    // an own domain: only once its DNS was checked
+    const own = domainName();
+    await owner("PUT", b, "/shop/domain", { domain: `www.${own}` });
+    expect(await ask(`www.${own}`)).toBe(404);
+    dns.records.set(`www.${own}`, [`${b.slug}.localtest.me.`]);
+    await owner("POST", b, "/shop/domain/verify");
+    expect(await ask(`www.${own}`)).toBe(200);
+    expect(await ask(`other.${own}`)).toBe(404);
+    expect((await t.get(`/public/tls/ask?domain=${encodeURIComponent(`www.${own}`)}`)).json()).toEqual({}); // the answer carries no data
+  });
 });

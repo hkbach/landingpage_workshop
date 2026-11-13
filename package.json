@@ -18,6 +18,7 @@
     "db:encrypt-bank": "pnpm --filter api db:encrypt-bank"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.0",
     "prettier": "^3.9.10",
     "turbo": "^2.11.10",
     "typescript": "^7.0.2"

@@ -1,0 +1,127 @@
+# Production (one host). NOT started by anyone without approval: see docs/PRODUCTION_CHECKLIST.md. Every secret comes from the environment file given with --env-file (see
+# docs/RUNBOOK.md, section Variables); nothing secret is in this file or in an image.
+#
+#   docker compose -f infra/docker-compose.prod.yml --env-file infra/.env.production build
+#   docker compose -f infra/docker-compose.prod.yml --env-file infra/.env.production up -d
+#
+# Order: the database -> `migrate` (once, applies the new migrations) -> the API and the worker -> the web app -> the front server. The database and the API are reachable only on the
+# internal network; only Caddy opens ports (80 and 443).
+name: workshop
+
+x-api-env: &api-env
+  NODE_ENV: production
+  DATABASE_URL: postgres://workshop:${DB_PASSWORD:?set DB_PASSWORD}@db:5432/workshop
+  APP_URL: ${APP_URL:?set APP_URL (https://app.your-domain)}
+  PLATFORM_DOMAIN: ${PLATFORM_DOMAIN:?set PLATFORM_DOMAIN}
+  APP_SECRET: ${APP_SECRET:?set APP_SECRET (32+ random characters; keep a copy in the secret store)}
+  REQUIRE_EMAIL_VERIFICATION: "true"
+  TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:?set TURNSTILE_SECRET_KEY}
+  TRUST_PROXY_HOPS: "1"
+  EMAIL_PROVIDER: resend
+  RESEND_API_KEY: ${RESEND_API_KEY:?set RESEND_API_KEY}
+  EMAIL_FROM: ${EMAIL_FROM:?set EMAIL_FROM}
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: workshop
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD}
+      POSTGRES_DB: workshop
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U workshop -d workshop"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [internal]
+
+  migrate:
+    build: { context: .., dockerfile: apps/api/Dockerfile }
+    image: workshop-api:${IMAGE_TAG:-latest}
+    command: ["node", "dist/migrate.js"]
+    environment:
+      DATABASE_URL: postgres://workshop:${DB_PASSWORD:?set DB_PASSWORD}@db:5432/workshop
+    depends_on:
+      db: { condition: service_healthy }
+    restart: "no"
+    networks: [internal]
+
+  api:
+    image: workshop-api:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment: *api-env
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    networks: [internal]
+
+  worker:
+    image: workshop-api:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    command: ["node", "dist/main.worker.js"]
+    environment: *api-env
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    networks: [internal]
+
+  web:
+    build: { context: .., dockerfile: apps/web/Dockerfile }
+    image: workshop-web:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      PLATFORM_DOMAIN: ${PLATFORM_DOMAIN:?set PLATFORM_DOMAIN}
+    depends_on:
+      api: { condition: service_healthy }
+    networks: [internal]
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data        # the certificates: keep this volume, or every host asks again
+      - caddy-config:/config
+    depends_on:
+      web: { condition: service_healthy }
+      api: { condition: service_healthy }
+    networks: [internal]
+
+  # A backup of the database every night, encrypted, to Cloudflare R2 (see infra/backup and docs/RUNBOOK.md).
+  backup:
+    build: { context: ./backup }
+    image: workshop-backup:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      PGHOST: db
+      PGUSER: workshop
+      PGPASSWORD: ${DB_PASSWORD:?set DB_PASSWORD}
+      PGDATABASE: workshop
+      BACKUP_PASSPHRASE: ${BACKUP_PASSPHRASE:?set BACKUP_PASSPHRASE (keep a copy in the secret store)}
+      BACKUP_HOUR_UTC: ${BACKUP_HOUR_UTC:-19}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-30}
+      BACKUP_BUCKET: ${BACKUP_BUCKET:?set BACKUP_BUCKET}
+      RCLONE_CONFIG_R2_TYPE: s3
+      RCLONE_CONFIG_R2_PROVIDER: Cloudflare
+      RCLONE_CONFIG_R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID:?set R2_ACCESS_KEY_ID}
+      RCLONE_CONFIG_R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY:?set R2_SECRET_ACCESS_KEY}
+      RCLONE_CONFIG_R2_ENDPOINT: ${R2_ENDPOINT:?set R2_ENDPOINT}
+      RCLONE_CONFIG_R2_NO_CHECK_BUCKET: "true"
+    depends_on:
+      db: { condition: service_healthy }
+    networks: [internal]
+
+networks:
+  internal: {}
+
+volumes:
+  db-data:
+  caddy-data:
+  caddy-config:

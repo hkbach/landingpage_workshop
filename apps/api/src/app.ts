@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { NestFactory } from "@nestjs/core";
 import { FastifyAdapter, type NestFastifyApplication } from "@nestjs/platform-fastify";
 import { AppModule, type AppOptions } from "./app.module";
+import { scrubUrl } from "./common/log-scrub";
 import type { Env } from "./config/env";
 
 const REQUEST_ID = /^[A-Za-z0-9_-]{8,64}$/;
@@ -12,7 +13,12 @@ const REQUEST_ID = /^[A-Za-z0-9_-]{8,64}$/;
  */
 export async function createApp(env: Pick<Env, "LOG_LEVEL" | "NODE_ENV"> & Partial<Pick<Env, "TRUST_PROXY_HOPS">>, options: AppOptions = {}): Promise<NestFastifyApplication> {
   const adapter = new FastifyAdapter({
-    logger: { level: env.NODE_ENV === "test" ? "silent" : env.LOG_LEVEL, redact: ["req.headers.authorization", "req.headers.cookie", 'res.headers["set-cookie"]'] },
+    logger: {
+      level: env.NODE_ENV === "test" ? "silent" : env.LOG_LEVEL,
+      redact: ["req.headers.authorization", "req.headers.cookie", 'req.headers["x-api-key"]', 'res.headers["set-cookie"]'],
+      // The line of a request is its method and its path: never the query string or a token in the path (a link of an email, a signature).
+      serializers: { req: (req: { method: string; url: string; ip?: string; socket?: { remoteAddress?: string } }) => ({ method: req.method, url: scrubUrl(req.url), remoteAddress: req.ip ?? req.socket?.remoteAddress }) },
+    },
     genReqId: (req: { headers: Record<string, string | string[] | undefined> }) => {
       const sent = req.headers["x-request-id"];
       return typeof sent === "string" && REQUEST_ID.test(sent) ? sent : randomUUID();
