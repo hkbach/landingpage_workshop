@@ -11,7 +11,8 @@ import { AuditService } from "./audit/audit.service";
 import { ScheduleService } from "./catalog/schedule.service";
 import { JOBS, NoopJobs, OUTBOX_QUEUE, startBoss } from "./jobs/jobs";
 import { FinanceService } from "./finance/finance.service";
-import { MaintenanceService, FINANCE_CLOSE_QUEUE, SESSIONS_GENERATE_QUEUE, SESSIONS_SWEEP_QUEUE } from "./jobs/maintenance";
+import { EmailsService } from "./platform/emails.service";
+import { MaintenanceService, FINANCE_CLOSE_QUEUE, MAINTENANCE_PURGE_QUEUE, SESSIONS_GENERATE_QUEUE, SESSIONS_SWEEP_QUEUE } from "./jobs/maintenance";
 import { OutboxService } from "./outbox/outbox.service";
 
 // The worker (REQUIREMENTS 3.2: a separate entry point, a separate container). It sends the emails of the outbox when the API wakes it (pg-boss job) and once a minute on its own,
@@ -21,7 +22,7 @@ import { OutboxService } from "./outbox/outbox.service";
   providers: [
     { provide: EMAIL_PROVIDER, inject: [ENV], useFactory: (env: Env) => createEmailProvider(env) },
     { provide: JOBS, useValue: new NoopJobs() },
-    AuditService, OutboxService, ScheduleService, FinanceService, MaintenanceService,
+    AuditService, OutboxService, ScheduleService, FinanceService, EmailsService, MaintenanceService,
   ],
 })
 class WorkerModule {}
@@ -62,6 +63,13 @@ async function bootstrap(): Promise<void> {
     if (result.closed > 0) logger.log(`Finance: ${result.closed} month(s) closed`);
   });
   await boss.schedule(FINANCE_CLOSE_QUEUE, "5 * * * *");
+  // What is kept for a time only (D18): once a day.
+  await boss.createQueue(MAINTENANCE_PURGE_QUEUE);
+  await boss.work(MAINTENANCE_PURGE_QUEUE, async () => {
+    const r = await maintenance.purgeExpired();
+    if (r.emails + r.messages > 0) logger.log(`Purge: ${r.emails} email(s) and ${r.messages} message(s) removed`);
+  });
+  await boss.schedule(MAINTENANCE_PURGE_QUEUE, "0 3 * * *");
   await boss.schedule(SESSIONS_SWEEP_QUEUE, "* * * * *");
   await boss.schedule(SESSIONS_GENERATE_QUEUE, "0 * * * *");
   await maintenance.sweepSessions();

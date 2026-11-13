@@ -9,6 +9,7 @@ import { ENV } from "../config/env.module";
 import { DB, type Database, type Executor } from "../db/db.module";
 import { authSessions, organizationMembers, organizations, userTokens, users } from "../db/schema";
 import { OutboxService } from "../outbox/outbox.service";
+import { readPlatformValues } from "../platform/platform.service";
 import type { SignupInput } from "./auth.schemas";
 import { hashPassword, hashToken, newToken, spendVerifyTime, verifyPassword } from "./crypto";
 import { TurnstileService } from "./turnstile.service";
@@ -321,8 +322,9 @@ export class AuthService {
     if (!user) throw new NotFoundException({ code: "NOT_FOUND", message: "User not found." });
     if (user.status === "DISABLED") throw new ConflictException({ code: "STATUS", message: "A deactivated account cannot reset its password." });
     await this.db.transaction(async (tx) => {
-      const token = await this.issueToken(tx, user.id, "PASSWORD_RESET", this.env.RESET_LINK_HOURS);
-      await this.outbox.enqueueEmail(tx, { name: "password-reset", to: user.email, data: { name: user.fullName, link: this.link("/reset-password", token), hours: this.env.RESET_LINK_HOURS } });
+      const hours = (await readPlatformValues(tx)).resetLinkHours; // the administrator sets it in the platform settings (default 24)
+      const token = await this.issueToken(tx, user.id, "PASSWORD_RESET", hours);
+      await this.outbox.enqueueEmail(tx, { name: "password-reset", to: user.email, data: { name: user.fullName, link: this.link("/reset-password", token), hours } });
       await this.audit.record({ actorUserId, action: "user.reset_password", entityType: "user", entityId: user.id, after: { targetEmail: user.email }, ip }, tx);
     });
     void this.outbox.wake();

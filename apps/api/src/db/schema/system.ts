@@ -35,6 +35,10 @@ export const outboxEvents = pgTable(
     status: outboxStatus("status").notNull().default("PENDING"),
     attempts: integer("attempts").notNull().default(0),
     lastError: text("last_error"),
+    /** For an EMAIL: who it is for (lowercase), which template made it and the subject that was sent. Kept 90 days for the list of the administrator (the content is never kept, except an email an administrator wrote). */
+    recipient: text("recipient"),
+    template: text("template"),
+    subject: text("subject"),
     availableAt: timestamp("available_at", { withTimezone: true }).notNull().defaultNow(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },

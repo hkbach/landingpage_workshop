@@ -162,6 +162,20 @@
       "when": 1794542013284,
       "tag": "0022_customer_area",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1794544047134,
+      "tag": "0023_platform_admin",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1794544350878,
+      "tag": "0024_outbox_email_list",
+      "breakpoints": true
     }
   ]
 }

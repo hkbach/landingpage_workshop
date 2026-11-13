@@ -12,7 +12,9 @@ export type EmailTemplate =
   | { name: "booking-cancelled-guest"; to: string; data: BookingMailData & { name: string; by: "GUEST" | "SHOP"; reason: string } }
   | { name: "booking-cancelled-shop"; to: string; data: BookingMailData & { guestName: string; reason: string } }
   | { name: "booking-info"; to: string; data: BookingMailData & { name: string } }
-  | { name: "payment-received"; to: string; data: BookingMailData & { name: string; paid: string } };
+  | { name: "payment-received"; to: string; data: BookingMailData & { name: string; paid: string } }
+  /** Written by a platform administrator: plain text (a blank line starts a paragraph), nothing in it is read as HTML. */
+  | { name: "admin-message"; to: string; data: { name?: string; subject: string; body: string } };
 
 /** What every booking email says about the booking: already formatted (the time in the time zone of the shop, the money with its currency). */
 export interface BookingMailData { shop: string; code: string; workshop: string; when: string; timezone: string; quantity: number; total: string; address: string }
@@ -34,7 +36,7 @@ const wrap = (body: string): string => `<div style="font-family:Arial,sans-serif
 const button = (href: string, label: string): string => `<p><a href="${escapeHtml(href)}" style="display:inline-block;background:#111827;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none">${escapeHtml(label)}</a></p>`;
 
 export function renderEmail(t: EmailTemplate): RenderedEmail {
-  const name = "name" in t.data ? escapeHtml(t.data.name) : "";
+  const name = "name" in t.data ? escapeHtml(t.data.name ?? "") : "";
   switch (t.name) {
     case "verify-email":
       return {
@@ -128,6 +130,15 @@ The studio received your payment of ${t.data.paid}. Thank you!
 ${details(t.data)}`,
         html: wrap(`<p>Hello ${name},</p><p>The studio received your payment of ${escapeHtml(t.data.paid)}. Thank you!</p>${detailsHtml(t.data)}`),
       };
+    case "admin-message": {
+      const subject = t.data.subject.replace(/[\r\n]+/g, " ").trim().slice(0, 200) || "A message from the platform";
+      const paragraphs = t.data.body.split(/\n{2,}/).map((x) => x.trim()).filter(Boolean);
+      return {
+        to: t.to, subject,
+        text: `${t.data.name ? `Hello ${t.data.name},\n\n` : ""}${paragraphs.join("\n\n")}`,
+        html: wrap(`${t.data.name ? `<p>Hello ${name},</p>` : ""}${paragraphs.map((x) => `<p>${escapeHtml(x).replace(/\n/g, "<br>")}</p>`).join("")}`),
+      };
+    }
     case "password-changed":
       return {
         to: t.to, subject: "Your password was changed",

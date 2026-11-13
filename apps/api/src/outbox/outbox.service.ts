@@ -32,7 +32,7 @@ export class OutboxService {
 
   /** Queues an email in the open transaction. Call `wake()` AFTER the transaction has committed. */
   async enqueueEmail(executor: Executor, template: EmailTemplate, organizationId?: string | null): Promise<void> {
-    await executor.insert(outboxEvents).values({ organizationId: organizationId ?? null, type: "EMAIL", payload: { template } });
+    await executor.insert(outboxEvents).values({ organizationId: organizationId ?? null, type: "EMAIL", payload: { template }, recipient: template.to.trim().toLowerCase(), template: template.name });
   }
 
   /** Asks the worker to send what is waiting now (it also looks every minute on its own). */
@@ -51,17 +51,20 @@ export class OutboxService {
         await tx.update(outboxEvents).set({ status: "FAILED", attempts: event.attempts + 1, lastError: "Unknown event" }).where(eq(outboxEvents.id, event.id));
         return "failed";
       }
+      let rendered: ReturnType<typeof renderEmail> | undefined;
       try {
-        await this.email.send(renderEmail(template));
+        rendered = renderEmail(template);
+        await this.email.send(rendered);
       } catch (error) {
         const attempts = event.attempts + 1;
         const message = (error instanceof Error ? error.message : "Unknown error").slice(0, 200);
         const last = attempts >= MAX_ATTEMPTS;
-        await tx.update(outboxEvents).set({ attempts, lastError: message, status: last ? "FAILED" : "PENDING", availableAt: new Date((now ?? new Date()).getTime() + retryDelayMs(attempts)) }).where(eq(outboxEvents.id, event.id));
+        await tx.update(outboxEvents).set({ subject: rendered?.subject ?? null, attempts, lastError: message, status: last ? "FAILED" : "PENDING", availableAt: new Date((now ?? new Date()).getTime() + retryDelayMs(attempts)) }).where(eq(outboxEvents.id, event.id));
         this.logger.warn(`Email event ${event.id} failed (attempt ${attempts}): ${message}`);
         return last ? "failed" : "retry";
       }
-      await tx.update(outboxEvents).set({ status: "DISPATCHED", attempts: event.attempts + 1, lastError: null, payload: { redacted: true, template: template.name } }).where(eq(outboxEvents.id, event.id));
+      // the content is scrubbed (it can hold a secret link); only what an administrator wrote stays, because only that may be read again (FR-ADM-22)
+      await tx.update(outboxEvents).set({ status: "DISPATCHED", attempts: event.attempts + 1, lastError: null, subject: rendered?.subject ?? null, payload: template.name === "admin-message" ? event.payload : { redacted: true, template: template.name } }).where(eq(outboxEvents.id, event.id));
       return "sent";
     });
   }
