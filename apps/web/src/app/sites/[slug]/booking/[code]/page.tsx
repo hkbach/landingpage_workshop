@@ -1,53 +1,82 @@
-import { BOOKING_CODE_RE, workshopDirectionsUrl } from "@workshop/shared";
+import { BOOKING_CODE_RE, pickLocalized, workshopDirectionsUrl, type BookingStatus } from "@workshop/shared";
 import type { Metadata } from "next";
 import { BookingConfirmation, BookingNotFound, SimulatedBookingConfirmation } from "@/components/booking/BookingConfirmation";
 import { SiteFrame } from "@/components/site/SiteFrame";
 import { SiteIntlProvider } from "@/components/site/SiteIntlProvider";
 import { requireSite } from "@/components/site/resolve";
 import { getSiteBase } from "@/components/site/site-base";
+import { realApi } from "@/lib/api-server";
 import { canGuestCancel, demoConfirmToken } from "@/lib/mock/booking-store";
 import { demoConfirmationEmailId } from "@/lib/mock/outbox-store";
 import { findBookingForLookup } from "@/lib/mock/site";
+import { lookupGuestBooking } from "@/lib/public-booking";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
+
+type Shown = {
+  code: string; workshopTitle: string; startsAt: string; endsAt: string; timezone: string; quantity: number; totalAmount: number; currency: string; status: BookingStatus;
+  cancelledBy?: string | null; cancelReason?: string | null;
+};
 
 // Lookup needs the booking code AND the matching email; anything else shows the same generic message (no enumeration).
 export default async function BookingPage({ params, searchParams }: PageProps<"/sites/[slug]/booking/[code]">) {
   const { slug, code } = await params;
   const sp = await searchParams;
   const email = typeof sp.email === "string" ? sp.email : "";
-  const site = requireSite(slug);
+  const site = await requireSite(slug);
   const { shop, theme } = site;
-  const base = await getSiteBase(slug);
+  const base = await getSiteBase(slug, site.customDomain);
   const homeHref = base || "/";
-  const found = findBookingForLookup(shop.id, code, email);
-  const demoToken = found ? demoConfirmToken(found.booking.id) : undefined; // demo only: there is no mailbox in the prototype
-  const demoEmailId = found ? demoConfirmationEmailId(found.booking.bookingCode) : undefined;
-  const cancellable = found ? canGuestCancel(found.booking) : false;
+
+  // What the page shows: from the API (the booking of the guest, found by the code AND the email) or from the sample data.
+  let shown: Shown | undefined;
+  let cancellable = false;
+  let where: { address?: string; mapsUrl?: string; addressNote?: string } = {};
+  let demoToken: string | undefined;
+  let demoEmailId: string | undefined;
+  if (realApi()) {
+    const b = email && BOOKING_CODE_RE.test(code.toUpperCase()) ? await lookupGuestBooking(slug, code.toUpperCase(), email) : null;
+    if (b) {
+      shown = { code: b.code, workshopTitle: pickLocalized(b.workshopTitle, shop.defaultLocale, shop.defaultLocale), startsAt: b.startsAt, endsAt: b.endsAt, timezone: b.timezone, quantity: b.quantity, totalAmount: b.totalAmount, currency: b.currency, status: b.status, cancelledBy: b.cancelledBy, cancelReason: b.cancelReason };
+      cancellable = b.canCancel;
+      where = { address: b.address };
+    }
+  } else {
+    const found = findBookingForLookup(shop.id, code, email);
+    if (found) {
+      const bk = found.booking;
+      shown = { code: bk.bookingCode, workshopTitle: bk.workshopTitle, startsAt: bk.startsAt, endsAt: bk.endsAt, timezone: bk.timezone, quantity: bk.quantity, totalAmount: bk.totalAmount, currency: bk.currency, status: bk.status, cancelledBy: bk.cancelledBy ?? null, cancelReason: bk.cancelReason ?? null };
+      demoToken = demoConfirmToken(bk.id); // demo only: there is no mailbox in the prototype
+      demoEmailId = demoToken ? demoConfirmationEmailId(bk.bookingCode) : undefined;
+      cancellable = canGuestCancel(bk);
+      const w = site.workshops.find((x) => x.id === bk.workshopId);
+      if (w) {
+        const maps = workshopDirectionsUrl(w, shop);
+        where = { address: w.address ?? shop.address, ...(maps ? { mapsUrl: maps } : {}), ...(w.addressNote ? { addressNote: w.addressNote } : {}) };
+      }
+    }
+  }
   const shopInfo = { name: shop.name, address: shop.address, mapsUrl: shop.mapsUrl, contactEmail: shop.contactEmail, contactPhone: shop.contactPhone };
   // Where the guest goes: the address of the workshop they booked (its own, or the shop's) and the way to it.
-  const workshop = found ? site.workshops.find((w) => w.id === found.booking.workshopId) : undefined;
-  const whereInfo = workshop
-    ? { ...shopInfo, address: workshop.address ?? shop.address, mapsUrl: workshopDirectionsUrl(workshop, shop) ?? shop.mapsUrl, ...(workshop.addressNote ? { addressNote: workshop.addressNote } : {}) }
-    : shopInfo;
+  const whereInfo = shown ? { ...shopInfo, address: where.address ?? shop.address, mapsUrl: where.mapsUrl ?? shop.mapsUrl, ...(where.addressNote ? { addressNote: where.addressNote } : {}) } : shopInfo;
 
   return (
     <SiteIntlProvider locale={shop.defaultLocale}>
       <SiteFrame theme={theme} locale={shop.defaultLocale}>
         <main>
-          {found ? (
+          {shown ? (
             <BookingConfirmation
               locale={shop.defaultLocale} shop={whereInfo} homeHref={homeHref} cancel={cancellable ? { slug } : undefined}
               data={{
-                code: found.booking.bookingCode, email: email.trim().toLowerCase(), workshopTitle: found.booking.workshopTitle,
-                startsAt: found.booking.startsAt, endsAt: found.booking.endsAt, timezone: found.booking.timezone,
-                quantity: found.booking.quantity, totalAmount: found.booking.totalAmount, currency: found.booking.currency,
-                status: found.booking.status, ...(found.booking.cancelledBy ? { cancelledBy: found.booking.cancelledBy } : {}), ...(found.booking.cancelReason ? { cancelReason: found.booking.cancelReason } : {}),
+                code: shown.code, email: email.trim().toLowerCase(), workshopTitle: shown.workshopTitle,
+                startsAt: shown.startsAt, endsAt: shown.endsAt, timezone: shown.timezone,
+                quantity: shown.quantity, totalAmount: shown.totalAmount, currency: shown.currency,
+                status: shown.status, ...(shown.cancelledBy ? { cancelledBy: shown.cancelledBy as "GUEST" | "SHOP" } : {}), ...(shown.cancelReason ? { cancelReason: shown.cancelReason } : {}),
                 ...(demoToken ? { demoConfirmUrl: `${base}/booking/confirm/${demoToken}` } : {}),
                 ...(demoToken && demoEmailId ? { demoEmailUrl: `/api/v1/outbox/${demoEmailId}` } : {}),
               }}
             />
-          ) : email && BOOKING_CODE_RE.test(code.toUpperCase()) ? (
+          ) : email && BOOKING_CODE_RE.test(code.toUpperCase()) && !realApi() ? (
             <SimulatedBookingConfirmation code={code.toUpperCase()} email={email} shop={shopInfo} locale={shop.defaultLocale} homeHref={homeHref} />
           ) : (
             <BookingNotFound homeHref={homeHref} />

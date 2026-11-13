@@ -9,8 +9,9 @@ export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default async function ReportPage({ params }: PageProps<"/sites/[slug]/report">) {
   const { slug } = await params;
-  const { shop, theme } = requireSite(slug);
-  const base = await getSiteBase(slug);
+  const site = await requireSite(slug);
+  const { shop, theme } = site;
+  const base = await getSiteBase(slug, site.customDomain);
   return (
     <SiteIntlProvider locale={shop.defaultLocale}>
       <SiteFrame theme={theme} locale={shop.defaultLocale}>

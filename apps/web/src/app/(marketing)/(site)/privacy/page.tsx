@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
 import { LegalDocument } from "@/components/marketing/legal-document";
-import { legalFor } from "@/lib/mock/legal-store";
+import { loadLegal } from "@/lib/public-legal";
 import type { Locale } from "@workshop/shared";
 
 // The text of the Privacy is written by the administrators (Legal of the admin area): the page is built on every request so a change shows at once.
@@ -15,7 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function PrivacyPage() {
   const t = await getTranslations("marketing.legal");
   const locale = (await getLocale()) as Locale;
-  const doc = legalFor("privacy", locale);
+  const doc = await loadLegal("privacy", locale);
   return (
     <section className="px-4 py-14 sm:px-6 sm:py-20" data-testid="legal-page">
       <div className="mx-auto max-w-3xl">

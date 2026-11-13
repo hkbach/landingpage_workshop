@@ -1,9 +1,15 @@
-import { getPublicSite } from "@/lib/mock/site";
-import { shopOrigin } from "@/lib/mock/shop-domain-store";
+import { loadPublicSite, originOfSite } from "@/lib/public-site";
 
 export async function GET(_req: Request, ctx: RouteContext<"/sites/[slug]/robots.txt">) {
   const { slug } = await ctx.params;
-  if (!getPublicSite(slug)) return new Response("Not found", { status: 404 });
-  const body = `User-agent: *\nAllow: /\nDisallow: /booking/\nDisallow: /report\n\nSitemap: ${shopOrigin(slug)}/sitemap.xml\n`;
+  const site = await loadPublicSite(slug);
+  if (!site) return new Response("Not found", { status: 404 });
+  const body = `User-agent: *
+Allow: /
+Disallow: /booking/
+Disallow: /report
+
+Sitemap: ${originOfSite(site)}/sitemap.xml
+`;
   return new Response(body, { headers: { "Content-Type": "text/plain; charset=utf-8" } });
 }

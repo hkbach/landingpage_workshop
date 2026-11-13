@@ -1,6 +1,6 @@
 # Nối `apps/web` với `apps/api`: hiện trạng và kế hoạch
 
-> **Trạng thái (13/11/2026): ĐÃ XONG lát 0 và 1 (nền + xác thực); lát 2–6 chưa làm.** Đặt `API_URL` thì web nối API thật cho tài khoản; không đặt thì vẫn chạy hoàn toàn trên dữ liệu mẫu (mock). Xem mục 0. Tài liệu này ghi lại **vì sao việc này lớn hơn một lần chuyển đổi cấu hình**, những gì đã đo được và một kế hoạch theo từng lát cắt để làm tiếp. Đây là việc cần quyết định thứ tự ưu tiên của chủ sản phẩm.
+> **Trạng thái (13/11/2026): ĐÃ XONG lát 0, 1 và 2 (nền, xác thực, trang công khai + đặt chỗ); lát 3–6 chưa làm.** Đặt `API_URL` thì web nối API thật cho tài khoản; không đặt thì vẫn chạy hoàn toàn trên dữ liệu mẫu (mock). Xem mục 0. Tài liệu này ghi lại **vì sao việc này lớn hơn một lần chuyển đổi cấu hình**, những gì đã đo được và một kế hoạch theo từng lát cắt để làm tiếp. Đây là việc cần quyết định thứ tự ưu tiên của chủ sản phẩm.
 
 ## 0. Đã làm (lát 0 và 1)
 
@@ -11,6 +11,14 @@
 - **Đồng ý lại Terms/Privacy (D17):** `ConsentGate` hỏi `GET /legal/consent`; khi có bản mới, cửa sổ chặn khu vực cho đến khi đồng ý hoặc đăng xuất.
 - **Còn dở theo thiết kế:** các trang bên trong khu vực vẫn đọc dữ liệu mẫu (lát 3–5). Shop mới đăng ký thật chưa có dữ liệu vào dashboard; wizard onboarding còn gọi `/onboarding` của mock (cần `PATCH /organization`, lát 3). Luồng admin reset mật khẩu bằng mật khẩu tạm chỉ còn trong mock.
 - **Kiểm thử:** `e2e/real-auth.spec.ts` (3 test, chạy với `E2E_REAL_API=1`, xem `e2e/README.md`) pass trên stack thật (Postgres + API + web), không vi phạm CSP.
+
+### Lát 2: trang công khai và đặt chỗ (13/11/2026)
+
+- **Trang shop:** `src/lib/public-site.ts` (`loadPublicSite`) lấy `GET /public/sites/{slug}` rồi `.../workshops/{id}/availability` cho từng workshop (song song), ánh xạ về kiểu `PublicSite` sẵn có; `requireSite` thành async. Shop chưa công bố trang, chưa ACTIVE hoặc bị khóa thì 404. Khuyến mãi đang chạy lấy từ API. Canonical, hreflang, sitemap, robots dùng tên miền riêng đã xác minh (API trả thêm `shop.customDomain`).
+- **Đặt chỗ:** khách **không cần phiên** (theo đề xuất ở mục 4). Bước 5 gọi `POST .../booking-otp` (mã gửi qua email, worker phải chạy); mã đi cùng yêu cầu đặt chỗ (`guest`, `consent`, `otp`, `locale`, `promotionIds`, `ref`), server kiểm tra cùng lúc; sai mã tính vào số lần thử, khóa thì báo khóa. Gợi ý mã demo chỉ hiện với dữ liệu mẫu.
+- **Trang đặt chỗ / xác nhận:** tra cứu bằng mã **và** email (`POST .../bookings/lookup`), link xác nhận gọi `POST /public/bookings/confirm`, hủy bằng mã + email; Terms/Privacy lấy từ `GET /public/legal/{kind}`; Contact, báo cáo vi phạm, đếm click affiliate vẫn cùng đường dẫn.
+- **Chưa làm ở lát này:** widget Turnstile thật (khung giữ chỗ vẫn hiện; API bỏ qua kiểm tra khi chưa có `TURNSTILE_SECRET_KEY`, production bắt buộc), `<html lang>` của trang shop, tạo tài khoản khi đặt chỗ (D2/D3) và yêu thích (lát 4), xác nhận bằng nút bấm thay vì mở link (đã có TODO).
+- **Kiểm thử:** `e2e/real-booking.spec.ts` (2 test): đặt chỗ đủ 5 bước với mã đọc từ Mailpit (mã sai bị từ chối), xác nhận bằng link, tra cứu đúng/sai email, 404, sitemap, robots. Cần stack thật gồm cả **worker** (`pnpm --filter api dev:worker`) và `E2E_PASSWORD` của tài khoản seed (xem `e2e/README.md`).
 
 ## 1. Đã đo được (13/11/2026)
 

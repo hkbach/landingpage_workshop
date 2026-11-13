@@ -5,6 +5,7 @@ import { apiError, fieldCodes } from "@/lib/api-error";
 import { shopOrigin } from "@/lib/mock/shop-domain-store";
 import { currentShop } from "@/lib/mock/data";
 import { createGuestBooking, demoConfirmToken } from "@/lib/mock/booking-store";
+import { DEMO_OTP } from "@/components/booking/otp";
 import { attributeBooking } from "@/lib/mock/referral-store";
 import { recordAudit } from "@/lib/mock/admin-audit-store";
 import { guestActor, DEMO_ORG } from "@/lib/mock/audit-actors";
@@ -36,6 +37,15 @@ export async function POST(request: Request, ctx: RouteContext<"/api/v1/public/s
     body = await request.json();
   } catch {
     return apiError(400, "BAD_REQUEST", "The request body must be JSON.");
+  }
+  // The shape of the real API (`guest` in its own object, `otp`, `consent`) is what the booking form sends; the older flat shape is still accepted by the tests of the sample data.
+  const shaped = body as { guest?: Record<string, unknown>; otp?: unknown; consent?: unknown } | null;
+  if (shaped && typeof shaped === "object" && shaped.guest && typeof shaped.guest === "object") {
+    if (shaped.consent !== true) return apiError(422, "VALIDATION", "Please check the highlighted fields.", { fields: { consent: "consentRequired" } });
+    if (shaped.otp !== DEMO_OTP) return apiError(422, "OTP_INVALID", "The code is not right or has expired.", { fields: { otp: "invalid" } });
+    const { guest, otp: _otp, consent: _consent, ...rest } = shaped as Record<string, unknown> & { guest: Record<string, unknown> };
+    void _otp; void _consent;
+    body = { ...rest, ...guest };
   }
   const parsed = bodySchema.safeParse(body);
   if (!parsed.success) return apiError(422, "VALIDATION", "Please check the highlighted fields.", { fields: fieldCodes(parsed.error.issues) });

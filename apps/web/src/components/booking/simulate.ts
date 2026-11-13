@@ -31,12 +31,12 @@ export interface ConfirmationData {
 
 /** Why the server refused the booking: the seats were taken (FULL) or the session closed (GONE) meanwhile, or something else went wrong. */
 export class BookingRefused extends Error {
-  constructor(readonly reason: "GONE" | "FULL" | "OTHER") { super(reason); }
+  constructor(readonly reason: "GONE" | "FULL" | "OTP_WRONG" | "OTP_LOCKED" | "OTHER") { super(reason); }
 }
 
 export interface BookingRequest {
-  slug: string; sessionId: string; quantity: number; fullName: string; email: string; phone?: string; specialRequest?: string;
-  promotionIds: string[]; locale: Locale;
+  slug: string; sessionId: string; quantity: number; fullName: string; email: string; country: string; phone: string; specialRequest?: string;
+  promotionIds: string[]; locale: Locale; /** The 6 digits the guest received by email. */ otp: string;
 }
 
 const KEY_PREFIX = "booking:";
@@ -46,17 +46,20 @@ const KEY_PREFIX = "booking:";
  * booking is NOT_CONFIRMED: the guest gets an email with the link that confirms it.
  */
 export async function submitBooking(req: BookingRequest, display: Omit<ConfirmationData, "code" | "status" | "demoConfirmUrl">, idempotencyKey: string): Promise<ConfirmationData> {
-  const { slug, ...rest } = req;
+  const { slug, fullName, email, country, phone, specialRequest, ...rest } = req;
   const ref = readAffiliateCode(slug);
-  const body = { ...rest, ...(ref ? { ref } : {}) };
+  // The shape of the API: the guest in its own object, the agreement to the policy (the form does not go on without it), the code of the email. The price is never sent: the server works it out.
+  const body = { ...rest, guest: { fullName, email, country, phone, ...(specialRequest ? { specialRequest } : {}) }, consent: true, ...(ref ? { ref } : {}) };
   const res = await fetch(`/api/v1/public/sites/${encodeURIComponent(slug)}/bookings`, {
     method: "POST", headers: { "content-type": "application/json", "idempotency-key": idempotencyKey }, body: JSON.stringify(body),
   });
-  if (res.status === 409) {
+  if (!res.ok) {
     const code = ((await res.json().catch(() => null)) as { error?: { code?: string } } | null)?.error?.code;
-    throw new BookingRefused(code === "SESSION_FULL" ? "FULL" : "GONE");
+    if (code === "OTP_INVALID") throw new BookingRefused("OTP_WRONG");
+    if (code === "OTP_LOCKED") throw new BookingRefused("OTP_LOCKED");
+    if (res.status === 409) throw new BookingRefused(code === "SESSION_FULL" ? "FULL" : "GONE");
+    throw new BookingRefused("OTHER");
   }
-  if (!res.ok) throw new BookingRefused("OTHER");
   const made = (await res.json()) as { code: string; status: BookingStatus; totalAmount: number; demoConfirmUrl?: string };
   const result: ConfirmationData = { ...display, code: made.code, status: made.status, totalAmount: made.totalAmount, ...(made.demoConfirmUrl ? { demoConfirmUrl: made.demoConfirmUrl } : {}) };
   sessionStorage.setItem(KEY_PREFIX + made.code, JSON.stringify(result));

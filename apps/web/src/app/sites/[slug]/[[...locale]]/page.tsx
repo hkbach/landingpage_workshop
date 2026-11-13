@@ -5,7 +5,8 @@ import { SiteFrame } from "@/components/site/SiteFrame";
 import { SiteIntlProvider } from "@/components/site/SiteIntlProvider";
 import { getSiteBase } from "@/components/site/site-base";
 import { localePath } from "@/components/site/site-url";
-import { shopOrigin } from "@/lib/mock/shop-domain-store";
+import { originOfSite } from "@/lib/public-site";
+import { realApi } from "@/lib/api-server";
 import { requireSite, resolveLocale } from "@/components/site/resolve";
 import { safeImage } from "@/components/sections/safe-url";
 import type { PageContent } from "@/lib/types";
@@ -20,10 +21,10 @@ function heroImage(content: PageContent): string | undefined {
 
 export async function generateMetadata({ params }: PageProps<"/sites/[slug]/[[...locale]]">): Promise<Metadata> {
   const { slug, locale: segs } = await params;
-  const site = requireSite(slug);
+  const site = await requireSite(slug);
   const locale = resolveLocale(site, segs);
   const { shop, content } = site;
-  const origin = shopOrigin(slug); // canonical and hreflang use the own domain of the shop when it has one
+  const origin = originOfSite(site); // canonical and hreflang use the own domain of the shop when it has one
   const title = pickLocalized(content.seo.title, locale, shop.defaultLocale) || shop.name;
   const description = pickLocalized(content.seo.description, locale, shop.defaultLocale);
   const image = heroImage(content);
@@ -43,11 +44,11 @@ export async function generateMetadata({ params }: PageProps<"/sites/[slug]/[[..
 
 export default async function SitePage({ params }: PageProps<"/sites/[slug]/[[...locale]]">) {
   const { slug, locale: segs } = await params;
-  const site = requireSite(slug);
+  const site = await requireSite(slug);
   const locale = resolveLocale(site, segs);
-  const base = await getSiteBase(slug);
-  // TODO(api): the promotions of this shop (organization_id); the mock store only holds the demo shop's.
-  const promotions = slug === currentShop.slug ? publicPromotions() : [];
+  const base = await getSiteBase(slug, site.customDomain);
+  // The promotions running today: from the API; the sample data only holds the demo shop's.
+  const promotions = realApi() ? site.promotions : slug === currentShop.slug ? publicPromotions() : [];
   const { shop, content, theme, workshops, sessions } = site;
 
   const languages = shop.enabledLocales.map((l) => ({ locale: l, href: localePath(base, l, shop.defaultLocale) }));
@@ -67,7 +68,7 @@ export default async function SitePage({ params }: PageProps<"/sites/[slug]/[[..
         {/* Header, navigation and language switch are part of the page frame (PageRenderer). */}
         <SiteBody
           content={content} theme={theme} ctx={ctx} workshops={workshops} sessions={sessions} locale={locale} basePath={base} promotions={promotions}
-          shop={{ name: shop.name, slug: shop.slug, timezone: shop.timezone, currency: shop.currency, defaultLocale: shop.defaultLocale }}
+          shop={{ name: shop.name, slug: shop.slug, timezone: shop.timezone, currency: shop.currency, defaultLocale: shop.defaultLocale, ...(realApi() ? {} : { demoOtp: true }) }}
         />
       </SiteFrame>
     </SiteIntlProvider>

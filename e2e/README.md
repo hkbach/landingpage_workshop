@@ -30,4 +30,6 @@ API_URL=http://127.0.0.1:4000 pnpm --filter web exec next dev -p 3200
 E2E_REAL_API=1 E2E_PORT=3200 pnpm exec playwright test e2e/real-auth.spec.ts
 ```
 
-Without `E2E_REAL_API` the file is skipped. The other files expect the sample data, so do not run them against the real API yet.
+Also start the worker (`APP_URL=http://app.localtest.me:3200 pnpm --filter api dev:worker`: it sends the emails) and, for `real-booking.spec.ts`, give `E2E_PASSWORD` (the password of the accounts of `pnpm db:seed`, in `apps/api/.seed-credentials`): the test publishes a landing page for the seeded shop when it has none and reads the codes from Mailpit.
+
+Without `E2E_REAL_API` the files are skipped. The other files expect the sample data, so do not run them against the real API yet.

@@ -19,11 +19,12 @@ import { COUNTRY_CODES, countryName } from "./countries";
 import { bookingContactSchema, type BookingFormValues } from "./schema";
 import { slotState, type SlotState } from "./availability";
 import { safeImage } from "@/components/sections/safe-url";
-import { cleanOtp, DEMO_OTP, isOtpComplete, OTP_LENGTH, OTP_MAX_ATTEMPTS, OTP_RESEND_SECONDS, sendOtp, verifyOtp } from "./otp";
+import { cleanOtp, DEMO_OTP, isOtpComplete, OTP_LENGTH, OTP_MAX_ATTEMPTS, OTP_RESEND_SECONDS, sendOtp } from "./otp";
 import { BookingRefused, submitBooking } from "./simulate";
 import { newUuid } from "@/lib/uuid";
 
-export type BookingShop = Pick<Shop, "name" | "slug" | "timezone" | "currency" | "defaultLocale">;
+/** `demoOtp`: the page runs on the sample data, which accepts one fixed code (shown as a hint outside production). Never set when the page is served by the real API. */
+export type BookingShop = Pick<Shop, "name" | "slug" | "timezone" | "currency" | "defaultLocale"> & { demoOtp?: boolean };
 
 interface Props {
   open: boolean;
@@ -238,7 +239,7 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
   }, [cooldown]);
 
   async function sendCode(email: string) {
-    await sendOtp(email);
+    await sendOtp(shop.slug, email, locale);
     setOtpCode(""); setOtpState("idle"); setAttempts(0); setCooldown(OTP_RESEND_SECONDS);
   }
 
@@ -268,14 +269,6 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
     setSubmitting(true);
     setSubmitError(false);
     try {
-      if (!(await verifyOtp(email, otpCode))) {
-        const used = attempts + 1;
-        setAttempts(used);
-        setOtpCode("");
-        setOtpState(used >= OTP_MAX_ATTEMPTS ? "locked" : "wrong");
-        setSubmitting(false);
-        return;
-      }
       // Time passed while the guest filled in the form: check the booking cut-off again (the real API checks it too, FR-BOOK-02).
       if (slotState(session, clock()) !== "OK") {
         setSlotGone(true); setGoneFull(false); setGoneCutoff(session.bookingCutoffMinutes); setSessionId(""); setDate(""); setStep("datetime"); setSubmitting(false);
@@ -286,8 +279,8 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
       // confirms it (the real API also verifies Turnstile and the OTP).
       const result = await submitBooking(
         {
-          slug: shop.slug, sessionId: session.id, quantity, fullName: values.fullName.trim(), email, phone: values.phone.trim() || undefined,
-          specialRequest: (values.specialRequest ?? "").trim() || undefined, promotionIds: chosen.map((p) => p.id), locale,
+          slug: shop.slug, sessionId: session.id, quantity, fullName: values.fullName.trim(), email, country: values.country, phone: values.phone.trim(),
+          specialRequest: (values.specialRequest ?? "").trim() || undefined, promotionIds: chosen.map((p) => p.id), locale, otp: otpCode,
         },
         {
           email, workshopTitle: L(workshop.title), startsAt: session.startsAt, endsAt: session.endsAt,
@@ -299,6 +292,15 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
       onOpenChange(false);
       router.push(`${basePath}/booking/${result.code}?email=${encodeURIComponent(result.email)}`);
     } catch (e) {
+      if (e instanceof BookingRefused && (e.reason === "OTP_WRONG" || e.reason === "OTP_LOCKED")) {
+        // The server checks the code together with the booking: a wrong code costs one of the attempts (the server locks after too many).
+        const used = attempts + 1;
+        setAttempts(used);
+        setOtpCode("");
+        setOtpState(e.reason === "OTP_LOCKED" || used >= OTP_MAX_ATTEMPTS ? "locked" : "wrong");
+        setSubmitting(false);
+        return;
+      }
       if (e instanceof BookingRefused && (e.reason === "GONE" || e.reason === "FULL")) {
         // The seats were taken, or the session closed, while the form was open: it is not offered again.
         setRefused((r) => ({ ...r, [session.id]: e.reason === "FULL" ? "FULL" : "CLOSED" }));
@@ -532,7 +534,7 @@ function BookingFlow({ onOpenChange, initialWorkshopId, shop, workshops, session
               aria-describedby="bk-otp-hint" onChange={(e) => { setOtpCode(cleanOtp(e.target.value)); if (otpState === "wrong") setOtpState("idle"); }}
             />
             <p id="bk-otp-hint" className="text-xs text-[var(--site-muted)]">{t("otpHint", { length: OTP_LENGTH })}</p>
-            {process.env.NODE_ENV !== "production" ? <p className="text-xs text-[var(--site-muted)]" data-testid="otp-demo">{t("otpDemo", { code: DEMO_OTP })}</p> : null}
+            {process.env.NODE_ENV !== "production" && shop.demoOtp ? <p className="text-xs text-[var(--site-muted)]" data-testid="otp-demo">{t("otpDemo", { code: DEMO_OTP })}</p> : null}
           </div>
           {otpState === "wrong" ? <p role="alert" className="text-sm text-red-700">{t("otpWrong", { left: OTP_MAX_ATTEMPTS - attempts })}</p> : null}
           {otpState === "locked" ? <p role="alert" className="text-sm text-red-700">{t("otpLocked")}</p> : null}

@@ -1,17 +1,16 @@
 import { hreflangOf } from "@workshop/shared";
-import { getPublicSite } from "@/lib/mock/site";
+import { loadPublicSite, originOfSite } from "@/lib/public-site";
 import { localePath } from "@/components/site/site-url";
-import { shopOrigin } from "@/lib/mock/shop-domain-store";
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 // Per-host sitemap with hreflang alternates for each enabled locale (FR-SITE-05).
 export async function GET(_req: Request, ctx: RouteContext<"/sites/[slug]/sitemap.xml">) {
   const { slug } = await ctx.params;
-  const site = getPublicSite(slug);
+  const site = await loadPublicSite(slug);
   if (!site) return new Response("Not found", { status: 404 });
   const { shop } = site;
-  const origin = shopOrigin(slug);
+  const origin = originOfSite(site);
   const alternates = (): string =>
     shop.enabledLocales
       .map((l) => `<xhtml:link rel="alternate" hreflang="${hreflangOf(l)}" href="${esc(origin + localePath("", l, shop.defaultLocale))}"/>`)
