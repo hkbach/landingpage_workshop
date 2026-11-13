@@ -6,6 +6,7 @@ import { SessionsService } from "../catalog/sessions.service";
 import { WorkshopsService, type Actor } from "../catalog/workshops.service";
 import { DB, type Database } from "../db/db.module";
 import { organizationMembers, organizations, users } from "../db/schema";
+import type { EditKind } from "../email/messages";
 import { OutboxService } from "../outbox/outbox.service";
 import { SitePagesService } from "../site/site-pages.service";
 
@@ -42,11 +43,11 @@ export class AdminActionsService {
   }
 
   /** After the change: the audit line with the reason, and the email to every active owner of the shop (what was changed, why). */
-  private async done(org: OrgContext & { name: string }, actor: Actor, reason: string, entity: { type: string; id: string }, action: string, what: string): Promise<void> {
+  private async done(org: OrgContext & { name: string }, actor: Actor, reason: string, entity: { type: string; id: string }, action: string, what: { kind: EditKind; detail: string }): Promise<void> {
     await this.db.transaction(async (tx) => {
       await this.audit.record({ organizationId: org.id, actorUserId: actor.userId, action: "admin_edit.reason", entityType: entity.type, entityId: entity.id, after: { action, reason }, ip: actor.ip }, tx);
-      const owners = await tx.select({ email: users.email, name: users.fullName }).from(organizationMembers).innerJoin(users, eq(users.id, organizationMembers.userId)).where(and(eq(organizationMembers.organizationId, org.id), eq(users.status, "ACTIVE")));
-      for (const o of owners) await this.outbox.enqueueEmail(tx, { name: "admin-edit-notice", to: o.email, data: { name: o.name, shop: org.name, what, reason } }, org.id);
+      const owners = await tx.select({ email: users.email, name: users.fullName, locale: users.uiLocale }).from(organizationMembers).innerJoin(users, eq(users.id, organizationMembers.userId)).where(and(eq(organizationMembers.organizationId, org.id), eq(users.status, "ACTIVE")));
+      for (const o of owners) await this.outbox.enqueueEmail(tx, { name: "admin-edit-notice", to: o.email, locale: o.locale, data: { name: o.name, shop: org.name, what, reason } }, org.id);
     });
     void this.outbox.wake();
   }
@@ -55,7 +56,7 @@ export class AdminActionsService {
     const reason = this.reason(rawReason);
     const org = await this.shop(shopId);
     const view = await this.workshops.switchStatus(org, workshopId, status, actor);
-    await this.done(org, actor, reason, { type: "workshop", id: workshopId }, status === "ACTIVE" ? "workshop.activate" : "workshop.deactivate", `a workshop of your shop (${Object.values(view.title)[0] ?? ""}): it was ${status === "ACTIVE" ? "activated" : "deactivated"}`);
+    await this.done(org, actor, reason, { type: "workshop", id: workshopId }, status === "ACTIVE" ? "workshop.activate" : "workshop.deactivate", { kind: status === "ACTIVE" ? "WORKSHOP_ACTIVATED" : "WORKSHOP_DEACTIVATED", detail: Object.values(view.title)[0] ?? "" });
     return view;
   }
 
@@ -64,7 +65,7 @@ export class AdminActionsService {
     const reason = this.reason(rawReason);
     const org = await this.shop(shopId);
     const view = await this.sessions.close(org, sessionId, { code: "OTHER", note: reason }, actor, new Date(), { admin: true });
-    await this.done(org, actor, reason, { type: "session", id: sessionId }, "session.close", `the session ${view.code} of your shop: it was closed`);
+    await this.done(org, actor, reason, { type: "session", id: sessionId }, "session.close", { kind: "SESSION_CLOSED", detail: view.code });
     return view;
   }
 
@@ -73,7 +74,7 @@ export class AdminActionsService {
     const reason = this.reason(rawReason);
     const org = await this.shop(shopId);
     const view = await this.sessions.reopen(org, sessionId, actor, new Date(), { admin: true });
-    await this.done(org, actor, reason, { type: "session", id: sessionId }, "session.reopen", `the session ${view.code} of your shop: it was opened again`);
+    await this.done(org, actor, reason, { type: "session", id: sessionId }, "session.reopen", { kind: "SESSION_REOPENED", detail: view.code });
     return view;
   }
 
@@ -82,7 +83,7 @@ export class AdminActionsService {
     const reason = this.reason(rawReason);
     const org = await this.shop(shopId);
     const view = await this.sessions.reschedule(org, sessionId, { newStartsAt, reason: { code: "OTHER", note: reason } }, actor, new Date(), { admin: true });
-    await this.done(org, actor, reason, { type: "session", id: sessionId }, "session.reschedule", `the session ${view.code} of your shop: it was moved`);
+    await this.done(org, actor, reason, { type: "session", id: sessionId }, "session.reschedule", { kind: "SESSION_MOVED", detail: view.code });
     return view;
   }
 
@@ -92,7 +93,7 @@ export class AdminActionsService {
     const org = await this.shop(shopId);
     if (org.status === "DRAFT") throw new ConflictException({ code: "SHOP_NOT_ACTIVE", message: "A shop is made active by its owner when they publish their landing page." });
     const result = await this.pages.publish(org, pageId, actor);
-    await this.done(org, actor, reason, { type: "site_page", id: pageId }, "site.publish", "the landing page of your shop: a new version was published");
+    await this.done(org, actor, reason, { type: "site_page", id: pageId }, "site.publish", { kind: "LANDING_PAGE_PUBLISHED", detail: "" });
     return result;
   }
 }

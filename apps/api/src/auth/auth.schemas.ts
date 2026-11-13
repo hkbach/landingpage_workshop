@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { LOCALES } from "@workshop/shared";
 
 // The bodies of the auth endpoints. Every text is trimmed (BR-16) and an email is lowercased; the codes of the errors ("required", "invalid", "tooLong") are the ones the forms already
 // know. TODO(shared): move to packages/shared when the web app calls these endpoints, so the forms and the server use one schema.
@@ -7,7 +8,7 @@ const password = z.string({ error: "required" }).min(1, "required").max(200, "to
 const turnstileToken = z.string().trim().max(2048).optional();
 const token = z.string({ error: "required" }).trim().min(20, "invalid").max(200, "invalid");
 
-const accountFields = { email, password, confirmPassword: password, turnstileToken };
+const accountFields = { email, password, confirmPassword: password, turnstileToken, /** The language the person used to sign up: the language of the emails of the account (default en). */ locale: z.enum(LOCALES, { error: "invalid" }).optional() };
 
 export const signupSchema = z.discriminatedUnion("type", [
   // `inviteCode`: the code of the invite link the friend came through; a wrong one is ignored, never an error

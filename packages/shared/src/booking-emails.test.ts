@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { EMAIL_LANGS, EMAIL_LANG_NAMES, renderBookingConfirmation, renderBookingInfo, renderPaymentReceived, renderSessionClosed, renderSessionRescheduled, type BookingConfirmationData } from "./templates";
+import { EMAIL_LANGS, EMAIL_LANG_NAMES, renderBookingConfirmation, renderBookingInfo, renderPaymentReceived, renderSessionClosed, renderSessionRescheduled, type BookingConfirmationData } from "./booking-emails";
 
 // An email holds the same message in six languages, one after the other; nothing about the recipient chooses the language.
 

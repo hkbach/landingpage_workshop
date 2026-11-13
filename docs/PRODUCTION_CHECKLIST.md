@@ -45,7 +45,7 @@ Backend đã có: lưu `organizations.custom_domain` (unique), kiểm tra DNS (`
 
 - [ ] Nối `apps/web` với API thật (hiện vẫn dùng mock trong bộ nhớ), gồm bắt đồng ý lại Terms / Privacy ở client.
 - [x] Kiểm tra props theo từng section ở backend: đã làm (13/11/2026).
-- [ ] Email đa ngôn ngữ (hiện chỉ tiếng Anh).
+- [x] Email đa ngôn ngữ: đã làm (13/11/2026): email booking 6 ngôn ngữ trong một email, email tài khoản theo ngôn ngữ UI. Còn: bản dịch Thai/Korean/Japanese/Chinese cần người bản ngữ rà soát trước khi chạy thật; email nhắc lịch và file `.ics`.
 
 ## Quy tắc phát hành
 

@@ -119,7 +119,7 @@ d("the platform administrator", () => {
     expect((await postA(`/users/${customer.userId}/status`, { status: "DISABLED", reason: "again" })).json().error.code).toBe("STATUS");
     expect((await postA(`/users/${customer.userId}/status`, { status: "ACTIVE" })).statusCode).toBe(200);
     expect((await t.post("/auth/login", { email: customer.email, password: PASSWORD })).statusCode).toBe(200);
-    expect((await postA(`/users/${admin.id.replace(/.$/, "0")}/status`, { status: "ACTIVE" })).statusCode).toBe(404);
+    expect((await postA(`/users/00000000-0000-4000-8000-000000000000/status`, { status: "ACTIVE" })).statusCode).toBe(404);
     const log = await t.pool.query<{ action: string; after: { targetEmail: string } }>("select action, after from audit_logs where entity_id = $1 and action like 'user.%' order by created_at", [customer.userId]);
     expect(log.rows.map((r) => r.action)).toEqual(["user.deactivate", "user.activate"]);
     expect(log.rows[0]!.after.targetEmail).toBe(customer.email);
@@ -141,7 +141,7 @@ d("the platform administrator", () => {
     await postA(`/users/${customer.userId}/status`, { status: "DISABLED", reason: "x" });
     expect((await postA(`/users/${customer.userId}/reset-password`)).json().error.code).toBe("STATUS");
     await postA(`/users/${customer.userId}/status`, { status: "ACTIVE" });
-    expect((await postA(`/users/${admin.id.replace(/.$/, "0")}/reset-password`)).statusCode).toBe(404);
+    expect((await postA(`/users/00000000-0000-4000-8000-000000000000/reset-password`)).statusCode).toBe(404);
   });
 
   it("reads the audit log of the whole platform with filters (who, which shop, what, when) and a cursor, with the actor of each line", async () => {

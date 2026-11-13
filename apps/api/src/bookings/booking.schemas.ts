@@ -5,7 +5,7 @@ import { BOOKING_CODE_RE, LOCALES } from "@workshop/shared";
 const email = z.string({ error: "required" }).trim().toLowerCase().min(1, "required").max(254, "tooLong").pipe(z.email("invalid"));
 const turnstileToken = z.string().trim().max(2048).optional();
 
-export const otpRequestSchema = z.object({ email, turnstileToken });
+export const otpRequestSchema = z.object({ email, turnstileToken, locale: z.enum(LOCALES).optional() });
 
 export const bookingCreateSchema = z.object({
   sessionId: z.uuid({ error: "invalid" }),

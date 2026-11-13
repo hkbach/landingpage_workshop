@@ -25,8 +25,8 @@ export class PublicController {
 
   @Post("sites/:slug/booking-otp")
   @HttpCode(202)
-  async otp(@Param("slug") slug: string, @Body(new ZodPipe(otpRequestSchema)) body: { email: string; turnstileToken?: string | undefined }, @Client() client: ClientContext) {
-    await this.service.requestOtp(slug, body.email, body.turnstileToken, client);
+  async otp(@Param("slug") slug: string, @Body(new ZodPipe(otpRequestSchema)) body: { email: string; turnstileToken?: string | undefined; locale?: string | undefined }, @Client() client: ClientContext) {
+    await this.service.requestOtp(slug, body.email, body.turnstileToken, client, new Date(), body.locale);
     return { status: "ACCEPTED" };
   }
 

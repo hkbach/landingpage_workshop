@@ -1,6 +1,7 @@
+import { bookingFacts, type BookingFacts } from "../email/booking-facts";
 import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException, UnprocessableEntityException } from "@nestjs/common";
 import { and, asc, desc, eq, inArray, lt, or, sql, type SQL } from "drizzle-orm";
-import { canTransition, computePaymentStatus, formatMoney, netPaid, targetStatus, workshopAddress, type BookingAction } from "@workshop/shared";
+import { canTransition, computePaymentStatus, netPaid, targetStatus, workshopAddress, type BookingAction } from "@workshop/shared";
 import { AuditService } from "../audit/audit.service";
 import type { OrgContext } from "../auth/auth.guards";
 import { isUniqueViolation } from "../auth/auth.service";
@@ -10,7 +11,6 @@ import { decodeCursor, encodeCursor } from "../common/cursor";
 import { addDays, zonedToUtc } from "../common/zoned-time";
 import { DB, type Database, type Executor } from "../db/db.module";
 import { bookings, customers, organizations, payments, workshopSessions, workshops } from "../db/schema";
-import type { BookingMailData } from "../email/templates";
 import { assertMonthsOpen } from "../finance/ledger";
 import { OutboxService } from "../outbox/outbox.service";
 import { assertShopWritable } from "../tenant/shop-writable";
@@ -132,11 +132,11 @@ export class BookingsService {
     return { ...this.toView(row.booking, row.session, row.title, netPaid(list), now), payments: list.map(paymentView) };
   }
 
-  private async mail(executor: Executor, orgId: string, b: BookingRow, session: SessionRow, title: Record<string, string>): Promise<{ data: BookingMailData; shop: typeof organizations.$inferSelect }> {
+  /** What an email about this booking says: the real time of the session (it may have moved since the booking was made) and the title of the workshop now. The email holds six languages. */
+  private async mail(executor: Executor, orgId: string, b: BookingRow, session: SessionRow, title: Record<string, string>): Promise<{ data: BookingFacts; shop: typeof organizations.$inferSelect }> {
     const [shop] = await executor.select().from(organizations).where(eq(organizations.id, orgId)).limit(1);
     if (!shop) throw notFound();
-    const when = new Intl.DateTimeFormat("en-GB", { timeZone: b.snapshot.timezone, dateStyle: "full", timeStyle: "short" }).format(session.startsAt);
-    return { shop, data: { shop: shop.name, code: b.bookingCode, workshop: title[shop.defaultLocale] ?? Object.values(title)[0] ?? "", when, timezone: b.snapshot.timezone, quantity: b.quantity, total: formatMoney(b.totalAmount, b.currency, "en"), address: b.snapshot.address } };
+    return { shop, data: bookingFacts(shop, b, { startsAt: session.startsAt, endsAt: session.endsAt, title }) };
   }
 
   // ---- a booking made by the shop --------------------------------------------------------------------------------------------------------------------------
@@ -175,7 +175,7 @@ export class BookingsService {
         if (!booking) throw new Error("The booking was not created");
         if (email) {
           const { data } = await this.mail(tx, org.id, booking, session, row.workshop.title);
-          await this.outbox.enqueueEmail(tx, { name: "booking-info", to: email, data: { ...data, name: input.fullName } }, org.id);
+          await this.outbox.enqueueEmail(tx, { name: "booking-info", to: email, data: { ...data, guestName: input.fullName } }, org.id);
         }
         await this.audit.record({ organizationId: org.id, actorUserId: actor.userId, action: "booking.manual_create", entityType: "booking", entityId: booking.id, after: { code: booking.bookingCode, quantity: booking.quantity, source: booking.source }, ip: actor.ip }, tx);
         return booking.id;
@@ -213,7 +213,7 @@ export class BookingsService {
       if (!row) throw notFound();
       if (action === "CANCEL" && row.guestEmail) {
         const { data } = await this.mail(tx, org.id, row, s, title);
-        await this.outbox.enqueueEmail(tx, { name: "booking-cancelled-guest", to: row.guestEmail, data: { ...data, name: row.guestName, by: "SHOP", reason: opts.reason ?? "" } }, org.id);
+        await this.outbox.enqueueEmail(tx, { name: "booking-cancelled-guest", to: row.guestEmail, data: { ...data, quantity: row.quantity, byGuest: false, ...(opts.reason ? { reason: opts.reason } : {}) } }, org.id);
       }
       const name = action === "CHECK_IN" ? "booking.check_in" : action === "UNDO_CHECK_IN" ? "booking.undo_check_in" : "booking.cancel_by_shop";
       await this.audit.record({ organizationId: org.id, actorUserId: actor.userId, action: name, entityType: "booking", entityId: id, before: { status: b.status }, after: { status: to, ...(opts.reason ? { reason: opts.reason } : {}) }, ip: actor.ip }, tx);
@@ -257,7 +257,7 @@ export class BookingsService {
       await this.audit.record({ organizationId: org.id, actorUserId: actor.userId, action: input.paid ? "booking.mark_paid" : "booking.mark_unpaid", entityType: "booking", entityId: id, after: { amount, method: entry.method, paymentStatus }, ip: actor.ip }, tx);
       if (input.paid && b.guestEmail) {
         const { data } = await this.mail(tx, org.id, b, s, title);
-        await this.outbox.enqueueEmail(tx, { name: "payment-received", to: b.guestEmail, data: { ...data, name: b.guestName, paid: formatMoney(amount, b.currency, "en") } }, org.id);
+        await this.outbox.enqueueEmail(tx, { name: "payment-received", to: b.guestEmail, data: { ...data, totalAmount: b.totalAmount } }, org.id);
         return true;
       }
       return false;

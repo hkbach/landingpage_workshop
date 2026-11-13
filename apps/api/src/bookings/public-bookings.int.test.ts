@@ -157,7 +157,7 @@ d("public booking", () => {
     expect((await t.pool.query("select 1 from customers where organization_id = $1 and email_normalized = $2", [a.orgId, email])).rowCount).toBe(1);
 
     await drain(t);
-    const guestMail = t.emails.sent.find((m) => m.to === email && m.subject.startsWith("Your booking"))!;
+    const guestMail = t.emails.sent.find((m) => m.to === email && m.subject.startsWith("Please confirm your booking"))!;
     expect(guestMail.text).toContain(body.code);
     expect(guestMail.text).toContain("pay at the studio");
     expect(guestMail.text).toContain("arrive on time");
@@ -167,7 +167,7 @@ d("public booking", () => {
     const stored = await t.pool.query("select token_hash from booking_confirmations where organization_id = $1", [a.orgId]);
     expect(JSON.stringify(stored.rows)).not.toContain(token); // only the hash
     const owner = (await t.pool.query<{ contact_email: string }>("select contact_email from organizations where id = $1", [a.orgId])).rows[0]!.contact_email;
-    expect(t.emails.sent.some((m) => m.to === owner && m.subject === `New booking ${body.code}`)).toBe(true);
+    expect(t.emails.sent.some((m) => m.to === owner && m.subject.startsWith(`New booking ${body.code}`))).toBe(true);
     const audit = await t.pool.query("select actor_user_id, ip from audit_logs where entity_id = $1 and action = 'booking.create'", [row.id]);
     expect(audit.rows).toHaveLength(1);
     expect(audit.rows[0].actor_user_id).toBeNull(); // a guest
@@ -332,9 +332,9 @@ d("public booking", () => {
     expect(again.statusCode).toBe(409);
     expect(again.json().error.code).toBe("NOT_CANCELLABLE");
     await drain(t);
-    expect(t.emails.sent.some((m) => m.to === email && m.subject === `Booking ${made.code} cancelled`)).toBe(true);
+    expect(t.emails.sent.some((m) => m.to === email && m.subject.startsWith(`Your booking ${made.code} has been cancelled`))).toBe(true);
     const owner = (await t.pool.query<{ contact_email: string }>("select contact_email from organizations where id = $1", [a.orgId])).rows[0]!.contact_email;
-    expect(t.emails.sent.some((m) => m.to === owner && m.subject === `Booking ${made.code} cancelled by the guest`)).toBe(true);
+    expect(t.emails.sent.some((m) => m.to === owner && m.subject.startsWith(`Booking ${made.code} was cancelled by the guest`))).toBe(true);
     const log = await t.pool.query("select action from audit_logs where organization_id = $1 and action = 'booking.cancel_by_guest'", [a.orgId]);
     expect(log.rows.length).toBeGreaterThanOrEqual(1);
   });
@@ -385,5 +385,40 @@ d("public booking", () => {
     walk(root);
     const writers = files.filter((f) => /reservedCount\s*:\s*(sql|\w+\()/.test(readFileSync(f, "utf8")) || /reserved_count\s*=/.test(readFileSync(f, "utf8")));
     expect(writers.map((f) => f.replace(root, "").replace(/\\/g, "/"))).toEqual(["/bookings/session-capacity.service.ts"]);
+  });
+
+  it("writes the emails about a booking in six languages in ONE email (nothing is detected about the guest), and the code of the form in the language it asks for", async () => {
+    const sessionId = await session(a, { days: 30 });
+    const email = emailFor("viguest");
+    const made = await bookOnce(a, sessionId, { email, extra: { locale: "vi" } });
+    expect(made.statusCode).toBe(201);
+    const code = made.json().code as string;
+    await drain(t);
+    // the guest and the shop both get the same email in the six languages, whatever language the booking form was in
+    for (const mail of [t.emails.sent.find((m) => m.to === email && m.subject.includes(code))!, t.emails.sent.find((m) => m.subject.startsWith(`New booking ${code}`))!]) {
+      expect(mail.subject.split(" | ")).toHaveLength(6);
+      for (const id of ["lang-en", "lang-vi", "lang-th", "lang-zh", "lang-ko", "lang-ja"]) expect(mail.html).toContain(`id="${id}"`);
+    }
+    const guestMail = t.emails.sent.find((m) => m.to === email && m.subject.includes(code))!;
+    expect(guestMail.subject.startsWith(`Please confirm your booking ${code} | Vui lòng xác nhận booking ${code}`)).toBe(true);
+    expect(guestMail.text).toContain("โปรดมาถึงตรงเวลา");
+    expect((await t.pool.query<{ locale: string }>("select locale from bookings where booking_code = $1", [code])).rows[0]!.locale).toBe("vi"); // the language of the form is kept
+
+    // the guest cancels: both sides get the six languages again
+    const before = t.emails.sent.length;
+    const cancel = await t.app.inject({ method: "POST", url: `/api/v1/public/sites/${a.slug}/bookings/cancel`, remoteAddress: nextIp(), headers: { origin: "https://some-shop.example" }, payload: { code, email } });
+    expect(cancel.statusCode).toBe(200);
+    await drain(t);
+    const after = t.emails.sent.slice(before);
+    expect(after.find((m) => m.to === email)!.subject.startsWith(`Your booking ${code} has been cancelled | `)).toBe(true);
+    expect(after.find((m) => m.to !== email)!.subject.startsWith(`Booking ${code} was cancelled by the guest | `)).toBe(true);
+
+    // the code asked for by the form can be in the language of the guest
+    const otpEmail = emailFor("kootp");
+    const asked = await t.app.inject({ method: "POST", url: `/api/v1/public/sites/${a.slug}/booking-otp`, remoteAddress: nextIp(), headers: { origin: "https://some-shop.example" }, payload: { email: otpEmail, locale: "ko" } });
+    expect(asked.statusCode).toBeLessThan(300);
+    await drain(t);
+    expect(t.emails.sent.filter((m) => m.to === otpEmail).at(-1)!.subject).toMatch(/^예약 코드: \d{6}$/);
+    expect((await t.app.inject({ method: "POST", url: `/api/v1/public/sites/${a.slug}/booking-otp`, remoteAddress: nextIp(), headers: { origin: "https://some-shop.example" }, payload: { email: emailFor("badloc"), locale: "xx" } })).statusCode).toBe(422);
   });
 });

@@ -15,6 +15,26 @@ d("email verification (production mode)", () => {
   beforeAll(async () => { t = await startApp({ REQUIRE_EMAIL_VERIFICATION: "true" }); });
   afterAll(async () => { await t.close(); });
 
+  it("writes the emails of an account in the language it signed up with, and in English when none was given", async () => {
+    const ko = emailFor("koverify");
+    expect((await t.post("/auth/signup", { ...signupBody("CUSTOMER", ko), locale: "ko" })).statusCode).toBe(202);
+    const en = emailFor("enverify");
+    await t.post("/auth/signup", signupBody("CUSTOMER", en));
+    expect((await t.post("/auth/signup", { ...signupBody("CUSTOMER", emailFor("badloc")), locale: "xx" })).statusCode).toBe(422);
+    await drain(t);
+    expect(t.emails.sent.find((m) => m.to === ko)!.subject).toBe("이메일을 확인해 주세요");
+    expect(t.emails.sent.find((m) => m.to === en)!.subject).toBe("Confirm your email");
+    expect((await t.pool.query("select ui_locale from users where email = $1", [ko])).rows[0]).toEqual({ ui_locale: "ko" });
+
+    // a reset link and the notice of a changed password are in that language too; so is the notice that the email already has an account
+    await t.post("/auth/forgot-password", { email: ko });
+    await t.post("/auth/signup", { ...signupBody("CUSTOMER", ko), locale: "en" });
+    await drain(t);
+    const mails = t.emails.sent.filter((m) => m.to === ko).map((m) => m.subject);
+    expect(mails).toContain("비밀번호 재설정");
+    expect(mails).toContain("이미 계정이 있습니다"); // the language of the account, not the one of the new attempt
+  });
+
   it("signup answers 202 and never says whether the email was new; the email goes out through the outbox, and the link is not left in the database", async () => {
     const email = emailFor("verify");
     const res = await t.post("/auth/signup", signupBody("CUSTOMER", email));

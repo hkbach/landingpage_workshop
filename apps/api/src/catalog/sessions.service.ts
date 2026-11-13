@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException, UnprocessableEntityException } from "@nestjs/common";
 import { and, asc, eq, gt, gte, lte, or, sql, type SQL } from "drizzle-orm";
 import {
-  applySessionAction, canCloseAgain, canCompleteSession, canEditSession, canReopenSession, checkCloseReason, checkCloseReasonFor, checkReschedule, checkRescheduleReason, closeCount, isFinalClose, isFutureStart,
+  applySessionAction, type SessionCloseReason, canCloseAgain, canCompleteSession, canEditSession, canReopenSession, checkCloseReason, checkCloseReasonFor, checkReschedule, checkRescheduleReason, closeCount, isFinalClose, isFutureStart,
   rescheduleCount, type SessionNote, type SessionStatus,
 } from "@workshop/shared";
 import { AuditService } from "../audit/audit.service";
@@ -198,7 +198,7 @@ export class SessionsService {
         if (!row) throw notFound();
         await this.audit.record({ organizationId: org.id, actorUserId: actor.userId, action: "session.reschedule", entityType: "session", entityId: id, before: { startsAt: session.startsAt.toISOString() }, after: { startsAt: checked.startsAt, reason: reason.reason.code }, ip: actor.ip }, tx);
         // every guest who booked the session is told, in the same transaction (outbox); the worker is woken after the commit
-        const told = await notifyGuests(tx, this.outbox, { organizationId: org.id, sessionId: id, workshopTitle, startsAt: row.startsAt, previousStartsAt: session.startsAt, kind: "RESCHEDULED", reason: reason.reason.note ?? reason.reason.code });
+        const told = await notifyGuests(tx, this.outbox, { organizationId: org.id, sessionId: id, workshopTitle, startsAt: row.startsAt, endsAt: row.endsAt, previousStartsAt: session.startsAt, kind: "RESCHEDULED", reason: reason.reason });
         return { view: toView(row, workshopTitle), told };
       }).then(({ view, told }) => { if (told > 0) void this.outbox.wake(); return view; });
     } catch (error) {
@@ -220,7 +220,7 @@ export class SessionsService {
       if (!row) throw notFound();
       await this.audit.record({ organizationId: org.id, actorUserId: actor.userId, action, entityType: "session", entityId: id, before: { status: session.status }, after: { status: row.status, ...details }, ip: actor.ip }, tx);
       // a close tells every guest who booked the session, in the same transaction (outbox); the worker is woken after the commit
-      const told = note?.type === "CLOSED" ? await notifyGuests(tx, this.outbox, { organizationId: org.id, sessionId: id, workshopTitle, startsAt: row.startsAt, kind: "CLOSED", reason: note.reason?.note ?? note.reason?.code ?? "" }) : 0;
+      const told = note?.type === "CLOSED" ? await notifyGuests(tx, this.outbox, { organizationId: org.id, sessionId: id, workshopTitle, startsAt: row.startsAt, endsAt: row.endsAt, kind: "CLOSED", ...(note.reason ? { reason: note.reason as SessionCloseReason } : {}) }) : 0;
       return { view: toView(row, workshopTitle), told };
     }).then(({ view, told }) => { if (told > 0) void this.outbox.wake(); return view; });
   }

@@ -63,7 +63,7 @@ d("bookings and customers of a shop", () => {
     expect(bk.actions.sort()).toEqual(["CANCEL", "CHECK_IN"]);
     expect(await seats(sid)).toBe(3);
     await drain(t);
-    expect(t.emails.sent.some((m) => m.to === email && m.subject.startsWith(`Your booking ${bk.code} at `))).toBe(true);
+    expect(t.emails.sent.some((m) => m.to === email && m.subject.startsWith(`Your booking ${bk.code} is confirmed`))).toBe(true);
     const log = await t.pool.query<{ actor_user_id: string | null }>("select actor_user_id from audit_logs where entity_id = $1 and action = 'booking.manual_create'", [bk.id]);
     expect(log.rows).toHaveLength(1);
     expect(log.rows[0]!.actor_user_id).not.toBeNull(); // the owner did it
@@ -178,8 +178,8 @@ d("bookings and customers of a shop", () => {
     expect((await act(a, bk.id, "cancel", { reason: "again" })).json().error.code).toBe("INVALID_TRANSITION");
     expect((await act(a, bk.id, "payment", { paid: true })).json().error.code).toBe("INVALID_STATE");
     await drain(t);
-    const mail = t.emails.sent.find((m) => m.to === email && m.subject === `Booking ${bk.code} cancelled`)!;
-    expect(mail.text).toContain("cancelled by the studio");
+    const mail = t.emails.sent.find((m) => m.to === email && m.subject.startsWith(`Your booking ${bk.code} has been cancelled`))!;
+    expect(mail.text).toContain("has cancelled your booking");
     expect(mail.text).toContain("Studio closed");
   });
 
@@ -193,7 +193,7 @@ d("bookings and customers of a shop", () => {
     expect(paid.payments[0]).toMatchObject({ type: "PAYMENT", amount: 400_000, method: "CARD", note: "Visa", currency: "VND" });
     expect((await act(a, bk.id, "payment", { paid: true })).json().payments).toHaveLength(1); // asking again changes nothing
     await drain(t);
-    expect(t.emails.sent.filter((m) => m.to === email && m.subject === `Payment received for booking ${bk.code}`)).toHaveLength(1);
+    expect(t.emails.sent.filter((m) => m.to === email && m.subject.startsWith(`Payment received for booking ${bk.code}`))).toHaveLength(1);
 
     const back = (await act(a, bk.id, "payment", { paid: false, note: "Mistake" })).json();
     expect(back).toMatchObject({ paymentStatus: "UNPAID", status: "CONFIRMED", paidAmount: 0, checkedInAt: null });

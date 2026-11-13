@@ -1,7 +1,7 @@
 import { randomInt } from "node:crypto";
 import { BadRequestException, ConflictException, HttpException, Inject, Injectable, NotFoundException, UnprocessableEntityException } from "@nestjs/common";
 import { and, asc, desc, eq, gt, gte, inArray, isNull, lte, sql } from "drizzle-orm";
-import { canTransition, confirmation, eligiblePromotions, formatMoney, priceBooking, workshopAddress } from "@workshop/shared";
+import { canTransition, confirmation, eligiblePromotions, priceBooking, workshopAddress } from "@workshop/shared";
 import { AuditService } from "../audit/audit.service";
 import { hashToken, newToken, safeEqual } from "../auth/crypto";
 import { TurnstileService } from "../auth/turnstile.service";
@@ -9,11 +9,11 @@ import { RateLimiter } from "../common/limiter";
 import { dateIn } from "../common/zoned-time";
 import type { Env } from "../config/env";
 import { ENV, SECRETS } from "../config/env.module";
+import { bookingFacts } from "../email/booking-facts";
 import type { Secrets } from "../common/secrets";
 import { DB, type Database, type Executor } from "../db/db.module";
 import { bookingConfirmations, bookingOtps, bookings, customers, organizations, workshopSessions, workshops } from "../db/schema";
 import { isUniqueViolation } from "../auth/auth.service";
-import type { BookingMailData } from "../email/templates";
 import { affiliateLinkFor } from "../affiliate/attribution";
 import { ratingSummaries } from "../customer/ratings.service";
 import { PromotionsService } from "../promotions/promotions.service";
@@ -129,7 +129,7 @@ export class PublicBookingsService {
   // ---- the code sent by email -------------------------------------------------------------------------------------------------------------------------------
 
   /** Step 5 of the booking form: a 6-digit code goes to the email of the guest. Always answers the same, whatever the email. */
-  async requestOtp(slug: string, email: string, turnstileToken: string | undefined, client: PublicClient, now = new Date()): Promise<void> {
+  async requestOtp(slug: string, email: string, turnstileToken: string | undefined, client: PublicClient, now = new Date(), locale?: string): Promise<void> {
     const o = await this.shop(slug);
     const ipKey = client.ip ?? "unknown";
     const wait = Math.max(this.otpByIp.retryAfter(ipKey), this.otpByEmail.retryAfter(`${o.id}|${email}`));
@@ -144,7 +144,7 @@ export class PublicBookingsService {
     await this.db.transaction(async (tx) => {
       const [row] = await tx.insert(bookingOtps).values({ organizationId: o.id, email, codeHash: "pending", expiresAt: new Date(now.getTime() + OTP_MINUTES * 60_000) }).returning({ id: bookingOtps.id });
       await tx.update(bookingOtps).set({ codeHash: this.hashOtp(row!.id, code) }).where(eq(bookingOtps.id, row!.id)); // only the hash of the code is kept
-      await this.outbox.enqueueEmail(tx, { name: "booking-otp", to: email, data: { code, minutes: OTP_MINUTES, shop: o.name } }, o.id);
+      await this.outbox.enqueueEmail(tx, { name: "booking-otp", to: email, locale: locale ?? o.defaultLocale, data: { code, minutes: OTP_MINUTES, shop: o.name } }, o.id);
     });
     void this.outbox.wake();
   }
@@ -168,11 +168,6 @@ export class PublicBookingsService {
   }
 
   // ---- the booking ---------------------------------------------------------------------------------------------------------------------------------------------
-
-  private mailData(o: OrgRow, b: { bookingCode: string; quantity: number; totalAmount: number; currency: string; snapshot: BookingRow["snapshot"] }): BookingMailData {
-    const when = new Intl.DateTimeFormat("en-GB", { timeZone: b.snapshot.timezone, dateStyle: "full", timeStyle: "short" }).format(new Date(b.snapshot.startsAt));
-    return { shop: o.name, code: b.bookingCode, workshop: b.snapshot.workshopTitle[o.defaultLocale] ?? Object.values(b.snapshot.workshopTitle)[0] ?? "", when, timezone: b.snapshot.timezone, quantity: b.quantity, total: formatMoney(b.totalAmount, b.currency, "en"), address: b.snapshot.address };
-  }
 
   private view(b: BookingRow, now: Date, session?: { status: string; startsAt: Date }): PublicBooking {
     const closed = session ? session.status === "CLOSED" || session.status === "COMPLETED" : false;
@@ -255,9 +250,9 @@ export class PublicBookingsService {
 
         const token = newToken();
         await tx.insert(bookingConfirmations).values({ organizationId: o.id, bookingId: booking.id, tokenHash: hashToken(token), expiresAt: new Date(now.getTime() + CONFIRM_DAYS * 86_400_000) });
-        const mail = this.mailData(o, booking);
-        await this.outbox.enqueueEmail(tx, { name: "booking-created", to: email, data: { ...mail, name: input.guest.fullName, confirmLink: `${shopOrigin(this.env, o.slug)}/booking/confirm/${token}` } }, o.id);
-        await this.outbox.enqueueEmail(tx, { name: "booking-notice", to: o.contactEmail, data: { ...mail, guestName: input.guest.fullName, guestEmail: email, guestPhone: input.guest.phone, request: input.guest.specialRequest ?? "" } }, o.id);
+        const facts = bookingFacts(o, booking);
+        await this.outbox.enqueueEmail(tx, { name: "booking-created", to: email, data: { ...facts, confirmUrl: `${shopOrigin(this.env, o.slug)}/booking/confirm/${token}` } }, o.id);
+        await this.outbox.enqueueEmail(tx, { name: "booking-notice", to: o.contactEmail, data: { shopName: facts.shopName, guestName: facts.guestName, guestEmail: email, ...(input.guest.phone ? { guestPhone: input.guest.phone } : {}), bookingCode: facts.bookingCode, workshopTitle: facts.workshopTitle, startsAt: facts.startsAt, endsAt: facts.endsAt, timezone: facts.timezone, quantity: facts.quantity, totalAmount: facts.totalAmount, currency: facts.currency } }, o.id);
         await this.audit.record({ organizationId: o.id, action: "booking.create", entityType: "booking", entityId: booking.id, after: { code: booking.bookingCode, quantity: booking.quantity, totalAmount: booking.totalAmount, source: "ONLINE" }, ip: client.ip }, tx);
         return { booking, replay: false as const };
       });
@@ -346,9 +341,9 @@ export class PublicBookingsService {
       await this.capacity.release(tx, { organizationId: o.id, sessionId: b.sessionId, quantity: b.quantity, now });
       const [row] = await tx.update(bookings).set({ status: "CANCELLED", cancelledBy: "GUEST", cancelReason: input.reason || null, statusChangedAt: now, updatedAt: now }).where(and(eq(bookings.organizationId, o.id), eq(bookings.id, b.id))).returning();
       if (!row) throw notFound();
-      const mail = this.mailData(o, row);
-      await this.outbox.enqueueEmail(tx, { name: "booking-cancelled-guest", to: input.email, data: { ...mail, name: row.guestName, by: "GUEST", reason: input.reason ?? "" } }, o.id);
-      await this.outbox.enqueueEmail(tx, { name: "booking-cancelled-shop", to: o.contactEmail, data: { ...mail, guestName: row.guestName, reason: input.reason ?? "" } }, o.id);
+      const facts = bookingFacts(o, row);
+      await this.outbox.enqueueEmail(tx, { name: "booking-cancelled-guest", to: input.email, data: { guestName: facts.guestName, shopName: facts.shopName, bookingCode: facts.bookingCode, workshopTitle: facts.workshopTitle, startsAt: facts.startsAt, endsAt: facts.endsAt, timezone: facts.timezone, quantity: facts.quantity, byGuest: true, ...(input.reason ? { reason: input.reason } : {}) } }, o.id);
+      await this.outbox.enqueueEmail(tx, { name: "booking-cancelled-shop", to: o.contactEmail, data: { shopName: facts.shopName, guestName: facts.guestName, guestEmail: input.email, bookingCode: facts.bookingCode, workshopTitle: facts.workshopTitle, startsAt: facts.startsAt, endsAt: facts.endsAt, timezone: facts.timezone, quantity: facts.quantity, totalAmount: facts.totalAmount, currency: facts.currency, ...(input.reason ? { reason: input.reason } : {}) } }, o.id);
       await this.audit.record({ organizationId: o.id, action: "booking.cancel_by_guest", entityType: "booking", entityId: b.id, before: { status: b.status }, after: { status: "CANCELLED" }, ip: client.ip }, tx);
       return row;
     });

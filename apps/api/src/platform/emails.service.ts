@@ -69,20 +69,20 @@ export class EmailsService {
    * Plain text. Audited with who it was for, how many and the subject, never the content.
    */
   async compose(input: { audience: Audience; address?: string | undefined; subject: string; body: string }, actor: Actor) {
-    let to: { email: string; name: string }[];
+    let to: { email: string; name: string; locale?: string }[];
     if (input.audience === "ADDRESS") {
       if (!input.address) throw new UnprocessableEntityException({ code: "VALIDATION", message: "Please check the highlighted fields.", details: { fields: { address: "required" } } });
       to = [{ email: input.address, name: "" }];
     } else {
       const owners = this.db.select({ id: organizationMembers.userId }).from(organizationMembers);
       const base = [eq(users.status, "ACTIVE"), isNull(users.platformRole)];
-      const rows = await this.db.select({ email: users.email, name: users.fullName }).from(users).where(and(...base, input.audience === "SHOP_OWNERS" ? inArray(users.id, owners) : sql`${users.id} not in (select user_id from organization_members)`)).limit(MAX_RECIPIENTS + 1);
+      const rows = await this.db.select({ email: users.email, name: users.fullName, locale: users.uiLocale }).from(users).where(and(...base, input.audience === "SHOP_OWNERS" ? inArray(users.id, owners) : sql`${users.id} not in (select user_id from organization_members)`)).limit(MAX_RECIPIENTS + 1);
       if (rows.length > MAX_RECIPIENTS) throw new UnprocessableEntityException({ code: "VALIDATION", message: `A notice goes to at most ${MAX_RECIPIENTS} people at once.`, details: { fields: { audience: "tooMany" } } });
       if (rows.length === 0) throw new UnprocessableEntityException({ code: "VALIDATION", message: "Nobody to send it to.", details: { fields: { audience: "noRecipients" } } });
       to = rows;
     }
     await this.db.transaction(async (tx) => {
-      for (const r of to) await this.outbox.enqueueEmail(tx, { name: "admin-message", to: r.email, data: { ...(r.name ? { name: r.name } : {}), subject: input.subject, body: input.body } });
+      for (const r of to) await this.outbox.enqueueEmail(tx, { name: "admin-message", to: r.email, ...(r.locale ? { locale: r.locale } : {}), data: { ...(r.name ? { name: r.name } : {}), subject: input.subject, body: input.body } });
       await this.audit.record({ actorUserId: actor.userId, action: "email.send", entityType: "email", entityId: input.audience, after: { audience: input.audience, recipients: to.length, subject: input.subject }, ip: actor.ip }, tx);
     });
     void this.outbox.wake();

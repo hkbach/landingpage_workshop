@@ -75,13 +75,13 @@ d("sessions, guests and the administrator acting for a shop", () => {
     expect(res.statusCode).toBe(200);
     await drain(t);
     for (const to of [e.one, e.two]) {
-      const [m] = mailTo(to, /was closed/);
+      const [m] = mailTo(to, /has been closed/);
       expect(m, to).toBeDefined();
-      expect(m!.text).toContain("will not take place");
-      expect(m!.text).toContain("there is a problem with the venue"); // the reason in words, never the code
+      expect(m!.text).toContain("It will not take place");
+      expect(m!.text).toContain("Studio or venue problem"); // the reason in words (in every language), never the code
       expect(m!.text).not.toContain("VENUE_ISSUE");
       expect(m!.text).toContain("SES-9"); // the code of the booking
-      expect(m!.subject).toContain(a.name);
+      expect(m!.text).toContain(a.name);
     }
     expect(mailTo(e.cancelled, /./)).toEqual([]); // a cancelled booking is not told
     expect((await t.pool.query("select count(*)::int as n from outbox_events where template = 'session-notice' and organization_id = $1", [a.orgId])).rows[0]!.n).toBe(2); // none for the guest without an email
@@ -100,12 +100,12 @@ d("sessions, guests and the administrator acting for a shop", () => {
     const next = new Date(before.getTime() + 2 * DAY).toISOString();
     expect((await owner(`/sessions/${s}/reschedule`, { newStartsAt: next, reason: { code: "INSTRUCTOR_UNAVAILABLE" } })).statusCode).toBe(200);
     await drain(t);
-    const [m] = mailTo(guest, /was moved/);
+    const [m] = mailTo(guest, /has been rescheduled/);
     expect(m).toBeDefined();
-    expect(m!.text).toContain("Your booking stays valid");
-    expect(m!.text).toContain("the instructor is not available");
-    expect(m!.text).toMatch(/Before: /);
-    expect(m!.text).toContain("Guests: 2");
+    expect(m!.text).toContain("now takes place at the new time");
+    expect(m!.text).toContain("The instructor is not available");
+    expect(m!.text).toMatch(/Previous time: /);
+    expect(m!.text).toMatch(/New time: /);
   });
 
   it("needs a reason for everything the administrator does for a shop, and changes nothing without one", async () => {
@@ -155,7 +155,7 @@ d("sessions, guests and the administrator acting for a shop", () => {
     const done = await adminPost(`/sessions/${s}/close`, { reason: "Safety inspection of the studio" });
     expect([done.statusCode, done.json().status]).toEqual([200, "CLOSED"]);
     await drain(t);
-    const [g] = mailTo(guest, /was closed/);
+    const [g] = mailTo(guest, /has been closed/);
     expect(g!.text).toContain("Safety inspection of the studio");
     expect(mailTo(a.ownerEmail, /The platform changed your shop/).some((m) => m.text.includes("Safety inspection"))).toBe(true);
     expect((await t.pool.query<{ action: string }>("select action from audit_logs where entity_id = $1 and action in ('session.close', 'admin_edit.reason') order by created_at", [s])).rows.map((r) => r.action)).toEqual(["session.close", "admin_edit.reason"]);
@@ -193,7 +193,7 @@ d("sessions, guests and the administrator acting for a shop", () => {
     expect(done.statusCode).toBe(200);
     expect(new Date(done.json().startsAt).toISOString()).toBe(next);
     await drain(t);
-    expect(mailTo(guest, /was moved/)[0]!.text).toContain("The venue is closed that day");
+    expect(mailTo(guest, /has been rescheduled/)[0]!.text).toContain("The venue is closed that day");
     expect((await adminPost(`/sessions/${s}/reschedule`, { newStartsAt: "tomorrow", reason: "x" })).json().error.details.fields).toEqual({ newStartsAt: "invalid" });
     const running = await session(a, 5, "RUNNING");
     expect((await adminPost(`/sessions/${running}/reschedule`, { newStartsAt: next, reason: "x" })).json().error.code).toBe("NOT_RESCHEDULABLE"); // the rules of the status stay

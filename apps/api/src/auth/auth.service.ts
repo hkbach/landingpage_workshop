@@ -146,13 +146,13 @@ export class AuthService {
 
     const email = emailOf(input.email);
     const verify = this.env.REQUIRE_EMAIL_VERIFICATION;
-    const [existing] = await this.db.select({ id: users.id, fullName: users.fullName }).from(users).where(eq(users.email, email)).limit(1);
-    if (existing) return this.signupForExistingEmail(email, existing.fullName, verify);
+    const [existing] = await this.db.select({ id: users.id, fullName: users.fullName, uiLocale: users.uiLocale }).from(users).where(eq(users.email, email)).limit(1);
+    if (existing) return this.signupForExistingEmail(email, existing.fullName, verify, existing.uiLocale);
 
     const passwordHash = await hashPassword(input.password); // slow on purpose: outside the transaction
     try {
       const result = await this.db.transaction(async (tx) => {
-        const [user] = await tx.insert(users).values({ email, passwordHash, fullName: nameOf(email), status: verify ? "UNVERIFIED" : "ACTIVE" }).returning();
+        const [user] = await tx.insert(users).values({ email, passwordHash, fullName: nameOf(email), status: verify ? "UNVERIFIED" : "ACTIVE", uiLocale: input.locale ?? "en" }).returning();
         if (!user) throw new Error("The user was not created");
         let organizationId: string | null = null;
         if (input.type === "SHOP_OWNER") {
@@ -163,7 +163,7 @@ export class AuthService {
         await this.audit.record({ organizationId, actorUserId: user.id, action: "auth.signup", entityType: "user", entityId: user.id, after: { type: input.type, status: user.status }, ip: ctx.ip }, tx);
         if (verify) {
           const token = await this.issueToken(tx, user.id, "EMAIL_VERIFY", this.env.EMAIL_VERIFY_HOURS);
-          await this.outbox.enqueueEmail(tx, { name: "verify-email", to: email, data: { name: user.fullName, link: this.link("/verify-email", token), hours: this.env.EMAIL_VERIFY_HOURS } }, organizationId);
+          await this.outbox.enqueueEmail(tx, { name: "verify-email", to: email, locale: user.uiLocale, data: { name: user.fullName, link: this.link("/verify-email", token), hours: this.env.EMAIL_VERIFY_HOURS } }, organizationId);
           return { kind: "CHECK_EMAIL" as const };
         }
         const token = await this.createSession(tx, user.id, organizationId, ctx);
@@ -172,16 +172,16 @@ export class AuthService {
       if (result.kind === "CHECK_EMAIL") void this.outbox.wake();
       return result;
     } catch (error) {
-      if (isUniqueViolation(error)) return this.signupForExistingEmail(email, nameOf(email), verify); // two signups with the same email at once
+      if (isUniqueViolation(error)) return this.signupForExistingEmail(email, nameOf(email), verify, input.locale ?? "en"); // two signups with the same email at once
       throw error;
     }
   }
 
   /** Signing up with an email that has an account: in production nothing is said (D3: no way to find out which emails exist) and the owner of the mailbox is told by email. */
-  private async signupForExistingEmail(email: string, name: string, verify: boolean): Promise<SignupResult> {
+  private async signupForExistingEmail(email: string, name: string, verify: boolean, locale: string): Promise<SignupResult> {
     if (!verify) throw fail(ConflictException, "EMAIL_TAKEN", "This email already has an account.");
     const app = this.env.APP_URL.replace(/\/$/, "");
-    await this.outbox.enqueueEmail(this.db, { name: "account-exists", to: email, data: { name, loginLink: `${app}/?auth=login`, resetLink: `${app}/forgot-password` } });
+    await this.outbox.enqueueEmail(this.db, { name: "account-exists", to: email, locale, data: { name, loginLink: `${app}/?auth=login`, resetLink: `${app}/forgot-password` } });
     void this.outbox.wake();
     return { kind: "CHECK_EMAIL" };
   }
@@ -288,7 +288,7 @@ export class AuthService {
     if (!user || user.status !== "UNVERIFIED") return;
     await this.db.transaction(async (tx) => {
       const token = await this.issueToken(tx, user.id, "EMAIL_VERIFY", this.env.EMAIL_VERIFY_HOURS);
-      await this.outbox.enqueueEmail(tx, { name: "verify-email", to: email, data: { name: user.fullName, link: this.link("/verify-email", token), hours: this.env.EMAIL_VERIFY_HOURS } });
+      await this.outbox.enqueueEmail(tx, { name: "verify-email", to: email, locale: user.uiLocale, data: { name: user.fullName, link: this.link("/verify-email", token), hours: this.env.EMAIL_VERIFY_HOURS } });
     });
     void this.outbox.wake();
   }
@@ -310,7 +310,7 @@ export class AuthService {
     if (!user || user.status === "DISABLED") return;
     await this.db.transaction(async (tx) => {
       const token = await this.issueToken(tx, user.id, "PASSWORD_RESET", this.env.RESET_LINK_HOURS);
-      await this.outbox.enqueueEmail(tx, { name: "password-reset", to: email, data: { name: user.fullName, link: this.link("/reset-password", token), hours: this.env.RESET_LINK_HOURS } });
+      await this.outbox.enqueueEmail(tx, { name: "password-reset", to: email, locale: user.uiLocale, data: { name: user.fullName, link: this.link("/reset-password", token), hours: this.env.RESET_LINK_HOURS } });
       await this.audit.record({ actorUserId: user.id, action: "auth.password_reset_requested", entityType: "user", entityId: user.id, ip: ctx.ip }, tx);
     });
     void this.outbox.wake();
@@ -324,7 +324,7 @@ export class AuthService {
     await this.db.transaction(async (tx) => {
       const hours = (await readPlatformValues(tx)).resetLinkHours; // the administrator sets it in the platform settings (default 24)
       const token = await this.issueToken(tx, user.id, "PASSWORD_RESET", hours);
-      await this.outbox.enqueueEmail(tx, { name: "password-reset", to: user.email, data: { name: user.fullName, link: this.link("/reset-password", token), hours } });
+      await this.outbox.enqueueEmail(tx, { name: "password-reset", to: user.email, locale: user.uiLocale, data: { name: user.fullName, link: this.link("/reset-password", token), hours } });
       await this.audit.record({ actorUserId, action: "user.reset_password", entityType: "user", entityId: user.id, after: { targetEmail: user.email }, ip }, tx);
     });
     void this.outbox.wake();
@@ -344,7 +344,7 @@ export class AuthService {
       if (user.status === "UNVERIFIED") await tx.update(users).set({ status: "ACTIVE", emailVerifiedAt: new Date() }).where(eq(users.id, userId));
       await tx.delete(authSessions).where(eq(authSessions.userId, userId));
       await this.audit.record({ actorUserId: userId, action: "auth.password_reset", entityType: "user", entityId: userId, ip: ctx.ip }, tx);
-      await this.outbox.enqueueEmail(tx, { name: "password-changed", to: user.email, data: { name: user.fullName } });
+      await this.outbox.enqueueEmail(tx, { name: "password-changed", to: user.email, locale: user.uiLocale, data: { name: user.fullName } });
     });
     void this.outbox.wake();
   }

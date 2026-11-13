@@ -43,7 +43,7 @@ export class ShopSettingsService {
 
   /** The owners of the shop (who are told when an administrator changes it). */
   private async ownerEmails(executor: Database | Parameters<Parameters<Database["transaction"]>[0]>[0], organizationId: string) {
-    return executor.select({ email: users.email, name: users.fullName }).from(organizationMembers).innerJoin(users, eq(users.id, organizationMembers.userId)).where(and(eq(organizationMembers.organizationId, organizationId), eq(users.status, "ACTIVE")));
+    return executor.select({ email: users.email, name: users.fullName, locale: users.uiLocale }).from(organizationMembers).innerJoin(users, eq(users.id, organizationMembers.userId)).where(and(eq(organizationMembers.organizationId, organizationId), eq(users.status, "ACTIVE")));
   }
 
   /** `PATCH /organization` (the owner) and `PATCH /admin/organizations/{id}` (the administrator): only what is sent changes; nothing changes when nothing differs. */
@@ -71,7 +71,7 @@ export class ShopSettingsService {
       await this.audit.record({ organizationId, actorUserId: actor.userId, action: "shop.profile_update", entityType: "organization", entityId: organizationId, after: { fields: changed, ...(by.admin ? { by: "ADMIN" } : {}) }, ip: actor.ip }, tx);
       if (by.admin) {
         for (const owner of await this.ownerEmails(tx, organizationId)) {
-          await this.outbox.enqueueEmail(tx, { name: "admin-edit-notice", to: owner.email, data: { name: owner.name, shop: row!.name, what: `the settings of your shop (${changed.join(", ")})`, reason: by.reason ?? "" } }, organizationId);
+          await this.outbox.enqueueEmail(tx, { name: "admin-edit-notice", to: owner.email, locale: owner.locale, data: { name: owner.name, shop: row!.name, what: { kind: "SHOP_SETTINGS", detail: changed.join(", ") }, reason: by.reason ?? "" } }, organizationId);
         }
       }
       return { shop: this.view(row!), changed: [...changed], warnings };

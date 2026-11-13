@@ -26,3 +26,4 @@ export * from "./custom-domain";
 export * from "./booking-state";
 export * from "./bank-details";
 export * from "./section-props";
+export * from "./booking-emails";

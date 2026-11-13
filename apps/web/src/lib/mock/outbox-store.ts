@@ -2,7 +2,7 @@
 // change and a worker sends the email in the language of the guest (REQUIREMENTS 5.7), so nothing is sent from a request handler.
 // Lives on globalThis like the other mock stores.
 import type { Locale, SessionCloseReason } from "@workshop/shared";
-import { renderBookingCancelled, renderBookingConfirmation, renderBookingInfo, renderPasswordReset, renderPaymentReceived, renderShopBookingNotice, renderSessionClosed, renderSessionRescheduled, type RenderedEmail } from "@/lib/email/templates";
+import { renderBookingCancelled, renderBookingConfirmation, renderBookingInfo, renderPasswordReset, renderPaymentReceived, renderShopBookingNotice, renderSessionClosed, renderSessionRescheduled, type RenderedEmail } from "@workshop/shared";
 import { newUuid } from "@/lib/uuid";
 
 interface EmailBase extends RenderedEmail {

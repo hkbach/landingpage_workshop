@@ -1,8 +1,9 @@
-// The emails the platform sends to a guest. Every email holds the SAME message in six languages, one after the other (English, Vietnamese, Thai,
+// The emails the platform sends about a booking (to the guest and to the shop). Every email holds the SAME message in six languages, one after the other (English, Vietnamese, Thai,
 // Chinese, Korean, Japanese): the reader scrolls to the language they read. Nothing is detected (no country, no browser language, no language saved on
 // the customer), so the email is the same for everybody. Pure: the same data always gives the same email. TODO(api): the worker renders these when it
 // sends the outbox event.
-import { formatMoney, type SessionCloseReason } from "@workshop/shared";
+import { formatMoney } from "./money";
+import type { SessionCloseReason } from "./session-rules";
 
 export const EMAIL_LANGS = ["en", "vi", "th", "zh", "ko", "ja"] as const;
 export type EmailLang = (typeof EMAIL_LANGS)[number];
@@ -54,6 +55,16 @@ const L = {
   languages: w("This email is written in six languages. Scroll down to read it in yours:", "Email này có sáu ngôn ngữ. Hãy cuộn xuống để đọc bằng ngôn ngữ của bạn:", "อีเมลนี้มีหกภาษา เลื่อนลงเพื่ออ่านในภาษาของคุณ:", "本邮件包含六种语言，请向下滚动阅读您的语言版本：", "이 이메일은 여섯 가지 언어로 작성되었습니다. 아래로 스크롤하여 원하는 언어로 읽어 보세요:", "このメールは6つの言語で書かれています。下へスクロールしてお読みください："),
 };
 
+/** BR-09: the late policy, in the emails that tell a guest about a booking. */
+export const LATE_POLICY: Words = w(
+  "Please arrive on time for your workshop. If you arrive more than 30 minutes late, your booking may be released and your reserved spot may be offered to walk-in guests. If there are still available spots when you arrive, you may still be able to join.",
+  "Vui lòng đến đúng giờ. Nếu bạn đến trễ hơn 30 phút, đặt chỗ có thể bị hủy giữ chỗ và chỗ của bạn có thể được nhường cho khách đến trực tiếp. Nếu khi bạn đến vẫn còn chỗ, bạn vẫn có thể tham gia.",
+  "โปรดมาถึงตรงเวลา หากคุณมาสายเกิน 30 นาที การจองของคุณอาจถูกปล่อยและที่นั่งของคุณอาจถูกเสนอให้ผู้มาใหม่หน้างาน หากยังมีที่นั่งว่างเมื่อคุณมาถึง คุณอาจยังเข้าร่วมได้",
+  "请准时到达。如果您迟到超过30分钟，您的预订可能会被释放，名额可能会提供给现场散客。如果您到达时仍有空位，您仍有可能参加。",
+  "정시에 도착해 주세요. 30분 이상 늦으면 예약이 해제되어 자리가 현장 방문 고객에게 제공될 수 있습니다. 도착했을 때 자리가 남아 있다면 참여하실 수 있습니다.",
+  "時間通りにお越しください。30分以上遅れた場合、予約が解除され、席が飛び込みのお客様に提供されることがあります。到着時に空席があればご参加いただける場合もあります。",
+);
+
 // ---- the emails ------------------------------------------------------------------------------------------------------------------------
 
 export interface BookingConfirmationData {
@@ -84,7 +95,7 @@ export function renderBookingConfirmation(d: BookingConfirmationData): RenderedE
   return compose(EMAIL_LANGS.map((lang): Section => ({
     lang, subject: fill(T.subject[lang], { code: d.bookingCode }),
     greeting: fill(L.hello[lang], { name: d.guestName }),
-    paragraphs: [fill(T.intro[lang], { shop: d.shopName })],
+    paragraphs: [fill(T.intro[lang], { shop: d.shopName }), LATE_POLICY[lang]],
     rows: [
       { label: L.code[lang], value: d.bookingCode }, { label: L.workshop[lang], value: d.workshopTitle },
       { label: L.when[lang], value: range(d.startsAt, d.endsAt, d.timezone, lang) }, ...(d.address ? [{ label: L.where[lang], value: d.address }] : []), ...(d.addressNote ? [{ label: L.addressNote[lang], value: d.addressNote }] : []), { label: L.guests[lang], value: String(d.quantity) },
@@ -112,7 +123,7 @@ export function renderBookingInfo(d: BookingInfoData): RenderedEmail {
   };
   return compose(EMAIL_LANGS.map((lang): Section => ({
     lang, subject: fill(T.subject[lang], { code: d.bookingCode }), greeting: fill(L.hello[lang], { name: d.guestName }),
-    paragraphs: [fill(T.intro[lang], { shop: d.shopName })],
+    paragraphs: [fill(T.intro[lang], { shop: d.shopName }), LATE_POLICY[lang]],
     rows: [
       { label: L.code[lang], value: d.bookingCode }, { label: L.workshop[lang], value: d.workshopTitle },
       { label: L.when[lang], value: range(d.startsAt, d.endsAt, d.timezone, lang) }, ...(d.address ? [{ label: L.where[lang], value: d.address }] : []), ...(d.addressNote ? [{ label: L.addressNote[lang], value: d.addressNote }] : []), { label: L.guests[lang], value: String(d.quantity) },
