@@ -10,7 +10,7 @@ interface RatingsResponse { items: OwnerRating[]; average: number; count: number
 
 /** The ratings and comments guests left for the workshops of the shop (read only). An administrator can remove a rating that breaks the rules; it then disappears from here. */
 export function RatingsView() {
-  const t = useTranslations("ratings");
+  const t = useTranslations("dashboard.ratings");
   const locale = useLocale();
   const { data, isError, isPending } = useQuery({
     queryKey: ["ratings"],

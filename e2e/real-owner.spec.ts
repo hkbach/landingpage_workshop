@@ -110,6 +110,21 @@ test.describe("the shop owner on the real API", () => {
     await expect.poll(async () => await (await request.get(`http://whiskladle.localtest.me:${process.env.E2E_PORT ?? 3100}/`)).text(), { timeout: 60_000 }).toContain(title);
     expect(problems).toEqual([]);
   });
+
+  test("opens every page of the owner area on the data of the server, with no error in the page", async ({ page }) => {
+    test.setTimeout(300_000);
+    const problems = watchBrowser(page);
+    const pages: Array<[string, RegExp]> = [
+      ["", /Overview/], ["/today", /Today/], ["/bookings", /Bookings/], ["/customers", /Customers/], ["/workshops", /Workshops/], ["/sessions", /Sessions/],
+      ["/finance", /Income/], ["/promotions", /Promotion/], ["/ratings", /Ratings/], ["/site", /Landing pages/], ["/settings", /Shop settings|Settings/i],
+    ];
+    for (const [path, heading] of pages) {
+      await open(page, `${APP}/shopowner/${SLUG}${path}`);
+      await expect(page.getByRole("heading", { name: heading, level: 1 }).first(), path || "overview").toBeVisible({ timeout: 90_000 });
+      await expect(page.getByText("This page couldn’t load"), path || "overview").toHaveCount(0);
+    }
+    expect(problems).toEqual([]);
+  });
 });
 
 /** A session of an active workshop in a few days (made through the API, as the owner): its code and id. */

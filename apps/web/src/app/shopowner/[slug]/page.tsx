@@ -15,21 +15,37 @@ import { getFeeRates } from "@/lib/mock/fee-rates-store";
 import { paymentSources } from "@/lib/mock/ledger-source";
 import { bookingTrend } from "@/lib/mock/trend";
 import { currentShop, mockLandingPages, sitePage, workshops as seedWorkshops } from "@/lib/mock/data";
+import { bookingSeries, TREND_PERIODS } from "@workshop/shared";
+import { realApi } from "@/lib/api-server";
+import { loadOpsData } from "@/lib/own-ops";
+import { ownPageList } from "@/lib/own-site";
+import { loadIncome } from "@/lib/own-finance";
+import type { Booking, Customer, Session, Workshop } from "@/lib/types";
 
 // Computed outside the component: depends on the current time.
-function computeOverview() {
+/** What the overview counts: from the API, or from the sample data. */
+interface OverviewData {
+  shop: { name: string; timezone: string; contactEmail: string; contactPhone: string; address: string };
+  bookings: Booking[]; sessions: Session[]; workshops: Workshop[]; customers: Customer[];
+  /** A page of the shop has an enabled hero (the first item of the checklist of a first publish). */
+  hasHero: boolean;
+  trend: (bookings: readonly Booking[], timeZone: string, now: Date) => Record<TrendPeriod, TrendBucket[]>;
+}
+
+// Computed outside the component: depends on the current time.
+function computeOverview(d: OverviewData) {
   const now = Date.now();
-  const tz = currentShop.timezone;
+  const tz = d.shop.timezone;
   const today = dayKey(new Date(now).toISOString(), tz);
-  const bookings = liveBookings();
+  const bookings = d.bookings;
   // An administrator's close and the live seats count; a workshop the owner switched keeps its new status.
-  const sessions = shopSessions();
-  const workshops = withWorkshopStatus(seedWorkshops);
+  const sessions = d.sessions;
+  const workshops = d.workshops;
   const live = bookings.filter((b) => b.status !== "CANCELLED");
   const upcoming = sessions.filter((s) => s.status === "RUNNING" && new Date(s.startsAt).getTime() > now);
   const activeWorkshopIds = new Set(workshops.filter((w) => w.status === "ACTIVE").map((w) => w.id));
   // Every booking of the past year: the history plus the recent bookings of the mock shop.
-  const trend: Record<TrendPeriod, TrendBucket[]> = bookingTrend(bookings, tz, new Date(now));
+  const trend: Record<TrendPeriod, TrendBucket[]> = d.trend(bookings, tz, new Date(now));
   // The sessions that are closed (by the owner, or by the system when their time ended) wait for the owner to complete them.
   const shown = sessions.map((s) => closeIfEnded(s, new Date(now)));
   const shownById = new Map(shown.map((s) => [s.id, s]));
@@ -42,7 +58,7 @@ function computeOverview() {
     month: { total: month.total, guests: month.guests, lostRate: month.total ? month.lost / month.total : 0 },
     workshops: { active: workshops.filter((w) => w.status === "ACTIVE").length, draft: workshops.filter((w) => w.status === "DRAFT").length },
     sessions: { upcoming: upcoming.length, fill: seatsOpen ? seatsTaken / seatsOpen : 0, toComplete: shown.filter((s) => s.status === "CLOSED").length, completed: shown.filter((s) => s.status === "COMPLETED").length },
-    customers: { total: liveCustomers().length, repeat: liveCustomers().filter((c) => bookingCount(c.id) >= 2).length },
+    customers: { total: d.customers.length, repeat: d.customers.filter((c) => bookingCount(c.id) >= 2).length },
     todayBookings: live.filter((b) => dayKey(b.startsAt, tz) === today).length,
     upcomingSessions: upcoming.length,
     notConfirmed: bookings.filter((b) => b.status === "NOT_CONFIRMED").length,
@@ -51,9 +67,9 @@ function computeOverview() {
     payAtStudio: live.filter((b) => b.paymentStatus === "UNPAID" && b.totalAmount > 0 && shownById.has(b.sessionId) && !isSessionFinished(shownById.get(b.sessionId)!.status)).length,
     // FR-SITE-04 prerequisites for "Submit for review".
     checklist: {
-      identity: Boolean(currentShop.name.trim()),
-      hero: sitePage.draft.sections.some((s) => s.type === "hero" && s.enabled),
-      contact: Boolean(currentShop.contactEmail && currentShop.contactPhone && currentShop.address),
+      identity: Boolean(d.shop.name.trim()),
+      hero: d.hasHero,
+      contact: Boolean(d.shop.contactEmail && d.shop.contactPhone && d.shop.address),
       workshop: upcoming.some((s) => activeWorkshopIds.has(s.workshopId)),
     },
   };
@@ -68,11 +84,23 @@ const CHECKLIST_LINKS = {
 
 export default async function OverviewPage() {
   const t = await getTranslations("dashboard.overview");
-  const shopStatus = (liveShop(currentShop.id) ?? currentShop).status;
+  // Connected to the API: everything below is counted from the shop's own data on the server. Sample data otherwise.
+  const live = realApi() ? await loadOpsData() : null;
+  const pages = live ? await ownPageList(live.shop) : null;
+  const income = live ? await loadIncome(live.shop.timezone) : null;
+  const shopRef = live ? live.shop : currentShop;
+  const shopStatus = live ? live.shop.status : (liveShop(currentShop.id) ?? currentShop).status;
   const ts = await getTranslations("dashboard.overview.summary");
   const locale = await getLocale();
-  const o = computeOverview();
-  const bookings = liveBookings();
+  const o = computeOverview(live ? {
+    shop: live.shop, bookings: live.bookings, sessions: live.sessions, workshops: live.workshops, customers: live.customers,
+    hasHero: Object.values(pages?.drafts ?? {}).some((d) => d.content.sections.some((x) => x.type === "hero" && x.enabled)),
+    // (the bookings of the shop: nothing is added to them)
+    trend: (list, tz, now) => Object.fromEntries(TREND_PERIODS.map((p) => [p, bookingSeries(list.map((b) => ({ startsAt: b.startsAt, status: b.status, guests: b.quantity })), p, now, tz)])) as Record<TrendPeriod, TrendBucket[]>,
+  } : {
+    shop: currentShop, bookings: liveBookings(), sessions: shopSessions(), workshops: withWorkshopStatus(seedWorkshops), customers: liveCustomers(), hasHero: sitePage.draft.sections.some((x) => x.type === "hero" && x.enabled), trend: bookingTrend,
+  });
+  const bookings = live ? live.bookings : liveBookings();
   const pct = (n: number) => new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 0 }).format(n);
   const num = (n: number) => new Intl.NumberFormat(locale).format(n);
   const kpis = [
@@ -130,8 +158,8 @@ export default async function OverviewPage() {
             rows={[{ label: ts("customers.total"), value: num(o.customers.total) }, { label: ts("customers.repeat"), value: num(o.customers.repeat) }]}
           />
           <LiveSummary
-            rows={ledgerFromPayments(paymentSources(bookings), getFeeRates(currentShop.id))} currency={currentShop.currency} timezone={currentShop.timezone}
-            mainPage={{ name: currentShop.name, template: sitePage.template, seed: mockLandingPages }} shopStatus={shopStatus}
+            rows={income ? income.rows : ledgerFromPayments(paymentSources(bookings), getFeeRates(currentShop.id))} currency={shopRef.currency} timezone={shopRef.timezone}
+            mainPage={{ name: shopRef.name, template: sitePage.template, seed: mockLandingPages }} shopStatus={shopStatus} {...(pages ? { server: { pages: pages.pages, liveId: pages.liveId } } : {})}
           />
         </ul>
       </section>

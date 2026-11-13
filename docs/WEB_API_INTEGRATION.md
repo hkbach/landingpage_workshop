@@ -1,6 +1,6 @@
 # Nối `apps/web` với `apps/api`: hiện trạng và kế hoạch
 
-> **Trạng thái (13/11/2026): ĐÃ XONG lát 0, 1 và 2 (nền, xác thực, trang công khai + đặt chỗ); lát 3–6 chưa làm.** Đặt `API_URL` thì web nối API thật cho tài khoản; không đặt thì vẫn chạy hoàn toàn trên dữ liệu mẫu (mock). Xem mục 0. Tài liệu này ghi lại **vì sao việc này lớn hơn một lần chuyển đổi cấu hình**, những gì đã đo được và một kế hoạch theo từng lát cắt để làm tiếp. Đây là việc cần quyết định thứ tự ưu tiên của chủ sản phẩm.
+> **Trạng thái (13/11/2026): ĐÃ XONG lát 0, 1, 2 và 3 (nền, xác thực, trang công khai + đặt chỗ, khu chủ shop); lát 4–6 chưa làm.** Đặt `API_URL` thì web nối API thật cho tài khoản; không đặt thì vẫn chạy hoàn toàn trên dữ liệu mẫu (mock). Xem mục 0. Tài liệu này ghi lại **vì sao việc này lớn hơn một lần chuyển đổi cấu hình**, những gì đã đo được và một kế hoạch theo từng lát cắt để làm tiếp. Đây là việc cần quyết định thứ tự ưu tiên của chủ sản phẩm.
 
 ## 0. Đã làm (lát 0 và 1)
 
@@ -19,6 +19,31 @@
 - **Trang đặt chỗ / xác nhận:** tra cứu bằng mã **và** email (`POST .../bookings/lookup`), link xác nhận gọi `POST /public/bookings/confirm`, hủy bằng mã + email; Terms/Privacy lấy từ `GET /public/legal/{kind}`; Contact, báo cáo vi phạm, đếm click affiliate vẫn cùng đường dẫn.
 - **Chưa làm ở lát này:** widget Turnstile thật (khung giữ chỗ vẫn hiện; API bỏ qua kiểm tra khi chưa có `TURNSTILE_SECRET_KEY`, production bắt buộc), `<html lang>` của trang shop, tạo tài khoản khi đặt chỗ (D2/D3) và yêu thích (lát 4), xác nhận bằng nút bấm thay vì mở link (đã có TODO).
 - **Kiểm thử:** `e2e/real-booking.spec.ts` (2 test): đặt chỗ đủ 5 bước với mã đọc từ Mailpit (mã sai bị từ chối), xác nhận bằng link, tra cứu đúng/sai email, 404, sitemap, robots. Cần stack thật gồm cả **worker** (`pnpm --filter api dev:worker`) và `E2E_PASSWORD` của tài khoản seed (xem `e2e/README.md`).
+
+### Lát 3: khu chủ shop (13/11/2026)
+
+Khi đặt `API_URL`, mọi trang của `/shopowner/{slug}` đọc dữ liệu của **shop trong phiên** từ API (`lib/own-shop.ts`, `own-catalog.ts`, `own-ops.ts`, `own-finance.ts`, `own-site.ts`) và mọi thay đổi được gửi lên server.
+
+| Trang | Cách nối |
+|---|---|
+| Khung, Settings, Onboarding | `GET/PATCH /organization`; liên hệ hỗ trợ `GET /support-contact` |
+| Workshops | `GET /workshops` (kèm số session đang mở), `POST/PUT`, `POST .../status`; quy tắc lịch `GET/POST/PUT/DELETE .../schedule-rules` |
+| Sessions, Bookings, Today, Customers | Lớp thao tác `useOpsState` cập nhật ngay trên màn hình, gửi API (`start/pause/close/reopen/complete/reschedule`, `check-in/uncheck-in/cancel/payment`, `POST /sessions`, `POST /bookings`), rồi đọc lại trang; server từ chối thì màn hình trở về dữ liệu của server |
+| Landing pages, builder, preview | Danh sách, bản nháp (tự lưu `PUT .../draft`), công bố `POST .../publish`; trang mới bắt đầu từ mẫu trung tính (`starterDraft`), không dùng nội dung demo |
+| Promotions, Ratings | Client đã gọi đúng đường dẫn API |
+| Finance, Overview | `GET /finance/income` (365 ngày gần nhất, ghép các trang); Overview tính từ cùng dữ liệu |
+
+**Quyết định đã áp dụng (vì API khác giao diện), cần chủ sản phẩm xác nhận:**
+1. Thanh toán chỉ còn **Đã trả / Chưa trả** (toàn bộ số tiền); không trả một phần hay hoàn một phần theo số tiền.
+2. **Chuyển booking sang session khác** bị tắt khi chạy với API (API chưa có route).
+3. **Không đổi workshop của session** khi chạy với API (chỉ sức chứa, hạn đặt chỗ, ảnh).
+4. **Xóa landing page** bị ẩn (API chưa có); đổi tên cũng chưa có.
+5. Email báo khách khi đổi lịch / đóng session do **server tự gửi**; số khách trong thông báo trên màn hình là số booking đang giữ chỗ lúc thao tác.
+6. Giảm giá của một booking hiển thị một dòng "discount" (API giữ tổng, chưa trả từng mã).
+
+**Giới hạn đã biết:** danh sách được lấy **đủ** qua con trỏ (tối đa 2000 dòng mỗi loại, 100 dòng mỗi lần gọi) rồi lọc/tìm trên trình duyệt như trước. Shop có hơn 2000 booking sẽ thấy 2000 dòng đầu. Việc chuyển lọc và phân trang của Bookings và Customers sang server là cải tiến tiếp theo.
+
+**Phát hiện và sửa khi nối:** trang Ratings của chủ shop hiển thị khóa dịch thô (`ratings.title`) vì dùng sai namespace (đã sửa thành `dashboard.ratings`).
 
 ## 1. Đã đo được (13/11/2026)
 

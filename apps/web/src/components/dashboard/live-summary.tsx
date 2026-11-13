@@ -17,6 +17,8 @@ interface Props {
   timezone: string;
   mainPage: { name: string; template: TemplateKey; seed?: { id: string; name: string; template: TemplateKey }[] };
   shopStatus: OrgStatus;
+  /** Connected to the API: the landing pages and the live one are the server's (the browser's storage is not read). */
+  server?: { pages: ReturnType<typeof loadPages>; liveId: string | null };
 }
 
 /**
@@ -26,7 +28,7 @@ interface Props {
 export function LiveSummary(props: Props) {
   const hydrated = useSyncExternalStore(noop, () => true, () => false);
   const t = useTranslations("dashboard.overview.summary");
-  if (!hydrated) {
+  if (!hydrated && !props.server) {
     return (
       <>
         <li className="rounded-xl border p-4 text-sm text-muted-foreground" aria-busy>{t("finance.title")}…</li>
@@ -37,15 +39,15 @@ export function LiveSummary(props: Props) {
   return <LiveInner {...props} />;
 }
 
-function LiveInner({ rows, currency, timezone, mainPage, shopStatus }: Props) {
+function LiveInner({ rows, currency, timezone, mainPage, shopStatus, server }: Props) {
   const t = useTranslations("dashboard.overview.summary");
   const locale = useLocale();
   const money = (n: number) => formatMoney(n, currency, locale);
   const [now] = useState(() => new Date());
   const month = lastMonthKeys(now, timezone, 1);
   const totals = summarizeLedger(filterLedger(rows, month, timezone));
-  const pages = loadPages(mainPage);
-  const liveId = loadLivePageId(shopStatus === "ACTIVE");
+  const pages = server ? server.pages : loadPages(mainPage);
+  const liveId = server ? server.liveId : loadLivePageId(shopStatus === "ACTIVE");
   const live = pages.find((p) => p.id === liveId);
 
   return (
