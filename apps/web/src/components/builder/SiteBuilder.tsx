@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Info, Tag, TriangleAlert } from "lucide-react";
 import { missingLocales, trimDeep, type Locale, type Localized, type OrgStatus, type SectionType } from "@workshop/shared";
@@ -51,6 +52,8 @@ interface Props {
   support?: SupportContact;
   /** Template requested via ?apply=KEY (template preview banner): opens the confirmation dialog. */
   applyTemplate?: TemplateKey;
+  /** Connected to the API: the page, its draft and the live page are the server's, the autosave and Publish go to the server. */
+  server?: { page: PageMeta; liveId: string | null; source: BuilderSource };
 }
 
 const noop = () => () => {};
@@ -58,7 +61,7 @@ const noop = () => () => {};
 /** Gate: localStorage is only read after hydration (avoids server/client mismatch). */
 export function SiteBuilder(props: Props) {
   const hydrated = useSyncExternalStore(noop, () => true, () => false);
-  if (!hydrated) return <div className="p-6 text-sm text-muted-foreground" aria-busy>…</div>;
+  if (!hydrated && !props.server) return <div className="p-6 text-sm text-muted-foreground" aria-busy>…</div>;
   return <PageGate {...props} />;
 }
 
@@ -66,7 +69,7 @@ export function SiteBuilder(props: Props) {
 function PageGate(props: Props) {
   const t = useTranslations("builder.pages");
   const pageId = props.pageId ?? MAIN_PAGE_ID;
-  const [page] = useState(() => loadPages(props.mainPage).find((p) => p.id === pageId));
+  const [page] = useState(() => (props.server ? props.server.page : loadPages(props.mainPage).find((p) => p.id === pageId)));
   if (!page) {
     return (
       <div className="grid justify-items-start gap-3 p-6">
@@ -81,12 +84,13 @@ function PageGate(props: Props) {
 
 const SEO_ID = "__seo__";
 
-function BuilderInner({ shop, initial, initialSource = "starter", initialStatus, upcomingWorkshopCount, applyTemplate, support, page, mainPage }: Props & { page: PageMeta }) {
+function BuilderInner({ shop, initial, initialSource = "starter", initialStatus, upcomingWorkshopCount, applyTemplate, support, page, mainPage, server }: Props & { page: PageMeta }) {
   const toShop = useShopHref();
+  const router = useRouter();
   const pageId = page.id;
   const t = useTranslations("builder");
   // Opening rule: last saved draft > published version > template starter (see chooseInitialDraft).
-  const [opened] = useState(() => chooseInitialDraft({
+  const [opened] = useState(() => server ? { draft: initial, source: server.source } : chooseInitialDraft({
     saved: loadDraft(pageId),
     // The server's published version is the main page's; another page only has one once it was published here.
     published: loadPublished(pageId) ?? (pageId === MAIN_PAGE_ID && initialSource === "published" ? initial : null),
@@ -98,23 +102,29 @@ function BuilderInner({ shop, initial, initialSource = "starter", initialStatus,
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [status, setStatus] = useState<OrgStatus>(initialStatus);
   // Only one landing page is public at a time: publishing this one takes the current public page offline.
-  const [liveId, setLiveId] = useState<string | null>(() => loadLivePageId(initialSource === "published"));
+  const [liveId, setLiveId] = useState<string | null>(() => (server ? server.liveId : loadLivePageId(initialSource === "published")));
   const [publishMessage, setPublishMessage] = useState<"published" | null>(null);
   const [activeLang, setLang] = useEditingLanguage(shop.enabledLocales, shop.defaultLocale);
   const [selectedId, setSelectedId] = useState<string>(() => draft.content.sections[0]?.id ?? SEO_ID);
   const [pendingTemplate, setPendingTemplate] = useState<TemplateKey | null>(() => (applyTemplate && applyTemplate !== draft.template ? applyTemplate : null));
   const enabledLocales = shop.enabledLocales;
 
-  // Debounced autosave (2 s) into local state only.
+  // Debounced autosave (2 s): into the server when connected (the live page is not touched), else into the browser's storage.
   useEffect(() => {
     if (rev === 0) return;
     const id = setTimeout(() => {
+      if (server) {
+        void fetch(`/api/v1/site/pages/${encodeURIComponent(pageId)}/draft`, { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ content: draft.content, theme: draft.theme, templateKey: draft.template }) })
+          .then((res) => setSaveState(res.ok ? "saved" : "unavailable"))
+          .catch(() => setSaveState("unavailable"));
+        return;
+      }
       const res = saveDraft(draft, pageId);
       if (res.ok) savePages(touchPage(loadPages(mainPage), pageId, { template: draft.template, now: new Date().toISOString() }));
       setSaveState(res.ok ? "saved" : res.reason);
     }, 2000);
     return () => clearTimeout(id);
-  }, [rev, draft, pageId, mainPage]);
+  }, [rev, draft, pageId, mainPage, server]);
 
   function change(next: Draft) {
     setView("draft");
@@ -200,8 +210,28 @@ function BuilderInner({ shop, initial, initialSource = "starter", initialStatus,
     if (JSON.stringify(clean) !== JSON.stringify(draft)) setDraft(clean);
     return clean;
   };
+  /** Connected: save the draft, then the server publishes it (and, for the first publish of a shop, makes the shop ACTIVE after its own checks). */
+  async function publishOnServer() {
+    const clean = trimmed();
+    try {
+      const saved = await fetch(`/api/v1/site/pages/${encodeURIComponent(pageId)}/draft`, { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ content: clean.content, theme: clean.theme, templateKey: clean.template }) });
+      if (!saved.ok) throw new Error("draft");
+      const res = await fetch(`/api/v1/site/pages/${encodeURIComponent(pageId)}/publish`, { method: "POST" });
+      if (!res.ok) throw new Error("publish");
+      const done = (await res.json()) as { shopStatus?: OrgStatus };
+      setSaveState("saved");
+      setLiveId(pageId);
+      setView("published");
+      setPublishMessage("published");
+      if (done.shopStatus) setStatus(done.shopStatus);
+      router.refresh();
+    } catch {
+      setSaveState("unavailable");
+    }
+  }
   const publishNow = () => {
     if (saving) return;
+    if (server) { void publishOnServer(); return; }
     const clean = trimmed();
     saveDraft(clean, pageId);
     savePublished(clean, pageId); // publishing copies the draft to the published version

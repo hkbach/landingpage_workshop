@@ -84,6 +84,32 @@ test.describe("the shop owner on the real API", () => {
     await expect.poll(async () => (await (await request.get(`${APP}/api/v1/bookings?q=${bookingCode}`)).json()).items[0]?.status, { timeout: 30_000 }).toBe("CANCELLED");
     expect(problems).toEqual([]);
   });
+
+  test("edits the landing page in the builder: the draft is kept by the server; a page made from the starter can be published", async ({ page }) => {
+    const request = page.context().request; // (it carries the session of the owner who logged in)
+    const problems = watchBrowser(page);
+    // a page of the shop that was never edited: the shop has two at most, so the last one is used when there are two already
+    const headers = { origin: APP };
+    const pages = (await (await request.get(`${APP}/api/v1/site/pages`)).json()) as { items: Array<{ id: string }> };
+    const pageId = pages.items.length >= 2 ? pages.items[pages.items.length - 1]!.id : ((await (await request.post(`${APP}/api/v1/site/pages`, { headers, data: { name: `E2E ${Date.now().toString(36)}` } })).json()) as { id: string }).id;
+    await open(page, `${APP}/shopowner/${SLUG}/site/${pageId}`);
+    const title = `Cooking with E2E ${Date.now().toString(36)}`;
+    const field = page.getByRole("textbox", { name: "Title" }).first();
+    await expect(field).toBeVisible({ timeout: 90_000 });
+    await expect(async () => {
+      await field.fill(title);
+      await expect(field).toHaveValue(title, { timeout: 1_000 });
+    }).toPass({ timeout: 30_000 });
+    await expect(page.getByText("Draft saved")).toBeVisible({ timeout: 30_000 }); // (the autosave waits two seconds)
+    await open(page, `${APP}/shopowner/${SLUG}/site/${pageId}`);
+    await expect(page.getByRole("textbox", { name: "Title" }).first()).toHaveValue(title, { timeout: 60_000 });
+    // the page made from the starter has nothing that needs attention: Publish is on, and the live page of the shop shows the new title
+    const publish = page.getByRole("button", { name: "Publish" }).first();
+    await expect(publish).toBeEnabled({ timeout: 30_000 });
+    await publish.click();
+    await expect.poll(async () => await (await request.get(`http://whiskladle.localtest.me:${process.env.E2E_PORT ?? 3100}/`)).text(), { timeout: 60_000 }).toContain(title);
+    expect(problems).toEqual([]);
+  });
 });
 
 /** A session of an active workshop in a few days (made through the API, as the owner): its code and id. */

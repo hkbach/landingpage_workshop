@@ -21,6 +21,7 @@ import { invalidSectionCount, pagePrerequisites, themeIsInvalid, type ReadinessS
 import { LayoutWireframe } from "./TemplatePicker";
 import { useDirty } from "@/lib/use-dirty";
 import { ShopLink, useShopHref } from "@/components/dashboard/shell/shop-link";
+import type { ServerPageList } from "./server-pages";
 
 interface Props {
   mainPage: { name: string; template: TemplateKey; seed?: { id: string; name: string; template: TemplateKey }[] };
@@ -31,6 +32,8 @@ interface Props {
   upcomingWorkshopCount: number;
   /** Sample content a page that was never edited starts from. */
   sample: { content: PageContent; theme: PageTheme };
+  /** Connected to the API: the pages, the live page and the drafts are the server's (nothing is read from the browser's storage). */
+  server?: ServerPageList;
 }
 
 const noop = () => () => {};
@@ -39,21 +42,24 @@ const noop = () => () => {};
 export function LandingPageList(props: Props) {
   const hydrated = useSyncExternalStore(noop, () => true, () => false);
   const t = useTranslations("builder.pages");
-  if (!hydrated) return <p className="text-sm text-muted-foreground" aria-busy>{t("loading")}</p>;
+  if (!hydrated && !props.server) return <p className="text-sm text-muted-foreground" aria-busy>{t("loading")}</p>;
   return <ListInner {...props} />;
 }
 
 type Message = { text: string; tone: "ok" | "error" };
 
-function ListInner({ mainPage, shopHost, shop, shopStatus, upcomingWorkshopCount, sample }: Props) {
+function ListInner({ mainPage, shopHost, shop, shopStatus, upcomingWorkshopCount, sample, server }: Props) {
   const t = useTranslations("builder.pages");
   const tn = useTranslations("builder");
   const locale = useLocale();
   const router = useRouter();
   const toShop = useShopHref();
   const mainLive = shopStatus === "ACTIVE";
-  const [pages, setPages] = useState<PageMeta[]>(() => loadPages(mainPage));
-  const [liveId, setLiveId] = useState<string | null>(() => loadLivePageId(mainLive));
+  const [pages, setPages] = useState<PageMeta[]>(() => (server ? server.pages : loadPages(mainPage)));
+  const [liveId, setLiveId] = useState<string | null>(() => (server ? server.liveId : loadLivePageId(mainLive)));
+  // Connected: when the page is read again (after a change), what the server says replaces what the screen held.
+  const [seenServer, setSeenServer] = useState(server);
+  if (server && seenServer !== server) { setSeenServer(server); setPages(server.pages); setLiveId(server.liveId); }
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<PageMeta | null>(null);
   const [publishing, setPublishing] = useState<PageMeta | null>(null);
@@ -63,14 +69,14 @@ function ListInner({ mainPage, shopHost, shop, shopStatus, upcomingWorkshopCount
 
   /** What a page shows: its saved draft, else (main) the published version, else the sample laid out with its template. */
   const contentOf = (p: PageMeta): Draft =>
-    loadDraft(p.id)
+    server ? server.drafts[p.id]! : loadDraft(p.id)
     ?? (p.id === MAIN_PAGE_ID ? loadPublished(p.id) ?? { content: sample.content, theme: sample.theme, template: p.template } : starterFor(sample, p.template));
 
   // The same rules as the Publish button of the editor (FR-SITE-04), applied to the saved content of each page.
   const actions = useMemo(() => {
     const out: Record<string, PublishAction> = {};
     for (const p of pages) {
-      const d = loadDraft(p.id)
+      const d = server ? server.drafts[p.id]! : loadDraft(p.id)
         ?? (p.id === MAIN_PAGE_ID ? loadPublished(p.id) ?? { content: sample.content, theme: sample.theme, template: p.template } : starterFor(sample, p.template));
       out[p.id] = publishAction({
         status: shopStatus,
@@ -80,14 +86,32 @@ function ListInner({ mainPage, shopHost, shop, shopStatus, upcomingWorkshopCount
       });
     }
     return out;
-  }, [pages, shopStatus, shop, upcomingWorkshopCount, sample]);
+  }, [pages, shopStatus, shop, upcomingWorkshopCount, sample, server]);
 
   function commit(next: PageMeta[]): boolean {
     if (!savePages(next)) { setMessage({ text: t("saveFailed"), tone: "error" }); return false; }
     setPages(next);
     return true;
   }
+  /** Connected: the draft is saved first when the server has none (a page that was never edited), then the server publishes it (it checks the list of a first publish itself). */
+  async function publishOnServer(page: PageMeta) {
+    setPublishing(null);
+    try {
+      if (!server!.saved.includes(page.id)) {
+        const d = trimDeep(server!.drafts[page.id]!);
+        const saved = await fetch(`/api/v1/site/pages/${encodeURIComponent(page.id)}/draft`, { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ content: d.content, theme: d.theme, templateKey: d.template }) });
+        if (!saved.ok) throw new Error("draft");
+      }
+      const res = await fetch(`/api/v1/site/pages/${encodeURIComponent(page.id)}/publish`, { method: "POST" });
+      if (!res.ok) throw new Error("publish");
+      setMessage({ text: t("publishedDone", { name: page.name }), tone: "ok" });
+    } catch {
+      setMessage({ text: t("saveFailed"), tone: "error" });
+    }
+    router.refresh();
+  }
   function publish(page: PageMeta) {
+    if (server) { void publishOnServer(page); return; }
     setPublishing(null);
     // Publishing is a submit: every text of the page is trimmed.
     if (!savePublished(trimDeep(contentOf(page)), page.id).ok || !setLivePage(page.id, mainLive).ok) { setMessage({ text: t("saveFailed"), tone: "error" }); return; }
@@ -125,7 +149,7 @@ function ListInner({ mainPage, shopHost, shop, shopStatus, upcomingWorkshopCount
       <ul className="grid gap-3 md:grid-cols-2" aria-label={t("listLabel")}>
         {pages.map((p) => {
           const live = liveId === p.id;
-          const isMain = p.id === MAIN_PAGE_ID;
+          const isMain = !server && p.id === MAIN_PAGE_ID;
           const def = TEMPLATES[p.template];
           const action = actions[p.id];
           const canPublish = action?.kind === "publish" && !action.disabled;
@@ -167,7 +191,7 @@ function ListInner({ mainPage, shopHost, shop, shopStatus, upcomingWorkshopCount
                           <Globe aria-hidden />{t("publish")}<span className="sr-only">: {p.name}</span>
                         </Button>
                       )}
-                      {isMain ? null : (
+                      {isMain || server ? null : ( // (the API does not delete a landing page)
                         <Button variant="outline" onClick={() => setDeleting(p)}>
                           <Trash2 aria-hidden />{t("delete")}<span className="sr-only">: {p.name}</span>
                         </Button>
@@ -185,6 +209,13 @@ function ListInner({ mainPage, shopHost, shop, shopStatus, upcomingWorkshopCount
       <CreateDialog
         open={creating} onOpenChange={setCreating} pageCount={pages.length}
         onCreate={(name) => {
+          if (server) { // the server makes the page (and its id) and keeps the limit
+            void fetch("/api/v1/site/pages", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: name.trim() }) })
+              .then(async (r) => { if (!r.ok) throw new Error("create"); router.push(toShop(`/shopowner/site/${((await r.json()) as { id: string }).id}`)); })
+              .catch(() => setMessage({ text: t("saveFailed"), tone: "error" }));
+            setCreating(false);
+            return "OK";
+          }
           const res = addPage(pages, { name }, { id: newPageId(), now: new Date().toISOString() });
           if (!res.ok) return res.reason;
           if (!commit(res.pages)) return "SAVE";

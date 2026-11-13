@@ -39,9 +39,11 @@ interface Props {
   previewTemplate?: TemplateKey;
   /** Which landing page is previewed (default: the main page). */
   pageId?: string;
+  /** Connected to the API: the draft of the page as the server has it (the browser's storage is not read). */
+  serverDraft?: { content: PageContent; theme: PageTheme; template: TemplateKey };
 }
 
-export function SitePreview({ shop, initial, workshops, sessions = [], promotions = [], siteMessages, previewTemplate, pageId = MAIN_PAGE_ID }: Props) {
+export function SitePreview({ shop, initial, workshops, sessions = [], promotions = [], siteMessages, previewTemplate, pageId = MAIN_PAGE_ID, serverDraft }: Props) {
   const t = useTranslations("builder");
   const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
   const [lang, setLang] = useState<Locale>(shop.defaultLocale);
@@ -51,12 +53,13 @@ export function SitePreview({ shop, initial, workshops, sessions = [], promotion
   // The page list is read the same way (null while hydrating), so the first client render matches the server HTML.
   const rawPages = useSyncExternalStore(subscribe, () => window.localStorage.getItem(PAGES_KEY), () => null);
   const stored = useMemo(() => {
+    if (serverDraft) return serverDraft;
     const saved = parseDraft(raw);
     if (saved) return saved;
     if (pageId === MAIN_PAGE_ID) return { ...initial };
     const page = parsePages(rawPages)?.find((p) => p.id === pageId);
     return page ? starterFor(initial, page.template) : { ...initial };
-  }, [raw, rawPages, initial, pageId]);
+  }, [raw, rawPages, initial, pageId, serverDraft]);
   const editHref = `/shopowner/site/${pageId}`;
   // "Preview template": the same content, laid out with another template. Never written anywhere.
   const draft = useMemo(
