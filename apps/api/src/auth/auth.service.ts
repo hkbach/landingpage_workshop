@@ -1,6 +1,7 @@
 import { BadRequestException, ForbiddenException, HttpException, Inject, Injectable, NotFoundException, UnauthorizedException, UnprocessableEntityException, ConflictException } from "@nestjs/common";
 import { and, eq, gt, isNull, like, sql } from "drizzle-orm";
 import { checkPassword, generateShopSlug, slugifyShopName } from "@workshop/shared";
+import { registerInvite } from "../affiliate/attribution";
 import { AuditService } from "../audit/audit.service";
 import { RateLimiter } from "../common/limiter";
 import type { Env } from "../config/env";
@@ -157,6 +158,7 @@ export class AuthService {
           const org = await this.createOrganization(tx, user.id, input.shopName, email);
           organizationId = org.id;
         }
+        if (input.type === "CUSTOMER") await registerInvite(tx, { friendUserId: user.id, code: input.inviteCode }); // nothing is said about the code, right or wrong
         await this.audit.record({ organizationId, actorUserId: user.id, action: "auth.signup", entityType: "user", entityId: user.id, after: { type: input.type, status: user.status }, ip: ctx.ip }, tx);
         if (verify) {
           const token = await this.issueToken(tx, user.id, "EMAIL_VERIFY", this.env.EMAIL_VERIFY_HOURS);

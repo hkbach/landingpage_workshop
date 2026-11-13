@@ -5,6 +5,7 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import { hashPassword } from "../auth/crypto";
 import { addDays, dateIn, ruleStarts } from "../common/zoned-time";
+import { newCode } from "../affiliate/codes";
 import { AuditService } from "../audit/audit.service";
 import { loadDotEnv } from "../config/env";
 import { FinanceService } from "../finance/finance.service";
@@ -115,7 +116,7 @@ export async function seed(db: Executor, password: string, now: Date = new Date(
     return { id: row!.id, isNew: true };
   }
 
-  async function shop(owner: { id: string; isNew: boolean }, input: { name: string; slug: string; status: "ACTIVE" | "DRAFT" | "SUSPENDED"; statusReason?: string; contactEmail: string; address: string }, workshops: WorkshopSeed[], opts: { history: boolean }): Promise<void> {
+  async function shop(owner: { id: string; isNew: boolean }, input: { name: string; slug: string; status: "ACTIVE" | "DRAFT" | "SUSPENDED"; statusReason?: string; contactEmail: string; address: string }, workshops: WorkshopSeed[], opts: { history: boolean; affiliateUserId?: string }): Promise<void> {
     if (!owner.isNew) return;
     const [org] = await db.insert(schema.organizations).values({
       name: input.name, slug: input.slug, status: input.status, ...(input.statusReason ? { statusReason: input.statusReason } : {}), country: "VN", timezone: "Asia/Ho_Chi_Minh", currency: "VND", defaultLocale: "en", enabledLocales: ["en", "vi"],
@@ -135,6 +136,7 @@ export async function seed(db: Executor, password: string, now: Date = new Date(
     }
 
     let sessionNumber = 0;
+    let affiliateDone = false;
     for (const [index, w] of workshops.entries()) {
       const [row] = await db.insert(schema.workshops).values({
         organizationId: org!.id, title: w.title, shortDescription: w.short, description: w.description, includes: w.includes, notes: { en: "Wear closed shoes.", vi: "Hãy mang giày kín mũi." },
@@ -143,6 +145,13 @@ export async function seed(db: Executor, password: string, now: Date = new Date(
       }).returning();
       await db.insert(schema.auditLogs).values({ organizationId: org!.id, actorUserId: owner.id, action: "workshop.create", entityType: "workshop", entityId: row!.id, after: { priceAmount: w.price, status: "DRAFT" } });
       if (!w.rule || w.status !== "ACTIVE") continue;
+      // an affiliate link of the demo customer to this workshop (the first one that runs); some of its paid bookings came through it
+      let linkId: string | null = null;
+      if (opts.history && opts.affiliateUserId && !affiliateDone) {
+        const [link] = await db.insert(schema.affiliateLinks).values({ userId: opts.affiliateUserId, organizationId: org!.id, workshopId: row!.id, code: newCode("A"), clicks: 37 }).returning({ id: schema.affiliateLinks.id });
+        linkId = link!.id;
+        affiliateDone = true;
+      }
 
       const [rule] = await db.insert(schema.scheduleRules).values({ organizationId: org!.id, workshopId: row!.id, weekdays: w.rule.weekdays, startTimes: w.rule.times, effectiveFrom: addDays(dateIn(now, "Asia/Ho_Chi_Minh"), -60), capacityOverride: null }).returning();
       // the sessions of the rule from six weeks ago to the next 60 days: ruleStarts only looks forward, so the past is made by moving `now` back
@@ -191,7 +200,7 @@ export async function seed(db: Executor, password: string, now: Date = new Date(
             source: rand() < 0.15 ? "WALK_IN" : "ONLINE", quantity, status: status2, paymentStatus: paid ? "PAID" : "UNPAID", statusBeforeCheckIn: status2 === "CHECKED_IN" ? "CONFIRMED" : null,
             unitPriceAmount: w.price, totalAmount: total, discountAmount: discount, currency: "VND", guestName: g.name, guestEmail: g.email, guestPhone: g.phone, guestCountry: g.country,
             snapshot: { workshopTitle: w.title, sessionCode: session!.code, startsAt: starts_at.toISOString(), endsAt: ends.toISOString(), timezone: "Asia/Ho_Chi_Minh", address: input.address, subtotalAmount: subtotal, ...(discount > 0 ? { discounts: [{ code: "WELCOME10", amount: discount }] } : {}) },
-            locale: g.country === "VN" ? "vi" : "en", ...(status2 === "CHECKED_IN" ? { checkedInAt: addMs(starts_at, 5 * 60_000) } : {}),
+            ...(linkId && g.email !== DEMO_ACCOUNTS.customer && seq % 3 === 0 ? { affiliateLinkId: linkId } : {}), locale: g.country === "VN" ? "vi" : "en", ...(status2 === "CHECKED_IN" ? { checkedInAt: addMs(starts_at, 5 * 60_000) } : {}),
             ...(status2 === "CANCELLED" ? { cancelledBy: rand() < 0.6 ? ("GUEST" as const) : ("SHOP" as const), cancelReason: "Change of plans" } : {}),
             createdAt: addMs(starts_at, -Math.floor(rand() * 10 + 2) * 86_400_000),
           }).returning({ id: schema.bookings.id });
@@ -211,10 +220,10 @@ export async function seed(db: Executor, password: string, now: Date = new Date(
   const addMs = (d: Date, ms: number): Date => new Date(d.getTime() + ms);
 
   await user(DEMO_ACCOUNTS.admin, "Platform Admin", "SUPER_ADMIN");
-  await shop(await user(DEMO_ACCOUNTS.activeOwner, "Linh Tran"), { name: "Whisk & Ladle Kitchen", slug: "whiskladle", status: "ACTIVE", contactEmail: DEMO_ACCOUNTS.activeOwner, address: "12 Nguyen Hue, District 1, Ho Chi Minh City" }, WHISK_WORKSHOPS, { history: true });
+  const emma = await user(DEMO_ACCOUNTS.customer, "Emma Wilson"); // before the shops: her affiliate link goes on some of their bookings
+  await shop(await user(DEMO_ACCOUNTS.activeOwner, "Linh Tran"), { name: "Whisk & Ladle Kitchen", slug: "whiskladle", status: "ACTIVE", contactEmail: DEMO_ACCOUNTS.activeOwner, address: "12 Nguyen Hue, District 1, Ho Chi Minh City" }, WHISK_WORKSHOPS, { history: true, affiliateUserId: emma.id });
   await shop(await user(DEMO_ACCOUNTS.draftOwner, "Ava Nguyen"), { name: "Sugar & Sift Bakery", slug: "sugarsift", status: "DRAFT", contactEmail: DEMO_ACCOUNTS.draftOwner, address: "8 Le Loi, District 1, Ho Chi Minh City" }, SUGAR_WORKSHOPS, { history: false });
   await shop(await user(DEMO_ACCOUNTS.suspendedOwner, "Minh Le"), { name: "Golden Noodle House", slug: "goldennoodle", status: "SUSPENDED", statusReason: "Reported for misleading prices (demo)", contactEmail: DEMO_ACCOUNTS.suspendedOwner, address: "45 Tran Hung Dao, District 5, Ho Chi Minh City" }, NOODLE_WORKSHOPS, { history: false });
-  await user(DEMO_ACCOUNTS.customer, "Emma Wilson");
   for (const g of GUESTS.slice(1, 6)) await user(g.email, g.name);
   return result;
 }
@@ -228,12 +237,31 @@ export async function seedFinance(db: Database): Promise<{ closed: number }> {
   if (shop) await db.insert(schema.organizationFeeSettings).values({ organizationId: shop.id, maintenanceBps: 800, serviceBps: 1200, affiliateBps: 500, inviteBonusBps: 300 }).onConflictDoNothing();
   const { closed } = await new FinanceService(db, new AuditService(db)).closeMonths();
   await seedWallet(db);
+  await seedInvites(db);
   return { closed };
 }
 
 /**
- * The demo customer gets a wallet: what the affiliate and referral programs will write when a fee or a bonus is earned (the programs are not in the backend yet, so these credits are demo data),
- * and one invoice of each state. Written once: when the customer already has credits nothing is added.
+ * The demo customer gets an invite link and two friends who registered with it: one registered long ago (the bookings they made since are counted, so the bonus shows) and one just now (waiting
+ * for a first paid booking). Written once.
+ */
+async function seedInvites(db: Database): Promise<void> {
+  const [emma] = await db.select({ id: schema.users.id }).from(schema.users).where(eq(schema.users.email, DEMO_ACCOUNTS.customer)).limit(1);
+  if (!emma) return;
+  const [has] = await db.select({ userId: schema.inviteLinks.userId }).from(schema.inviteLinks).where(eq(schema.inviteLinks.userId, emma.id)).limit(1);
+  if (has) return;
+  await db.insert(schema.inviteLinks).values({ userId: emma.id, code: newCode("I") });
+  const friends = [GUESTS[1], GUESTS[2]];
+  const ages = [50, 0]; // days ago
+  for (const [i, g] of friends.entries()) {
+    const [friend] = await db.select({ id: schema.users.id }).from(schema.users).where(eq(schema.users.email, g!.email)).limit(1);
+    if (friend) await db.insert(schema.referrals).values({ inviterUserId: emma.id, friendUserId: friend.id, createdAt: new Date(Date.now() - ages[i]! * 86_400_000) }).onConflictDoNothing();
+  }
+}
+
+/**
+ * The demo customer gets a wallet: some credits written by hand (what the two programs earn is worked out from the bookings and added to them) and one invoice of each state.
+ * Written once: when the customer already has credits nothing is added.
  */
 async function seedWallet(db: Database): Promise<void> {
   const [emma] = await db.select({ id: schema.users.id }).from(schema.users).where(eq(schema.users.email, DEMO_ACCOUNTS.customer)).limit(1);
@@ -241,7 +269,7 @@ async function seedWallet(db: Database): Promise<void> {
   if (!emma) return;
   const [existing] = await db.select({ id: schema.walletCredits.id }).from(schema.walletCredits).where(eq(schema.walletCredits.userId, emma.id)).limit(1);
   if (existing) return;
-  const credits: [("AFFILIATE" | "REFERRAL"), number, string][] = [["AFFILIATE", 160_000, "Whisk & Ladle: 4 paid bookings"], ["AFFILIATE", 90_000, "Whisk & Ladle: 2 paid bookings"], ["REFERRAL", 100_000, "Friend invited: first paid booking"], ["REFERRAL", 100_000, "Friend invited: first paid booking"]];
+  const credits: [("AFFILIATE" | "REFERRAL"), number, string][] = [["AFFILIATE", 160_000, "Demo credit (an adjustment made by hand)"], ["AFFILIATE", 90_000, "Demo credit (an adjustment made by hand)"], ["REFERRAL", 100_000, "Demo credit (an adjustment made by hand)"], ["REFERRAL", 100_000, "Demo credit (an adjustment made by hand)"]];
   for (const [source, amount, note] of credits) await db.insert(schema.walletCredits).values({ userId: emma.id, source, currency: "VND", amount, note });
   const number = sql`'WD-' || lpad(nextval('withdrawal_number_seq')::text, 4, '0')`;
   const day = 86_400_000;

@@ -13,6 +13,8 @@ import { DB, type Database, type Executor } from "../db/db.module";
 import { bookingConfirmations, bookingOtps, bookings, customers, organizations, workshopSessions, workshops } from "../db/schema";
 import { isUniqueViolation } from "../auth/auth.service";
 import type { BookingMailData } from "../email/templates";
+import { affiliateLinkFor } from "../affiliate/attribution";
+import { shopOrigin } from "../common/origins";
 import { OutboxService } from "../outbox/outbox.service";
 import { SitePagesService } from "../site/site-pages.service";
 import type { BookingCreateInput } from "./booking.schemas";
@@ -32,11 +34,7 @@ const fields = (f: Record<string, string>) => new UnprocessableEntityException({
 const notFound = () => new NotFoundException({ code: "NOT_FOUND", message: "Not found." });
 const throttled = (seconds: number) => new HttpException({ code: "RATE_LIMITED", message: "Too many attempts. Please try again later.", details: { retryAfterSeconds: seconds } }, 429);
 
-/** The origin of the landing page of a shop (`{slug}.{PLATFORM_DOMAIN}` with the scheme and the port of the web app): the links of the emails to guests point there. */
-export function shopOrigin(env: Pick<Env, "APP_URL" | "PLATFORM_DOMAIN">, slug: string): string {
-  const app = new URL(env.APP_URL);
-  return `${app.protocol}//${slug}.${env.PLATFORM_DOMAIN}${app.port ? `:${app.port}` : ""}`;
-}
+export { shopOrigin };
 
 const hashOtp = (id: string, code: string): string => hashToken(`${id}:${code}`);
 
@@ -222,12 +220,13 @@ export class PublicBookingsService {
 
         const unit = row.workshop.priceAmount;
         const customerId = await this.customerFor(tx, o.id, input, now);
+        const affiliateLinkId = await affiliateLinkFor(tx, { code: input.ref, organizationId: o.id, workshopId: session.workshopId, guestEmail: email }); // a wrong code only means no link
         const snapshot = { workshopTitle: row.workshop.title, sessionCode: session.code, startsAt: session.startsAt.toISOString(), endsAt: session.endsAt.toISOString(), timezone: o.timezone, address: workshopAddress({ address: row.workshop.address }, o.address), subtotalAmount: unit * input.quantity };
         const [booking] = await tx.insert(bookings).values({
           organizationId: o.id, bookingCode: `${session.code}-${String(bookingNumber).padStart(3, "0")}`, sessionId: session.id, workshopId: session.workshopId, customerId, source: "ONLINE", quantity: input.quantity,
           unitPriceAmount: unit, totalAmount: unit * input.quantity, currency: row.workshop.currency, // the price of the SERVER, never one from the client (BR-04)
           guestName: input.guest.fullName, guestEmail: email, guestPhone: input.guest.phone, guestCountry: input.guest.country, snapshot, locale: input.locale,
-          specialRequest: input.guest.specialRequest || null, idempotencyKey: key,
+          specialRequest: input.guest.specialRequest || null, idempotencyKey: key, affiliateLinkId,
         }).returning();
         if (!booking) throw new Error("The booking was not created");
 

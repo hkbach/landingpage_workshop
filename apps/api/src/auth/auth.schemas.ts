@@ -10,7 +10,8 @@ const token = z.string({ error: "required" }).trim().min(20, "invalid").max(200,
 const accountFields = { email, password, confirmPassword: password, turnstileToken };
 
 export const signupSchema = z.discriminatedUnion("type", [
-  z.object({ type: z.literal("CUSTOMER"), ...accountFields }),
+  // `inviteCode`: the code of the invite link the friend came through; a wrong one is ignored, never an error
+  z.object({ type: z.literal("CUSTOMER"), ...accountFields, inviteCode: z.string().trim().max(20).optional() }),
   z.object({ type: z.literal("SHOP_OWNER"), ...accountFields, shopName: z.string({ error: "required" }).trim().min(1, "required").max(120, "tooLong") }),
 ], { error: "invalid" });
 

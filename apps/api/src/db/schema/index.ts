@@ -6,3 +6,4 @@ export * from "./site";
 export * from "./finance";
 export * from "./system";
 export * from "./wallet";
+export * from "./affiliate";

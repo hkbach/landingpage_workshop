@@ -1,13 +1,13 @@
 import { Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { asc, eq, sql } from "drizzle-orm";
-import { feeBase, feeShares, filterLedgerRange, ledgerSeries, monthKey, summarizeLedger, type LedgerRow } from "@workshop/shared";
+import { feeBase, feeShares, ledgerSeries, monthKey, summarizeLedger } from "@workshop/shared";
 import { AuditService } from "../audit/audit.service";
 import type { OrgContext } from "../auth/auth.guards";
 import { decodeCursor, encodeCursor } from "../common/cursor";
 import { addDays } from "../common/zoned-time";
 import { DB, type Database } from "../db/db.module";
 import { financeMonthClosings, organizations, type MonthClosingTotals } from "../db/schema";
-import { RatesBook, buildLedger, ledgerView, loadEntries, resolveRange, startOfDay, type ShopInfo } from "./ledger";
+import { RatesBook, buildLedger, ledgerView, loadEntries, resolveRange, rowsInRange, startOfDay, type PlatformLedgerRow, type ShopInfo } from "./ledger";
 
 export interface IncomeQuery { from?: string | undefined; to?: string | undefined; kind?: "PAYMENT" | "REVERSAL" | undefined; limit: number; cursor?: string | undefined }
 
@@ -15,10 +15,12 @@ const notFound = () => new NotFoundException({ code: "NOT_FOUND", message: "Shop
 const FAR_PAST = new Date(0);
 
 /** What a month of a shop adds up to (the invoice is what the shop owes the platform: maintenance + service fee). */
-export function monthTotals(rows: readonly LedgerRow[]): MonthClosingTotals {
+export function monthTotals(rows: readonly PlatformLedgerRow[]): MonthClosingTotals {
   const t = summarizeLedger(rows);
-  // The affiliate fee and the referral bonus are not in the backend yet (no booking carries a link): they are 0 until the programs exist.
-  return { entries: rows.length, collected: t.income, maintenanceFee: t.maintenanceFee, serviceFee: t.serviceFee, invoice: t.fees, affiliateFee: 0, referralBonus: 0, platformProfit: t.fees };
+  // The platform pays the Affiliate fee and the Referral bonus out of what it earns (FR-ADM-16): they come off its profit, not off the invoice of the shop.
+  const affiliateFee = rows.reduce((n, r) => n + r.affiliateFee, 0);
+  const referralBonus = rows.reduce((n, r) => n + r.referralBonus, 0);
+  return { entries: rows.length, collected: t.income, maintenanceFee: t.maintenanceFee, serviceFee: t.serviceFee, invoice: t.fees, affiliateFee, referralBonus, platformProfit: t.fees - affiliateFee - referralBonus };
 }
 
 /**
@@ -36,7 +38,7 @@ export class FinanceService {
   }
 
   /** The ledger of one shop in a range of days (the days of the shop), with its totals and chart. */
-  private async report(shop: ShopInfo, range: { from: string; to: string }, q: IncomeQuery) {
+  private async report(shop: ShopInfo, range: { from: string; to: string }, q: IncomeQuery, forPlatform = false) {
     const entries = await loadEntries(this.db, { organizationId: shop.id, fromUtc: startOfDay(range.from, shop.timezone), toUtc: startOfDay(addDays(range.to, 1), shop.timezone) });
     const book = await RatesBook.load(this.db, [shop.id]);
     const all = buildLedger(entries, shop, book);
@@ -50,10 +52,12 @@ export class FinanceService {
       currency: shop.currency, timezone: shop.timezone, from: range.from, to: range.to,
       rates: { maintenanceBps: current.maintenanceBps, serviceBps: current.serviceBps },
       totals, series: ledgerSeries(all, shop.timezone, range.from, range.to), feeShares: feeShares(totals),
-      items: page.map((r) => ledgerView(r, shop.timezone)),
+      items: page.map((r) => ledgerView(r, shop.timezone, forPlatform)),
       nextCursor: start + q.limit < shown.length ? encodeCursor({ o: start + q.limit }) : null,
     };
-    return { body, book };
+    // what the platform pays out of its fees in the range (the administrator's view only)
+    const platform = { affiliateFee: all.reduce((n, r) => n + r.affiliateFee, 0), referralBonus: all.reduce((n, r) => n + r.referralBonus, 0) };
+    return { body, book, platform, all };
   }
 
   // ---- the shop owner -----------------------------------------------------------------------------------------------------------------------------------------
@@ -76,12 +80,14 @@ export class FinanceService {
     const items = shops.flatMap((shop) => {
       const mine = entries.filter((e) => e.organizationId === shop.id);
       if (mine.length === 0) return [];
-      const rows = filterLedgerRange(buildLedger(mine, shop, book), range.from, range.to, shop.timezone);
+      const rows = rowsInRange(buildLedger(mine, shop, book), range.from, range.to, shop.timezone);
       if (rows.length === 0) return [];
       const t = summarizeLedger(rows);
+      const affiliateFee = rows.reduce((n, r) => n + r.affiliateFee, 0);
+      const referralBonus = rows.reduce((n, r) => n + r.referralBonus, 0);
       return [{
         shopId: shop.id, name: shop.name, slug: shop.slug, currency: shop.currency, entries: rows.length, collected: t.income,
-        originalPrice: rows.reduce((n, r) => n + feeBase(r.amount, r.price), 0), maintenanceFee: t.maintenanceFee, serviceFee: t.serviceFee, adminIncome: t.fees, affiliateFee: 0, referralBonus: 0, profit: t.fees,
+        originalPrice: rows.reduce((n, r) => n + feeBase(r.amount, r.price), 0), maintenanceFee: t.maintenanceFee, serviceFee: t.serviceFee, adminIncome: t.fees, affiliateFee, referralBonus, profit: t.fees - affiliateFee - referralBonus,
       }];
     });
     const totals = new Map<string, { currency: string; entries: number; collected: number; originalPrice: number; maintenanceFee: number; serviceFee: number; adminIncome: number; affiliateFee: number; referralBonus: number; profit: number }>();
@@ -96,17 +102,18 @@ export class FinanceService {
   /** `GET /admin/income/{shopId}`: the months of the shop (closed or open) and its payments in a range, with the fees of each. */
   async adminShopIncome(shopId: string, q: IncomeQuery, now = new Date()) {
     const shop = await this.shopInfo(shopId);
-    const { body: range, book } = await this.report(shop, resolveRange(q.from, q.to, shop.timezone, now), q);
+    const { body: range, book, platform } = await this.report(shop, resolveRange(q.from, q.to, shop.timezone, now), q, true);
     const everything = buildLedger(await loadEntries(this.db, { organizationId: shop.id, fromUtc: FAR_PAST, toUtc: new Date(now.getTime() + 86_400_000) }), shop, book);
     const closings = new Map((await this.db.select().from(financeMonthClosings).where(eq(financeMonthClosings.organizationId, shop.id))).map((c) => [c.month, c]));
-    const byMonth = new Map<string, LedgerRow[]>();
+    const byMonth = new Map<string, PlatformLedgerRow[]>();
     for (const r of everything) { const k = monthKey(r.occurredAt, shop.timezone); (byMonth.get(k) ?? byMonth.set(k, []).get(k)!).push(r); }
     const months = [...new Set([...byMonth.keys(), ...closings.keys()])].sort().reverse().map((month) => {
       const closing = closings.get(month);
-      const rates = closing ? { maintenanceBps: closing.maintenanceBps, serviceBps: closing.serviceBps } : { maintenanceBps: book.currentOf(shop.id).maintenanceBps, serviceBps: book.currentOf(shop.id).serviceBps };
+      const r = closing ? closing : book.currentOf(shop.id);
+      const rates = { maintenanceBps: r.maintenanceBps, serviceBps: r.serviceBps, affiliateBps: r.affiliateBps, inviteBonusBps: r.inviteBonusBps };
       return { month, closed: Boolean(closing), closedAt: closing ? closing.closedAt.toISOString() : null, rates, ...(closing ? closing.totals : monthTotals(byMonth.get(month) ?? [])) };
     });
-    return { shop: { id: shop.id, name: shop.name, slug: shop.slug, currency: shop.currency, timezone: shop.timezone }, ...range, months };
+    return { shop: { id: shop.id, name: shop.name, slug: shop.slug, currency: shop.currency, timezone: shop.timezone }, ...range, platform: { ...platform, adminIncome: range.totals.fees, profit: range.totals.fees - platform.affiliateFee - platform.referralBonus }, months };
   }
 
   // ---- closing the months ---------------------------------------------------------------------------------------------------------------------------------------
@@ -125,14 +132,14 @@ export class FinanceService {
         const entries = await loadEntries(tx, { organizationId: shop.id, fromUtc: FAR_PAST, toUtc: startOfDay(`${current}-01`, shop.timezone) });
         if (entries.length === 0) return 0;
         const book = await RatesBook.load(tx, [shop.id]);
-        const byMonth = new Map<string, LedgerRow[]>();
+        const byMonth = new Map<string, PlatformLedgerRow[]>();
         for (const r of buildLedger(entries, shop, book)) { const k = monthKey(r.occurredAt, shop.timezone); (byMonth.get(k) ?? byMonth.set(k, []).get(k)!).push(r); }
         let n = 0;
         for (const [month, rows] of byMonth) {
           if (book.isClosed(shop.id, month)) continue;
           const rates = book.currentOf(shop.id);
           const totals = monthTotals(rows); // a month that is not closed yet was priced with the current rates, which are the ones written below
-          await tx.insert(financeMonthClosings).values({ organizationId: shop.id, month, currency: shop.currency, maintenanceBps: rates.maintenanceBps, serviceBps: rates.serviceBps, totals, closedAt: now }).onConflictDoNothing();
+          await tx.insert(financeMonthClosings).values({ organizationId: shop.id, month, currency: shop.currency, maintenanceBps: rates.maintenanceBps, serviceBps: rates.serviceBps, affiliateBps: rates.affiliateBps, inviteBonusBps: rates.inviteBonusBps, totals, closedAt: now }).onConflictDoNothing();
           await this.audit.record({ organizationId: shop.id, actorUserId: null, action: "finance.month_close", entityType: "finance_month", entityId: `${shop.id}:${month}`, after: { month, entries: rows.length, invoice: totals.invoice, maintenanceBps: rates.maintenanceBps, serviceBps: rates.serviceBps } }, tx);
           n++;
         }

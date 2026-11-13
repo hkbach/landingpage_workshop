@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import { bigint, check, foreignKey, index, integer, jsonb, pgEnum, pgTable, text, timestamp, unique, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { affiliateLinks } from "./affiliate";
 import { workshopSessions, workshops } from "./catalog";
 import { organizations, users } from "./identity";
 
@@ -59,6 +60,8 @@ export const bookings = pgTable(
     /** What the promotions took off (a snapshot: a promotion edited or deleted later does not change a past booking, BR-05). */
     discountAmount: bigint("discount_amount", { mode: "number" }).notNull().default(0),
     promotionIds: uuid("promotion_ids").array().notNull().default(sql`ARRAY[]::uuid[]`),
+    /** The affiliate link the guest came through, set when the booking is made (never changed): the Affiliate fee is worked out from it. */
+    affiliateLinkId: uuid("affiliate_link_id").references(() => affiliateLinks.id),
     currency: text("currency").notNull(),
     /** What the guest typed when booking: each booking keeps its own name, email, phone and country (the customer keeps the first ones). */
     guestName: text("guest_name").notNull(),

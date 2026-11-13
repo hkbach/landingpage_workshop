@@ -1,18 +1,18 @@
 import { ConflictException, UnprocessableEntityException } from "@nestjs/common";
 import { and, eq, gte, inArray, lt } from "drizzle-orm";
-import { DEFAULT_FEE_RATES, checkDateRange, dayKeyOf, isDayKey, ledgerFromPayments, monthKey, type BookingPriceInfo, type FeeRates, type LedgerRow } from "@workshop/shared";
+import { checkDateRange, dayKeyOf, feeBase, feeOf, isDayKey, ledgerFromPayments, monthKey, type BookingPriceInfo, type LedgerRow } from "@workshop/shared";
+import { referralBonuses } from "../affiliate/earnings";
 import { addDays, dateIn, zonedToUtc } from "../common/zoned-time";
 import type { Executor } from "../db/db.module";
 import { bookings, financeMonthClosings, organizationFeeSettings, organizations, payments } from "../db/schema";
 import { tenantScope } from "../tenant/tenant-scope";
+import { DEFAULT_RATES, type Rates } from "./rates";
+
+export { DEFAULT_RATES, type Rates };
 
 // The ledger of a shop (FR-PAY-02): every payment and reversal of a booking that is PAID, with the fees taken from it. The rule of the fees lives in `packages/shared` (the web app uses the
 // same one), this file reads the rows from the database and puts the right rates on each: the rates of a month that was closed are the ones written when it was closed, the rates of an
 // open month are the current ones.
-
-export interface Rates extends FeeRates { affiliateBps: number; inviteBonusBps: number }
-/** Until an administrator sets the rates of a shop (a round value to start with; the real percentages are a business decision). */
-export const DEFAULT_RATES: Rates = { ...DEFAULT_FEE_RATES, affiliateBps: 1000, inviteBonusBps: 1000 };
 
 export interface ShopInfo { id: string; name: string; slug: string; timezone: string; currency: string }
 
@@ -26,6 +26,10 @@ export interface Entry {
   amount: number;
   recordedAt: Date;
   price: BookingPriceInfo;
+  /** The booking came through an affiliate link: the platform pays the Affiliate fee on it. */
+  affiliate: boolean;
+  /** The booking is the one that earns a friend's Referral bonus (the first paid one after registering). */
+  referral: boolean;
 }
 
 const invalid = (fields: Record<string, string>) => new UnprocessableEntityException({ code: "VALIDATION", message: "Please check the highlighted fields.", details: { fields } });
@@ -54,30 +58,31 @@ export async function loadEntries(executor: Executor, filter: { organizationId?:
   const rows = await executor
     .select({
       organizationId: payments.organizationId, paymentId: payments.id, bookingCode: bookings.bookingCode, currency: payments.currency, type: payments.type, amount: payments.amount, recordedAt: payments.recordedAt,
-      quantity: bookings.quantity, unitPrice: bookings.unitPriceAmount, discountAmount: bookings.discountAmount, snapshot: bookings.snapshot,
+      quantity: bookings.quantity, unitPrice: bookings.unitPriceAmount, discountAmount: bookings.discountAmount, snapshot: bookings.snapshot, bookingId: bookings.id, affiliateLinkId: bookings.affiliateLinkId,
     })
     .from(payments)
     .innerJoin(bookings, and(eq(bookings.organizationId, payments.organizationId), eq(bookings.id, payments.bookingId)))
     .where(and(filter.organizationId ? tenantScope(payments, filter.organizationId) : undefined, eq(bookings.paymentStatus, "PAID"), gte(payments.recordedAt, filter.fromUtc), lt(payments.recordedAt, filter.toUtc)));
+  const bonusBookings = new Set((await referralBonuses(executor)).map((b) => b.bookingId));
   return rows.map((r) => {
     // The original price (before the vouchers) and what each voucher took off, as they were when the booking was made (BR-05).
     const subtotal = r.snapshot.subtotalAmount ?? r.unitPrice * r.quantity;
     const discounts = r.snapshot.discounts ?? (r.discountAmount > 0 ? [{ code: "DISCOUNT", amount: r.discountAmount }] : []);
-    return { organizationId: r.organizationId, paymentId: r.paymentId, bookingCode: r.bookingCode, currency: r.currency, type: r.type, amount: r.amount, recordedAt: r.recordedAt, price: { subtotal, discounts } };
+    return { organizationId: r.organizationId, paymentId: r.paymentId, bookingCode: r.bookingCode, currency: r.currency, type: r.type, amount: r.amount, recordedAt: r.recordedAt, price: { subtotal, discounts }, affiliate: r.affiliateLinkId !== null, referral: bonusBookings.has(r.bookingId) };
   });
 }
 
 /** The rates in force: the closed months keep theirs, every other month uses what the shop has now. */
 export class RatesBook {
-  private constructor(private readonly current: Map<string, Rates>, private readonly closed: Map<string, FeeRates>) {}
+  private constructor(private readonly current: Map<string, Rates>, private readonly closed: Map<string, Rates>) {}
 
   static async load(executor: Executor, organizationIds?: readonly string[]): Promise<RatesBook> {
     const settings = await executor.select().from(organizationFeeSettings).where(organizationIds ? inArray(organizationFeeSettings.organizationId, [...organizationIds]) : undefined);
-    const closings = await executor.select({ organizationId: financeMonthClosings.organizationId, month: financeMonthClosings.month, maintenanceBps: financeMonthClosings.maintenanceBps, serviceBps: financeMonthClosings.serviceBps })
+    const closings = await executor.select({ organizationId: financeMonthClosings.organizationId, month: financeMonthClosings.month, maintenanceBps: financeMonthClosings.maintenanceBps, serviceBps: financeMonthClosings.serviceBps, affiliateBps: financeMonthClosings.affiliateBps, inviteBonusBps: financeMonthClosings.inviteBonusBps })
       .from(financeMonthClosings).where(organizationIds ? inArray(financeMonthClosings.organizationId, [...organizationIds]) : undefined);
     return new RatesBook(
       new Map(settings.map((s) => [s.organizationId, { maintenanceBps: s.maintenanceBps, serviceBps: s.serviceBps, affiliateBps: s.affiliateBps, inviteBonusBps: s.inviteBonusBps }])),
-      new Map(closings.map((c) => [`${c.organizationId}|${c.month}`, { maintenanceBps: c.maintenanceBps, serviceBps: c.serviceBps }])),
+      new Map(closings.map((c) => [`${c.organizationId}|${c.month}`, { maintenanceBps: c.maintenanceBps, serviceBps: c.serviceBps, affiliateBps: c.affiliateBps, inviteBonusBps: c.inviteBonusBps }])),
     );
   }
 
@@ -87,30 +92,40 @@ export class RatesBook {
   isClosed(organizationId: string, month: string): boolean {
     return this.closed.has(`${organizationId}|${month}`);
   }
-  ratesFor(organizationId: string, month: string): FeeRates {
+  ratesFor(organizationId: string, month: string): Rates {
     return this.closed.get(`${organizationId}|${month}`) ?? this.currentOf(organizationId);
   }
 }
 
+/** A ledger row with what the PLATFORM pays out of its fees on that payment (the shop never sees these two). Negative for a reversal, like the rest. */
+export type PlatformLedgerRow = LedgerRow & { affiliateFee: number; referralBonus: number };
+
 /** The ledger rows of the entries of ONE shop, newest first (a payment is positive, a reversal negative). */
-export function buildLedger(entries: readonly Entry[], shop: Pick<ShopInfo, "timezone">, book: RatesBook): LedgerRow[] {
+export function buildLedger(entries: readonly Entry[], shop: Pick<ShopInfo, "timezone">, book: RatesBook): PlatformLedgerRow[] {
   return entries
-    .map((e) => {
+    .map((e): PlatformLedgerRow => {
       const iso = e.recordedAt.toISOString();
+      const rates = book.ratesFor(e.organizationId, monthKey(iso, shop.timezone));
       const [row] = ledgerFromPayments(
         [{ id: e.paymentId, bookingCode: e.bookingCode, currency: e.currency, price: e.price, payments: [{ id: e.paymentId, type: e.type === "PAYMENT" ? "PAYMENT" : "REFUND", amount: e.amount, recordedAt: iso }] }],
-        book.ratesFor(e.organizationId, monthKey(iso, shop.timezone)),
+        rates,
       );
-      return row!;
+      const base = feeBase(row!.amount, row!.price); // the same base as the maintenance and the service fee: the ORIGINAL price
+      return { ...row!, affiliateFee: e.affiliate ? feeOf(base, rates.affiliateBps) : 0, referralBonus: e.referral ? feeOf(base, rates.inviteBonusBps) : 0 };
     })
     .sort((a, b) => Date.parse(b.occurredAt) - Date.parse(a.occurredAt) || a.id.localeCompare(b.id));
 }
 
+/** The rows paid on the days from `from` to `to` (the days of the time zone), keeping whatever else a row carries. */
+export const rowsInRange = <T extends LedgerRow>(rows: readonly T[], from: string, to: string, timeZone: string): T[] => rows.filter((r) => { const d = dayKeyOf(r.occurredAt, timeZone); return d >= from && d <= to; });
+
 /** The ledger row as the API shows it: a reversal is named REVERSAL (never "refund": the system does not give money back, REQUIREMENTS 8.5) and the id is the payment's. */
-export function ledgerView(row: LedgerRow, timeZone: string) {
+export function ledgerView(row: LedgerRow | PlatformLedgerRow, timeZone: string, forPlatform = false) {
   return {
     id: row.id.replace(/^pay-/, ""), bookingCode: row.bookingCode, kind: row.kind === "PAYMENT" ? ("PAYMENT" as const) : ("REVERSAL" as const), currency: row.currency, occurredAt: row.occurredAt, day: dayKeyOf(row.occurredAt, timeZone),
     amount: row.amount, originalPrice: row.price.subtotal, promotions: row.price.discounts, maintenanceFee: row.maintenanceFee, serviceFee: row.serviceFee, profit: row.profit,
+    // what the platform pays out of its fees: only for the administrator, never for the shop
+    ...(forPlatform && "affiliateFee" in row ? { affiliateFee: row.affiliateFee, referralBonus: row.referralBonus } : {}),
   };
 }
 

@@ -52,6 +52,9 @@ export const financeMonthClosings = pgTable(
     currency: text("currency").notNull(),
     maintenanceBps: integer("maintenance_bps").notNull(),
     serviceBps: integer("service_bps").notNull(),
+    /** The affiliate and referral rates of the month when it was closed (0 for a month closed before the programs existed). */
+    affiliateBps: integer("affiliate_bps").notNull().default(0),
+    inviteBonusBps: integer("invite_bonus_bps").notNull().default(0),
     totals: jsonb("totals").notNull().$type<MonthClosingTotals>(),
     closedAt: timestamp("closed_at", { withTimezone: true }).notNull().defaultNow(),
   },

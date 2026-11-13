@@ -113,6 +113,27 @@
       "when": 1794534843118,
       "tag": "0015_withdrawal_holder_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1794537732965,
+      "tag": "0016_affiliate",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1794537748317,
+      "tag": "0017_affiliate_triggers",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1794538281833,
+      "tag": "0018_links_identity_fix",
+      "breakpoints": true
     }
   ]
 }
