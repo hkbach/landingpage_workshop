@@ -33,7 +33,6 @@ describe("platform support contact stays out of the public landing page", () => 
     expect(users.sort()).toEqual([
       "app/api/v1/admin/support-contact/route.ts",
       "app/customer/[accountId]/layout.tsx",
-      "app/shopowner/[slug]/layout.tsx",
       "app/shopowner/[slug]/site/[pageId]/page.tsx",
       "app/systemadmin/support-contact/page.tsx",
       "components/admin/admin-nav.tsx",
