@@ -1,7 +1,7 @@
 import { randomInt } from "node:crypto";
 import { BadRequestException, ConflictException, HttpException, Inject, Injectable, NotFoundException, UnprocessableEntityException } from "@nestjs/common";
 import { and, asc, desc, eq, gt, gte, inArray, isNull, lte, sql } from "drizzle-orm";
-import { canTransition, confirmation, formatMoney, workshopAddress } from "@workshop/shared";
+import { canTransition, confirmation, eligiblePromotions, formatMoney, priceBooking, workshopAddress } from "@workshop/shared";
 import { AuditService } from "../audit/audit.service";
 import { hashToken, newToken, safeEqual } from "../auth/crypto";
 import { TurnstileService } from "../auth/turnstile.service";
@@ -14,6 +14,7 @@ import { bookingConfirmations, bookingOtps, bookings, customers, organizations, 
 import { isUniqueViolation } from "../auth/auth.service";
 import type { BookingMailData } from "../email/templates";
 import { affiliateLinkFor } from "../affiliate/attribution";
+import { PromotionsService } from "../promotions/promotions.service";
 import { shopOrigin } from "../common/origins";
 import { OutboxService } from "../outbox/outbox.service";
 import { SitePagesService } from "../site/site-pages.service";
@@ -64,6 +65,7 @@ export class PublicBookingsService {
     @Inject(TurnstileService) private readonly turnstile: TurnstileService,
     @Inject(SessionCapacityService) private readonly capacity: SessionCapacityService,
     @Inject(SitePagesService) private readonly pages: SitePagesService,
+    @Inject(PromotionsService) private readonly promotions: PromotionsService,
   ) {}
 
   // ---- the shop and what it offers ------------------------------------------------------------------------------------------------------------------------
@@ -79,9 +81,11 @@ export class PublicBookingsService {
     const o = await this.shop(slug);
     const list = await this.db.select().from(workshops).where(and(eq(workshops.organizationId, o.id), eq(workshops.status, "ACTIVE"))).orderBy(asc(workshops.sortOrder), asc(workshops.id));
     const page = await this.pages.livePage(o.id); // what the owner published (null while there is none)
+    const running = await this.promotions.activeFor(this.db, o.id, dateIn(new Date(), o.timezone)); // the promotions of today, for the "Promotions" section and the booking form
     return {
       page: page ? { templateKey: page.templateKey, theme: page.theme, content: page.content, version: page.version, publishedAt: page.publishedAt } : null,
       shop: { name: o.name, slug: o.slug, country: o.country, timezone: o.timezone, currency: o.currency, defaultLocale: o.defaultLocale, enabledLocales: o.enabledLocales, contactEmail: o.contactEmail, contactPhone: o.contactPhone, whatsapp: o.whatsapp, address: o.address, mapsUrl: o.mapsUrl },
+      promotions: running.map((r) => ({ id: r.id, title: r.title, description: r.description, discountType: r.discountType, discountValue: r.discountValue, code: r.code, imageUrl: r.imageUrl ?? null, stacking: r.stacking, appliesTo: r.appliesTo, workshopIds: r.workshopIds, startDate: r.startDate, endDate: r.endDate })),
       workshops: list.map((w) => ({
         id: w.id, title: w.title, shortDescription: w.shortDescription, description: w.description, includes: w.includes, notes: w.notes, durationMinutes: w.durationMinutes, priceAmount: w.priceAmount, currency: w.currency,
         maxPerBooking: w.maxPerBooking, coverUrl: w.coverUrl, galleryUrls: w.galleryUrls, categories: w.categories, address: workshopAddress({ address: w.address }, o.address), addressNote: w.addressNote,
@@ -197,6 +201,18 @@ export class PublicBookingsService {
     if (!row || row.workshop.status !== "ACTIVE") throw fields({ sessionId: "unknown" }); // a session of another shop looks like none
     if (input.quantity > row.workshop.maxPerBooking) throw fields({ quantity: "quantityRange" });
 
+    // The price is the SERVER's (BR-04): the unit price of the workshop x the guests, less the promotions the guest chose that run today for this workshop and may be used together. A promotion that
+    // does not run (any more) or cannot be combined is refused, never quietly dropped: the guest must know what they will pay.
+    const unit = row.workshop.priceAmount;
+    const chosenIds = [...new Set(input.promotionIds ?? [])];
+    const today = dateIn(now, o.timezone);
+    const eligible = chosenIds.length > 0 ? eligiblePromotions(await this.promotions.activeFor(this.db, o.id, today), row.workshop.id, today) : [];
+    const chosen = chosenIds.map((id) => eligible.find((p) => p.id === id));
+    if (chosen.some((c) => !c)) throw fields({ promotionIds: "unavailable" });
+    const priced = priceBooking({ unitPrice: unit, quantity: input.quantity, promotions: chosen.map((c) => c!) });
+    if (!priced.ok) throw fields({ promotionIds: "notCombinable" });
+    const codeOf = new Map(chosen.map((c) => [c!.id, c!.code]));
+
     let otpId: string;
     try {
       otpId = await this.checkOtp(o.id, email, input.otp, now);
@@ -218,13 +234,12 @@ export class PublicBookingsService {
         // The row lock, the checks (RUNNING, cut-off, seats) and the new count: one place, SessionCapacityService.
         const { session, bookingNumber } = await this.capacity.reserve(tx, { organizationId: o.id, sessionId: input.sessionId, quantity: input.quantity, online: true, now });
 
-        const unit = row.workshop.priceAmount;
         const customerId = await this.customerFor(tx, o.id, input, now);
         const affiliateLinkId = await affiliateLinkFor(tx, { code: input.ref, organizationId: o.id, workshopId: session.workshopId, guestEmail: email }); // a wrong code only means no link
-        const snapshot = { workshopTitle: row.workshop.title, sessionCode: session.code, startsAt: session.startsAt.toISOString(), endsAt: session.endsAt.toISOString(), timezone: o.timezone, address: workshopAddress({ address: row.workshop.address }, o.address), subtotalAmount: unit * input.quantity };
+        const snapshot = { workshopTitle: row.workshop.title, sessionCode: session.code, startsAt: session.startsAt.toISOString(), endsAt: session.endsAt.toISOString(), timezone: o.timezone, address: workshopAddress({ address: row.workshop.address }, o.address), subtotalAmount: priced.subtotal, ...(priced.discounts.length > 0 ? { discounts: priced.discounts.map((d) => ({ code: codeOf.get(d.id) ?? "", amount: d.amount, promotionId: d.id })) } : {}) };
         const [booking] = await tx.insert(bookings).values({
           organizationId: o.id, bookingCode: `${session.code}-${String(bookingNumber).padStart(3, "0")}`, sessionId: session.id, workshopId: session.workshopId, customerId, source: "ONLINE", quantity: input.quantity,
-          unitPriceAmount: unit, totalAmount: unit * input.quantity, currency: row.workshop.currency, // the price of the SERVER, never one from the client (BR-04)
+          unitPriceAmount: unit, totalAmount: priced.total, discountAmount: priced.discount, promotionIds: priced.discounts.map((d) => d.id), currency: row.workshop.currency, // the price of the SERVER, never one from the client (BR-04)
           guestName: input.guest.fullName, guestEmail: email, guestPhone: input.guest.phone, guestCountry: input.guest.country, snapshot, locale: input.locale,
           specialRequest: input.guest.specialRequest || null, idempotencyKey: key, affiliateLinkId,
         }).returning();

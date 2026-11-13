@@ -21,6 +21,8 @@ export const bookingCreateSchema = z.object({
   consent: z.literal(true, { error: "consentRequired" }),
   otp: z.string({ error: "required" }).trim().regex(/^\d{6}$/, "invalid"),
   locale: z.enum(LOCALES).default("en"),
+  /** The promotions the guest chose (ids of the promotions shown on the landing page). The server checks them and works the price out; a total sent by the client is never read. */
+  promotionIds: z.array(z.uuid({ error: "invalid" })).max(10, "tooMany").optional(),
   /** The affiliate code of the link the guest came through (a wrong one is ignored, never an error). */
   ref: z.string().trim().max(20).optional(),
   turnstileToken,

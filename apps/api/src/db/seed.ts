@@ -243,7 +243,30 @@ export async function seedFinance(db: Database): Promise<{ closed: number }> {
   const { closed } = await new FinanceService(db, new AuditService(db)).closeMonths();
   await seedWallet(db);
   await seedInvites(db);
+  await seedPromotions(db);
   return { closed };
+}
+
+/**
+ * The demo shop gets promotions in every state (running, scheduled, paused), one to use alone and two that can be combined (never more than 5 running at once, never a free workshop).
+ * Written once: when the shop already has promotions nothing is added.
+ */
+async function seedPromotions(db: Database): Promise<void> {
+  const [shop] = await db.select({ id: schema.organizations.id, timezone: schema.organizations.timezone }).from(schema.organizations).where(eq(schema.organizations.slug, "whiskladle")).limit(1);
+  if (!shop) return;
+  const [has] = await db.select({ id: schema.promotions.id }).from(schema.promotions).where(eq(schema.promotions.organizationId, shop.id)).limit(1);
+  if (has) return;
+  const first = (await db.select({ id: schema.workshops.id }).from(schema.workshops).where(eq(schema.workshops.organizationId, shop.id)).orderBy(schema.workshops.sortOrder).limit(1))[0];
+  const today = dateIn(new Date(), shop.timezone);
+  const day = (n: number): string => addDays(today, n);
+  const base = { organizationId: shop.id, discountType: "PERCENT" as const, description: {} };
+  await db.insert(schema.promotions).values([
+    { ...base, title: { en: "Early bird: 20% off", vi: "Đặt sớm: giảm 20%" }, code: "EARLY20", discountValue: 20, stacking: "SINGLE", startDate: day(-10), endDate: day(20), description: { en: "Book any workshop and pay 20% less." } },
+    { ...base, title: { en: "Groups save 10%", vi: "Đi nhóm giảm 10%" }, code: "GROUP10", discountValue: 10, stacking: "MULTIPLE", startDate: day(-2), endDate: day(25) },
+    { ...base, title: { en: "Welcome gift: 50,000 off" }, code: "WELCOME50", discountType: "FIXED_AMOUNT", discountValue: 50_000, stacking: "MULTIPLE", appliesTo: "SELECTED", workshopIds: first ? [first.id] : [], startDate: day(-5), endDate: day(12) },
+    { ...base, title: { en: "Autumn festival" }, code: "AUTUMN15", discountValue: 15, stacking: "SINGLE", startDate: day(14), endDate: day(30) },
+    { ...base, title: { en: "Student discount" }, code: "STUDENT10", discountValue: 10, stacking: "MULTIPLE", enabled: false, startDate: day(-10), endDate: day(40) },
+  ]);
 }
 
 /**

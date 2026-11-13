@@ -108,7 +108,7 @@ export interface BookingSnapshot {
   timezone: string;
   address: string;
   /** What the promotions took off, line by line (the code or title of each one). */
-  discounts?: { code: string; amount: number }[];
+  discounts?: { code: string; amount: number; promotionId?: string }[];
   subtotalAmount?: number;
 }
 
