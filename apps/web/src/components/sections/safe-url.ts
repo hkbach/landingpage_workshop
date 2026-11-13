@@ -1,44 +1,8 @@
-import { isPlatformMediaPath } from "@workshop/shared";
+import { isAllowedMapsUrl, isHttpsUrl, isImageUrl, type ImageUrlOptions } from "@workshop/shared";
 
 // URL validators for shop-provided links (REQUIREMENTS FR-SITE-02). Used both in schemas and at render time.
-function parse(value: string): URL | null {
-  try {
-    return new URL(value);
-  } catch {
-    return null;
-  }
-}
-
-export function isHttpsUrl(value: string): boolean {
-  return parse(value)?.protocol === "https:";
-}
-
-/** Only google.com/maps or maps.app.goo.gl over https. */
-export function isAllowedMapsUrl(value: string): boolean {
-  const u = parse(value);
-  if (!u || u.protocol !== "https:") return false;
-  const host = u.hostname.toLowerCase();
-  if (host === "maps.app.goo.gl") return true;
-  return (host === "google.com" || host === "www.google.com") && (u.pathname === "/maps" || u.pathname.startsWith("/maps/"));
-}
-
-/** data:image/(jpeg|png|webp);base64 - produced by the mock uploader; valid ONLY in the builder/preview context. */
-const DATA_IMAGE_RE = /^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/;
-export const MAX_DATA_IMAGE_LENGTH = 2_500_000;
-
-export function isDataImageUrl(value: string): boolean {
-  return value.length <= MAX_DATA_IMAGE_LENGTH && DATA_IMAGE_RE.test(value);
-}
-
-export interface ImageUrlOptions {
-  /** Accept uploaded data: URLs. Only the builder and its preview may set this; never the public site. */
-  allowDataImages?: boolean;
-}
-
-/** https image URL, an image the platform serves itself (/api/v1/media/...), or (builder/preview only) a data:image URL. */
-export function isImageUrl(value: string, opts?: ImageUrlOptions): boolean {
-  return isHttpsUrl(value) || isPlatformMediaPath(value) || (opts?.allowDataImages === true && isDataImageUrl(value));
-}
+// The validators live in @workshop/shared (the API checks a page with the same rules); re-exported here for the web app.
+export { isAllowedMapsUrl, isDataImageUrl, isHttpsUrl, isImageUrl, MAX_DATA_IMAGE_LENGTH, type ImageUrlOptions } from "@workshop/shared";
 
 /** Returns the URL if it is a valid image URL for this context, otherwise undefined. */
 export function safeImage(value: unknown, opts?: ImageUrlOptions): string | undefined {

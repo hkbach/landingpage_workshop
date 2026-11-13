@@ -1,7 +1,6 @@
 import { z } from "zod";
-import { isYoutubeId, LOCALES, MAX_SECTION_VIDEOS, migrateVideoProps, type Localized, type SectionType } from "@workshop/shared";
+import { MAX_SECTION_VIDEOS, makeImageSchema, migrateVideoProps, SECTION_PROPS, SECTION_VARIANTS, type Localized, type SectionType } from "@workshop/shared";
 import type { SectionInstance } from "@/lib/types";
-import { isAllowedMapsUrl, isHttpsUrl, isImageUrl, MAX_DATA_IMAGE_LENGTH } from "./safe-url";
 import type { Tone } from "./theme";
 import { newUuid } from "@/lib/uuid";
 
@@ -42,15 +41,6 @@ export interface SectionDef {
   removable: boolean;
 }
 
-const optStr = (max: number) => z.string().max(max).optional();
-const localized = (max: number) =>
-  z.object(Object.fromEntries(LOCALES.map((l) => [l, optStr(max)])) as Record<(typeof LOCALES)[number], z.ZodOptional<z.ZodString>>);
-const makeImage = (allowDataImages: boolean) =>
-  z.string().max(allowDataImages ? MAX_DATA_IMAGE_LENGTH : 2000).refine((v) => v === "" || isImageUrl(v, { allowDataImages }), { message: "https_url" });
-const videoId = z.string().max(11).refine((v) => v === "" || isYoutubeId(v), { message: "youtube_id" });
-const linkUrl = z.string().max(2000).refine((v) => v === "" || isHttpsUrl(v), { message: "https_url" });
-const mapsUrl = z.string().max(2000).refine((v) => v === "" || isAllowedMapsUrl(v), { message: "maps_url" });
-const socials = z.array(z.object({ label: z.string().max(40), url: linkUrl })).max(6);
 const asSchema = (s: z.ZodType<unknown>) => s as unknown as z.ZodType<Record<string, unknown>>;
 
 const SOCIAL_FIELDS: FieldDef = {
@@ -85,10 +75,10 @@ const fixed = (tone: Tone) => () => tone;
 const DEFINITIONS: Record<SectionType, Define> = {
   hero: {
     type: "hero", schemaVersion: 1, removable: true,
-    variants: ["centered", "split", "overlay-left", "compact", "editorial", "fullscreen"],
+    variants: SECTION_VARIANTS.hero,
     // compact (avatar header), editorial (headline) and fullscreen (dark cinematic cover) sit on the page background, the rest on primary.
     tone: (v) => (v === "compact" || v === "editorial" || v === "fullscreen" ? "bg" : "primary"),
-    make: (image) => z.object({ title: localized(120), subtitle: localized(240), imageUrl: image, ctaText: localized(40) }),
+    make: SECTION_PROPS.hero,
     defaultProps: () => ({ title: { en: "Make something with your hands" }, subtitle: { en: "Hands-on workshops, no experience needed" }, imageUrl: "", ctaText: { en: "Book a workshop" } }),
     fields: [
       { kind: "localized", key: "title", max: 120 }, { kind: "localized", key: "subtitle", max: 240 },
@@ -97,40 +87,37 @@ const DEFINITIONS: Record<SectionType, Define> = {
   },
   about: {
     type: "about", schemaVersion: 1, removable: true,
-    variants: ["image-left", "image-right", "stacked"], tone: fixed("bg"),
-    make: (image) => z.object({ heading: localized(80), body: localized(2000), imageUrl: image }),
+    variants: SECTION_VARIANTS.about, tone: fixed("bg"),
+    make: SECTION_PROPS.about,
     defaultProps: () => ({ heading: { en: "About us" }, body: { en: "" }, imageUrl: "" }),
     fields: [{ kind: "localized", key: "heading", max: 80 }, { kind: "localized", key: "body", max: 2000, multiline: true }, { kind: "image", key: "imageUrl" }],
   },
   workshops: {
     type: "workshops", schemaVersion: 1, removable: true, autoContent: true,
-    variants: ["grid", "list", "featured", "compact"], tone: fixed("surface"),
-    make: () => z.object({ heading: localized(80) }),
+    variants: SECTION_VARIANTS.workshops, tone: fixed("surface"),
+    make: SECTION_PROPS.workshops,
     defaultProps: () => ({ heading: { en: "Our workshops" } }),
     fields: [{ kind: "localized", key: "heading", max: 80 }],
   },
   promotions: {
     // Content comes from Promotion management (the promotions that are active today), like the workshops section.
     type: "promotions", schemaVersion: 1, removable: true, autoContent: true,
-    variants: ["cards", "banner"], tone: fixed("surface"),
-    make: () => z.object({ heading: localized(80) }),
+    variants: SECTION_VARIANTS.promotions, tone: fixed("surface"),
+    make: SECTION_PROPS.promotions,
     defaultProps: () => ({ heading: { en: "Special offers" } }),
     fields: [{ kind: "localized", key: "heading", max: 80 }],
   },
   gallery: {
     type: "gallery", schemaVersion: 1, removable: true,
-    variants: ["grid", "masonry", "strip"], tone: fixed("bg"),
-    make: (image) => z.object({ heading: localized(80), imageUrls: z.array(image).max(12) }),
+    variants: SECTION_VARIANTS.gallery, tone: fixed("bg"),
+    make: SECTION_PROPS.gallery,
     defaultProps: () => ({ heading: { en: "Gallery" }, imageUrls: [] }),
     fields: [{ kind: "localized", key: "heading", max: 80 }, { kind: "imageList", key: "imageUrls", max: 12 }],
   },
   team: {
     type: "team", schemaVersion: 1, removable: true,
-    variants: ["cards", "inline"], tone: fixed("surface"),
-    make: (image) => z.object({
-      heading: localized(80),
-      members: z.array(z.object({ name: z.string().max(80), role: localized(80), bio: localized(300), imageUrl: image })).max(12),
-    }),
+    variants: SECTION_VARIANTS.team, tone: fixed("surface"),
+    make: SECTION_PROPS.team,
     defaultProps: () => ({ heading: { en: "Meet the team" }, members: [] }),
     fields: [
       { kind: "localized", key: "heading", max: 80 },
@@ -143,11 +130,8 @@ const DEFINITIONS: Record<SectionType, Define> = {
   },
   testimonials: {
     type: "testimonials", schemaVersion: 1, removable: true, authenticityNote: true,
-    variants: ["cards", "quote"], tone: fixed("bg"),
-    make: () => z.object({
-      heading: localized(80),
-      items: z.array(z.object({ name: z.string().max(80), country: z.string().max(60), text: localized(500) })).max(12),
-    }),
+    variants: SECTION_VARIANTS.testimonials, tone: fixed("bg"),
+    make: SECTION_PROPS.testimonials,
     defaultProps: () => ({ heading: { en: "What guests say" }, items: [] }),
     fields: [
       { kind: "localized", key: "heading", max: 80 },
@@ -160,8 +144,8 @@ const DEFINITIONS: Record<SectionType, Define> = {
   },
   faq: {
     type: "faq", schemaVersion: 1, removable: true,
-    variants: ["accordion", "two-column"], tone: fixed("surface"),
-    make: () => z.object({ heading: localized(80), items: z.array(z.object({ q: localized(200), a: localized(1000) })).max(20) }),
+    variants: SECTION_VARIANTS.faq, tone: fixed("surface"),
+    make: SECTION_PROPS.faq,
     defaultProps: () => ({ heading: { en: "FAQ" }, items: [{ q: { ...LATE_POLICY_FAQ.q }, a: { ...LATE_POLICY_FAQ.a } }] }),
     fields: [
       { kind: "localized", key: "heading", max: 80 },
@@ -174,8 +158,8 @@ const DEFINITIONS: Record<SectionType, Define> = {
   },
   location: {
     type: "location", schemaVersion: 1, removable: true,
-    variants: ["simple", "card"], tone: fixed("bg"),
-    make: () => z.object({ heading: localized(80), address: localized(300), hours: localized(300), mapsUrl }),
+    variants: SECTION_VARIANTS.location, tone: fixed("bg"),
+    make: SECTION_PROPS.location,
     defaultProps: () => ({ heading: { en: "Find us" }, address: { en: "" }, hours: { en: "" }, mapsUrl: "" }),
     fields: [
       { kind: "localized", key: "heading", max: 80 }, { kind: "localized", key: "address", max: 300 },
@@ -184,11 +168,8 @@ const DEFINITIONS: Record<SectionType, Define> = {
   },
   contact: {
     type: "contact", schemaVersion: 1, removable: true,
-    variants: ["list", "cards"], tone: fixed("surface"),
-    make: () => z.object({
-      heading: localized(80), phone: z.string().max(40), whatsapp: z.string().max(40),
-      email: z.string().max(120).refine((v) => v === "" || z.email().safeParse(v).success, { message: "email" }), socials,
-    }),
+    variants: SECTION_VARIANTS.contact, tone: fixed("surface"),
+    make: SECTION_PROPS.contact,
     defaultProps: () => ({ heading: { en: "Contact" }, phone: "", whatsapp: "", email: "", socials: [] }),
     fields: [
       { kind: "localized", key: "heading", max: 80 }, { kind: "plain", key: "phone", max: 40, inputType: "tel" },
@@ -198,9 +179,9 @@ const DEFINITIONS: Record<SectionType, Define> = {
   video: {
     // v2: up to MAX_SECTION_VIDEOS videos (v1 stored a single `videoId`).
     type: "video", schemaVersion: 2, removable: true, migrateProps: migrateVideoProps,
-    variants: ["wide", "split"], tone: fixed("bg"),
+    variants: SECTION_VARIANTS.video, tone: fixed("bg"),
     // Only validated 11-char video IDs are stored; the raw link is never kept (see parseYoutubeId).
-    make: () => z.object({ heading: localized(80), caption: localized(300), videos: z.array(videoId).max(MAX_SECTION_VIDEOS) }),
+    make: SECTION_PROPS.video,
     defaultProps: () => ({ heading: { en: "See it in action" }, caption: { en: "" }, videos: [] }),
     fields: [
       { kind: "localized", key: "heading", max: 80 }, { kind: "localized", key: "caption", max: 300, multiline: true },
@@ -209,8 +190,8 @@ const DEFINITIONS: Record<SectionType, Define> = {
   },
   footer: {
     type: "footer", schemaVersion: 1, removable: false,
-    variants: ["dark", "light", "centered"], tone: (v) => (v === "light" ? "surface" : "inverse"),
-    make: () => z.object({ text: localized(200), socials }),
+    variants: SECTION_VARIANTS.footer, tone: (v) => (v === "light" ? "surface" : "inverse"),
+    make: SECTION_PROPS.footer,
     defaultProps: () => ({ text: { en: "" }, socials: [] }),
     fields: [{ kind: "localized", key: "text", max: 200 }, SOCIAL_FIELDS],
   },
@@ -219,7 +200,7 @@ const DEFINITIONS: Record<SectionType, Define> = {
 export const SECTION_REGISTRY = Object.fromEntries(
   (Object.entries(DEFINITIONS) as [SectionType, Define][]).map(([type, { make, ...def }]) => [
     type,
-    { ...def, schema: asSchema(make(makeImage(false))), builderSchema: asSchema(make(makeImage(true))) },
+    { ...def, schema: asSchema(make(makeImageSchema(false))), builderSchema: asSchema(make(makeImageSchema(true))) },
   ]),
 ) as Record<SectionType, SectionDef>;
 

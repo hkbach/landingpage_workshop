@@ -99,7 +99,7 @@ d("landing pages", () => {
     expect(await fields(page({}, [sec("about", deep)]))).toEqual(expect.arrayContaining([expect.arrayContaining(["tooDeep"])]));
     expect((await put(`/site/pages/${p.id}/draft`, { content: "nope" }, shop.cookie)).statusCode).toBe(422);
     expect((await t.get(`/site/pages/${p.id}`, { cookie: shop.cookie })).json().source).toBe("NONE"); // nothing bad was saved
-    const ok = await save(page({}, [sec("about", { heading: { en: "Fine", vi: "Tốt" }, photos: ["https://cdn.example.com/a.jpg"] })]));
+    const ok = await save(page({}, [sec("about", { heading: { en: "Fine", vi: "Tốt" }, imageUrl: "https://cdn.example.com/a.jpg" })]));
     expect(ok.statusCode).toBe(200);
   });
 
@@ -186,5 +186,50 @@ d("landing pages", () => {
     } finally {
       await t.pool.query("update organizations set status = 'DRAFT' where id = $1", [a.orgId]);
     }
+  });
+
+  it("checks the props of every section type with the schemas of the editor, and keeps the variant, the Book button and the layout", async () => {
+    const shop = await makeShop("siteprops");
+    const p = await newPage(shop);
+    const save = (middle: unknown[], over: Record<string, unknown> = {}) => put(`/site/pages/${p.id}/draft`, { content: page(over, middle) }, shop.cookie);
+    const fields = async (middle: unknown[], over: Record<string, unknown> = {}) => Object.fromEntries(Object.entries((await save(middle, over)).json().error?.details?.fields ?? {}).map(([k, v]) => [k.replace("content.sections.1.", ""), v]));
+
+    expect(await fields([sec("about", { photos: [] })])).toEqual({ "props.photos": "unknownField" }); // a field the type does not have
+    expect(await fields([sec("about", { imageUrl: "http://insecure.example/a.jpg" })])).toEqual({ "props.imageUrl": "https_url" });
+    expect(await fields([sec("about", { imageUrl: "data:image/png;base64,AAAA" })])).toEqual({ "props.imageUrl": "https_url" }); // an uploaded data image is never stored
+    expect(await fields([sec("about", { imageUrl: "javascript:alert(1)" })])).toEqual({ "props.imageUrl": "https_url" });
+    expect(await fields([sec("location", { mapsUrl: "https://evil.example/maps" })])).toEqual({ "props.mapsUrl": "maps_url" });
+    expect(await fields([sec("location", { mapsUrl: "https://www.google.com/maps/place/x" })])).toEqual({});
+    expect(await fields([sec("contact", { email: "not-an-email" })])).toEqual({ "props.email": "email" });
+    expect(await fields([sec("contact", { socials: [{ label: "FB", url: "ftp://x.example" }] })])).toEqual({ "props.socials.0.url": "https_url" });
+    expect(await fields([sec("contact", { socials: Array.from({ length: 7 }, () => ({ label: "x", url: "https://x.example" })) })])).toEqual({ "props.socials": "tooMany" });
+    expect(await fields([sec("video", { videos: ["bad video!"] })])).toEqual({ "props.videos.0": "youtube_id" });
+    expect(await fields([sec("video", { videos: Array.from({ length: 6 }, () => "dQw4w9WgXcQ") })])).toEqual({}); // more than 5 videos are cut to 5, like the editor does
+    expect(await fields([sec("gallery", { imageUrls: Array.from({ length: 13 }, () => "https://cdn.example.com/a.jpg") })])).toEqual({ "props.imageUrls": "tooMany" });
+    expect(await fields([sec("team", { members: [{ name: "x".repeat(81), role: {}, bio: {}, imageUrl: "" }] })])).toEqual({ "props.members.0.name": "tooLong" });
+    expect(await fields([sec("about", { heading: { en: "x".repeat(81) } })])).toEqual({ "props.heading.en": "tooLong" });
+    expect(await fields([sec("about", { heading: { xx: "unknown language" } })])).toEqual({}); // only the five languages are kept
+    expect(await fields([sec("about", { heading: "plain text instead of the languages" })])).toEqual({ "props.heading": "invalid" });
+    expect(await fields([sec("faq", { items: "no" })])).toEqual({ "props.items": "invalid" });
+
+    // a variant of the type, the Book button, the layout
+    expect(await fields([{ ...sec("about"), variant: "no-such-variant" }])).toEqual({ variant: "invalid" });
+    expect(await fields([{ ...sec("about"), variant: "hero-split" }])).toEqual({ variant: "invalid" }); // a variant of another type
+    expect((await save([sec("about")], { layout: "no-such-layout" })).json().error.details.fields["content.layout"]).toBe("invalid");
+    const footer = (await put(`/site/pages/${p.id}/draft`, { content: { ...page(), sections: [sec("hero"), { ...sec("footer"), showBook: true }] } }, shop.cookie)).json();
+    expect(footer.error.details.fields["content.sections.1.showBook"]).toBe("invalid"); // the footer never carries a Book button
+
+    // what is valid is kept, including the variant, the Book button and the layout (they used to be dropped)
+    const good = await save([{ ...sec("about", { heading: { en: "Fine" }, imageUrl: "/api/v1/media/workshop/0b1f2a4e-8b1c-4f6a-9d3e-0123456789ab" }), variant: "stacked", showBook: true }], { layout: "magazine" });
+    expect(good.statusCode).toBe(200);
+    const back = (await t.get(`/site/pages/${p.id}`, { cookie: shop.cookie })).json();
+    expect(back.content.layout).toBe("magazine");
+    expect(back.content.sections[1]).toMatchObject({ variant: "stacked", showBook: true, props: { heading: { en: "Fine" } } });
+    expect(back.content.sections[1].props.heading.xx).toBeUndefined();
+
+    // the old video section (one videoId) is upgraded to the list
+    const video = await save([sec("video", { videoId: "dQw4w9WgXcQ", heading: { en: "Watch" } })]);
+    expect(video.statusCode).toBe(200);
+    expect((await t.get(`/site/pages/${p.id}`, { cookie: shop.cookie })).json().content.sections[1].props).toMatchObject({ videos: ["dQw4w9WgXcQ"] });
   });
 });

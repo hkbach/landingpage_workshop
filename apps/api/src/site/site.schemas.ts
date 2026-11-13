@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { LANDING_PAGE_NAME_MAX, LOCALES, SECTION_TYPES } from "@workshop/shared";
+import { LANDING_PAGE_NAME_MAX, LAYOUT_KEYS, LOCALES, SECTION_TYPES, SECTION_VARIANTS, checkSectionProps } from "@workshop/shared";
 
-// FR-SITE-02. The backend checks the STRUCTURE of a page (the section types, hero first and footer last, sizes, the languages) and refuses what is not text. The props of each section type are
-// validated by the registry of the web app (apps/web/src/components/sections); TODO(shared): move that registry to packages/shared so this check can be as strict as the editor.
+// FR-SITE-02. The backend checks the STRUCTURE of a page (the section types, hero first and footer last, sizes, the languages), refuses what is not text, and checks the PROPS of every section
+// type with the same schemas as the editor (packages/shared/src/section-props.ts): lengths, https links, Google Maps links, YouTube ids, an email, and no field the type does not have.
 export const MAX_SECTIONS = 40;
 export const MAX_CONTENT_BYTES = 200_000;
 const MAX_TEXT = 5_000;
@@ -36,18 +36,47 @@ function checkProps(value: unknown, depth: number, path: (string | number)[], ct
   ctx.addIssue({ code: "custom", path, message: "invalid" });
 }
 
-const section = z.object({
+const sectionShape = z.object({
   id: z.string({ error: "required" }).trim().min(1, "required").max(64, "tooLong").regex(/^[A-Za-z0-9_-]+$/, "invalid"),
   type: z.enum(SECTION_TYPES, { error: "invalid" }),
   enabled: z.boolean({ error: "invalid" }),
+  /** The layout variant of the section; a missing one means the default of its type. */
+  variant: z.string({ error: "invalid" }).max(40, "invalid").optional(),
+  /** Show a Book button in this section (missing = the default of its type). */
+  showBook: z.boolean({ error: "invalid" }).optional(),
   props: z.record(z.string(), z.unknown(), { error: "invalid" }).superRefine((v, ctx) => checkProps(v, 0, [], ctx)),
   /** A section may override its colours (background, text, accent): hex only, never CSS (REQUIREMENTS FR-SITE-02). */
   style: z.object({ background: hex.optional(), text: hex.optional(), accent: hex.optional() }).strict().optional(),
 });
 
+/** The short code of an issue of the props (the editor's own messages, like `https_url`, are kept; the generic ones of the validator become the codes of the rest of the API). */
+const propsCode = (i: z.core.$ZodIssue): string => {
+  if (i.code === "custom") return i.message;
+  if (i.code === "too_big") return i.origin === "array" ? "tooMany" : "tooLong";
+  return "invalid";
+};
+
+/** One section: the common fields, then its variant, its Book button and its props by type. What is stored is what the editor's schema accepted (the props of the old video section are upgraded). */
+const section = sectionShape.transform((s, ctx) => {
+  if (s.variant !== undefined && !SECTION_VARIANTS[s.type].includes(s.variant)) ctx.addIssue({ code: "custom", path: ["variant"], message: "invalid" });
+  if (s.showBook === true && s.type === "footer") ctx.addIssue({ code: "custom", path: ["showBook"], message: "invalid" }); // the footer never carries a Book button
+  const checked = checkSectionProps(s.type, s.props);
+  if (!checked.success) {
+    for (const i of checked.error.issues) {
+      const keys = i.code === "unrecognized_keys" ? (i.keys as string[]) : null;
+      if (keys) for (const k of keys) ctx.addIssue({ code: "custom", path: ["props", k], message: "unknownField" });
+      else ctx.addIssue({ code: "custom", path: ["props", ...i.path], message: propsCode(i) });
+    }
+    return z.NEVER;
+  }
+  return { ...s, props: checked.data as Record<string, unknown> };
+});
+
 export const pageContentSchema = z
   .object({
     schemaVersion: z.literal(1, { error: "invalid" }),
+    /** The page layout of the template (missing = the first one, "classic"). */
+    layout: z.enum(LAYOUT_KEYS, { error: "invalid" }).optional(),
     sections: z.array(section, { error: "invalid" }).max(MAX_SECTIONS, "tooMany"),
     seo: z.object({ title: localized.default({}), description: localized.default({}) }).default({ title: {}, description: {} }),
   })

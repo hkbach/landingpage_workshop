@@ -1,5 +1,5 @@
 import type {
-  BookingSource, BookingStatus, Gender, Localized, Locale, OrgStatus, PaymentMethod,
+  BookingSource, BookingStatus, Gender, LayoutKey, Localized, Locale, OrgStatus, PaymentMethod,
   PaymentStatus, ReportRecord, SectionType, SessionNote, SessionStatus, Socials, WorkshopCategory, WorkshopStatus
 } from "@workshop/shared";
 
@@ -96,9 +96,7 @@ export interface SectionInstance {
   style?: SectionStyle;
 }
 /** Page structure ("frame") of a template: how sections are arranged and what chrome surrounds them. */
-export type LayoutKey =
-  | "classic" | "quicklinks" | "sidebar" | "bento" | "bookingrail"
-  | "magazine" | "cinematic" | "floatingcards" | "journey" | "appstyle";
+export type { LayoutKey };
 export interface PageContent {
   schemaVersion: 1; sections: SectionInstance[]; seo: { title: Localized; description: Localized };
   /** Page layout; missing or unknown values fall back to the first layout ("classic"). */

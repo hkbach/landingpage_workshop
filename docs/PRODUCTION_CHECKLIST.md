@@ -44,7 +44,8 @@ Backend đã có: lưu `organizations.custom_domain` (unique), kiểm tra DNS (`
 ## 5. Sản phẩm còn mở
 
 - [ ] Nối `apps/web` với API thật (hiện vẫn dùng mock trong bộ nhớ), gồm bắt đồng ý lại Terms / Privacy ở client.
-- [ ] Kiểm tra props theo từng section ở backend; email đa ngôn ngữ (hiện chỉ tiếng Anh).
+- [x] Kiểm tra props theo từng section ở backend: đã làm (13/11/2026).
+- [ ] Email đa ngôn ngữ (hiện chỉ tiếng Anh).
 
 ## Quy tắc phát hành
 

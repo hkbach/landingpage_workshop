@@ -25,3 +25,4 @@ export * from "./workshop-ranking";
 export * from "./custom-domain";
 export * from "./booking-state";
 export * from "./bank-details";
+export * from "./section-props";
