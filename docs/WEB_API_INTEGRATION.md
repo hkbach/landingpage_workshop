@@ -1,6 +1,16 @@
 # Nối `apps/web` với `apps/api`: hiện trạng và kế hoạch
 
-> **Trạng thái (13/11/2026): CHƯA nối.** `apps/web` vẫn chạy hoàn toàn trên dữ liệu mẫu trong bộ nhớ (mock). Tài liệu này ghi lại **vì sao việc này lớn hơn một lần chuyển đổi cấu hình**, những gì đã đo được và một kế hoạch theo từng lát cắt để làm tiếp. Đây là việc cần quyết định thứ tự ưu tiên của chủ sản phẩm.
+> **Trạng thái (13/11/2026): ĐÃ XONG lát 0 và 1 (nền + xác thực); lát 2–6 chưa làm.** Đặt `API_URL` thì web nối API thật cho tài khoản; không đặt thì vẫn chạy hoàn toàn trên dữ liệu mẫu (mock). Xem mục 0. Tài liệu này ghi lại **vì sao việc này lớn hơn một lần chuyển đổi cấu hình**, những gì đã đo được và một kế hoạch theo từng lát cắt để làm tiếp. Đây là việc cần quyết định thứ tự ưu tiên của chủ sản phẩm.
+
+## 0. Đã làm (lát 0 và 1)
+
+- **Chế độ thật:** biến `API_URL` (địa chỉ API mà máy chủ web gọi tới). Khi đặt (lúc build và lúc chạy), `next.config.ts` chuyển `/api/v1/*` sang API (`beforeFiles`, thắng route mock; cookie đi cùng nên không cần CORS). Không đặt: route mock trả lời như cũ. API phải đặt `APP_URL` đúng địa chỉ trình duyệt dùng (kiểm tra Origin).
+- **Phía máy chủ web:** `src/lib/api-server.ts` (`apiFetch` chuyển tiếp cookie, không ghi log; `getSession`, `requireArea`, `homeOf`); `proxy.ts` tra tên miền riêng bằng `GET /public/domains/{host}` (nhớ 60 giây).
+- **Bảo vệ khu vực:** `/shopowner` (đúng shop của phiên), `/customer/{id}` (đúng tài khoản), `/systemadmin` (SUPER_ADMIN) cần phiên thật; không có phiên thì về `/login`, sai loại thì về khu của mình.
+- **Form:** đăng nhập (kể cả `EMAIL_NOT_VERIFIED`), đăng ký (hộp đồng ý Terms/Privacy bắt buộc, gửi `locale`, ghi bằng chứng qua `POST /legal/consent`, trả 202 thì báo kiểm tra email), quên mật khẩu, đặt lại mật khẩu (**bỏ mật khẩu tạm**: link một lần là bằng chứng, đúng hợp đồng API), đăng xuất thật (`LogoutLink`), trang xác minh email, onboarding lấy shop từ phiên.
+- **Đồng ý lại Terms/Privacy (D17):** `ConsentGate` hỏi `GET /legal/consent`; khi có bản mới, cửa sổ chặn khu vực cho đến khi đồng ý hoặc đăng xuất.
+- **Còn dở theo thiết kế:** các trang bên trong khu vực vẫn đọc dữ liệu mẫu (lát 3–5). Shop mới đăng ký thật chưa có dữ liệu vào dashboard; wizard onboarding còn gọi `/onboarding` của mock (cần `PATCH /organization`, lát 3). Luồng admin reset mật khẩu bằng mật khẩu tạm chỉ còn trong mock.
+- **Kiểm thử:** `e2e/real-auth.spec.ts` (3 test, chạy với `E2E_REAL_API=1`, xem `e2e/README.md`) pass trên stack thật (Postgres + API + web), không vi phạm CSP.
 
 ## 1. Đã đo được (13/11/2026)
 

@@ -37,5 +37,13 @@
     "page": "Page {page} of {pages}"
   },
   "close": "Close",
-  "appDescription": "Landing pages and bookings for workshop studios."
+  "appDescription": "Landing pages and bookings for workshop studios.",
+  "consent": {
+    "title": "Terms and Privacy Policy updated",
+    "body": "We changed our Terms of Service or our Privacy Policy. Please read them and accept to continue.",
+    "agree": "I agree to the <terms>Terms of Service</terms> and the <privacy>Privacy Policy</privacy>.",
+    "accept": "Accept and continue",
+    "logout": "Log out",
+    "failed": "Could not save your answer. Try again."
+  }
 }

@@ -37,5 +37,13 @@
     "page": "第 {page} 页，共 {pages} 页"
   },
   "close": "关闭",
-  "appDescription": "为工作坊工作室提供着陆页和预订。"
+  "appDescription": "为工作坊工作室提供着陆页和预订。",
+  "consent": {
+    "title": "服务条款和隐私政策已更新",
+    "body": "我们更新了服务条款或隐私政策。请阅读并同意后继续使用。",
+    "agree": "我同意<terms>服务条款</terms>和<privacy>隐私政策</privacy>。",
+    "accept": "同意并继续",
+    "logout": "退出登录",
+    "failed": "无法保存您的选择，请重试。"
+  }
 }

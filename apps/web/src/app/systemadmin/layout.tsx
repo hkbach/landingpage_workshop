@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { LogOut, ShieldCheck } from "lucide-react";
+import { LogoutLink } from "@/components/auth/logout-link";
 import { AdminGuard } from "@/components/admin/admin-guard";
 import { AdminNav } from "@/components/admin/admin-nav";
 import { buttonVariants } from "@/components/ui/button";
 import { LocaleSwitcher } from "@/components/dashboard/shell/locale-switcher";
 import { AreaIntlProvider } from "@/i18n/AreaIntlProvider";
 import { ADMIN_LOCALES } from "@workshop/shared";
+import { requireArea } from "@/lib/api-server";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("admin.meta");
@@ -15,6 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function AdminLayout({ children }: LayoutProps<"/systemadmin">) {
+  await requireArea("SUPER_ADMIN"); // connected to the API: only the platform administrator, with a session
   const t = await getTranslations("admin.shell");
 
   return (
@@ -39,15 +41,15 @@ export default async function AdminLayout({ children }: LayoutProps<"/systemadmi
                   </p>
                 </div>
               </div>
-              <Link href="/login" className={buttonVariants({ variant: "outline", size: "sm", className: "md:hidden" })}>
+              <LogoutLink className={buttonVariants({ variant: "outline", size: "sm", className: "md:hidden" })}>
                 <LogOut aria-hidden /> {t("logout")}
-              </Link>
+              </LogoutLink>
             </div>
             <LocaleSwitcher locales={ADMIN_LOCALES} labelKey="admin.shell.language" />
             <AdminNav />
-            <Link href="/login" className={buttonVariants({ variant: "outline", size: "sm", className: "hidden w-full md:inline-flex" })}>
+            <LogoutLink className={buttonVariants({ variant: "outline", size: "sm", className: "hidden w-full md:inline-flex" })}>
               <LogOut aria-hidden /> {t("logout")}
-            </Link>
+            </LogoutLink>
           </div>
         </aside>
 

@@ -3,35 +3,35 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
-import { useForm, useWatch } from "react-hook-form";
+import { useLocale, useTranslations } from "next-intl";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { Store, UserRound } from "lucide-react";
 import { generateShopSlug, PASSWORD_MAX, PASSWORD_MIN } from "@workshop/shared";
 import { writeGuestEmail } from "@/lib/favorites";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Field, describedBy } from "@/components/dashboard/shell/field";
 import { zodResolver } from "@/lib/zod-resolver";
 
-const fakeRequest = () => new Promise<void>((resolve) => setTimeout(resolve, 700));
-
 const email = z.string().trim().min(1, "errors.emailRequired").pipe(z.email("errors.emailInvalid"));
 const password = z.string().min(PASSWORD_MIN, "errors.passwordMin");
 
 const loginSchema = z.object({ email, password: z.string().min(1, "errors.passwordRequired") });
-const passwordPair = { password: password.max(PASSWORD_MAX, "errors.passwordMax"), confirm: z.string().min(1, "errors.confirmRequired") };
+// The box of the Terms and the Privacy Policy: nobody opens an account without it (D17). The server keeps the proof (the version and the time).
+const consent = z.boolean().refine((v) => v, "errors.termsRequired");
+const passwordPair = { password: password.max(PASSWORD_MAX, "errors.passwordMax"), confirm: z.string().min(1, "errors.confirmRequired"), consent };
 const samePair = (v: { password: string; confirm: string }) => v.password === v.confirm;
 // The popup Sign up has two kinds: a customer (email + password twice) and a shop owner (the same + the name of the shop, which gives the slug of the shop).
 const customerSchema = z.object({ email, ...passwordPair }).refine(samePair, { path: ["confirm"], message: "errors.passwordMismatch" });
 const ownerSchema = z.object({ email, ...passwordPair, shopName: z.string().trim().min(1, "errors.shopNameRequired").max(120, "errors.shopNameTooLong") }).refine(samePair, { path: ["confirm"], message: "errors.passwordMismatch" });
 const forgotSchema = z.object({ email });
-// The page of the link an administrator's reset emails: the temporary password of the email, then the new password twice.
+// The page of the link of the reset email: the new password twice. The link is the proof (it works once and expires).
 const resetSchema = z
-  .object({ tempPassword: z.string().min(1, "errors.tempRequired"), password: password.max(PASSWORD_MAX, "errors.passwordMax"), confirm: z.string() })
-  .refine((v) => v.password === v.confirm, { path: ["confirm"], message: "errors.passwordMismatch" })
-  .refine((v) => v.password !== v.tempPassword, { path: ["password"], message: "errors.samePassword" });
+  .object({ password: password.max(PASSWORD_MAX, "errors.passwordMax"), confirm: z.string() })
+  .refine((v) => v.password === v.confirm, { path: ["confirm"], message: "errors.passwordMismatch" });
 
 type LoginValues = z.infer<typeof loginSchema>;
 type OwnerValues = z.infer<typeof ownerSchema>;
@@ -65,7 +65,7 @@ export function LoginForm() {
           const res = await fetch("/api/v1/auth/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(values) });
           if (!res.ok) {
             const code = ((await res.json().catch(() => null)) as { error?: { code?: string } } | null)?.error?.code;
-            setFailure(code === "DEACTIVATED" ? "login.deactivated" : code === "TOO_MANY_ATTEMPTS" ? "login.tooMany" : code === "INVALID_CREDENTIALS" ? "login.invalid" : "login.failed");
+            setFailure(code === "DEACTIVATED" ? "login.deactivated" : code === "EMAIL_NOT_VERIFIED" ? "login.notVerified" : code === "TOO_MANY_ATTEMPTS" ? "login.tooMany" : code === "INVALID_CREDENTIALS" ? "login.invalid" : "login.failed");
             return;
           }
           goHome(router, (await res.json()) as Me);
@@ -91,16 +91,24 @@ export function LoginForm() {
   );
 }
 
-/** What the server answers to a login or a signup: where the person goes next. */
-type Me = { type: "SHOP_OWNER" | "CUSTOMER"; id: string; email: string; slug?: string; guestSlug?: string; /** A shop that just signed up: its owner finishes the setup first. */ setup?: boolean };
+/** What the server answers to a login or a signup: where the person goes next (the API: `organization` for a shop owner; the sample data: `slug`, `guestSlug` and `setup`). */
+type Me = {
+  type: "SHOP_OWNER" | "CUSTOMER" | "SUPER_ADMIN"; id: string; email: string; slug?: string; guestSlug?: string; /** A shop that just signed up: its owner finishes the setup first. */ setup?: boolean;
+  organization?: { slug: string; status: "DRAFT" | "ACTIVE" | "SUSPENDED" };
+};
 
-/** The person is logged in: a shop owner goes to the shop, a customer to Today of the customer area (the customer area looks the account up with the email of the guest session). */
+/** The person is logged in: the platform administrator goes to the admin area, a shop owner to the shop, a customer to Today of the customer area. */
 function goHome(router: ReturnType<typeof useRouter>, me: Me) {
-  if (me.type === "SHOP_OWNER") {
-    router.push(me.setup ? `/shopowner/onboarding?shop=${encodeURIComponent(me.slug ?? "")}` : `/shopowner/${me.slug}`);
+  if (me.type === "SUPER_ADMIN") {
+    router.push("/systemadmin");
     return;
   }
-  writeGuestEmail(me.guestSlug ?? "", me.email);
+  if (me.type === "SHOP_OWNER") {
+    const slug = me.organization?.slug ?? me.slug ?? "";
+    router.push(me.setup || me.organization?.status === "DRAFT" ? `/shopowner/onboarding?shop=${encodeURIComponent(slug)}` : `/shopowner/${slug}`);
+    return;
+  }
+  if (me.guestSlug) writeGuestEmail(me.guestSlug, me.email); // (the customer area of the sample data looks the account up with the email of the guest session)
   router.push(`/customer/${me.id}/today`);
 }
 
@@ -126,11 +134,13 @@ export function SignupForm({ initialTab = "customer" }: { initialTab?: SignupKin
 function SignupKindForm({ kind }: { kind: SignupKind }) {
   const t = useTranslations("auth");
   const router = useRouter();
+  const locale = useLocale();
   const [failure, setFailure] = useState<string | null>(null);
+  const [checkEmail, setCheckEmail] = useState(false);
   const owner = kind === "owner";
   const form = useForm<OwnerValues>({
     resolver: zodResolver(owner ? ownerSchema : customerSchema) as never,
-    defaultValues: { email: "", password: "", confirm: "", shopName: "" },
+    defaultValues: { email: "", password: "", confirm: "", shopName: "", consent: false },
   });
   const { register, handleSubmit, setError, control, formState: { errors, isSubmitting } } = form;
   const shopName = useWatch({ control, name: "shopName" });
@@ -139,6 +149,8 @@ function SignupKindForm({ kind }: { kind: SignupKind }) {
   // The address the shop will get (the server adds a number when the name is already taken).
   const slug = owner && shopName.trim() ? generateShopSlug(shopName, () => false) : "";
 
+  if (checkEmail) return <SuccessNotice title={t("signup.checkEmailTitle")} body={t("signup.checkEmailBody")} />;
+
   return (
     <form
       noValidate
@@ -146,10 +158,16 @@ function SignupKindForm({ kind }: { kind: SignupKind }) {
       data-testid={`signup-form-${kind}`}
       onSubmit={handleSubmit(async (v) => {
         setFailure(null);
-        const body = { type: owner ? "SHOP_OWNER" : "CUSTOMER", email: v.email, password: v.password, confirmPassword: v.confirm, ...(owner ? { shopName: v.shopName } : {}) };
+        const body = { type: owner ? "SHOP_OWNER" : "CUSTOMER", email: v.email, password: v.password, confirmPassword: v.confirm, locale, ...(owner ? { shopName: v.shopName } : {}) };
         try {
           const res = await fetch("/api/v1/auth/signup", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
-          if (res.status === 201) return goHome(router, (await res.json()) as Me);
+          if (res.status === 202) return setCheckEmail(true); // the email has to be confirmed first (the answer is the same for a new and an existing email)
+          if (res.status === 201) {
+            const me = (await res.json()) as Me;
+            // The proof of the box (the version of the Terms and of the Privacy Policy and the time). A failure here is not the end of the signup: the area asks again before the person goes on.
+            await fetch("/api/v1/legal/consent", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ kinds: ["terms", "privacy"], locale }) }).catch(() => null);
+            return goHome(router, me);
+          }
           const j = (await res.json().catch(() => null)) as { error?: { code?: string; details?: { fields?: Record<string, string> } } } | null;
           const f = j?.error?.details?.fields ?? {};
           if (res.status === 409) return setError("email", { message: "errors.emailTaken" });
@@ -186,12 +204,25 @@ function SignupKindForm({ kind }: { kind: SignupKind }) {
         <Input id={id("confirm")} type="password" autoComplete="new-password" aria-invalid={!!errors.confirm}
           aria-describedby={describedBy(id("confirm"), { error: !!errors.confirm })} {...register("confirm")} />
       </Field>
-      <p className="text-xs text-muted-foreground">
-        {t.rich("signup.consent", {
-          terms: (c) => <Link href="/terms" className="underline underline-offset-4">{c}</Link>,
-          privacy: (c) => <Link href="/privacy" className="underline underline-offset-4">{c}</Link>,
-        })}
-      </p>
+      <div className="grid gap-1">
+        <div className="flex items-start gap-2">
+          <Controller
+            control={control}
+            name="consent"
+            render={({ field }) => (
+              <Checkbox id={id("consent")} checked={field.value} onCheckedChange={(v) => field.onChange(v === true)} onBlur={field.onBlur} aria-invalid={!!errors.consent}
+                aria-describedby={errors.consent ? `${id("consent")}-error` : undefined} data-testid={`signup-consent-${kind}`} className="mt-0.5" />
+            )}
+          />
+          <label htmlFor={id("consent")} className="text-sm text-muted-foreground">
+            {t.rich("signup.consent", {
+              terms: (c) => <Link href="/terms" target="_blank" className="underline underline-offset-4">{c}</Link>,
+              privacy: (c) => <Link href="/privacy" target="_blank" className="underline underline-offset-4">{c}</Link>,
+            })}
+          </label>
+        </div>
+        {errors.consent ? <p id={`${id("consent")}-error`} role="alert" className="text-sm text-destructive">{t(errors.consent.message as string)}</p> : null}
+      </div>
       <Button type="submit" size="lg" disabled={isSubmitting} data-testid={`signup-submit-${kind}`}>{isSubmitting ? t("signup.submitting") : t("signup.submit")}</Button>
     </form>
   );
@@ -206,7 +237,11 @@ export function ForgotPasswordForm() {
   if (done) return <SuccessNotice title={t("forgot.sentTitle")} body={t("forgot.sentBody")} />;
 
   return (
-    <form noValidate className="grid gap-4" onSubmit={handleSubmit(async () => { await fakeRequest(); setDone(true); })}>
+    <form noValidate className="grid gap-4" onSubmit={handleSubmit(async (v) => {
+      // The answer is the same for an email that has an account and one that has none (nobody learns which emails are registered): the notice is shown after any answer of the server.
+      await fetch("/api/v1/auth/forgot-password", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: v.email }) }).catch(() => null);
+      setDone(true);
+    })}>
       <Field htmlFor="forgot-email" label={t("fields.email")} error={errors.email?.message ? t(errors.email.message) : undefined}>
         <Input id="forgot-email" type="email" autoComplete="email" aria-invalid={!!errors.email}
           aria-describedby={describedBy("forgot-email", { error: !!errors.email })} {...register("email")} />
@@ -221,7 +256,7 @@ export function ResetPasswordForm() {
   const token = useSearchParams().get("token") ?? "";
   const [done, setDone] = useState(false);
   const [invalid, setInvalid] = useState(false);
-  const form = useForm<ResetValues>({ resolver: zodResolver(resetSchema), defaultValues: { tempPassword: "", password: "", confirm: "" } });
+  const form = useForm<ResetValues>({ resolver: zodResolver(resetSchema), defaultValues: { password: "", confirm: "" } });
   const { register, handleSubmit, setError, formState: { errors, isSubmitting } } = form;
   const err = (k: keyof ResetValues) => (errors[k]?.message ? t(errors[k]!.message as string) : undefined);
 
@@ -241,20 +276,16 @@ export function ResetPasswordForm() {
       noValidate
       className="grid gap-4"
       onSubmit={handleSubmit(async (v) => {
-        const res = await fetch("/api/v1/auth/reset-password", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ token, tempPassword: v.tempPassword, newPassword: v.password }) }).catch(() => null);
+        const res = await fetch("/api/v1/auth/reset-password", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ token, password: v.password, confirmPassword: v.confirm }) }).catch(() => null);
         if (res?.ok) return setDone(true);
         const body = (await res?.json().catch(() => null)) as { error?: { code?: string; details?: { fields?: Record<string, string> } } } | null;
-        if (body?.error?.code === "INVALID_LINK") return setInvalid(true);
+        if (body?.error?.code === "TOKEN_INVALID" || body?.error?.code === "INVALID_LINK") return setInvalid(true);
         const fields = body?.error?.details?.fields ?? {};
-        if (fields.tempPassword) setError("tempPassword", { message: "errors.tempWrong" });
-        else if (fields.newPassword) setError("password", { message: fields.newPassword === "samePassword" ? "errors.samePassword" : fields.newPassword === "weak" ? "errors.passwordMin" : "errors.passwordMax" });
-        else setError("tempPassword", { message: "errors.resetFailed" });
+        if (fields.password) setError("password", { message: fields.password === "tooLong" ? "errors.passwordMax" : "errors.passwordMin" });
+        else if (fields.confirmPassword) setError("confirm", { message: "errors.passwordMismatch" });
+        else setError("password", { message: "errors.resetFailed" });
       })}
     >
-      <Field htmlFor="reset-temp" label={t("reset.tempPassword")} hint={t("reset.tempHint")} error={err("tempPassword")}>
-        <Input id="reset-temp" type="password" autoComplete="one-time-code" aria-invalid={!!errors.tempPassword}
-          aria-describedby={describedBy("reset-temp", { error: !!errors.tempPassword, hint: true })} {...register("tempPassword")} />
-      </Field>
       <Field htmlFor="reset-password" label={t("reset.newPassword")} hint={t("signup.passwordHint")} error={err("password")}>
         <Input id="reset-password" type="password" autoComplete="new-password" aria-invalid={!!errors.password}
           aria-describedby={describedBy("reset-password", { error: !!errors.password, hint: true })} {...register("password")} />

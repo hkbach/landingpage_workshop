@@ -1,12 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { DEMO_SHOP_SLUG, SHOP_SECTIONS } from "@/lib/shop-path";
-import { slugForDomain } from "@/lib/mock/shop-domain-store";
+import { slugForOwnDomain } from "@/lib/own-domain";
 import { buildCsp, newNonce } from "@/lib/csp";
 
 const PLATFORM_DOMAIN = process.env.PLATFORM_DOMAIN ?? "localtest.me";
 
 // Host routing (REQUIREMENTS 3.3): {slug}.PLATFORM_DOMAIN -> /sites/{slug}/...
-function route(request: NextRequest, requestHeaders: Headers) {
+async function route(request: NextRequest, requestHeaders: Headers) {
   // The shop owner area has the slug of the shop in its address; an old address such as /shopowner/bookings is sent there.
   const legacy = request.nextUrl.pathname.match(/^\/shopowner\/([^/]+)(\/.*)?$/);
   if ((SHOP_SECTIONS as readonly string[]).includes(legacy?.[1] ?? "")) {
@@ -16,7 +16,9 @@ function route(request: NextRequest, requestHeaders: Headers) {
   }
   const host = (request.headers.get("host") ?? "").split(":")[0]!.toLowerCase();
   // The own domain of a shop (shop.example.com): the whole host is the landing page of that shop, like {slug}.PLATFORM_DOMAIN (so never the admin or the owner area on that origin).
-  const own = slugForDomain(host);
+  // (a platform host is never an own domain: no need to ask)
+  const isPlatformHost = host === PLATFORM_DOMAIN || host.endsWith(`.${PLATFORM_DOMAIN}`) || host === "localhost";
+  const own = isPlatformHost ? undefined : await slugForOwnDomain(host);
   if (own) {
     const url = request.nextUrl.clone();
     url.pathname = `/sites/${own}${url.pathname === "/" ? "" : url.pathname}`;
@@ -43,7 +45,7 @@ function route(request: NextRequest, requestHeaders: Headers) {
  * Every page answer carries a Content-Security-Policy with the nonce of its own request (see lib/csp.ts). The nonce also goes to the page in the request headers, where Next reads it and
  * puts it on its own scripts.
  */
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const nonce = newNonce();
   const csp = buildCsp({
     nonce, dev: process.env.NODE_ENV !== "production", upgradeInsecure: process.env.NODE_ENV === "production" && process.env.CSP_UPGRADE_INSECURE !== "false", // (off only to try the production image over plain http on this machine)
@@ -52,7 +54,7 @@ export function proxy(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-nonce", nonce);
   requestHeaders.set("content-security-policy", csp);
-  const response = route(request, requestHeaders);
+  const response = await route(request, requestHeaders);
   response.headers.set("content-security-policy", csp);
   return response;
 }

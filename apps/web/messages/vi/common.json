@@ -37,5 +37,13 @@
     "page": "Trang {page} / {pages}"
   },
   "close": "Đóng",
-  "appDescription": "Landing page và đặt chỗ cho các studio workshop."
+  "appDescription": "Landing page và đặt chỗ cho các studio workshop.",
+  "consent": {
+    "title": "Điều khoản và Chính sách quyền riêng tư đã được cập nhật",
+    "body": "Chúng tôi đã thay đổi Điều khoản dịch vụ hoặc Chính sách quyền riêng tư. Vui lòng đọc và chấp nhận để tiếp tục.",
+    "agree": "Tôi đồng ý với <terms>Điều khoản dịch vụ</terms> và <privacy>Chính sách quyền riêng tư</privacy>.",
+    "accept": "Chấp nhận và tiếp tục",
+    "logout": "Đăng xuất",
+    "failed": "Không lưu được lựa chọn của bạn. Vui lòng thử lại."
+  }
 }

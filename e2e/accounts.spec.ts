@@ -48,6 +48,7 @@ test.describe("signing up", () => {
     const password = "A-long-enough-password-1";
     await dialog.getByRole("textbox", { name: "Password", exact: true }).fill(password);
     await dialog.getByRole("textbox", { name: "Re-enter password" }).fill(password);
+    await dialog.getByRole("checkbox").check(); // the Terms and the Privacy Policy
     await dialog.getByRole("button", { name: "Create account" }).click();
     await page.waitForURL(/\/customer\//, { timeout: 90_000, waitUntil: "domcontentloaded" });
   });
@@ -61,6 +62,7 @@ test.describe("signing up", () => {
     const password = "A-long-enough-password-1";
     await dialog.getByRole("textbox", { name: "Password", exact: true }).fill(password);
     await dialog.getByRole("textbox", { name: "Re-enter password" }).fill(password);
+    await dialog.getByRole("checkbox").check(); // the Terms and the Privacy Policy
     await dialog.getByRole("button", { name: "Create account" }).click();
     await page.waitForURL(/\/shopowner\/onboarding\?shop=e2e-pottery-/, { timeout: 90_000, waitUntil: "domcontentloaded" });
   });

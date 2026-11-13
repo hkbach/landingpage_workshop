@@ -16,6 +16,7 @@ import type { SupportContact } from "@/lib/support-contact";
 import { GuestLoginForm } from "@/components/site/FavoritesProvider";
 import { CustomerApiError, fetchCustomerProfile, type CustomerProfile } from "@/lib/customer-api";
 import { readGuestEmail, subscribeFavorites, writeGuestEmail } from "@/lib/favorites";
+import { endSession } from "@/lib/logout";
 import type { PageTheme } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -70,7 +71,7 @@ export function CustomerShell({ accountId, shop, theme, loginRequired, support, 
     queryKey: ["customer", accountId, loginRequired ? stored : "no-login"], queryFn: () => fetchCustomerProfile(accountId, loginRequired ? stored! : undefined), enabled: open, retry: false,
   });
   const [menuOpen, setMenuOpen] = useState(false);
-  const logout = () => { writeGuestEmail(shop.slug, null); queryClient.removeQueries({ queryKey: ["customer"] }); router.push(`/sites/${shop.slug}`); };
+  const logout = () => { writeGuestEmail(shop.slug, null); queryClient.removeQueries({ queryKey: ["customer"] }); void endSession().then(() => router.push(`/sites/${shop.slug}`)); };
   // The menu of a phone is a drawer: Escape closes it, and it never stays open on another page.
   useEffect(() => {
     if (!menuOpen) return;

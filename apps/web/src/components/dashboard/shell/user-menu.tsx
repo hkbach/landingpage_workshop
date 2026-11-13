@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { LogOut, User } from "lucide-react";
+import { LogoutLink } from "@/components/auth/logout-link";
 import { buttonVariants } from "@/components/ui/button";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel,
@@ -25,7 +25,7 @@ export function UserMenu({ name, email }: { name: string; email: string }) {
           </DropdownMenuLabel>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem render={<Link href="/login" />}>
+        <DropdownMenuItem render={<LogoutLink />}>
           <LogOut aria-hidden />
           {t("logout")}
         </DropdownMenuItem>

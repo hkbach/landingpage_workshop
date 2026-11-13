@@ -26,6 +26,12 @@ const nextConfig: NextConfig = {
       ...["/systemadmin/:path*", "/systemadmin", "/shopowner/:path*", "/shopowner", "/customer/:path*", "/login", "/signup", "/reset-password", "/forgot-password"].map((source) => ({ source, headers: noFraming })),
     ];
   },
+  // Connected to the API (API_URL set when the server starts and when it is built): the browser keeps calling /api/v1/* on its own origin, and the web server hands the call to the API
+  // (the cookie of the session goes along, so there is no CORS). `beforeFiles`: it wins over the sample-data routes of app/api/v1. Not set: the sample-data routes answer, as before.
+  async rewrites() {
+    const api = (process.env.API_URL ?? "").replace(/\/+$/, "");
+    return api ? { beforeFiles: [{ source: "/api/v1/:path*", destination: `${api}/api/v1/:path*` }], afterFiles: [], fallback: [] } : [];
+  },
   // The shop owner area moved from /dashboard to /shopowner; old links and bookmarks keep working (query strings are kept).
   async redirects() {
     return [

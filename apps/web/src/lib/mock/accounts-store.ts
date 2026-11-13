@@ -158,19 +158,19 @@ export type CompleteResetResult =
   | { ok: false; code: "INVALID_LINK" | "WRONG_TEMP_PASSWORD" | "WEAK_PASSWORD" | "SAME_PASSWORD" };
 
 /** The person opens the link: the temporary password of the email plus a new password. The link works once; 5 wrong temporary passwords burn it. */
-export function completePasswordReset(token: string, tempPassword: string, newPassword: string, now = Date.now()): CompleteResetResult {
+export function completePasswordReset(token: string, tempPassword: string | null, newPassword: string, now = Date.now()): CompleteResetResult {
   const reset = store().resets.get(hashToken(token));
   if (!reset || reset.expiresAt <= now) {
     if (reset) store().resets.delete(reset.tokenHash);
     return { ok: false, code: "INVALID_LINK" };
   }
-  if (!verifyPassword(tempPassword, reset.tempHash)) {
+  if (tempPassword !== null && !verifyPassword(tempPassword, reset.tempHash)) { // (null: the link alone is the proof, as in the real API)
     reset.attempts += 1;
     if (reset.attempts >= MAX_RESET_ATTEMPTS) store().resets.delete(reset.tokenHash);
     return { ok: false, code: reset.attempts >= MAX_RESET_ATTEMPTS ? "INVALID_LINK" : "WRONG_TEMP_PASSWORD" };
   }
   if (checkPassword(newPassword) !== "OK") return { ok: false, code: "WEAK_PASSWORD" };
-  if (newPassword === tempPassword) return { ok: false, code: "SAME_PASSWORD" };
+  if (tempPassword !== null && newPassword === tempPassword) return { ok: false, code: "SAME_PASSWORD" };
   store().passwords.set(reset.accountId, hashPassword(newPassword));
   store().resets.delete(reset.tokenHash);
   setAccountStatus(reset.accountId, "ACTIVE");

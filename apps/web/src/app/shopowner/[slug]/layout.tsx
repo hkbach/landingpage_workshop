@@ -1,6 +1,7 @@
 
 import { notFound } from "next/navigation";
 import { currentShop } from "@/lib/mock/data";
+import { requireArea } from "@/lib/api-server";
 import { NewShopWelcome } from "@/components/dashboard/new-shop-welcome";
 import { liveShop, liveShops } from "@/lib/mock/shop-admin-store";
 import { isOnboarded } from "@/lib/mock/registered-shops-store";
@@ -11,6 +12,7 @@ import { ShopStatusBanner } from "@/components/dashboard/shell/shop-status-banne
 // The slug in /shopowner/{slug}/... is the slug of the shop and never changes. TODO(api): the shop of the session's organization.
 export default async function DashboardLayout({ children, params }: LayoutProps<"/shopowner/[slug]">) {
   const { slug } = await params;
+  await requireArea("SHOP_OWNER", (me) => me.organization?.slug === slug); // connected to the API: the owner of THIS shop, with a session
   const isDemo = slug === currentShop.slug;
   // The demo shop has the tools of the owner area; a shop that signed up (or another demo shop) has its own address and the welcome page for now.
   const known = isDemo ? undefined : liveShops().find((s) => s.slug === slug);
