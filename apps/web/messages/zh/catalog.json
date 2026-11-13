@@ -56,7 +56,8 @@
     "allStatuses": "所有状态",
     "noMatch": "没有符合搜索或筛选条件的工作坊。",
     "address": "地址",
-    "addressNote": "地址备注"
+    "addressNote": "地址备注",
+    "createdReal": "工作坊已创建为草稿。准备好后请在列表中启用。"
   },
   "detail": {
     "tabDetails": "详情",
@@ -139,7 +140,8 @@
     "pastStart": "开始时间不能是过去。请选择更晚的日期和时间。",
     "addressTooLong": "地址最多 {max} 个字符。",
     "addressNoteTooLong": "备注最多 {max} 个字符。",
-    "categoriesRequired": "请至少选择 1 个类别（最多 3 个）。"
+    "categoriesRequired": "请至少选择 1 个类别（最多 3 个）。",
+    "saveFailed": "无法保存工作坊。请检查各项内容后重试。"
   },
   "rules": {
     "title": "排期规则",

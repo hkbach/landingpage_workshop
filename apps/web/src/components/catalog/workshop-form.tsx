@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { z } from "zod";
 import { ImageOff, MapPin, Plus, Trash2, TriangleAlert } from "lucide-react";
@@ -30,6 +31,8 @@ export interface ShopForCatalog {
   currency: string; timezone: string; defaultLocale: Locale; enabledLocales: Locale[];
   /** The address of the shop: the one a workshop without an address of its own is held at (said under the field). */
   address?: string;
+  /** Connected to the API: Save sends the workshop to the server (the sample data only simulates it). */
+  viaApi?: boolean;
 }
 
 interface Draft {
@@ -72,6 +75,8 @@ export function WorkshopForm({
 }) {
   const t = useTranslations("catalog");
   const locale = useLocale();
+  const router = useRouter();
+  const [saving, setSaving] = useState(false);
   const [d, setD] = useState<Draft>(() => toDraft(workshop, shop.currency));
   const [lang, setLang] = useEditingLanguage(shop.enabledLocales, shop.defaultLocale);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -122,10 +127,56 @@ export function WorkshopForm({
     }
     setErrors({});
     // Every text is trimmed when the form is submitted (the form then shows what was saved).
-    setD((p) => trimDeep(p));
+    const clean = trimDeep(d);
+    setD(clean);
+    if (shop.viaApi) {
+      void saveToServer(clean);
+      return;
+    }
     setSaved(true); setVersion((v) => v + 1);
     onStatusChange?.(d.status);
     onSaved?.();
+  }
+
+  /** POST (new) or PUT (edit) to the API: the price goes in minor units, one include per line. A refusal puts the server's codes on the fields. */
+  async function saveToServer(clean: Draft) {
+    if (saving) return;
+    setSaving(true);
+    const body = {
+      title: clean.title, shortDescription: clean.shortDescription, description: clean.description, notes: clean.notes,
+      includes: Object.fromEntries(LOCALES.map((l) => [l, (clean.includes[l] ?? "").split("\n").map((x) => x.trim()).filter(Boolean)])),
+      durationMinutes: num(clean.durationMinutes), priceAmount: Math.round(num(clean.price) * 10 ** minorDigits(shop.currency)), defaultCapacity: num(clean.defaultCapacity),
+      maxPerBooking: num(clean.maxPerBooking), coverUrl: clean.coverUrl.trim(), galleryUrls: clean.galleryUrls.map((u) => u.trim()).filter(Boolean), categories: clean.categories,
+      address: clean.address, addressNote: clean.addressNote, sortOrder: num(clean.sortOrder),
+    };
+    try {
+      const res = await fetch(workshop ? `/api/v1/workshops/${encodeURIComponent(workshop.id)}` : "/api/v1/workshops", { method: workshop ? "PUT" : "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+      if (!res.ok) {
+        const payload = (await res.json().catch(() => null)) as { error?: { details?: { fields?: Record<string, string> } } } | null;
+        const fields = payload?.error?.details?.fields ?? {};
+        const next: Record<string, string> = {};
+        for (const [field, code] of Object.entries(fields)) {
+          const key = `errors.${code === "required" && field.startsWith("title") ? "titleRequired" : code}`;
+          next[field.startsWith("title") ? `title.${shop.defaultLocale}` : field] = t.has(key as never) ? key : "errors.saveFailed";
+        }
+        setErrors(Object.keys(next).length > 0 ? next : { form: "errors.saveFailed" });
+        setSaved(false);
+        return;
+      }
+      // A new workshop is a draft; the owner may have chosen to switch it on at once.
+      if (!workshop && clean.status === "ACTIVE") {
+        const made = (await res.json().catch(() => null)) as { id?: string } | null;
+        if (made?.id) await fetch(`/api/v1/workshops/${encodeURIComponent(made.id)}/status`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ status: "ACTIVE" }) }).catch(() => null);
+      }
+      setSaved(true); setVersion((v) => v + 1);
+      onStatusChange?.(clean.status);
+      router.refresh();
+      onSaved?.();
+    } catch {
+      setErrors({ form: "errors.saveFailed" });
+    } finally {
+      setSaving(false);
+    }
   }
 
   const err = (k: string) => (errors[k] ? t(errors[k]) : undefined);
@@ -322,7 +373,8 @@ export function WorkshopForm({
       ) : null}
 
       <div className="flex flex-wrap items-center gap-2">
-        <Button type="submit" disabled={!dirty}>{t("form.save")}</Button>
+        {errors.form ? <p role="alert" className="text-sm text-destructive" data-testid="workshop-save-error">{t(errors.form)}</p> : null}
+        <Button type="submit" disabled={!dirty || saving}>{t("form.save")}</Button>
         {onCancel ? (
           <Button type="button" variant="outline" onClick={onCancel}>{t("form.cancel")}</Button>
         ) : (

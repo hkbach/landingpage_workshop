@@ -56,7 +56,8 @@
     "allStatuses": "すべてのステータス",
     "noMatch": "検索条件に一致するワークショップがありません。",
     "address": "住所",
-    "addressNote": "住所のメモ"
+    "addressNote": "住所のメモ",
+    "createdReal": "ワークショップを下書きとして作成しました。準備ができたら一覧から有効にしてください。"
   },
   "detail": {
     "tabDetails": "詳細",
@@ -139,7 +140,8 @@
     "pastStart": "開始日時は過去にできません。より後の日付と時刻を選択してください。",
     "addressTooLong": "住所は{max}文字以内で入力してください。",
     "addressNoteTooLong": "メモは{max}文字以内で入力してください。",
-    "categoriesRequired": "カテゴリを1個以上（最大3個）選んでください。"
+    "categoriesRequired": "カテゴリを1個以上（最大3個）選んでください。",
+    "saveFailed": "ワークショップを保存できませんでした。入力内容を確認して、もう一度お試しください。"
   },
   "rules": {
     "title": "スケジュールルール",

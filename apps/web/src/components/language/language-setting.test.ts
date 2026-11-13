@@ -1,7 +1,10 @@
 import { createElement, type ComponentType, type ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { NextIntlClientProvider } from "next-intl";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+// The form refreshes the page after it saved (a router is not mounted when it is rendered to a string).
+vi.mock("next/navigation", async (original) => ({ ...(await original<typeof import("next/navigation")>()), useRouter: () => ({ refresh: () => undefined, push: () => undefined }) }));
 import type { Locale } from "@workshop/shared";
 import builder from "../../../messages/en/builder.json";
 import catalog from "../../../messages/en/catalog.json";

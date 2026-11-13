@@ -56,7 +56,8 @@
     "allStatuses": "All statuses",
     "noMatch": "No workshops match your search or filter.",
     "address": "Address",
-    "addressNote": "Address note"
+    "addressNote": "Address note",
+    "createdReal": "Workshop created as a draft. Activate it from the list when it is ready."
   },
   "detail": {
     "tabDetails": "Details",
@@ -139,7 +140,8 @@
     "pastStart": "The start cannot be in the past. Choose a later date and time.",
     "addressTooLong": "The address can have at most {max} characters.",
     "addressNoteTooLong": "The note can have at most {max} characters.",
-    "categoriesRequired": "Choose at least 1 category (up to 3)."
+    "categoriesRequired": "Choose at least 1 category (up to 3).",
+    "saveFailed": "Could not save the workshop. Check the fields and try again."
   },
   "rules": {
     "title": "Schedule rules",

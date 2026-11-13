@@ -56,7 +56,8 @@
     "allStatuses": "Tất cả trạng thái",
     "noMatch": "Không có workshop nào khớp với tìm kiếm hoặc bộ lọc.",
     "address": "Địa chỉ",
-    "addressNote": "Ghi chú địa chỉ"
+    "addressNote": "Ghi chú địa chỉ",
+    "createdReal": "Đã tạo workshop ở dạng nháp. Hãy kích hoạt trong danh sách khi sẵn sàng."
   },
   "detail": {
     "tabDetails": "Chi tiết",
@@ -139,7 +140,8 @@
     "pastStart": "Giờ bắt đầu không được ở quá khứ. Hãy chọn ngày giờ muộn hơn.",
     "addressTooLong": "Địa chỉ tối đa {max} ký tự.",
     "addressNoteTooLong": "Ghi chú tối đa {max} ký tự.",
-    "categoriesRequired": "Chọn ít nhất 1 danh mục (tối đa 3)."
+    "categoriesRequired": "Chọn ít nhất 1 danh mục (tối đa 3).",
+    "saveFailed": "Không lưu được workshop. Hãy kiểm tra các trường và thử lại."
   },
   "rules": {
     "title": "Quy tắc lịch",

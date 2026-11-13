@@ -20,7 +20,7 @@ export function NewWorkshopDialog({ shop }: { shop: ShopForCatalog }) {
       <Button onClick={() => { setCreated(false); setOpen(true); }} data-testid="new-workshop-button">
         <Plus aria-hidden="true" />{t("list.new")}
       </Button>
-      {created ? <p role="status" data-testid="workshop-created" className="basis-full text-sm font-medium text-emerald-800">{t("list.createdSim")}</p> : null}
+      {created ? <p role="status" data-testid="workshop-created" className="basis-full text-sm font-medium text-emerald-800">{t(shop.viaApi ? "list.createdReal" : "list.createdSim")}</p> : null}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
           <DialogHeader>

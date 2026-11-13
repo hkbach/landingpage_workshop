@@ -10,26 +10,42 @@ import { WorkshopRowActions } from "@/components/catalog/workshop-row-actions";
 import { WorkshopTitleButton } from "@/components/catalog/workshop-title-button";
 import { WorkshopStatusBadge } from "@/components/catalog/workshop-status-badge";
 import { safeImage } from "@/components/sections/safe-url";
-import { currentShop, workshops } from "@/lib/mock/data";
+import { currentShop as sampleShop, workshops } from "@/lib/mock/data";
 import { formatDate } from "@/lib/format";
 import { allPromotions, shopToday } from "@/lib/mock/promotion-store";
 import { ShopLink } from "@/components/dashboard/shell/shop-link";
 import { liveBookings } from "@/lib/mock/booking-store";
+import { realApi } from "@/lib/api-server";
+import { loadOwnShop } from "@/lib/own-shop";
+import { ownPromotions, ownScheduleRules, ownWorkshops } from "@/lib/own-catalog";
+import { fetchAll } from "@/lib/shop-data";
+import { notFound } from "next/navigation";
 import { scheduleRules } from "@/lib/mock/ops";
 import { withWorkshopStatus, workshopSessionStatuses } from "@/lib/mock/workshop-status-store";
 
 export default async function WorkshopsPage() {
   const t = await getTranslations("catalog");
   const locale = (await getLocale()) as Locale;
+  // Connected to the API: the shop, its workshops (with how many sessions are open), its promotions and its schedule rules come from the server. Sample data otherwise.
+  const own = await loadOwnShop();
+  if (realApi() && !own) notFound();
+  const currentShop = own ?? sampleShop;
   const displayLocale = resolveShopLocale(locale, currentShop.enabledLocales, currentShop.defaultLocale);
-  const rows = withWorkshopStatus(workshops).sort((a, b) => a.sortOrder - b.sortOrder);
-  // TODO(api): the promotions of this shop (organization_id), computed by the backend with the workshop list.
-  const promotions = allPromotions();
-  const today = shopToday();
-  const bookings = liveBookings();
-  const shop = { currency: currentShop.currency, timezone: currentShop.timezone, defaultLocale: currentShop.defaultLocale, enabledLocales: currentShop.enabledLocales, address: currentShop.address };
+  const apiRows = own ? await ownWorkshops() : [];
+  const rows = (own ? apiRows : withWorkshopStatus(workshops)).sort((a, b) => a.sortOrder - b.sortOrder);
+  const promoData = own ? await ownPromotions(own.timezone) : null;
+  const promotions = promoData ? promoData.promotions : allPromotions();
+  const today = promoData ? promoData.today : shopToday();
+  const bookings = own ? (await fetchAll<{ workshopId: string }>("/bookings")) : liveBookings();
+  const ruleList = own ? new Map(await Promise.all(rows.map(async (w) => [w.id, await ownScheduleRules(w.id)] as const))) : null;
+  const shop = { currency: currentShop.currency, timezone: currentShop.timezone, defaultLocale: currentShop.defaultLocale, enabledLocales: currentShop.enabledLocales, address: currentShop.address, viaApi: realApi() };
+  const stateOf = (w: (typeof rows)[number]): { open: number; total: number } => {
+    if (own) return (w as (typeof apiRows)[number]).sessions;
+    const states = workshopSessionStatuses(w.id);
+    return { open: openSessionCount(states), total: states.length };
+  };
   /** What the popup of a workshop needs (its details, schedule rules and number of bookings). */
-  const editData = (w: (typeof rows)[number]) => ({ workshop: w, rules: scheduleRules.filter((r) => r.workshopId === w.id), bookingCount: bookings.filter((b) => b.workshopId === w.id).length, shop });
+  const editData = (w: (typeof rows)[number]) => ({ workshop: w, rules: ruleList ? (ruleList.get(w.id) ?? []) : scheduleRules.filter((r) => r.workshopId === w.id), bookingCount: bookings.filter((b) => b.workshopId === w.id).length, shop });
   const title = (p: { title: Parameters<typeof pickLocalized>[0] }) => pickLocalized(p.title, displayLocale, currentShop.defaultLocale);
   const percent = new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 1 });
   // Business dates of a promotion: shown as plain calendar days, whatever the timezone.
@@ -38,8 +54,8 @@ export default async function WorkshopsPage() {
   const items = rows.map((w) => {
     const promo = workshopPromotions(w, promotions, today);
     const money = (n: number) => formatMoney(n, w.currency, locale);
-    const states = workshopSessionStatuses(w.id);
-    const activeSessions = openSessionCount(states);
+    const counts = stateOf(w);
+    const activeSessions = counts.open;
     return {
       id: w.id, status: w.status, search: Object.values(w.title).join(" "),
       row: (
@@ -65,7 +81,7 @@ export default async function WorkshopsPage() {
             ) : null}
           </TableCell>
           <TableCell className="whitespace-nowrap tabular-nums" data-testid="workshop-active-sessions">
-            <span className="font-medium">{activeSessions}</span> <span className="text-xs text-muted-foreground">{t("list.ofTotal", { total: states.length })}</span>
+            <span className="font-medium">{activeSessions}</span> <span className="text-xs text-muted-foreground">{t("list.ofTotal", { total: counts.total })}</span>
           </TableCell>
           <TableCell className="min-w-64 whitespace-normal" data-testid="workshop-promotions">
             {promo.applicable.length === 0 ? (

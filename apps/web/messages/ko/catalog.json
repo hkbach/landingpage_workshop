@@ -56,7 +56,8 @@
     "allStatuses": "모든 상태",
     "noMatch": "검색 또는 필터에 맞는 워크숍이 없습니다.",
     "address": "주소",
-    "addressNote": "주소 메모"
+    "addressNote": "주소 메모",
+    "createdReal": "워크숍이 초안으로 만들어졌습니다. 준비가 되면 목록에서 활성화하세요."
   },
   "detail": {
     "tabDetails": "상세",
@@ -139,7 +140,8 @@
     "pastStart": "시작 시간은 과거일 수 없습니다. 더 늦은 날짜와 시간을 선택하세요.",
     "addressTooLong": "주소는 최대 {max}자까지 입력할 수 있습니다.",
     "addressNoteTooLong": "메모는 최대 {max}자까지 입력할 수 있습니다.",
-    "categoriesRequired": "카테고리를 최소 1개(최대 3개) 선택하세요."
+    "categoriesRequired": "카테고리를 최소 1개(최대 3개) 선택하세요.",
+    "saveFailed": "워크숍을 저장하지 못했습니다. 입력 내용을 확인하고 다시 시도해 주세요."
   },
   "rules": {
     "title": "일정 규칙",
