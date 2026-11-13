@@ -4,6 +4,7 @@ import { Pool } from "pg";
 import { createApp } from "../app";
 import { MemoryEmailProvider } from "../email/email";
 import { NoopJobs } from "../jobs/jobs";
+import type { DnsResolver } from "../organization/dns";
 import { OutboxService } from "../outbox/outbox.service";
 
 export const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL;
@@ -29,12 +30,12 @@ export interface TestApp {
 }
 
 /** Starts the whole API on the test database with emails kept in memory. `env` overrides settings for this app only. */
-export async function startApp(env: Record<string, string> = {}): Promise<TestApp> {
+export async function startApp(env: Record<string, string> = {}, options: { dns?: DnsResolver } = {}): Promise<TestApp> {
   const values = { DATABASE_URL: TEST_DATABASE_URL ?? "", NODE_ENV: "test", ...env };
   const before = Object.fromEntries(Object.keys(values).map((k) => [k, process.env[k]]));
   Object.assign(process.env, values);
   const emails = new MemoryEmailProvider();
-  const app = await createApp({ NODE_ENV: "test", LOG_LEVEL: "silent" }, { emailProvider: emails, jobs: new NoopJobs() });
+  const app = await createApp({ NODE_ENV: "test", LOG_LEVEL: "silent" }, { emailProvider: emails, jobs: new NoopJobs(), ...options });
   await app.init();
   await app.getHttpAdapter().getInstance().ready();
   for (const [k, v] of Object.entries(before)) { if (v === undefined) delete process.env[k]; else process.env[k] = v; } // the app has read its settings

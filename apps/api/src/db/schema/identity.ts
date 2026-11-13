@@ -47,6 +47,9 @@ export const organizations = pgTable(
     mapsUrl: text("maps_url").notNull().default(""),
     /** The platform administrator chose to list the workshops of this shop on the Workshops page of the customers (only while the shop is ACTIVE). */
     showOnCustomerPage: boolean("show_on_customer_page").notNull().default(false),
+    /** The own domain of the shop (D13): the landing page is served there too. One shop for each domain (unique). It counts only once its DNS was checked (`customDomainVerifiedAt`). */
+    customDomain: text("custom_domain").unique(),
+    customDomainVerifiedAt: timestamp("custom_domain_verified_at", { withTimezone: true }),
     /** The last session number used by the shop: "SES-0007" is 7. Bumped atomically (UPDATE ... RETURNING) so two sessions made at once never get the same code. */
     sessionSeq: integer("session_seq").notNull().default(0),
     createdAt: createdAt(),

@@ -14,7 +14,9 @@ export type EmailTemplate =
   | { name: "booking-info"; to: string; data: BookingMailData & { name: string } }
   | { name: "payment-received"; to: string; data: BookingMailData & { name: string; paid: string } }
   /** Written by a platform administrator: plain text (a blank line starts a paragraph), nothing in it is read as HTML. */
-  | { name: "admin-message"; to: string; data: { name?: string; subject: string; body: string } };
+  | { name: "admin-message"; to: string; data: { name?: string; subject: string; body: string } }
+  /** Told to the owner of a shop when the platform administrator changes something of the shop on their behalf (D14, D15). */
+  | { name: "admin-edit-notice"; to: string; data: { name: string; shop: string; what: string; reason: string } };
 
 /** What every booking email says about the booking: already formatted (the time in the time zone of the shop, the money with its currency). */
 export interface BookingMailData { shop: string; code: string; workshop: string; when: string; timezone: string; quantity: number; total: string; address: string }
@@ -137,6 +139,14 @@ ${details(t.data)}`,
         to: t.to, subject,
         text: `${t.data.name ? `Hello ${t.data.name},\n\n` : ""}${paragraphs.join("\n\n")}`,
         html: wrap(`${t.data.name ? `<p>Hello ${name},</p>` : ""}${paragraphs.map((x) => `<p>${escapeHtml(x).replace(/\n/g, "<br>")}</p>`).join("")}`),
+      };
+    }
+    case "admin-edit-notice": {
+      const reason = t.data.reason.trim();
+      return {
+        to: t.to, subject: `The platform changed your shop ${t.data.shop.replace(/[\r\n]+/g, " ")}`,
+        text: `Hello ${t.data.name},\n\nA platform administrator changed ${t.data.what}.${reason ? `\n\nReason: ${reason}` : ""}\n\nYou can see and change it in your dashboard; the latest save wins.`,
+        html: wrap(`<p>Hello ${name},</p><p>A platform administrator changed ${escapeHtml(t.data.what)}.</p>${reason ? `<p>Reason: ${escapeHtml(reason)}</p>` : ""}<p>You can see and change it in your dashboard; the latest save wins.</p>`),
       };
     }
     case "password-changed":

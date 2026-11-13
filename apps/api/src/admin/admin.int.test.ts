@@ -178,7 +178,8 @@ d("the platform administrator", () => {
   it("an administrator has no way to change the slug of a shop (it never changes, not even for them)", async () => {
     for (const method of ["PATCH", "PUT"] as const) {
       const res = await t.app.inject({ method, url: `/api/v1/admin/organizations/${owner.orgId}`, remoteAddress: "10.1.1.1", headers: { origin: "http://app.localtest.me:3000", cookie: admin.cookie }, payload: { slug: "hijacked" } });
-      expect(res.statusCode).toBe(404);
+      // PUT does not exist; PATCH is the edit of a shop, which ignores a slug in the body (the slug is not a field of it)
+      expect(res.statusCode).toBe(method === "PATCH" ? 200 : 404);
     }
     await expect(t.pool.query("update organizations set slug = 'hijacked-shop' where id = $1", [owner.orgId])).rejects.toThrow(/cannot be changed/);
     expect((await getA(`/organizations/${owner.orgId}`)).json().slug).toBe(owner.slug);

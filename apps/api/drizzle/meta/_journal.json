@@ -176,6 +176,13 @@
       "when": 1794544350878,
       "tag": "0024_outbox_email_list",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1794544847663,
+      "tag": "0025_custom_domain",
+      "breakpoints": true
     }
   ]
 }

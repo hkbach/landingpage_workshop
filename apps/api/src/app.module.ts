@@ -15,6 +15,8 @@ import { EmailsService } from "./platform/emails.service";
 import { InboxService } from "./platform/inbox.service";
 import { AdminPlatformController, PublicPlatformController, SupportContactController } from "./platform/platform.controller";
 import { PlatformService } from "./platform/platform.service";
+import { DirectoryController } from "./admin/directory.controller";
+import { DirectoryService } from "./admin/directory.service";
 import { AuditService } from "./audit/audit.service";
 import { BookingsController, CustomersController } from "./bookings/bookings.controller";
 import { BookingsService } from "./bookings/bookings.service";
@@ -42,7 +44,10 @@ import { FinanceService } from "./finance/finance.service";
 import { HealthController } from "./health/health.controller";
 import { createJobs, JOBS, type JobsPort } from "./jobs/jobs";
 import { MaintenanceService } from "./jobs/maintenance";
+import { DNS, SystemDns, type DnsResolver } from "./organization/dns";
 import { OrganizationController } from "./organization/organization.controller";
+import { AdminShopSettingsController, PublicDomainController, ShopSettingsController } from "./organization/shop-settings.controller";
+import { ShopSettingsService } from "./organization/shop-settings.service";
 import { SitePagesController } from "./site/site-pages.controller";
 import { SitePagesService } from "./site/site-pages.service";
 import { AdminWalletController, WalletController } from "./wallet/wallet.controller";
@@ -50,7 +55,7 @@ import { WalletService } from "./wallet/wallet.service";
 import { OutboxService } from "./outbox/outbox.service";
 
 /** What a test (or another entry point) may replace: how emails leave and how the worker is woken. */
-export interface AppOptions { emailProvider?: EmailProvider; jobs?: JobsPort }
+export interface AppOptions { emailProvider?: EmailProvider; jobs?: JobsPort; dns?: DnsResolver }
 
 /** The services of the business (shared by the API and the worker). */
 export const CORE_PROVIDERS = [AuditService, OutboxService];
@@ -63,11 +68,12 @@ export class AppModule implements OnApplicationShutdown {
     return {
       module: AppModule,
       imports: [EnvModule, DbModule],
-      controllers: [HealthController, AuthController, OrganizationController, WorkshopsController, SessionsController, ScheduleRulesController, PublicController, BookingsController, CustomersController, SitePagesController, AdminController, FinanceController, AdminFinanceController, WalletController, AdminWalletController, CustomerAffiliateController, PublicAffiliateController, AdminAffiliateController, DashboardController, PromotionsController, AdminPromotionsController, CustomerController, ShopRatingsController, AdminRatingsController, PublicPlatformController, SupportContactController, AdminPlatformController],
+      controllers: [HealthController, AuthController, OrganizationController, WorkshopsController, SessionsController, ScheduleRulesController, PublicController, BookingsController, CustomersController, SitePagesController, AdminController, FinanceController, AdminFinanceController, WalletController, AdminWalletController, CustomerAffiliateController, PublicAffiliateController, AdminAffiliateController, DashboardController, PromotionsController, AdminPromotionsController, CustomerController, ShopRatingsController, AdminRatingsController, PublicPlatformController, SupportContactController, AdminPlatformController, ShopSettingsController, AdminShopSettingsController, PublicDomainController, DirectoryController],
       providers: [
         { provide: EMAIL_PROVIDER, inject: [ENV], useFactory: (env: Env) => options.emailProvider ?? createEmailProvider(env) },
+        { provide: DNS, useFactory: () => options.dns ?? new SystemDns() },
         { provide: JOBS, inject: [ENV], useFactory: (env: Env) => options.jobs ?? createJobs(env) },
-        ...CORE_PROVIDERS, WorkshopsService, SessionsService, ScheduleService, MaintenanceService, SessionCapacityService, PublicBookingsService, BookingsService, CustomersService, SitePagesService, AdminService, FinanceService, FeesService, WalletService, AffiliateService, DashboardService, PromotionsService, CustomerService, RatingsService, PlatformService, InboxService, EmailsService, AuthService, TurnstileService, AuthGuard, TenantGuard, PlatformAdminGuard,
+        ...CORE_PROVIDERS, WorkshopsService, SessionsService, ScheduleService, MaintenanceService, SessionCapacityService, PublicBookingsService, BookingsService, CustomersService, SitePagesService, AdminService, FinanceService, FeesService, WalletService, AffiliateService, DashboardService, PromotionsService, CustomerService, RatingsService, PlatformService, InboxService, EmailsService, ShopSettingsService, DirectoryService, AuthService, TurnstileService, AuthGuard, TenantGuard, PlatformAdminGuard,
         { provide: APP_FILTER, useClass: ErrorFilter },
         { provide: APP_GUARD, useClass: OriginGuard },
       ],
