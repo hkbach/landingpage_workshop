@@ -1,5 +1,6 @@
 "use client";
 
+import { ServerRefusedNotice } from "./server-notice";
 import { useLocale, useTranslations } from "next-intl";
 import { Clock, Users } from "lucide-react";
 import { formatMoney, isSessionFinished, pickLocalized, resolveShopLocale, type Locale } from "@workshop/shared";
@@ -18,11 +19,11 @@ export interface ShopCtx { timezone: string; currency: string; defaultLocale: Lo
 
 /** FR-OPS-01 "Today": sessions of the day with a tap-friendly guest list and quick actions. */
 export function TodayView({
-  bookings, sessions, customers, workshops, shop, nowIso,
-}: { bookings: Booking[]; sessions: Session[]; customers: Customer[]; workshops: Workshop[]; shop: ShopCtx; nowIso: string }) {
+  bookings, sessions, customers, workshops, shop, nowIso, viaApi,
+}: { bookings: Booking[]; sessions: Session[]; customers: Customer[]; workshops: Workshop[]; shop: ShopCtx; nowIso: string; viaApi?: boolean }) {
   const t = useTranslations("ops");
   const locale = useLocale() as Locale;
-  const ops = useOpsState({ bookings, sessions, nowIso, actor: shop.ownerName });
+  const ops = useOpsState({ bookings, sessions, nowIso, actor: shop.ownerName, ...(viaApi ? { viaApi } : {}) });
   const today = dayKey(nowIso, shop.timezone);
   const todays = ops.sessions
     .filter((s) => dayKey(s.startsAt, shop.timezone) === today)
@@ -48,6 +49,7 @@ export function TodayView({
         </p>
       </header>
 
+      <ServerRefusedNotice show={ops.serverError} />
       <dl className="grid grid-cols-2 gap-2 sm:grid-cols-5 lg:max-w-3xl" data-testid="today-stats">
         <Stat label={t("today.sessions")} value={todays.length} />
         <Stat label={t("today.guestsExpected")} value={expected} />

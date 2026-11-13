@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { Pencil, Plus, Trash2, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -27,16 +28,32 @@ function useWeekdayNames(): string[] {
 }
 
 /** FR-SCHED-01: recurring schedule rules for a workshop (mock state only). */
-export function ScheduleRulesEditor({ workshopId, initialRules, timezone }: { workshopId: string; initialRules: ScheduleRule[]; timezone: string }) {
+export function ScheduleRulesEditor({ workshopId, initialRules, timezone, viaApi = false }: { workshopId: string; initialRules: ScheduleRule[]; timezone: string; /** Connected to the API: a change is kept by the server. */ viaApi?: boolean }) {
   const t = useTranslations("catalog");
+  const router = useRouter();
+  const [failed, setFailed] = useState(false);
   const days = useWeekdayNames();
   const [rules, setRules] = useState<ScheduleRule[]>(initialRules);
+  const [seenRules, setSeenRules] = useState(initialRules);
+  if (viaApi && seenRules !== initialRules) { setSeenRules(initialRules); setRules(initialRules); } // (the page was read again: the server's rules, with their real ids)
   const [editing, setEditing] = useState<ScheduleRule | "new" | null>(null);
   const [note, setNote] = useState(false);
 
+  /** Sends the change to the server and reads the page again: the rule keeps its real id, and the sessions of the coming weeks are made from it. */
+  async function persist(method: "POST" | "PUT" | "DELETE", rule: ScheduleRule, isNew: boolean) {
+    setFailed(false);
+    const body = { weekdays: rule.weekdays, startTimes: rule.times, effectiveFrom: rule.effectiveFrom, effectiveTo: rule.effectiveTo ?? null, capacityOverride: rule.capacityOverride ?? null, status: rule.status === "ACTIVE" ? "ACTIVE" : "INACTIVE" };
+    const url = isNew ? `/api/v1/workshops/${encodeURIComponent(workshopId)}/schedule-rules` : `/api/v1/schedule-rules/${encodeURIComponent(rule.id)}`;
+    const res = await fetch(url, method === "DELETE" ? { method } : { method, headers: { "content-type": "application/json" }, body: JSON.stringify(body) }).catch(() => null);
+    if (!res?.ok) setFailed(true);
+    router.refresh();
+  }
+
   function save(rule: ScheduleRule) {
-    setRules((list) => (list.some((r) => r.id === rule.id) ? list.map((r) => (r.id === rule.id ? rule : r)) : [...list, rule]));
+    const isNew = !rules.some((r) => r.id === rule.id);
+    setRules((list) => (isNew ? [...list, rule] : list.map((r) => (r.id === rule.id ? rule : r))));
     setEditing(null); setNote(true);
+    if (viaApi) void persist(isNew ? "POST" : "PUT", rule, isNew);
   }
 
   return (
@@ -67,7 +84,7 @@ export function ScheduleRulesEditor({ workshopId, initialRules, timezone }: { wo
               <div className="flex gap-2">
                 <Button size="sm" variant="outline" onClick={() => setEditing(r)}><Pencil aria-hidden="true" />{t("rules.edit")}</Button>
                 <Button size="sm" variant="outline" aria-label={t("rules.remove")}
-                  onClick={() => { setRules((l) => l.filter((x) => x.id !== r.id)); setNote(true); }}>
+                  onClick={() => { setRules((l) => l.filter((x) => x.id !== r.id)); setNote(true); if (viaApi) void persist("DELETE", r, false); }}>
                   <Trash2 aria-hidden="true" />{t("rules.remove")}
                 </Button>
               </div>
@@ -75,7 +92,8 @@ export function ScheduleRulesEditor({ workshopId, initialRules, timezone }: { wo
           ))}
         </ul>
         <p className="text-xs text-muted-foreground">{t("rules.generateNote")}</p>
-        <p role="status" className="text-sm text-emerald-800 empty:hidden">{note ? t("rules.changedSim") : ""}</p>
+        <p role="status" className="text-sm text-emerald-800 empty:hidden">{note ? t(viaApi ? "rules.savedReal" : "rules.changedSim") : ""}</p>
+        {failed ? <p role="alert" className="text-sm text-destructive">{t("errors.saveFailed")}</p> : null}
       </CardContent>
 
       <Dialog open={editing !== null} onOpenChange={(o) => !o && setEditing(null)}>

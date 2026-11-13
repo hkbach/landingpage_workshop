@@ -450,5 +450,6 @@
     "heldByAdmin": "平台已暂停：{reason}",
     "heldByAdminTitle": "管理员已暂停此促销，只有管理员才能恢复。",
     "heldByAdminError": "此促销已被平台暂停，只有管理员才能恢复。"
-  }
+  },
+  "serverRefused": "服务器未接受此更改。屏幕显示的是服务器上的当前内容。"
 }

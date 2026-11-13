@@ -1,5 +1,6 @@
 "use client";
 
+import { ServerRefusedNotice } from "./server-notice";
 import { useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Plus, Search } from "lucide-react";
@@ -33,11 +34,11 @@ import { cn } from "@/lib/utils";
  * The chart shows the bookings of the same range over time.
  */
 export function BookingsList({
-  bookings: initialBookings, prices, currency, sessions, customers, workshops, actor, timezone, defaultLocale, enabledLocales, nowIso,
+  bookings: initialBookings, prices, currency, sessions, customers, workshops, actor, timezone, defaultLocale, enabledLocales, nowIso, viaApi,
 }: {
   bookings: Booking[]; /** The original price of each booking and its vouchers, by booking id. */ prices: Record<string, BookingPriceInfo>;
   currency: string; sessions: Session[]; customers: Customer[]; workshops: Workshop[];
-  /** The shop owner, who is recorded as the one who checked a guest in. */ actor: string; timezone: string; defaultLocale: Locale; enabledLocales: Locale[]; nowIso: string;
+  /** The shop owner, who is recorded as the one who checked a guest in. */ actor: string; timezone: string; defaultLocale: Locale; enabledLocales: Locale[]; nowIso: string; viaApi?: boolean;
 }) {
   const t = useTranslations("ops");
   const tf = useTranslations("ops.finance");
@@ -54,7 +55,7 @@ export function BookingsList({
   const customerOf = (id: string) => customers.find((c) => c.id === id);
   const displayLocale = resolveShopLocale(locale, enabledLocales, defaultLocale);
   // Check-in, uncheck-in and cancel are done in the list: the bookings are the ones of the screen (the server keeps each change).
-  const ops = useOpsState({ bookings: initialBookings, sessions, nowIso, actor });
+  const ops = useOpsState({ bookings: initialBookings, sessions, nowIso, actor, ...(viaApi ? { viaApi } : {}) });
   const bookings = ops.bookings;
   const wsTitle = (id: string) => pickLocalized(workshops.find((w) => w.id === id)?.title, displayLocale, defaultLocale);
   const inRange = (iso: string) => { const d = dayKey(iso, timezone); return (!from || d >= from) && (!to || d <= to); };
@@ -104,6 +105,7 @@ export function BookingsList({
     <div className="grid gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-xl font-semibold sm:text-2xl">{t("bookings.title")}</h1>
+        <ServerRefusedNotice show={ops.serverError} />
         <ShopLink href="/shopowner/bookings/new" className={buttonVariants()}>
           <Plus aria-hidden="true" />
           {t("bookings.new")}

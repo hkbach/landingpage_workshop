@@ -173,7 +173,8 @@
     "capacityOverride": "定員の上書き",
     "capacityOverrideHint": "任意。これらのセッションでワークショップの標準定員の代わりに使用されます。",
     "statusLabel": "ステータス",
-    "save": "ルールを保存"
+    "save": "ルールを保存",
+    "savedReal": "保存しました。今後数週間のセッションがこのルールから作成されます。"
   },
   "sessions": {
     "title": "セッション",

@@ -56,7 +56,7 @@ function EditContent({ data: { workshop, rules, bookingCount, shop } }: { data: 
           )}
         </TabsContent>
         <TabsContent value="schedule" className="pt-2">
-          <ScheduleRulesEditor workshopId={workshop.id} initialRules={rules} timezone={shop.timezone} />
+          <ScheduleRulesEditor workshopId={workshop.id} initialRules={rules} timezone={shop.timezone} viaApi={shop.viaApi ?? false} />
         </TabsContent>
       </Tabs>
     </div>

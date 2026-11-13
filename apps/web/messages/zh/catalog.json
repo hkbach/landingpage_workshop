@@ -173,7 +173,8 @@
     "capacityOverride": "覆盖容量",
     "capacityOverrideHint": "可选。替代这些场次的 Workshop 默认值。",
     "statusLabel": "状态",
-    "save": "保存规则"
+    "save": "保存规则",
+    "savedReal": "已保存。未来几周的场次将根据此规则生成。"
   },
   "sessions": {
     "title": "场次",

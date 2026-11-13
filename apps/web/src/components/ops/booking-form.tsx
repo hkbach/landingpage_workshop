@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, type FormEvent } from "react";
+import { newUuid } from "@/lib/uuid";
 import { useLocale, useTranslations } from "next-intl";
 import { z } from "zod";
 import { BOOKING_SOURCES, formatMoney, pickLocalized, resolveShopLocale, type Locale } from "@workshop/shared";
@@ -44,6 +45,8 @@ export function BookingForm({
   const dirty = useDirty(v, "new");
   const [created, setCreated] = useState<{ code: string; emailed: boolean; email: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  // One key for one booking: a repeated send of the same form (a double click, a retry) gives the same booking, never two.
+  const [idempotencyKey, setIdempotencyKey] = useState(() => newUuid());
   const [failed, setFailed] = useState(""); // the key of the message when the server refused the booking
   const set = <K extends keyof typeof v>(k: K, val: (typeof v)[K]) => { setV((p) => ({ ...p, [k]: val })); setErrors((e) => ({ ...e, [k]: "" })); };
 
@@ -80,12 +83,13 @@ export function BookingForm({
     setFailed("");
     try {
       const res = await fetch("/api/v1/bookings", {
-        method: "POST", headers: { "content-type": "application/json" },
+        method: "POST", headers: { "content-type": "application/json", "idempotency-key": idempotencyKey },
         body: JSON.stringify({ sessionId: d.sessionId, quantity: d.quantity, source: d.source, fullName: d.fullName, ...(d.email.trim() ? { email: d.email.trim() } : {}), ...(d.phone ? { phone: d.phone } : {}), ...(d.specialRequest ? { specialRequest: d.specialRequest } : {}) }),
       });
       if (res.status === 201) {
-        const made = (await res.json()) as { code: string; emailed: boolean };
-        setCreated({ code: made.code, emailed: made.emailed, email: d.email.trim().toLowerCase() });
+        const made = (await res.json()) as { code: string; emailed?: boolean };
+        setIdempotencyKey(newUuid());
+        setCreated({ code: made.code, emailed: made.emailed ?? d.email.trim() !== "", email: d.email.trim().toLowerCase() });
       } else if (res.status === 409) {
         setFailed((await res.json() as { error?: { code?: string } }).error?.code === "SESSION_FULL" ? "errors.sessionFull" : "errors.sessionClosed");
       } else {

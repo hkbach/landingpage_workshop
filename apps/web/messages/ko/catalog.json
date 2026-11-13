@@ -173,7 +173,8 @@
     "capacityOverride": "정원 재정의",
     "capacityOverrideHint": "선택 사항이에요. 이 세션들에 한해 워크숍 기본값을 대체해요.",
     "statusLabel": "상태",
-    "save": "규칙 저장"
+    "save": "규칙 저장",
+    "savedReal": "저장했습니다. 앞으로 몇 주의 세션이 이 규칙으로 만들어집니다."
   },
   "sessions": {
     "title": "세션",

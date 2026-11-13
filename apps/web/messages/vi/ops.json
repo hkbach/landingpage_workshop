@@ -450,5 +450,6 @@
     "heldByAdmin": "Nền tảng tạm dừng: {reason}",
     "heldByAdminTitle": "Admin đã tạm dừng khuyến mãi này: chỉ admin mới bật lại được.",
     "heldByAdminError": "Khuyến mãi này đã bị nền tảng tạm dừng. Chỉ admin mới bật lại được."
-  }
+  },
+  "serverRefused": "Máy chủ không chấp nhận thay đổi này. Màn hình hiển thị đúng dữ liệu hiện có trên máy chủ."
 }

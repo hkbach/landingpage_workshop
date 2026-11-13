@@ -1,5 +1,6 @@
 "use client";
 
+import { ServerRefusedNotice } from "./server-notice";
 import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowLeft } from "lucide-react";
@@ -29,11 +30,11 @@ function initialTrail(booking: Pick<Booking, "status" | "createdAt" | "statusBef
 
 /** FR-OPS-01/03..08 + FR-PAY-01 detail: summary, status timeline, actions and append-only payment entries. */
 export function BookingDetail({
-  booking, customer, sessions, otherBookings, nowIso, actor,
-}: { booking: Booking; customer?: Customer; sessions: Session[]; otherBookings?: Booking[]; nowIso: string; actor: string }) {
+  booking, customer, sessions, otherBookings, nowIso, actor, viaApi,
+}: { booking: Booking; customer?: Customer; sessions: Session[]; otherBookings?: Booking[]; nowIso: string; actor: string; viaApi?: boolean }) {
   const t = useTranslations("ops");
   const locale = useLocale() as Locale;
-  const ops = useOpsState({ bookings: [booking], otherBookings, sessions, nowIso, actor });
+  const ops = useOpsState({ bookings: [booking], otherBookings, sessions, nowIso, actor, ...(viaApi ? { viaApi } : {}) });
   const [trail0] = useState(() => initialTrail(booking));
   const b = ops.bookings[0] ?? booking;
   const session = ops.sessions.find((s) => s.id === b.sessionId);
@@ -52,6 +53,7 @@ export function BookingDetail({
       </div>
       <header className="flex flex-wrap items-center gap-2">
         <h1 className="font-mono text-xl font-semibold sm:text-2xl">{b.bookingCode}</h1>
+        <ServerRefusedNotice show={ops.serverError} />
         <BookingStatusBadge status={b.status} />
         <PaymentStatusBadge status={b.paymentStatus} />
       </header>

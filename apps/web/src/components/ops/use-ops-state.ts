@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { applySessionAction, canCompleteSession, canEditSession, isSessionFinished, canReopenSession, checkCloseReasonFor, checkRescheduleReason, isFutureStart, checkReschedule, closeIfEnded, isValidBookingCutoff, nextSessionCode, rescheduleCount, canCloseAgain, withNote, type BookingStatus, type PaymentMethod, type RescheduleError, type SessionAction, type SessionCloseReason } from "@workshop/shared";
 import type { Booking, PaymentEntry, Session } from "@/lib/types";
 import {
@@ -19,10 +20,31 @@ export interface PaymentInput { type: "PAYMENT" | "REFUND"; amount: number; meth
  * The authoritative rules live in `@/lib/booking-state` and will be enforced again by the backend.
  */
 /** `otherBookings`: bookings the screen does not change but whose seats count (the other bookings of the workshop, on the detail of one booking). */
-export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; nowIso: string; actor: string; otherBookings?: Booking[] }) {
+export function useOpsState(init: {
+  bookings: Booking[]; sessions: Session[]; nowIso: string; actor: string; otherBookings?: Booking[];
+  /** Connected to the API: every change is sent to the server (the screen shows it at once, then reads the server's answer again; a refusal brings the screen back to what the server has). */
+  viaApi?: boolean;
+}) {
+  const router = useRouter();
+  const viaApi = init.viaApi === true;
+  const [serverError, setServerError] = useState(false);
+  const onServerError = useCallback(() => setServerError(true), []);
+  /** Sends a change to the API. Whatever the answer, the page is read again: the server is the truth (a refusal undoes what the screen showed). */
+  const send = useCallback((method: "POST" | "PATCH", path: string, body?: unknown) => {
+    setServerError(false);
+    void fetch(`/api/v1${path}`, { method, ...(body === undefined ? {} : { headers: { "content-type": "application/json" }, body: JSON.stringify(body) }) }) // (no body, no content type: the API refuses an empty JSON body)
+      .then((res) => { if (!res.ok) onServerError?.(); })
+      .catch(() => onServerError?.())
+      .finally(() => router.refresh());
+  }, [router, onServerError]);
   const [bookings, setBookings] = useState<Booking[]>(init.bookings);
   const [storedSessions, setSessions] = useState<Session[]>(init.sessions);
   const [history, setHistory] = useState<Record<string, BookingEvent[]>>({});
+  // Connected to the API: when the page is read again, the new data replaces what the screen held (the way React keeps state in step with new props: compare while rendering).
+  const [seenBookings, setSeenBookings] = useState(init.bookings);
+  const [seenSessions, setSeenSessions] = useState(init.sessions);
+  if (viaApi && seenBookings !== init.bookings) { setSeenBookings(init.bookings); setBookings(init.bookings); }
+  if (viaApi && seenSessions !== init.sessions) { setSeenSessions(init.sessions); setSessions(init.sessions); }
   const [now, setNow] = useState(() => new Date(init.nowIso));
   // A session whose time is over is closed by the system (shown as Closed with a note), whatever its stored status.
   // The seats taken are counted from the bookings, so cancelling a booking frees its seats at once.
@@ -55,6 +77,7 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
       if (state.requiresReason && !reason?.trim()) return { ok: false, reason: "REASON_REQUIRED" };
       const to = targetStatus(action, b);
       if (!to) return { ok: false, reason: "INVALID_STATE" };
+      if (viaApi && action !== "CHECK_IN" && action !== "CANCEL" && action !== "UNDO_CHECK_IN") return { ok: false, reason: "INVALID_STATE" }; // (the API has these three)
       const at = new Date().toISOString();
       setBookings((list) =>
         list.map((x) => {
@@ -69,10 +92,14 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
       );
       adjustSeats(s.id, seatDelta(b.status, to, b.quantity));
       pushEvent(b.id, { status: to, at, note: action === "CANCEL" ? reason!.trim() : undefined });
+      if (viaApi) {
+        send("POST", `/bookings/${encodeURIComponent(b.id)}/${action === "CHECK_IN" ? "check-in" : action === "CANCEL" ? "cancel" : "uncheck-in"}`, action === "CANCEL" ? { reason: reason!.trim() } : undefined);
+        return { ok: true };
+      }
       persistBookingStatus(b.id, to, action === "CANCEL" ? reason!.trim() : undefined, action === "CHECK_IN" ? at : undefined, action === "CHECK_IN" && (b.status === "NOT_CONFIRMED" || b.status === "CONFIRMED") ? b.status : undefined);
       return { ok: true };
     },
-    [bookings, sessions],
+    [bookings, sessions, viaApi, send],
   );
 
   const addPayment = useCallback(
@@ -82,6 +109,12 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
       if (sessions.find((x) => x.id === b.sessionId)?.status === "COMPLETED") return { ok: false, reason: "INVALID_STATE" }; // a completed session no longer changes
       if (!Number.isFinite(input.amount) || input.amount <= 0) return { ok: false, reason: "INVALID_AMOUNT" };
       if (input.type === "REFUND" && input.amount > netPaid(b.payments)) return { ok: false, reason: "INVALID_AMOUNT" };
+      if (viaApi) {
+        // The server keeps one thing: paid or not paid. Only the whole amount is taken (a part is not): the booking is then Paid, a whole refund brings it back to Unpaid.
+        const whole = input.type === "PAYMENT" ? input.amount === b.totalAmount - Math.max(0, netPaid(b.payments)) : input.amount === netPaid(b.payments);
+        if (!whole) return { ok: false, reason: "INVALID_AMOUNT" };
+        send("POST", `/bookings/${encodeURIComponent(b.id)}/payment`, { paid: input.type === "PAYMENT", ...(input.type === "PAYMENT" ? { method: input.method } : {}), ...(input.note?.trim() ? { note: input.note.trim() } : {}) });
+      }
       const entry: PaymentEntry = {
         id: nextId("pm"), type: input.type, amount: input.amount, method: input.method,
         note: input.note?.trim() || undefined, recordedAt: new Date().toISOString(), recordedBy: init.actor,
@@ -95,7 +128,7 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
       );
       return { ok: true };
     },
-    [bookings, sessions, init.actor],
+    [bookings, sessions, init.actor, viaApi, send],
   );
 
   /**
@@ -113,7 +146,7 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
         if (b.paymentStatus === "PAID") return { ok: true };
         const res = addPayment(bookingId, { type: "PAYMENT", amount: b.totalAmount - Math.max(0, net), method: "CASH", note: "Payment confirmed after the session" });
         if (res.ok) {
-          persistPaid(bookingId, true); // the server sets the status too (recordPaid)
+          if (!viaApi) persistPaid(bookingId, true); // the server sets the status too (recordPaid)
           // A booking that becomes Paid is also Checked in, from Not confirmed or Confirmed (the status before is kept for an uncheck-in).
           if (b.status === "NOT_CONFIRMED" || b.status === "CONFIRMED") {
             const at = new Date().toISOString();
@@ -127,7 +160,7 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
       if (b.paymentStatus === "UNPAID") return { ok: true };
       const res = addPayment(bookingId, { type: "REFUND", amount: net, method: "CASH", note: "Marked as unpaid" });
       if (res.ok) {
-        persistPaid(bookingId, false); // the server brings the status back too (recordPaid)
+        if (!viaApi) persistPaid(bookingId, false); // the server brings the status back too (recordPaid)
         // A Checked in booking goes back to the status it had before the check-in, however it was checked in.
         if (b.status === "CHECKED_IN") {
           const back = b.statusBeforeCheckIn ?? "CONFIRMED";
@@ -142,7 +175,7 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
       }
       return res;
     },
-    [bookings, addPayment],
+    [bookings, addPayment, viaApi],
   );
 
   const reschedule = useCallback(
@@ -151,6 +184,7 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
       const from = b && sessions.find((x) => x.id === b.sessionId);
       const to = sessions.find((x) => x.id === targetSessionId);
       if (!b || !from || !to) return { ok: false, reason: "NOT_FOUND" };
+      if (viaApi) return { ok: false, reason: "INVALID_STATE" }; // (the API does not move a booking to another session)
       if (!canTransition(b, from, new Date()).RESCHEDULE.allowed) return { ok: false, reason: "INVALID_STATE" };
       if (to.workshopId !== b.workshopId || isSessionFinished(to.status) || to.id === from.id) return { ok: false, reason: "INVALID_STATE" };
       if (to.capacity - to.reservedCount < b.quantity) return { ok: false, reason: "NO_CAPACITY" };
@@ -163,7 +197,7 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
       );
       return { ok: true };
     },
-    [bookings, sessions],
+    [bookings, sessions, viaApi],
   );
 
   // ----- session operations (FR-SCHED-02/03) -----
@@ -178,9 +212,10 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
       const reason = action === "close" ? checkCloseReasonFor(s, now, closeReason?.code ?? "", closeReason?.note ?? "") : null;
       if (reason && !reason.ok) return false;
       setSessions((list) => list.map((x) => (x.id === id ? { ...x, ...next, ...(reason?.ok ? { notes: withNote(x.notes, { type: "CLOSED", at: now.toISOString(), reason: reason.reason }) } : {}) } : x)));
+      if (viaApi) send("POST", `/sessions/${encodeURIComponent(id)}/${action}`, action === "close" ? { reason: { code: closeReason?.code ?? "", ...(closeReason?.note ? { note: closeReason.note } : {}) } } : undefined);
       return true;
     },
-    [sessions, now],
+    [sessions, now, viaApi, send],
   );
 
   /** The owner marks a closed session that took place as Completed (it is final). False when it cannot be. */
@@ -190,9 +225,10 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
       if (!s || !canCompleteSession(s)) return false;
       // The displayed session (closed by the system when its time ended) becomes the stored one, so its history is kept.
       setSessions((list) => list.map((x) => (x.id === id ? { ...closeIfEnded(x, now), status: "COMPLETED" } : x)));
+      if (viaApi) send("POST", `/sessions/${encodeURIComponent(id)}/complete`);
       return true;
     },
-    [sessions, now],
+    [sessions, now, viaApi, send],
   );
 
   /** Re-opens a session the owner closed before it started: it is Open again, and the reason of the close is forgotten. False when it cannot be. */
@@ -205,9 +241,10 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
         // The notes are kept: the close stays in the history, and the re-open is added to it.
         return { ...x, status: "OPEN", notes: withNote(x.notes, { type: "REOPENED", at: now.toISOString() }) };
       }));
+      if (viaApi) send("POST", `/sessions/${encodeURIComponent(id)}/reopen`);
       return true;
     },
-    [sessions, now],
+    [sessions, now, viaApi, send],
   );
 
   /**
@@ -226,9 +263,10 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
       setSessions((list) => list.map((x) => (x.id === id ? { ...x, startsAt: checked.startsAt, endsAt: checked.endsAt, notes: withNote(x.notes, { type: "RESCHEDULED", at: now.toISOString(), reason: why.reason }) } : x)));
       const moved = bookings.filter((b) => b.sessionId === id && b.status === "CONFIRMED");
       setBookings((list) => list.map((b) => (b.sessionId === id ? { ...b, startsAt: checked.startsAt, endsAt: checked.endsAt } : b)));
+      if (viaApi) send("POST", `/sessions/${encodeURIComponent(id)}/reschedule`, { newStartsAt: checked.startsAt, reason: { code: reason.code, ...(reason.note ? { note: reason.note } : {}) } });
       return { ok: true, oldStartsAt: s.startsAt, startsAt: checked.startsAt, endsAt: checked.endsAt, reason: why.reason, moved };
     },
-    [sessions, bookings, now],
+    [sessions, bookings, now, viaApi, send],
   );
 
   /**
@@ -242,7 +280,7 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
       if (!s || !canEditSession(s.status)) return false; // a running session is not edited: pause it first
       const hasBookings = s.reservedCount > 0 || bookings.some((b) => b.sessionId === id && b.status !== "CANCELLED");
       // Another session may start at the same time, even of the same workshop: only a workshop with bookings cannot change.
-      if (patch.workshopId !== s.workshopId && hasBookings) return false;
+      if (patch.workshopId !== s.workshopId && (hasBookings || viaApi)) return false; // (the API does not change the workshop of a session)
       if (!Number.isInteger(patch.capacity) || patch.capacity < 1 || patch.capacity < s.reservedCount || !isValidBookingCutoff(patch.bookingCutoffMinutes)) return false;
       setSessions((list) => list.map((x) => {
         if (x.id !== id) return x;
@@ -250,16 +288,18 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
         void _old;
         return { ...rest, workshopId: patch.workshopId, capacity: patch.capacity, bookingCutoffMinutes: patch.bookingCutoffMinutes, endsAt: patch.endsAt, ...(patch.imageUrl ? { imageUrl: patch.imageUrl } : {}) };
       }));
+      if (viaApi) send("PATCH", `/sessions/${encodeURIComponent(id)}`, { capacity: patch.capacity, bookingCutoffMinutes: patch.bookingCutoffMinutes, imageUrl: patch.imageUrl ?? "" });
       return true;
     },
-    [sessions, bookings],
+    [sessions, bookings, viaApi, send],
   );
 
   const addSession = useCallback((s: Omit<Session, "id" | "code" | "reservedCount" | "status">): boolean => {
     if (!isFutureStart(s.startsAt, new Date())) return false; // no session in the past
     setSessions((list) => [...list, { ...s, id: nextId("se"), code: nextSessionCode(list.map((x) => x.code)), reservedCount: 0, status: "OPEN" }]); // a new session is open (not running): Start makes it bookable
+    if (viaApi) send("POST", "/sessions", { workshopId: s.workshopId, startsAt: s.startsAt, capacity: s.capacity, bookingCutoffMinutes: s.bookingCutoffMinutes, ...(s.imageUrl ? { imageUrl: s.imageUrl } : {}) });
     return true;
-  }, []);
+  }, [viaApi, send]);
 
   const addBooking = useCallback((b: Booking) => {
     setBookings((list) => [b, ...list]);
@@ -267,7 +307,7 @@ export function useOpsState(init: { bookings: Booking[]; sessions: Session[]; no
   }, []);
 
   return {
-    bookings, sessions, history, now, perform, setPaid, reschedule,
+    bookings, sessions, history, now, serverError, perform, setPaid, reschedule,
     sessionAction, completeSession, reopenSession, rescheduleSession, updateSession, addSession, addBooking,
   };
 }

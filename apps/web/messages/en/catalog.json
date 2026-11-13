@@ -173,7 +173,8 @@
     "capacityOverride": "Capacity override",
     "capacityOverrideHint": "Optional. Replaces the workshop default for these sessions.",
     "statusLabel": "Status",
-    "save": "Save rule"
+    "save": "Save rule",
+    "savedReal": "Saved. The sessions for the coming weeks are made from this rule."
   },
   "sessions": {
     "title": "Sessions",

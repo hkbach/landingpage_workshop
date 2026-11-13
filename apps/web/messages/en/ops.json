@@ -450,5 +450,6 @@
     "heldByAdmin": "Paused by the platform: {reason}",
     "heldByAdminTitle": "An administrator paused this promotion: only an administrator can resume it.",
     "heldByAdminError": "This promotion was paused by the platform. Only an administrator can resume it."
-  }
+  },
+  "serverRefused": "The server did not accept the change. The screen shows what the server has."
 }

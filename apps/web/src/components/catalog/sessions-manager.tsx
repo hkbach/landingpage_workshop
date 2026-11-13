@@ -1,5 +1,6 @@
 "use client";
 
+import { ServerRefusedNotice } from "@/components/ops/server-notice";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useDisplayLocale } from "@/lib/use-shop-language";
@@ -34,12 +35,12 @@ const clock = () => new Date();
 
 /** FR-SCHED-02/03: sessions agenda by date range + workshop; add one-off, close/open, edit capacity, cancel. */
 export function SessionsManager({
-  sessions, bookings, customers, workshops, shop, nowIso, actor,
-}: { sessions: Session[]; bookings: Booking[]; customers: Customer[]; workshops: Workshop[]; shop: ShopForCatalog; nowIso: string; actor: string }) {
+  sessions, bookings, customers, workshops, shop, nowIso, actor, viaApi,
+}: { sessions: Session[]; bookings: Booking[]; customers: Customer[]; workshops: Workshop[]; shop: ShopForCatalog; nowIso: string; actor: string; viaApi?: boolean }) {
   const t = useTranslations("catalog");
   const tops = useTranslations("ops");
   const locale = useLocale() as Locale;
-  const ops = useOpsState({ bookings, sessions, nowIso, actor });
+  const ops = useOpsState({ bookings, sessions, nowIso, actor, ...(viaApi ? { viaApi } : {}) });
   const today = dayKey(nowIso, shop.timezone);
   const [workshopId, setWorkshopId] = useState("");
   const [status, setStatus] = useState<"" | SessionStatus>("");
@@ -75,6 +76,10 @@ export function SessionsManager({
   })();
 
   async function notifyGuests(id: string, res: { oldStartsAt: string; startsAt: string; endsAt: string; reason: SessionCloseReason }) {
+    if (viaApi) { // the server emails the guests in the same transaction as the change
+      setNotice({ text: t("sessions.rescheduled", { count: ops.bookings.filter((b) => b.sessionId === id && b.status === "CONFIRMED").length }), tone: "ok" });
+      return;
+    }
     try {
       // The guests who booked the session are emailed (the real backend queues the emails in the same transaction as the change).
       const sent = await notifyRescheduleRequest(id, { oldStartsAt: res.oldStartsAt, newStartsAt: res.startsAt, newEndsAt: res.endsAt, reason: res.reason });
@@ -85,6 +90,10 @@ export function SessionsManager({
   }
 
   async function notifyClosed(s: Session, reason: SessionCloseReason) {
+    if (viaApi) { // the server emails the guests in the same transaction as the change
+      setNotice({ text: t("sessions.closedNotified", { count: ops.bookings.filter((b) => b.sessionId === s.id && b.status !== "CANCELLED").length }), tone: "ok" });
+      return;
+    }
     try {
       const sent = await notifyClosedRequest(s.id, { startsAt: s.startsAt, endsAt: s.endsAt, reason });
       setNotice({ text: t("sessions.closedNotified", { count: sent.notified }), tone: "ok" });
@@ -96,13 +105,13 @@ export function SessionsManager({
   // The sessions the system closed because their time ended: the server emails their guests, once for each session.
   const autoClosedKey = ops.sessions.filter((s) => s.autoClosed).map((s) => `${s.id}|${s.startsAt}|${s.endsAt}`).join(",");
   useEffect(() => {
-    if (!autoClosedKey) return;
+    if (!autoClosedKey || viaApi) return; // (connected: the server closes the sessions whose time is over and emails their guests)
     const list = autoClosedKey.split(",").map((k) => { const [id, startsAt, endsAt] = k.split("|"); return { id: id!, startsAt: startsAt!, endsAt: endsAt! }; });
     notifyAutoClosedRequest(list).then((r) => {
       const guests = r.mailed.reduce((n, m) => n + m.notified, 0);
       if (guests > 0) setNotice({ text: t("sessions.autoClosedNotified", { count: guests }), tone: "ok" });
     }).catch(() => undefined); // the next check tries again
-  }, [autoClosedKey, t]);
+  }, [autoClosedKey, t, viaApi]);
 
   const target = dialog && dialog.kind !== "add" ? ops.sessions.find((s) => s.id === dialog.id) : undefined;
 
@@ -113,6 +122,7 @@ export function SessionsManager({
         <Button onClick={() => setDialog({ kind: "add" })}><Plus aria-hidden="true" />{t("sessions.add")}</Button>
       </div>
       <p className="text-sm text-muted-foreground">{t("sessions.tzNote", { tz: shop.timezone })}</p>
+      <ServerRefusedNotice show={ops.serverError} />
       {notice ? <p role="status" data-testid="session-notice" className={notice.tone === "error" ? "text-sm font-medium text-destructive" : "text-sm font-medium text-emerald-800"}>{notice.text}</p> : null}
       <p data-testid="status-note" className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">{t("sessions.statusNote")}</p>
 

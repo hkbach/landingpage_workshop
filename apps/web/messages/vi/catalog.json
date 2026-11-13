@@ -173,7 +173,8 @@
     "capacityOverride": "Ghi đè sức chứa",
     "capacityOverrideHint": "Không bắt buộc. Thay thế mức mặc định của workshop cho các buổi này.",
     "statusLabel": "Trạng thái",
-    "save": "Lưu quy tắc"
+    "save": "Lưu quy tắc",
+    "savedReal": "Đã lưu. Các session của những tuần tới được tạo từ quy tắc này."
   },
   "sessions": {
     "title": "Buổi",

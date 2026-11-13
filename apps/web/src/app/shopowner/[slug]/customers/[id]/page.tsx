@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import type { Customer } from "@/lib/types";
 import { getLocale, getTranslations } from "next-intl/server";
 import { ArrowLeft } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,15 +7,23 @@ import { CustomerBookingsTable } from "@/components/ops/customer-bookings-table"
 import { liveBookings, liveCustomers } from "@/lib/mock/booking-store";
 import { currentShop } from "@/lib/mock/data";
 import { ShopLink } from "@/components/dashboard/shell/shop-link";
+import { apiGet, realApi } from "@/lib/api-server";
+import { loadOwnShop } from "@/lib/own-shop";
+import { toBooking, toCustomer } from "@/lib/own-ops";
+import { fetchAll } from "@/lib/shop-data";
 
 export default async function CustomerDetailPage(props: PageProps<"/shopowner/[slug]/customers/[id]">) {
   const { id } = await props.params;
-  const customer = liveCustomers().find((c) => c.id === id);
+  const own = realApi() ? await loadOwnShop() : null;
+  if (realApi() && !own) notFound();
+  const found = own ? await apiGet<{ id: string; fullName: string; email: string; phone: string; country: string; preferredLocale: Customer["preferredLocale"] }>(`/customers/${encodeURIComponent(id)}`) : null;
+  const customer = own ? (found ? { ...toCustomer({ ...found, bookingCount: 0, lastBookingAt: null, createdAt: "" }), preferredLocale: found.preferredLocale } : undefined) : liveCustomers().find((c) => c.id === id);
   if (!customer) notFound();
   const t = await getTranslations("ops");
   const locale = await getLocale();
-  const history = liveBookings().filter((b) => b.customerId === customer.id).sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)); // newest booking first (FR-CUST-01)
-  const tz = currentShop.timezone;
+  const all = own ? (await fetchAll<Parameters<typeof toBooking>[0]>("/bookings")).filter((b) => b.customerId === customer.id).map((b) => toBooking(b, own)) : liveBookings();
+  const history = all.filter((b) => b.customerId === customer.id).sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)); // newest booking first (FR-CUST-01)
+  const tz = own ? own.timezone : currentShop.timezone;
   const regionName = new Intl.DisplayNames([locale], { type: "region" });
   const languageName = new Intl.DisplayNames([locale], { type: "language" });
 
