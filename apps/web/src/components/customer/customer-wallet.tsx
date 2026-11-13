@@ -63,6 +63,8 @@ export function WalletOverview({ source, onRequested }: { source: WalletSource; 
         <span className="text-sm text-muted-foreground" data-testid="wallet-available">{t("available", { amount: money(w?.available ?? 0) })}</span>
         {note ? <span role="status" className="text-sm font-medium text-emerald-800" data-testid="wallet-note">{note}</span> : null}
       </div>
+      {/* Money can be withdrawn only once the month it was earned in is closed, and a closed month never changes (D11, D24): say it where the customer decides. */}
+      <p className="text-sm text-muted-foreground" data-testid="wallet-closing-notice">{t("closingNotice")}</p>
       {open && w ? (
         <WithdrawDialog
           source={source} available={w.available} currency={w.currency} limits={w.limits} onClose={() => setOpen(false)}
@@ -141,6 +143,7 @@ function WithdrawDialog({ source, available, currency, limits, onClose, onDone }
           <DialogHeader>
             <DialogTitle>{t("dialogTitle")}</DialogTitle>
             <DialogDescription>{t("dialogBody", { program: t(`program.${source}`), amount: money(available) })}</DialogDescription>
+            <p className="text-xs text-muted-foreground" data-testid="wallet-dialog-closing-notice">{t("closingNotice")}</p>
           </DialogHeader>
           <Field htmlFor="wd-amount" label={t("amountLabel", { currency })} error={message} hint={<>{t("amountHint", { amount: money(available) })}{limits.min > 0 || limits.max > 0 ? <span className="block" data-testid="wallet-limits">{limits.min > 0 && limits.max > 0 ? t("limitsBoth", { min: money(limits.min), max: money(limits.max) }) : limits.min > 0 ? t("limitsMin", { min: money(limits.min) }) : t("limitsMax", { max: money(limits.max) })}</span> : null}</>}>
             <Input id="wd-amount" inputMode="decimal" autoComplete="off" value={text} aria-invalid={Boolean(message)} onChange={(e) => { setText(e.target.value); setError(""); }} />

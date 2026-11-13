@@ -1,13 +1,16 @@
 import { sql } from "drizzle-orm";
-import { bigint, check, index, pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
-import { users } from "./identity";
+import { bigint, check, index, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { organizations, users } from "./identity";
 
 // The wallet of a customer account and the withdrawal requests (FR-CUST-04, FR-ADM-19, D6, D12, D22). The account is platform wide (not a shop's customer), money is bigint minor units, one
 // wallet for each currency. The system never moves money: an administrator pays the invoice outside it and marks it as paid.
 export const walletSource = pgEnum("wallet_source", ["AFFILIATE", "REFERRAL"]);
 export const withdrawalStatus = pgEnum("withdrawal_status", ["PENDING", "PAID", "REJECTED"]);
 
-/** What an account has earned, one row for each credit (append only: a trigger refuses UPDATE and DELETE). The affiliate and referral programs write here when a fee or a bonus is earned. */
+/**
+ * What an account may withdraw, one row for each credit (append only: a trigger refuses UPDATE and DELETE). The affiliate fees and the referral bonuses are written here when the MONTH of the shop they
+ * were earned in is closed (D11, D24): from then on they never change. Before that they are only shown as waiting for the closing. A row with no month is an adjustment made by hand.
+ */
 export const walletCredits = pgTable(
   "wallet_credits",
   {
@@ -19,9 +22,17 @@ export const walletCredits = pgTable(
     amount: bigint("amount", { mode: "number" }).notNull(),
     /** What it was earned for (a booking code, a friend): shown to the customer, never a secret. */
     note: text("note").notNull().default(""),
+    /** The shop and the month ("YYYY-MM", the time zone of the shop) the money was earned in; both null for an adjustment made by hand. One row for each account, source, currency, shop and month. */
+    organizationId: uuid("organization_id").references(() => organizations.id),
+    month: text("month"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [check("wallet_credits_amount", sql`${t.amount} > 0`), index("wallet_credits_user_idx").on(t.userId, t.source, t.currency)],
+  (t) => [
+    check("wallet_credits_amount", sql`${t.amount} > 0`),
+    check("wallet_credits_month", sql`(${t.month} IS NULL) = (${t.organizationId} IS NULL)`),
+    index("wallet_credits_user_idx").on(t.userId, t.source, t.currency),
+    uniqueIndex("wallet_credits_settled_unique").on(t.userId, t.source, t.currency, t.organizationId, t.month).where(sql`${t.month} IS NOT NULL`),
+  ],
 );
 
 /** An invoice WD-0001... asked by the customer. Pending until an administrator pays or rejects it (once: a trigger keeps a processed one as it is). */

@@ -147,8 +147,11 @@ d("income, fees and closing of the months", () => {
     const ok = await adminPut(`/fees/${a.orgId}`, { maintenanceBps: 500, serviceBps: 250, referralBps: 700, inviteBonusBps: 300 });
     expect(ok.statusCode).toBe(200);
     expect(ok.json()).toMatchObject({ shopId: a.orgId, custom: true, maintenanceBps: 500, serviceBps: 250, referralBps: 700, inviteBonusBps: 300 });
-    // The shop has paid bookings worth 360 000 (a voucher one on a 400 000 price): 5% + 2.5% of 400 000.
-    expect((await income(a)).json()).toMatchObject({ rates: { maintenanceBps: 500, serviceBps: 250 }, totals: { income: 360_000, maintenanceFee: 20_000, serviceFee: 10_000, profit: 330_000 } });
+    // D24: the new rates reach only what is paid AFTER the change. The shop has paid bookings worth 360 000 (a voucher one on a 400 000 price): its fees stay 10% + 10% of 400 000.
+    expect((await income(a)).json()).toMatchObject({ rates: { maintenanceBps: 500, serviceBps: 250 }, totals: { income: 360_000, maintenanceFee: 40_000, serviceFee: 40_000, profit: 280_000 } });
+    // a booking paid now is worked out with 5% + 2.5% of 200 000 (10 000 + 5 000), the old ones untouched
+    expect((await pay(a, await book(a, 1))).statusCode).toBe(200);
+    expect((await income(a)).json().totals).toEqual({ income: 560_000, maintenanceFee: 50_000, serviceFee: 45_000, fees: 95_000, profit: 465_000 });
 
     // The form of one shop sends only the two fees: the other two keep their values.
     const form = await adminPut(`/organizations/${a.orgId}/finance-settings`, { maintenanceBps: 600, serviceBps: 300 });
@@ -213,7 +216,8 @@ d("income, fees and closing of the months", () => {
     const oldBooking = await book(shop, 1);
     await t.pool.query("insert into payments (organization_id, booking_id, type, amount, currency, method, recorded_at) values ($1, $2, 'PAYMENT', 200000, 'VND', 'CASH', now() - interval '70 days')", [shop.orgId, oldBooking]);
     await t.pool.query("update bookings set payment_status = 'PAID' where id = $1", [oldBooking]);
-    await adminPut(`/fees/${shop.orgId}`, { maintenanceBps: 1000, serviceBps: 500, referralBps: 0, inviteBonusBps: 0 });
+    // the shop has had 10% + 5% for a long time (a version of its history that began 100 days ago: a change made now would not reach a payment of 70 days ago, D24)
+    await t.pool.query("insert into organization_fee_rates (organization_id, effective_from, maintenance_bps, service_bps, affiliate_bps, invite_bonus_bps) values ($1, now() - interval '100 days', 1000, 500, 0, 0)", [shop.orgId]);
 
     const jobs = t.app.get(MaintenanceService, { strict: false });
     const first = await jobs.closeMonths();
@@ -233,12 +237,25 @@ d("income, fees and closing of the months", () => {
     expect(oldRow).toMatchObject({ maintenanceFee: 20_000, serviceFee: 10_000 }); // the old rates, not the 20% + 20% of now
     expect(detail.months.find((m: { closed: boolean }) => !m.closed)).toMatchObject({ rates: { maintenanceBps: 2000, serviceBps: 2000 } });
 
+    // what is paid after the change is worked out with the new rates (20% + 20% of 200 000), what was paid before is not
+    const later = await book(shop, 1);
+    expect((await pay(shop, later)).statusCode).toBe(200);
+    const rows = (await adminGet(`/income/${shop.orgId}`)).json().items as { id: string; amount: number; maintenanceFee: number; serviceFee: number }[];
+    expect(rows.filter((r) => r.maintenanceFee === 40_000 && r.serviceFee === 40_000)).toHaveLength(1); // the payment made after the change
+    expect(rows.filter((r) => r.maintenanceFee === 20_000 && r.serviceFee === 10_000)).toHaveLength(2); // the one of the closed month and the one paid before the change: both as they were (10% + 5%)
+
     // D10: the booking with a payment in the closed month cannot be put back to unpaid; one of the open month still can.
     const refused = await pay(shop, oldBooking, false);
     expect(refused.statusCode).toBe(409);
     expect(refused.json().error).toMatchObject({ code: "MONTH_CLOSED" });
     expect((await pay(shop, fresh, false)).statusCode).toBe(200);
     expect((await t.pool.query("select payment_status from bookings where id = $1", [oldBooking])).rows[0]).toEqual({ payment_status: "PAID" });
+  });
+
+  it("keeps the history of the rates: it only grows", async () => {
+    await expect(t.pool.query("update organization_fee_rates set maintenance_bps = 0")).rejects.toThrow(/append only/);
+    await expect(t.pool.query("delete from organization_fee_rates")).rejects.toThrow(/append only/);
+    await expect(t.pool.query("truncate organization_fee_rates")).rejects.toThrow(/append only/);
   });
 
   it("never changes or deletes a closed month, whoever asks", async () => {

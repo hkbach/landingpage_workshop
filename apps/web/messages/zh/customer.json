@@ -234,6 +234,7 @@
     "withdraw": "提现",
     "available": "可提现：{amount}",
     "nothing": "暂无可提现的金额。",
+    "closingNotice": "收益只能在其产生月份结账后提取。每家店铺的月份在月底结账，此后该月金额即为最终金额，之后即使预订被更改也不会变化。",
     "dialogTitle": "提现",
     "dialogBody": "您想从{program}收益中提现多少？最多可提现 {amount}。",
     "program": {

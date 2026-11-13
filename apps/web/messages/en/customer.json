@@ -234,6 +234,7 @@
     "withdraw": "Withdraw",
     "available": "Available to withdraw: {amount}",
     "nothing": "There is nothing to withdraw yet.",
+    "closingNotice": "Earnings can only be withdrawn after the month they were earned in has been closed. The month of each shop is closed at the end of the month; from then on the amounts of that month are final and never change, even if a booking is changed later.",
     "dialogTitle": "Withdraw money",
     "dialogBody": "How much do you want to withdraw from your {program} earnings? You can withdraw up to {amount}.",
     "program": {

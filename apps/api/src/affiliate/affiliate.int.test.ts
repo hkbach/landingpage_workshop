@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { hashPassword, hashToken } from "../auth/crypto";
+import { MaintenanceService } from "../jobs/maintenance";
 import { PASSWORD, TEST_DATABASE_URL, cookieOf, emailFor, signupBody, startApp, unique, type TestApp } from "../test/helpers";
 
 // The affiliate links, the invite links and what they earn, on a real PostgreSQL (FR-CUST-02, FR-CUST-03, FR-ADM-15, FR-ADM-16, FR-ADM-18). The numbers are worked out by hand.
@@ -42,7 +43,7 @@ d("affiliate and referral", () => {
 
   const makeAccount = async (label: string, extra: Record<string, unknown> = {}): Promise<Account> => {
     const email = emailFor(label);
-    const res = await t.post("/auth/signup", { ...signupBody("CUSTOMER", email), ...extra });
+    const res = await t.post("/auth/signup", { ...signupBody("CUSTOMER", email), ...extra }, { from: nextIp() }); // a signup limit of 10 an hour for each address
     if (res.statusCode !== 201 && res.statusCode !== 200) throw new Error(`signup failed (${res.statusCode}): ${res.body}`);
     return { cookie: cookieOf(res), id: res.json().id as string, email };
   };
@@ -161,8 +162,11 @@ d("affiliate and referral", () => {
     expect((await pay(a, id)).statusCode).toBe(200); // 2 x 250 000 = 500 000, at 10%
     let item = (await links(sharer)).json().items[0];
     expect(item).toMatchObject({ bookings: 1, referralFee: 50_000 });
-    expect((await wallet(sharer)).json().balances).toEqual([{ source: "AFFILIATE", currency: "VND", earned: 50_000, pending: 0, withdrawn: 0, available: 50_000, limits: { minAmount: 0, maxAmount: 0 } }]);
+    // what is earned in a month that is not closed yet is only shown: it waits for the closing and cannot be withdrawn (D11, D24)
+    expect((await wallet(sharer)).json().balances).toEqual([{ source: "AFFILIATE", currency: "VND", earned: 0, unsettled: 50_000, pending: 0, withdrawn: 0, available: 0, limits: { minAmount: 0, maxAmount: 0 } }]);
     expect((await wallet(sharer, "?source=REFERRAL")).json().balances).toEqual([]);
+    const bankDetails = { bankName: "Demo Bank", bankAccountNumber: "0123456789", bankAccountHolder: "Sharer One" };
+    expect((await t.post(`/customer/${sharer.id}/withdrawals`, { source: "AFFILIATE", currency: "VND", amount: 1, ...bankDetails }, { cookie: sharer.cookie })).json().error.details.fields).toEqual({ amount: "exceeds" });
 
     expect((await pay(a, id, false)).statusCode).toBe(200); // put back to unpaid: it stops counting
     item = (await links(sharer)).json().items[0];
@@ -170,16 +174,10 @@ d("affiliate and referral", () => {
     expect((await wallet(sharer)).json().balances).toEqual([]); // nothing earned: no wallet line
     expect((await pay(a, id)).statusCode).toBe(200);
 
-    // the rate of the shop is the one it has now
+    // a change of the rates reaches only what is paid after it (D24): the fee already earned stays, the page shows the rate of the future
     await setRates(a, { maintenanceBps: 1000, serviceBps: 1000, referralBps: 500, inviteBonusBps: 1000 });
-    expect((await links(sharer)).json().items[0]).toMatchObject({ referralBps: 500, referralFee: 25_000 });
+    expect((await links(sharer)).json().items[0]).toMatchObject({ referralBps: 500, referralFee: 50_000 });
     await setRates(a, { maintenanceBps: 1000, serviceBps: 1000, referralBps: 1000, inviteBonusBps: 1000 });
-
-    // and it goes into the wallet: it can be withdrawn, not more
-    const bank = { bankName: "Demo Bank", bankAccountNumber: "0123456789", bankAccountHolder: "Sharer One" };
-    expect((await t.post(`/customer/${sharer.id}/withdrawals`, { source: "AFFILIATE", currency: "VND", amount: 50_001, ...bank }, { cookie: sharer.cookie })).json().error.details.fields).toEqual({ amount: "exceeds" });
-    expect((await t.post(`/customer/${sharer.id}/withdrawals`, { source: "AFFILIATE", currency: "VND", amount: 30_000, ...bank }, { cookie: sharer.cookie })).statusCode).toBe(201);
-    expect((await wallet(sharer)).json().balances[0]).toMatchObject({ earned: 50_000, pending: 30_000, available: 20_000 });
   });
 
   it("lets the administrator switch a link off with a reason: it counts no new booking and its visitor sees the workshop ended, what it earned stays", async () => {
@@ -257,7 +255,7 @@ d("affiliate and referral", () => {
     const done = await invites();
     expect(done.items[0]).toMatchObject({ bonus: 25_000, bookingCode: first.code });
     expect(done.earned).toEqual([{ currency: "VND", amount: 25_000 }]);
-    expect((await wallet(inviter, "?source=REFERRAL")).json().balances).toEqual([{ source: "REFERRAL", currency: "VND", earned: 25_000, pending: 0, withdrawn: 0, available: 25_000, limits: { minAmount: 0, maxAmount: 0 } }]);
+    expect((await wallet(inviter, "?source=REFERRAL")).json().balances).toEqual([{ source: "REFERRAL", currency: "VND", earned: 0, unsettled: 25_000, pending: 0, withdrawn: 0, available: 0, limits: { minAmount: 0, maxAmount: 0 } }]);
 
     // the first one put back to unpaid: the bonus goes to the next paid booking (500 000 at 10% = 50 000)
     expect((await pay(a, first.id, false)).statusCode).toBe(200);
@@ -317,6 +315,78 @@ d("affiliate and referral", () => {
     const shopView = JSON.stringify((await t.get("/finance/income", { cookie: a.cookie })).json());
     expect(shopView).not.toMatch(/affiliate|referral|bonus/i);
     expect((await t.get("/finance/income", { cookie: a.cookie })).json().totals.fees).toBe(fees.fees);
+  });
+
+  it("lets an account withdraw only what was earned in a month that is closed, writes it into the wallet once and freezes it", async () => {
+    // A guest books through the link; the payment is recorded 45 days ago (a month that is over): the fee is earned, but it waits for the closing of that month.
+    const made = await bookOnline(a, emailFor("settle"), { quantity: 1, ref: linkCode });
+    expect(made.linkId).toBe(linkId);
+    await t.pool.query("insert into payments (organization_id, booking_id, type, amount, currency, method, recorded_at) values ($1, $2, 'PAYMENT', 250000, 'VND', 'CASH', now() - interval '45 days')", [a.orgId, made.id]);
+    await t.pool.query("update bookings set payment_status = 'PAID' where id = $1", [made.id]);
+    const bank = { bankName: "Demo Bank", bankAccountNumber: "0123456789", bankAccountHolder: "Sharer One" };
+    const ask = (amount: number) => t.post(`/customer/${sharer.id}/withdrawals`, { source: "AFFILIATE", currency: "VND", amount, ...bank }, { cookie: sharer.cookie });
+    const line = async () => (await wallet(sharer, "?source=AFFILIATE")).json().balances[0];
+    const unsettledBefore = (await line()).unsettled;
+    expect(unsettledBefore).toBeGreaterThanOrEqual(25_000);
+    expect(await line()).toMatchObject({ earned: 0, available: 0 });
+    expect((await ask(1)).json().error.details.fields).toEqual({ amount: "exceeds" }); // nothing can be withdrawn before the month is closed
+
+    const jobs = t.app.get(MaintenanceService, { strict: false });
+    await jobs.closeMonths();
+    const credits = async () => (await t.pool.query<{ amount: string; month: string; organization_id: string; note: string }>("select amount, month, organization_id, note from wallet_credits where user_id = $1 and source = 'AFFILIATE' and month is not null", [sharer.id])).rows;
+    expect(await credits()).toHaveLength(1);
+    expect(Number((await credits())[0]!.amount)).toBe(25_000);
+    expect((await credits())[0]).toMatchObject({ organization_id: a.orgId });
+    expect((await credits())[0]!.note).toMatch(/^Affiliate fees of Shop .*, \d{4}-\d{2}$/);
+    expect(await line()).toMatchObject({ earned: 25_000, available: 25_000, unsettled: unsettledBefore - 25_000 }); // the closed month moved from "waiting" to withdrawable
+    await jobs.closeMonths();
+    expect(await credits()).toHaveLength(1); // closing again writes nothing twice
+
+    expect((await ask(25_001)).json().error.details.fields).toEqual({ amount: "exceeds" });
+    expect((await ask(25_000)).statusCode).toBe(201);
+    expect(await line()).toMatchObject({ earned: 25_000, pending: 25_000, available: 0 });
+
+    // frozen: the payment of a closed month cannot be put back to unpaid, and switching the link off or the booking away changes nothing in the wallet
+    expect((await pay(a, made.id, false)).json().error.code).toBe("MONTH_CLOSED");
+    await t.post(`/admin/affiliate/${linkId}`, { disabled: true, reason: "check" }, { cookie: admin });
+    expect(await line()).toMatchObject({ earned: 25_000, pending: 25_000, available: 0 });
+    await t.post(`/admin/affiliate/${linkId}`, { disabled: false }, { cookie: admin });
+    await expect(t.pool.query("update wallet_credits set amount = amount + 1 where user_id = $1", [sharer.id])).rejects.toThrow(/append only/);
+  });
+
+  it("settles the Referral bonus of a closed month into the wallet of the inviter too", async () => {
+    const inviter = await makeAccount("inviter2");
+    const invite = (await t.get(`/customer/${inviter.id}/invites`, { cookie: inviter.cookie })).json();
+    const friend = await makeAccount("friend2", { inviteCode: invite.code });
+    const made = await bookOnline(a, friend.email, { quantity: 2 }); // 500 000 at 10% = 50 000, paid in a month that is not the one the test before closed (105 days ago)
+    await t.pool.query("insert into payments (organization_id, booking_id, type, amount, currency, method, recorded_at) values ($1, $2, 'PAYMENT', 500000, 'VND', 'CASH', now() - interval '105 days')", [a.orgId, made.id]);
+    await t.pool.query("update bookings set payment_status = 'PAID' where id = $1", [made.id]);
+    const line = async () => (await wallet(inviter, "?source=REFERRAL")).json().balances[0];
+    expect(await line()).toMatchObject({ earned: 0, unsettled: 50_000, available: 0 });
+    await t.app.get(MaintenanceService, { strict: false }).closeMonths();
+    expect(await line()).toMatchObject({ earned: 50_000, unsettled: 0, available: 50_000 });
+    expect((await t.post(`/customer/${inviter.id}/withdrawals`, { source: "REFERRAL", currency: "VND", amount: 50_000, bankName: "Demo Bank", bankAccountNumber: "0123456789", bankAccountHolder: "Inviter Two" }, { cookie: inviter.cookie })).statusCode).toBe(201);
+  });
+
+  it("applies a change of the rates only to what is paid after it: the fees and the earnings worked out before keep their rates", async () => {
+    const x = await makeAccount("rater");
+    const link = (await t.post(`/customer/${x.id}/referrals`, { workshopId: b.workshopId }, { cookie: x.cookie })).json();
+    const first = await bookOnline(b, emailFor("r1"), { quantity: 1, ref: link.code });
+    expect((await pay(b, first.id)).statusCode).toBe(200); // 250 000 at the default 10% + 10% and 10% affiliate
+    expect((await links(x)).json().items[0]).toMatchObject({ referralFee: 25_000, bookings: 1, referralBps: 1000 });
+
+    expect((await setRates(b, { maintenanceBps: 2000, serviceBps: 1000, referralBps: 500, inviteBonusBps: 1000 })).statusCode).toBe(200);
+    expect((await links(x)).json().items[0]).toMatchObject({ referralFee: 25_000, referralBps: 500 }); // the earned fee stays; the page shows the rate of the future
+    const second = await bookOnline(b, emailFor("r2"), { quantity: 1, ref: link.code });
+    expect((await pay(b, second.id)).statusCode).toBe(200); // 250 000 at 20% + 10% and 5% affiliate
+    expect((await links(x)).json().items[0]).toMatchObject({ referralFee: 25_000 + 12_500, bookings: 2 });
+
+    const rows = (await adminGet(`/income/${b.orgId}`)).json().items as { bookingCode: string; maintenanceFee: number; serviceFee: number; affiliateFee: number }[];
+    expect(rows.find((r) => r.bookingCode === first.code)).toMatchObject({ maintenanceFee: 25_000, serviceFee: 25_000, affiliateFee: 25_000 });
+    expect(rows.find((r) => r.bookingCode === second.code)).toMatchObject({ maintenanceFee: 50_000, serviceFee: 25_000, affiliateFee: 12_500 });
+    // putting the first back to unpaid reverses it with ITS rates, not today's: the two rows cancel out
+    expect((await pay(b, first.id, false)).statusCode).toBe(200);
+    expect((await links(x)).json().items[0]).toMatchObject({ referralFee: 12_500, bookings: 1 });
   });
 
   it("keeps the code, the owner and the workshop of a link for good, and the link a booking came through", async () => {

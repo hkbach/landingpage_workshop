@@ -1,7 +1,7 @@
 import { ConflictException, Inject, Injectable, NotFoundException, UnprocessableEntityException } from "@nestjs/common";
 import { and, desc, eq, gte, lt, sql, type SQL } from "drizzle-orm";
 import { checkAccountHolder, checkAccountNumber, checkBankName, maskAccountNumber, normalizeAccountHolder, normalizeAccountNumber, normalizeBankName } from "@workshop/shared";
-import { programEarnings } from "../affiliate/earnings";
+import { unsettledEarnings } from "../affiliate/earnings";
 import { AuditService } from "../audit/audit.service";
 import type { Actor } from "../catalog/workshops.service";
 import { decodeCursor, encodeCursor } from "../common/cursor";
@@ -37,10 +37,11 @@ export class WalletService {
     const rows = await executor.select({ status: withdrawals.status, n: sql<string>`coalesce(sum(${withdrawals.amount}), 0)` }).from(withdrawals)
       .where(and(eq(withdrawals.userId, userId), eq(withdrawals.source, source), eq(withdrawals.currency, currency))).groupBy(withdrawals.status);
     const by = (s: WithdrawalRow["status"]) => num(rows.find((r) => r.status === s)?.n);
-    // what was written by hand (credits) plus what the two programs earned from the bookings as they are now
-    const program = (await programEarnings(executor, userId)).find((x) => x.source === source && x.currency === currency)?.amount ?? 0;
-    const e = num(earned?.n) + program;
-    return { earned: e, pending: by("PENDING"), withdrawn: by("PAID"), available: Math.max(0, e - by("PENDING") - by("PAID")) };
+    // `earned` is what can be withdrawn: the credits (the months that were closed, and the adjustments made by hand). What the programs earned in a month that is not closed yet is only shown,
+    // as `unsettled`, and is not withdrawable until the month of the shop is closed (D11, D24).
+    const unsettled = (await unsettledEarnings(executor, userId)).find((x) => x.source === source && x.currency === currency)?.amount ?? 0;
+    const e = num(earned?.n);
+    return { earned: e, unsettled, pending: by("PENDING"), withdrawn: by("PAID"), available: Math.max(0, e - by("PENDING") - by("PAID")) };
   }
 
   private base(w: WithdrawalRow) {
@@ -63,7 +64,7 @@ export class WalletService {
   async wallet(userId: string, source?: WalletSource) {
     const credited = await this.db.selectDistinct({ source: walletCredits.source, currency: walletCredits.currency }).from(walletCredits).where(and(eq(walletCredits.userId, userId), source ? eq(walletCredits.source, source) : undefined));
     const pairs = new Map(credited.map((c) => [`${c.source}|${c.currency}`, c]));
-    for (const e of await programEarnings(this.db, userId)) if (!source || e.source === source) pairs.set(`${e.source}|${e.currency}`, { source: e.source, currency: e.currency });
+    for (const e of await unsettledEarnings(this.db, userId)) if (e.amount > 0 && (!source || e.source === source)) pairs.set(`${e.source}|${e.currency}`, { source: e.source, currency: e.currency });
     const earnedIn = [...pairs.values()];
     const balances = [];
     for (const w of earnedIn.sort((x, y) => x.source.localeCompare(y.source) || x.currency.localeCompare(y.currency))) {

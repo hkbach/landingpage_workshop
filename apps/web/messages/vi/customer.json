@@ -234,6 +234,7 @@
     "withdraw": "Rút tiền",
     "available": "Có thể rút: {amount}",
     "nothing": "Chưa có số tiền nào để rút.",
+    "closingNotice": "Tiền kiếm được chỉ rút được sau khi tháng phát sinh đã được kết sổ. Tháng của mỗi shop được kết sổ vào cuối tháng; từ đó số tiền của tháng đó được chốt và không bao giờ thay đổi, kể cả khi booking bị sửa sau này.",
     "dialogTitle": "Rút tiền",
     "dialogBody": "Bạn muốn rút bao nhiêu từ thu nhập {program}? Bạn có thể rút tối đa {amount}.",
     "program": {

@@ -5,7 +5,7 @@ import { AuditService } from "../audit/audit.service";
 import type { Actor } from "../catalog/workshops.service";
 import { decodeCursor, encodeCursor } from "../common/cursor";
 import { DB, type Database, type Executor } from "../db/db.module";
-import { organizationFeeSettings, organizations } from "../db/schema";
+import { organizationFeeRates, organizationFeeSettings, organizations } from "../db/schema";
 import { DEFAULT_RATES, type Rates } from "./ledger";
 
 /** The four rates as the API names them: `referralBps` is the Affiliate fee and `inviteBonusBps` the Referral bonus (FR-ADM-17). */
@@ -78,7 +78,7 @@ export class FeesService {
       const before = (await this.ratesOf(tx, organizationId)).rates;
       const next: FeeRatesView = { ...toView(before), ...Object.fromEntries(Object.entries(patch).filter(([, v]) => v !== undefined)) };
       validate(next);
-      await this.write(tx, organizationId, next, actor);
+      await this.write(tx, organizationId, next, actor, toView(before));
       await this.audit.record({ organizationId, actorUserId: actor.userId, action: "fees.update", entityType: "fee_settings", entityId: organizationId, before: toView(before), after: next, ip: actor.ip }, tx);
       return { shopId: organizationId, custom: true, ...next };
     });
@@ -91,15 +91,23 @@ export class FeesService {
       const shops = await tx.select({ id: organizations.id }).from(organizations).orderBy(asc(organizations.id)).for("update");
       for (const shop of shops) {
         const before = (await this.ratesOf(tx, shop.id)).rates;
-        await this.write(tx, shop.id, rates, actor);
+        await this.write(tx, shop.id, rates, actor, toView(before));
         await this.audit.record({ organizationId: shop.id, actorUserId: actor.userId, action: "fees.bulk_update", entityType: "fee_settings", entityId: shop.id, before: toView(before), after: rates, ip: actor.ip }, tx);
       }
       return { updated: shops.length, ...rates };
     });
   }
 
-  private async write(executor: Executor, organizationId: string, r: FeeRatesView, actor: Actor): Promise<void> {
+  /**
+   * Saves the rates (the current row, for the screens) and, when they are not the ones the shop already had, a new version of its history that takes effect NOW (D24): only what is paid from
+   * this moment on is worked out with them; every fee worked out before keeps the rates it was worked out with.
+   */
+  private async write(executor: Executor, organizationId: string, r: FeeRatesView, actor: Actor, before: FeeRatesView): Promise<void> {
     const values = { maintenanceBps: r.maintenanceBps, serviceBps: r.serviceBps, affiliateBps: r.referralBps, inviteBonusBps: r.inviteBonusBps, updatedAt: new Date(), updatedBy: actor.userId };
     await executor.insert(organizationFeeSettings).values({ organizationId, ...values }).onConflictDoUpdate({ target: organizationFeeSettings.organizationId, set: values });
+    if (r.maintenanceBps === before.maintenanceBps && r.serviceBps === before.serviceBps && r.referralBps === before.referralBps && r.inviteBonusBps === before.inviteBonusBps) return; // nothing changed: no new version
+    await executor.insert(organizationFeeRates).values({
+      organizationId, effectiveFrom: sql`clock_timestamp()`, maintenanceBps: r.maintenanceBps, serviceBps: r.serviceBps, affiliateBps: r.referralBps, inviteBonusBps: r.inviteBonusBps, createdBy: actor.userId,
+    });
   }
 }

@@ -234,6 +234,7 @@
     "withdraw": "出金",
     "available": "出金可能額：{amount}",
     "nothing": "出金できる金額はまだありません。",
+    "closingNotice": "収益は、発生した月が締められた後にのみ出金できます。各ショップの月は月末に締められ、それ以降その月の金額は確定し、後から予約が変更されても変わりません。",
     "dialogTitle": "出金する",
     "dialogBody": "{program}の収益からいくら出金しますか？最大{amount}まで出金できます。",
     "program": {

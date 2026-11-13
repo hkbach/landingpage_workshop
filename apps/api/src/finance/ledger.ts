@@ -1,10 +1,10 @@
 import { ConflictException, UnprocessableEntityException } from "@nestjs/common";
-import { and, eq, gte, inArray, lt } from "drizzle-orm";
+import { and, asc, eq, gte, inArray, lt, sql } from "drizzle-orm";
 import { checkDateRange, dayKeyOf, feeBase, feeOf, isDayKey, ledgerFromPayments, monthKey, type BookingPriceInfo, type LedgerRow } from "@workshop/shared";
 import { referralBonuses } from "../affiliate/earnings";
 import { addDays, dateIn, zonedToUtc } from "../common/zoned-time";
 import type { Executor } from "../db/db.module";
-import { bookings, financeMonthClosings, organizationFeeSettings, organizations, payments } from "../db/schema";
+import { bookings, financeMonthClosings, organizationFeeRates, organizations, payments } from "../db/schema";
 import { tenantScope } from "../tenant/tenant-scope";
 import { DEFAULT_RATES, type Rates } from "./rates";
 
@@ -25,6 +25,8 @@ export interface Entry {
   type: "PAYMENT" | "REVERSAL";
   amount: number;
   recordedAt: Date;
+  /** The moment whose rates apply (D24): when the payment was recorded; for a reversal, when the payment it reverses was recorded (so the two cancel out exactly). */
+  rateAt: Date;
   price: BookingPriceInfo;
   /** The booking came through an affiliate link: the platform pays the Affiliate fee on it. */
   affiliate: boolean;
@@ -59,41 +61,52 @@ export async function loadEntries(executor: Executor, filter: { organizationId?:
     .select({
       organizationId: payments.organizationId, paymentId: payments.id, bookingCode: bookings.bookingCode, currency: payments.currency, type: payments.type, amount: payments.amount, recordedAt: payments.recordedAt,
       quantity: bookings.quantity, unitPrice: bookings.unitPriceAmount, discountAmount: bookings.discountAmount, snapshot: bookings.snapshot, bookingId: bookings.id, affiliateLinkId: bookings.affiliateLinkId,
+      rateAtMs: sql<string | null>`(extract(epoch from case when ${payments.type} = 'PAYMENT' then ${payments.recordedAt} else (select max(p2.recorded_at) from payments p2 where p2.organization_id = ${payments.organizationId} and p2.booking_id = ${payments.bookingId} and p2.type = 'PAYMENT' and p2.recorded_at <= ${payments.recordedAt}) end) * 1000)::bigint`,
     })
     .from(payments)
     .innerJoin(bookings, and(eq(bookings.organizationId, payments.organizationId), eq(bookings.id, payments.bookingId)))
     .where(and(filter.organizationId ? tenantScope(payments, filter.organizationId) : undefined, eq(bookings.paymentStatus, "PAID"), gte(payments.recordedAt, filter.fromUtc), lt(payments.recordedAt, filter.toUtc)));
-  const bonusBookings = new Set((await referralBonuses(executor)).map((b) => b.bookingId));
+  const bonusBookings = new Set((await referralBonuses(executor, filter.organizationId ? { organizationId: filter.organizationId } : {})).map((b) => b.bookingId));
   return rows.map((r) => {
     // The original price (before the vouchers) and what each voucher took off, as they were when the booking was made (BR-05).
     const subtotal = r.snapshot.subtotalAmount ?? r.unitPrice * r.quantity;
     const discounts = r.snapshot.discounts ?? (r.discountAmount > 0 ? [{ code: "DISCOUNT", amount: r.discountAmount }] : []);
-    return { organizationId: r.organizationId, paymentId: r.paymentId, bookingCode: r.bookingCode, currency: r.currency, type: r.type, amount: r.amount, recordedAt: r.recordedAt, price: { subtotal, discounts }, affiliate: r.affiliateLinkId !== null, referral: bonusBookings.has(r.bookingId) };
+    return { organizationId: r.organizationId, paymentId: r.paymentId, bookingCode: r.bookingCode, currency: r.currency, type: r.type, amount: r.amount, recordedAt: r.recordedAt, rateAt: r.rateAtMs === null ? r.recordedAt : new Date(Number(r.rateAtMs)), price: { subtotal, discounts }, affiliate: r.affiliateLinkId !== null, referral: bonusBookings.has(r.bookingId) };
   });
 }
 
-/** The rates in force: the closed months keep theirs, every other month uses what the shop has now. */
+/**
+ * The rates of every shop over time (D24): a fee is worked out with the rates that were in force at the moment of the payment, so a change of the rates only reaches what happens after it
+ * and what was worked out before never changes. A shop with no history has the defaults.
+ */
 export class RatesBook {
-  private constructor(private readonly current: Map<string, Rates>, private readonly closed: Map<string, Rates>) {}
+  private constructor(private readonly history: Map<string, { from: number; rates: Rates }[]>, private readonly closed: Set<string>) {}
 
   static async load(executor: Executor, organizationIds?: readonly string[]): Promise<RatesBook> {
-    const settings = await executor.select().from(organizationFeeSettings).where(organizationIds ? inArray(organizationFeeSettings.organizationId, [...organizationIds]) : undefined);
-    const closings = await executor.select({ organizationId: financeMonthClosings.organizationId, month: financeMonthClosings.month, maintenanceBps: financeMonthClosings.maintenanceBps, serviceBps: financeMonthClosings.serviceBps, affiliateBps: financeMonthClosings.affiliateBps, inviteBonusBps: financeMonthClosings.inviteBonusBps })
-      .from(financeMonthClosings).where(organizationIds ? inArray(financeMonthClosings.organizationId, [...organizationIds]) : undefined);
-    return new RatesBook(
-      new Map(settings.map((s) => [s.organizationId, { maintenanceBps: s.maintenanceBps, serviceBps: s.serviceBps, affiliateBps: s.affiliateBps, inviteBonusBps: s.inviteBonusBps }])),
-      new Map(closings.map((c) => [`${c.organizationId}|${c.month}`, { maintenanceBps: c.maintenanceBps, serviceBps: c.serviceBps, affiliateBps: c.affiliateBps, inviteBonusBps: c.inviteBonusBps }])),
-    );
+    const versions = await executor.select().from(organizationFeeRates).where(organizationIds ? inArray(organizationFeeRates.organizationId, [...organizationIds]) : undefined).orderBy(asc(organizationFeeRates.effectiveFrom));
+    const closings = await executor.select({ organizationId: financeMonthClosings.organizationId, month: financeMonthClosings.month }).from(financeMonthClosings).where(organizationIds ? inArray(financeMonthClosings.organizationId, [...organizationIds]) : undefined);
+    const history = new Map<string, { from: number; rates: Rates }[]>();
+    for (const v of versions) {
+      const list = history.get(v.organizationId) ?? [];
+      list.push({ from: v.effectiveFrom.getTime(), rates: { maintenanceBps: v.maintenanceBps, serviceBps: v.serviceBps, affiliateBps: v.affiliateBps, inviteBonusBps: v.inviteBonusBps } });
+      history.set(v.organizationId, list);
+    }
+    return new RatesBook(history, new Set(closings.map((c) => `${c.organizationId}|${c.month}`)));
   }
 
+  /** The rates in force at a moment: the last version that began at or before it, or the defaults when none had begun. */
+  ratesAt(organizationId: string, at: Date): Rates {
+    const list = this.history.get(organizationId) ?? [];
+    for (let i = list.length - 1; i >= 0; i--) if (list[i]!.from <= at.getTime()) return list[i]!.rates;
+    return DEFAULT_RATES;
+  }
+  /** The rates a payment made now would be worked out with. */
   currentOf(organizationId: string): Rates {
-    return this.current.get(organizationId) ?? DEFAULT_RATES;
+    const list = this.history.get(organizationId) ?? [];
+    return list.length > 0 ? list[list.length - 1]!.rates : DEFAULT_RATES;
   }
   isClosed(organizationId: string, month: string): boolean {
     return this.closed.has(`${organizationId}|${month}`);
-  }
-  ratesFor(organizationId: string, month: string): Rates {
-    return this.closed.get(`${organizationId}|${month}`) ?? this.currentOf(organizationId);
   }
 }
 
@@ -105,7 +118,7 @@ export function buildLedger(entries: readonly Entry[], shop: Pick<ShopInfo, "tim
   return entries
     .map((e): PlatformLedgerRow => {
       const iso = e.recordedAt.toISOString();
-      const rates = book.ratesFor(e.organizationId, monthKey(iso, shop.timezone));
+      const rates = book.ratesAt(e.organizationId, e.rateAt); // the rates of the moment of the payment, never today's
       const [row] = ledgerFromPayments(
         [{ id: e.paymentId, bookingCode: e.bookingCode, currency: e.currency, price: e.price, payments: [{ id: e.paymentId, type: e.type === "PAYMENT" ? "PAYMENT" : "REFUND", amount: e.amount, recordedAt: iso }] }],
         rates,

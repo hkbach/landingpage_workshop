@@ -24,6 +24,30 @@ export const organizationFeeSettings = pgTable(
   ],
 );
 
+/**
+ * Every change of the rates of a shop, with the moment it takes effect (D24): a rate applies only to what happens AFTER that moment, so a payment made before keeps the rate it was worked out
+ * with. A fee is worked out with the row that was in force when the payment was recorded (a reversal: when the payment it reverses was recorded). Append only (a trigger refuses UPDATE and DELETE).
+ * `organization_fee_settings` is the current row, for the screens.
+ */
+export const organizationFeeRates = pgTable(
+  "organization_fee_rates",
+  {
+    organizationId: uuid("organization_id").notNull().references(() => organizations.id),
+    effectiveFrom: timestamp("effective_from", { withTimezone: true }).notNull(),
+    maintenanceBps: integer("maintenance_bps").notNull(),
+    serviceBps: integer("service_bps").notNull(),
+    affiliateBps: integer("affiliate_bps").notNull(),
+    inviteBonusBps: integer("invite_bonus_bps").notNull(),
+    createdBy: uuid("created_by").references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.organizationId, t.effectiveFrom] }),
+    check("fee_rates_range", sql`${t.maintenanceBps} BETWEEN 0 AND 10000 AND ${t.serviceBps} BETWEEN 0 AND 10000 AND ${t.affiliateBps} BETWEEN 0 AND 10000 AND ${t.inviteBonusBps} BETWEEN 0 AND 10000`),
+    check("fee_rates_total", sql`${t.maintenanceBps} + ${t.serviceBps} <= 10000`),
+  ],
+);
+
 export interface MonthClosingTotals {
   /** Payments and reversals of the month. */
   entries: number;

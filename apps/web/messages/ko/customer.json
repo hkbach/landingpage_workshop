@@ -234,6 +234,7 @@
     "withdraw": "출금",
     "available": "출금 가능: {amount}",
     "nothing": "아직 출금할 금액이 없습니다.",
+    "closingNotice": "수익은 발생한 달이 마감된 후에만 출금할 수 있습니다. 각 샵의 월은 월말에 마감되며, 그때부터 해당 월의 금액은 확정되어 이후 예약이 변경되어도 바뀌지 않습니다.",
     "dialogTitle": "출금하기",
     "dialogBody": "{program} 수익에서 얼마를 출금하시겠습니까? 최대 {amount}까지 출금할 수 있습니다.",
     "program": {

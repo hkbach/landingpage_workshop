@@ -234,7 +234,12 @@ export async function seed(db: Executor, password: string, now: Date = new Date(
  */
 export async function seedFinance(db: Database): Promise<{ closed: number }> {
   const [shop] = await db.select({ id: schema.organizations.id }).from(schema.organizations).where(eq(schema.organizations.slug, "whiskladle")).limit(1);
-  if (shop) await db.insert(schema.organizationFeeSettings).values({ organizationId: shop.id, maintenanceBps: 800, serviceBps: 1200, affiliateBps: 500, inviteBonusBps: 300 }).onConflictDoNothing();
+  if (shop) {
+    const rates = { maintenanceBps: 800, serviceBps: 1200, affiliateBps: 500, inviteBonusBps: 300 };
+    await db.insert(schema.organizationFeeSettings).values({ organizationId: shop.id, ...rates }).onConflictDoNothing();
+    // the demo history is long: these rates apply to the whole demo past (a change made later only reaches what is paid after it, D24)
+    await db.insert(schema.organizationFeeRates).values({ organizationId: shop.id, effectiveFrom: new Date(0), ...rates }).onConflictDoNothing();
+  }
   const { closed } = await new FinanceService(db, new AuditService(db)).closeMonths();
   await seedWallet(db);
   await seedInvites(db);

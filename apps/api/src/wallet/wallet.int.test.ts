@@ -48,9 +48,9 @@ d("wallet and withdrawals of a customer", () => {
     const res = (await wallet(emma)).json();
     expect(res.source).toBeNull();
     expect(res.balances).toEqual([
-      { source: "AFFILIATE", currency: "USD", earned: 2_000, pending: 0, withdrawn: 0, available: 2_000, limits: { minAmount: 0, maxAmount: 0 } },
-      { source: "AFFILIATE", currency: "VND", earned: 600_000, pending: 0, withdrawn: 0, available: 600_000, limits: { minAmount: 0, maxAmount: 0 } },
-      { source: "REFERRAL", currency: "VND", earned: 80_000, pending: 0, withdrawn: 0, available: 80_000, limits: { minAmount: 0, maxAmount: 0 } },
+      { source: "AFFILIATE", currency: "USD", earned: 2_000, unsettled: 0, pending: 0, withdrawn: 0, available: 2_000, limits: { minAmount: 0, maxAmount: 0 } },
+      { source: "AFFILIATE", currency: "VND", earned: 600_000, unsettled: 0, pending: 0, withdrawn: 0, available: 600_000, limits: { minAmount: 0, maxAmount: 0 } },
+      { source: "REFERRAL", currency: "VND", earned: 80_000, unsettled: 0, pending: 0, withdrawn: 0, available: 80_000, limits: { minAmount: 0, maxAmount: 0 } },
     ]);
     expect(res.invoices).toEqual([]);
     expect((await wallet(emma, "?source=REFERRAL")).json().balances).toHaveLength(1);
