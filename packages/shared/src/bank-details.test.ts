@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkAccountNumber, checkBankName, maskAccountNumber, normalizeAccountNumber, normalizeBankName } from "./bank-details";
+import { checkAccountHolder, checkAccountNumber, checkBankName, maskAccountNumber, normalizeAccountNumber, normalizeBankName } from "./bank-details";
 
 describe("bank name", () => {
   it("is trimmed and its runs of spaces made one", () => {
@@ -15,6 +15,16 @@ describe("bank name", () => {
     expect(checkBankName("Bank; drop table")).toBe("invalid");
     expect(checkBankName("B".repeat(101))).toBe("tooLong");
     expect(checkBankName("B".repeat(100))).toBeNull();
+  });
+});
+
+describe("account holder", () => {
+  it("follows the rules of a name: any language, apostrophes and hyphens, not empty, not too long", () => {
+    for (const ok of ["Nguyễn Văn A", "O'Brien-Smith", "김민수", "山田 太郎", "王小明"]) expect(checkAccountHolder(ok), ok).toBeNull();
+    expect(checkAccountHolder("  ")).toBe("required");
+    expect(checkAccountHolder("A")).toBe("invalid");
+    expect(checkAccountHolder("Bob <script>")).toBe("invalid");
+    expect(checkAccountHolder("N".repeat(101))).toBe("tooLong");
   });
 });
 

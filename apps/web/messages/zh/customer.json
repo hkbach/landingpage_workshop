@@ -243,6 +243,7 @@
     "amountLabel": "金额（{currency}）",
     "amountHint": "最多 {amount}。",
     "bankNameLabel": "银行名称",
+    "accountHolderLabel": "账户持有人姓名",
     "accountNumberLabel": "银行账号",
     "bankHint": "平台将在本网站之外通过银行转账向您付款。提交申请后无法修改，请仔细核对信息。",
     "submit": "提交申请",
@@ -260,7 +261,10 @@
       "bankNameTooLong": "银行名称过长（最多 100 个字符）。",
       "accountRequired": "请输入银行账号。",
       "accountInvalid": "请输入有效的银行账号（6 至 34 位字母或数字，空格和连字符会被忽略）。",
-      "accountTooLong": "银行账号过长（最多 34 个字符）。"
+      "accountTooLong": "银行账号过长（最多 34 个字符）。",
+      "accountHolderRequired": "请输入账户持有人姓名。",
+      "accountHolderInvalid": "请输入有效的姓名（仅限文字和数字）。",
+      "accountHolderTooLong": "姓名过长（最多 100 个字符）。"
     },
     "done": "申请 {code} 已发送，可在“历史记录”中查看。",
     "tabHistory": "历史记录",

@@ -14,7 +14,7 @@ const money = (min: number) => z.number({ error: (i) => (i.input === undefined ?
 const walletQuery = z.object({ source: source.optional() });
 // The bank details are checked (and made tidy) by the service with the rules of `packages/shared`, the same ones the popup uses: here only a missing or non-text value is reported.
 const text = z.string({ error: (issue) => (issue.input === undefined ? "required" : "invalid") });
-const requestBody = z.object({ source, currency, amount: money(1), bankName: text, bankAccountNumber: text });
+const requestBody = z.object({ source, currency, amount: money(1), bankName: text, bankAccountNumber: text, bankAccountHolder: text });
 const listQuery = z.object({
   q: z.string().trim().max(100).optional(), status: z.enum(["PENDING", "PAID", "REJECTED"]).optional(), source: source.optional(),
   from: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, "invalid").optional(), to: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, "invalid").optional(),
@@ -42,7 +42,7 @@ export class WalletController {
   }
 
   @Post(":id/withdrawals")
-  request(@CurrentUser() auth: AuthContext, @Client() client: ClientContext, @Param("id", new UuidPipe()) id: string, @Body(new ZodPipe(requestBody)) body: { source: WalletSource; currency: string; amount: number; bankName: string; bankAccountNumber: string }) {
+  request(@CurrentUser() auth: AuthContext, @Client() client: ClientContext, @Param("id", new UuidPipe()) id: string, @Body(new ZodPipe(requestBody)) body: { source: WalletSource; currency: string; amount: number; bankName: string; bankAccountNumber: string; bankAccountHolder: string }) {
     return this.wallet.request(this.own(auth, id), body, actorOf(auth, client));
   }
 }

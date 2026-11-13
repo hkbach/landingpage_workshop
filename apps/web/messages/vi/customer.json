@@ -243,6 +243,7 @@
     "amountLabel": "Số tiền ({currency})",
     "amountHint": "Tối đa {amount}.",
     "bankNameLabel": "Tên ngân hàng",
+    "accountHolderLabel": "Tên chủ tài khoản",
     "accountNumberLabel": "Số tài khoản",
     "bankHint": "Nền tảng sẽ chuyển khoản cho bạn ngoài website này. Hãy kiểm tra kỹ thông tin: bạn không thể sửa sau khi gửi yêu cầu.",
     "submit": "Gửi yêu cầu",
@@ -260,7 +261,10 @@
       "bankNameTooLong": "Tên ngân hàng quá dài (tối đa 100 ký tự).",
       "accountRequired": "Nhập số tài khoản của bạn.",
       "accountInvalid": "Nhập số tài khoản hợp lệ (6 đến 34 chữ cái hoặc chữ số; dấu cách và dấu gạch ngang được bỏ qua).",
-      "accountTooLong": "Số tài khoản quá dài (tối đa 34 ký tự)."
+      "accountTooLong": "Số tài khoản quá dài (tối đa 34 ký tự).",
+      "accountHolderRequired": "Nhập tên chủ tài khoản.",
+      "accountHolderInvalid": "Nhập tên hợp lệ (chỉ gồm chữ và số).",
+      "accountHolderTooLong": "Tên quá dài (tối đa 100 ký tự)."
     },
     "done": "Đã gửi yêu cầu {code}. Theo dõi trong History.",
     "tabHistory": "History",

@@ -75,7 +75,7 @@ export const fetchCustomerInvites = async (id: string, email?: string): Promise<
 export type WalletSource = "AFFILIATE" | "REFERRAL";
 export type WithdrawalStatus = "PENDING" | "PAID" | "REJECTED";
 /** An invoice: a withdrawal the guest asked for. `reason` is why the platform rejected it. */
-export interface CustomerWithdrawal { id: string; code: string; amount: number; currency: string; status: WithdrawalStatus; requestedAt: string; processedAt?: string; reason?: string; /** Where it is paid; the number is masked ("****6789"). */ bankName: string; accountNumberMasked: string }
+export interface CustomerWithdrawal { id: string; code: string; amount: number; currency: string; status: WithdrawalStatus; requestedAt: string; processedAt?: string; reason?: string; /** Where it is paid; the number is masked ("****6789"). */ bankName: string; accountNumberMasked: string; /** The name of the owner of the account. */ bankAccountHolder: string }
 /** What the guest earned from a program (minor units), what waits to be paid, what was withdrawn, what is left to withdraw, and the invoices (newest first). */
 export interface CustomerWallet { source: WalletSource; currency: string; earned: number; pending: number; withdrawn: number; available: number; /** The smallest and the largest amount of one withdrawal, set by the platform (0 = no limit). */ limits: { min: number; max: number }; items: CustomerWithdrawal[] }
 
@@ -83,9 +83,9 @@ export const fetchCustomerWallet = async (id: string, email: string | undefined,
   parse(await fetch(`${url(id)}/wallet?source=${source}`, { headers: emailHeader(email), cache: "no-store" }));
 
 /** Where the platform pays a withdrawal (outside the system). */
-export interface BankDetailsInput { bankName: string; bankAccountNumber: string }
+export interface BankDetailsInput { bankName: string; bankAccountNumber: string; bankAccountHolder: string }
 
-/** Asks to withdraw `amount` (minor units) to a bank account: a new invoice that waits for the platform. The server refuses more than is available (422, `fields.amount` = "exceeds") and bad bank details (`fields.bankName`, `fields.bankAccountNumber`). */
+/** Asks to withdraw `amount` (minor units) to a bank account: a new invoice that waits for the platform. The server refuses more than is available (422, `fields.amount` = "exceeds") and bad bank details (`fields.bankName`, `fields.bankAccountNumber`, `fields.bankAccountHolder`). */
 export const requestCustomerWithdrawal = async (id: string, email: string | undefined, source: WalletSource, amount: number, bank: BankDetailsInput): Promise<CustomerWithdrawal> =>
   parse(await fetch(`${url(id)}/withdrawals`, { method: "POST", headers: { "content-type": "application/json", ...emailHeader(email) }, body: JSON.stringify({ source, amount, ...bank }) }));
 

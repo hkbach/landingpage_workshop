@@ -245,7 +245,7 @@ async function seedWallet(db: Database): Promise<void> {
   for (const [source, amount, note] of credits) await db.insert(schema.walletCredits).values({ userId: emma.id, source, currency: "VND", amount, note });
   const number = sql`'WD-' || lpad(nextval('withdrawal_number_seq')::text, 4, '0')`;
   const day = 86_400_000;
-  const bank = { bankName: "Demo Bank", bankAccountNumber: "000011112222" }; // made up: not a real account
+  const bank = { bankName: "Demo Bank", bankAccountNumber: "000011112222", bankAccountHolder: "Emma Wilson" }; // made up: not a real account
   await db.insert(schema.withdrawals).values([
     { number, userId: emma.id, source: "AFFILIATE", currency: "VND", amount: 100_000, ...bank, status: "PAID", requestedAt: new Date(Date.now() - 20 * day), processedAt: new Date(Date.now() - 18 * day), processedBy: root?.id ?? null },
     { number, userId: emma.id, source: "AFFILIATE", currency: "VND", amount: 50_000, ...bank, status: "REJECTED", reason: "Bank details are missing (demo)", requestedAt: new Date(Date.now() - 9 * day), processedAt: new Date(Date.now() - 8 * day), processedBy: root?.id ?? null },

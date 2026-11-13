@@ -243,6 +243,7 @@
     "amountLabel": "金額（{currency}）",
     "amountHint": "最大{amount}。",
     "bankNameLabel": "銀行名",
+    "accountHolderLabel": "口座名義人",
     "accountNumberLabel": "口座番号",
     "bankHint": "プラットフォームがこのウェブサイトの外で銀行振込により支払います。リクエスト送信後は変更できないため、内容をよくご確認ください。",
     "submit": "申請する",
@@ -260,7 +261,10 @@
       "bankNameTooLong": "銀行名が長すぎます（100文字まで）。",
       "accountRequired": "口座番号を入力してください。",
       "accountInvalid": "有効な口座番号を入力してください（英字または数字6〜34文字。スペースとハイフンは無視されます）。",
-      "accountTooLong": "口座番号が長すぎます（34文字まで）。"
+      "accountTooLong": "口座番号が長すぎます（34文字まで）。",
+      "accountHolderRequired": "口座名義人の名前を入力してください。",
+      "accountHolderInvalid": "有効な名前を入力してください（文字と数字のみ）。",
+      "accountHolderTooLong": "名前が長すぎます（100文字まで）。"
     },
     "done": "申請 {code} を送信しました。履歴で確認できます。",
     "tabHistory": "履歴",

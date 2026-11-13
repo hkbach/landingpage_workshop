@@ -709,7 +709,7 @@
     "reject": "Reject",
     "payTitle": "Mark {code} as paid?",
     "payBody": "Confirm that {amount} was sent to {email}. An invoice is processed once.",
-    "payBodyBank": "Confirm that {amount} was sent to {bank}, account {number} (customer {email}). An invoice is processed once.",
+    "payBodyBank": "Confirm that {amount} was sent to {holder} at {bank}, account {number} (customer {email}). An invoice is processed once.",
     "rejectTitle": "Reject {code}?",
     "rejectBody": "The amount of {amount} goes back to what the customer can withdraw. Please give the reason; the customer sees it.",
     "paidDone": "Invoice {code} was marked as paid.",

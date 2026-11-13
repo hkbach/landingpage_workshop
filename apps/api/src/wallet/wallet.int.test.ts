@@ -24,7 +24,7 @@ d("wallet and withdrawals of a customer", () => {
     t.pool.query("insert into wallet_credits (user_id, source, currency, amount, note) values ($1, $2, $3, $4, 'test')", [c.id, source, currency, amount]);
   const wallet = (c: Customer, query = "", as = c) => t.get(`/customer/${c.id}/wallet${query}`, { cookie: as.cookie });
   /** The bank details every request carries (where the administrator pays); a test that is about something else uses these. */
-  const BANK = { bankName: "Demo Bank", bankAccountNumber: "0123 4567 89" };
+  const BANK = { bankName: "Demo Bank", bankAccountNumber: "0123 4567 89", bankAccountHolder: "Emma Wilson" };
   const ask = (c: Customer, body: unknown, as = c) => t.post(`/customer/${c.id}/withdrawals`, { ...BANK, ...(body as object) }, { cookie: as.cookie });
   const adminGet = (url: string) => t.get(`/admin${url}`, { cookie: admin });
   const process = (id: string, body: unknown, cookie = admin) => t.post(`/admin/withdrawals/${id}`, body, { cookie });
@@ -97,29 +97,31 @@ d("wallet and withdrawals of a customer", () => {
     const raw = (extra: Record<string, unknown>) => t.post(`/customer/${c.id}/withdrawals`, { ...body, ...extra }, { cookie: c.cookie });
     const fields = async (extra: Record<string, unknown>) => (await raw(extra)).json().error?.details?.fields;
 
-    expect(await fields({})).toEqual({ bankName: "required", bankAccountNumber: "required" }); // both missing: both reported
-    expect(await fields({ bankName: "   ", bankAccountNumber: "" })).toEqual({ bankName: "required", bankAccountNumber: "required" });
-    expect(await fields({ bankName: "Vietcombank", bankAccountNumber: "12 34" })).toEqual({ bankAccountNumber: "invalid" });
-    expect(await fields({ bankName: "Vietcombank", bankAccountNumber: "1234 5678.90" })).toEqual({ bankAccountNumber: "invalid" });
-    expect(await fields({ bankName: "Vietcombank", bankAccountNumber: "1".repeat(35) })).toEqual({ bankAccountNumber: "tooLong" });
-    expect(await fields({ bankName: "<script>", bankAccountNumber: "0123456789" })).toEqual({ bankName: "invalid" });
-    expect(await fields({ bankName: "B".repeat(101), bankAccountNumber: "0123456789" })).toEqual({ bankName: "tooLong" });
-    expect(await fields({ bankName: 5, bankAccountNumber: "0123456789" })).toEqual({ bankName: "invalid" });
-    expect((await raw({ bankName: "Vietcombank", bankAccountNumber: "0123456789", amount: 99_999_999_999 })).json().error.details.fields).toEqual({ amount: "exceeds" }); // a wrong amount is still reported
+    expect(await fields({})).toEqual({ bankName: "required", bankAccountNumber: "required", bankAccountHolder: "required" }); // all missing: all reported
+    expect(await fields({ bankName: "   ", bankAccountNumber: "", bankAccountHolder: " " })).toEqual({ bankName: "required", bankAccountNumber: "required", bankAccountHolder: "required" });
+    expect(await fields({ bankName: "Vietcombank", bankAccountNumber: "0123456789", bankAccountHolder: "<b>x</b>" })).toEqual({ bankAccountHolder: "invalid" });
+    expect(await fields({ bankName: "Vietcombank", bankAccountNumber: "0123456789", bankAccountHolder: "N".repeat(101) })).toEqual({ bankAccountHolder: "tooLong" });
+    expect(await fields({ bankName: "Vietcombank", bankAccountNumber: "12 34", bankAccountHolder: "Emma Wilson" })).toEqual({ bankAccountNumber: "invalid" });
+    expect(await fields({ bankName: "Vietcombank", bankAccountNumber: "1234 5678.90", bankAccountHolder: "Emma Wilson" })).toEqual({ bankAccountNumber: "invalid" });
+    expect(await fields({ bankName: "Vietcombank", bankAccountNumber: "1".repeat(35), bankAccountHolder: "Emma Wilson" })).toEqual({ bankAccountNumber: "tooLong" });
+    expect(await fields({ bankName: "<script>", bankAccountNumber: "0123456789", bankAccountHolder: "Emma Wilson" })).toEqual({ bankName: "invalid" });
+    expect(await fields({ bankName: "B".repeat(101), bankAccountNumber: "0123456789", bankAccountHolder: "Emma Wilson" })).toEqual({ bankName: "tooLong" });
+    expect(await fields({ bankName: 5, bankAccountNumber: "0123456789", bankAccountHolder: "Emma Wilson" })).toEqual({ bankName: "invalid" });
+    expect((await raw({ bankName: "Vietcombank", bankAccountNumber: "0123456789", bankAccountHolder: "Emma Wilson", amount: 99_999_999_999 })).json().error.details.fields).toEqual({ amount: "exceeds" }); // a wrong amount is still reported
     expect((await wallet(c)).json().invoices).toEqual([]); // nothing was made by the refused calls
 
-    const made = await raw({ bankName: "  Ngân hàng   Vietcombank ", bankAccountNumber: " 0123 4567-8901 " });
+    const made = await raw({ bankName: "  Ngân hàng   Vietcombank ", bankAccountNumber: " 0123 4567-8901 ", bankAccountHolder: "  Nguyen   Van A " });
     expect(made.statusCode).toBe(201);
     // the owner gets the name and the masked number back, never the whole number
-    expect(made.json()).toMatchObject({ bankName: "Ngân hàng Vietcombank", accountNumberMasked: "****8901" });
+    expect(made.json()).toMatchObject({ bankName: "Ngân hàng Vietcombank", accountNumberMasked: "****8901", bankAccountHolder: "Nguyen Van A" });
     expect(made.body).not.toContain("012345678901");
     expect(JSON.stringify((await wallet(c)).json())).not.toContain("012345678901");
     // kept normalized in the table
-    expect((await t.pool.query("select bank_name, bank_account_number from withdrawals where id = $1", [made.json().id])).rows[0]).toEqual({ bank_name: "Ngân hàng Vietcombank", bank_account_number: "012345678901" });
+    expect((await t.pool.query("select bank_name, bank_account_number, bank_account_holder from withdrawals where id = $1", [made.json().id])).rows[0]).toEqual({ bank_name: "Ngân hàng Vietcombank", bank_account_number: "012345678901", bank_account_holder: "Nguyen Van A" });
 
     // the administrator who pays sees the whole number, and so does the answer of paying
     const row = (await adminGet(`/directory/withdrawals?q=${encodeURIComponent(c.email)}`)).json().items[0];
-    expect(row).toMatchObject({ bankName: "Ngân hàng Vietcombank", accountNumber: "012345678901" });
+    expect(row).toMatchObject({ bankName: "Ngân hàng Vietcombank", accountNumber: "012345678901", bankAccountHolder: "Nguyen Van A" });
     expect(row.accountNumberMasked).toBeUndefined();
     expect((await process(made.json().id, { action: "pay" })).json()).toMatchObject({ accountNumber: "012345678901" });
     expect((await wallet(c)).json().invoices[0]).toMatchObject({ status: "PAID", accountNumberMasked: "****8901" });
@@ -127,7 +129,7 @@ d("wallet and withdrawals of a customer", () => {
     // personal data stays out of the audit log
     const logs = await t.pool.query("select before::text as b, after::text as a from audit_logs where entity_id = $1", [made.json().id]);
     expect(logs.rowCount).toBeGreaterThanOrEqual(2);
-    for (const l of logs.rows) expect(`${l.b}${l.a}`).not.toMatch(/0123|Vietcombank/);
+    for (const l of logs.rows) expect(`${l.b}${l.a}`).not.toMatch(/0123|Vietcombank|Nguyen/);
     // the details of an invoice never change
     await expect(t.pool.query("update withdrawals set bank_account_number = '999999' where id = $1", [made.json().id])).rejects.toThrow(/cannot be changed|final/);
   });

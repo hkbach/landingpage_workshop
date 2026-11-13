@@ -1,6 +1,6 @@
 import { ConflictException, Inject, Injectable, NotFoundException, UnprocessableEntityException } from "@nestjs/common";
 import { and, desc, eq, gte, lt, sql, type SQL } from "drizzle-orm";
-import { checkAccountNumber, checkBankName, maskAccountNumber, normalizeAccountNumber, normalizeBankName } from "@workshop/shared";
+import { checkAccountHolder, checkAccountNumber, checkBankName, maskAccountNumber, normalizeAccountHolder, normalizeAccountNumber, normalizeBankName } from "@workshop/shared";
 import { AuditService } from "../audit/audit.service";
 import type { Actor } from "../catalog/workshops.service";
 import { decodeCursor, encodeCursor } from "../common/cursor";
@@ -41,7 +41,7 @@ export class WalletService {
   }
 
   private base(w: WithdrawalRow) {
-    return { id: w.id, number: w.number, source: w.source, currency: w.currency, amount: w.amount, status: w.status, reason: w.reason, requestedAt: w.requestedAt.toISOString(), processedAt: w.processedAt ? w.processedAt.toISOString() : null, bankName: w.bankName };
+    return { id: w.id, number: w.number, source: w.source, currency: w.currency, amount: w.amount, status: w.status, reason: w.reason, requestedAt: w.requestedAt.toISOString(), processedAt: w.processedAt ? w.processedAt.toISOString() : null, bankName: w.bankName, bankAccountHolder: w.bankAccountHolder };
   }
 
   /** An invoice as its owner sees it: the bank account number is masked (the last four characters). */
@@ -68,16 +68,19 @@ export class WalletService {
   }
 
   /** `POST /customer/{id}/withdrawals`: an invoice WD-0001... in PENDING. 422 `fields.amount` = `invalid | exceeds | belowMin | aboveMax`. */
-  async request(userId: string, input: { source: WalletSource; currency: string; amount: number; bankName: string; bankAccountNumber: string }, actor: Actor) {
+  async request(userId: string, input: { source: WalletSource; currency: string; amount: number; bankName: string; bankAccountNumber: string; bankAccountHolder: string }, actor: Actor) {
     // The bank details come first (nothing to look up): both fields are reported at once. They are kept normalized and are never logged or audited.
     const bankIssues: Record<string, string> = {};
     const nameIssue = checkBankName(input.bankName);
     const numberIssue = checkAccountNumber(input.bankAccountNumber);
+    const holderIssue = checkAccountHolder(input.bankAccountHolder);
     if (nameIssue) bankIssues.bankName = nameIssue;
+    if (holderIssue) bankIssues.bankAccountHolder = holderIssue;
     if (numberIssue) bankIssues.bankAccountNumber = numberIssue;
     if (Object.keys(bankIssues).length > 0) throw invalid(bankIssues);
     const bankName = normalizeBankName(input.bankName);
     const bankAccountNumber = normalizeAccountNumber(input.bankAccountNumber);
+    const bankAccountHolder = normalizeAccountHolder(input.bankAccountHolder);
     return this.db.transaction(async (tx) => {
       await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`wallet:${userId}:${input.source}:${input.currency}`}))`);
       const t = await this.totals(tx, userId, input.source, input.currency);
@@ -85,7 +88,7 @@ export class WalletService {
       if (input.amount > t.available) throw invalid({ amount: "exceeds" });
       if (limits.minAmount > 0 && input.amount < limits.minAmount) throw invalid({ amount: "belowMin" });
       if (limits.maxAmount > 0 && input.amount > limits.maxAmount) throw invalid({ amount: "aboveMax" });
-      const [row] = await tx.insert(withdrawals).values({ number: sql`'WD-' || lpad(nextval('withdrawal_number_seq')::text, 4, '0')`, userId, source: input.source, currency: input.currency, amount: input.amount, bankName, bankAccountNumber }).returning();
+      const [row] = await tx.insert(withdrawals).values({ number: sql`'WD-' || lpad(nextval('withdrawal_number_seq')::text, 4, '0')`, userId, source: input.source, currency: input.currency, amount: input.amount, bankName, bankAccountNumber, bankAccountHolder }).returning();
       if (!row) throw new Error("The withdrawal was not recorded");
       await this.audit.record({ actorUserId: userId, action: "withdrawal.request", entityType: "withdrawal", entityId: row.id, after: { number: row.number, source: row.source, currency: row.currency, amount: row.amount }, ip: actor.ip }, tx);
       return this.view(row);

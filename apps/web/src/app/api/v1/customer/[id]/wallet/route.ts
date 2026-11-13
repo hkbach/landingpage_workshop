@@ -21,7 +21,7 @@ export async function GET(request: Request, ctx: RouteContext<"/api/v1/customer/
   const source = new URL(request.url).searchParams.get("source") ?? "";
   if (!(WALLET_SOURCES as readonly string[]).includes(source)) return apiError(422, "VALIDATION", "The source must be AFFILIATE or REFERRAL.", { fields: { source: "invalid" } }, headers);
   const s = source as WalletSource;
-  const items = withdrawalsOf(id, s).map(({ id: wid, code, amount, currency, status, requestedAt, processedAt, reason, bankName, accountNumber }) => ({ id: wid, code, amount, currency, status, requestedAt, bankName, accountNumberMasked: accountNumber ? maskAccountNumber(accountNumber) : "", ...(processedAt ? { processedAt } : {}), ...(reason ? { reason } : {}) }));
+  const items = withdrawalsOf(id, s).map(({ id: wid, code, amount, currency, status, requestedAt, processedAt, reason, bankName, accountNumber, accountHolder }) => ({ id: wid, code, amount, currency, status, requestedAt, bankName, accountNumberMasked: accountNumber ? maskAccountNumber(accountNumber) : "", bankAccountHolder: accountHolder, ...(processedAt ? { processedAt } : {}), ...(reason ? { reason } : {}) }));
   const { withdrawalMin, withdrawalMax } = getPlatformSettings();
   return Response.json({ ...walletOf(id, s), limits: { min: withdrawalMin, max: withdrawalMax }, items }, { headers });
 }

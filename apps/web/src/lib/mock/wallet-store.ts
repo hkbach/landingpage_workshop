@@ -31,6 +31,8 @@ export interface Withdrawal {
   /** Where the admin pays the invoice (outside the system): personal data, kept tidy (`normalizeBankName`, `normalizeAccountNumber`). */
   bankName: string;
   accountNumber: string;
+  /** The name of the owner of the account. */
+  accountHolder: string;
   status: WithdrawalStatus;
   requestedAt: string;
   processedAt?: string;
@@ -51,7 +53,7 @@ function seed(): Withdrawal[] {
   const at = (days: number) => new Date(Date.now() - days * DAY).toISOString();
   const cur = currentShop.currency;
   const row = (n: number, accountId: string, source: WalletSource, amount: number, status: WithdrawalStatus, requestedDaysAgo: number, processedDaysAgo?: number, reason?: string): Withdrawal => ({
-    id: `wd-${n}`, code: `WD-${String(n).padStart(4, "0")}`, accountId, source, amount, currency: cur, bankName: "Demo Bank", accountNumber: "000011112222", status, requestedAt: at(requestedDaysAgo),
+    id: `wd-${n}`, code: `WD-${String(n).padStart(4, "0")}`, accountId, source, amount, currency: cur, bankName: "Demo Bank", accountNumber: "000011112222", accountHolder: "Demo Customer", status, requestedAt: at(requestedDaysAgo),
     ...(processedDaysAgo === undefined ? {} : { processedAt: at(processedDaysAgo) }), ...(reason ? { reason } : {}),
   });
   return [
@@ -100,7 +102,7 @@ export const withdrawalsOf = (accountId: string, source: WalletSource): Withdraw
 export type RequestResult = { ok: true; withdrawal: Withdrawal } | { ok: false; code: "NO_ACCOUNT" | "AMOUNT_INVALID" | "EXCEEDS_AVAILABLE" | "BELOW_MIN" | "ABOVE_MAX" };
 
 /** The customer asks to withdraw `amount` (minor units, a whole positive number) from one program: it must not be more than what is available. `bank` is already checked and tidy (the route does it). */
-export function requestWithdrawal(accountId: string, source: WalletSource, amount: number, bank: { bankName: string; accountNumber: string }, now: Date = new Date()): RequestResult {
+export function requestWithdrawal(accountId: string, source: WalletSource, amount: number, bank: { bankName: string; accountNumber: string; accountHolder: string }, now: Date = new Date()): RequestResult {
   if (!listAccounts().some((a) => a.id === accountId && a.type === "CUSTOMER")) return { ok: false, code: "NO_ACCOUNT" };
   if (!Number.isSafeInteger(amount) || amount <= 0) return { ok: false, code: "AMOUNT_INVALID" };
   if (amount > walletOf(accountId, source).available) return { ok: false, code: "EXCEEDS_AVAILABLE" };
@@ -108,7 +110,7 @@ export function requestWithdrawal(accountId: string, source: WalletSource, amoun
   if (withdrawalMin > 0 && amount < withdrawalMin) return { ok: false, code: "BELOW_MIN" };
   if (withdrawalMax > 0 && amount > withdrawalMax) return { ok: false, code: "ABOVE_MAX" };
   const n = store().length + 1;
-  const withdrawal: Withdrawal = { id: `wd-${newUuid().slice(0, 8)}`, code: `WD-${String(n).padStart(4, "0")}`, accountId, source, amount, currency: currentShop.currency, bankName: bank.bankName, accountNumber: bank.accountNumber, status: "PENDING", requestedAt: now.toISOString() };
+  const withdrawal: Withdrawal = { id: `wd-${newUuid().slice(0, 8)}`, code: `WD-${String(n).padStart(4, "0")}`, accountId, source, amount, currency: currentShop.currency, bankName: bank.bankName, accountNumber: bank.accountNumber, accountHolder: bank.accountHolder, status: "PENDING", requestedAt: now.toISOString() };
   store().push(withdrawal);
   return { ok: true, withdrawal: { ...withdrawal } };
 }

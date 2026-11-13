@@ -709,7 +709,7 @@
     "reject": "Từ chối",
     "payTitle": "Đánh dấu {code} đã thanh toán?",
     "payBody": "Xác nhận đã chuyển {amount} cho {email}. Mỗi invoice chỉ xử lý một lần.",
-    "payBodyBank": "Xác nhận đã chuyển {amount} đến {bank}, tài khoản {number} (khách hàng {email}). Mỗi invoice chỉ xử lý một lần.",
+    "payBodyBank": "Xác nhận đã chuyển {amount} cho {holder} tại {bank}, tài khoản {number} (khách hàng {email}). Mỗi invoice chỉ xử lý một lần.",
     "rejectTitle": "Từ chối {code}?",
     "rejectBody": "Số tiền {amount} sẽ quay lại phần customer có thể rút. Vui lòng nhập lý do; customer sẽ thấy lý do này.",
     "paidDone": "Đã đánh dấu invoice {code} đã thanh toán.",

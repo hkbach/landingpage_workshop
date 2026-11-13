@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { checkAccountNumber, checkBankName, maskAccountNumber, normalizeAccountNumber, normalizeBankName } from "@workshop/shared";
+import { checkAccountHolder, checkAccountNumber, checkBankName, maskAccountNumber, normalizeAccountHolder, normalizeAccountNumber, normalizeBankName } from "@workshop/shared";
 import { apiError, fieldCodes } from "@/lib/api-error";
 import { customerLoginRequired } from "@/lib/customer-access";
 import { accountOfGuest } from "@/lib/mock/booking-store";
@@ -13,11 +13,11 @@ import { customerActor, DEMO_ORG } from "@/lib/mock/audit-actors";
 const headers = { "cache-control": "no-store", "x-robots-tag": "noindex" };
 const emailOf = (request: Request): string | null => (customerLoginRequired() ? (request.headers.get("x-guest-email") ?? "") : null);
 const text = z.string({ error: (issue) => (issue.input === undefined ? "required" : "invalid") });
-const bodySchema = z.object({ source: z.enum(WALLET_SOURCES, { error: "invalid" }), amount: z.number({ error: "required" }).int("invalid").positive("invalid"), bankName: text, bankAccountNumber: text });
+const bodySchema = z.object({ source: z.enum(WALLET_SOURCES, { error: "invalid" }), amount: z.number({ error: "required" }).int("invalid").positive("invalid"), bankName: text, bankAccountNumber: text, bankAccountHolder: text });
 
 /**
- * POST { source, amount, bankName, bankAccountNumber } (minor units) -> 201 { id, code, amount, currency, status: "PENDING", requestedAt, bankName, accountNumberMasked }. 404 NOT_FOUND, 422 with `fields`:
- * amount (invalid | exceeds | belowMin | aboveMax), bankName and bankAccountNumber (required | invalid | tooLong). The bank details are where the admin pays (outside the system): they are never audited or logged.
+ * POST { source, amount, bankName, bankAccountNumber, bankAccountHolder } (minor units) -> 201 { id, code, amount, currency, status: "PENDING", requestedAt, bankName, accountNumberMasked, bankAccountHolder }. 404 NOT_FOUND, 422 with `fields`:
+ * amount (invalid | exceeds | belowMin | aboveMax), bankName, bankAccountNumber and bankAccountHolder (required | invalid | tooLong). The bank details are where the admin pays (outside the system): they are never audited or logged.
  */
 export async function POST(request: Request, ctx: RouteContext<"/api/v1/customer/[id]/withdrawals">) {
   const { id } = await ctx.params;
@@ -35,10 +35,13 @@ export async function POST(request: Request, ctx: RouteContext<"/api/v1/customer
   const numberIssue = checkAccountNumber(parsed.data.bankAccountNumber);
   if (nameIssue) bankFields.bankName = nameIssue;
   if (numberIssue) bankFields.bankAccountNumber = numberIssue;
+  const holderIssue = checkAccountHolder(parsed.data.bankAccountHolder);
+  if (holderIssue) bankFields.bankAccountHolder = holderIssue;
   if (Object.keys(bankFields).length > 0) return apiError(422, "VALIDATION", "Please check the highlighted fields.", { fields: bankFields }, headers);
   const bankName = normalizeBankName(parsed.data.bankName);
   const accountNumber = normalizeAccountNumber(parsed.data.bankAccountNumber);
-  const res = requestWithdrawal(id, parsed.data.source, parsed.data.amount, { bankName, accountNumber });
+  const accountHolder = normalizeAccountHolder(parsed.data.bankAccountHolder);
+  const res = requestWithdrawal(id, parsed.data.source, parsed.data.amount, { bankName, accountNumber, accountHolder });
   if (!res.ok) {
     if (res.code === "EXCEEDS_AVAILABLE") return apiError(422, "VALIDATION", "The amount is more than what is available.", { fields: { amount: "exceeds" } }, headers);
     if (res.code === "BELOW_MIN" || res.code === "ABOVE_MAX") return apiError(422, "VALIDATION", "The amount is outside the limits of one withdrawal.", { fields: { amount: res.code === "BELOW_MIN" ? "belowMin" : "aboveMax" } }, headers);
@@ -46,5 +49,5 @@ export async function POST(request: Request, ctx: RouteContext<"/api/v1/customer
   }
   const { id: wid, code, amount, currency, status, requestedAt } = res.withdrawal;
   recordAudit({ ...customerActor(id), action: "withdrawal.request", entityType: "Withdrawal", entityId: wid, organizationId: DEMO_ORG, details: `${code} ${parsed.data.source} ${amount} ${currency}` });
-  return Response.json({ id: wid, code, amount, currency, status, requestedAt, bankName, accountNumberMasked: maskAccountNumber(accountNumber) }, { status: 201, headers });
+  return Response.json({ id: wid, code, amount, currency, status, requestedAt, bankName, accountNumberMasked: maskAccountNumber(accountNumber), bankAccountHolder: accountHolder }, { status: 201, headers });
 }
