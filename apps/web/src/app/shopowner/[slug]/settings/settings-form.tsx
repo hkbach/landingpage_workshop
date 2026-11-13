@@ -43,7 +43,7 @@ const schema = z
 
 type Values = z.infer<typeof schema>;
 
-export function SettingsForm({ initial, hasBookings, readOnly, systemHost }: { initial: Values; hasBookings: boolean; readOnly: boolean; /** {slug}.{PLATFORM_DOMAIN}: the address the shop always has, and where the DNS record of its own domain points. */ systemHost: string }) {
+export function SettingsForm({ initial, hasBookings, readOnly, systemHost, viaApi = false }: { initial: Values; hasBookings: boolean; readOnly: boolean; /** Connected to the API: Save sends the settings to the server (the sample data only fakes it). */ viaApi?: boolean; /** {slug}.{PLATFORM_DOMAIN}: the address the shop always has, and where the DNS record of its own domain points. */ systemHost: string }) {
   const t = useTranslations("dashboard.settings");
   const tc = useTranslations("common");
   const uiLocale = useLocale();
@@ -96,7 +96,22 @@ export function SettingsForm({ initial, hasBookings, readOnly, systemHost }: { i
       className="grid gap-6"
       onSubmit={handleSubmit(async (values) => {
         setSaved(false);
-        await new Promise((r) => setTimeout(r, 700));
+        if (viaApi) {
+          const { customDomain: _domain, ...profile } = values;
+          void _domain;
+          const res = await fetch("/api/v1/organization", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...profile, whatsapp: profile.whatsapp }) }).catch(() => null);
+          if (!res?.ok) {
+            const body = (await res?.json().catch(() => null)) as { error?: { details?: { fields?: Record<string, string> } } } | null;
+            const fields = body?.error?.details?.fields ?? {};
+            const KEYS: Record<string, string> = { name: "errors.nameRequired", contactEmail: "errors.emailInvalid", contactPhone: "errors.phoneRequired", address: "errors.addressRequired", mapsUrl: "errors.urlInvalid", defaultLocale: "errors.defaultMustBeEnabled", enabledLocales: "errors.defaultMustBeEnabled" };
+            const names = Object.keys(fields).filter((f) => f in KEYS);
+            if (names.length === 0) setError("name", { message: "errors.required" });
+            for (const f of names) setError(f as keyof Values, { message: KEYS[f]! });
+            return;
+          }
+        } else {
+          await new Promise((r) => setTimeout(r, 700));
+        }
         // The own domain is the one setting that is kept by the server (it changes where the landing page is served); the server cleans and checks it again.
         const cleaned = checkCustomDomain(values.customDomain, PLATFORM_DOMAIN);
         const domain = cleaned.ok ? cleaned.domain : "";

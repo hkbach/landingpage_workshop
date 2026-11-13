@@ -1,7 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { registeredShops } from "@/lib/mock/registered-shops-store";
-import { getSession } from "@/lib/api-server";
+import { getSession, realApi } from "@/lib/api-server";
 import { OnboardingWizard } from "./onboarding-wizard";
 
 // Standalone page (no dashboard shell): FR-ORG-01. Reached after email verification.
@@ -26,7 +26,7 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
           <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
         <main>
-          <OnboardingWizard platformDomain={platformDomain} {...(shop ? { shop: { name: shop.name, slug: shop.slug, ownerEmail: shop.ownerEmail } } : {})} />
+          <OnboardingWizard platformDomain={platformDomain} viaApi={realApi()} {...(shop ? { shop: { name: shop.name, slug: shop.slug, ownerEmail: shop.ownerEmail } } : {})} />
         </main>
       </div>
     </div>

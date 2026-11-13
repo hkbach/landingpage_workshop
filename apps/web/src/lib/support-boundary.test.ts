@@ -43,6 +43,7 @@ describe("platform support contact stays out of the public landing page", () => 
       "components/customer/customer-shell.tsx",
       "components/customer/customer-support.tsx",
       "components/dashboard/shell/dashboard-shell.tsx",
+      "lib/own-shop.ts", // (the loader of the private owner area: `GET /support-contact` needs a session)
     ]);
   });
 

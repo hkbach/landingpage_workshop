@@ -64,7 +64,7 @@ const isTaken = (slug: string) => TAKEN_SLUGS.includes(slug);
  * The setup wizard. With `shop` (a shop that just signed up: its name and address exist already) it starts at the Region step, shows the name and the address as fixed and saves the answers with
  * POST /api/v1/onboarding. Without it, it is the standalone wizard of the first version (a mock that creates nothing).
  */
-export function OnboardingWizard({ platformDomain, shop }: { platformDomain: string; shop?: { name: string; slug: string; ownerEmail: string } }) {
+export function OnboardingWizard({ platformDomain, shop, viaApi = false }: { platformDomain: string; shop?: { name: string; slug: string; ownerEmail: string }; /** Connected to the API: the setup is saved with PATCH /organization (the shop of the session). */ viaApi?: boolean }) {
   const t = useTranslations("dashboard.onboarding");
   const tc = useTranslations("common");
   const uiLocale = useLocale();
@@ -157,9 +157,9 @@ export function OnboardingWizard({ platformDomain, shop }: { platformDomain: str
           return;
         }
         try {
-          const res = await fetch("/api/v1/onboarding", {
-            method: "POST", headers: { "content-type": "application/json" },
-            body: JSON.stringify({ slug: shop.slug, country: v.country, timezone: v.timezone, currency: v.currency, defaultLocale: v.defaultLocale, enabledLocales: v.enabledLocales, contactEmail: v.contactEmail.trim(), contactPhone: v.contactPhone.trim(), whatsapp: v.whatsapp.trim(), address: v.address.trim(), mapsUrl: v.mapsUrl.trim() }), // BR-16
+          const res = await fetch(viaApi ? "/api/v1/organization" : "/api/v1/onboarding", {
+            method: viaApi ? "PATCH" : "POST", headers: { "content-type": "application/json" },
+            body: JSON.stringify({ ...(viaApi ? {} : { slug: shop.slug }), country: v.country, timezone: v.timezone, currency: v.currency, defaultLocale: v.defaultLocale, enabledLocales: v.enabledLocales, contactEmail: v.contactEmail.trim(), contactPhone: v.contactPhone.trim(), whatsapp: v.whatsapp.trim(), address: v.address.trim(), mapsUrl: v.mapsUrl.trim() }), // BR-16
           });
           if (res.ok || res.status === 409) setSubmitted(true);
           else setFailure(true);
