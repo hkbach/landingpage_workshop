@@ -55,6 +55,17 @@ export class AdminService {
     };
   }
 
+  /** Lists the workshops of a shop on the Workshops page of the customers, or stops listing them (the shop is shown only while it is ACTIVE). Audited. */
+  async setVisibility(id: string, show: boolean, actor: Actor) {
+    return this.db.transaction(async (tx) => {
+      const [o] = await tx.select({ show: organizations.showOnCustomerPage }).from(organizations).where(eq(organizations.id, id)).limit(1).for("update");
+      if (!o) throw notFound("Shop");
+      await tx.update(organizations).set({ showOnCustomerPage: show, updatedAt: new Date() }).where(eq(organizations.id, id));
+      await this.audit.record({ organizationId: id, actorUserId: actor.userId, action: "organization.visibility", entityType: "organization", entityId: id, before: { showOnCustomerPage: o.show }, after: { showOnCustomerPage: show }, ip: actor.ip }, tx);
+      return { id, showOnCustomerPage: show };
+    });
+  }
+
   async getOrganization(id: string) {
     const [o] = await this.db.select().from(organizations).where(eq(organizations.id, id)).limit(1);
     if (!o) throw notFound("Shop");

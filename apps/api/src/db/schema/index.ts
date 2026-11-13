@@ -8,3 +8,4 @@ export * from "./system";
 export * from "./wallet";
 export * from "./affiliate";
 export * from "./promotion";
+export * from "./customer";

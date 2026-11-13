@@ -40,6 +40,13 @@ export class AdminController {
     return this.admin.setOrganizationActive(id, body.active, body.reason, actorOf(auth, client));
   }
 
+  /** `{ showOnCustomerPage }`: list (or stop listing) the workshops of the shop on the Workshops page of the customers. */
+  @Post("organizations/:id/visibility")
+  @HttpCode(200)
+  organizationVisibility(@CurrentUser() auth: AuthContext, @Client() client: ClientContext, @Param("id", new UuidPipe()) id: string, @Body(new ZodPipe(z.object({ showOnCustomerPage: z.boolean({ error: "required" }) }))) body: { showOnCustomerPage: boolean }) {
+    return this.admin.setVisibility(id, body.showOnCustomerPage, actorOf(auth, client));
+  }
+
   @Get("users")
   users(@Query(new ZodPipe(userListQuery)) q: { q?: string | undefined; type?: UserType | undefined; status?: "UNVERIFIED" | "ACTIVE" | "DISABLED" | undefined; limit: number; cursor?: string | undefined }) {
     return this.admin.listUsers(q);

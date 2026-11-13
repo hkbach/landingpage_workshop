@@ -14,6 +14,7 @@ import { bookingConfirmations, bookingOtps, bookings, customers, organizations, 
 import { isUniqueViolation } from "../auth/auth.service";
 import type { BookingMailData } from "../email/templates";
 import { affiliateLinkFor } from "../affiliate/attribution";
+import { ratingSummaries } from "../customer/ratings.service";
 import { PromotionsService } from "../promotions/promotions.service";
 import { shopOrigin } from "../common/origins";
 import { OutboxService } from "../outbox/outbox.service";
@@ -81,13 +82,14 @@ export class PublicBookingsService {
     const o = await this.shop(slug);
     const list = await this.db.select().from(workshops).where(and(eq(workshops.organizationId, o.id), eq(workshops.status, "ACTIVE"))).orderBy(asc(workshops.sortOrder), asc(workshops.id));
     const page = await this.pages.livePage(o.id); // what the owner published (null while there is none)
+    const ratings = await ratingSummaries(this.db, list.map((w) => w.id));
     const running = await this.promotions.activeFor(this.db, o.id, dateIn(new Date(), o.timezone)); // the promotions of today, for the "Promotions" section and the booking form
     return {
       page: page ? { templateKey: page.templateKey, theme: page.theme, content: page.content, version: page.version, publishedAt: page.publishedAt } : null,
       shop: { name: o.name, slug: o.slug, country: o.country, timezone: o.timezone, currency: o.currency, defaultLocale: o.defaultLocale, enabledLocales: o.enabledLocales, contactEmail: o.contactEmail, contactPhone: o.contactPhone, whatsapp: o.whatsapp, address: o.address, mapsUrl: o.mapsUrl },
       promotions: running.map((r) => ({ id: r.id, title: r.title, description: r.description, discountType: r.discountType, discountValue: r.discountValue, code: r.code, imageUrl: r.imageUrl ?? null, stacking: r.stacking, appliesTo: r.appliesTo, workshopIds: r.workshopIds, startDate: r.startDate, endDate: r.endDate })),
       workshops: list.map((w) => ({
-        id: w.id, title: w.title, shortDescription: w.shortDescription, description: w.description, includes: w.includes, notes: w.notes, durationMinutes: w.durationMinutes, priceAmount: w.priceAmount, currency: w.currency,
+        rating: ratings.get(w.id) ?? { average: null, count: 0 }, id: w.id, title: w.title, shortDescription: w.shortDescription, description: w.description, includes: w.includes, notes: w.notes, durationMinutes: w.durationMinutes, priceAmount: w.priceAmount, currency: w.currency,
         maxPerBooking: w.maxPerBooking, coverUrl: w.coverUrl, galleryUrls: w.galleryUrls, categories: w.categories, address: workshopAddress({ address: w.address }, o.address), addressNote: w.addressNote,
       })),
     };

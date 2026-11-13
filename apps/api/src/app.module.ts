@@ -8,6 +8,9 @@ import { DashboardController } from "./dashboard/dashboard.controller";
 import { DashboardService } from "./dashboard/dashboard.service";
 import { AdminPromotionsController, PromotionsController } from "./promotions/promotions.controller";
 import { PromotionsService } from "./promotions/promotions.service";
+import { AdminRatingsController, CustomerController, ShopRatingsController } from "./customer/customer.controller";
+import { CustomerService } from "./customer/customer.service";
+import { RatingsService } from "./customer/ratings.service";
 import { AuditService } from "./audit/audit.service";
 import { BookingsController, CustomersController } from "./bookings/bookings.controller";
 import { BookingsService } from "./bookings/bookings.service";
@@ -56,11 +59,11 @@ export class AppModule implements OnApplicationShutdown {
     return {
       module: AppModule,
       imports: [EnvModule, DbModule],
-      controllers: [HealthController, AuthController, OrganizationController, WorkshopsController, SessionsController, ScheduleRulesController, PublicController, BookingsController, CustomersController, SitePagesController, AdminController, FinanceController, AdminFinanceController, WalletController, AdminWalletController, CustomerAffiliateController, PublicAffiliateController, AdminAffiliateController, DashboardController, PromotionsController, AdminPromotionsController],
+      controllers: [HealthController, AuthController, OrganizationController, WorkshopsController, SessionsController, ScheduleRulesController, PublicController, BookingsController, CustomersController, SitePagesController, AdminController, FinanceController, AdminFinanceController, WalletController, AdminWalletController, CustomerAffiliateController, PublicAffiliateController, AdminAffiliateController, DashboardController, PromotionsController, AdminPromotionsController, CustomerController, ShopRatingsController, AdminRatingsController],
       providers: [
         { provide: EMAIL_PROVIDER, inject: [ENV], useFactory: (env: Env) => options.emailProvider ?? createEmailProvider(env) },
         { provide: JOBS, inject: [ENV], useFactory: (env: Env) => options.jobs ?? createJobs(env) },
-        ...CORE_PROVIDERS, WorkshopsService, SessionsService, ScheduleService, MaintenanceService, SessionCapacityService, PublicBookingsService, BookingsService, CustomersService, SitePagesService, AdminService, FinanceService, FeesService, WalletService, AffiliateService, DashboardService, PromotionsService, AuthService, TurnstileService, AuthGuard, TenantGuard, PlatformAdminGuard,
+        ...CORE_PROVIDERS, WorkshopsService, SessionsService, ScheduleService, MaintenanceService, SessionCapacityService, PublicBookingsService, BookingsService, CustomersService, SitePagesService, AdminService, FinanceService, FeesService, WalletService, AffiliateService, DashboardService, PromotionsService, CustomerService, RatingsService, AuthService, TurnstileService, AuthGuard, TenantGuard, PlatformAdminGuard,
         { provide: APP_FILTER, useClass: ErrorFilter },
         { provide: APP_GUARD, useClass: OriginGuard },
       ],

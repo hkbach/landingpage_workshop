@@ -244,7 +244,20 @@ export async function seedFinance(db: Database): Promise<{ closed: number }> {
   await seedWallet(db);
   await seedInvites(db);
   await seedPromotions(db);
+  await seedCustomerArea(db);
   return { closed };
+}
+
+/**
+ * The demo shop is listed on the Workshops page of the customers, and the demo customer has a profile (what a customer fills in when registering). Written once: a profile that exists is kept.
+ */
+async function seedCustomerArea(db: Database): Promise<void> {
+  await db.update(schema.organizations).set({ showOnCustomerPage: true }).where(eq(schema.organizations.slug, "whiskladle"));
+  const [emma] = await db.select({ id: schema.users.id }).from(schema.users).where(eq(schema.users.email, DEMO_ACCOUNTS.customer)).limit(1);
+  if (!emma) return;
+  await db.insert(schema.customerProfiles).values({
+    userId: emma.id, phone: "+44 20 7946 0000", country: "GB", birthDate: "1990-04-12", favoriteCategories: ["COOKING", "BAKING", "COFFEE_TEA"], gender: "FEMALE", socials: { INSTAGRAM: "emma.wilson" }, consentAt: new Date(),
+  }).onConflictDoNothing();
 }
 
 /**
