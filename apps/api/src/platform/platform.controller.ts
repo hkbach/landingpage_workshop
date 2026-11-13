@@ -8,7 +8,8 @@ import { UuidPipe } from "../common/uuid.pipe";
 import { ZodPipe } from "../common/zod.pipe";
 import { CONTACT_TOPICS, InboxService, MESSAGE_STATUSES } from "./inbox.service";
 import { EmailsService } from "./emails.service";
-import { PlatformService, type PlatformValues, type SupportContact } from "./platform.service";
+import { LegalService, type LegalKind } from "./legal.service";
+import { PlatformService, type SupportContact } from "./platform.service";
 
 const kindParam = z.enum(["terms", "privacy"], { error: "invalid" });
 const text = (max: number) => z.string({ error: "required" }).trim().min(1, "required").max(max, "tooLong");
@@ -19,10 +20,14 @@ const contactBody = z.object({
 });
 const reportBody = createReportSchema.extend({ turnstileToken: z.string().trim().max(2048).optional() });
 const int = z.number({ error: "required" });
-const settingsBody = z.object({ resetLinkHours: int, contactPerHour: int });
+const settingsBody = z.object({ resetLinkHours: int, contactPerHour: int, contactRetentionMonths: int.optional(), emailRetentionDays: int.optional() });
 const channel = z.string({ error: "invalid" }).max(100, "invalid");
 const supportBody = z.object({ whatsapp: channel.default(""), phone: channel.default(""), zalo: channel.default(""), email: channel.default("") });
 const legalBody = z.object({ locale: z.string({ error: "invalid" }), content: z.string({ error: "required" }).max(60_000, "tooLong") });
+const publishBody = z.object({ locale: z.string({ error: "invalid" }), major: z.boolean({ error: "invalid" }).optional() });
+const localeQuery = z.object({ locale: z.string({ error: "invalid" }) });
+const versionParam = z.coerce.number({ error: "invalid" }).int("invalid").min(1, "invalid").max(1_000_000, "invalid");
+const consentBody = z.object({ kinds: z.array(kindParam).min(1, "required").max(2, "invalid"), locale: z.string({ error: "invalid" }).default("en") });
 const messagesQuery = z.object({ q: z.string().trim().max(100).optional(), status: z.enum(MESSAGE_STATUSES).optional(), topic: z.enum(CONTACT_TOPICS).optional(), limit: z.coerce.number().int().min(1).max(100).default(50), cursor: z.string().max(300).optional() });
 const messagePatch = z.object({ status: z.enum(MESSAGE_STATUSES, { error: "invalid" }).optional(), note: z.string().trim().max(2100, "tooLong").optional() });
 const replyBody = z.object({ subject: z.string().trim().max(200, "tooLong").optional(), body: z.string({ error: "required" }).trim().min(1, "required").max(10_000, "tooLong") });
@@ -41,7 +46,7 @@ const actorOf = (auth: AuthContext, client: ClientContext): Actor => ({ userId: 
 @Controller("public")
 @PublicRoute()
 export class PublicPlatformController {
-  constructor(@Inject(InboxService) private readonly inbox: InboxService, @Inject(PlatformService) private readonly platform: PlatformService) {}
+  constructor(@Inject(InboxService) private readonly inbox: InboxService, @Inject(LegalService) private readonly legal: LegalService) {}
 
   @Post("contact")
   submit(@Body(new ZodPipe(contactBody)) body: z.infer<typeof contactBody>, @Client() client: ClientContext) {
@@ -54,8 +59,26 @@ export class PublicPlatformController {
   }
 
   @Get("legal/:kind")
-  legal(@Param("kind", new ZodPipe(kindParam)) kind: "terms" | "privacy", @Query("locale") locale = "en") {
-    return this.platform.publicLegal(kind, locale);
+  legalDocument(@Param("kind", new ZodPipe(kindParam)) kind: LegalKind, @Query("locale") locale = "en") {
+    return this.legal.publicDocument(kind, locale);
+  }
+}
+
+/** What the logged-in user agreed to (D17): `GET /api/v1/legal/consent`, `POST /api/v1/legal/consent {kinds, locale}`. */
+@Controller("legal")
+@UseGuards(AuthGuard)
+export class LegalConsentController {
+  constructor(@Inject(LegalService) private readonly legal: LegalService) {}
+
+  @Get("consent")
+  status(@CurrentUser() auth: AuthContext, @Query("locale") locale = "en") {
+    return this.legal.consentStatus(auth.user.id, locale);
+  }
+
+  @Post("consent")
+  @HttpCode(200)
+  accept(@CurrentUser() auth: AuthContext, @Client() client: ClientContext, @Body(new ZodPipe(consentBody)) body: z.infer<typeof consentBody>) {
+    return this.legal.consent(auth.user.id, [...new Set(body.kinds)], body.locale, actorOf(auth, client));
   }
 }
 
@@ -75,7 +98,7 @@ export class SupportContactController {
 @Controller("admin")
 @UseGuards(PlatformAdminGuard)
 export class AdminPlatformController {
-  constructor(@Inject(PlatformService) private readonly platform: PlatformService, @Inject(InboxService) private readonly inbox: InboxService, @Inject(EmailsService) private readonly emails: EmailsService) {}
+  constructor(@Inject(PlatformService) private readonly platform: PlatformService, @Inject(InboxService) private readonly inbox: InboxService, @Inject(EmailsService) private readonly emails: EmailsService, @Inject(LegalService) private readonly legal: LegalService) {}
 
   @Get("settings")
   settings() {
@@ -83,7 +106,7 @@ export class AdminPlatformController {
   }
 
   @Put("settings")
-  putSettings(@CurrentUser() auth: AuthContext, @Client() client: ClientContext, @Body(new ZodPipe(settingsBody)) body: PlatformValues) {
+  putSettings(@CurrentUser() auth: AuthContext, @Client() client: ClientContext, @Body(new ZodPipe(settingsBody)) body: z.infer<typeof settingsBody>) {
     return this.platform.putSettings(body, actorOf(auth, client));
   }
 
@@ -98,13 +121,41 @@ export class AdminPlatformController {
   }
 
   @Get("legal/:kind")
-  legal(@Param("kind", new ZodPipe(kindParam)) kind: "terms" | "privacy") {
-    return this.platform.legal(kind);
+  legalOverview(@Param("kind", new ZodPipe(kindParam)) kind: LegalKind) {
+    return this.legal.overview(kind);
   }
 
+  /** Saves the DRAFT of one language; nothing is live until it is published. */
   @Put("legal/:kind")
-  putLegal(@CurrentUser() auth: AuthContext, @Client() client: ClientContext, @Param("kind", new ZodPipe(kindParam)) kind: "terms" | "privacy", @Body(new ZodPipe(legalBody)) body: { locale: string; content: string }) {
-    return this.platform.putLegal(kind, body, actorOf(auth, client));
+  putLegal(@CurrentUser() auth: AuthContext, @Client() client: ClientContext, @Param("kind", new ZodPipe(kindParam)) kind: LegalKind, @Body(new ZodPipe(legalBody)) body: { locale: string; content: string }) {
+    return this.legal.saveDraft(kind, body, actorOf(auth, client));
+  }
+
+  @Post("legal/:kind/publish")
+  @HttpCode(200)
+  publishLegal(@CurrentUser() auth: AuthContext, @Client() client: ClientContext, @Param("kind", new ZodPipe(kindParam)) kind: LegalKind, @Body(new ZodPipe(publishBody)) body: z.infer<typeof publishBody>) {
+    return this.legal.publish(kind, body, actorOf(auth, client));
+  }
+
+  @Get("legal/:kind/versions")
+  legalVersions(@Param("kind", new ZodPipe(kindParam)) kind: LegalKind, @Query(new ZodPipe(localeQuery)) q: z.infer<typeof localeQuery>) {
+    return this.legal.versions(kind, q.locale);
+  }
+
+  @Get("legal/:kind/versions/:version")
+  legalVersion(@Param("kind", new ZodPipe(kindParam)) kind: LegalKind, @Param("version", new ZodPipe(versionParam)) version: number, @Query(new ZodPipe(localeQuery)) q: z.infer<typeof localeQuery>) {
+    return this.legal.version(kind, q.locale, version);
+  }
+
+  @Post("legal/:kind/versions/:version/restore")
+  @HttpCode(200)
+  restoreLegal(@CurrentUser() auth: AuthContext, @Client() client: ClientContext, @Param("kind", new ZodPipe(kindParam)) kind: LegalKind, @Param("version", new ZodPipe(versionParam)) version: number, @Body(new ZodPipe(localeQuery)) body: z.infer<typeof localeQuery>) {
+    return this.legal.restore(kind, body.locale, version, actorOf(auth, client));
+  }
+
+  @Delete("legal/:kind/:locale")
+  unpublishLegal(@CurrentUser() auth: AuthContext, @Client() client: ClientContext, @Param("kind", new ZodPipe(kindParam)) kind: LegalKind, @Param("locale") locale: string) {
+    return this.legal.unpublish(kind, locale, actorOf(auth, client));
   }
 
   @Get("directory/messages")

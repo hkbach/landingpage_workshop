@@ -22,7 +22,7 @@ d("the platform administrator: settings, inbox, reports and legal", () => {
 
   beforeAll(async () => {
     t = await startApp();
-    await t.pool.query("delete from legal_documents");
+    await t.pool.query("truncate legal_documents, legal_versions, legal_consents");
     await t.pool.query("delete from platform_settings"); // the platform starts from its defaults
     const email = emailFor("platroot");
     await t.pool.query("insert into users (email, password_hash, full_name, status, platform_role) values ($1, $2, 'Root', 'ACTIVE', 'SUPER_ADMIN')", [email, await hashPassword(PASSWORD)]);
@@ -36,22 +36,24 @@ d("the platform administrator: settings, inbox, reports and legal", () => {
   });
   afterAll(async () => {
     await adminSend("PUT", "/settings", { resetLinkHours: 24, contactPerHour: 5 }); // the test leaves the platform as it found it
-    await t.pool.query("delete from legal_documents");
+    await t.pool.query("truncate legal_documents, legal_versions, legal_consents");
     await t.close();
   });
 
   it("holds the numbers of the platform: defaults, a range for each, audited with the old and the new value, for the administrator only", async () => {
-    expect((await adminSend("GET", "/settings")).json()).toEqual({ resetLinkHours: 24, contactPerHour: 5 });
+    expect((await adminSend("GET", "/settings")).json()).toEqual({ resetLinkHours: 24, contactPerHour: 5, contactRetentionMonths: 12, emailRetentionDays: 90 });
     expect((await adminSend("GET", "/settings", undefined, owner.cookie)).statusCode).toBe(403);
     expect((await t.get("/admin/settings")).statusCode).toBe(401);
     const fields = async (body: unknown) => (await adminSend("PUT", "/settings", body)).json().error?.details?.fields;
     expect(await fields({ resetLinkHours: 0, contactPerHour: 5 })).toEqual({ resetLinkHours: "range" });
     expect(await fields({ resetLinkHours: 169, contactPerHour: 101 })).toEqual({ resetLinkHours: "range", contactPerHour: "range" });
     expect(await fields({ resetLinkHours: 12.5, contactPerHour: 5 })).toEqual({ resetLinkHours: "range" });
+    expect(await fields({ resetLinkHours: 12, contactPerHour: 5, contactRetentionMonths: 0, emailRetentionDays: 6 })).toEqual({ contactRetentionMonths: "range", emailRetentionDays: "range" });
+    expect(await fields({ resetLinkHours: 12, contactPerHour: 5, contactRetentionMonths: 121 })).toEqual({ contactRetentionMonths: "range" });
     expect((await adminSend("PUT", "/settings", { resetLinkHours: 12 })).statusCode).toBe(422);
-    expect((await adminSend("GET", "/settings")).json()).toEqual({ resetLinkHours: 24, contactPerHour: 5 }); // nothing saved by the refused calls
+    expect((await adminSend("GET", "/settings")).json()).toEqual({ resetLinkHours: 24, contactPerHour: 5, contactRetentionMonths: 12, emailRetentionDays: 90 }); // nothing saved by the refused calls
 
-    expect((await adminSend("PUT", "/settings", { resetLinkHours: 12, contactPerHour: 2 })).json()).toEqual({ resetLinkHours: 12, contactPerHour: 2 });
+    expect((await adminSend("PUT", "/settings", { resetLinkHours: 12, contactPerHour: 2 })).json()).toEqual({ resetLinkHours: 12, contactPerHour: 2, contactRetentionMonths: 12, emailRetentionDays: 90 }); // what is left out keeps its value
     const log = await t.pool.query<{ after: { changes: { name: string; from: number; to: number }[] } }>("select after from audit_logs where entity_id = 'settings' and action = 'platform.settings_update' order by created_at desc limit 1");
     expect(log.rows[0]!.after.changes).toEqual([{ name: "resetLinkHours", from: 24, to: 12 }, { name: "contactPerHour", from: 5, to: 2 }]);
 
@@ -191,35 +193,126 @@ d("the platform administrator: settings, inbox, reports and legal", () => {
     expect(log.rows.every((r) => r.organization_id === owner.orgId)).toBe(true);
   });
 
-  it("keeps the Terms and the Privacy for each language as plain text: a version for each change, an empty text removes a language, English is the fallback", async () => {
-    expect((await adminSend("GET", "/legal/terms")).json()).toEqual({ kind: "terms", documents: {} });
+  it("keeps the Terms and the Privacy for each language as plain text: a draft is written first and goes live only when published, English is the fallback", async () => {
+    const empty = (await adminSend("GET", "/legal/terms")).json();
+    expect(empty).toMatchObject({ kind: "terms", epoch: 0, documents: {}, drafts: {} });
     expect((await t.get("/public/legal/terms?locale=vi")).json()).toEqual({ kind: "terms", available: false }); // nothing yet
     expect((await adminSend("GET", "/legal/other")).statusCode).toBe(422);
     expect((await adminSend("PUT", "/legal/terms", { locale: "en", content: "x" }, owner.cookie)).statusCode).toBe(403);
     expect((await adminSend("PUT", "/legal/terms", { locale: "xx", content: "x" })).json().error.details.fields).toEqual({ locale: "invalid" });
     expect((await adminSend("PUT", "/legal/terms", { locale: "en", content: "x".repeat(50_001) })).json().error.details.fields).toEqual({ content: "tooLong" });
+    expect((await adminSend("POST", "/legal/terms/publish", { locale: "en" })).json().error.code).toBe("NO_DRAFT");
 
+    // saving writes a draft: nothing is live
     const text = "# Terms\n\nYou may use the service.\n\n- Be kind\n- <script>alert(1)</script>";
-    const v1 = await adminSend("PUT", "/legal/terms", { locale: "en", content: `  ${text}  ` });
-    expect(v1.json().documents.en).toMatchObject({ content: text, version: 1 });
-    expect(v1.json().documents.en.updatedBy).toBeTruthy();
-    expect((await adminSend("PUT", "/legal/terms", { locale: "en", content: text })).json().documents.en.version).toBe(1); // the same text: no new version
-    expect((await adminSend("PUT", "/legal/terms", { locale: "en", content: `${text}\n\nMore.` })).json().documents.en.version).toBe(2);
-    expect((await adminSend("PUT", "/legal/terms", { locale: "vi", content: "Điều khoản" })).json().documents.vi.version).toBe(1); // each language has its own
-    expect((await adminSend("PUT", "/legal/privacy", { locale: "en", content: "Privacy text" })).json().documents.en.version).toBe(1); // and each document
+    const saved = (await adminSend("PUT", "/legal/terms", { locale: "en", content: `  ${text}  ` })).json();
+    expect(saved.drafts.en).toMatchObject({ content: text, version: 1 });
+    expect(saved.documents.en).toBeUndefined();
+    expect((await t.get("/public/legal/terms?locale=en")).json()).toEqual({ kind: "terms", available: false });
+    expect((await adminSend("PUT", "/legal/terms", { locale: "en", content: `${text}\n\nMore.` })).json().drafts.en).toMatchObject({ content: `${text}\n\nMore.`, version: 1 }); // the draft is corrected in place
 
-    // what a visitor reads: shown at once, the language that has no text falls back to English
-    const vi = (await t.get("/public/legal/terms?locale=vi")).json();
-    expect(vi).toMatchObject({ available: true, locale: "vi", fallback: false, version: 1, content: "Điều khoản" });
+    // publishing makes it live as that version; the draft is gone
+    const live = (await adminSend("POST", "/legal/terms/publish", { locale: "en" })).json();
+    expect(live.documents.en).toMatchObject({ content: `${text}\n\nMore.`, version: 1 });
+    expect(live.documents.en.updatedBy).toBeTruthy();
+    expect(live.drafts.en).toBeUndefined();
+    expect(live.epoch).toBe(0);
     const ko = (await t.get("/public/legal/terms?locale=ko")).json();
-    expect(ko).toMatchObject({ locale: "en", fallback: true, version: 2 });
+    expect(ko).toMatchObject({ locale: "en", fallback: true, version: 1, epoch: 0 });
     expect(ko.content).toContain("<script>alert(1)</script>"); // kept as text: the page shows it as text, never as HTML
+
+    // each language and each document has its own versions
+    await adminSend("PUT", "/legal/terms", { locale: "vi", content: "Điều khoản" });
+    expect((await adminSend("POST", "/legal/terms/publish", { locale: "vi" })).json().documents.vi.version).toBe(1);
+    await adminSend("PUT", "/legal/privacy", { locale: "en", content: "Privacy text" });
+    await adminSend("POST", "/legal/privacy/publish", { locale: "en" });
+    expect((await t.get("/public/legal/terms?locale=vi")).json()).toMatchObject({ available: true, locale: "vi", fallback: false, version: 1, content: "Điều khoản" });
     expect((await t.get("/public/legal/privacy?locale=ja")).json()).toMatchObject({ locale: "en", fallback: true, content: "Privacy text" });
 
-    expect((await adminSend("PUT", "/legal/terms", { locale: "vi", content: "   " })).json().documents.vi).toBeUndefined(); // empty: the language is removed
+    // a new draft of a live text: the live one does not change until the publish
+    await adminSend("PUT", "/legal/terms", { locale: "en", content: "Terms, second text" });
+    expect((await t.get("/public/legal/terms?locale=en")).json()).toMatchObject({ version: 1 });
+    expect((await adminSend("PUT", "/legal/terms", { locale: "en", content: "   " })).json().drafts.en).toBeUndefined(); // an empty text throws the draft away
+    expect((await t.get("/public/legal/terms?locale=en")).json()).toMatchObject({ version: 1, content: `${text}\n\nMore.` }); // and the live text stays
+    await adminSend("PUT", "/legal/terms", { locale: "en", content: "Terms, second text" });
+    expect((await adminSend("POST", "/legal/terms/publish", { locale: "en" })).json().documents.en).toMatchObject({ version: 2, content: "Terms, second text" });
+
+    // taking a language off the page keeps its history
+    expect((await adminSend("DELETE", "/legal/terms/vi")).json().documents.vi).toBeUndefined();
+    expect((await adminSend("DELETE", "/legal/terms/vi")).statusCode).toBe(404);
     expect((await t.get("/public/legal/terms?locale=vi")).json()).toMatchObject({ locale: "en", fallback: true });
-    const log = await t.pool.query<{ after: string }>("select after::text as after from audit_logs where entity_id like 'terms:%' and action = 'legal.update' order by created_at");
-    expect(log.rows.length).toBeGreaterThanOrEqual(4);
+
+    const log = await t.pool.query<{ after: string }>("select coalesce(after::text, '') as after from audit_logs where entity_id like 'terms:%' and action like 'legal.%'");
+    expect(log.rows.length).toBeGreaterThanOrEqual(8);
     expect(log.rows.map((r) => r.after).join()).not.toMatch(/Terms|kind|Điều|script/); // the text is not in the audit log
+  });
+
+  it("keeps every version: the history can be read, a published version is never changed or deleted, and it can be put back as a draft", async () => {
+    const versions = (await adminSend("GET", "/legal/terms/versions?locale=en")).json();
+    expect(versions.items.map((v: { version: number; status: string }) => [v.version, v.status])).toEqual([[2, "PUBLISHED"], [1, "PUBLISHED"]]);
+    expect(versions.items[0]).toMatchObject({ major: false, epoch: 0 });
+    expect(versions.items[0].publishedBy).toBeTruthy();
+    expect((await adminSend("GET", "/legal/terms/versions?locale=xx")).statusCode).toBe(422);
+    const old = (await adminSend("GET", "/legal/terms/versions/1?locale=en")).json();
+    expect(old).toMatchObject({ version: 1, status: "PUBLISHED" });
+    expect(old.content).toContain("Be kind");
+    expect((await adminSend("GET", "/legal/terms/versions/9?locale=en")).statusCode).toBe(404);
+    expect((await adminSend("GET", "/legal/terms/versions/abc?locale=en")).statusCode).toBe(422);
+
+    // the database itself refuses to change or delete what was published
+    await expect(t.pool.query("update legal_versions set content = 'tampered' where kind = 'terms' and locale = 'en' and version = 1")).rejects.toThrow(/published version cannot be changed/);
+    await expect(t.pool.query("delete from legal_versions where kind = 'terms' and locale = 'en' and version = 1")).rejects.toThrow(/published version cannot be changed/);
+
+    // put version 1 back: it becomes the draft (version 3) and nothing is live until the publish
+    const restored = (await adminSend("POST", "/legal/terms/versions/1/restore", { locale: "en" })).json();
+    expect(restored.drafts.en).toMatchObject({ version: 3 });
+    expect(restored.drafts.en.content).toContain("Be kind");
+    expect(restored.documents.en.version).toBe(2);
+    expect((await adminSend("POST", "/legal/terms/versions/3/restore", { locale: "en" })).json().error.code).toBe("NOT_PUBLISHED"); // a draft is not put back
+    expect((await adminSend("POST", "/legal/terms/publish", { locale: "en" })).json().documents.en.version).toBe(3);
+    expect((await t.get("/public/legal/terms?locale=en")).json().content).toContain("Be kind");
+  });
+
+  it("records what each user agreed to, and asks again after a major publish (and only then)", async () => {
+    const consent = (method: "GET" | "POST", payload?: unknown, cookie = customer.cookie) =>
+      t.app.inject({ method, url: "/api/v1/legal/consent", ...(payload !== undefined ? { payload: payload as object } : {}), remoteAddress: nextIp(), headers: { origin: "http://app.localtest.me:3000", cookie } });
+    expect((await t.get("/legal/consent")).statusCode).toBe(401);
+    const first = (await consent("GET")).json();
+    expect(first.mustAcceptAny).toBe(true);
+    expect(first.items.find((i: { kind: string }) => i.kind === "terms")).toMatchObject({ epoch: 0, accepted: null, mustAccept: true, published: { version: 3, locale: "en" } });
+
+    expect((await consent("POST", { kinds: [] })).statusCode).toBe(422);
+    expect((await consent("POST", { kinds: ["other"] })).statusCode).toBe(422);
+    const agreed = (await consent("POST", { kinds: ["terms", "privacy"], locale: "en" })).json();
+    expect(agreed.mustAcceptAny).toBe(false);
+    expect(agreed.items.find((i: { kind: string }) => i.kind === "terms").accepted).toMatchObject({ epoch: 0, version: 3, locale: "en" });
+    expect((await consent("POST", { kinds: ["terms"] })).json().mustAcceptAny).toBe(false); // a second time changes nothing
+    const rows = await t.pool.query("select * from legal_consents where user_id = $1", [customer.id]);
+    expect(rows.rows).toHaveLength(2);
+    await expect(t.pool.query("delete from legal_consents where user_id = $1", [customer.id])).rejects.toThrow(/append only/);
+    await expect(t.pool.query("update legal_consents set version = 9 where user_id = $1", [customer.id])).rejects.toThrow(/append only/);
+
+    // a small change: nobody has to agree again
+    await adminSend("PUT", "/legal/terms", { locale: "en", content: "Terms, a typo fixed" });
+    await adminSend("POST", "/legal/terms/publish", { locale: "en" });
+    expect((await consent("GET")).json().mustAcceptAny).toBe(false);
+
+    // a major one: everybody does, for that document only, and the old consent stays as the record
+    await adminSend("PUT", "/legal/terms", { locale: "en", content: "Terms, new rules" });
+    const major = (await adminSend("POST", "/legal/terms/publish", { locale: "en", major: true })).json();
+    expect(major.epoch).toBe(1);
+    expect(major.consents.agreed).toBe(0);
+    const again = (await consent("GET")).json();
+    expect(again.items.find((i: { kind: string }) => i.kind === "terms")).toMatchObject({ epoch: 1, mustAccept: true, accepted: { epoch: 0 } });
+    expect(again.items.find((i: { kind: string }) => i.kind === "privacy").mustAccept).toBe(false);
+    const done = (await consent("POST", { kinds: ["terms"] })).json();
+    expect(done.mustAcceptAny).toBe(false);
+    expect(done.items.find((i: { kind: string }) => i.kind === "terms").accepted).toMatchObject({ epoch: 1, version: 5 });
+    expect((await t.pool.query("select * from legal_consents where user_id = $1", [customer.id])).rows).toHaveLength(3);
+    expect((await adminSend("GET", "/legal/terms")).json().consents.agreed).toBeGreaterThanOrEqual(1);
+
+    // a document that is not published cannot be agreed to
+    await t.pool.query("truncate legal_documents");
+    expect((await consent("POST", { kinds: ["privacy"] })).json().error.code).toBe("NOT_PUBLISHED");
   });
 });

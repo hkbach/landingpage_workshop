@@ -16,7 +16,7 @@ d("system emails", () => {
   let owner: { cookie: string };
   let customer: { id: string; email: string };
 
-  const send = (method: "GET" | "POST", url: string, payload?: unknown, cookie = admin) =>
+  const send = (method: "GET" | "POST" | "PUT", url: string, payload?: unknown, cookie = admin) =>
     t.app.inject({ method, url: `/api/v1/admin${url}`, ...(payload !== undefined ? { payload: payload as object } : {}), remoteAddress: "10.1.1.1", headers: { origin: "http://app.localtest.me:3000", cookie } });
   const list = async (query: string) => (await send("GET", `/directory/emails?${query}`)).json();
   /** Tries every waiting email again and again, far enough in the future that no back-off is still running. */
@@ -128,5 +128,21 @@ d("system emails", () => {
     const left = async (table: "outbox_events" | "contact_messages", column: string, value: string) => (await t.pool.query(`select 1 from ${table} where ${column} = $1`, [value])).rowCount;
     expect([await left("outbox_events", "recipient", old), await left("outbox_events", "recipient", recent)]).toEqual([0, 1]);
     expect([await left("contact_messages", "email", old), await left("contact_messages", "email", recent)]).toEqual([0, 1]);
+
+    // the administrator sets how long they are kept: 1 month and 7 days now
+    const aging = `age-${unique("o")}@example.test`;
+    await t.pool.query("insert into outbox_events (type, payload, status, recipient, template, subject, created_at) values ('EMAIL', '{\"redacted\":true}', 'DISPATCHED', $1, 'verify-email', 'Hello', now() - interval '20 days')", [aging]);
+    await t.pool.query("insert into contact_messages (name, email, topic, message, created_at) values ('Aging', $1, 'general', 'A message that is about two months old now.', now() - interval '2 months')", [aging]);
+    // the administrator sets how long they are kept: 1 month and 7 days
+    expect((await send("PUT", "/settings", { resetLinkHours: 24, contactPerHour: 5, contactRetentionMonths: 1, emailRetentionDays: 7 }, owner.cookie)).statusCode).toBe(403);
+    expect((await send("PUT", "/settings", { resetLinkHours: 24, contactPerHour: 5, contactRetentionMonths: 1, emailRetentionDays: 7 })).json()).toMatchObject({ contactRetentionMonths: 1, emailRetentionDays: 7 });
+    try {
+      await t.app.get(MaintenanceService, { strict: false }).purgeExpired();
+      expect([await left("outbox_events", "recipient", aging), await left("contact_messages", "email", aging)]).toEqual([0, 0]); // older than the new limits
+      expect(await left("outbox_events", "recipient", recent)).toBe(0); // 10 days: it stayed under the 90 days above, not under 7
+      expect(await left("contact_messages", "email", recent)).toBe(1); // 2 days: still under a month
+    } finally {
+      await send("PUT", "/settings", { resetLinkHours: 24, contactPerHour: 5, contactRetentionMonths: 12, emailRetentionDays: 90 });
+    }
   });
 });

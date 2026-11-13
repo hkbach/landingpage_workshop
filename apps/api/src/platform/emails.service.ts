@@ -6,13 +6,10 @@ import { decodeCursor, encodeCursor } from "../common/cursor";
 import { DB, type Database } from "../db/db.module";
 import { contactMessages, organizationMembers, outboxEvents, users } from "../db/schema";
 import { OutboxService } from "../outbox/outbox.service";
+import { readPlatformValues } from "./platform.service";
 
 /** An administrator may write to at most this many people at once (FR-ADM-22). */
 export const MAX_RECIPIENTS = 500;
-/** How long what was sent stays (D18). */
-export const EMAIL_RETENTION_DAYS = 90;
-/** How long a Contact message stays (D18). */
-export const CONTACT_RETENTION_MONTHS = 12;
 
 const escapeLike = (v: string): string => v.replace(/[\\%_]/g, (c) => `\\${c}`);
 const statusOf = (s: string): "SENT" | "FAILED" | "PENDING" => (s === "DISPATCHED" ? "SENT" : s === "FAILED" ? "FAILED" : "PENDING");
@@ -92,10 +89,14 @@ export class EmailsService {
     return { queued: to.length };
   }
 
-  /** What is kept for a time only (D18): the emails sent (90 days) and the Contact messages (12 months). Returns how many of each were removed. */
+  /**
+   * What is kept for a time only (D18): the emails sent and the Contact messages, for as long as the administrator set in the platform settings (defaults: 90 days and 12 months).
+   * Returns how many of each were removed.
+   */
   async purgeExpired(now = new Date()): Promise<{ emails: number; messages: number }> {
-    const emailCut = new Date(now.getTime() - EMAIL_RETENTION_DAYS * 86_400_000);
-    const messageCut = new Date(now); messageCut.setMonth(messageCut.getMonth() - CONTACT_RETENTION_MONTHS);
+    const keep = await readPlatformValues(this.db);
+    const emailCut = new Date(now.getTime() - keep.emailRetentionDays * 86_400_000);
+    const messageCut = new Date(now); messageCut.setMonth(messageCut.getMonth() - keep.contactRetentionMonths);
     const emails = await this.db.delete(outboxEvents).where(and(eq(outboxEvents.type, "EMAIL"), inArray(outboxEvents.status, ["DISPATCHED", "FAILED"]), lt(outboxEvents.createdAt, emailCut))).returning({ id: outboxEvents.id });
     const messages = await this.db.delete(contactMessages).where(lt(contactMessages.createdAt, messageCut)).returning({ id: contactMessages.id });
     return { emails: emails.length, messages: messages.length };

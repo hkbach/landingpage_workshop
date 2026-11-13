@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException, UnprocessableEntityException } from "@nestjs/common";
 import { and, asc, eq, gt, gte, lte, or, sql, type SQL } from "drizzle-orm";
 import {
-  applySessionAction, canCloseAgain, canCompleteSession, canEditSession, canReopenSession, checkCloseReasonFor, checkReschedule, checkRescheduleReason, closeCount, isFinalClose, isFutureStart,
+  applySessionAction, canCloseAgain, canCompleteSession, canEditSession, canReopenSession, checkCloseReason, checkCloseReasonFor, checkReschedule, checkRescheduleReason, closeCount, isFinalClose, isFutureStart,
   rescheduleCount, type SessionNote, type SessionStatus,
 } from "@workshop/shared";
 import { AuditService } from "../audit/audit.service";
@@ -10,9 +10,11 @@ import { isUniqueViolation } from "../auth/auth.service";
 import { decodeCursor, encodeCursor } from "../common/cursor";
 import { DB, type Database, type Executor } from "../db/db.module";
 import { organizations, workshopSessions, workshops, type SessionNoteRow } from "../db/schema";
+import { OutboxService } from "../outbox/outbox.service";
 import { assertShopWritable } from "../tenant/shop-writable";
 import { tenantScope } from "../tenant/tenant-scope";
 import type { Actor } from "./workshops.service";
+import { notifyGuests } from "./session-notices";
 import { autoCloseEnded } from "./session-sweeper";
 
 type SessionRow = typeof workshopSessions.$inferSelect;
@@ -42,7 +44,7 @@ export async function nextSessionCode(executor: Executor, organizationId: string
 
 @Injectable()
 export class SessionsService {
-  constructor(@Inject(DB) private readonly db: Database, @Inject(AuditService) private readonly audit: AuditService) {}
+  constructor(@Inject(DB) private readonly db: Database, @Inject(AuditService) private readonly audit: AuditService, @Inject(OutboxService) private readonly outbox: OutboxService) {}
 
   private async load(executor: Executor, org: OrgContext, id: string, lock = false): Promise<{ session: SessionRow; workshopTitle: Record<string, string>; duration: number }> {
     const query = executor
@@ -140,22 +142,25 @@ export class SessionsService {
   }
 
   /** Close (a Paused session) with a reason that fits the time; the 4th close is for good, and a re-open is only possible before the session starts. */
-  async close(org: OrgContext, id: string, reason: { code: string; note?: string | undefined }, actor: Actor, now = new Date()): Promise<SessionView> {
+  async close(org: OrgContext, id: string, reason: { code: string; note?: string | undefined }, actor: Actor, now = new Date(), opts: { admin?: boolean } = {}): Promise<SessionView> {
     assertShopWritable(org);
     return this.transition(org, id, actor, "session.close", (s) => {
-      if (applySessionAction({ status: s.status }, "close") === null) throw conflict("INVALID_STATE", "Only a paused session can be closed.");
+      // The owner closes a PAUSED session, at most 4 times. A platform administrator may close an open, paused or running session (not one that is over), without that limit (FR-ADM-13).
+      if (opts.admin ? !["OPEN", "PAUSED", "RUNNING"].includes(s.status) : applySessionAction({ status: s.status }, "close") === null) throw conflict("INVALID_STATE", opts.admin ? "Only an open, paused or running session can be closed." : "Only a paused session can be closed.");
       const notes = s.sessionNotes as SessionNote[];
-      if (!canCloseAgain(notes)) throw conflict("CLOSE_LIMIT", "This session cannot be closed again.");
-      const checked = checkCloseReasonFor({ startsAt: s.startsAt.toISOString(), endsAt: s.endsAt.toISOString() }, now, reason.code, reason.note ?? "");
+      if (!opts.admin && !canCloseAgain(notes)) throw conflict("CLOSE_LIMIT", "This session cannot be closed again.");
+      const checked = opts.admin ? checkCloseReason(reason.code, reason.note ?? "") : checkCloseReasonFor({ startsAt: s.startsAt.toISOString(), endsAt: s.endsAt.toISOString() }, now, reason.code, reason.note ?? "");
       if (!checked.ok) throw bad({ reason: checked.error === "NOTE_REQUIRED" ? "noteRequired" : checked.error === "NOTE_TOO_LONG" ? "tooLong" : "required" });
       return { set: { status: "CLOSED" as const }, note: { type: "CLOSED", at: now.toISOString(), reason: checked.reason }, details: { reason: checked.reason.code, forGood: isFinalClose(notes) } };
     });
   }
 
-  async reopen(org: OrgContext, id: string, actor: Actor, now = new Date()): Promise<SessionView> {
+  async reopen(org: OrgContext, id: string, actor: Actor, now = new Date(), opts: { admin?: boolean } = {}): Promise<SessionView> {
     assertShopWritable(org);
     return this.transition(org, id, actor, "session.reopen", (s) => {
-      if (!canReopenSession({ status: s.status, startsAt: s.startsAt.toISOString(), autoClosed: s.autoClosed, notes: s.sessionNotes as SessionNote[] }, now)) throw conflict("NOT_REOPENABLE", "This session cannot be re-opened.");
+      // The owner cannot re-open a session closed for good (4 closes); the platform administrator can (FR-ADM-13). Neither can re-open one the system closed, one that has started or one that is completed.
+      const notes = opts.admin ? [] : (s.sessionNotes as SessionNote[]);
+      if (!canReopenSession({ status: s.status, startsAt: s.startsAt.toISOString(), autoClosed: s.autoClosed, notes }, now)) throw conflict("NOT_REOPENABLE", "This session cannot be re-opened.");
       return { set: { status: "OPEN" as const }, note: { type: "REOPENED", at: now.toISOString() } };
     });
   }
@@ -170,7 +175,7 @@ export class SessionsService {
   }
 
   /** Moves an Open or Paused session to another start (its length stays): at most 3 times, to the future, never onto another session of the workshop. */
-  async reschedule(org: OrgContext, id: string, input: { newStartsAt: string; reason: { code: string; note?: string | undefined } }, actor: Actor, now = new Date()): Promise<SessionView> {
+  async reschedule(org: OrgContext, id: string, input: { newStartsAt: string; reason: { code: string; note?: string | undefined } }, actor: Actor, now = new Date(), opts: { admin?: boolean } = {}): Promise<SessionView> {
     assertShopWritable(org);
     const reason = checkRescheduleReason(input.reason.code, input.reason.note ?? "");
     if (!reason.ok) throw bad({ reason: reason.error === "NOTE_REQUIRED" ? "noteRequired" : reason.error === "NOTE_TOO_LONG" ? "tooLong" : "required" });
@@ -180,7 +185,7 @@ export class SessionsService {
         const { session, workshopTitle } = await this.load(tx, org, id, true);
         const others = await tx.select({ startsAt: workshopSessions.startsAt }).from(workshopSessions).where(and(tenantScope(workshopSessions, org.id), eq(workshopSessions.workshopId, session.workshopId)));
         const checked = checkReschedule(
-          { status: session.status, startsAt: session.startsAt.toISOString(), endsAt: session.endsAt.toISOString(), reschedules: rescheduleCount(session.sessionNotes as SessionNote[]) },
+          { status: session.status, startsAt: session.startsAt.toISOString(), endsAt: session.endsAt.toISOString(), reschedules: opts.admin ? 0 : rescheduleCount(session.sessionNotes as SessionNote[]) }, // the limit of 3 is the owner's
           input.newStartsAt, now, others.filter((o) => o.startsAt.getTime() !== session.startsAt.getTime()).map((o) => o.startsAt.toISOString()),
         );
         if (!checked.ok) {
@@ -192,9 +197,10 @@ export class SessionsService {
           .where(and(tenantScope(workshopSessions, org.id), eq(workshopSessions.id, id))).returning();
         if (!row) throw notFound();
         await this.audit.record({ organizationId: org.id, actorUserId: actor.userId, action: "session.reschedule", entityType: "session", entityId: id, before: { startsAt: session.startsAt.toISOString() }, after: { startsAt: checked.startsAt, reason: reason.reason.code }, ip: actor.ip }, tx);
-        // TODO(M4): every guest who booked the session is told by email, in the same transaction (outbox).
-        return toView(row, workshopTitle);
-      });
+        // every guest who booked the session is told, in the same transaction (outbox); the worker is woken after the commit
+        const told = await notifyGuests(tx, this.outbox, { organizationId: org.id, sessionId: id, workshopTitle, startsAt: row.startsAt, previousStartsAt: session.startsAt, kind: "RESCHEDULED", reason: reason.reason.note ?? reason.reason.code });
+        return { view: toView(row, workshopTitle), told };
+      }).then(({ view, told }) => { if (told > 0) void this.outbox.wake(); return view; });
     } catch (error) {
       if (isUniqueViolation(error)) throw conflict("DUPLICATE", "This workshop already has a session at that time.");
       throw error;
@@ -213,8 +219,9 @@ export class SessionsService {
         .where(and(tenantScope(workshopSessions, org.id), eq(workshopSessions.id, id))).returning();
       if (!row) throw notFound();
       await this.audit.record({ organizationId: org.id, actorUserId: actor.userId, action, entityType: "session", entityId: id, before: { status: session.status }, after: { status: row.status, ...details }, ip: actor.ip }, tx);
-      // TODO(M4): a close tells every guest who booked the session (outbox, same transaction).
-      return toView(row, workshopTitle);
-    });
+      // a close tells every guest who booked the session, in the same transaction (outbox); the worker is woken after the commit
+      const told = note?.type === "CLOSED" ? await notifyGuests(tx, this.outbox, { organizationId: org.id, sessionId: id, workshopTitle, startsAt: row.startsAt, kind: "CLOSED", reason: note.reason?.note ?? note.reason?.code ?? "" }) : 0;
+      return { view: toView(row, workshopTitle), told };
+    }).then(({ view, told }) => { if (told > 0) void this.outbox.wake(); return view; });
   }
 }

@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { check, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { boolean, check, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 import { organizations, users } from "./identity";
 
 // What the platform administrator keeps and handles (FR-ADM-04, FR-ADM-07, FR-ADM-20 to FR-ADM-23): the settings, the support channels, the messages of the Contact form, the reports of a site and
@@ -74,4 +74,52 @@ export const legalDocuments = pgTable(
     updatedBy: uuid("updated_by").references(() => users.id),
   },
   (t) => [primaryKey({ columns: [t.kind, t.locale] }), check("legal_documents_kind", sql`${t.kind} IN ('terms', 'privacy')`), check("legal_documents_content", sql`char_length(${t.content}) BETWEEN 1 AND 50000`)],
+);
+
+export const legalVersionStatus = pgEnum("legal_version_status", ["DRAFT", "PUBLISHED"]);
+
+/**
+ * Every version of the Terms and of the Privacy Policy, for each language (D17): a DRAFT is written and corrected until somebody publishes it (an explicit step), a PUBLISHED one is kept for ever
+ * so any version can be read again and put back as a new draft. `major` marks a publish that people must agree to again; `epoch` is the number of such publishes of the document so far.
+ * `legal_documents` is the version that is live now.
+ */
+export const legalVersions = pgTable(
+  "legal_versions",
+  {
+    kind: text("kind").notNull(),
+    locale: text("locale").notNull(),
+    version: integer("version").notNull(),
+    content: text("content").notNull(),
+    status: legalVersionStatus("status").notNull().default("DRAFT"),
+    major: boolean("major").notNull().default(false),
+    /** For a published version: how many major publishes the document had, this one included. */
+    epoch: integer("epoch"),
+    createdBy: uuid("created_by").references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    publishedBy: uuid("published_by").references(() => users.id),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+  },
+  (t) => [
+    primaryKey({ columns: [t.kind, t.locale, t.version] }),
+    uniqueIndex("legal_versions_one_draft").on(t.kind, t.locale).where(sql`${t.status} = 'DRAFT'`),
+    check("legal_versions_kind", sql`${t.kind} IN ('terms', 'privacy')`),
+    check("legal_versions_content", sql`char_length(${t.content}) BETWEEN 1 AND 50000`),
+    check("legal_versions_published", sql`(${t.status} = 'PUBLISHED') = (${t.publishedAt} IS NOT NULL)`),
+  ],
+);
+
+/** What a user agreed to, and when: one row for each user, document and epoch (the user agrees again when a major version is published). */
+export const legalConsents = pgTable(
+  "legal_consents",
+  {
+    userId: uuid("user_id").notNull().references(() => users.id),
+    kind: text("kind").notNull(),
+    epoch: integer("epoch").notNull(),
+    /** The version and the language of the text the user was shown. */
+    version: integer("version").notNull(),
+    locale: text("locale").notNull(),
+    acceptedAt: timestamp("accepted_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.kind, t.epoch] }), check("legal_consents_kind", sql`${t.kind} IN ('terms', 'privacy')`), index("legal_consents_user_idx").on(t.userId)],
 );

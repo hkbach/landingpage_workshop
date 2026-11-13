@@ -15,6 +15,8 @@ export type EmailTemplate =
   | { name: "payment-received"; to: string; data: BookingMailData & { name: string; paid: string } }
   /** Written by a platform administrator: plain text (a blank line starts a paragraph), nothing in it is read as HTML. */
   | { name: "admin-message"; to: string; data: { name?: string; subject: string; body: string } }
+  /** Told to a guest when the session of their booking is closed or moved. The reason is plain text. */
+  | { name: "session-notice"; to: string; data: BookingMailData & { name: string; kind: "CLOSED" | "RESCHEDULED"; reason: string; previousWhen?: string } }
   /** Told to the owner of a shop when the platform administrator changes something of the shop on their behalf (D14, D15). */
   | { name: "admin-edit-notice"; to: string; data: { name: string; shop: string; what: string; reason: string } };
 
@@ -139,6 +141,17 @@ ${details(t.data)}`,
         to: t.to, subject,
         text: `${t.data.name ? `Hello ${t.data.name},\n\n` : ""}${paragraphs.join("\n\n")}`,
         html: wrap(`${t.data.name ? `<p>Hello ${name},</p>` : ""}${paragraphs.map((x) => `<p>${escapeHtml(x).replace(/\n/g, "<br>")}</p>`).join("")}`),
+      };
+    }
+    case "session-notice": {
+      const reason = t.data.reason.trim();
+      const moved = t.data.kind === "RESCHEDULED";
+      const intro = moved ? "The studio moved the session of your booking to a new time. Your booking stays valid." : "The studio closed the session of your booking, so it will not take place.";
+      const next = moved ? `If the new time does not suit you, you can cancel your booking with its code and your email, or contact the studio.` : "Please contact the studio about your booking.";
+      return {
+        to: t.to, subject: moved ? `Your workshop at ${t.data.shop} was moved (${t.data.code})` : `Your workshop at ${t.data.shop} was closed (${t.data.code})`,
+        text: `Hello ${t.data.name},\n\n${intro}${reason ? `\nReason: ${reason}` : ""}${moved && t.data.previousWhen ? `\nBefore: ${t.data.previousWhen}` : ""}\n\n${details(t.data)}\n\n${next}`,
+        html: wrap(`<p>Hello ${name},</p><p>${intro}${reason ? ` Reason: ${escapeHtml(reason)}.` : ""}</p>${moved && t.data.previousWhen ? `<p>Before: ${escapeHtml(t.data.previousWhen)}</p>` : ""}${detailsHtml(t.data)}<p>${next}</p>`),
       };
     }
     case "admin-edit-notice": {
