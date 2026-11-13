@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { hashPassword, hashToken } from "../auth/crypto";
+import { hashPassword } from "../auth/crypto";
 import { MaintenanceService } from "../jobs/maintenance";
-import { PASSWORD, TEST_DATABASE_URL, cookieOf, emailFor, signupBody, startApp, unique, type TestApp } from "../test/helpers";
+import { PASSWORD, TEST_DATABASE_URL, cookieOf, emailFor, signupBody, startApp, unique, type TestApp , otpHash } from "../test/helpers";
 
 // The affiliate links, the invite links and what they earn, on a real PostgreSQL (FR-CUST-02, FR-CUST-03, FR-ADM-15, FR-ADM-16, FR-ADM-18). The numbers are worked out by hand.
 const d = describe.skipIf(!TEST_DATABASE_URL);
@@ -52,7 +52,7 @@ d("affiliate and referral", () => {
   async function bookOnline(shop: Shop, email: string, over: { quantity?: number; ref?: string } = {}) {
     const lower = email.trim().toLowerCase();
     const id = (await t.pool.query<{ id: string }>("insert into booking_otps (organization_id, email, code_hash, expires_at) values ($1, $2, 'x', now() + interval '10 minutes') returning id", [shop.orgId, lower])).rows[0]!.id;
-    await t.pool.query("update booking_otps set code_hash = $2 where id = $1", [id, hashToken(`${id}:${OTP}`)]);
+    await t.pool.query("update booking_otps set code_hash = $2 where id = $1", [id, otpHash(id, OTP)]);
     const res = await t.app.inject({
       method: "POST", url: `/api/v1/public/sites/${shop.slug}/bookings`, remoteAddress: nextIp(), headers: { "idempotency-key": `aff-${unique("k")}-key`, origin: "https://some-shop.example" },
       payload: { sessionId: shop.sessionId, quantity: over.quantity ?? 1, guest: { fullName: "Aff Guest", email: lower, country: "VN", phone: "+84 90 000 0000" }, consent: true, otp: OTP, ...(over.ref !== undefined ? { ref: over.ref } : {}) },

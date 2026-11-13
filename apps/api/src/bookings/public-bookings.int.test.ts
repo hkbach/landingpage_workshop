@@ -1,8 +1,9 @@
+import { createHash } from "node:crypto";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { hashToken } from "../auth/crypto";
-import { TEST_DATABASE_URL, cookieOf, drain, emailFor, signupBody, startApp, unique, type TestApp } from "../test/helpers";
+import { TEST_DATABASE_URL, cookieOf, drain, emailFor, signupBody, startApp, unique, type TestApp , otpHash } from "../test/helpers";
 
 // The public side of booking on a real PostgreSQL: the capacity race, the code by email, idempotency, confirm, look up, cancel and the isolation of the shops.
 const d = describe.skipIf(!TEST_DATABASE_URL);
@@ -46,7 +47,7 @@ d("public booking", () => {
   async function plantOtp(shop: Shop, rawEmail: string, code = OTP): Promise<void> {
     const email = rawEmail.trim().toLowerCase(); // the server looks the code up by the normalised email
     const id = (await t.pool.query<{ id: string }>("insert into booking_otps (organization_id, email, code_hash, expires_at) values ($1, $2, 'x', now() + interval '10 minutes') returning id", [shop.orgId, email])).rows[0]!.id;
-    await t.pool.query("update booking_otps set code_hash = $2 where id = $1", [id, hashToken(`${id}:${code}`)]);
+    await t.pool.query("update booking_otps set code_hash = $2 where id = $1", [id, otpHash(id, code)]);
   }
 
   const book = (shop: Shop, body: Record<string, unknown>, key = unique("k") + "-key-1", from = nextIp()) =>
@@ -115,9 +116,10 @@ d("public booking", () => {
     const mail = t.emails.sent.filter((m) => m.to === email).at(-1)!;
     const code = /\b(\d{6})\b/.exec(mail.text)![1]!;
     expect(mail.subject).toContain(code);
-    const row = (await t.pool.query<{ code_hash: string }>("select code_hash from booking_otps where organization_id = $1 and email = $2", [a.orgId, email])).rows[0]!;
+    const row = (await t.pool.query<{ id: string; code_hash: string }>("select id, code_hash from booking_otps where organization_id = $1 and email = $2", [a.orgId, email])).rows[0]!;
     expect(row.code_hash).not.toContain(code);
     expect(row.code_hash).toMatch(/^[0-9a-f]{64}$/);
+    expect(row.code_hash).not.toBe(createHash("sha256").update(`${row.id}:${code}`).digest("hex")); // keyed: not a plain hash of the code
     const again = await ask();
     expect(again.statusCode).toBe(429); // 30 seconds between two codes
     expect(again.json().error.details.retryAfterSeconds).toBeGreaterThan(0);

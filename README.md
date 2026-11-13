@@ -313,7 +313,7 @@ Bản giao diện ở trên **không cần** phần này. Chỉ làm khi bạn m
    API_PORT=4000
    LOG_LEVEL=info
    ```
-   Các biến tùy chọn (đã có giá trị mặc định cho môi trường dev): `APP_URL` (mặc định `http://app.localtest.me:3000`), `REQUIRE_EMAIL_VERIFICATION` (dev mặc định `false`: đăng ký xong vào luôn; đặt `true` để bắt xác minh email như production), `EMAIL_PROVIDER` (`mailpit` hoặc `resend`), `TURNSTILE_SECRET_KEY` (trống thì bỏ qua kiểm tra bot, chỉ khi dev). Danh sách đầy đủ ở [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) mục 11.1.
+   Các biến tùy chọn (đã có giá trị mặc định cho môi trường dev): `APP_URL` (mặc định `http://app.localtest.me:3000`), `REQUIRE_EMAIL_VERIFICATION` (dev mặc định `false`: đăng ký xong vào luôn; đặt `true` để bắt xác minh email như production), `EMAIL_PROVIDER` (`mailpit` hoặc `resend`), `APP_SECRET` (>= 32 ký tự; pepper của OTP và khóa mã hóa số tài khoản; dev có mặc định, **production bắt buộc đặt riêng**), `TURNSTILE_SECRET_KEY` (trống thì bỏ qua kiểm tra bot, chỉ khi dev). Danh sách đầy đủ ở [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) mục 11.1.
 5. Tạo bảng: `pnpm db:migrate`.
 6. Chạy backend: `pnpm dev:api`, rồi mở http://127.0.0.1:4000/health (còn sống) và http://127.0.0.1:4000/ready (kết nối được database).
 7. Gửi email (đăng ký có xác minh, quên mật khẩu): chạy thêm worker ở một terminal khác bằng `pnpm --filter api dev:worker`. Email được **giữ lại ở Mailpit**, xem tại http://127.0.0.1:8025 (không gửi ra ngoài). Worker cũng **tự đóng session hết giờ** (mỗi phút) và **sinh session từ lịch lặp của workshop** (mỗi giờ), nên nên để nó chạy khi thử phần workshop và session.

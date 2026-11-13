@@ -39,7 +39,15 @@ describe("parseEnv", () => {
 
   it("production needs Turnstile, a verified email and an https app url; resend needs its key", () => {
     expect(() => parseEnv({ DATABASE_URL: URL, NODE_ENV: "production" })).toThrow(/TURNSTILE_SECRET_KEY.*REQUIRE_EMAIL_VERIFICATION.*APP_URL/);
-    expect(parseEnv({ DATABASE_URL: URL, NODE_ENV: "production", TURNSTILE_SECRET_KEY: "k", REQUIRE_EMAIL_VERIFICATION: "true", APP_URL: "https://app.example.com" })).toMatchObject({ NODE_ENV: "production" });
+    expect(parseEnv({ DATABASE_URL: URL, NODE_ENV: "production", TURNSTILE_SECRET_KEY: "k", REQUIRE_EMAIL_VERIFICATION: "true", APP_URL: "https://app.example.com", APP_SECRET: "x".repeat(40) })).toMatchObject({ NODE_ENV: "production" });
     expect(() => parseEnv({ DATABASE_URL: URL, EMAIL_PROVIDER: "resend" })).toThrow(/RESEND_API_KEY/);
+  });
+
+  it("production needs its own APP_SECRET of 32 characters or more, never the development one", () => {
+    const prod = { DATABASE_URL: URL, NODE_ENV: "production", TURNSTILE_SECRET_KEY: "k", REQUIRE_EMAIL_VERIFICATION: "true", APP_URL: "https://app.example.com" };
+    expect(() => parseEnv(prod)).toThrow(/APP_SECRET must be set in production/);
+    expect(() => parseEnv({ ...prod, APP_SECRET: "too-short" })).toThrow(/at least 32/);
+    expect(parseEnv({ ...prod, APP_SECRET: "x".repeat(40) })).toMatchObject({ NODE_ENV: "production" });
+    expect(parseEnv({ DATABASE_URL: URL }).APP_SECRET.length).toBeGreaterThanOrEqual(32); // development has a default
   });
 });

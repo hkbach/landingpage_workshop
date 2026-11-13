@@ -8,7 +8,8 @@ import { TurnstileService } from "../auth/turnstile.service";
 import { RateLimiter } from "../common/limiter";
 import { dateIn } from "../common/zoned-time";
 import type { Env } from "../config/env";
-import { ENV } from "../config/env.module";
+import { ENV, SECRETS } from "../config/env.module";
+import type { Secrets } from "../common/secrets";
 import { DB, type Database, type Executor } from "../db/db.module";
 import { bookingConfirmations, bookingOtps, bookings, customers, organizations, workshopSessions, workshops } from "../db/schema";
 import { isUniqueViolation } from "../auth/auth.service";
@@ -38,7 +39,6 @@ const throttled = (seconds: number) => new HttpException({ code: "RATE_LIMITED",
 
 export { shopOrigin };
 
-const hashOtp = (id: string, code: string): string => hashToken(`${id}:${code}`);
 
 /** What a guest is shown of a booking (never an id, a payment or another guest). */
 export interface PublicBooking {
@@ -61,6 +61,7 @@ export class PublicBookingsService {
   constructor(
     @Inject(DB) private readonly db: Database,
     @Inject(ENV) private readonly env: Env,
+    @Inject(SECRETS) private readonly secrets: Secrets,
     @Inject(OutboxService) private readonly outbox: OutboxService,
     @Inject(AuditService) private readonly audit: AuditService,
     @Inject(TurnstileService) private readonly turnstile: TurnstileService,
@@ -120,6 +121,11 @@ export class PublicBookingsService {
     };
   }
 
+  /** What is stored for a code: a keyed hash (the pepper is `APP_SECRET`), so a copy of the database alone cannot be used to try the 1,000,000 codes. */
+  private hashOtp(id: string, code: string): string {
+    return this.secrets.hmac("otp", `${id}:${code}`);
+  }
+
   // ---- the code sent by email -------------------------------------------------------------------------------------------------------------------------------
 
   /** Step 5 of the booking form: a 6-digit code goes to the email of the guest. Always answers the same, whatever the email. */
@@ -137,7 +143,7 @@ export class PublicBookingsService {
     const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
     await this.db.transaction(async (tx) => {
       const [row] = await tx.insert(bookingOtps).values({ organizationId: o.id, email, codeHash: "pending", expiresAt: new Date(now.getTime() + OTP_MINUTES * 60_000) }).returning({ id: bookingOtps.id });
-      await tx.update(bookingOtps).set({ codeHash: hashOtp(row!.id, code) }).where(eq(bookingOtps.id, row!.id)); // only the hash of the code is kept
+      await tx.update(bookingOtps).set({ codeHash: this.hashOtp(row!.id, code) }).where(eq(bookingOtps.id, row!.id)); // only the hash of the code is kept
       await this.outbox.enqueueEmail(tx, { name: "booking-otp", to: email, data: { code, minutes: OTP_MINUTES, shop: o.name } }, o.id);
     });
     void this.outbox.wake();
@@ -152,7 +158,7 @@ export class PublicBookingsService {
       const [otp] = await tx.select().from(bookingOtps).where(and(eq(bookingOtps.organizationId, orgId), eq(bookingOtps.email, email), isNull(bookingOtps.usedAt), gt(bookingOtps.expiresAt, now))).orderBy(desc(bookingOtps.createdAt)).limit(1).for("update");
       if (!otp) return { kind: "invalid" as const, left: 0 };
       if (otp.attempts >= OTP_MAX_TRIES) return { kind: "locked" as const };
-      if (safeEqual(otp.codeHash, hashOtp(otp.id, code))) return { kind: "ok" as const, id: otp.id };
+      if (safeEqual(otp.codeHash, this.hashOtp(otp.id, code))) return { kind: "ok" as const, id: otp.id };
       await tx.update(bookingOtps).set({ attempts: otp.attempts + 1 }).where(eq(bookingOtps.id, otp.id));
       return { kind: "invalid" as const, left: OTP_MAX_TRIES - otp.attempts - 1 };
     });

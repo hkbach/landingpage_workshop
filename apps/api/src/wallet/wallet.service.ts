@@ -5,6 +5,8 @@ import { unsettledEarnings } from "../affiliate/earnings";
 import { AuditService } from "../audit/audit.service";
 import type { Actor } from "../catalog/workshops.service";
 import { decodeCursor, encodeCursor } from "../common/cursor";
+import { SECRETS } from "../config/env.module";
+import type { Secrets } from "../common/secrets";
 import { DB, type Database, type Executor } from "../db/db.module";
 import { users, walletCredits, withdrawalLimits, withdrawals } from "../db/schema";
 
@@ -24,7 +26,12 @@ export interface Limits { minAmount: number; maxAmount: number }
  */
 @Injectable()
 export class WalletService {
-  constructor(@Inject(DB) private readonly db: Database, @Inject(AuditService) private readonly audit: AuditService) {}
+  constructor(@Inject(DB) private readonly db: Database, @Inject(AuditService) private readonly audit: AuditService, @Inject(SECRETS) private readonly secrets: Secrets) {}
+
+  /** The account number is stored encrypted (APP_SECRET); a row from before that is read as it is. */
+  private accountNumber(w: WithdrawalRow): string {
+    return this.secrets.decrypt("bank-account", w.bankAccountNumber);
+  }
 
   private async limits(executor: Executor, currency: string): Promise<Limits> {
     const [l] = await executor.select().from(withdrawalLimits).where(eq(withdrawalLimits.currency, currency)).limit(1);
@@ -50,12 +57,12 @@ export class WalletService {
 
   /** An invoice as its owner sees it: the bank account number is masked (the last four characters). */
   private view(w: WithdrawalRow) {
-    return { ...this.base(w), accountNumberMasked: w.bankAccountNumber ? maskAccountNumber(w.bankAccountNumber) : "" };
+    return { ...this.base(w), accountNumberMasked: w.bankAccountNumber ? maskAccountNumber(this.accountNumber(w)) : "" };
   }
 
   /** An invoice as the administrator who pays it sees it: the whole account number (without it the invoice cannot be paid). */
   private adminView(w: WithdrawalRow) {
-    return { ...this.base(w), accountNumber: w.bankAccountNumber };
+    return { ...this.base(w), accountNumber: this.accountNumber(w) };
   }
 
   // ---- the customer -----------------------------------------------------------------------------------------------------------------------------------------
@@ -95,7 +102,7 @@ export class WalletService {
       if (input.amount > t.available) throw invalid({ amount: "exceeds" });
       if (limits.minAmount > 0 && input.amount < limits.minAmount) throw invalid({ amount: "belowMin" });
       if (limits.maxAmount > 0 && input.amount > limits.maxAmount) throw invalid({ amount: "aboveMax" });
-      const [row] = await tx.insert(withdrawals).values({ number: sql`'WD-' || lpad(nextval('withdrawal_number_seq')::text, 4, '0')`, userId, source: input.source, currency: input.currency, amount: input.amount, bankName, bankAccountNumber, bankAccountHolder }).returning();
+      const [row] = await tx.insert(withdrawals).values({ number: sql`'WD-' || lpad(nextval('withdrawal_number_seq')::text, 4, '0')`, userId, source: input.source, currency: input.currency, amount: input.amount, bankName, bankAccountNumber: this.secrets.encrypt("bank-account", bankAccountNumber), bankAccountHolder }).returning();
       if (!row) throw new Error("The withdrawal was not recorded");
       await this.audit.record({ actorUserId: userId, action: "withdrawal.request", entityType: "withdrawal", entityId: row.id, after: { number: row.number, source: row.source, currency: row.currency, amount: row.amount }, ip: actor.ip }, tx);
       return this.view(row);

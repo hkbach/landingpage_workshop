@@ -1,5 +1,6 @@
 import { existsSync } from "node:fs";
 import { z } from "zod";
+import { DEV_APP_SECRET } from "../common/secrets";
 
 // The settings of the API, read once from the environment (and from apps/api/.env in development). A missing or wrong value stops the start with a clear message, and the
 // values are never printed: a DATABASE_URL carries the password of the database.
@@ -33,6 +34,9 @@ const schema = z
     SMTP_PORT: z.coerce.number().int().min(1).max(65535).default(1025),
     RESEND_API_KEY: z.string().optional(),
 
+    /** The application secret: the pepper of the codes sent by email and the key of the encrypted columns (bank account numbers). At least 32 characters, random, kept in the secret store of the environment. A change makes the encrypted values unreadable. A development default exists; production refuses it. */
+    APP_SECRET: z.string().min(32, "APP_SECRET must have at least 32 characters").default(DEV_APP_SECRET),
+
     /** Cloudflare Turnstile secret. Empty: the check is skipped (development only). */
     TURNSTILE_SECRET_KEY: z.string().optional(),
 
@@ -43,6 +47,7 @@ const schema = z
     if (v.NODE_ENV === "production") {
       if (!v.TURNSTILE_SECRET_KEY) ctx.addIssue({ code: "custom", path: ["TURNSTILE_SECRET_KEY"], message: "TURNSTILE_SECRET_KEY is required in production" });
       if (!v.REQUIRE_EMAIL_VERIFICATION) ctx.addIssue({ code: "custom", path: ["REQUIRE_EMAIL_VERIFICATION"], message: "REQUIRE_EMAIL_VERIFICATION must be true in production" });
+      if (v.APP_SECRET === DEV_APP_SECRET) ctx.addIssue({ code: "custom", path: ["APP_SECRET"], message: "APP_SECRET must be set in production" });
       if (!v.APP_URL.startsWith("https://")) ctx.addIssue({ code: "custom", path: ["APP_URL"], message: "APP_URL must be https in production" });
     }
     if (v.EMAIL_PROVIDER === "resend" && !v.RESEND_API_KEY) ctx.addIssue({ code: "custom", path: ["RESEND_API_KEY"], message: "RESEND_API_KEY is required for the resend provider" });

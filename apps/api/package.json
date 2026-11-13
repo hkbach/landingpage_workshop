@@ -14,7 +14,8 @@
     "test": "vitest run",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:seed": "node --import tsx src/db/seed.ts"
+    "db:seed": "node --import tsx src/db/seed.ts",
+    "db:encrypt-bank": "node --import tsx src/db/encrypt-bank-accounts.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.0",

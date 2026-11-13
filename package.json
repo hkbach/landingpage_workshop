@@ -14,7 +14,8 @@
     "test": "turbo run test",
     "db:generate": "pnpm --filter api db:generate",
     "db:migrate": "pnpm --filter api db:migrate",
-    "db:seed": "pnpm --filter api db:seed"
+    "db:seed": "pnpm --filter api db:seed",
+    "db:encrypt-bank": "pnpm --filter api db:encrypt-bank"
   },
   "devDependencies": {
     "prettier": "^3.9.10",

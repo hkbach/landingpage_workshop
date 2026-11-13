@@ -1,3 +1,4 @@
+import { DEV_APP_SECRET, Secrets } from "../common/secrets";
 import { randomUUID } from "node:crypto";
 import type { NestFastifyApplication } from "@nestjs/platform-fastify";
 import { Pool } from "pg";
@@ -77,3 +78,6 @@ export async function drain(t: Pick<TestApp, "outbox">, now?: Date): Promise<voi
     if (r.sent + r.retried + r.failed === 0) return;
   }
 }
+
+/** What the API stores for a code sent by email (a keyed hash; tests run with the development `APP_SECRET`). */
+export const otpHash = (id: string, code: string): string => new Secrets(DEV_APP_SECRET).hmac("otp", `${id}:${code}`);

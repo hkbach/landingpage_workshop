@@ -30,8 +30,7 @@ Backend đã có: lưu `organizations.custom_domain` (unique), kiểm tra DNS (`
 
 - [ ] **Rà soát bảo mật bởi con người** (xác thực, phân quyền theo tổ chức, rút tiền, tên miền riêng, upload) trước khi cho khách thật dùng. Mã do AI sinh ra không được coi là đã tin cậy.
 - [ ] `REQUIRE_EMAIL_VERIFICATION=true` và bật Turnstile (khóa do người phụ trách cấp).
-- [ ] Mã hóa cột số tài khoản ngân hàng khi lưu; chính sách lưu trữ theo D18.
-- [ ] Mã OTP có khóa bí mật (pepper) trong bí mật triển khai.
+- [x] Mã hóa cột số tài khoản ngân hàng (AES-256-GCM) và pepper cho OTP: **đã làm trong mã** (13/11/2026). Việc còn lại khi triển khai: đặt `APP_SECRET` riêng (≥ 32 ký tự ngẫu nhiên) trong kho bí mật, sao lưu nó cùng quy trình backup (mất khóa là mất số tài khoản đã mã hóa), chạy `pnpm db:encrypt-bank` một lần sau khi migrate nếu đã có dữ liệu cũ, và quyết định chính sách lưu trữ theo D18.
 - [ ] Không có bí mật thật trong repo, log hay tài liệu; quản lý bí mật bằng kho bí mật của môi trường.
 - [ ] Ảnh tải lên R2 (presign) khi có khóa Cloudflare R2; hiện ảnh vẫn là link https.
 

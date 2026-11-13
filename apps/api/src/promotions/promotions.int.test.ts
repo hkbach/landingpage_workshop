@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { hashPassword, hashToken } from "../auth/crypto";
-import { PASSWORD, TEST_DATABASE_URL, cookieOf, emailFor, signupBody, startApp, unique, type TestApp } from "../test/helpers";
+import { hashPassword } from "../auth/crypto";
+import { PASSWORD, TEST_DATABASE_URL, cookieOf, emailFor, signupBody, startApp, unique, type TestApp , otpHash } from "../test/helpers";
 
 // Promotions on a real PostgreSQL (FR-PROMO-01, FR-ADM-25): the rules of the owner, the price of a booking worked out by the server, and what the platform administrator may do.
 const d = describe.skipIf(!TEST_DATABASE_URL);
@@ -60,7 +60,7 @@ d("promotions", () => {
   async function bookOnline(shop: Shop, extra: Record<string, unknown>, quantity = 2) {
     const email = emailFor("guest");
     const id = (await t.pool.query<{ id: string }>("insert into booking_otps (organization_id, email, code_hash, expires_at) values ($1, $2, 'x', now() + interval '10 minutes') returning id", [shop.orgId, email])).rows[0]!.id;
-    await t.pool.query("update booking_otps set code_hash = $2 where id = $1", [id, hashToken(`${id}:${OTP}`)]);
+    await t.pool.query("update booking_otps set code_hash = $2 where id = $1", [id, otpHash(id, OTP)]);
     return t.app.inject({
       method: "POST", url: `/api/v1/public/sites/${shop.slug}/bookings`, remoteAddress: nextIp(), headers: { "idempotency-key": `promo-${unique("k")}-key`, origin: "https://some-shop.example" },
       payload: { sessionId: shop.sessionId, quantity, guest: { fullName: "Promo Guest", email, country: "VN", phone: "+84 90 000 0000" }, consent: true, otp: OTP, ...extra },

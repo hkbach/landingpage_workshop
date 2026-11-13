@@ -1,6 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { hashPassword } from "../auth/crypto";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { DEV_APP_SECRET, Secrets } from "../common/secrets";
+import { encryptBankAccounts } from "../db/encrypt-bank-accounts";
 import { PASSWORD, TEST_DATABASE_URL, cookieOf, emailFor, signupBody, startApp, type TestApp } from "../test/helpers";
 
 // The wallet of a customer and the withdrawal invoices on a real PostgreSQL (FR-CUST-04, FR-ADM-19, D6, D12): what can be asked, the limits, the lock against asking twice, and who may process.
@@ -116,8 +119,12 @@ d("wallet and withdrawals of a customer", () => {
     expect(made.json()).toMatchObject({ bankName: "Ngân hàng Vietcombank", accountNumberMasked: "****8901", bankAccountHolder: "Nguyen Van A" });
     expect(made.body).not.toContain("012345678901");
     expect(JSON.stringify((await wallet(c)).json())).not.toContain("012345678901");
-    // kept normalized in the table
-    expect((await t.pool.query("select bank_name, bank_account_number, bank_account_holder from withdrawals where id = $1", [made.json().id])).rows[0]).toEqual({ bank_name: "Ngân hàng Vietcombank", bank_account_number: "012345678901", bank_account_holder: "Nguyen Van A" });
+    // kept normalized in the table, and the number is stored encrypted (never in clear)
+    const stored = (await t.pool.query<{ bank_name: string; bank_account_number: string; bank_account_holder: string }>("select bank_name, bank_account_number, bank_account_holder from withdrawals where id = $1", [made.json().id])).rows[0]!;
+    expect(stored).toMatchObject({ bank_name: "Ngân hàng Vietcombank", bank_account_holder: "Nguyen Van A" });
+    expect(stored.bank_account_number).toMatch(/^enc:v1:/);
+    expect(stored.bank_account_number).not.toContain("0123");
+    expect(new Secrets(DEV_APP_SECRET).decrypt("bank-account", stored.bank_account_number)).toBe("012345678901");
 
     // the administrator who pays sees the whole number, and so does the answer of paying
     const row = (await adminGet(`/directory/withdrawals?q=${encodeURIComponent(c.email)}`)).json().items[0];
@@ -241,5 +248,26 @@ d("wallet and withdrawals of a customer", () => {
     await expect(t.pool.query("update withdrawals set status = 'PENDING', processed_at = null where id = $1", [processed.id])).rejects.toThrow(/final/);
     await expect(t.pool.query("update withdrawals set amount = 1 where id = $1", [processed.id])).rejects.toThrow(/cannot be changed/);
     await expect(t.pool.query("delete from withdrawals where id = $1", [processed.id])).rejects.toThrow(/cannot be deleted/);
+  });
+
+  it("encrypts the numbers written in clear before the encryption existed, on any invoice, and changes nothing else", async () => {
+    const c = await makeCustomer("legacy");
+    const secrets = new Secrets(DEV_APP_SECRET);
+    const ins = (n: string, status: "PENDING" | "PAID") => t.pool.query<{ id: string }>(
+      `insert into withdrawals (number, user_id, source, currency, amount, bank_name, bank_account_number, bank_account_holder, status, processed_at)
+       values ('WD-L' || substr(md5(random()::text), 1, 6), $1, 'AFFILIATE', 'VND', 1000, 'Old Bank', $2, 'Old Holder', $3::withdrawal_status, case when $3::text = 'PAID' then now() end) returning id`, [c.id, n, status]);
+    const pending = (await ins("5550001111", "PENDING")).rows[0]!.id;
+    const paid = (await ins("5550002222", "PAID")).rows[0]!.id;
+    expect(await encryptBankAccounts(drizzle(t.pool), secrets)).toBeGreaterThanOrEqual(2);
+    expect(await encryptBankAccounts(drizzle(t.pool), secrets)).toBe(0); // again: nothing left
+    const rows = (await t.pool.query<{ id: string; n: string; status: string }>("select id, bank_account_number as n, status from withdrawals where id = any($1)", [[pending, paid]])).rows;
+    for (const r of rows) expect(r.n).toMatch(/^enc:v1:/);
+    expect(rows.find((r) => r.id === paid)!.status).toBe("PAID");
+    expect(secrets.decrypt("bank-account", rows.find((r) => r.id === pending)!.n)).toBe("5550001111");
+    // the administrator reads the number whole, whichever way it was stored
+    expect((await adminGet(`/directory/withdrawals?q=${encodeURIComponent(c.email)}`)).json().items.map((i: { accountNumber: string }) => i.accountNumber).sort()).toEqual(["5550001111", "5550002222"]);
+    // the exception is only for a number in clear becoming its encrypted form: any other change of the bank details is still refused
+    await expect(t.pool.query("update withdrawals set bank_account_number = 'enc:v1:x:y:z' where id = $1", [paid])).rejects.toThrow(/cannot be changed/);
+    await expect(t.pool.query("update withdrawals set bank_account_number = '1' where id = $1", [pending])).rejects.toThrow(/cannot be changed/);
   });
 });

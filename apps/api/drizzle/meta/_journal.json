@@ -197,6 +197,13 @@
       "when": 1794546929776,
       "tag": "0027_legal_versions_backfill",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1794550104305,
+      "tag": "0028_bank_account_encrypted",
+      "breakpoints": true
     }
   ]
 }
