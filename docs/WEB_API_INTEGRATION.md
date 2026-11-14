@@ -81,6 +81,7 @@ Khi đặt `API_URL`, mọi trang của `/shopowner/{slug}` đọc dữ liệu c
 - Web: `mediaUploader` (kiểm tra loại thật từ byte đầu, thu nhỏ còn 1600 px, đổi sang WebP) → xin URL → PUT thẳng lên R2 → dùng `publicUrl`. Form workshop có ô tải ảnh bìa và nhiều ảnh gallery thật (trước đó chỉ là khung giữ chỗ); builder, ảnh session và ảnh khuyến mãi dùng cùng đường tải lên. Chưa cấu hình thì báo "chưa thiết lập" và vẫn dán được địa chỉ ảnh.
 - CSP của web có thêm `MEDIA_UPLOAD_ORIGIN` trong `connect-src` (nếu quên, trình duyệt chặn việc PUT).
 - Lệnh `pnpm --filter api r2:check` thử cấu hình thật (tải, đọc lại ở địa chỉ công khai, xóa) mà không in khóa.
+- Đã kiểm với R2 thật (14/11/2026): `r2:check` đạt cả 4 bước (tải, đọc công khai, xóa, CORS) và test trình duyệt `e2e/media.spec.ts` đạt (form workshop → chọn ảnh → PUT 200 lên R2 → địa chỉ `r2.dev` trả ảnh, không vi phạm CSP). Test tự bỏ qua khi chưa cấu hình R2 (CI) và để lại một ảnh thử nhỏ trong bucket.
 - **Chưa làm:** trang Media của admin vẫn rỗng (chưa có bảng theo dõi ảnh); ảnh không còn dùng chưa bị dọn; R2 không ép dung lượng của URL ký sẵn nên 5 MB chỉ được kiểm ở trình duyệt và ở số khai báo gửi lên API.
 
 ## 1. Đã đo được (13/11/2026)

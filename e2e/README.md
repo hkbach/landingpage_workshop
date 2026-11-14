@@ -28,5 +28,7 @@ E2E_PORT=3200 pnpm test:e2e                   # another port (the API must then 
 - The tests add data to the database (accounts, a workshop, a session, bookings, a published page, a published Terms). Run them on a database made for it, never on one with real data.
 - While a published Terms or Privacy Policy is not agreed to, a window stands in front of the shop owner area and the customer area (D17): the helpers agree for the tests that are about something else
   (`acceptLegal`), and `customer.spec.ts` checks the window itself.
+- `media.spec.ts` uploads a real image to the Cloudflare R2 bucket from the browser (the five `R2_*` in `apps/api/.env`, `MEDIA_UPLOAD_ORIGIN` for web, the CORS policy of the bucket for the origin of the app: run it with `E2E_PORT=3000`, the origin
+  in the CORS policy). It is skipped when the storage is not set up, so CI (no R2) skips it. It leaves one small test image in the bucket.
 - A failed test leaves a screenshot, a trace and a snapshot of the page in `test-results/` (git ignores it): `pnpm exec playwright show-trace <trace.zip>`.
 - CI runs the same on the services of the job (`.github/workflows/ci.yml`, job `e2e`).
