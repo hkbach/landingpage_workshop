@@ -172,6 +172,19 @@ export class PromotionsService {
     });
   }
 
+  /**
+   * A workshop whose price changes must not become free with the promotions of the shop (the rule that is checked when a promotion is saved, checked from the other side): `422 FULL_DISCOUNT`
+   * on `priceAmount`. Takes the promotions lock, so a promotion saved at the same moment waits for it.
+   */
+  async assertNotFree(tx: Executor, organizationId: string, workshop: { id: string; priceAmount: number }, now = new Date()): Promise<void> {
+    await this.lock(tx, organizationId);
+    const today = await this.todayOf(tx, organizationId, now);
+    const all = (await tx.select().from(promotions).where(tenantScope(promotions, organizationId))).map(toRecord).filter((p) => p.enabled);
+    if (all.some((p) => fullDiscountWorkshops(p, all.filter((x) => x.id !== p.id), [workshop], today).length > 0)) {
+      throw new UnprocessableEntityException({ code: "FULL_DISCOUNT", message: "At this price a guest could get the workshop for nothing with the promotions of your shop.", details: { fields: { priceAmount: "fullDiscount" } } });
+    }
+  }
+
   // ---- the guest (public) -----------------------------------------------------------------------------------------------------------------------------------
 
   /** The promotions guests see on the landing page of a shop: active today, newest start first. */

@@ -30,7 +30,7 @@ const en: Msgs = {
   exists: { subject: "You already have an account", intro: "Someone tried to sign up with this email, but it already has an account.", loginLabel: "Log in", forgotLabel: "Forgot your password", forgotQuestion: "Forgot your password?", resetLabel: "Reset it", ignore: "If it was not you, ignore this email." },
   changed: { subject: "Your password was changed", body: "The password of your account was just changed and every device was logged out. If it was not you, reset your password at once." },
   otp: {
-    subject: (c) => `Your booking code: ${c}`, text: (s, c) => `Your code to confirm a booking at ${s} is ${c}.`, htmlIntro: (s) => `Your code to confirm a booking at ${s} is:`,
+    subject: () => "Your booking code", text: (s, c) => `Your code to confirm a booking at ${s} is ${c}.`, htmlIntro: (s) => `Your code to confirm a booking at ${s} is:`,
     note: (m) => `It works for ${m} minutes. If you did not ask for it, ignore this email.`,
   },
   adminMessage: { subject: "A message from the platform" },
@@ -51,7 +51,7 @@ const vi: Msgs = {
   exists: { subject: "Bạn đã có tài khoản", intro: "Có người đã thử đăng ký bằng email này nhưng email đã có tài khoản.", loginLabel: "Đăng nhập", forgotLabel: "Quên mật khẩu", forgotQuestion: "Quên mật khẩu?", resetLabel: "Đặt lại mật khẩu", ignore: "Nếu không phải bạn, hãy bỏ qua email này." },
   changed: { subject: "Mật khẩu của bạn đã được đổi", body: "Mật khẩu tài khoản của bạn vừa được đổi và mọi thiết bị đã bị đăng xuất. Nếu không phải bạn, hãy đặt lại mật khẩu ngay." },
   otp: {
-    subject: (c) => `Mã đặt chỗ của bạn: ${c}`, text: (s, c) => `Mã xác nhận đặt chỗ tại ${s} của bạn là ${c}.`, htmlIntro: (s) => `Mã xác nhận đặt chỗ tại ${s} của bạn là:`,
+    subject: () => "Mã đặt chỗ của bạn", text: (s, c) => `Mã xác nhận đặt chỗ tại ${s} của bạn là ${c}.`, htmlIntro: (s) => `Mã xác nhận đặt chỗ tại ${s} của bạn là:`,
     note: (m) => `Mã có hiệu lực trong ${m} phút. Nếu bạn không yêu cầu, hãy bỏ qua email này.`,
   },
   adminMessage: { subject: "Thông báo từ nền tảng" },
@@ -72,7 +72,7 @@ const ko: Msgs = {
   exists: { subject: "이미 계정이 있습니다", intro: "누군가 이 이메일로 가입을 시도했지만 이미 계정이 있습니다.", loginLabel: "로그인", forgotLabel: "비밀번호를 잊으셨나요", forgotQuestion: "비밀번호를 잊으셨나요?", resetLabel: "재설정하기", ignore: "본인이 아니라면 이 이메일을 무시해 주세요." },
   changed: { subject: "비밀번호가 변경되었습니다", body: "계정 비밀번호가 방금 변경되었으며 모든 기기에서 로그아웃되었습니다. 본인이 아니라면 즉시 비밀번호를 재설정해 주세요." },
   otp: {
-    subject: (c) => `예약 코드: ${c}`, text: (s, c) => `${s}의 예약을 확인하는 코드는 ${c}입니다.`, htmlIntro: (s) => `${s}의 예약을 확인하는 코드:`,
+    subject: () => "예약 코드", text: (s, c) => `${s}의 예약을 확인하는 코드는 ${c}입니다.`, htmlIntro: (s) => `${s}의 예약을 확인하는 코드:`,
     note: (m) => `이 코드는 ${m}분 동안 유효합니다. 요청하지 않으셨다면 이 이메일을 무시해 주세요.`,
   },
   adminMessage: { subject: "플랫폼 안내" },
@@ -93,7 +93,7 @@ const ja: Msgs = {
   exists: { subject: "すでにアカウントがあります", intro: "このメールアドレスで登録しようとした方がいましたが、すでにアカウントがあります。", loginLabel: "ログイン", forgotLabel: "パスワードをお忘れの場合", forgotQuestion: "パスワードをお忘れですか？", resetLabel: "再設定する", ignore: "心当たりがない場合は、このメールを無視してください。" },
   changed: { subject: "パスワードが変更されました", body: "アカウントのパスワードが変更され、すべての端末からログアウトされました。心当たりがない場合は、直ちにパスワードを再設定してください。" },
   otp: {
-    subject: (c) => `予約コード: ${c}`, text: (s, c) => `${s}での予約を確認するコードは ${c} です。`, htmlIntro: (s) => `${s}での予約を確認するコード:`,
+    subject: () => "予約コード", text: (s, c) => `${s}での予約を確認するコードは ${c} です。`, htmlIntro: (s) => `${s}での予約を確認するコード:`,
     note: (m) => `このコードは${m}分間有効です。依頼した覚えがない場合は、このメールを無視してください。`,
   },
   adminMessage: { subject: "プラットフォームからのお知らせ" },
@@ -114,7 +114,7 @@ const zh: Msgs = {
   exists: { subject: "您已有账号", intro: "有人尝试使用此邮箱注册，但该邮箱已有账号。", loginLabel: "登录", forgotLabel: "忘记密码", forgotQuestion: "忘记密码？", resetLabel: "重置密码", ignore: "如果不是您本人操作，请忽略此邮件。" },
   changed: { subject: "您的密码已更改", body: "您账号的密码刚刚被更改，所有设备均已退出登录。如果不是您本人操作，请立即重置密码。" },
   otp: {
-    subject: (c) => `您的预订验证码：${c}`, text: (s, c) => `您在 ${s} 确认预订的验证码是 ${c}。`, htmlIntro: (s) => `您在 ${s} 确认预订的验证码：`,
+    subject: () => "您的预订验证码", text: (s, c) => `您在 ${s} 确认预订的验证码是 ${c}。`, htmlIntro: (s) => `您在 ${s} 确认预订的验证码：`,
     note: (m) => `验证码在 ${m} 分钟内有效。如果不是您本人操作，请忽略此邮件。`,
   },
   adminMessage: { subject: "来自平台的消息" },

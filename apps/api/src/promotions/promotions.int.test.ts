@@ -177,6 +177,21 @@ d("promotions", () => {
     expect((await t.pool.query("select count(*)::int as n from promotions where organization_id = $1", [other.orgId])).rows[0]!.n).toBe(3); // a refused one left no row behind
   });
 
+  it("does not let a workshop become free by lowering its price under a fixed discount (the rule checked from the side of the workshop)", async () => {
+    const shop = await makeShop("promfree");
+    await mustCreate(shop, { code: "FIXED150", discountType: "FIXED_AMOUNT", discountValue: 150_000, appliesTo: "SELECTED", workshopIds: [shop.w2] });
+    expect((await t.post(`/workshops/${shop.w2}/status`, { status: "DRAFT" }, { cookie: shop.cookie })).statusCode).toBe(200); // (only a draft is edited)
+    const edit = (priceAmount: number) => t.app.inject({
+      method: "PUT", url: `/api/v1/workshops/${shop.w2}`, remoteAddress: "10.1.1.1", headers: { origin: "http://app.localtest.me:3000", cookie: shop.cookie },
+      payload: { title: { en: "Promo free" }, durationMinutes: 60, priceAmount, defaultCapacity: 40, maxPerBooking: 6, categories: ["COOKING"] },
+    });
+    const free = await edit(150_000);
+    expect([free.statusCode, free.json().error.code]).toEqual([422, "FULL_DISCOUNT"]);
+    expect(free.json().error.details.fields).toEqual({ priceAmount: "fullDiscount" });
+    expect((await t.pool.query("select price_amount::int as p from workshops where id = $1", [shop.w2])).rows[0]!.p).toBe(250_000); // nothing changed
+    expect((await edit(180_000)).statusCode).toBe(200); // still above the discount
+  });
+
   it("shows the promotions that run today on the landing page, and prices a booking on the server with the ones the guest chose", async () => {
     const shop = await makeShop("pricing");
     const early = await mustCreate(shop, { code: "EARLY20", discountValue: 20, stacking: "SINGLE", title: { en: "Early" } });

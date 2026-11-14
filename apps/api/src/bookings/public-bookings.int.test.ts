@@ -115,7 +115,7 @@ d("public booking", () => {
     await drain(t);
     const mail = t.emails.sent.filter((m) => m.to === email).at(-1)!;
     const code = /\b(\d{6})\b/.exec(mail.text)![1]!;
-    expect(mail.subject).toContain(code);
+    expect(mail.subject).not.toContain(code); // (the subject is kept in the outbox and shown to administrators: never the code)
     const row = (await t.pool.query<{ id: string; code_hash: string }>("select id, code_hash from booking_otps where organization_id = $1 and email = $2", [a.orgId, email])).rows[0]!;
     expect(row.code_hash).not.toContain(code);
     expect(row.code_hash).toMatch(/^[0-9a-f]{64}$/);
@@ -199,6 +199,12 @@ d("public booking", () => {
     expect(new Set(both.map((r) => r.json().code)).size).toBe(1);
     expect((await seats(sid2)).reserved_count).toBe(2);
     expect((await t.app.inject({ method: "POST", url: `/api/v1/public/sites/${a.slug}/bookings`, remoteAddress: nextIp(), payload: body })).statusCode).toBe(422); // the header is required
+
+    // the key of another guest is never answered with that guest's booking
+    const stranger = await book(a, { ...body, guest: guest(emailFor("stranger")) }, key);
+    expect(stranger.statusCode).toBe(409);
+    expect(stranger.json().error.code).toBe("IDEMPOTENCY_KEY_REUSED");
+    expect(stranger.body).not.toContain(first.json().code);
   });
 
   it("never overbooks: 25 guests race for 10 seats and exactly 10 get one", async () => {
@@ -339,6 +345,15 @@ d("public booking", () => {
     expect(log.rows.length).toBeGreaterThanOrEqual(1);
   });
 
+  it("stops guessing the booking codes of one email from many addresses (20 tries in 15 minutes at one shop)", async () => {
+    const email = emailFor("guessed");
+    const lookup = () => t.app.inject({ method: "POST", url: `/api/v1/public/sites/${a.slug}/bookings/lookup`, remoteAddress: nextIp(), headers: { origin: "https://some-shop.example" }, payload: { code: `SES-${String(1000 + Math.floor(Math.random() * 8999))}-001`, email } });
+    for (let i = 0; i < 20; i++) expect((await lookup()).statusCode).toBe(404); // every try from another address
+    const stopped = await lookup();
+    expect(stopped.statusCode).toBe(429);
+    expect(stopped.json().error.code).toBe("RATE_LIMITED");
+  });
+
   it("cannot be cancelled by the guest once the session started or closed, or the guest checked in", async () => {
     const sid = await session(a, { days: 44 });
     const email = emailFor("late");
@@ -418,7 +433,7 @@ d("public booking", () => {
     const asked = await t.app.inject({ method: "POST", url: `/api/v1/public/sites/${a.slug}/booking-otp`, remoteAddress: nextIp(), headers: { origin: "https://some-shop.example" }, payload: { email: otpEmail, locale: "ko" } });
     expect(asked.statusCode).toBeLessThan(300);
     await drain(t);
-    expect(t.emails.sent.filter((m) => m.to === otpEmail).at(-1)!.subject).toMatch(/^예약 코드: \d{6}$/);
+    expect(t.emails.sent.filter((m) => m.to === otpEmail).at(-1)!.subject).toBe("예약 코드");
     expect((await t.app.inject({ method: "POST", url: `/api/v1/public/sites/${a.slug}/booking-otp`, remoteAddress: nextIp(), headers: { origin: "https://some-shop.example" }, payload: { email: emailFor("badloc"), locale: "xx" } })).statusCode).toBe(422);
   });
 });

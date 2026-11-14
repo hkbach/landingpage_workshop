@@ -31,9 +31,12 @@ https:// {
 		X-Content-Type-Options nosniff
 	}
 
-	# the question of the front server to the API is not a public endpoint
+	# the question of the front server to the API is not a public endpoint. It is a `handle` of its own, placed before the API's: Caddy runs `handle` before `respond`, so a bare
+	# `respond @tls 404` here would never be reached and the path would be proxied to the API.
 	@tls path /api/v1/public/tls/*
-	respond @tls 404
+	handle @tls {
+		respond 404
+	}
 
 	# the API (the web app calls it on its own origin: the cookie is never sent to another host)
 	handle /api/v1/* {

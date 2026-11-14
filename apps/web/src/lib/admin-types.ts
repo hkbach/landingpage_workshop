@@ -99,7 +99,7 @@ export interface AdminMedia {
   /** USED: an address of it is written in a workshop, a session, a promotion, an avatar or a landing page. UNUSED: nowhere (it can be deleted). */
   status: "USED" | "UNUSED";
   /** What shows it (empty when unused). */
-  usedBy: Array<"workshop" | "session" | "promotion" | "profile" | "landingPage">;
+  usedBy: Array<"workshop" | "session" | "promotion" | "profile" | "landingPage" | "recentUpload">;
 }
 
 export interface AdminRating {

@@ -1056,7 +1056,8 @@
       "session": "Session",
       "promotion": "Promotion",
       "profile": "Customer avatar",
-      "landingPage": "Landing page"
+      "landingPage": "Landing page",
+      "recentUpload": "Uploaded in the last 24 hours (maybe not saved yet)"
     },
     "selected": "{count} selected",
     "selectAll": "Select all the images listed",

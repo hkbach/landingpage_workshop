@@ -61,8 +61,18 @@ test.describe("a guest on the real API", () => {
     await page.getByRole("button", { name: /^Book / }).first().click();
     const dialog = page.getByRole("dialog", { name: "Book a workshop" });
     await expect(dialog.getByText("Step 1 of 5")).toBeVisible();
-    await dialog.getByRole("group", { name: "Choose a date" }).getByRole("radio", { disabled: false }).first().locator("xpath=ancestor::label").click();
-    await dialog.getByRole("group", { name: "Choose a time" }).getByRole("radio").first().locator("xpath=ancestor::label").click();
+    // the first day that still has a time open (a time can be full, or too close to its start, after earlier runs)
+    const days = dialog.getByRole("group", { name: "Choose a date" }).getByRole("radio", { disabled: false });
+    const times = dialog.getByRole("group", { name: "Choose a time" }).getByRole("radio", { disabled: false });
+    let picked = false;
+    for (let i = 0; i < Math.min(await days.count(), 14) && !picked; i++) {
+      await days.nth(i).locator("xpath=ancestor::label").click();
+      if ((await times.count()) > 0) {
+        await times.first().locator("xpath=ancestor::label").click();
+        picked = true;
+      }
+    }
+    expect(picked, "a day with an open time").toBe(true);
     await dialog.getByRole("button", { name: "Next" }).click();
     await dialog.getByRole("button", { name: "Next" }).click(); // guests
     await dialog.getByRole("textbox", { name: "Full name" }).fill("Ava Tran");

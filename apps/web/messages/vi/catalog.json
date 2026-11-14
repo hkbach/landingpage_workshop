@@ -141,7 +141,8 @@
     "addressTooLong": "Địa chỉ tối đa {max} ký tự.",
     "addressNoteTooLong": "Ghi chú tối đa {max} ký tự.",
     "categoriesRequired": "Chọn ít nhất 1 danh mục (tối đa 3).",
-    "saveFailed": "Không lưu được workshop. Hãy kiểm tra các trường và thử lại."
+    "saveFailed": "Không lưu được workshop. Hãy kiểm tra các trường và thử lại.",
+    "fullDiscount": "Với giá này, khách có thể được miễn phí hoàn toàn nhờ các khuyến mãi của shop. Hãy tăng giá hoặc sửa khuyến mãi trước."
   },
   "rules": {
     "title": "Quy tắc lịch",

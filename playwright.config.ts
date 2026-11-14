@@ -18,7 +18,8 @@ export default defineConfig({
     screenshot: "only-on-failure",
     launchOptions: { args: ["--host-resolver-rules=MAP *.localtest.me 127.0.0.1, MAP localtest.me 127.0.0.1"] },
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  // E2E_CHANNEL=chrome (or msedge) runs the browser installed on the machine instead of the one Playwright downloads: for a machine where security software blocks the downloaded one.
+  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"], ...(process.env.E2E_CHANNEL ? { channel: process.env.E2E_CHANNEL } : {}) } }],
   webServer: {
     command: `pnpm --filter web exec next dev -p ${PORT}`,
     env: { API_URL: process.env.API_URL ?? "http://127.0.0.1:4000" },

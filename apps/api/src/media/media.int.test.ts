@@ -34,7 +34,7 @@ d("upload of images (presigned URL)", () => {
     const url = new URL(body.uploadUrl);
     expect(url.host).toBe(`${R2.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`);
     expect(url.pathname).toBe(`/${R2.R2_BUCKET}/${body.key}`);
-    expect(url.searchParams.get("X-Amz-SignedHeaders")).toBe("content-type;host");
+    expect(url.searchParams.get("X-Amz-SignedHeaders")).toBe("content-length;content-type;host"); // (the size is signed: a larger body is refused by the bucket)
     expect(url.searchParams.get("X-Amz-Expires")).toBe("300");
     expect(JSON.stringify(body)).not.toContain(R2.R2_SECRET_ACCESS_KEY); // the key itself never goes out
   });
@@ -57,6 +57,9 @@ d("upload of images (presigned URL)", () => {
 });
 
 /** A bucket in memory that answers like R2 to the listing and to the removal of a file (nothing here talks to Cloudflare). */
+/** Files uploaded "just now" (the others were uploaded long ago). */
+const justUploaded = new Set<string>();
+
 function fakeBucket(files: Map<string, number>): typeof fetch {
   return async (input, init) => {
     const url = new URL(String(input));
@@ -66,7 +69,7 @@ function fakeBucket(files: Map<string, number>): typeof fetch {
     const start = Number(url.searchParams.get("continuation-token") ?? 0);
     const page = keys.slice(start, start + 2); // (two at a time: the listing has to follow the pages)
     const more = start + 2 < keys.length;
-    const xml = `<?xml version="1.0"?><ListBucketResult><IsTruncated>${more}</IsTruncated>${more ? `<NextContinuationToken>${start + 2}</NextContinuationToken>` : ""}${page.map((k) => `<Contents><Key>${k}</Key><LastModified>2026-11-14T10:00:00.000Z</LastModified><Size>${files.get(k)}</Size></Contents>`).join("")}</ListBucketResult>`;
+    const xml = `<?xml version="1.0"?><ListBucketResult><IsTruncated>${more}</IsTruncated>${more ? `<NextContinuationToken>${start + 2}</NextContinuationToken>` : ""}${page.map((k) => `<Contents><Key>${k}</Key><LastModified>${justUploaded.has(k) ? new Date().toISOString() : "2026-01-05T10:00:00.000Z"}</LastModified><Size>${files.get(k)}</Size></Contents>`).join("")}</ListBucketResult>`;
     return new Response(xml, { status: 200 });
   };
 }
@@ -78,7 +81,7 @@ d("the images in the storage and the ones nothing shows any more (administrator)
   const bucket = new Map<string, number>();
   const uid = () => randomUUID();
   const key = (orgId: string, purpose: string, ext = "webp") => `shops/${orgId}/${purpose}/${uid()}.${ext}`;
-  const keys = {} as Record<"cover" | "gallery" | "page" | "version" | "free1" | "free2" | "free3", string>;
+  const keys = {} as Record<"cover" | "gallery" | "page" | "version" | "free1" | "free2" | "free3" | "fresh", string>;
   const get = () => t.app.inject({ method: "GET", url: "/api/v1/admin/media", remoteAddress: "10.1.1.1", headers: { cookie: admin } });
   const del = (body: unknown, cookie = admin) => t.post("/admin/media/delete", body, { cookie });
 
@@ -92,6 +95,7 @@ d("the images in the storage and the ones nothing shows any more (administrator)
     owner = { cookie: cookieOf(res), orgId: res.json().organization.id as string };
     keys.cover = key(owner.orgId, "workshop"); keys.gallery = key(owner.orgId, "workshop", "png"); keys.page = key(owner.orgId, "site"); keys.version = key(owner.orgId, "site", "jpg");
     keys.free1 = key(owner.orgId, "promotion"); keys.free2 = key(owner.orgId, "session"); keys.free3 = key(owner.orgId, "branding");
+    keys.fresh = key(owner.orgId, "workshop"); justUploaded.add(keys.fresh); // uploaded a moment ago, the form maybe not saved yet
     for (const k of Object.values(keys)) bucket.set(k, 1234);
     bucket.set(`shops/${owner.orgId}/notes.txt`, 5); // (not named like ours)
     // what shows an image: a workshop (cover and gallery), the draft of a landing page, and a version kept of it
@@ -111,13 +115,14 @@ d("the images in the storage and the ones nothing shows any more (administrator)
     expect(res.statusCode).toBe(200);
     const body = res.json() as { items: Array<{ key: string; status: string; usedBy: string[]; shopName: string; purpose: string; url: string; size: number }>; total: number; truncated: boolean };
     const byKey = new Map(body.items.map((i) => [i.key, i]));
-    expect(body.total).toBe(7); // (the notes.txt that is not named like ours is left out; the listing followed its pages)
+    expect(body.total).toBe(8); // (the notes.txt that is not named like ours is left out; the listing followed its pages)
     expect(body.truncated).toBe(false);
     expect(byKey.get(keys.cover)).toMatchObject({ status: "USED", usedBy: ["workshop"], purpose: "workshop", size: 1234, url: `https://pub-test.r2.dev/${keys.cover}` });
     expect(byKey.get(keys.gallery)).toMatchObject({ status: "USED", usedBy: ["workshop"] });
     expect(byKey.get(keys.page)).toMatchObject({ status: "USED", usedBy: ["landingPage"] });
     expect(byKey.get(keys.version)).toMatchObject({ status: "USED", usedBy: ["landingPage"] });
     for (const k of [keys.free1, keys.free2, keys.free3]) expect(byKey.get(k)).toMatchObject({ status: "UNUSED", usedBy: [] });
+    expect(byKey.get(keys.fresh)).toMatchObject({ status: "USED", usedBy: ["recentUpload"] }); // not offered for deletion yet
     expect(byKey.get(keys.free1)!.shopName).toMatch(/^Shop /);
   });
 
@@ -129,16 +134,17 @@ d("the images in the storage and the ones nothing shows any more (administrator)
   });
 
   it("removes unused files from the bucket and audits each; a file that is in use is never removed, even when the request names it", async () => {
-    const res = await del({ keys: [keys.free1, keys.free2, keys.cover, keys.version], reason: "clean up" });
+    const res = await del({ keys: [keys.free1, keys.free2, keys.cover, keys.version, keys.fresh], reason: "clean up" });
     expect(res.statusCode).toBe(200);
     const out = res.json() as { deleted: string[]; inUse: string[]; failed: string[] };
     expect(out.deleted.sort()).toEqual([keys.free1, keys.free2].sort());
-    expect(out.inUse.sort()).toEqual([keys.cover, keys.version].sort());
+    expect(out.inUse.sort()).toEqual([keys.cover, keys.version, keys.fresh].sort()); // (the one uploaded a moment ago too)
     expect(out.failed).toEqual([]);
     expect(bucket.has(keys.free1)).toBe(false);
     expect(bucket.has(keys.free2)).toBe(false);
     expect(bucket.has(keys.cover)).toBe(true);
     expect(bucket.has(keys.version)).toBe(true);
+    expect(bucket.has(keys.fresh)).toBe(true);
     const audit = await t.pool.query<{ entity_id: string; organization_id: string; after: { reason: string } }>("select entity_id, organization_id, after from audit_logs where action = 'media.delete' and entity_type = 'media' and entity_id = any($1)", [[keys.free1, keys.free2, keys.cover]]);
     expect(audit.rows.map((r) => r.entity_id).sort()).toEqual([keys.free1, keys.free2].sort());
     expect(audit.rows[0]).toMatchObject({ organization_id: owner.orgId, after: { reason: "clean up" } });
@@ -147,7 +153,7 @@ d("the images in the storage and the ones nothing shows any more (administrator)
   it("says which files could not be removed (the bucket refused)", async () => {
     const media = t.app.get(MediaService, { strict: false });
     const normal = media.http;
-    media.http = async () => new Response("denied", { status: 403 });
+    media.http = async (input, init) => (init?.method === "DELETE" ? new Response("denied", { status: 403 }) : normal(input, init)); // (the listing still works, the removal is refused)
     try {
       const out = (await del({ keys: [keys.free3] })).json() as { deleted: string[]; failed: string[] };
       expect(out).toMatchObject({ deleted: [], failed: [keys.free3] });

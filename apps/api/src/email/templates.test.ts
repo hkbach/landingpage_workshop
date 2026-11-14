@@ -104,7 +104,7 @@ describe("the emails about an account", () => {
     expect(asEmailLocale("fr")).toBe("en");
     expect(renderEmail(accountMails()[0]!).subject).toBe("Confirm your email");
     expect(renderEmail({ ...accountMails()[0]!, locale: "fr" }).subject).toBe("Confirm your email");
-    expect(renderEmail(accountMails("en")[4]!).subject).toBe("Your booking code: 123456");
+    expect(renderEmail(accountMails("en")[4]!).subject).toBe("Your booking code"); // (never the code itself: the subject is kept in the outbox and shown to administrators)
   });
 
   it("tell each language in its own words", () => {

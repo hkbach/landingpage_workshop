@@ -51,11 +51,19 @@ export interface PublicBooking {
  * The public side of booking (FR-BOOK-01..03): what a guest can do without an account, on the landing page of a shop. Nothing here takes a shop id or a price from the client: the shop is
  * the one of the slug (and must be ACTIVE; anything else is the same 404), the price is worked out on the server (BR-04).
  */
+/** A replay is answered only to the guest who made the booking (the same email). */
+function sameRequester(b: BookingRow, email: string): BookingRow {
+  if ((b.guestEmail ?? "").toLowerCase() !== email.toLowerCase()) throw new ConflictException({ code: "IDEMPOTENCY_KEY_REUSED", message: "This request key was already used for another booking." });
+  return b;
+}
+
 @Injectable()
 export class PublicBookingsService {
   private readonly otpByIp = new RateLimiter(20, 60 * 60_000);
   private readonly otpByEmail = new RateLimiter(5, 60 * 60_000);
   private readonly lookups = new RateLimiter(30, 15 * 60_000);
+  /** Look-ups and cancels of one email at one shop from any address: guessing the booking codes of a known email from many addresses is stopped too. */
+  private readonly lookupsByEmail = new RateLimiter(20, 15 * 60_000);
   private readonly creates = new RateLimiter(30, 60 * 60_000);
 
   constructor(
@@ -206,7 +214,7 @@ export class PublicBookingsService {
   async createBooking(slug: string, input: BookingCreateInput, key: string, client: PublicClient, now = new Date()): Promise<{ booking: PublicBooking; replay: boolean }> {
     const o = await this.shop(slug);
     const email = input.guest.email;
-    const replay = await this.findByKey(o.id, key);
+    const replay = await this.findByKey(o.id, key, email);
     if (replay) return { booking: await this.viewOf(replay, now), replay: true };
 
     const ipKey = client.ip ?? "unknown";
@@ -240,7 +248,7 @@ export class PublicBookingsService {
       otpId = await this.checkOtp(o.id, email, input.otp, now);
     } catch (error) {
       // The same request twice at once: the first one has used the code up by now and has made the booking, so the second one is answered with it.
-      const done = await this.findByKey(o.id, key);
+      const done = await this.findByKey(o.id, key, email);
       if (done) return { booking: await this.viewOf(done, now), replay: true };
       throw error;
     }
@@ -249,7 +257,7 @@ export class PublicBookingsService {
         // Two requests with the same key take turns: the second one waits here, then finds the booking of the first and returns it.
         await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`${o.id}:${key}`}))`);
         const [same] = await tx.select().from(bookings).where(and(eq(bookings.organizationId, o.id), eq(bookings.idempotencyKey, key))).limit(1);
-        if (same) return { booking: same, replay: true as const };
+        if (same) return { booking: sameRequester(same, email), replay: true as const };
         const used = await tx.update(bookingOtps).set({ usedAt: now }).where(and(eq(bookingOtps.id, otpId), isNull(bookingOtps.usedAt))).returning({ id: bookingOtps.id });
         if (used.length === 0) throw new UnprocessableEntityException({ code: "OTP_INVALID", message: "The code is not right or has expired.", details: { fields: { otp: "invalid" } } });
 
@@ -279,16 +287,17 @@ export class PublicBookingsService {
       return { booking: await this.viewOf(result.booking, now), replay: result.replay };
     } catch (error) {
       if (isUniqueViolation(error)) {
-        const again = await this.findByKey(o.id, key); // two requests with the same key at once: the second gets the booking of the first
+        const again = await this.findByKey(o.id, key, email); // two requests with the same key at once: the second gets the booking of the first
         if (again) return { booking: await this.viewOf(again, now), replay: true };
       }
       throw error;
     }
   }
 
-  private async findByKey(orgId: string, key: string): Promise<BookingRow | undefined> {
+  /** The booking made earlier with this key, when it is the same guest's; a key of another guest is a conflict (a replay never hands one guest's booking to someone else). */
+  private async findByKey(orgId: string, key: string, email: string): Promise<BookingRow | undefined> {
     const [b] = await this.db.select().from(bookings).where(and(eq(bookings.organizationId, orgId), eq(bookings.idempotencyKey, key))).limit(1);
-    return b;
+    return b ? sameRequester(b, email) : undefined;
   }
 
   private async viewOf(b: BookingRow, now: Date): Promise<PublicBooking> {
@@ -330,6 +339,16 @@ export class PublicBookingsService {
   }
 
   /** The booking of a code AND an email: a wrong code and a wrong email are the same 404 (no way to learn which booking codes exist). */
+  /** Both limits of a look-up or a cancel: the address, and the email at this shop. */
+  private throttleLookup(orgId: string, email: string, client: PublicClient): void {
+    const byIp = client.ip ?? "unknown";
+    const byEmail = `${orgId}|${email.toLowerCase()}`;
+    const wait = Math.max(this.lookups.retryAfter(byIp), this.lookupsByEmail.retryAfter(byEmail));
+    if (wait > 0) throw throttled(wait);
+    this.lookups.hit(byIp);
+    this.lookupsByEmail.hit(byEmail);
+  }
+
   private async findGuestBooking(tx: Executor, o: OrgRow, code: string, email: string, lock = false): Promise<BookingRow> {
     const query = tx.select().from(bookings).where(and(eq(bookings.organizationId, o.id), eq(bookings.bookingCode, code), eq(bookings.guestEmail, email))).limit(1);
     const [b] = lock ? await query.for("update") : await query;
@@ -339,20 +358,14 @@ export class PublicBookingsService {
 
   async lookup(slug: string, code: string, email: string, client: PublicClient, now = new Date()): Promise<PublicBooking> {
     const o = await this.shop(slug);
-    const key = client.ip ?? "unknown";
-    const wait = this.lookups.retryAfter(key);
-    if (wait > 0) throw throttled(wait);
-    this.lookups.hit(key);
+    this.throttleLookup(o.id, email, client);
     return this.viewOf(await this.findGuestBooking(this.db, o, code, email), now);
   }
 
   /** The guest cancels: only a NOT_CONFIRMED or CONFIRMED booking, before its session starts and while it is not closed (`409 NOT_CANCELLABLE`). The seats come back at once. */
   async cancel(slug: string, input: { code: string; email: string; reason?: string | undefined }, client: PublicClient, now = new Date()): Promise<PublicBooking> {
     const o = await this.shop(slug);
-    const key = client.ip ?? "unknown";
-    const wait = this.lookups.retryAfter(key);
-    if (wait > 0) throw throttled(wait);
-    this.lookups.hit(key);
+    this.throttleLookup(o.id, input.email, client);
     const result = await this.db.transaction(async (tx) => {
       const b = await this.findGuestBooking(tx, o, input.code, input.email, true);
       const [s] = await tx.select({ status: workshopSessions.status, startsAt: workshopSessions.startsAt }).from(workshopSessions).where(and(eq(workshopSessions.organizationId, o.id), eq(workshopSessions.id, b.sessionId))).limit(1);

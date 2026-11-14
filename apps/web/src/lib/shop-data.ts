@@ -20,7 +20,9 @@ export async function fetchAll<T>(path: string, max = FETCH_ALL_MAX): Promise<T[
     if (!res.ok) throw new Error(`The API answered ${res.status} to GET ${path.split("?")[0]}`);
     const page = (await res.json()) as Page<T>;
     out.push(...page.items);
-    cursor = page.nextCursor;
+    // (an empty page or the same cursor again would loop for ever: the list ends there)
+    const next = page.items.length > 0 && page.nextCursor !== cursor ? page.nextCursor : null;
+    cursor = next;
   } while (cursor && out.length < max);
   return out.slice(0, max);
 }

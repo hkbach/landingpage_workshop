@@ -126,7 +126,7 @@ export function GuestLoginForm({ slug, shopName, initialStep = "login", onLogged
   const [merged, setMerged] = useState(0);
   const clean = normalizeGuestEmail(email);
   const base = `/api/v1/public/sites/${encodeURIComponent(slug)}/accounts`;
-  const today = new Date().toISOString().slice(0, 10);
+  const today = new Date().toLocaleDateString("en-CA"); // (the day of the person, YYYY-MM-DD: the UTC day is yesterday before 07:00 in Vietnam)
 
   async function logIn() {
     setLoginError(null);

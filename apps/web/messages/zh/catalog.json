@@ -141,7 +141,8 @@
     "addressTooLong": "地址最多 {max} 个字符。",
     "addressNoteTooLong": "备注最多 {max} 个字符。",
     "categoriesRequired": "请至少选择 1 个类别（最多 3 个）。",
-    "saveFailed": "无法保存工作坊。请检查各项内容后重试。"
+    "saveFailed": "无法保存工作坊。请检查各项内容后重试。",
+    "fullDiscount": "按此价格，顾客使用店铺的促销后可能免费参加。请提高价格或先修改促销。"
   },
   "rules": {
     "title": "排期规则",

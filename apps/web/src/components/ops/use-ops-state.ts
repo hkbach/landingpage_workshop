@@ -43,12 +43,15 @@ export function useOpsState(init: {
   // Connected to the API: when the page is read again, the new data replaces what the screen held (the way React keeps state in step with new props: compare while rendering).
   const [seenBookings, setSeenBookings] = useState(init.bookings);
   const [seenSessions, setSeenSessions] = useState(init.sessions);
-  if (viaApi && seenBookings !== init.bookings) { setSeenBookings(init.bookings); setBookings(init.bookings); }
+  // (the events shown at once for a change are dropped too: what the server answered is the truth, a refused change leaves no event behind)
+  if (viaApi && seenBookings !== init.bookings) { setSeenBookings(init.bookings); setBookings(init.bookings); setHistory({}); }
   if (viaApi && seenSessions !== init.sessions) { setSeenSessions(init.sessions); setSessions(init.sessions); }
   const [now, setNow] = useState(() => new Date(init.nowIso));
   // A session whose time is over is closed by the system (shown as Closed with a note), whatever its stored status.
-  // The seats taken are counted from the bookings, so cancelling a booking frees its seats at once.
-  const [others] = useState<Booking[]>(init.otherBookings ?? []);
+  // The seats taken are counted from the bookings, so cancelling a booking frees its seats at once. The other bookings follow the server too (compared as given: no new array each render).
+  const [others, setOthers] = useState<Booking[]>(init.otherBookings ?? []);
+  const [seenOthers, setSeenOthers] = useState(init.otherBookings);
+  if (viaApi && seenOthers !== init.otherBookings) { setSeenOthers(init.otherBookings); setOthers(init.otherBookings ?? []); }
   const sessions = useMemo(
     () => storedSessions.map((x) => ({ ...closeIfEnded(x, now), reservedCount: reservedSeats(bookings, x.id) + reservedSeats(others, x.id) })),
     [storedSessions, bookings, others, now],
@@ -144,7 +147,7 @@ export function useOpsState(init: {
       const net = netPaid(b.payments);
       if (paid) {
         if (b.paymentStatus === "PAID") return { ok: true };
-        const res = addPayment(bookingId, { type: "PAYMENT", amount: b.totalAmount - Math.max(0, net), method: "CASH", note: "Payment confirmed after the session" });
+        const res = addPayment(bookingId, { type: "PAYMENT", amount: b.totalAmount - Math.max(0, net), method: "CASH" }); // (no note: a fixed English text would be stored and shown to owners in every language)
         if (res.ok) {
           if (!viaApi) persistPaid(bookingId, true); // the server sets the status too (recordPaid)
           // A booking that becomes Paid is also Checked in, from Not confirmed or Confirmed (the status before is kept for an uncheck-in).
@@ -158,7 +161,7 @@ export function useOpsState(init: {
         return res;
       }
       if (b.paymentStatus === "UNPAID") return { ok: true };
-      const res = addPayment(bookingId, { type: "REFUND", amount: net, method: "CASH", note: "Marked as unpaid" });
+      const res = addPayment(bookingId, { type: "REFUND", amount: net, method: "CASH" });
       if (res.ok) {
         if (!viaApi) persistPaid(bookingId, false); // the server brings the status back too (recordPaid)
         // A Checked in booking goes back to the status it had before the check-in, however it was checked in.

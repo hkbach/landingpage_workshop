@@ -2,6 +2,7 @@ import { ConflictException, Inject, Injectable, NotFoundException, Unprocessable
 import { and, asc, count, eq, gt, inArray, or, sql, type SQL } from "drizzle-orm";
 import { checkWorkshopSwitch, canEditWorkshop, isSessionFinished, type SessionStatus } from "@workshop/shared";
 import { AuditService } from "../audit/audit.service";
+import { PromotionsService } from "../promotions/promotions.service";
 import type { OrgContext } from "../auth/auth.guards";
 import { decodeCursor, encodeCursor } from "../common/cursor";
 import { DB, type Database, type Executor } from "../db/db.module";
@@ -40,7 +41,7 @@ const audited = (w: WorkshopRow) => ({
 
 @Injectable()
 export class WorkshopsService {
-  constructor(@Inject(DB) private readonly db: Database, @Inject(AuditService) private readonly audit: AuditService) {}
+  constructor(@Inject(DB) private readonly db: Database, @Inject(AuditService) private readonly audit: AuditService, @Inject(PromotionsService) private readonly promotions: PromotionsService) {}
 
   private async shop(executor: Executor, org: OrgContext) {
     const [row] = await executor.select({ defaultLocale: organizations.defaultLocale, enabledLocales: organizations.enabledLocales, currency: organizations.currency }).from(organizations).where(eq(organizations.id, org.id)).limit(1);
@@ -123,6 +124,7 @@ export class WorkshopsService {
       if (!canEditWorkshop(before.status)) throw new ConflictException({ code: "NOT_EDITABLE", message: "Deactivate the workshop before editing it." });
       const [row] = await tx.update(workshops).set({ ...input, updatedAt: new Date() }).where(and(tenantScope(workshops, org.id), eq(workshops.id, id))).returning();
       if (!row) throw new NotFoundException({ code: "NOT_FOUND", message: "Workshop not found." });
+      if (row.priceAmount !== before.priceAmount) await this.promotions.assertNotFree(tx, org.id, { id, priceAmount: row.priceAmount }); // (a lower price could make a fixed discount take all of it)
       await this.audit.record({ organizationId: org.id, actorUserId: actor.userId, action: "workshop.update", entityType: "workshop", entityId: id, before: audited(before), after: audited(row), ip: actor.ip }, tx);
       return toView(row, (await this.counts(tx, org, [id])).get(id));
     });

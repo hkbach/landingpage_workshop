@@ -40,7 +40,7 @@ export function CustomerProfileView() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<"saved" | "failed" | null>(null);
   const dirty = useDirty(draft, savedCount);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = new Date().toLocaleDateString("en-CA"); // (the day of the person, YYYY-MM-DD: the UTC day is yesterday before 07:00 in Vietnam)
 
   const set = <K extends keyof ProfileDraft>(key: K, value: ProfileDraft[K]) => {
     setDraft((d) => ({ ...d, [key]: value }));

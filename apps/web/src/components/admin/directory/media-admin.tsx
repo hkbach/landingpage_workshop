@@ -64,8 +64,8 @@ export function MediaAdmin() {
     const needle = typed.trim().toLowerCase();
     return all.filter((m) => m.status === tab && (!purpose || m.purpose === purpose) && (!needle || m.shopName.toLowerCase().includes(needle) || m.key.toLowerCase().includes(needle)));
   }, [all, tab, purpose, typed]);
-  // (what is selected and no longer listed, because the list was loaded again, is dropped)
-  const chosen = useMemo(() => (all ?? []).filter((m) => m.status === "UNUSED" && selected.has(m.key)).map((m) => m.key), [all, selected]);
+  // Only what is selected AND listed now counts: an image hidden by the search or the folder filter, or gone after a reload, is never deleted by surprise.
+  const chosen = useMemo(() => (tab === "UNUSED" ? (rows ?? []).filter((m) => selected.has(m.key)).map((m) => m.key) : []), [rows, selected, tab]);
   const everyListed = rows !== null && rows.length > 0 && rows.every((m) => selected.has(m.key));
 
   function toggle(key: string, on: boolean) {
@@ -81,12 +81,13 @@ export function MediaAdmin() {
     const total = { deleted: 0, inUse: 0, failed: 0 };
     for (let i = 0; i < chosen.length; i += BATCH) {
       const keys = chosen.slice(i, i + BATCH);
-      const res = await fetch("/api/v1/admin/media/delete", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ keys, reason }) }).catch(() => null);
-      if (res?.ok) {
+      try {
+        const res = await fetch("/api/v1/admin/media/delete", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ keys, reason }) });
+        if (!res.ok) throw new Error(String(res.status));
         const out = (await res.json()) as { deleted: string[]; inUse: string[]; failed: string[] };
         total.deleted += out.deleted.length; total.inUse += out.inUse.length; total.failed += out.failed.length;
-      } else {
-        total.failed += keys.length;
+      } catch {
+        total.failed += keys.length; // (a refusal, a network error or an answer that is not JSON: the page is never left busy)
       }
     }
     setBusy(false);

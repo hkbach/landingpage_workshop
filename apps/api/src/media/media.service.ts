@@ -93,7 +93,8 @@ export class MediaService {
     const host = `${e.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`;
     const uploadUrl = presignUrl({
       method: "PUT", host, path: `/${e.R2_BUCKET}/${key}`, accessKeyId: e.R2_ACCESS_KEY_ID!, secretAccessKey: e.R2_SECRET_ACCESS_KEY!, region: "auto", expiresSeconds: UPLOAD_SECONDS, now,
-      signedHeaders: { "content-type": input.contentType },
+      // The length is signed too: the bucket refuses a body of another size, so the 5 MB checked here is the size that is stored (the browser sends Content-Length itself from the file).
+      signedHeaders: { "content-type": input.contentType, "content-length": String(input.size) },
     });
     return {
       key, uploadUrl, method: "PUT" as const, headers: { "content-type": input.contentType }, publicUrl: `${e.R2_PUBLIC_BASE_URL!.replace(/\/+$/, "")}/${key}`, expiresInSeconds: UPLOAD_SECONDS,

@@ -20,6 +20,8 @@ export function parseMoney(text: string, currency: string): number | null {
   const digits = minorDigits(currency);
   const s = text.trim();
   if (digits === 0) {
+    // Only real thousands groups: "1.500.000" is 1500000, but "12.5" or "1500.7" is not a whole amount (a decimal typed by mistake must not become 125 or 15007).
+    if (!/^\d+$/.test(s) && !/^\d{1,3}(?:([\s,.])\d{3})(?:\1\d{3})*$/.test(s)) return null;
     const whole = s.replace(/[\s,.]/g, "");
     return /^\d{1,15}$/.test(whole) ? Number(whole) : null;
   }

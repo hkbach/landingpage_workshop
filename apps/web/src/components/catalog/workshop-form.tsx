@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { z } from "zod";
 import { MapPin, Plus, Trash2, TriangleAlert } from "lucide-react";
-import { LOCALES, WORKSHOP_ADDRESS_MAX, WORKSHOP_ADDRESS_NOTE_MAX, WORKSHOP_CATEGORIES, WORKSHOP_CATEGORY_MAX, WORKSHOP_CATEGORY_MIN, formatMoney, mapsSearchUrl, minorDigits, missingLocales, toggleCategory, trimDeep, type Locale, type Localized, type WorkshopCategory, type WorkshopStatus } from "@workshop/shared";
+import { LOCALES, WORKSHOP_ADDRESS_MAX, WORKSHOP_ADDRESS_NOTE_MAX, WORKSHOP_CATEGORIES, WORKSHOP_CATEGORY_MAX, WORKSHOP_CATEGORY_MIN, formatMoney, mapsSearchUrl, minorDigits, missingLocales, parseMoney, toggleCategory, trimDeep, type Locale, type Localized, type WorkshopCategory, type WorkshopStatus } from "@workshop/shared";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -114,7 +114,7 @@ export function WorkshopForm({
         ctx.addIssue({ code: "custom", path: ["maxPerBooking"], message: "errors.maxPerBookingRange" });
     });
     const parsed = schema.safeParse({
-      titleDefault: d.title[shop.defaultLocale] ?? "", categories: d.categories, address: d.address, addressNote: d.addressNote, price: num(d.price), durationMinutes: num(d.durationMinutes),
+      titleDefault: d.title[shop.defaultLocale] ?? "", categories: d.categories, address: d.address, addressNote: d.addressNote, price: parseMoney(d.price, shop.currency) ?? NaN, durationMinutes: num(d.durationMinutes),
       defaultCapacity: num(d.defaultCapacity), maxPerBooking: num(d.maxPerBooking), sortOrder: num(d.sortOrder),
       coverUrl: d.coverUrl, galleryUrls: d.galleryUrls.filter((u) => u.trim() !== ""),
     });
@@ -144,7 +144,7 @@ export function WorkshopForm({
     const body = {
       title: clean.title, shortDescription: clean.shortDescription, description: clean.description, notes: clean.notes,
       includes: Object.fromEntries(LOCALES.map((l) => [l, (clean.includes[l] ?? "").split("\n").map((x) => x.trim()).filter(Boolean)])),
-      durationMinutes: num(clean.durationMinutes), priceAmount: Math.round(num(clean.price) * 10 ** minorDigits(shop.currency)), defaultCapacity: num(clean.defaultCapacity),
+      durationMinutes: num(clean.durationMinutes), priceAmount: parseMoney(clean.price, shop.currency) ?? 0, defaultCapacity: num(clean.defaultCapacity),
       maxPerBooking: num(clean.maxPerBooking), coverUrl: clean.coverUrl.trim(), galleryUrls: clean.galleryUrls.map((u) => u.trim()).filter(Boolean), categories: clean.categories,
       address: clean.address, addressNote: clean.addressNote, sortOrder: num(clean.sortOrder),
     };
@@ -156,7 +156,7 @@ export function WorkshopForm({
         const next: Record<string, string> = {};
         for (const [field, code] of Object.entries(fields)) {
           const key = `errors.${code === "required" && field.startsWith("title") ? "titleRequired" : code}`;
-          next[field.startsWith("title") ? `title.${shop.defaultLocale}` : field] = t.has(key as never) ? key : "errors.saveFailed";
+          next[field.startsWith("title") ? `title.${shop.defaultLocale}` : field === "priceAmount" ? "price" : field] = t.has(key as never) ? key : "errors.saveFailed";
         }
         setErrors(Object.keys(next).length > 0 ? next : { form: "errors.saveFailed" });
         setSaved(false);
@@ -181,7 +181,7 @@ export function WorkshopForm({
   const err = (k: string) => (errors[k] ? t(errors[k]) : undefined);
   const galleryKey = Object.keys(errors).find((k) => k.startsWith("galleryUrls") && errors[k]);
   const galleryError = galleryKey ? t(errors[galleryKey] as string) : undefined;
-  const priceMinor = Math.round(num(d.price) * 10 ** minorDigits(shop.currency));
+  const priceMinor = parseMoney(d.price, shop.currency) ?? NaN; // (the decimals the currency has, no more: "1500.7" VND is not a price)
   const priceChanged = workshop !== undefined && d.price !== initialPrice;
 
   return (

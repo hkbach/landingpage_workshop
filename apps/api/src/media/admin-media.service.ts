@@ -11,8 +11,10 @@ export const MEDIA_KEY = /^shops\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
 /** The same name as a pattern that finds it inside a text (a column, a page of the builder), for PostgreSQL. */
 const KEY_IN_TEXT = "(shops/[0-9a-f-]{36}/(?:site|workshop|branding|session|promotion)/[0-9a-f-]{36}[.](?:jpg|png|webp))";
 export const MAX_DELETE = 100;
+/** A file younger than this is never "unused": a shop owner may have uploaded it and not saved the form yet. */
+export const RECENT_MS = 24 * 60 * 60_000;
 
-export type UsedBy = "workshop" | "session" | "promotion" | "profile" | "landingPage";
+export type UsedBy = "workshop" | "session" | "promotion" | "profile" | "landingPage" | "recentUpload";
 export interface MediaItem {
   key: string; url: string; shopId: string; shopName: string; purpose: string; size: number; uploadedAt: string | null; status: "USED" | "UNUSED"; usedBy: UsedBy[];
 }
@@ -25,6 +27,8 @@ export interface DeleteResult { deleted: string[]; inUse: string[]; failed: stri
  * the landing pages (the draft, the live page and every kept version, because putting a version back shows its images again). History that only records what happened (the audit log, a booking
  * snapshot) does not count, or no file would ever be unused. A file that is in none of them is unused and may be removed.
  */
+const isRecent = (o: StoredObject, now: Date): boolean => !o.lastModified || now.getTime() - Date.parse(o.lastModified) < RECENT_MS;
+
 @Injectable()
 export class AdminMediaService {
   constructor(@Inject(DB) private readonly db: Database, @Inject(MediaService) private readonly media: MediaService, @Inject(AuditService) private readonly audit: AuditService) {}
@@ -56,13 +60,13 @@ export class AdminMediaService {
   }
 
   /** All the files of the bucket, newest first, each with its state. */
-  async list(): Promise<{ items: MediaItem[]; total: number; truncated: boolean }> {
+  async list(now = new Date()): Promise<{ items: MediaItem[]; total: number; truncated: boolean }> {
     const [{ objects, truncated }, used] = await Promise.all([this.media.listObjects(), this.usage()]);
     const files = objects.flatMap((o) => { const m = MEDIA_KEY.exec(o.key); return m ? [{ o, shopId: m[1]!, purpose: m[2]! }] : []; }); // (a file that is not named like ours is not ours to show or remove)
     const shopIds = [...new Set(files.map((f) => f.shopId))];
     const shops = shopIds.length === 0 ? [] : await this.db.select({ id: organizations.id, name: organizations.name }).from(organizations).where(inArray(organizations.id, shopIds));
     const names = new Map(shops.map((s) => [s.id, s.name]));
-    const items = files.map(({ o, shopId, purpose }): MediaItem => this.item(o, shopId, purpose, names.get(shopId) ?? "", used.get(o.key)));
+    const items = files.map(({ o, shopId, purpose }): MediaItem => this.item(o, shopId, purpose, names.get(shopId) ?? "", used.get(o.key) ?? (isRecent(o, now) ? new Set<UsedBy>(["recentUpload"]) : undefined)));
     items.sort((a, b) => (b.uploadedAt ?? "").localeCompare(a.uploadedAt ?? "") || a.key.localeCompare(b.key));
     return { items, total: items.length, truncated };
   }
@@ -75,12 +79,18 @@ export class AdminMediaService {
    * Removes files from the bucket for good. The list the administrator saw is not trusted: what is used is worked out again now, and a file that something shows is NOT removed (`inUse`), so an
    * image used a moment ago by a shop owner who was uploading while the administrator was clicking stays. Each removal is audited.
    */
-  async deleteUnused(keys: string[], reason: string | undefined, actor: Actor): Promise<DeleteResult> {
+  async deleteUnused(keys: string[], reason: string | undefined, actor: Actor, now = new Date()): Promise<DeleteResult> {
     const unique = [...new Set(keys)];
     const result: DeleteResult = { deleted: [], inUse: [], failed: [] };
-    const used = await this.usage();
+    const [used, { objects }] = await Promise.all([this.usage(), this.media.listObjects()]);
+    const stored = new Map(objects.map((o) => [o.key, o]));
     const candidates: string[] = [];
-    for (const key of unique) (used.has(key) ? result.inUse : candidates).push(key);
+    // in use, or uploaded in the last day (maybe not saved yet), is kept; a file that is no longer in the bucket has nothing to delete
+    for (const key of unique) {
+      const o = stored.get(key);
+      if (used.has(key) || (o && isRecent(o, now))) result.inUse.push(key);
+      else if (o) candidates.push(key);
+    }
     for (let i = 0; i < candidates.length; i += 5) {
       await Promise.all(candidates.slice(i, i + 5).map(async (key) => {
         const removed = await this.media.deleteObject(key);

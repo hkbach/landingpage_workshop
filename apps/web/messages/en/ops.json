@@ -157,7 +157,11 @@
     "none": "No payments recorded.",
     "when": "Recorded",
     "by": "By",
-    "amountCol": "Amount"
+    "amountCol": "Amount",
+    "type": "Type",
+    "note": "Note",
+    "typePAYMENT": "Payment",
+    "typeREFUND": "Refund"
   },
   "cancelBooking": {
     "title": "Cancel booking",

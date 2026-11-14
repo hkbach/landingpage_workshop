@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Info, Tag, TriangleAlert } from "lucide-react";
@@ -109,14 +109,34 @@ function BuilderInner({ shop, initial, initialSource = "starter", initialStatus,
   const [pendingTemplate, setPendingTemplate] = useState<TemplateKey | null>(() => (applyTemplate && applyTemplate !== draft.template ? applyTemplate : null));
   const enabledLocales = shop.enabledLocales;
 
+  // Saves to the server one at a time, in the order of the edits (an older save never lands after a newer one), and says "saved" only when the latest edit is the one saved.
+  const latestRev = useRef(0);
+  const savedRev = useRef(0);
+  const latestDraft = useRef(draft);
+  const queue = useRef<Promise<void>>(Promise.resolve());
+  const putDraft = useCallback((d: Draft, at: number, leaving = false) => {
+    const body = JSON.stringify({ content: d.content, theme: d.theme, templateKey: d.template });
+    const run = () => fetch(`/api/v1/site/pages/${encodeURIComponent(pageId)}/draft`, { method: "PUT", headers: { "content-type": "application/json" }, body, keepalive: leaving && body.length < 60_000 })
+      .then((res) => { if (res.ok) savedRev.current = Math.max(savedRev.current, at); if (!leaving && at === latestRev.current) setSaveState(res.ok ? "saved" : "unavailable"); })
+      .catch(() => { if (!leaving && at === latestRev.current) setSaveState("unavailable"); });
+    queue.current = queue.current.then(run, run);
+  }, [pageId]);
+  // Leaving the builder (another page of the app, or the tab closed) with an edit not saved yet: it is sent at once.
+  useEffect(() => {
+    if (!server) return;
+    const flush = () => { if (latestRev.current > savedRev.current) putDraft(latestDraft.current, latestRev.current, true); };
+    window.addEventListener("pagehide", flush);
+    return () => { window.removeEventListener("pagehide", flush); flush(); };
+  }, [server, putDraft]);
+
   // Debounced autosave (2 s): into the server when connected (the live page is not touched), else into the browser's storage.
   useEffect(() => {
     if (rev === 0) return;
+    latestRev.current = rev;
+    latestDraft.current = draft;
     const id = setTimeout(() => {
       if (server) {
-        void fetch(`/api/v1/site/pages/${encodeURIComponent(pageId)}/draft`, { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ content: draft.content, theme: draft.theme, templateKey: draft.template }) })
-          .then((res) => setSaveState(res.ok ? "saved" : "unavailable"))
-          .catch(() => setSaveState("unavailable"));
+        putDraft(draft, rev);
         return;
       }
       const res = saveDraft(draft, pageId);
@@ -124,7 +144,7 @@ function BuilderInner({ shop, initial, initialSource = "starter", initialStatus,
       setSaveState(res.ok ? "saved" : res.reason);
     }, 2000);
     return () => clearTimeout(id);
-  }, [rev, draft, pageId, mainPage, server]);
+  }, [rev, draft, pageId, mainPage, server, putDraft]);
 
   function change(next: Draft) {
     setView("draft");
@@ -308,7 +328,7 @@ function BuilderInner({ shop, initial, initialSource = "starter", initialStatus,
                 section={selected} lang={activeLang} defaultLocale={shop.defaultLocale} theme={draft.theme}
                 onChange={(props) => patchSection(selected.id, { props })}
                 onPatch={(patch) => patchSection(selected.id, patch)}
-                onBeforeLeave={() => { if (saveState === "pending") saveDraft(draft, pageId); }}
+                onBeforeLeave={() => { if (saveState !== "pending") return; if (server) putDraft(draft, rev, true); else saveDraft(draft, pageId); }}
               />
             ) : (
               <FieldsEditor

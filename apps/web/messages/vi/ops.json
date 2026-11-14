@@ -157,7 +157,11 @@
     "none": "Chưa ghi nhận thanh toán nào.",
     "when": "Thời điểm ghi nhận",
     "by": "Người ghi nhận",
-    "amountCol": "Số tiền"
+    "amountCol": "Số tiền",
+    "type": "Loại",
+    "note": "Ghi chú",
+    "typePAYMENT": "Thanh toán",
+    "typeREFUND": "Hoàn tiền"
   },
   "cancelBooking": {
     "title": "Hủy đặt chỗ",

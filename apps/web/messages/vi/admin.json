@@ -1056,7 +1056,8 @@
       "session": "Session",
       "promotion": "Khuyến mãi",
       "profile": "Ảnh đại diện khách hàng",
-      "landingPage": "Landing page"
+      "landingPage": "Landing page",
+      "recentUpload": "Tải lên trong 24 giờ qua (có thể chưa được lưu)"
     },
     "selected": "Đã chọn {count}",
     "selectAll": "Chọn tất cả ảnh trong danh sách",

@@ -24,8 +24,10 @@ const hint = (status: number): string =>
     : status === 404 ? "404: the bucket name or the account id is wrong." : `${status}: unexpected answer.`;
 
 async function main(): Promise<void> {
-  const put = await fetch(sign("PUT", { "content-type": "image/png" }), { method: "PUT", headers: { "content-type": "image/png" }, body: PNG });
+  // (the length is signed as the app signs it: a body of another size is refused)
+  const put = await fetch(sign("PUT", { "content-type": "image/png", "content-length": String(PNG.length) }), { method: "PUT", headers: { "content-type": "image/png" }, body: PNG });
   console.log(`1. upload with a presigned URL: ${put.ok ? "OK" : "FAILED " + hint(put.status)}`);
+  console.log(`   a body larger than the signed length is refused: ${(await fetch(sign("PUT", { "content-type": "image/png", "content-length": String(PNG.length) }), { method: "PUT", headers: { "content-type": "image/png" }, body: Buffer.concat([PNG, PNG]) })).ok ? "NO (the size is not enforced)" : "yes"}`);
   if (!put.ok) process.exit(1);
   const url = `${base!.replace(/\/+$/, "")}/${key}`;
   const read = await fetch(url);

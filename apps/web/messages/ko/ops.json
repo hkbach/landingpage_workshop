@@ -157,7 +157,11 @@
     "none": "기록된 결제가 없어요.",
     "when": "기록 일시",
     "by": "기록자",
-    "amountCol": "금액"
+    "amountCol": "금액",
+    "type": "유형",
+    "note": "메모",
+    "typePAYMENT": "결제",
+    "typeREFUND": "환불"
   },
   "cancelBooking": {
     "title": "예약 취소",

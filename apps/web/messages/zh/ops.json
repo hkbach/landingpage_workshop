@@ -157,7 +157,11 @@
     "none": "暂无付款记录。",
     "when": "记录时间",
     "by": "操作人",
-    "amountCol": "金额"
+    "amountCol": "金额",
+    "type": "类型",
+    "note": "备注",
+    "typePAYMENT": "付款",
+    "typeREFUND": "退款"
   },
   "cancelBooking": {
     "title": "取消预订",

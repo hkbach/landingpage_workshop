@@ -157,7 +157,11 @@
     "none": "記録された支払いはありません。",
     "when": "記録日時",
     "by": "記録者",
-    "amountCol": "金額"
+    "amountCol": "金額",
+    "type": "種類",
+    "note": "メモ",
+    "typePAYMENT": "支払い",
+    "typeREFUND": "返金"
   },
   "cancelBooking": {
     "title": "予約をキャンセル",

@@ -141,7 +141,8 @@
     "addressTooLong": "The address can have at most {max} characters.",
     "addressNoteTooLong": "The note can have at most {max} characters.",
     "categoriesRequired": "Choose at least 1 category (up to 3).",
-    "saveFailed": "Could not save the workshop. Check the fields and try again."
+    "saveFailed": "Could not save the workshop. Check the fields and try again.",
+    "fullDiscount": "At this price a guest could get the workshop for nothing with your promotions. Raise the price or change the promotions first."
   },
   "rules": {
     "title": "Schedule rules",
