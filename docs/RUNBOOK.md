@@ -53,7 +53,7 @@ Thiết lập một lần (bảng điều khiển Cloudflare, R2):
    [{ "AllowedOrigins": ["https://app.<tên miền>", "http://app.localtest.me:3000"], "AllowedMethods": ["PUT"], "AllowedHeaders": ["content-type"], "MaxAgeSeconds": 3600 }]
    ```
 4. Điền biến (dev: `apps/api/.env` với `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_PUBLIC_BASE_URL`, và `apps/web/.env.local` với `MEDIA_UPLOAD_ORIGIN=https://<account id>.r2.cloudflarestorage.com`; production: các biến `MEDIA_*` ở bảng trên).
-5. Kiểm tra: `pnpm --filter api r2:check` tải một ảnh 1x1 lên bằng URL ký sẵn, đọc lại ở địa chỉ công khai rồi xóa; không in khóa. Nếu báo 403: khóa sai hoặc không có quyền ghi vào bucket; 404: sai tên bucket hoặc id tài khoản; bước 2 lỗi: chưa bật địa chỉ công khai.
+5. Kiểm tra: `pnpm --filter api r2:check` tải một ảnh 1x1 lên bằng URL ký sẵn, đọc lại ở địa chỉ công khai rồi xóa; không in khóa. Nếu báo 403: khóa sai hoặc không có quyền ghi vào bucket; 404: sai tên bucket hoặc id tài khoản; bước 2 lỗi: chưa bật địa chỉ công khai; bước 4 (CORS) báo chưa đặt: thêm origin của web (`APP_URL`) và phương thức `PUT` vào CORS policy của bucket.
 
 Giới hạn đã biết: URL ký sẵn của R2 không ép được dung lượng, nên 5 MB được kiểm ở trình duyệt và ở API (số khai báo), không ở R2; ảnh không còn được dùng **chưa tự bị xóa** khỏi bucket (có thể thêm quy tắc vòng đời hoặc quét định kỳ sau).
 

@@ -33,7 +33,14 @@ async function main(): Promise<void> {
   console.log(`2. read at the public address (${new URL(url).host}): ${same ? "OK" : `FAILED (${read.status}): turn on "Public Development URL" (r2.dev) in the settings of the bucket, and check R2_PUBLIC_BASE_URL.`}`);
   const del = await fetch(sign("DELETE"), { method: "DELETE" });
   console.log(`3. remove the test file: ${del.ok ? "OK" : `not removed (${del.status}); delete ${key} in the dashboard`}`);
-  console.log("The browser also needs the CORS rules of the bucket (see docs/RUNBOOK.md): this check runs outside a browser and cannot try them.");
+  // The browser asks the bucket first (a "preflight") whether the web app may PUT there: the same question, asked from here, with the address of the web app as the origin.
+  const origin = new URL(env.APP_URL).origin;
+  const pre = await fetch(`https://${host}/${bucket}/${key}`, { method: "OPTIONS", headers: { origin, "access-control-request-method": "PUT", "access-control-request-headers": "content-type" } });
+  const allowed = pre.headers.get("access-control-allow-origin");
+  const methods = pre.headers.get("access-control-allow-methods") ?? "";
+  const cors = pre.ok && (allowed === origin || allowed === "*") && methods.toUpperCase().includes("PUT");
+  console.log(`4. CORS for ${origin}: ${cors ? "OK" : `NOT SET (${pre.status}). Add this origin and the PUT method to the CORS policy of the bucket (docs/RUNBOOK.md).`}`);
+  if (!cors) process.exitCode = 1;
   if (!same) process.exit(1);
 }
 main().catch((e: unknown) => { console.log(`FAILED: ${e instanceof Error ? e.message : "network error"}`); process.exit(1); });
