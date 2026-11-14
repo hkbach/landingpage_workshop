@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { BadGatewayException, Inject, Injectable, ServiceUnavailableException, UnprocessableEntityException } from "@nestjs/common";
+import { BadGatewayException, Inject, Injectable, Logger, ServiceUnavailableException, UnprocessableEntityException } from "@nestjs/common";
 import type { Env } from "../config/env";
 import { ENV } from "../config/env.module";
 import { presignUrl } from "./sigv4";
@@ -38,6 +38,8 @@ const invalid = (fields: Record<string, string>) => new UnprocessableEntityExcep
  */
 @Injectable()
 export class MediaService {
+  private readonly log = new Logger(MediaService.name);
+
   constructor(@Inject(ENV) private readonly env: Env) {}
 
   /** Whether the settings of R2 are all there. */
@@ -54,6 +56,16 @@ export class MediaService {
     return `${this.env.R2_PUBLIC_BASE_URL!.replace(/\/+$/, "")}/${key}`;
   }
 
+  /** One request to the bucket; a network error (a connection the bucket closed while it sat idle is the usual one: ECONNRESET) is tried once more with a new signature. Only for GET and DELETE: they can be repeated. */
+  private async send(method: "GET" | "DELETE", path: string, query?: Record<string, string>): Promise<{ res: Response | null; failure: string }> {
+    let failure = "";
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const res = await this.http(this.signed(method, path, query), { method }).catch((e: unknown) => { failure = e instanceof Error ? `${e.name}: ${e.cause instanceof Error ? e.cause.message : e.message}` : "error"; return null; });
+      if (res) return { res, failure: "" };
+    }
+    return { res: null, failure };
+  }
+
   private signed(method: "GET" | "DELETE", path: string, query?: Record<string, string>, now = new Date()): string {
     const e = this.env;
     return presignUrl({ method, host: `${e.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`, path, accessKeyId: e.R2_ACCESS_KEY_ID!, secretAccessKey: e.R2_SECRET_ACCESS_KEY!, region: "auto", expiresSeconds: 60, now, ...(query ? { query } : {}) });
@@ -68,9 +80,12 @@ export class MediaService {
     const objects: StoredObject[] = [];
     let token: string | undefined;
     for (;;) {
-      const url = this.signed("GET", `/${this.env.R2_BUCKET}`, { "list-type": "2", prefix: "shops/", "max-keys": "1000", ...(token ? { "continuation-token": token } : {}) });
-      const res = await this.http(url, { method: "GET" }).catch(() => null);
-      if (!res || !res.ok) throw new BadGatewayException({ code: "MEDIA_STORAGE_ERROR", message: "The image storage did not answer." });
+      const { res, failure } = await this.send("GET", `/${this.env.R2_BUCKET}`, { "list-type": "2", prefix: "shops/", "max-keys": "1000", ...(token ? { "continuation-token": token } : {}) });
+      if (!res || !res.ok) {
+        // what is logged is the status or the kind of error, never the URL (it carries a signature)
+        this.log.warn(`Listing the image bucket failed: ${res ? `HTTP ${res.status} ${(await res.text().catch(() => "")).slice(0, 200)}` : failure}`);
+        throw new BadGatewayException({ code: "MEDIA_STORAGE_ERROR", message: "The image storage did not answer." });
+      }
       const page = parseListing(await res.text());
       objects.push(...page.objects);
       if (objects.length >= MAX_LISTED) return { objects: objects.slice(0, MAX_LISTED), truncated: objects.length > MAX_LISTED || page.next !== null };
@@ -81,7 +96,7 @@ export class MediaService {
 
   /** Removes one file from the bucket (the bucket answers 204 also for a file that is not there). */
   async deleteObject(key: string): Promise<boolean> {
-    const res = await this.http(this.signed("DELETE", `/${this.env.R2_BUCKET}/${key}`), { method: "DELETE" }).catch(() => null);
+    const { res } = await this.send("DELETE", `/${this.env.R2_BUCKET}/${key}`);
     return res !== null && (res.ok || res.status === 404);
   }
 

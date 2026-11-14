@@ -315,6 +315,7 @@ Cấu trúc đích khi có backend thật (chưa làm):
 
 **FR-SITE-02 – Chỉnh section (Must)**
 - Section registry nằm trong `packages/shared/src/sections/`. Mỗi section type có: `type`, `schemaVersion`, Zod schema cho props, giá trị mặc định, form editor, component renderer.
+- **Quy tắc validation props (14/11/2026), một nguồn cho cả API và builder** (`checkSectionProps`, `packages/shared/src/section-props.ts`): section phải có **đủ mọi trường** của loại đó với đúng dạng (một trường thiếu bị từ chối, không được bỏ qua), **không được có trường mà loại đó không có**, text là dữ liệu thuần, link chỉ https, link bản đồ chỉ Google Maps, ảnh là link https hoặc ảnh do nền tảng phục vụ (ảnh `data:` chỉ builder nhận khi đang sửa, API không bao giờ lưu), danh sách video tối đa 5 id YouTube hợp lệ (không âm thầm cắt). API: `PUT draft` trả `422` kèm tên trường; `POST publish` kiểm lại nội dung đã lưu và trả `422 INCOMPLETE_PAGE` nếu bản nháp cũ còn thiếu trường. Builder: section vi phạm hiện "Needs attention" và khóa Publish; một bản nháp cũ thiếu trường khi mở được điền từ giá trị mặc định (giá trị chủ shop đã lưu luôn được giữ).
 - Section type MVP:
 
 | type | Nội dung | Ghi chú |

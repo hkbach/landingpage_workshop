@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { needsAttention } from "@/components/sections/instance";
+import { validateSection } from "@/components/sections/registry";
 import type { PageContent } from "@/lib/types";
 import { draftOf, type ServerPageDetail } from "./server-pages";
 
@@ -36,5 +37,21 @@ describe("a saved page with sections that lack fields", () => {
     const before = JSON.stringify(thin);
     draftOf(page(thin), { name: "Shop", defaultLocale: "en" });
     expect(JSON.stringify(thin)).toBe(before);
+  });
+});
+
+// The editor and the API apply ONE rule to the props of a section (shared checkSectionProps): every field of the type, and none that it does not have.
+describe("the editor checks a section with the rule of the API", () => {
+  const hero = { title: { en: "Hi" }, subtitle: {}, imageUrl: "", ctaText: {} };
+  it("marks a section that lacks a field, and one that has a field its type does not have", () => {
+    expect(validateSection("hero", hero)).toEqual([]);
+    expect(validateSection("hero", { title: hero.title, subtitle: {}, ctaText: {} })).toEqual(["imageUrl:Invalid input: expected string, received undefined"]);
+    expect(validateSection("hero", { ...hero, photos: [] })).toEqual(["photos:unknown_field"]);
+    expect(validateSection("footer", {})).toHaveLength(2);
+  });
+  it("takes an uploaded data: image only while editing (the API never stores one)", () => {
+    const data = `data:image/png;base64,${"A".repeat(40)}`;
+    expect(validateSection("hero", { ...hero, imageUrl: data })).not.toEqual([]);
+    expect(validateSection("hero", { ...hero, imageUrl: data }, { allowDataImages: true })).toEqual([]);
   });
 });

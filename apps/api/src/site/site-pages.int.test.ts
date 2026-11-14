@@ -1,11 +1,12 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { completeProps } from "../test/sections";
 import { TEST_DATABASE_URL, cookieOf, emailFor, signupBody, startApp, unique, type TestApp } from "../test/helpers";
 
 // The landing pages of a shop on a real PostgreSQL: structure checks, autosave that never touches the live page, publish with the checklist of a first publish, one live page, versions, isolation.
 const d = describe.skipIf(!TEST_DATABASE_URL);
 
 interface Shop { cookie: string; orgId: string; slug: string }
-const sec = (type: string, props: Record<string, unknown> = {}, id = unique("s")) => ({ id, type, enabled: true, props });
+const sec = (type: string, props: Record<string, unknown> = {}, id = unique("s")) => ({ id, type, enabled: true, props: completeProps(type, props) });
 const page = (over: Record<string, unknown> = {}, middle: unknown[] = [sec("about", { heading: { en: "About" } })]) => ({
   schemaVersion: 1,
   sections: [sec("hero", { title: { en: "Welcome" } }), ...middle, sec("footer", { text: { en: "Bye" } })],
@@ -188,6 +189,20 @@ d("landing pages", () => {
     }
   });
 
+  it("refuses to publish a draft kept from before the rule (a section with fields missing), says which fields, and publishes once the editor has saved it whole", async () => {
+    const shop = await makeShop("sitethin", true);
+    const p = await newPage(shop);
+    const thin = { schemaVersion: 1, sections: [{ id: "h", type: "hero", enabled: true, props: { title: { en: "Hi" } } }, { id: "f", type: "footer", enabled: true, props: {} }], seo: { title: {}, description: {} } };
+    await t.pool.query("update site_pages set draft_content = $2::jsonb where id = $1", [p.id, JSON.stringify(thin)]); // (written before the rule: the API cannot be made to store it now)
+    const refused = await t.post(`/site/pages/${p.id}/publish`, {}, { cookie: shop.cookie });
+    expect(refused.statusCode).toBe(422);
+    expect(refused.json().error.code).toBe("INCOMPLETE_PAGE");
+    expect(Object.keys(refused.json().error.details.fields).sort()).toEqual(["content.sections.0.props.ctaText", "content.sections.0.props.imageUrl", "content.sections.0.props.subtitle", "content.sections.1.props.socials", "content.sections.1.props.text"].sort());
+    const whole = { ...thin, sections: [sec("hero", { title: { en: "Hi" } }), sec("footer", { text: { en: "Bye" } })] };
+    expect((await put(`/site/pages/${p.id}/draft`, { content: whole }, shop.cookie)).statusCode).toBe(200);
+    expect((await t.post(`/site/pages/${p.id}/publish`, {}, { cookie: shop.cookie })).statusCode).toBe(200);
+  });
+
   it("checks the props of every section type with the schemas of the editor, and keeps the variant, the Book button and the layout", async () => {
     const shop = await makeShop("siteprops");
     const p = await newPage(shop);
@@ -204,13 +219,22 @@ d("landing pages", () => {
     expect(await fields([sec("contact", { socials: [{ label: "FB", url: "ftp://x.example" }] })])).toEqual({ "props.socials.0.url": "https_url" });
     expect(await fields([sec("contact", { socials: Array.from({ length: 7 }, () => ({ label: "x", url: "https://x.example" })) })])).toEqual({ "props.socials": "tooMany" });
     expect(await fields([sec("video", { videos: ["bad video!"] })])).toEqual({ "props.videos.0": "youtube_id" });
-    expect(await fields([sec("video", { videos: Array.from({ length: 6 }, () => "dQw4w9WgXcQ") })])).toEqual({}); // more than 5 videos are cut to 5, like the editor does
+    expect(await fields([sec("video", { videos: Array.from({ length: 6 }, () => "dQw4w9WgXcQ") })])).toEqual({ "props.videos": "tooMany" }); // the editor refuses more than 5 too (nothing is cut quietly)
+    expect(await fields([sec("video", { videos: Array.from({ length: 5 }, () => "dQw4w9WgXcQ") })])).toEqual({});
     expect(await fields([sec("gallery", { imageUrls: Array.from({ length: 13 }, () => "https://cdn.example.com/a.jpg") })])).toEqual({ "props.imageUrls": "tooMany" });
     expect(await fields([sec("team", { members: [{ name: "x".repeat(81), role: {}, bio: {}, imageUrl: "" }] })])).toEqual({ "props.members.0.name": "tooLong" });
     expect(await fields([sec("about", { heading: { en: "x".repeat(81) } })])).toEqual({ "props.heading.en": "tooLong" });
     expect(await fields([sec("about", { heading: { xx: "unknown language" } })])).toEqual({}); // only the five languages are kept
     expect(await fields([sec("about", { heading: "plain text instead of the languages" })])).toEqual({ "props.heading": "invalid" });
     expect(await fields([sec("faq", { items: "no" })])).toEqual({ "props.items": "invalid" });
+
+    // every field of the type must be there (the editor needs them all, and marks the section "needs attention" without them)
+    const thin = (type: string, props: Record<string, unknown>) => ({ id: unique("s"), type, enabled: true, props });
+    expect(await fields([thin("about", { heading: {} })])).toEqual({ "props.body": "invalid", "props.imageUrl": "invalid" });
+    expect(await fields([thin("contact", {})])).toEqual({ "props.heading": "invalid", "props.phone": "invalid", "props.whatsapp": "invalid", "props.email": "invalid", "props.socials": "invalid" });
+    expect(await fields([thin("workshops", {})])).toEqual({ "props.heading": "invalid" });
+    const noHeroImage = (await put(`/site/pages/${p.id}/draft`, { content: { ...page(), sections: [thin("hero", { title: {}, subtitle: {}, ctaText: {} }), sec("footer")] } }, shop.cookie)).json();
+    expect(noHeroImage.error.details.fields).toEqual({ "content.sections.0.props.imageUrl": "invalid" });
 
     // a variant of the type, the Book button, the layout
     expect(await fields([{ ...sec("about"), variant: "no-such-variant" }])).toEqual({ variant: "invalid" });
@@ -228,7 +252,7 @@ d("landing pages", () => {
     expect(back.content.sections[1].props.heading.xx).toBeUndefined();
 
     // the old video section (one videoId) is upgraded to the list
-    const video = await save([sec("video", { videoId: "dQw4w9WgXcQ", heading: { en: "Watch" } })]);
+    const video = await save([thin("video", { videoId: "dQw4w9WgXcQ", heading: { en: "Watch" }, caption: {} })]); // (as the old editor wrote it: not completed)
     expect(video.statusCode).toBe(200);
     expect((await t.get(`/site/pages/${p.id}`, { cookie: shop.cookie })).json().content.sections[1].props).toMatchObject({ videos: ["dQw4w9WgXcQ"] });
   });

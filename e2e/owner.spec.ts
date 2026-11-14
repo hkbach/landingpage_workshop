@@ -109,30 +109,33 @@ test.describe("the shop owner on the real API", () => {
     expect(problems).toEqual([]);
   });
 
-  test("a page saved with sections that lack fields opens in the builder with nothing to fix, and can be edited and published", async ({ page }) => {
+  test("the API refuses a page whose sections lack fields, with the field named; a page with every field opens in the builder with nothing to fix and can be published", async ({ page }) => {
     const request = page.context().request;
     const problems = watchBrowser(page);
     const headers = { origin: APP };
     const pages = (await (await request.get(`${APP}/api/v1/site/pages`)).json()) as { items: Array<{ id: string }> };
     const pageId = pages.items.length >= 2 ? pages.items[pages.items.length - 1]!.id : ((await (await request.post(`${APP}/api/v1/site/pages`, { headers, data: { name: `E2E ${Date.now().toString(36)}` } })).json()) as { id: string }).id;
-    // what a script or an older builder leaves: the hero without its image, the footer with no fields at all
-    const thin = {
+    const section = (type: string, props: Record<string, unknown>) => ({ id: `s-${type}`, type, enabled: true, props });
+    const content = (hero: Record<string, unknown>, footer: Record<string, unknown>) => ({
       schemaVersion: 1,
-      sections: [
-        { id: "s-hero", type: "hero", enabled: true, props: { title: { en: "Thin page" }, subtitle: { en: "Few fields" }, ctaText: { en: "Book now" } } },
-        { id: "s-workshops", type: "workshops", enabled: true, props: { heading: { en: "Our workshops" } } },
-        { id: "s-footer", type: "footer", enabled: true, props: {} },
-      ],
-      seo: { title: { en: "Thin page" }, description: { en: "Few fields" } },
-    };
-    expect((await request.put(`${APP}/api/v1/site/pages/${pageId}/draft`, { headers, data: { content: thin } })).status()).toBe(200);
+      sections: [section("hero", hero), section("workshops", { heading: { en: "Our workshops" } }), section("footer", footer)],
+      seo: { title: { en: "Whole page" }, description: { en: "Every field" } },
+    });
 
+    // the same rule as the editor: a hero without its image and a footer with no fields are refused, and the answer says which fields
+    const thin = await request.put(`${APP}/api/v1/site/pages/${pageId}/draft`, { headers, data: { content: content({ title: { en: "Thin" }, subtitle: {}, ctaText: {} }, {}) } });
+    expect(thin.status()).toBe(422);
+    const fields = ((await thin.json()) as { error: { details: { fields: Record<string, string> } } }).error.details.fields;
+    expect(Object.keys(fields).sort()).toEqual(["content.sections.0.props.imageUrl", "content.sections.2.props.socials", "content.sections.2.props.text"]);
+
+    const whole = content({ title: { en: "Whole page" }, subtitle: { en: "Every field" }, imageUrl: "", ctaText: { en: "Book now" } }, { text: { en: "Bye" }, socials: [] });
+    expect((await request.put(`${APP}/api/v1/site/pages/${pageId}/draft`, { headers, data: { content: whole } })).status()).toBe(200);
     await open(page, `${APP}/shopowner/${SLUG}/site/${pageId}`);
     const title = page.getByRole("textbox", { name: "Title" }).first();
     await expect(title).toBeVisible({ timeout: 90_000 });
     await expect(page.getByText(/marked as needing attention/)).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Publish" }).first()).toBeEnabled({ timeout: 30_000 });
-    const edited = `Edited thin page ${Date.now().toString(36)}`;
+    const edited = `Edited whole page ${Date.now().toString(36)}`;
     await expect(async () => {
       await title.fill(edited);
       await expect(title).toHaveValue(edited, { timeout: 1_000 });

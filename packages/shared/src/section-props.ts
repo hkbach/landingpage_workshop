@@ -108,13 +108,14 @@ export const SECTION_PROPS: Record<SectionType, (image: ImageSchema) => z.ZodObj
 };
 
 /**
- * What the API checks for the props of one section: every field the editor knows must have the shape the editor gives it, a field may be left out (a client may send only some), and a
- * field the type does not have is refused (`unrecognized_keys`). Images are https links or platform images only: a data: image is never stored. A `video` section written with the old
- * single `videoId` is upgraded first.
+ * THE rule for the props of one section, the same in the API and in the editor: every field of the type must be there with the shape the editor gives it (a missing field is refused:
+ * `invalid_type`), and a field the type does not have is refused (`unrecognized_keys`). Images are https links or platform images only; `allowDataImages` (the editor and its preview, never
+ * the API) also accepts an uploaded data: image. A `video` section written with the old single `videoId` is upgraded first.
  */
-export function checkSectionProps(type: SectionType, props: Record<string, unknown>) {
-  const input = type === "video" ? migrateVideoProps(props) : props;
-  return SECTION_PROPS[type](makeImageSchema(false)).partial().strict().safeParse(input);
+export function checkSectionProps(type: SectionType, props: Record<string, unknown>, opts: { allowDataImages?: boolean } = {}) {
+  // Only the OLD shape (one `videoId`, no `videos`) is upgraded; a `videos` list is checked as it is (at most five, valid ids), never quietly cut down.
+  const input = type === "video" && props.videos === undefined ? migrateVideoProps(props) : props;
+  return SECTION_PROPS[type](makeImageSchema(opts.allowDataImages === true)).strict().safeParse(input);
 }
 
 export const isSectionType = (v: unknown): v is SectionType => typeof v === "string" && (SECTION_TYPES as readonly string[]).includes(v);

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { MAX_SECTION_VIDEOS, makeImageSchema, migrateVideoProps, SECTION_PROPS, SECTION_VARIANTS, type Localized, type SectionType } from "@workshop/shared";
+import { checkSectionProps, MAX_SECTION_VIDEOS, makeImageSchema, migrateVideoProps, SECTION_PROPS, SECTION_VARIANTS, type Localized, type SectionType } from "@workshop/shared";
 import type { SectionInstance } from "@/lib/types";
 import type { Tone } from "./theme";
 import { newUuid } from "@/lib/uuid";
@@ -263,9 +263,10 @@ export interface ValidateOptions {
 }
 
 export function validateSection(type: SectionType, props: Record<string, unknown>, opts?: ValidateOptions): string[] {
-  const def = SECTION_REGISTRY[type];
-  const res = (opts?.allowDataImages ? def.builderSchema : def.schema).safeParse(props);
-  return res.success ? [] : res.error.issues.map((i) => `${i.path.join(".")}:${i.message}`);
+  // The same rule as the API (shared checkSectionProps): every field there, none that the type does not have. The editor alone also accepts an uploaded data: image.
+  const res = checkSectionProps(type, props, { allowDataImages: opts?.allowDataImages === true });
+  if (res.success) return [];
+  return res.error.issues.flatMap((i) => (i.code === "unrecognized_keys" ? (i.keys as string[]).map((k) => `${[...i.path, k].join(".")}:unknown_field`) : [`${i.path.join(".")}:${i.message}`]));
 }
 
 // --- "has the shop edited this section?" (used when switching templates so no content is lost) ---------------------

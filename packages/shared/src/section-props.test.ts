@@ -19,12 +19,37 @@ describe("section props", () => {
     expect(isAllowedMapsUrl("https://evil.example/maps")).toBe(false);
   });
 
-  it("checks the props of a type: a field may be missing, an unknown or badly shaped one is refused", () => {
-    expect(checkSectionProps("hero", {}).success).toBe(true);
-    expect(checkSectionProps("hero", { title: { en: "Hi" } }).success).toBe(true);
-    expect(checkSectionProps("hero", { title: "Hi" }).success).toBe(false);
-    expect(checkSectionProps("hero", { nope: 1 }).success).toBe(false);
-    expect(checkSectionProps("contact", { email: "bad" }).success).toBe(false);
-    expect(checkSectionProps("video", { videoId: "dQw4w9WgXcQ" })).toMatchObject({ success: true, data: { videos: ["dQw4w9WgXcQ"] } });
+  const hero = { title: { en: "Hi" }, subtitle: {}, imageUrl: "", ctaText: {} };
+  it("checks the props of a type: every field must be there, an unknown or badly shaped one is refused", () => {
+    expect(checkSectionProps("hero", hero).success).toBe(true);
+    expect(checkSectionProps("hero", { ...hero, title: "Hi" }).success).toBe(false);
+    expect(checkSectionProps("hero", { ...hero, nope: 1 }).success).toBe(false);
+    expect(checkSectionProps("contact", { heading: {}, phone: "", whatsapp: "", email: "bad", socials: [] }).success).toBe(false);
+    expect(checkSectionProps("video", { heading: {}, caption: {}, videoId: "dQw4w9WgXcQ" })).toMatchObject({ success: true, data: { videos: ["dQw4w9WgXcQ"] } });
+  });
+
+  it("refuses a section that lacks a field (the same rule as the editor), and says which one", () => {
+    for (const type of ["hero", "about", "gallery", "contact", "footer"] as const) {
+      const res = checkSectionProps(type, {});
+      expect(res.success, type).toBe(false);
+    }
+    const { imageUrl: _omitted, ...withoutImage } = hero;
+    void _omitted;
+    const res = checkSectionProps("hero", withoutImage);
+    expect(res.success).toBe(false);
+    expect(!res.success && res.error.issues.map((i) => i.path.join("."))).toEqual(["imageUrl"]);
+  });
+
+  it("does not cut a list of videos down: more than five is refused, as is a bad id", () => {
+    const videos = ["aaaaaaaaaaa", "bbbbbbbbbbb", "ccccccccccc", "ddddddddddd", "eeeeeeeeeee"];
+    expect(checkSectionProps("video", { heading: {}, caption: {}, videos }).success).toBe(true);
+    expect(checkSectionProps("video", { heading: {}, caption: {}, videos: [...videos, "fffffffffff"] }).success).toBe(false);
+    expect(checkSectionProps("video", { heading: {}, caption: {}, videos: ["dQw4w9WgXcQ", "not-valid"] }).success).toBe(false);
+  });
+
+  it("takes an uploaded data: image only where asked (the editor), never by default (the API)", () => {
+    const data = `data:image/png;base64,${"A".repeat(40)}`;
+    expect(checkSectionProps("hero", { ...hero, imageUrl: data }).success).toBe(false);
+    expect(checkSectionProps("hero", { ...hero, imageUrl: data }, { allowDataImages: true }).success).toBe(true);
   });
 });

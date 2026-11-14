@@ -1,4 +1,4 @@
-import { ConflictException, ForbiddenException, Inject, Injectable, NotFoundException } from "@nestjs/common";
+import { ConflictException, ForbiddenException, Inject, Injectable, NotFoundException, UnprocessableEntityException } from "@nestjs/common";
 import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { MAX_LANDING_PAGES_PER_SHOP, replacedByPublish } from "@workshop/shared";
 import { AuditService } from "../audit/audit.service";
@@ -8,6 +8,7 @@ import { DB, type Database, type Executor } from "../db/db.module";
 import { organizations, sitePageVersions, sitePages, workshops, type PageContent } from "../db/schema";
 import { assertShopWritable } from "../tenant/shop-writable";
 import { tenantScope } from "../tenant/tenant-scope";
+import { pageContentSchema } from "./site.schemas";
 
 type PageRow = typeof sitePages.$inferSelect;
 
@@ -100,6 +101,12 @@ export class SitePagesService {
       const page = await this.load(tx, org, id, true);
       const content = page.draftContent ?? page.publishedContent;
       if (!content) throw conflict("NOTHING_TO_PUBLISH", "Save the page before publishing it.");
+      // What is public must pass the rule of a saved page: a draft kept from before the rule (a section with fields missing) is refused here with the fields, not shown half-empty to guests.
+      const checked = pageContentSchema.safeParse(content);
+      if (!checked.success) {
+        const fields = Object.fromEntries(checked.error.issues.map((i) => [`content.${i.path.join(".")}`, i.message]));
+        throw new UnprocessableEntityException({ code: "INCOMPLETE_PAGE", message: "The page has sections with fields missing. Open it in the editor and save it again.", details: { fields } });
+      }
       if (shop.status === "DRAFT") {
         const missing = await this.missing(tx, org, content, now);
         if (missing.length > 0) throw conflict("CHECKLIST", "The shop is not ready to go public yet.", { missing });

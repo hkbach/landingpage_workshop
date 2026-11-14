@@ -93,15 +93,16 @@ function ListInner({ mainPage, shopHost, shop, shopStatus, upcomingWorkshopCount
     setPages(next);
     return true;
   }
-  /** Connected: the draft is saved first when the server has none (a page that was never edited), then the server publishes it (it checks the list of a first publish itself). */
+  /**
+   * Connected: the draft the list shows (the saved one with its missing fields filled in, or the starter of a page never edited) is saved first, then the server publishes it (it checks the
+   * list of a first publish itself). Saving it every time means a draft kept from before the rule "every field of a section" is made whole before the server checks it.
+   */
   async function publishOnServer(page: PageMeta) {
     setPublishing(null);
     try {
-      if (!server!.saved.includes(page.id)) {
-        const d = trimDeep(server!.drafts[page.id]!);
-        const saved = await fetch(`/api/v1/site/pages/${encodeURIComponent(page.id)}/draft`, { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ content: d.content, theme: d.theme, templateKey: d.template }) });
-        if (!saved.ok) throw new Error("draft");
-      }
+      const d = trimDeep(server!.drafts[page.id]!);
+      const saved = await fetch(`/api/v1/site/pages/${encodeURIComponent(page.id)}/draft`, { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ content: d.content, theme: d.theme, templateKey: d.template }) });
+      if (!saved.ok) throw new Error("draft");
       const res = await fetch(`/api/v1/site/pages/${encodeURIComponent(page.id)}/publish`, { method: "POST" });
       if (!res.ok) throw new Error("publish");
       setMessage({ text: t("publishedDone", { name: page.name }), tone: "ok" });

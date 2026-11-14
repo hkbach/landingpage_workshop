@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { hashPassword } from "../auth/crypto";
+import { completeProps } from "../test/sections";
 import { PASSWORD, TEST_DATABASE_URL, cookieOf, drain, emailFor, signupBody, startApp, unique, type TestApp } from "../test/helpers";
 
 // The guests told when a session is closed or moved, and what the platform administrator does on behalf of a shop (D14, D15): a reason is required, the owner is told, the limits of the owner do not bind
@@ -200,7 +201,7 @@ d("sessions, guests and the administrator acting for a shop", () => {
   });
 
   it("publishes a landing page for an active shop only, and leaves a shop in draft to its owner", async () => {
-    const page = { schemaVersion: 1, sections: [{ id: unique("s"), type: "hero", enabled: true, props: { title: { en: "Welcome" } } }, { id: unique("s"), type: "footer", enabled: true, props: { text: { en: "Bye" } } }], seo: { title: { en: "Shop" }, description: { en: "A shop" } } };
+    const page = { schemaVersion: 1, sections: [{ id: unique("s"), type: "hero", enabled: true, props: completeProps("hero", { title: { en: "Welcome" } }) }, { id: unique("s"), type: "footer", enabled: true, props: completeProps("footer", { text: { en: "Bye" } }) }], seo: { title: { en: "Shop" }, description: { en: "A shop" } } };
     const put = (url: string, payload: unknown, cookie: string) => t.app.inject({ method: "PUT", url: `/api/v1${url}`, payload: payload as object, remoteAddress: "10.1.1.1", headers: { origin: "http://app.localtest.me:3000", cookie } });
     const fresh = await t.post("/auth/signup", signupBody("SHOP_OWNER", emailFor("draftshop"), `Draft ${unique("d")}`), { from: nextIp() });
     const draftOrg = fresh.json().organization.id as string;

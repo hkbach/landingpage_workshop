@@ -23,6 +23,8 @@ const schema = z
     PLATFORM_DOMAIN: z.string().regex(/^[a-z0-9.-]+$/i, "invalid").default("localtest.me"),
     SESSION_COOKIE_NAME: z.string().regex(/^[A-Za-z0-9_-]{1,40}$/).default("wsp_sid"),
     SESSION_TTL_DAYS: z.coerce.number().int().min(1).max(90).default(14),
+    /** How many accounts one address may sign up in an hour. Keep the default in production; a machine that runs the browser tests over and over may raise it (e.g. 100). */
+    SIGNUPS_PER_HOUR: z.coerce.number().int().min(1).max(10_000).default(10),
     /** How many reverse proxies stand in front of the API (0 = none: the client is the socket). Never trust a header the client can write. */
     TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(5).default(0),
 

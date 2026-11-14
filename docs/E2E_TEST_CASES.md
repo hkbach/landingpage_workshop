@@ -248,6 +248,7 @@ Ký hiệu dùng trong bảng: **P0** = luồng tiền, đặt chỗ, bảo mậ
 | E2E-SITE-19 | Section video | Builder | Thêm 6 link YouTube; mở trang live, bấm Play | Tối đa 5 link; player `youtube-nocookie.com` chỉ tải khi bấm Play; không vi phạm CSP | P2 | FR-SITE-02 L331, L340 | Chưa có |
 | E2E-SITE-20 | Shop bị khóa không lưu / publish | Shop `SUSPENDED` | Autosave; Publish | `403` | P1 | FR-SITE-04 L353, REQ L1051 | Chưa có |
 | E2E-SITE-21 | Section Promotions trong builder | Builder | Chọn section Promotions; bấm "Go to Promotion management" | Thông báo nội dung do Promotion management quản lý; bản nháp được lưu trước khi chuyển trang | P2 | FR-PROMO-01 L550 | Chưa có |
+| E2E-SITE-22 | Một quy tắc validation props cho API và builder | Một page của shop | `PUT draft` với hero thiếu `imageUrl` và footer `{}`; rồi lưu bản đủ trường, mở builder | Thiếu trường: `422` kèm tên trường (`content.sections.0.props.imageUrl`); bản đủ trường: builder không có thông báo "marked as needing attention", Publish bật, sửa và autosave được | P1 | FR-SITE-02 (quy tắc validation props), `section-props.ts` | Đã có: `owner.spec.ts` › the API refuses a page whose sections lack fields… |
 
 ### 2.6 Chủ shop: khuyến mãi (PROMO)
 
@@ -462,7 +463,7 @@ Ghi chú I18N-12: tiêu đề email theo REQ L626 là 6 tiêu đề nối bằng
 | PUB | 52 | 20 | 17 | 15 | 7 | 6 | 35 | 4 | 0 |
 | OPS | 29 | 11 | 9 | 9 | 1 | 3 | 24 | 1 | 0 |
 | CAT | 26 | 4 | 14 | 8 | 1 | 3 | 21 | 1 | 0 |
-| SITE | 21 | 4 | 10 | 7 | 1 | 1 | 18 | 1 | 0 |
+| SITE | 22 | 4 | 11 | 7 | 2 | 1 | 18 | 1 | 0 |
 | PROMO | 17 | 4 | 7 | 6 | 0 | 0 | 16 | 1 | 0 |
 | FIN | 10 | 4 | 1 | 5 | 0 | 0 | 9 | 1 | 0 |
 | SET | 15 | 1 | 8 | 6 | 1 | 0 | 12 | 1 | 1 |
@@ -473,9 +474,9 @@ Ghi chú I18N-12: tiêu đề email theo REQ L626 là 6 tiêu đề nối bằng
 | I18N | 13 | 0 | 6 | 7 | 1 | 2 | 10 | 0 | 0 |
 | RESP | 7 | 0 | 3 | 4 | 0 | 0 | 7 | 0 | 0 |
 | A11Y | 8 | 0 | 2 | 6 | 0 | 1 | 7 | 0 | 0 |
-| **Tổng** | **308** | **81** | **125** | **102** | **33** | **28** | **231** | **14** | **2** |
+| **Tổng** | **309** | **81** | **126** | **102** | **34** | **28** | **231** | **14** | **2** |
 
-- Cập nhật 14/11/2026: 30 test (8 file, thêm `security.spec.ts` và `booking-rules.spec.ts`) phủ **61 case** (33 đủ, 28 một phần), khoảng 20% danh mục.
+- Cập nhật 14/11/2026: 31 test (8 file, thêm `security.spec.ts` và `booking-rules.spec.ts`) phủ **62 case** (34 đủ, 28 một phần), khoảng 20% danh mục.
 - P0: 81 case, phủ đủ 17 (AUTH-13, PUB-10, PUB-15, PUB-16, PUB-17, PUB-24, PUB-25, SEC-01, SEC-02, SEC-03, SEC-04, SEC-05, SEC-06, SEC-07, SEC-09, SEC-11, SEC-13) và một phần 13 (AUTH-10, AUTH-12, PUB-07, PUB-21, PUB-22, PUB-31, PUB-32, PUB-35, OPS-07, OPS-14, CAT-13, ADM-07, SEC-14).
 - 14 case thuộc tính năng chưa làm; 2 case không tự động được ổn định (SET-11 cần DNS thật; CUST-04 xếp theo seed ngày).
 - 15 case ghi rõ "cần hook" thời gian / kết sổ / DNS (AUTH-17, PUB-18, PUB-29, PUB-34, PUB-38, OPS-21, CAT-21, CAT-22, PROMO-10, FIN-07, SET-11, CUST-10, CUST-17, ADM-17, ADM-21); thêm CUST-18, CUST-21 cũng cần số dư ví nên phụ thuộc cùng hook.

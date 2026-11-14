@@ -100,8 +100,13 @@ test.describe("a guest on the real API", () => {
 
     // the link of the email confirms the booking (there is no demo link with the real API)
     await expect(page.getByRole("link", { name: "open the link of the email" })).toHaveCount(0);
-    const mail = (await (await request.get(`${MAILPIT}/api/v1/search?query=${encodeURIComponent(`to:${email} subject:confirm`)}`)).json()) as { messages?: Array<{ ID: string }> };
-    const messageId = mail.messages?.[0]?.ID;
+    // (the worker sends the email after the page shows the booking: wait for it, up to 30 seconds)
+    let messageId: string | undefined;
+    for (let i = 0; i < 30 && !messageId; i++) {
+      const mail = (await (await request.get(`${MAILPIT}/api/v1/search?query=${encodeURIComponent(`to:${email} subject:confirm`)}`)).json()) as { messages?: Array<{ ID: string }> };
+      messageId = mail.messages?.[0]?.ID;
+      if (!messageId) await new Promise((r) => setTimeout(r, 1000));
+    }
     expect(messageId, "the confirmation email arrived").toBeTruthy();
     const text = ((await (await request.get(`${MAILPIT}/api/v1/message/${messageId}`)).json()) as { Text: string }).Text;
     const link = /(http:\/\/whiskladle\.localtest\.me:\d+\/booking\/confirm\/[\w-]+)/.exec(text)?.[1];
