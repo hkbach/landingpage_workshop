@@ -1,5 +1,5 @@
 import type { Locale } from "@workshop/shared";
-import { createSection } from "@/components/sections/registry";
+import { createSection, SECTION_REGISTRY } from "@/components/sections/registry";
 import { applyTemplate, resolveTemplateKey, TEMPLATES, type TemplateKey } from "@/components/sections/templates";
 import type { PageContent, PageTheme } from "@/lib/types";
 import type { Draft } from "./draft-store";
@@ -31,11 +31,23 @@ export function starterDraft(shop: { name: string; defaultLocale: Locale }, temp
   return { content: applyTemplate(content, template), theme: TEMPLATES[template].theme, template };
 }
 
+/**
+ * A saved section with the fields it lacks filled in from the defaults of its type. The API keeps a page whose sections have only some of their fields (a page written by a script, or by an
+ * older version of the builder); the builder needs every field, and without them it marks the section "needs attention" and blocks Publish for something the owner never did. What is saved
+ * is never changed here: the owner's own values win over the defaults.
+ */
+export function withDefaults(content: PageContent): PageContent {
+  return {
+    ...content,
+    sections: content.sections.map((s) => (SECTION_REGISTRY[s.type] ? { ...s, props: { ...SECTION_REGISTRY[s.type].defaultProps(), ...s.props } } : s)),
+  };
+}
+
 /** The draft the builder opens a server page with. */
 export function draftOf(page: ServerPageDetail, shop: { name: string; defaultLocale: Locale }): Draft {
   const template = resolveTemplateKey(page.templateKey) ?? "classic";
   if (!page.content) return starterDraft(shop, template);
-  return { content: page.content, theme: { ...TEMPLATES[template].theme, ...page.theme } as PageTheme, template };
+  return { content: withDefaults(page.content), theme: { ...TEMPLATES[template].theme, ...page.theme } as PageTheme, template };
 }
 
 export type ServerPageList = {

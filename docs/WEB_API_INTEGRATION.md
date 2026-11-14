@@ -27,6 +27,13 @@
 - Test: `site-url.test.ts` (địa chỉ theo host), `header-menu.test.ts` (nút, mọi layout), `e2e/auth.spec.ts` thêm 2 test (đăng ký khách thật từ trang shop, không có tab chủ shop, `/auth/me` trả CUSTOMER; nút Log in mở hộp đăng nhập).
 - **Chưa làm:** sau khi đăng nhập/đăng ký từ trang shop, khách vào khu khách hàng chứ chưa quay lại trang shop (cần tham số `next` an toàn, chỉ chấp nhận host của nền tảng hoặc tên miền đã xác minh).
 
+### Sửa lỗi: trang landing page lưu thiếu trường báo "Fix N sections marked as needing attention first" (14/11/2026)
+
+- **Nguyên nhân:** API chấp nhận section chỉ có một vài trường (trang do script hoặc builder cũ ghi: hero không có `imageUrl`, footer là `{}`), còn builder yêu cầu đủ trường nên đánh dấu "cần sửa" và khóa Publish, dù chủ shop chưa làm gì sai. Trường hợp thực tế: trang "Main" bị hàm hỗ trợ của test e2e đặt chỗ ghi nội dung thiếu trường vào database dev.
+- **Sửa:** `withDefaults` (`components/builder/server-pages.ts`) điền các trường còn thiếu từ mặc định của loại section khi tải bản nháp (trang sửa, xem trước, danh sách). Giá trị chủ shop đã lưu luôn thắng mặc định; dữ liệu đã lưu không bị đổi cho tới khi autosave. Hàm hỗ trợ e2e giờ ghi đủ trường.
+- **Test:** `server-pages.test.ts` (3 test) và `owner.spec.ts` (mở trang lưu thiếu trường: không có thông báo, Publish dùng được, sửa và autosave được).
+- **Chưa làm:** để API và builder cùng một quy tắc (API nên từ chối section thiếu trường, hoặc builder nên coi trường đó là tùy chọn).
+
 ### Lát 3: khu chủ shop (13/11/2026)
 
 Khi đặt `API_URL`, mọi trang của `/shopowner/{slug}` đọc dữ liệu của **shop trong phiên** từ API (`lib/own-shop.ts`, `own-catalog.ts`, `own-ops.ts`, `own-finance.ts`, `own-site.ts`) và mọi thay đổi được gửi lên server.

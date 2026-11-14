@@ -109,6 +109,38 @@ test.describe("the shop owner on the real API", () => {
     expect(problems).toEqual([]);
   });
 
+  test("a page saved with sections that lack fields opens in the builder with nothing to fix, and can be edited and published", async ({ page }) => {
+    const request = page.context().request;
+    const problems = watchBrowser(page);
+    const headers = { origin: APP };
+    const pages = (await (await request.get(`${APP}/api/v1/site/pages`)).json()) as { items: Array<{ id: string }> };
+    const pageId = pages.items.length >= 2 ? pages.items[pages.items.length - 1]!.id : ((await (await request.post(`${APP}/api/v1/site/pages`, { headers, data: { name: `E2E ${Date.now().toString(36)}` } })).json()) as { id: string }).id;
+    // what a script or an older builder leaves: the hero without its image, the footer with no fields at all
+    const thin = {
+      schemaVersion: 1,
+      sections: [
+        { id: "s-hero", type: "hero", enabled: true, props: { title: { en: "Thin page" }, subtitle: { en: "Few fields" }, ctaText: { en: "Book now" } } },
+        { id: "s-workshops", type: "workshops", enabled: true, props: { heading: { en: "Our workshops" } } },
+        { id: "s-footer", type: "footer", enabled: true, props: {} },
+      ],
+      seo: { title: { en: "Thin page" }, description: { en: "Few fields" } },
+    };
+    expect((await request.put(`${APP}/api/v1/site/pages/${pageId}/draft`, { headers, data: { content: thin } })).status()).toBe(200);
+
+    await open(page, `${APP}/shopowner/${SLUG}/site/${pageId}`);
+    const title = page.getByRole("textbox", { name: "Title" }).first();
+    await expect(title).toBeVisible({ timeout: 90_000 });
+    await expect(page.getByText(/marked as needing attention/)).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Publish" }).first()).toBeEnabled({ timeout: 30_000 });
+    const edited = `Edited thin page ${Date.now().toString(36)}`;
+    await expect(async () => {
+      await title.fill(edited);
+      await expect(title).toHaveValue(edited, { timeout: 1_000 });
+    }).toPass({ timeout: 30_000 });
+    await expect(page.getByText("Draft saved")).toBeVisible({ timeout: 30_000 });
+    expect(problems).toEqual([]);
+  });
+
   test("opens every page of the owner area on the data of the server, with no error in the page", async ({ page }) => {
     test.setTimeout(300_000);
     const problems = watchBrowser(page);

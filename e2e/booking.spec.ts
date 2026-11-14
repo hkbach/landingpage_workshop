@@ -20,9 +20,10 @@ async function ensureLandingPage(request: APIRequestContext): Promise<void> {
   const content = {
     schemaVersion: 1,
     sections: [
-      { id: "s-hero", type: "hero", enabled: true, props: { title: { en: "Whisk & Ladle" }, subtitle: { en: "Baking classes" }, ctaText: { en: "Book now" } } },
+      // (every field of a section: a page with fewer opens in the builder marked "needs attention")
+      { id: "s-hero", type: "hero", enabled: true, props: { title: { en: "Whisk & Ladle" }, subtitle: { en: "Baking classes" }, imageUrl: "", ctaText: { en: "Book now" } } },
       { id: "s-workshops", type: "workshops", enabled: true, props: { heading: { en: "Our workshops" } } },
-      { id: "s-footer", type: "footer", enabled: true, props: {} },
+      { id: "s-footer", type: "footer", enabled: true, props: { text: { en: "Whisk & Ladle" }, socials: [] } },
     ],
     seo: { title: { en: "Whisk & Ladle" }, description: { en: "Baking classes" } },
   };
