@@ -761,7 +761,8 @@
     "reasonLabel": "Reason for your changes (required)",
     "reasonPlaceholder": "For example: the shop owner asked us to fix the opening hours",
     "reasonHint": "Enter the reason before you change anything: the shop owner is told by email what changed and why.",
-    "reasonSet": "The shop owner will be told by email, with this reason, about each change you make."
+    "reasonSet": "The shop owner will be told by email, with this reason, about each change you make.",
+    "unavailable": "Editing the pages of a shop for its owner is not available yet when the platform runs on the real server. Use the lists of the admin area, or the actions on the page of the shop."
   },
   "shopEdit": {
     "title": "Edit {name}",
@@ -962,7 +963,29 @@
     "tooLong": "The text is too long (at most {max} characters).",
     "loadFailed": "The text could not be loaded.",
     "openPublic": "Open the public page",
-    "opensNewTab": "(opens in a new tab)"
+    "opensNewTab": "(opens in a new tab)",
+    "descriptionDrafts": "The text of the Terms of Service and of the Privacy Policy, in each language. Write it and save a draft, then publish it: only a published text shows on the public pages.",
+    "liveVersion": "Live: version {version}, published {date} by {by}.",
+    "noLive": "Nothing is published yet: the public page says the text is coming.",
+    "consents": "{agreed} of {active} active users agreed to the current version.",
+    "hasDraft": "draft",
+    "showingDraft": "Showing your draft (version {version}); it is not live yet.",
+    "showingLive": "Showing the live text; change it to start a draft.",
+    "showingNothing": "No text yet in this language.",
+    "saveDraft": "Save draft",
+    "draftSaved": "Draft saved. It is not live until you publish it.",
+    "draftRemoved": "The draft of this language was thrown away.",
+    "publish": "Publish",
+    "published": "Published. The public page shows the new text.",
+    "major": "Major change: everybody must agree again",
+    "majorHint": "Publish with a major change when the meaning changes: every user is asked to agree again the next time they open their area.",
+    "unpublish": "Take down",
+    "unpublished": "The text of this language is not live any more.",
+    "history": "History",
+    "historyRow": "Version {version} · {status} · {date} · {length} characters",
+    "majorTag": "major",
+    "restore": "Restore as draft",
+    "restored": "The version is now the draft. Publish it to make it live."
   },
   "promotions": {
     "title": "Promotions",

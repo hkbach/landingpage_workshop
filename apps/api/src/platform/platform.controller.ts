@@ -32,12 +32,15 @@ const messagesQuery = z.object({ q: z.string().trim().max(100).optional(), statu
 const messagePatch = z.object({ status: z.enum(MESSAGE_STATUSES, { error: "invalid" }).optional(), note: z.string().trim().max(2100, "tooLong").optional() });
 const replyBody = z.object({ subject: z.string().trim().max(200, "tooLong").optional(), body: z.string({ error: "required" }).trim().min(1, "required").max(10_000, "tooLong") });
 const emailsQuery = z.object({ q: z.string().trim().max(100).optional(), type: z.string().trim().max(60).optional(), status: z.enum(["SENT", "FAILED", "PENDING"], { error: "invalid" }).optional(), limit: z.coerce.number().int().min(1).max(100).default(50), cursor: z.string().max(300).optional() });
+// The admin screens say audience ONE with the address in `to`, and a reply to a message of the Contact form carries its `messageId`: both are accepted next to ADDRESS + `address`.
 const composeBody = z.object({
-  audience: z.enum(["ADDRESS", "SHOP_OWNERS", "CUSTOMERS"], { error: "invalid" }),
+  audience: z.enum(["ADDRESS", "ONE", "SHOP_OWNERS", "CUSTOMERS"], { error: "invalid" }),
   address: z.string().trim().toLowerCase().max(254, "tooLong").pipe(z.email("invalid")).optional(),
+  to: z.string().trim().toLowerCase().max(254, "tooLong").pipe(z.email("invalid")).optional(),
+  messageId: z.uuid({ error: "invalid" }).optional(),
   subject: z.string({ error: "required" }).trim().min(1, "required").max(200, "tooLong").refine((v) => !/[\r\n]/.test(v), "invalid"),
   body: z.string({ error: "required" }).trim().min(1, "required").max(10_000, "tooLong"),
-});
+}).transform((v) => ({ audience: (v.audience === "ONE" ? "ADDRESS" : v.audience) as "ADDRESS" | "SHOP_OWNERS" | "CUSTOMERS", address: v.address ?? v.to, messageId: v.messageId, subject: v.subject, body: v.body }));
 const reportsQuery = z.object({ status: z.enum(REPORT_STATUSES, { error: "invalid" }).optional(), reason: z.enum(REPORT_REASONS, { error: "invalid" }).optional(), shop: z.string().trim().max(60).optional(), q: z.string().trim().max(120).optional(), sort: z.enum(["newest", "oldest"], { error: "invalid" }).optional() });
 
 const actorOf = (auth: AuthContext, client: ClientContext): Actor => ({ userId: auth.user.id, ip: client.ip });
@@ -193,6 +196,8 @@ export class AdminPlatformController {
   @Post("emails")
   @HttpCode(201)
   compose(@CurrentUser() auth: AuthContext, @Client() client: ClientContext, @Body(new ZodPipe(composeBody)) body: z.infer<typeof composeBody>) {
+    // A reply to a message of the Contact form: the message is marked done in the same step as the email is queued.
+    if (body.messageId) return this.inbox.reply(body.messageId, { subject: body.subject, body: body.body }, actorOf(auth, client)).then(() => ({ queued: 1 }));
     return this.emails.compose(body, actorOf(auth, client));
   }
 

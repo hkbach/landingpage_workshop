@@ -1,6 +1,6 @@
 # Nối `apps/web` với `apps/api`: hiện trạng và kế hoạch
 
-> **Trạng thái (13/11/2026): ĐÃ XONG lát 0–4 (nền, xác thực, trang công khai + đặt chỗ, khu chủ shop, khu customer); lát 5–6 chưa làm.** Đặt `API_URL` thì web nối API thật cho tài khoản; không đặt thì vẫn chạy hoàn toàn trên dữ liệu mẫu (mock). Xem mục 0. Tài liệu này ghi lại **vì sao việc này lớn hơn một lần chuyển đổi cấu hình**, những gì đã đo được và một kế hoạch theo từng lát cắt để làm tiếp. Đây là việc cần quyết định thứ tự ưu tiên của chủ sản phẩm.
+> **Trạng thái (13/11/2026): ĐÃ XONG lát 0–5 (nền, xác thực, trang công khai + đặt chỗ, khu chủ shop, khu customer, khu admin); lát 6 (gỡ mock) chưa làm.** Đặt `API_URL` thì web nối API thật cho tài khoản; không đặt thì vẫn chạy hoàn toàn trên dữ liệu mẫu (mock). Xem mục 0. Tài liệu này ghi lại **vì sao việc này lớn hơn một lần chuyển đổi cấu hình**, những gì đã đo được và một kế hoạch theo từng lát cắt để làm tiếp. Đây là việc cần quyết định thứ tự ưu tiên của chủ sản phẩm.
 
 ## 0. Đã làm (lát 0 và 1)
 
@@ -54,6 +54,17 @@ Khi đặt `API_URL`, mọi trang của `/shopowner/{slug}` đọc dữ liệu c
 - Ví hiển thị **một loại tiền** (loại tiền đầu tiên của ví; mặc định VND khi chưa có thu nhập), dù API giữ ví theo từng loại tiền. API `GET .../invites` trả thêm `bonusBps` (tỷ lệ thưởng mặc định).
 - Sửa khi nối: thiếu nhãn `site.nav.promotions` ở 5 ngôn ngữ (trang shop có mục Khuyến mãi bị báo thiếu thông điệp).
 - Kiểm thử: `e2e/real-customer.spec.ts` mở mọi trang của khu customer, lưu một yêu thích và tạo một liên kết affiliate trên server.
+
+### Lát 5: khu admin (14/11/2026)
+
+- Các danh sách admin (`useDirectory`) gọi đúng đường dẫn của API (shops → `/admin/organizations`, users, audit-logs có route riêng; còn lại `/admin/directory/{name}`) và `lib/admin-adapters.ts` đưa từng dòng về kiểu màn hình dùng (nhận cả hình dạng của dữ liệu mẫu). API `organizations` và `users` được bổ sung các trường màn hình cần (tên chủ shop, điện thoại, địa chỉ, ngôn ngữ, tên miền, đang hiển thị cho khách, số session / booking; tên shop và số booking của người dùng).
+- **Terms / Privacy:** màn hình mới `LegalDrafts` cho quy trình **nháp → công bố → gỡ → lịch sử → khôi phục** (D17), có chọn "thay đổi lớn: mọi người phải đồng ý lại" và số người đã đồng ý. Dữ liệu mẫu vẫn dùng màn hình cũ (lưu là áp dụng ngay).
+- **Chi tiết shop** (`/systemadmin/organizations/{id}`) đọc shop, audit, tỷ lệ phí và số liệu từ API; trang Reports lấy danh sách shop từ API.
+- **Settings:** con số của nền tảng (`PUT /admin/settings`) và hạn mức rút tiền (`PUT /admin/settings/withdrawal-limits`, theo loại tiền, mặc định VND) được lưu bằng hai lời gọi.
+- API được làm **rộng lượng hơn với màn hình** (không đổi hợp đồng cũ): trạng thái người dùng nhận `DEACTIVATED`, hiển thị shop nhận `show`, soạn email nhận `ONE` + `to` + `messageId` (trả lời tin nhắn liên hệ đánh dấu tin đã xử lý).
+- Vô hiệu hóa người dùng **bắt buộc có lý do** (D15): màn hình hỏi lý do. Đóng / mở lại session của admin đi qua `/admin/shops/{shopId}/sessions/{id}/...`.
+- **Chưa nối (khi chạy với API):** (1) sửa các trang của một shop thay chủ shop (`/systemadmin/shops/{slug}/...`): hiện báo chưa có, API có 5 hành động `/admin/shops/{id}/...` nhưng các trang của chủ shop đọc shop của phiên; (2) sửa hồ sơ người dùng (`PATCH /admin/users/{id}` chưa có); (3) Media (chờ khóa R2: danh sách rỗng); (4) kiểm tra landing page `POST /admin/landing-pages/{slug}/audit` (chưa có route); (5) lịch sử thay đổi của từng session trong chi tiết shop.
+- Kiểm thử: `e2e/real-admin.spec.ts` (4 test): mở 19 trang admin không lỗi, soạn → công bố Terms → trang công khai hiển thị, vô hiệu hóa người dùng → đăng nhập bị từ chối, chi tiết shop và đổi hiển thị.
 
 ## 1. Đã đo được (13/11/2026)
 

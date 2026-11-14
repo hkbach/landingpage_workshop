@@ -761,7 +761,8 @@
     "reasonLabel": "Lý do cho các thay đổi (bắt buộc)",
     "reasonPlaceholder": "Ví dụ: shop owner nhờ chúng tôi sửa giờ mở cửa",
     "reasonHint": "Nhập lý do trước khi thay đổi bất cứ điều gì: shop owner được báo qua email về thay đổi và lý do.",
-    "reasonSet": "Shop owner sẽ được báo qua email, kèm lý do này, về mỗi thay đổi bạn thực hiện."
+    "reasonSet": "Shop owner sẽ được báo qua email, kèm lý do này, về mỗi thay đổi bạn thực hiện.",
+    "unavailable": "Chưa thể sửa các trang của một shop thay chủ shop khi nền tảng chạy trên máy chủ thật. Hãy dùng các danh sách của khu admin hoặc các thao tác trên trang của shop."
   },
   "shopEdit": {
     "title": "Chỉnh sửa {name}",
@@ -962,7 +963,29 @@
     "tooLong": "Nội dung quá dài (tối đa {max} ký tự).",
     "loadFailed": "Không tải được nội dung.",
     "openPublic": "Mở trang công khai",
-    "opensNewTab": "(mở trong tab mới)"
+    "opensNewTab": "(mở trong tab mới)",
+    "descriptionDrafts": "Nội dung Điều khoản dịch vụ và Chính sách quyền riêng tư theo từng ngôn ngữ. Hãy viết và lưu bản nháp, sau đó công bố: chỉ nội dung đã công bố mới hiện trên trang công khai.",
+    "liveVersion": "Đang áp dụng: phiên bản {version}, công bố {date} bởi {by}.",
+    "noLive": "Chưa công bố gì: trang công khai báo rằng nội dung sắp có.",
+    "consents": "{agreed} trên {active} người dùng đang hoạt động đã đồng ý bản hiện tại.",
+    "hasDraft": "bản nháp",
+    "showingDraft": "Đang hiển thị bản nháp của bạn (phiên bản {version}); chưa áp dụng.",
+    "showingLive": "Đang hiển thị nội dung đang áp dụng; hãy sửa để bắt đầu một bản nháp.",
+    "showingNothing": "Chưa có nội dung ở ngôn ngữ này.",
+    "saveDraft": "Lưu bản nháp",
+    "draftSaved": "Đã lưu bản nháp. Bản này chưa áp dụng cho đến khi bạn công bố.",
+    "draftRemoved": "Đã bỏ bản nháp của ngôn ngữ này.",
+    "publish": "Công bố",
+    "published": "Đã công bố. Trang công khai hiển thị nội dung mới.",
+    "major": "Thay đổi lớn: mọi người phải đồng ý lại",
+    "majorHint": "Công bố với thay đổi lớn khi ý nghĩa thay đổi: mọi người dùng sẽ được yêu cầu đồng ý lại lần tới khi mở khu vực của mình.",
+    "unpublish": "Gỡ xuống",
+    "unpublished": "Nội dung của ngôn ngữ này không còn áp dụng.",
+    "history": "Lịch sử",
+    "historyRow": "Phiên bản {version} · {status} · {date} · {length} ký tự",
+    "majorTag": "lớn",
+    "restore": "Khôi phục thành bản nháp",
+    "restored": "Phiên bản đã thành bản nháp. Hãy công bố để áp dụng."
   },
   "promotions": {
     "title": "Khuyến mãi",

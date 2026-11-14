@@ -12,8 +12,13 @@ const text = (max: number) => z.string().trim().max(max).optional();
 const orgListQuery = z.object({ q: text(100), status: z.enum(["DRAFT", "ACTIVE", "SUSPENDED"]).optional(), ...page });
 const userListQuery = z.object({ q: text(100), type: z.enum(["SUPER_ADMIN", "SHOP_OWNER", "CUSTOMER"]).optional(), status: z.enum(["UNVERIFIED", "ACTIVE", "DISABLED"]).optional(), ...page });
 const auditQuery = z.object({ email: text(200), org: text(200), action: text(80), entityType: text(60), from: z.string().datetime({ offset: true }).optional(), to: z.string().datetime({ offset: true }).optional(), ...page });
+// `show` is the older name of the field that the admin screens send: both are accepted.
+const visibilityBody = z.object({ showOnCustomerPage: z.boolean({ error: "required" }).optional(), show: z.boolean({ error: "required" }).optional() })
+  .refine((v) => v.showOnCustomerPage !== undefined || v.show !== undefined, { message: "required", path: ["showOnCustomerPage"] })
+  .transform((v) => ({ showOnCustomerPage: (v.showOnCustomerPage ?? v.show)! }));
 const orgStatusBody = z.object({ active: z.boolean({ error: "required" }), reason: z.string().trim().max(300, "tooLong").optional() });
-const userStatusBody = z.object({ status: z.enum(["ACTIVE", "DISABLED"], { error: "invalid" }), reason: z.string().trim().max(300, "tooLong").optional() });
+// The admin screens say DEACTIVATED, the database says DISABLED: both are accepted.
+const userStatusBody = z.object({ status: z.enum(["ACTIVE", "DISABLED", "DEACTIVATED"], { error: "invalid" }).transform((v) => (v === "DEACTIVATED" ? ("DISABLED" as const) : v)), reason: z.string().trim().max(300, "tooLong").optional() });
 
 const actorOf = (auth: AuthContext, client: ClientContext): Actor => ({ userId: auth.user.id, ip: client.ip });
 
@@ -43,7 +48,7 @@ export class AdminController {
   /** `{ showOnCustomerPage }`: list (or stop listing) the workshops of the shop on the Workshops page of the customers. */
   @Post("organizations/:id/visibility")
   @HttpCode(200)
-  organizationVisibility(@CurrentUser() auth: AuthContext, @Client() client: ClientContext, @Param("id", new UuidPipe()) id: string, @Body(new ZodPipe(z.object({ showOnCustomerPage: z.boolean({ error: "required" }) }))) body: { showOnCustomerPage: boolean }) {
+  organizationVisibility(@CurrentUser() auth: AuthContext, @Client() client: ClientContext, @Param("id", new UuidPipe()) id: string, @Body(new ZodPipe(visibilityBody)) body: { showOnCustomerPage: boolean }) {
     return this.admin.setVisibility(id, body.showOnCustomerPage, actorOf(auth, client));
   }
 

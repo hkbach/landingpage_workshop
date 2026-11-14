@@ -1,5 +1,6 @@
 "use client";
 
+import { ADMIN_LIST_PATH, adaptRows } from "@/lib/admin-adapters";
 import { useEffect, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { Search } from "lucide-react";
@@ -26,15 +27,16 @@ export function useDebounced<T>(value: T, ms = 250): T {
  * asks again (after an action).
  */
 export function useDirectory<T>(name: string, params: Record<string, string>): { items: T[] | null; error: boolean; reload: () => void } {
-  const qs = new URLSearchParams(Object.entries(params).filter(([, v]) => v)).toString();
+  // (the screens say DEACTIVATED, the API DISABLED)
+  const qs = new URLSearchParams(Object.entries(params).filter(([, v]) => v).map(([k, v]) => [k, name === "users" && k === "status" && v === "DEACTIVATED" ? "DISABLED" : v])).toString();
   const [token, setToken] = useState(0);
   const key = `${name}?${qs}#${token}`;
   const [state, setState] = useState<{ key: string; items: T[]; error: boolean } | null>(null);
   useEffect(() => {
     let live = true;
-    fetch(`/api/v1/admin/directory/${name}${qs ? `?${qs}` : ""}`, { cache: "no-store" })
-      .then((r) => (r.ok ? (r.json() as Promise<{ items: T[] }>) : Promise.reject(new Error("failed"))))
-      .then((j) => { if (live) setState({ key, items: j.items, error: false }); })
+    fetch(`/api/v1/admin/${ADMIN_LIST_PATH[name] ?? `directory/${name}`}${qs ? `?${qs}` : ""}`, { cache: "no-store" })
+      .then((r) => (r.ok ? (r.json() as Promise<{ items: T[] }>) : name === "media" && r.status === 404 ? { items: [] as T[] } : Promise.reject(new Error("failed")))) // (the API has no image storage yet: the list of images is empty, not an error)
+      .then((j) => { if (live) setState({ key, items: adaptRows<T>(name, j.items), error: false }); })
       .catch(() => { if (live) setState({ key, items: [], error: true }); });
     return () => { live = false; };
   }, [name, qs, key]);

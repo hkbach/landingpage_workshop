@@ -102,11 +102,11 @@ export function UsersAdmin() {
       />
       {edit ? <EditDialog key={edit.id} user={edit} onClose={() => setEdit(null)} onSaved={(text) => { setEdit(null); setMessage({ text, tone: "ok" }); reload(); }} onFailed={() => setMessage({ text: t("failed"), tone: "error" })} /> : null}
       <ReasonDialog
-        open={toggle !== null} onOpenChange={(o) => { if (!o) setToggle(null); }} reason="none" destructive={toggle?.status === "ACTIVE"}
+        open={toggle !== null} onOpenChange={(o) => { if (!o) setToggle(null); }} reason={toggle?.status === "ACTIVE" ? "required" : "none"} destructive={toggle?.status === "ACTIVE"}
         title={toggle ? t(toggle.status === "ACTIVE" ? "deactivateTitle" : "activateTitle", { name: toggle.fullName }) : ""}
         description={toggle ? t(toggle.status === "ACTIVE" ? "deactivateBody" : "activateBody") : ""}
         confirmLabel={toggle?.status === "ACTIVE" ? t("deactivate") : t("activate")}
-        onConfirm={() => { const u = toggle!; setToggle(null); void post(`/api/v1/admin/users/${encodeURIComponent(u.id)}/status`, { status: u.status === "ACTIVE" ? "DEACTIVATED" : "ACTIVE" }, t(u.status === "ACTIVE" ? "deactivated" : "activated", { name: u.fullName })); }}
+        onConfirm={(reason) => { const u = toggle!; setToggle(null); void post(`/api/v1/admin/users/${encodeURIComponent(u.id)}/status`, { status: u.status === "ACTIVE" ? "DEACTIVATED" : "ACTIVE", ...(reason ? { reason } : {}) }, t(u.status === "ACTIVE" ? "deactivated" : "activated", { name: u.fullName })); }}
       />
       <ReasonDialog
         open={reset !== null} onOpenChange={(o) => { if (!o) setReset(null); }} reason="none" destructive

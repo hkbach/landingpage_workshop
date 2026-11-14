@@ -136,7 +136,9 @@ function ComposeForm({ onClose, onDone }: { onClose: () => void; onDone: (text: 
     const res = await fetch("/api/v1/admin/emails", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ audience, ...(audience === "ONE" ? { to: clean.to } : {}), subject: clean.subject, body: clean.body }) }).catch(() => null);
     setBusy(false);
     if (res?.status === 201) {
-      const j = (await res.json()) as { total: number; sent: number; failed: number };
+      // The sample data says how many were sent and how many failed; the API says how many it queued (each is sent by the worker, and a failure shows in the list).
+      const raw = (await res.json()) as { total?: number; sent?: number; failed?: number; queued?: number };
+      const j = { total: raw.total ?? raw.queued ?? 0, sent: raw.sent ?? raw.queued ?? 0, failed: raw.failed ?? 0 };
       onDone(j.failed > 0 ? t("sentWithFailures", { sent: j.sent, failed: j.failed }) : t("sentAll", { total: j.total }), j.failed > 0 ? "error" : "ok");
       onClose();
       return;

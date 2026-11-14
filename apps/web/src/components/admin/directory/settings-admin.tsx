@@ -9,6 +9,16 @@ import { Input } from "@/components/ui/input";
 import { Notice } from "./kit";
 
 interface Settings { withdrawalMin: number; withdrawalMax: number; resetLinkHours: number; contactPerHour: number; currency: string; defaults: Omit<Settings, "currency" | "defaults" | "bounds">; bounds: { resetLinkHours: { min: number; max: number }; contactPerHour: { min: number; max: number } } }
+type ApiSettings = { resetLinkHours: number; contactPerHour: number };
+type ApiLimit = { currency: string; minAmount: number; maxAmount: number };
+const DEFAULT_CURRENCY = "VND"; // the currency the shops start with: the limits are kept for it
+const fromApi = (b: ApiSettings, limits: ApiLimit[]): Settings => {
+  const l = limits.find((x) => x.currency === DEFAULT_CURRENCY) ?? limits[0];
+  return {
+    withdrawalMin: l?.minAmount ?? 0, withdrawalMax: l?.maxAmount ?? 0, resetLinkHours: b.resetLinkHours, contactPerHour: b.contactPerHour, currency: l?.currency ?? DEFAULT_CURRENCY,
+    defaults: { withdrawalMin: 0, withdrawalMax: 0, resetLinkHours: 24, contactPerHour: 5 }, bounds: { resetLinkHours: { min: 1, max: 168 }, contactPerHour: { min: 1, max: 100 } },
+  } as Settings;
+};
 type Texts = { withdrawalMin: string; withdrawalMax: string; resetLinkHours: string; contactPerHour: string };
 type Message = { text: string; tone: "ok" | "error" } | null;
 
@@ -29,8 +39,15 @@ export function SettingsAdmin() {
 
   useEffect(() => {
     let live = true;
+    // The sample data answers in one piece; the API keeps the withdrawal limits apart (one for each currency) and says nothing about the bounds, which are the ones it checks.
     fetch("/api/v1/admin/settings", { cache: "no-store" })
-      .then((r) => (r.ok ? (r.json() as Promise<Settings>) : Promise.reject(new Error("failed"))))
+      .then(async (r) => {
+        if (!r.ok) return Promise.reject(new Error("failed"));
+        const body = (await r.json()) as Settings | ApiSettings;
+        if ("currency" in body) return body;
+        const limits = await fetch("/api/v1/admin/settings/withdrawal-limits", { cache: "no-store" }).then((x) => (x.ok ? (x.json() as Promise<{ items: ApiLimit[] }>) : { items: [] as ApiLimit[] }));
+        return fromApi(body, limits.items);
+      })
       .then((s) => { if (live) { setSaved(s); setX(toTexts(s)); } })
       .catch(() => { if (live) setMessage({ text: t("loadFailed"), tone: "error" }); });
     return () => { live = false; };
@@ -54,7 +71,13 @@ export function SettingsAdmin() {
     setErrors(found);
     if (Object.keys(found).length) return;
     setBusy(true);
-    const res = await fetch("/api/v1/admin/settings", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ withdrawalMin: min, withdrawalMax: max, resetLinkHours: hours, contactPerHour: per }) }).catch(() => null);
+    // The sample data takes everything in one request; the API takes the numbers of the platform and the withdrawal limits of the currency apart.
+    let res: Response | null = await fetch("/api/v1/admin/settings", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ withdrawalMin: min, withdrawalMax: max, resetLinkHours: hours, contactPerHour: per }) }).catch(() => null);
+    if (res?.ok && !("currency" in ((await res.clone().json().catch(() => ({}))) as object))) {
+      // (the API answered with the platform numbers only: the limits go to their own route)
+      res = await fetch("/api/v1/admin/settings/withdrawal-limits", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ currency: saved.currency, minAmount: min, maxAmount: max }) }).catch(() => null);
+      if (res?.ok) { setSaved({ ...saved, withdrawalMin: min!, withdrawalMax: max!, resetLinkHours: hours, contactPerHour: per }); setX(toTexts({ ...saved, withdrawalMin: min!, withdrawalMax: max!, resetLinkHours: hours, contactPerHour: per })); setBusy(false); setMessage({ text: t("saved"), tone: "ok" }); return; }
+    }
     setBusy(false);
     if (res?.ok) { const s = (await res.json()) as Settings; setSaved(s); setX(toTexts(s)); setMessage({ text: t("saved"), tone: "ok" }); return; }
     setMessage({ text: t("failed"), tone: "error" });

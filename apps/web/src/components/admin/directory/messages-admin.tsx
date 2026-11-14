@@ -105,8 +105,8 @@ function Body({ m, onClose, onChanged, onFailed }: { m: AdminMessage; onClose: (
     const res = await fetch("/api/v1/admin/emails", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ audience: "ONE", to: m.email, subject: sub, body: text, messageId: m.id }) }).catch(() => null);
     setBusy(false);
     if (!res?.ok) { setReplyError(t("replyFailed")); return; }
-    const j = (await res.json()) as { failed: number };
-    onChanged(j.failed > 0 ? t("replyNotDelivered", { email: m.email }) : t("replySent", { email: m.email }));
+    const j = (await res.json()) as { failed?: number }; // (the API only says how many were queued)
+    onChanged((j.failed ?? 0) > 0 ? t("replyNotDelivered", { email: m.email }) : t("replySent", { email: m.email }));
     onClose();
   }
 

@@ -42,6 +42,9 @@ export class AdminService {
         ownerEmail: sql<string | null>`(select u.email from organization_members m join users u on u.id = m.user_id where m.organization_id = "organizations"."id" and m.role = 'OWNER' order by m.created_at limit 1)`,
         workshopCount: sql<number>`(select count(*)::int from workshops w where w.organization_id = "organizations"."id")`,
         bookings30d: sql<number>`(select count(*)::int from bookings b where b.organization_id = "organizations"."id" and b.created_at > now() - interval '30 days')`,
+        ownerName: sql<string | null>`(select u.full_name from organization_members m join users u on u.id = m.user_id where m.organization_id = "organizations"."id" and m.role = 'OWNER' order by m.created_at limit 1)`,
+        sessionCount: sql<number>`(select count(*)::int from workshop_sessions s where s.organization_id = "organizations"."id")`,
+        bookingCount: sql<number>`(select count(*)::int from bookings b where b.organization_id = "organizations"."id")`,
       })
       .from(organizations).where(and(...conditions)).orderBy(desc(organizations.createdAt), desc(organizations.id)).limit(query.limit + 1);
     const page = rows.slice(0, query.limit);
@@ -50,6 +53,9 @@ export class AdminService {
       items: page.map((r) => ({
         id: r.o.id, name: r.o.name, slug: r.o.slug, status: r.o.status, statusReason: r.o.statusReason, country: r.o.country, timezone: r.o.timezone, currency: r.o.currency,
         contactEmail: r.o.contactEmail, ownerEmail: r.ownerEmail, workshopCount: Number(r.workshopCount), bookings30d: Number(r.bookings30d), createdAt: r.o.createdAt.toISOString(),
+        // what the admin screens show and edit without asking for each shop again
+        ownerName: r.ownerName, contactPhone: r.o.contactPhone, whatsapp: r.o.whatsapp, mapsUrl: r.o.mapsUrl, address: r.o.address, defaultLocale: r.o.defaultLocale, enabledLocales: r.o.enabledLocales,
+        customDomain: r.o.customDomain, showOnCustomerPage: r.o.showOnCustomerPage, sessionCount: Number(r.sessionCount), bookingCount: Number(r.bookingCount),
       })),
       nextCursor: last ? encodeCursor({ t: last.o.createdAt.toISOString(), id: last.o.id }) : null,
     };
@@ -120,13 +126,16 @@ export class AdminService {
       .select({
         u: { id: users.id, email: users.email, fullName: users.fullName, status: users.status, platformRole: users.platformRole, createdAt: users.createdAt, lastLoginAt: users.lastLoginAt, emailVerifiedAt: users.emailVerifiedAt },
         shopSlug: sql<string | null>`(select o.slug from organization_members m join organizations o on o.id = m.organization_id where m.user_id = "users"."id" order by m.created_at limit 1)`,
+        shopName: sql<string | null>`(select o.name from organization_members m join organizations o on o.id = m.organization_id where m.user_id = "users"."id" order by m.created_at limit 1)`,
+        shopId: sql<string | null>`(select o.id from organization_members m join organizations o on o.id = m.organization_id where m.user_id = "users"."id" order by m.created_at limit 1)`,
+        bookingCount: sql<number>`(select count(*)::int from bookings b join customers c on c.id = b.customer_id where lower(c.email_normalized) = lower("users"."email"))`,
       })
       .from(users).where(and(...conditions)).orderBy(desc(users.createdAt), desc(users.id)).limit(query.limit + 1); // the password hash is never selected
     const page = rows.slice(0, query.limit);
     const last = rows.length > query.limit ? page[page.length - 1] : undefined;
     return {
       items: page.map((r) => ({
-        id: r.u.id, email: r.u.email, fullName: r.u.fullName, status: r.u.status, type: (r.u.platformRole === "SUPER_ADMIN" ? "SUPER_ADMIN" : r.shopSlug ? "SHOP_OWNER" : "CUSTOMER") as UserType, shopSlug: r.shopSlug,
+        id: r.u.id, email: r.u.email, fullName: r.u.fullName, status: r.u.status, type: (r.u.platformRole === "SUPER_ADMIN" ? "SUPER_ADMIN" : r.shopSlug ? "SHOP_OWNER" : "CUSTOMER") as UserType, shopSlug: r.shopSlug, shopName: r.shopName, shopId: r.shopId, bookingCount: Number(r.bookingCount),
         createdAt: r.u.createdAt.toISOString(), lastLoginAt: r.u.lastLoginAt?.toISOString() ?? null, emailVerified: r.u.emailVerifiedAt !== null,
       })),
       nextCursor: last ? encodeCursor({ t: last.u.createdAt.toISOString(), id: last.u.id }) : null,

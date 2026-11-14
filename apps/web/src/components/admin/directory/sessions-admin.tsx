@@ -20,6 +20,9 @@ const TONE: Record<SessionStatus, "sky" | "slate" | "green" | "amber"> = { OPEN:
  * The sessions of every shop. Edit opens the sessions page of the shop (the same as the shop owner's, on the admin site: add, edit, close, reschedule and the rest). Search by the information of the session (code, workshop, day, status, notes) or the name of the shop. An administrator can close a session
  * (with a reason) and open it again without the limits of the shop owner, so a session the owner closed more than 3 times (closed for good) can be opened again.
  */
+/** The sample data takes the action on `/admin/sessions/{id}`; the API takes it on the shop of the session (`/admin/shops/{shopId}/sessions/{id}/close`), which a row from the API has in `shopId`. */
+const shopAction = (s: AdminSession, action: "close" | "reopen") => ((s as { viaApi?: boolean }).viaApi ? `/api/v1/admin/shops/${encodeURIComponent(s.shopId)}/sessions/${encodeURIComponent(s.id)}/${action}` : `/api/v1/admin/sessions/${encodeURIComponent(s.id)}`);
+
 export function SessionsAdmin() {
   const t = useTranslations("admin.sessionsAll");
   const locale = useLocale();
@@ -36,7 +39,7 @@ export function SessionsAdmin() {
   const rows = useMemo(() => (items === null ? null : forGood ? items.filter((s) => closedForGood(s)) : items), [items, forGood]);
 
   async function change(s: AdminSession, action: "close" | "reopen", reason = "") {
-    const res = await fetch(`/api/v1/admin/sessions/${encodeURIComponent(s.id)}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action, ...(reason ? { reason } : {}) }) }).catch(() => null);
+    const res = await fetch(shopAction(s, action), { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action, ...(reason ? { reason } : {}) }) }).catch(() => null);
     setClosing(null);
     setMessage(res?.ok ? { text: t(action === "close" ? "closed" : "reopened", { code: s.code }), tone: "ok" } : { text: t("failed"), tone: "error" });
     reload();
