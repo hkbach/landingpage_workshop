@@ -32,7 +32,22 @@ Backend đã có: lưu `organizations.custom_domain` (unique), kiểm tra DNS (`
 - [ ] `REQUIRE_EMAIL_VERIFICATION=true` và bật Turnstile (khóa do người phụ trách cấp).
 - [x] Mã hóa cột số tài khoản ngân hàng (AES-256-GCM) và pepper cho OTP: **đã làm trong mã** (13/11/2026). Việc còn lại khi triển khai: đặt `APP_SECRET` riêng (≥ 32 ký tự ngẫu nhiên) trong kho bí mật, sao lưu nó cùng quy trình backup (mất khóa là mất số tài khoản đã mã hóa), chạy `pnpm db:encrypt-bank` một lần sau khi migrate nếu đã có dữ liệu cũ, và quyết định chính sách lưu trữ theo D18.
 - [ ] Không có bí mật thật trong repo, log hay tài liệu; quản lý bí mật bằng kho bí mật của môi trường.
-- [ ] Ảnh tải lên R2 (presign) khi có khóa Cloudflare R2; hiện ảnh vẫn là link https.
+- [x] Ảnh tải lên R2 bằng URL ký sẵn: đã làm và thử với R2 thật ở dev (14/11/2026). Việc triển khai xem mục 3a.
+
+## 3a. Cloudflare R2 cho ảnh (cần người có quyền tài khoản Cloudflare)
+
+Đã làm: API cấp URL ký sẵn (`POST /api/v1/media/presign`), trình duyệt PUT thẳng lên R2, `pnpm --filter api r2:check` và `e2e/media.spec.ts` đạt trên bucket dev. Cần làm khi lên production (chi tiết từng bước ở [RUNBOOK.md](RUNBOOK.md) mục "Ảnh (Cloudflare R2)"):
+
+- [ ] **Bucket ảnh riêng cho production** (không dùng chung bucket dev, không dùng chung bucket backup).
+- [ ] **Địa chỉ đọc công khai:** bucket dev đang dùng `r2.dev` (Cloudflare giới hạn tốc độ, không dành cho production). Gắn **tên miền riêng** cho bucket (ví dụ `media.{PLATFORM_DOMAIN}`) rồi đặt `MEDIA_PUBLIC_BASE_URL` và `MEDIA_ORIGIN` theo tên miền đó. Cần người duyệt (DNS).
+- [ ] **API token R2 riêng cho ảnh:** quyền `Object Read & Write` **chỉ trên bucket ảnh**; khác khóa của backup. Lưu trong kho bí mật (`MEDIA_R2_ACCESS_KEY_ID`, `MEDIA_R2_SECRET_ACCESS_KEY`), không đưa vào repo, log hay chat. Khóa đã từng dán ở nơi không an toàn thì tạo lại.
+- [ ] **CORS policy của bucket production:** `AllowedOrigins` đúng `https://app.{PLATFORM_DOMAIN}` (không để origin `localtest.me` / `localhost`), `AllowedMethods: ["PUT"]`, `AllowedHeaders: ["content-type"]`.
+- [ ] Đặt đủ các biến production: `MEDIA_R2_ACCOUNT_ID`, `MEDIA_R2_BUCKET`, `MEDIA_R2_ACCESS_KEY_ID`, `MEDIA_R2_SECRET_ACCESS_KEY`, `MEDIA_PUBLIC_BASE_URL`, `MEDIA_UPLOAD_ORIGIN` (`https://<account id>.r2.cloudflarestorage.com`). Đủ năm biến của API hoặc không đặt biến nào.
+- [ ] Chạy `pnpm --filter api r2:check` với cấu hình production: cả 4 bước phải OK (bước 4 hỏi CORS cho `APP_URL`). Chạy `e2e/media.spec.ts` trên staging.
+- [ ] Rà CSP của web trên staging: `img-src` có `MEDIA_ORIGIN`, `connect-src` có `MEDIA_UPLOAD_ORIGIN`; không có vi phạm CSP khi tải ảnh.
+- [ ] **Chưa làm (chấp nhận hay làm tiếp, chủ sản phẩm quyết định):** dọn ảnh không còn dùng (quy tắc vòng đời hoặc quét định kỳ); trang Media của admin chưa có dữ liệu; R2 không ép dung lượng của URL ký sẵn nên giới hạn 5 MB chỉ kiểm ở trình duyệt và ở số khai báo gửi lên API (cân nhắc đặt quy tắc dung lượng/giới hạn tần suất ở Cloudflare).
+- [ ] Theo dõi chi phí R2 (lưu trữ, thao tác loại A/B) và đặt cảnh báo trong Cloudflare.
+- [ ] Backup (`infra/backup/`) dùng khóa và bucket **khác** (`R2_*` / `BACKUP_*`): thử với bucket R2 thật, bật khóa xóa / lifecycle (đã có ở mục 2).
 
 ## 4. Pháp lý (cần pháp chế / người có thẩm quyền xác nhận)
 
@@ -43,7 +58,7 @@ Backend đã có: lưu `organizations.custom_domain` (unique), kiểm tra DNS (`
 
 ## 5. Sản phẩm còn mở
 
-- [ ] Nối `apps/web` với API thật (hiện vẫn dùng mock trong bộ nhớ), gồm bắt đồng ý lại Terms / Privacy ở client. **Chưa làm**: đã đo phạm vi và có kế hoạch theo lát cắt ở `docs/WEB_API_INTEGRATION.md`; cần chủ sản phẩm chốt thứ tự và các quyết định ở mục 4 của tài liệu đó.
+- [x] Nối `apps/web` với API thật, gồm bắt đồng ý lại Terms / Privacy ở client: đã làm (lát 0–6, 14/11/2026; mock đã gỡ). Các khoảng trống còn lại nằm ở `docs/WEB_API_INTEGRATION.md`.
 - [x] Kiểm tra props theo từng section ở backend: đã làm (13/11/2026).
 - [x] Email đa ngôn ngữ: đã làm (13/11/2026): email booking 6 ngôn ngữ trong một email, email tài khoản theo ngôn ngữ UI. Còn: bản dịch Thai/Korean/Japanese/Chinese cần người bản ngữ rà soát trước khi chạy thật; email nhắc lịch và file `.ics`.
 
