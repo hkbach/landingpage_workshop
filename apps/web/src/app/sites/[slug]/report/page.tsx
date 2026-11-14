@@ -2,14 +2,14 @@ import type { Metadata } from "next";
 import { ReportForm } from "@/components/site/ReportForm";
 import { SiteFrame } from "@/components/site/SiteFrame";
 import { SiteIntlProvider } from "@/components/site/SiteIntlProvider";
-import { requireSite } from "@/components/site/resolve";
+import { requireSiteShell } from "@/components/site/resolve";
 import { getSiteBase } from "@/components/site/site-base";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default async function ReportPage({ params }: PageProps<"/sites/[slug]/report">) {
   const { slug } = await params;
-  const site = await requireSite(slug);
+  const site = await requireSiteShell(slug);
   const { shop, theme } = site;
   const base = await getSiteBase(slug, site.customDomain);
   return (

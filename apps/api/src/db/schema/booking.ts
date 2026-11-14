@@ -35,6 +35,9 @@ export const customers = pgTable(
   (t) => [
     unique("customers_org_id_unique").on(t.organizationId, t.id),
     uniqueIndex("customers_org_email_unique").on(t.organizationId, t.emailNormalized).where(sql`${t.emailNormalized} IS NOT NULL`),
+    // the list of the shop owner (newest first, keyset) and the booking count of an account in the admin list of users (the same email in every shop)
+    index("customers_org_created_idx").on(t.organizationId, t.createdAt, t.id), // (ascending: read backwards it serves ORDER BY ... DESC, DESC; a DESC NULLS LAST index cannot, since DESC sorts nulls first)
+    index("customers_email_idx").on(t.emailNormalized),
     check("customers_email_lowercase", sql`${t.emailNormalized} IS NULL OR ${t.emailNormalized} = lower(btrim(${t.emailNormalized}))`),
   ],
 );
@@ -95,8 +98,14 @@ export const bookings = pgTable(
     check("bookings_amounts", sql`${t.unitPriceAmount} >= 0 AND ${t.totalAmount} >= 0 AND ${t.discountAmount} >= 0`),
     check("bookings_code_format", sql`${t.bookingCode} ~ '^SES-[0-9]{4,}-[0-9]{3,}$'`),
     index("bookings_org_session_status_idx").on(t.organizationId, t.sessionId, t.status),
-    index("bookings_org_created_idx").on(t.organizationId, t.createdAt.desc()),
+    index("bookings_org_created_id_idx").on(t.organizationId, t.createdAt, t.id), // the list of the shop owner, newest first (replaces bookings_org_created_idx, which could not serve that order)
     index("bookings_org_customer_idx").on(t.organizationId, t.customerId),
+    // the bookings of a customer account in every shop (the customer area, affiliate earnings): matched by the email of the guest
+    index("bookings_guest_email_lower_idx").on(sql`lower(${t.guestEmail})`),
+    index("bookings_affiliate_link_idx").on(t.affiliateLinkId).where(sql`${t.affiliateLinkId} IS NOT NULL`),
+    index("bookings_org_workshop_idx").on(t.organizationId, t.workshopId),
+    // the platform-wide list of the administrator (newest first)
+    index("bookings_created_idx").on(t.createdAt, t.id), // (ascending: read backwards it serves ORDER BY ... DESC, DESC; a DESC NULLS LAST index cannot, since DESC sorts nulls first)
   ],
 );
 

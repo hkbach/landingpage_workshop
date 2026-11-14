@@ -108,10 +108,13 @@ export class PublicBookingsService {
 
   async site(slug: string) {
     const o = await this.shop(slug);
-    const list = await this.db.select().from(workshops).where(and(eq(workshops.organizationId, o.id), eq(workshops.status, "ACTIVE"))).orderBy(asc(workshops.sortOrder), asc(workshops.id));
-    const page = await this.pages.livePage(o.id); // what the owner published (null while there is none)
+    // independent reads at once (the ratings need the list of workshops): one round trip of waiting instead of four
+    const [list, page, running] = await Promise.all([
+      this.db.select().from(workshops).where(and(eq(workshops.organizationId, o.id), eq(workshops.status, "ACTIVE"))).orderBy(asc(workshops.sortOrder), asc(workshops.id)),
+      this.pages.livePage(o.id), // what the owner published (null while there is none)
+      this.promotions.activeFor(this.db, o.id, dateIn(new Date(), o.timezone)), // the promotions of today, for the "Promotions" section and the booking form
+    ]);
     const ratings = await ratingSummaries(this.db, list.map((w) => w.id));
-    const running = await this.promotions.activeFor(this.db, o.id, dateIn(new Date(), o.timezone)); // the promotions of today, for the "Promotions" section and the booking form
     return {
       page: page ? { templateKey: page.templateKey, theme: page.theme, content: page.content, version: page.version, publishedAt: page.publishedAt } : null,
       shop: { name: o.name, slug: o.slug, country: o.country, timezone: o.timezone, currency: o.currency, defaultLocale: o.defaultLocale, enabledLocales: o.enabledLocales, contactEmail: o.contactEmail, contactPhone: o.contactPhone, whatsapp: o.whatsapp, address: o.address, mapsUrl: o.mapsUrl, customDomain: o.customDomainVerifiedAt ? o.customDomain : null },

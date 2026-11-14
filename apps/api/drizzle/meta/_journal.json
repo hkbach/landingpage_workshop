@@ -204,6 +204,13 @@
       "when": 1794550104305,
       "tag": "0028_bank_account_encrypted",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1794642831273,
+      "tag": "0029_perf_indexes",
+      "breakpoints": true
     }
   ]
 }

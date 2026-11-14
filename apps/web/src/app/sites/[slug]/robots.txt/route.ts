@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(_req: Request, ctx: RouteContext<"/sites/[slug]/robots.txt">) {
   const { slug } = await ctx.params;
-  const site = await loadPublicSite(slug);
+  const site = await loadPublicSite(slug, { sessions: false }); // (no seats: one call instead of one per workshop)
   if (!site) return new Response("Not found", { status: 404 });
   const body = `User-agent: *
 Allow: /

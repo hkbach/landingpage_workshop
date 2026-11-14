@@ -11,9 +11,10 @@ import { fetchAll } from "@/lib/shop-data";
 
 // The shop owner's landing pages (up to MAX_LANDING_PAGES_PER_SHOP, one public at a time). Each is edited at /shopowner/site/{pageId}.
 export default async function LandingPagesPage() {
-  const shop = await loadOwnShop();
+  // only the sessions still to come count for the checklist (not every running session ever made)
+  const [shop, list, sessionList] = await Promise.all([loadOwnShop(), ownWorkshops(), fetchAll<Parameters<typeof toSession>[0]>(`/sessions?status=RUNNING&from=${encodeURIComponent(new Date().toISOString())}`)]);
   if (!shop) notFound();
-  const [server, list, sessionList] = await Promise.all([ownPageList(shop), ownWorkshops(), fetchAll<Parameters<typeof toSession>[0]>("/sessions?status=RUNNING")]);
+  const server = await ownPageList(shop);
   const starter = starterDraft(shop, "classic");
   return (
     <LandingPageList

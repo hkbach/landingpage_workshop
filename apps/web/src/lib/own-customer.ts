@@ -15,7 +15,8 @@ export async function loadListedShops(accountId: string): Promise<ListedShop[]> 
   const slugs = [...new Set(cards.map((c) => c.shop.slug))];
   const sites = await Promise.all(slugs.map((slug) => loadPublicSite(slug)));
   return sites
-    .flatMap((site): ListedShop[] => (site ? [{ ...site, bookable: true }] : []))
+    // (the sections of each landing page are dropped: the customer area never shows them, and they would be sent to the browser with every shop)
+    .flatMap((site): ListedShop[] => (site ? [{ ...site, content: { ...site.content, sections: [] }, bookable: true }] : []))
     .sort((a, b) => a.shop.name.localeCompare(b.shop.name));
 }
 

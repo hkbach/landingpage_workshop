@@ -47,7 +47,9 @@ export class DashboardService {
     const dayEnd = startOfDay(addDays(today, 1), shop.timezone);
     const iso = (d: Date) => d.toISOString();
 
-    const [b] = await this.rows<{ today: number; not_confirmed: number; awaiting: number; awaiting_amount: string; to_pay: number; to_pay_amount: string }>(sql`
+    // seven independent reads at once: the summary waits for the slowest, not for the sum of them
+    const month = monthKey(now.toISOString(), shop.timezone);
+    const [[b], [s], [w], [c], [p], points, incomeAnswer] = await Promise.all([this.rows<{ today: number; not_confirmed: number; awaiting: number; awaiting_amount: string; to_pay: number; to_pay_amount: string }>(sql`
       select count(*) filter (where b.status <> 'CANCELLED' and s.starts_at >= ${iso(dayStart)}::timestamptz and s.starts_at < ${iso(dayEnd)}::timestamptz)::int as today,
              count(*) filter (where b.status = 'NOT_CONFIRMED' and s.starts_at > ${iso(now)}::timestamptz)::int as not_confirmed,
              count(*) filter (where b.status <> 'CANCELLED' and b.payment_status = 'UNPAID' and b.total_amount > 0 and s.status = 'CLOSED')::int as awaiting,
@@ -55,22 +57,23 @@ export class DashboardService {
              count(*) filter (where b.status <> 'CANCELLED' and b.payment_status = 'UNPAID' and b.total_amount > 0 and s.starts_at > ${iso(now)}::timestamptz and s.status in ('OPEN', 'RUNNING', 'PAUSED'))::int as to_pay,
              coalesce(sum(b.total_amount) filter (where b.status <> 'CANCELLED' and b.payment_status = 'UNPAID' and b.total_amount > 0 and s.starts_at > ${iso(now)}::timestamptz and s.status in ('OPEN', 'RUNNING', 'PAUSED')), 0)::bigint as to_pay_amount
         from bookings b join workshop_sessions s on s.organization_id = b.organization_id and s.id = b.session_id
-       where b.organization_id = ${org.id}`);
-    const [s] = await this.rows<{ upcoming: number; reserved: string; capacity: string; closed: number; completed: number }>(sql`
+       where b.organization_id = ${org.id}`),
+    this.rows<{ upcoming: number; reserved: string; capacity: string; closed: number; completed: number }>(sql`
       select count(*) filter (where starts_at > ${iso(now)}::timestamptz and status in ('OPEN', 'RUNNING', 'PAUSED'))::int as upcoming,
              coalesce(sum(reserved_count) filter (where starts_at > ${iso(now)}::timestamptz and status in ('OPEN', 'RUNNING', 'PAUSED')), 0)::bigint as reserved,
              coalesce(sum(capacity) filter (where starts_at > ${iso(now)}::timestamptz and status in ('OPEN', 'RUNNING', 'PAUSED')), 0)::bigint as capacity,
              count(*) filter (where status = 'CLOSED')::int as closed, count(*) filter (where status = 'COMPLETED')::int as completed
-        from workshop_sessions where organization_id = ${org.id}`);
-    const [w] = await this.rows<{ active: number; draft: number }>(sql`select count(*) filter (where status = 'ACTIVE')::int as active, count(*) filter (where status = 'DRAFT')::int as draft from workshops where organization_id = ${org.id}`);
-    const [c] = await this.rows<{ total: number; returning: number }>(sql`
+        from workshop_sessions where organization_id = ${org.id}`),
+    this.rows<{ active: number; draft: number }>(sql`select count(*) filter (where status = 'ACTIVE')::int as active, count(*) filter (where status = 'DRAFT')::int as draft from workshops where organization_id = ${org.id}`),
+    this.rows<{ total: number; returning: number }>(sql`
       select (select count(*)::int from customers where organization_id = ${org.id}) as total,
-             (select count(*)::int from (select customer_id from bookings where organization_id = ${org.id} and status <> 'CANCELLED' group by customer_id having count(*) > 1) x) as returning`);
-    const [p] = await this.rows<{ pages: number; live: number }>(sql`select count(*)::int as pages, count(*) filter (where is_live)::int as live from site_pages where organization_id = ${org.id}`);
-
-    const month = monthKey(now.toISOString(), shop.timezone);
-    const monthBucket = bookingSeries(await this.points(org.id, new Date(now.getTime() - 100 * 86_400_000)), "3m", now, shop.timezone).at(-1)!; // bookings of the month of their session
-    const income = (await this.finance.income(org, { from: `${month}-01`, to: today, limit: 1 }, now)).totals;
+             (select count(*)::int from (select customer_id from bookings where organization_id = ${org.id} and status <> 'CANCELLED' group by customer_id having count(*) > 1) x) as returning`),
+    this.rows<{ pages: number; live: number }>(sql`select count(*)::int as pages, count(*) filter (where is_live)::int as live from site_pages where organization_id = ${org.id}`),
+    this.points(org.id, new Date(now.getTime() - 100 * 86_400_000)),
+    this.finance.income(org, { from: `${month}-01`, to: today, limit: 1 }, now),
+    ]);
+    const monthBucket = bookingSeries(points, "3m", now, shop.timezone).at(-1)!; // bookings of the month of their session
+    const income = incomeAnswer.totals;
     const reserved = num(s?.reserved);
     const capacity = num(s?.capacity);
 

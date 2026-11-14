@@ -20,8 +20,11 @@ type ApiSite = {
 };
 type ApiAvailability = { items: Array<{ id: string; code: string; startsAt: string; endsAt: string; remaining: number; capacity: number; bookingCutoffMinutes: number; imageUrl: string | null; reason: string | null }> };
 
-/** The site of `slug`, or `null` when there is none (an unknown, not ACTIVE or suspended shop, or one that has not published a page). */
-export async function loadPublicSite(slug: string): Promise<LoadedSite | null> {
+/**
+ * The site of `slug`, or `null` when there is none (an unknown, not ACTIVE or suspended shop, or one that has not published a page). `sessions: false` skips the seats (one call per workshop)
+ * for the routes that never show them: robots, sitemap, the report form, the booking pages.
+ */
+export async function loadPublicSite(slug: string, options: { sessions?: boolean } = {}): Promise<LoadedSite | null> {
   const raw = await apiGet<ApiSite>(`/public/sites/${encodeURIComponent(slug)}`);
   if (!raw || !raw.page) return null;
   const now = new Date().toISOString();
@@ -39,7 +42,7 @@ export async function loadPublicSite(slug: string): Promise<LoadedSite | null> {
     };
   });
   // One call per workshop (a shop has a handful): the sessions of the next 90 days.
-  const lists = await Promise.all(workshops.map(async (w) => ({ w, a: await apiGet<ApiAvailability>(`/public/sites/${encodeURIComponent(slug)}/workshops/${w.id}/availability`) })));
+  const lists = options.sessions === false ? [] : await Promise.all(workshops.map(async (w) => ({ w, a: await apiGet<ApiAvailability>(`/public/sites/${encodeURIComponent(slug)}/workshops/${w.id}/availability`) })));
   const sessions: Session[] = lists.flatMap(({ w, a }) =>
     (a?.items ?? []).map((s): Session => ({
       id: s.id, code: s.code, workshopId: w.id, startsAt: s.startsAt, endsAt: s.endsAt, capacity: s.capacity, reservedCount: s.capacity - s.remaining,

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { BookingLinkResult } from "@/components/booking/BookingConfirmation";
 import { SiteFrame } from "@/components/site/SiteFrame";
 import { SiteIntlProvider } from "@/components/site/SiteIntlProvider";
-import { requireSite } from "@/components/site/resolve";
+import { requireSiteShell } from "@/components/site/resolve";
 import { getSiteBase } from "@/components/site/site-base";
 import { confirmGuestBooking } from "@/lib/public-booking";
 
@@ -12,7 +12,7 @@ export const metadata: Metadata = { robots: { index: false, follow: false } };
 // TODO: confirm on a click of a button, so a mail scanner that opens the link cannot confirm by itself.
 export default async function ConfirmBookingPage({ params }: PageProps<"/sites/[slug]/booking/confirm/[token]">) {
   const { slug, token } = await params;
-  const site = await requireSite(slug);
+  const site = await requireSiteShell(slug);
   const { shop, theme } = site;
   const base = await getSiteBase(slug, site.customDomain);
   const res = await confirmGuestBooking(token);

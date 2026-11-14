@@ -156,7 +156,11 @@ export class SitePagesService {
 
   /** The public side: the page the shop shows (only an ACTIVE shop is ever asked), or null. */
   async livePage(organizationId: string): Promise<{ id: string; templateKey: string; theme: Record<string, unknown>; content: PageContent; version: number; publishedAt: string | null } | null> {
-    const [p] = await this.db.select().from(sitePages).where(and(eq(sitePages.organizationId, organizationId), eq(sitePages.isLive, true))).limit(1);
+    // only the published columns: the draft and its theme (the largest jsonb of the row) are never read for the public page
+    const [p] = await this.db.select({
+      id: sitePages.id, templateKey: sitePages.templateKey, publishedTemplateKey: sitePages.publishedTemplateKey, publishedTheme: sitePages.publishedTheme, publishedContent: sitePages.publishedContent,
+      version: sitePages.version, publishedAt: sitePages.publishedAt,
+    }).from(sitePages).where(and(eq(sitePages.organizationId, organizationId), eq(sitePages.isLive, true))).limit(1);
     if (!p?.publishedContent) return null;
     return { id: p.id, templateKey: p.publishedTemplateKey ?? p.templateKey, theme: p.publishedTheme ?? {}, content: p.publishedContent, version: p.version, publishedAt: p.publishedAt?.toISOString() ?? null };
   }

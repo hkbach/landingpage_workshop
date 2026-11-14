@@ -7,10 +7,10 @@ import { SettingsForm } from "./settings-form";
 
 export default async function SettingsPage() {
   const t = await getTranslations("dashboard.settings");
-  const shop = await loadOwnShop();
+  // (the shop and whether it has a booking, at once) A change of the time zone or the currency is risky when the shop has bookings: the screen warns about it.
+  const [shop, oneBooking] = await Promise.all([loadOwnShop(), apiGet<{ items: unknown[] }>("/bookings?limit=1")]);
   if (!shop) notFound();
-  // A change of the time zone or the currency is risky when the shop has bookings: the screen warns about it.
-  const hasBookings = ((await apiGet<{ items: unknown[] }>("/bookings?limit=1"))?.items.length ?? 0) > 0;
+  const hasBookings = (oneBooking?.items.length ?? 0) > 0;
   return (
     <div className="mx-auto grid max-w-3xl gap-6">
       <div className="grid gap-1">

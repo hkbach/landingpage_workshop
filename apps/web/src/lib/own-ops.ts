@@ -59,11 +59,11 @@ export function pricesOf(bookings: readonly Booking[]): Record<string, BookingPr
 
 /** The sessions, bookings, customers and workshops of the shop of the session (the whole lists, see lib/shop-data.ts). */
 export async function loadOpsData(): Promise<OpsData> {
-  const shop = await loadOwnShop();
-  if (!shop) notFound();
-  const [workshops, sessions, bookings, customers] = await Promise.all([
-    ownWorkshops(), fetchAll<ApiSession>("/sessions"), fetchAll<ApiBooking>("/bookings"), fetchAll<ApiCustomer>("/customers"),
+  // the shop and the four lists at once: the lists do not need the shop to be asked for
+  const [shop, workshops, sessions, bookings, customers] = await Promise.all([
+    loadOwnShop(), ownWorkshops(), fetchAll<ApiSession>("/sessions"), fetchAll<ApiBooking>("/bookings"), fetchAll<ApiCustomer>("/customers"),
   ]);
+  if (!shop) notFound();
   const mapped = bookings.map((b) => toBooking(b, shop));
   return { shop, workshops, sessions: sessions.map(toSession), bookings: mapped, customers: customers.map(toCustomer), prices: pricesOf(mapped) };
 }

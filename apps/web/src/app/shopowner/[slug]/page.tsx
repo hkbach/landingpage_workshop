@@ -9,7 +9,9 @@ import { buttonVariants } from "@/components/ui/button";
 import { ShopLink } from "@/components/dashboard/shell/shop-link";
 import { dayKey } from "@/lib/format";
 import { bookingSeries, TREND_PERIODS } from "@workshop/shared";
+import { notFound } from "next/navigation";
 import { loadOpsData } from "@/lib/own-ops";
+import { loadOwnShop } from "@/lib/own-shop";
 import { ownPageList } from "@/lib/own-site";
 import { loadIncome } from "@/lib/own-finance";
 import type { Booking, Customer, Session, Workshop } from "@/lib/types";
@@ -44,7 +46,10 @@ function computeOverview(d: OverviewData) {
   const month = trend["3m"].at(-1)!;
   const seatsOpen = upcoming.reduce((n, s) => n + s.capacity, 0);
   const seatsTaken = upcoming.reduce((n, s) => n + s.reservedCount, 0);
-  const bookingCount = (id: string) => bookings.filter((b) => b.customerId === id && b.status !== "CANCELLED").length;
+  // the live bookings of each customer, counted once (not one pass over every booking per customer)
+  const perCustomer = new Map<string, number>();
+  for (const b of live) perCustomer.set(b.customerId, (perCustomer.get(b.customerId) ?? 0) + 1);
+  const bookingCount = (id: string) => perCustomer.get(id) ?? 0;
   return {
     trend,
     month: { total: month.total, guests: month.guests, lostRate: month.total ? month.lost / month.total : 0 },
@@ -77,9 +82,14 @@ const CHECKLIST_LINKS = {
 export default async function OverviewPage() {
   const t = await getTranslations("dashboard.overview");
   // Everything below is counted from the shop's own data on the server.
-  const live = await loadOpsData();
-  const pages = await ownPageList(live.shop);
-  const income = await loadIncome(live.shop.timezone);
+  // the lists, the pages and the income at once (each needed only the shop, which is read first and shared): the page waits for the slowest, not for the sum
+  const shop = loadOwnShop();
+  const [live, pages, income] = await Promise.all([
+    loadOpsData(),
+    shop.then((s) => (s ? ownPageList(s) : null)),
+    shop.then((s) => (s ? loadIncome(s.timezone) : null)),
+  ]);
+  if (!pages) notFound();
   const shopRef = live.shop;
   const shopStatus = live.shop.status;
   const ts = await getTranslations("dashboard.overview.summary");

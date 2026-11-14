@@ -40,9 +40,9 @@ export class AdminMediaService {
       from (
         select 'workshop' as kind, cover_url as v from workshops
         union all select 'workshop', array_to_string(gallery_urls, ' ') from workshops
-        union all select 'session', image_url from workshop_sessions
-        union all select 'promotion', image_url from promotions
-        union all select 'profile', avatar_url from customer_profiles
+        union all select 'session', image_url from workshop_sessions where image_url is not null
+        union all select 'promotion', image_url from promotions where image_url is not null
+        union all select 'profile', avatar_url from customer_profiles where avatar_url is not null
         union all select 'landingPage', theme::text from site_pages
         union all select 'landingPage', draft_content::text from site_pages
         union all select 'landingPage', published_content::text from site_pages

@@ -24,9 +24,23 @@ function deepMerge(base: Record<string, unknown>, over: Record<string, unknown>)
   return out;
 }
 
-export async function loadMessages(locale: Locale): Promise<Record<string, unknown>> {
+// The merged catalogue of a locale never changes while the server runs: it is built once per locale (it was merged again at every request, and once per language in the preview).
+const merged = new Map<Locale, Promise<Record<string, unknown>>>();
+
+async function build(locale: Locale): Promise<Record<string, unknown>> {
   const load = async (l: string) =>
     Object.fromEntries(await Promise.all(AREAS.map(async (a) => [a, await loadArea(l, a)] as const)));
   const en = await load("en");
   return locale === "en" ? en : deepMerge(en, await load(locale));
+}
+
+export function loadMessages(locale: Locale): Promise<Record<string, unknown>> {
+  if (process.env.NODE_ENV !== "production") return build(locale); // (in development an edited message file must show at once)
+  let found = merged.get(locale);
+  if (!found) {
+    found = build(locale);
+    found.catch(() => merged.delete(locale)); // (a failed load is tried again next time)
+    merged.set(locale, found);
+  }
+  return found;
 }

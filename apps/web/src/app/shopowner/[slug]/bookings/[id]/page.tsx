@@ -7,8 +7,7 @@ import { fetchAll } from "@/lib/shop-data";
 
 export default async function BookingDetailPage(props: PageProps<"/shopowner/[slug]/bookings/[id]">) {
   const { id } = await props.params;
-  const shop = await loadOwnShop();
-  const raw = shop ? await apiGet<Parameters<typeof toBooking>[0] & { payments?: Array<{ id: string; type: "PAYMENT" | "REVERSAL"; amount: number; method: "CASH" | "CARD" | "BANK_TRANSFER" | "E_WALLET" | "OTHER"; note: string | null; recordedAt: string }> }>(`/bookings/${encodeURIComponent(id)}`) : null;
+  const [shop, raw] = await Promise.all([loadOwnShop(), apiGet<Parameters<typeof toBooking>[0] & { payments?: Array<{ id: string; type: "PAYMENT" | "REVERSAL"; amount: number; method: "CASH" | "CARD" | "BANK_TRANSFER" | "E_WALLET" | "OTHER"; note: string | null; recordedAt: string }> }>(`/bookings/${encodeURIComponent(id)}`)]); // (at once: the booking does not need the shop)
   if (!shop || !raw) notFound();
   const base = toBooking(raw, shop);
   // The detail has every entry of the ledger: a refund is a "reversal" on the server.

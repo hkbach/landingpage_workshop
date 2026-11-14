@@ -1,4 +1,4 @@
-import { desc } from "drizzle-orm";
+import { desc, sql } from "drizzle-orm";
 import { index, integer, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { outboxStatus } from "./enums";
 import { organizations, users } from "./identity";
@@ -42,5 +42,8 @@ export const outboxEvents = pgTable(
     availableAt: timestamp("available_at", { withTimezone: true }).notNull().defaultNow(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [index("outbox_events_dispatch_idx").on(t.status, t.availableAt)],
+  (t) => [
+    index("outbox_events_dispatch_idx").on(t.status, t.availableAt),
+    index("outbox_events_email_created_idx").on(t.createdAt, t.id).where(sql`${t.type} = 'EMAIL'`), // the Emails page of the administrator
+  ],
 );

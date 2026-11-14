@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { QueryProvider } from "@/components/providers";
 import type { ReactNode } from "react";
 import { AreaIntlProvider } from "@/i18n/AreaIntlProvider";
 import { CustomerShell } from "@/components/customer/customer-shell";
@@ -15,11 +16,13 @@ export default async function CustomerLayout({ children, params }: { children: R
   const { accountId } = await params;
   await requireArea("CUSTOMER", (me) => me.id === accountId);
   return (
+    <QueryProvider>
     <AreaIntlProvider area="customer">
       <CustomerShell accountId={accountId} shop={{ slug: "", name: "Workshop Platform" }} theme={TEMPLATES.classic.theme} loginRequired={false} support={await loadSupport()}>
         {children}
       </CustomerShell>
       <ConsentGate />
     </AreaIntlProvider>
+    </QueryProvider>
   );
 }

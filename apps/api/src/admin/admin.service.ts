@@ -128,7 +128,7 @@ export class AdminService {
         shopSlug: sql<string | null>`(select o.slug from organization_members m join organizations o on o.id = m.organization_id where m.user_id = "users"."id" order by m.created_at limit 1)`,
         shopName: sql<string | null>`(select o.name from organization_members m join organizations o on o.id = m.organization_id where m.user_id = "users"."id" order by m.created_at limit 1)`,
         shopId: sql<string | null>`(select o.id from organization_members m join organizations o on o.id = m.organization_id where m.user_id = "users"."id" order by m.created_at limit 1)`,
-        bookingCount: sql<number>`(select count(*)::int from bookings b join customers c on c.id = b.customer_id where lower(c.email_normalized) = lower("users"."email"))`,
+        bookingCount: sql<number>`(select count(*)::int from bookings b join customers c on c.id = b.customer_id where c.email_normalized = lower("users"."email"))` // (stored lowercase: a plain comparison, served by customers_email_idx),
       })
       .from(users).where(and(...conditions)).orderBy(desc(users.createdAt), desc(users.id)).limit(query.limit + 1); // the password hash is never selected
     const page = rows.slice(0, query.limit);

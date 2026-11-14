@@ -10,7 +10,7 @@ const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
 // Per-host sitemap with hreflang alternates for each enabled locale (FR-SITE-05).
 export async function GET(_req: Request, ctx: RouteContext<"/sites/[slug]/sitemap.xml">) {
   const { slug } = await ctx.params;
-  const site = await loadPublicSite(slug);
+  const site = await loadPublicSite(slug, { sessions: false }); // (no seats: one call instead of one per workshop)
   if (!site) return new Response("Not found", { status: 404 });
   const { shop } = site;
   const origin = originOfSite(site);

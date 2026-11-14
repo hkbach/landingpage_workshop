@@ -16,10 +16,11 @@ export default async function SiteBuilderPage({ params, searchParams }: PageProp
   const sp = await searchParams;
   // ?apply=KEY (from the template preview banner) opens the "Switch template?" confirmation for that template.
   const apply = typeof sp.apply === "string" && isTemplateKey(sp.apply) ? sp.apply : undefined;
-  const shop = await loadOwnShop();
-  const detail = shop ? await ownPageDetail(pageId) : null;
+  // everything at once (none of it needs the shop to be asked for); only the sessions still to come count for the checklist
+  const [shop, detail, list, pages, sessionList] = await Promise.all([
+    loadOwnShop(), ownPageDetail(pageId), ownWorkshops(), apiGet<{ items: ServerPage[] }>("/site/pages"), fetchAll<Parameters<typeof toSession>[0]>(`/sessions?status=RUNNING&from=${encodeURIComponent(new Date().toISOString())}`),
+  ]);
   if (!shop || !detail) notFound();
-  const [list, pages, sessionList] = await Promise.all([ownWorkshops(), apiGet<{ items: ServerPage[] }>("/site/pages"), fetchAll<Parameters<typeof toSession>[0]>("/sessions?status=RUNNING")]);
   const draft = draftOf(detail, shop);
   return (
     <SiteBuilder

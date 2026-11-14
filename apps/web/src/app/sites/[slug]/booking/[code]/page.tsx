@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { BookingConfirmation, BookingNotFound } from "@/components/booking/BookingConfirmation";
 import { SiteFrame } from "@/components/site/SiteFrame";
 import { SiteIntlProvider } from "@/components/site/SiteIntlProvider";
-import { requireSite } from "@/components/site/resolve";
+import { requireSiteShell } from "@/components/site/resolve";
 import { getSiteBase } from "@/components/site/site-base";
 import { lookupGuestBooking } from "@/lib/public-booking";
 
@@ -14,7 +14,7 @@ export default async function BookingPage({ params, searchParams }: PageProps<"/
   const { slug, code } = await params;
   const sp = await searchParams;
   const email = typeof sp.email === "string" ? sp.email : "";
-  const site = await requireSite(slug);
+  const site = await requireSiteShell(slug);
   const { shop, theme } = site;
   const base = await getSiteBase(slug, site.customDomain);
   const homeHref = base || "/";

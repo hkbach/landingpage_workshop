@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { QueryProvider } from "@/components/providers";
 import { getTranslations } from "next-intl/server";
 import { LogOut, ShieldCheck } from "lucide-react";
 import { LogoutLink } from "@/components/auth/logout-link";
@@ -20,6 +21,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/systemadmi
   const t = await getTranslations("admin.shell");
 
   return (
+    <QueryProvider>
     <AreaIntlProvider area="admin">
       <div className="flex min-h-screen flex-col bg-muted/30 md:flex-row">
         <a
@@ -60,5 +62,6 @@ export default async function AdminLayout({ children }: LayoutProps<"/systemadmi
         </main>
       </div>
     </AreaIntlProvider>
+    </QueryProvider>
   );
 }

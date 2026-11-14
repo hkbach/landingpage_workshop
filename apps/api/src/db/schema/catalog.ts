@@ -123,6 +123,7 @@ export const workshopSessions = pgTable(
     check("workshop_sessions_code_format", sql`${t.code} ~ '^SES-[0-9]{4,}$'`),
     index("workshop_sessions_org_start_idx").on(t.organizationId, t.startsAt, t.status),
     index("workshop_sessions_open_end_idx").on(t.endsAt).where(sql`${t.status} NOT IN ('CLOSED','COMPLETED')`),
+    index("workshop_sessions_starts_idx").on(t.startsAt, t.id), // the platform-wide list of the administrator (ascending: serves DESC read backwards)
   ],
 );
 

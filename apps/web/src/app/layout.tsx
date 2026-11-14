@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getTranslations } from "next-intl/server";
-import { QueryProvider } from "@/components/providers";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -21,7 +20,8 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         {/* No messages here on purpose: each area (and the public site) sends only the texts it needs, see i18n/client-messages.ts. */}
         <NextIntlClientProvider messages={{}}>
-          <QueryProvider>{children}</QueryProvider>
+          {/* React Query is given by the layouts of the signed-in areas only: the public pages (the landing pages of the shops) do not load it */}
+          {children}
         </NextIntlClientProvider>
       </body>
     </html>

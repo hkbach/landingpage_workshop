@@ -12,14 +12,18 @@ import { fetchAll } from "@/lib/shop-data";
 
 export default async function CustomerDetailPage(props: PageProps<"/shopowner/[slug]/customers/[id]">) {
   const { id } = await props.params;
-  const own = await loadOwnShop();
+  // the shop, the customer and the bookings at once
+  const [own, found, allBookings] = await Promise.all([
+    loadOwnShop(),
+    apiGet<{ id: string; fullName: string; email: string; phone: string; country: string; preferredLocale: Customer["preferredLocale"] }>(`/customers/${encodeURIComponent(id)}`),
+    fetchAll<Parameters<typeof toBooking>[0]>("/bookings"),
+  ]);
   if (!own) notFound();
-  const found = await apiGet<{ id: string; fullName: string; email: string; phone: string; country: string; preferredLocale: Customer["preferredLocale"] }>(`/customers/${encodeURIComponent(id)}`);
   const customer = found ? { ...toCustomer({ ...found, bookingCount: 0, lastBookingAt: null, createdAt: "" }), preferredLocale: found.preferredLocale } : undefined;
   if (!customer) notFound();
   const t = await getTranslations("ops");
   const locale = await getLocale();
-  const all = (await fetchAll<Parameters<typeof toBooking>[0]>("/bookings")).filter((b) => b.customerId === customer.id).map((b) => toBooking(b, own));
+  const all = allBookings.filter((b) => b.customerId === customer.id).map((b) => toBooking(b, own));
   const history = all.filter((b) => b.customerId === customer.id).sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)); // newest booking first (FR-CUST-01)
   const tz = own.timezone;
   const regionName = new Intl.DisplayNames([locale], { type: "region" });
