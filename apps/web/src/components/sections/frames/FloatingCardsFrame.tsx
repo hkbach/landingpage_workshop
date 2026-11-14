@@ -3,7 +3,7 @@
 import type { CSSProperties } from "react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
-import { BookButton, Brand, Footer, FrameRoot, LanguageSwitch, Main, NavLinks, Sec, type FrameProps, HeaderMenu } from "./kit";
+import { AccountButtons, BookButton, Brand, Footer, FrameRoot, LanguageSwitch, Main, NavLinks, Sec, type FrameProps, HeaderMenu } from "./kit";
 import { navItems } from "./logic";
 
 const VARS = { "--sec-px": "1.25rem", "--sec-max": "100%", "--site-pad": "clamp(2rem, 5vw, 3.5rem)" } as CSSProperties;
@@ -29,6 +29,7 @@ export function FloatingCardsFrame({ body, footer, theme, ctx }: FrameProps) {
             </nav>
           ) : null}
           <div className="hidden items-center gap-2 @3xl:flex">
+            <AccountButtons ctx={ctx} />
             <LanguageSwitch ctx={ctx} />
             <BookButton className="rounded-full" />
           </div>

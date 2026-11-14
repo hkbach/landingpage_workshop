@@ -119,6 +119,31 @@ export function BookButton({ className, workshopId, onBeforeOpen }: { className?
   );
 }
 
+/**
+ * Log in and Register, for a customer of the platform (never for a shop owner: the register popup has no shop owner tab). They are links to the popups of the platform, because the session lives there.
+ * Without `ctx.accountLinks` nothing is shown; with empty addresses (the builder preview) they look the same and do nothing. `className` says how they are laid out (default: a row).
+ */
+export function AccountButtons({ ctx, className = "flex", menu = false }: { ctx: RenderContext; className?: string; menu?: boolean }) {
+  const t = useTranslations("site");
+  const links = ctx.accountLinks;
+  if (!links) return null;
+  const size = menu ? "min-h-12 w-full text-base" : "min-h-10 text-sm";
+  const base = "inline-flex items-center justify-center rounded-[var(--site-btn-radius)] font-medium text-[var(--site-text)]";
+  const entries = [
+    { href: links.login, label: t("nav.login"), testId: "site-login", style: cn("px-3 hover:bg-[var(--site-surface)]") },
+    { href: links.signup, label: t("nav.register"), testId: "site-register", style: cn("border border-[color:var(--site-primary)] px-4 hover:bg-[var(--site-surface)]") },
+  ];
+  return (
+    <div className={cn("items-center gap-2", menu && "grid grid-cols-2", className)}>
+      {entries.map((e) => e.href ? (
+        <a key={e.testId} href={e.href} rel="nofollow" data-testid={e.testId} className={cn(base, size, e.style, focusRing)}>{e.label}</a>
+      ) : (
+        <span key={e.testId} aria-disabled="true" data-testid={e.testId} className={cn(base, size, e.style)}>{e.label}</span>
+      ))}
+    </div>
+  );
+}
+
 export const navLinkClass = cn(
   "inline-flex min-h-10 items-center rounded-md px-3 text-sm font-medium text-[var(--site-text)] hover:bg-[var(--site-surface)]",
   "outline-none focus-visible:ring-2 focus-visible:ring-[var(--site-primary)]",
@@ -172,7 +197,7 @@ export function HeaderMenu({ items, ctx, until = "3xl", showBook = true, classNa
   }, [open]);
 
   // Nothing to put in the menu: no button either.
-  if (items.length === 0 && !hasLanguages && !showBook) return null;
+  if (items.length === 0 && !hasLanguages && !showBook && !ctx.accountLinks) return null;
 
   return (
     <div ref={root} className="contents">
@@ -201,6 +226,7 @@ export function HeaderMenu({ items, ctx, until = "3xl", showBook = true, classNa
               <LanguageSwitch ctx={ctx} onSelect={() => setOpen(false)} />
             </div>
           ) : null}
+          <AccountButtons ctx={ctx} menu className="mt-3 grid" />
           {showBook ? <BookButton className="mt-3 min-h-12 w-full text-base" onBeforeOpen={() => setOpen(false)} /> : null}
         </div>
       ) : null}

@@ -220,7 +220,9 @@
     "location": "アクセス",
     "contact": "お問い合わせ",
     "video": "動画",
-    "promotions": "プロモーション"
+    "promotions": "プロモーション",
+    "login": "ログイン",
+    "register": "新規登録"
   },
   "tabs": {
     "label": "ページのセクション",

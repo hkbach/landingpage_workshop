@@ -4,7 +4,7 @@ import type { CSSProperties } from "react";
 import { useTranslations } from "next-intl";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { BookButton, Brand, Footer, FrameRoot, LanguageSwitch, Main, Sec, STICKY_TOP, type FrameProps, HeaderMenu } from "./kit";
+import { AccountButtons, BookButton, Brand, Footer, FrameRoot, LanguageSwitch, Main, Sec, STICKY_TOP, type FrameProps, HeaderMenu } from "./kit";
 import { journeyRuns } from "./logic";
 
 const VARS = { "--sec-px": "1.25rem", "--sec-max": "100%", "--site-pad": "clamp(2rem, 5vw, 3.5rem)" } as CSSProperties;
@@ -20,6 +20,7 @@ export function JourneyFrame({ body, footer, theme, ctx }: FrameProps) {
         <div className="mx-auto flex w-full max-w-5xl items-center gap-3 px-4 py-2 @xl:px-6">
           <Brand theme={theme} ctx={ctx} className="flex-1" />
           <div className="hidden items-center gap-2 @3xl:flex">
+            <AccountButtons ctx={ctx} />
             <LanguageSwitch ctx={ctx} />
             <BookButton />
           </div>

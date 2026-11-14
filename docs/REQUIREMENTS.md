@@ -369,6 +369,7 @@ Cấu trúc đích khi có backend thật (chưa làm):
 - SEO: `<title>`, meta description, Open Graph image (lấy từ hero), `hreflang` cho mỗi ngôn ngữ đã bật, `sitemap.xml` và `robots.txt` theo host, canonical URL.
 - Cache: dùng ISR/revalidate theo tag; revalidate khi publish và khi workshop thay đổi. Dữ liệu chỗ còn trống **không cache** (lấy client-side hoặc `no-store`).
 - Footer có link "Report this site" (FR-ADM-04) và link Privacy Policy.
+- **Nút Đăng nhập và Đăng ký (14/11/2026):** header của mọi layout (trừ Quick Links, chỉ có menu) có hai nút **Log in** và **Register**; trên màn hình hẹp chúng nằm trong menu ba gạch. Dành cho **khách hàng (end user)** của nền tảng: nút Register mở hộp đăng ký của nền tảng ở chế độ **chỉ khách hàng** (`app.{PLATFORM_DOMAIN}/?auth=signup&only=customer`, không có tab chủ shop; chủ shop đăng ký từ trang chủ nền tảng), nút Log in mở hộp đăng nhập (`/?auth=login`). Hai nút là liên kết sang host `app.` vì cookie phiên chỉ đặt cho host đó (D21); trên host nền tảng ở dev giữ nguyên cổng, trên tên miền riêng của shop thì không có cổng. Nhãn qua i18n (`site.nav.login`, `site.nav.register`, 5 ngôn ngữ). Trong builder preview hai nút hiện nhưng không bấm được; trong khu khách hàng (đã đăng nhập) không hiện. Sau khi đăng ký, khách vào khu khách hàng của mình; **chưa** tự quay lại trang shop vừa đứng (ghi nhận để làm sau).
 
 ### 5.3 Media
 

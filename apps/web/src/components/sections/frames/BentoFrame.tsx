@@ -6,7 +6,7 @@ import { isBookButtonShown } from "../registry";
 import { WorkshopCard } from "../renderers";
 import { Img } from "../renderer-kit";
 import { sectionVarsFor } from "../SectionRenderer";
-import { activeWorkshops, BookButton, Brand, Footer, FrameRoot, galleryImages, LanguageSwitch, Main, Sec, STICKY_TOP, type FrameProps, HeaderMenu } from "./kit";
+import { AccountButtons, activeWorkshops, BookButton, Brand, Footer, FrameRoot, galleryImages, LanguageSwitch, Main, Sec, STICKY_TOP, type FrameProps, HeaderMenu } from "./kit";
 import { planBento, type BentoSize, type BentoTile } from "./logic";
 
 const VARS = { "--sec-px": "1.25rem", "--sec-max": "100%", "--site-pad": "1.5rem", "--hero-min-h": "22rem" } as CSSProperties;
@@ -54,6 +54,7 @@ export function BentoFrame({ body, footer, theme, ctx }: FrameProps) {
         <div className="mx-auto flex w-full max-w-7xl items-center gap-3 px-3 py-2">
           <Brand theme={theme} ctx={ctx} className="flex-1" />
           <div className="hidden items-center gap-2 @3xl:flex">
+            <AccountButtons ctx={ctx} />
             <LanguageSwitch ctx={ctx} />
             <BookButton />
           </div>

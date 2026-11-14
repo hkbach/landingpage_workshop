@@ -305,6 +305,7 @@ Dùng nút ngôn ngữ ở góc trên bên phải (English, Tiếng Việt, 한�
 
 - Dữ liệu nằm trong **PostgreSQL** và còn nguyên khi tắt web. Muốn làm lại từ đầu, tạo lại database rồi chạy `pnpm db:migrate` và `pnpm db:seed` (xóa volume của database là hành động mất dữ liệu: chỉ làm trên máy dev của bạn).
 - Trang giới thiệu của nền tảng hiển thị workshop của các shop mà admin chọn "List" (API `GET /public/workshops/featured`).
+- Trang landing page của shop có nút **Log in** và **Register** ở header (trong menu ba gạch trên điện thoại) cho **khách hàng**: chúng dẫn sang `app.localtest.me:3000` và mở hộp đăng nhập / đăng ký chỉ dành cho khách hàng (chủ shop đăng ký từ trang chủ của nền tảng).
 - Test: có `TEST_DATABASE_URL` thì `pnpm test` chạy thêm các test trên PostgreSQL thật (đăng ký, đăng nhập, cách ly dữ liệu giữa các shop, email, outbox...). Thiếu nó thì các test đó được bỏ qua. Các test này **tạo dữ liệu trong database test**, không dùng database dev. Test trình duyệt (`pnpm test:e2e`) cần cả stack ở trên: xem [e2e/README.md](e2e/README.md).
 
 ---

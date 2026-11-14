@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
-import { BookButton, Brand, Footer, FrameRoot, LanguageSwitch, Main, onTabListKeyDown, Sec, STICKY_TOP, type FrameProps, HeaderMenu } from "./kit";
+import { AccountButtons, BookButton, Brand, Footer, FrameRoot, LanguageSwitch, Main, onTabListKeyDown, Sec, STICKY_TOP, type FrameProps, HeaderMenu } from "./kit";
 import { groupIntoTabs, tabForHash, type TabKey } from "./logic";
 
 function subscribeHash(cb: () => void) {
@@ -43,6 +43,7 @@ export function AppStyleFrame({ body, footer, theme, ctx }: FrameProps) {
       <div className={cn("sticky z-30 border-b border-[color:var(--site-border)] bg-[var(--site-bg)]", STICKY_TOP)}>
         <header className="mx-auto flex w-full max-w-5xl items-center gap-3 px-4 py-2 @xl:px-6">
           <Brand theme={theme} ctx={ctx} className="flex-1" />
+          <AccountButtons ctx={ctx} className="hidden @3xl:flex" />
           <LanguageSwitch ctx={ctx} className="hidden @3xl:block" />
           <BookButton className="hidden @3xl:inline-flex" />
           {/* The tabs are this layout's own navigation; the menu keeps the languages (Book is in the bottom bar). */}

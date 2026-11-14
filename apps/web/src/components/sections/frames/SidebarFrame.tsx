@@ -3,7 +3,7 @@
 import type { CSSProperties } from "react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
-import { BookButton, Brand, Footer, FrameRoot, LanguageSwitch, Main, NavLinks, Sec, STICKY_TOP, useActiveSection, type FrameProps, HeaderMenu } from "./kit";
+import { AccountButtons, BookButton, Brand, Footer, FrameRoot, LanguageSwitch, Main, NavLinks, Sec, STICKY_TOP, useActiveSection, type FrameProps, HeaderMenu } from "./kit";
 import { navItems } from "./logic";
 
 const VARS = { "--sec-max": "60rem" } as CSSProperties;
@@ -38,6 +38,7 @@ export function SidebarFrame({ body, footer, theme, ctx }: FrameProps) {
             <NavLinks items={items} className="grid gap-1" linkClassName={sideLink} activeId={active} />
           </nav>
           <div className="space-y-3">
+            <AccountButtons ctx={ctx} className="grid grid-cols-2" />
             <LanguageSwitch ctx={ctx} />
             <BookButton className="w-full" />
           </div>

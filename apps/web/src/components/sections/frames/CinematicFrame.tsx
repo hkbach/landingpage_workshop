@@ -3,7 +3,7 @@
 import type { CSSProperties } from "react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
-import { BookButton, Brand, Footer, FrameRoot, LanguageSwitch, Main, NavLinks, Sec, STICKY_TOP, useActiveSection, type FrameProps, HeaderMenu } from "./kit";
+import { AccountButtons, BookButton, Brand, Footer, FrameRoot, LanguageSwitch, Main, NavLinks, Sec, STICKY_TOP, useActiveSection, type FrameProps, HeaderMenu } from "./kit";
 import { navItems, isRenderable } from "./logic";
 
 const HERO_VARS = { "--hero-min-h": "100svh" } as CSSProperties;
@@ -30,6 +30,7 @@ export function CinematicFrame({ body, footer, theme, ctx }: FrameProps) {
             </nav>
           ) : null}
           <div className="hidden items-center gap-2 @3xl:flex">
+            <AccountButtons ctx={ctx} />
             <LanguageSwitch ctx={ctx} />
             <BookButton />
           </div>

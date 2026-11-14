@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
-import { BookButton, Brand, Footer, FrameRoot, LanguageSwitch, Main, NavLinks, Sec, type FrameProps, HeaderMenu } from "./kit";
+import { AccountButtons, BookButton, Brand, Footer, FrameRoot, LanguageSwitch, Main, NavLinks, Sec, type FrameProps, HeaderMenu } from "./kit";
 import { chapterNumber, navItems } from "./logic";
 
 const chapterLink = cn(
@@ -22,6 +22,7 @@ export function MagazineFrame({ body, footer, theme, ctx }: FrameProps) {
         <div className="mx-auto flex w-full max-w-6xl items-center gap-3 px-4 py-4 @xl:px-6">
           <Brand theme={theme} ctx={ctx} className="flex-1 font-serif text-lg uppercase tracking-[0.2em] @xl:text-2xl" />
           <div className="hidden items-center gap-2 @3xl:flex">
+            <AccountButtons ctx={ctx} />
             <LanguageSwitch ctx={ctx} />
             <BookButton />
           </div>

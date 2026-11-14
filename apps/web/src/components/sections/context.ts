@@ -10,6 +10,11 @@ export interface RenderContext {
   /** Promotions that are active today (Promotion management); the promotions section never takes manual content. Default: none. */
   promotions?: PromotionRecord[];
   reportHref: string;
+  /**
+   * The Log in and Register buttons in the header of the page (a customer account of the platform). Public site: the addresses of the popups of the platform. Builder preview: empty strings (the
+   * buttons are shown and do nothing). Absent where a person is already signed in (the customer area): no buttons.
+   */
+  accountLinks?: { login: string; signup: string };
   privacyHref: string;
   /** Languages offered by the language switcher of the frame chrome (public site: real links; preview: in-place switch). */
   languages?: { locale: Locale; href: string }[];

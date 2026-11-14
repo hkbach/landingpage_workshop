@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
-import { BookButton, Brand, Footer, FrameRoot, LanguageSwitch, Main, NavLinks, Sec, STICKY_TOP, type FrameProps, HeaderMenu } from "./kit";
+import { AccountButtons, BookButton, Brand, Footer, FrameRoot, LanguageSwitch, Main, NavLinks, Sec, STICKY_TOP, type FrameProps, HeaderMenu } from "./kit";
 import { navItems } from "./logic";
 
 /** Classic Story: sticky top bar (logo, anchor links, language, Book) and the familiar stack of full-width sections. */
@@ -20,6 +20,7 @@ export function ClassicFrame({ body, footer, theme, ctx }: FrameProps) {
             </nav>
           ) : <span className="hidden flex-1 @3xl:block" />}
           <div className="hidden items-center gap-2 @3xl:flex">
+            <AccountButtons ctx={ctx} />
             <LanguageSwitch ctx={ctx} />
             <BookButton />
           </div>

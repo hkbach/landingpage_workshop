@@ -70,7 +70,7 @@ export function SitePreview({ shop, initial, workshops, sessions = [], promotion
   );
 
   const ctx: RenderContext = {
-    locale: lang, shop, workshops, promotions, reportHref: "#", privacyHref: "#", allowDataImages: true,
+    locale: lang, shop, workshops, promotions, reportHref: "#", privacyHref: "#", accountLinks: { login: "", signup: "" }, allowDataImages: true,
     languages: shop.enabledLocales.map((l) => ({ locale: l, href: "#" })),
   };
   const chrome = useMemo(() => ({ onSelectLocale: setLang }), []);

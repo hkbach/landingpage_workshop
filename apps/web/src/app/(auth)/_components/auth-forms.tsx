@@ -117,9 +117,11 @@ type SignupKind = "customer" | "owner";
 const PLATFORM_DOMAIN = process.env.NEXT_PUBLIC_PLATFORM_DOMAIN || "localtest.me";
 
 /** The popup Sign up: two tabs, one for a customer and one for a shop owner. A new account is logged in at once and sent to its own area. */
-export function SignupForm({ initialTab = "customer" }: { initialTab?: SignupKind }) {
+export function SignupForm({ initialTab = "customer", customerOnly = false }: { initialTab?: SignupKind; customerOnly?: boolean }) {
   const t = useTranslations("auth");
   const [tab, setTab] = useState<SignupKind>(initialTab);
+  // From the Register button of a shop page: a customer account only, no shop owner tab.
+  if (customerOnly) return <div className="grid gap-3" data-testid="signup-customer-only"><p className="text-muted-foreground">{t("signup.customerIntro")}</p><SignupKindForm kind="customer" /></div>;
   return (
     <Tabs value={tab} onValueChange={(v) => setTab(v as SignupKind)} className="gap-4" data-testid="signup-tabs">
       <TabsList className="grid w-full grid-cols-2" aria-label={t("signup.tabsLabel")}>

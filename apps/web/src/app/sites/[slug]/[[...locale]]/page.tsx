@@ -3,7 +3,7 @@ import { hreflangOf, pickLocalized } from "@workshop/shared";
 import { SiteBody } from "@/components/site/SiteBody";
 import { SiteFrame } from "@/components/site/SiteFrame";
 import { SiteIntlProvider } from "@/components/site/SiteIntlProvider";
-import { getSiteBase } from "@/components/site/site-base";
+import { getAccountLinks, getSiteBase } from "@/components/site/site-base";
 import { localePath } from "@/components/site/site-url";
 import { originOfSite } from "@/lib/public-site";
 import { requireSite, resolveLocale } from "@/components/site/resolve";
@@ -56,6 +56,7 @@ export default async function SitePage({ params }: PageProps<"/sites/[slug]/[[..
     workshops,
     promotions,
     reportHref: `${base}/report`,
+    accountLinks: await getAccountLinks(),
     privacyHref: "#privacy", // placeholder until the legal pages exist
   };
 

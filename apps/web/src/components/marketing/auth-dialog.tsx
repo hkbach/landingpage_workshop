@@ -19,11 +19,13 @@ export function useAuthDialog(): (mode: Mode, kind?: Kind) => void {
 }
 
 /**
- * Log in and Sign up are popups of the public site, not pages. The address `/?auth=login` or `/?auth=signup` (`&tab=owner` for the shop owner tab) opens the popup too: it is where the old
+ * Log in and Sign up are popups of the public site, not pages. The address `/?auth=login` or `/?auth=signup` (`&tab=owner` for the shop owner tab; `&only=customer` for a customer only, as the Register button of a shop page asks) opens the popup too: it is where the old
  * /login and /signup addresses, the links of the emails and Log out lead. After a login the person is sent to their own area, see goHome in auth-forms.
  */
 export function AuthDialogProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<Open | null>(null);
+  // `&only=customer` (the Register button of a shop page): the sign up popup has no shop owner tab, also after a switch to Log in and back.
+  const [customerOnly, setCustomerOnly] = useState(false);
   const openDialog = useCallback((mode: Mode, kind?: Kind) => setState({ mode, ...(kind ? { kind } : {}) }), []);
 
   useEffect(() => {
@@ -31,7 +33,11 @@ export function AuthDialogProvider({ children }: { children: ReactNode }) {
     const auth = q.get("auth");
     if (auth !== "login" && auth !== "signup") return;
     const tab = q.get("tab");
-    queueMicrotask(() => setState({ mode: auth, ...(tab === "owner" || tab === "customer" ? { kind: tab } : {}) }));
+    const only = q.get("only") === "customer";
+    queueMicrotask(() => {
+      setCustomerOnly(only);
+      setState({ mode: auth, ...(only ? { kind: "customer" as const } : tab === "owner" || tab === "customer" ? { kind: tab } : {}) });
+    });
   }, []);
 
   const close = (open: boolean) => {
@@ -42,6 +48,7 @@ export function AuthDialogProvider({ children }: { children: ReactNode }) {
     if (url.searchParams.has("auth")) {
       url.searchParams.delete("auth");
       url.searchParams.delete("tab");
+      url.searchParams.delete("only");
       window.history.replaceState(null, "", url.pathname + url.search + url.hash);
     }
   };
@@ -52,14 +59,14 @@ export function AuthDialogProvider({ children }: { children: ReactNode }) {
       {children}
       <Dialog open={state !== null} onOpenChange={close}>
         <DialogContent className="max-h-[92dvh] gap-4 overflow-y-auto p-5 sm:max-w-md sm:p-6" data-testid="auth-dialog">
-          {state ? <AuthPanel key={`${state.mode}-${state.kind ?? ""}`} state={state} onSwitch={openDialog} /> : null}
+          {state ? <AuthPanel key={`${state.mode}-${state.kind ?? ""}`} state={state} customerOnly={customerOnly} onSwitch={openDialog} /> : null}
         </DialogContent>
       </Dialog>
     </AuthDialogContext.Provider>
   );
 }
 
-function AuthPanel({ state, onSwitch }: { state: Open; onSwitch: (mode: Mode, kind?: Kind) => void }) {
+function AuthPanel({ state, customerOnly, onSwitch }: { state: Open; customerOnly: boolean; onSwitch: (mode: Mode, kind?: Kind) => void }) {
   const t = useTranslations("auth");
   const login = state.mode === "login";
   return (
@@ -68,7 +75,7 @@ function AuthPanel({ state, onSwitch }: { state: Open; onSwitch: (mode: Mode, ki
         <DialogTitle className="text-xl font-semibold">{login ? t("login.title") : t("signup.title")}</DialogTitle>
         <DialogDescription>{login ? t("login.subtitle") : t("signup.subtitle")}</DialogDescription>
       </DialogHeader>
-      {login ? <LoginForm /> : <SignupForm initialTab={state.kind ?? "customer"} />}
+      {login ? <LoginForm /> : <SignupForm initialTab={state.kind ?? "customer"} customerOnly={customerOnly} />}
       <p className="text-center text-sm text-muted-foreground">
         {login ? t("login.noAccount") : t("signup.haveAccount")}{" "}
         <button type="button" onClick={() => onSwitch(login ? "signup" : "login")} className="font-medium text-foreground underline underline-offset-4" data-testid="auth-switch">

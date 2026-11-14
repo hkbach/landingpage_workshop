@@ -1,5 +1,5 @@
 import { headers } from "next/headers";
-import { PLATFORM_DOMAIN } from "./site-url";
+import { accountLinks, PLATFORM_DOMAIN } from "./site-url";
 
 /**
  * Base path for links inside a shop site: "" when served on {slug}.PLATFORM_DOMAIN or on the own domain of the shop (proxy rewrite),
@@ -9,4 +9,9 @@ export async function getSiteBase(slug: string, customDomain?: string | null): P
   const host = ((await headers()).get("host") ?? "").split(":")[0]!.toLowerCase();
   const own = customDomain ?? "";
   return host === `${slug.toLowerCase()}.${PLATFORM_DOMAIN}` || (own !== "" && host === own) ? "" : `/sites/${slug}`;
+}
+
+/** The addresses of the Log in and Register buttons, from the host the page is served on (reading headers makes the page dynamic, as getSiteBase does). */
+export async function getAccountLinks(): Promise<{ login: string; signup: string }> {
+  return accountLinks((await headers()).get("host") ?? "");
 }

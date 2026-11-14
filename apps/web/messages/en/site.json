@@ -220,7 +220,9 @@
     "location": "Location",
     "contact": "Contact",
     "video": "Video",
-    "promotions": "Promotions"
+    "promotions": "Promotions",
+    "login": "Log in",
+    "register": "Register"
   },
   "tabs": {
     "label": "Page sections",

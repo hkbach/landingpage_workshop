@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { useBookingActions } from "../booking-context";
 import { localizer, primaryButton } from "../renderer-kit";
 import type { RenderContext } from "../context";
-import { activeWorkshops, BookButton, Brand, Footer, FrameRoot, LanguageSwitch, Main, NavLinks, Sec, STICKY_TOP, type FrameProps, HeaderMenu } from "./kit";
+import { AccountButtons, activeWorkshops, BookButton, Brand, Footer, FrameRoot, LanguageSwitch, Main, NavLinks, Sec, STICKY_TOP, type FrameProps, HeaderMenu } from "./kit";
 import { navItems } from "./logic";
 
 const VARS = { "--sec-px": "1.25rem", "--sec-max": "100%" } as CSSProperties;
@@ -39,6 +39,7 @@ export function BookingRailFrame({ body, footer, theme, ctx }: FrameProps) {
               <NavLinks items={items} className="flex gap-1 whitespace-nowrap" />
             </nav>
           ) : <span className="hidden flex-1 @5xl:block" />}
+          <AccountButtons ctx={ctx} className="hidden @5xl:flex" />
           <LanguageSwitch ctx={ctx} className="hidden @5xl:block" />
           {/* Booking stays in the sticky bottom bar on narrow widths, so the menu only holds the links and the languages. */}
           <HeaderMenu items={items} ctx={ctx} until="5xl" showBook={false} />

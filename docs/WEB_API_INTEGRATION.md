@@ -20,6 +20,13 @@
 - **Chưa làm ở lát này:** widget Turnstile thật (khung giữ chỗ vẫn hiện; API bỏ qua kiểm tra khi chưa có `TURNSTILE_SECRET_KEY`, production bắt buộc), `<html lang>` của trang shop, tạo tài khoản khi đặt chỗ (D2/D3) và yêu thích (lát 4), xác nhận bằng nút bấm thay vì mở link (đã có TODO).
 - **Kiểm thử:** `e2e/real-booking.spec.ts` (2 test): đặt chỗ đủ 5 bước với mã đọc từ Mailpit (mã sai bị từ chối), xác nhận bằng link, tra cứu đúng/sai email, 404, sitemap, robots. Cần stack thật gồm cả **worker** (`pnpm --filter api dev:worker`) và `E2E_PASSWORD` của tài khoản seed (xem `e2e/README.md`).
 
+### Nút Đăng nhập / Đăng ký trên trang shop (14/11/2026)
+
+- `RenderContext.accountLinks` (`components/sections/context.ts`): trang public điền từ host đang phục vụ (`getAccountLinks` → `accountLinks(host)` trong `components/site/site-url.ts`), builder preview điền chuỗi rỗng (nút hiện, không bấm), khu khách hàng không điền (không hiện). `AccountButtons` (`frames/kit.tsx`) có mặt trong header của 9 layout và trong `HeaderMenu` cho màn hình hẹp.
+- Hộp đăng ký của nền tảng nhận thêm `&only=customer`: `SignupForm` bỏ tab chủ shop (`data-testid="signup-customer-only"`); bấm sang Đăng nhập rồi quay lại vẫn chỉ khách hàng.
+- Test: `site-url.test.ts` (địa chỉ theo host), `header-menu.test.ts` (nút, mọi layout), `e2e/auth.spec.ts` thêm 2 test (đăng ký khách thật từ trang shop, không có tab chủ shop, `/auth/me` trả CUSTOMER; nút Log in mở hộp đăng nhập).
+- **Chưa làm:** sau khi đăng nhập/đăng ký từ trang shop, khách vào khu khách hàng chứ chưa quay lại trang shop (cần tham số `next` an toàn, chỉ chấp nhận host của nền tảng hoặc tên miền đã xác minh).
+
 ### Lát 3: khu chủ shop (13/11/2026)
 
 Khi đặt `API_URL`, mọi trang của `/shopowner/{slug}` đọc dữ liệu của **shop trong phiên** từ API (`lib/own-shop.ts`, `own-catalog.ts`, `own-ops.ts`, `own-finance.ts`, `own-site.ts`) và mọi thay đổi được gửi lên server.

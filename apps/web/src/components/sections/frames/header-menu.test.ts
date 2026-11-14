@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 import site from "../../../../messages/en/site.json";
 import type { RenderContext } from "../context";
 import { LAYOUT_KEYS } from "../layouts";
-import { HeaderMenu } from "./kit";
+import { AccountButtons, HeaderMenu } from "./kit";
 import type { NavItem } from "./logic";
 
 const Provider = NextIntlClientProvider as unknown as ComponentType<{ locale: string; messages: { site: typeof site }; children?: ReactNode }>;
@@ -54,6 +54,45 @@ describe("HeaderMenu (closed)", () => {
     expect(menu({ items: [], showBook: false })).toContain("aria-expanded");
     expect(menu({ languages: [], showBook: false })).toContain("aria-expanded");
     expect(menu({ items: [], languages: [] })).toContain("aria-expanded");
+  });
+});
+
+describe("Log in and Register buttons (a customer account of the platform)", () => {
+  const withLinks = (accountLinks?: RenderContext["accountLinks"]): RenderContext => ({ ...ctx([...two]), ...(accountLinks ? { accountLinks } : {}) });
+  const links = { login: "http://app.localtest.me:3000/?auth=login", signup: "http://app.localtest.me:3000/?auth=signup&only=customer" };
+
+  it("are two links to the popups of the platform", () => {
+    const html = render(createElement(AccountButtons, { ctx: withLinks(links) }));
+    expect(html).toContain(`href="${links.login}"`);
+    expect(html).toContain(`href="${links.signup.replace("&", "&amp;")}"`); // (static markup escapes the & of the address)
+    expect(html).toContain(">Log in<");
+    expect(html).toContain(">Register<");
+    expect(html).toContain('data-testid="site-register"');
+  });
+  it("are not offered to a shop owner: the Register address asks for a customer only", () => {
+    const html = render(createElement(AccountButtons, { ctx: withLinks(links) }));
+    expect(html).toContain("only=customer");
+    expect(html).not.toContain("tab=owner");
+  });
+  it("show nothing where there are no addresses (the customer area, a person who is signed in)", () => {
+    expect(render(createElement(AccountButtons, { ctx: withLinks() }))).toBe("");
+  });
+  it("look the same and do nothing in the builder preview (empty addresses)", () => {
+    const html = render(createElement(AccountButtons, { ctx: withLinks({ login: "", signup: "" }) }));
+    expect(html).not.toContain("<a ");
+    expect(html).toContain('aria-disabled="true"');
+    expect(html).toContain(">Register<");
+  });
+  it("keep the menu there even when it would hold nothing else, and stay out of its closed state", () => {
+    const only = { ...withLinks(links), languages: [] };
+    expect(render(createElement(HeaderMenu, { items: [], ctx: only, showBook: false }))).toContain("aria-expanded");
+    expect(render(createElement(HeaderMenu, { items: [], ctx: only, showBook: false }))).not.toContain("Register");
+  });
+  it("every frame that shows the language switch in its header also has them", () => {
+    const dir = join(process.cwd(), "src/components/sections/frames");
+    for (const file of readdirSync(dir).filter((f) => /Frame\.tsx$/.test(f) && f !== "QuickLinksFrame.tsx")) {
+      expect(readFileSync(join(dir, file), "utf8"), file).toMatch(/<AccountButtons\b/);
+    }
   });
 });
 
