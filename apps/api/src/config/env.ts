@@ -7,6 +7,9 @@ import { DEV_APP_SECRET } from "../common/secrets";
 const bool = (fallback: boolean) =>
   z.enum(["true", "false", "1", "0"]).optional().transform((v) => (v === undefined ? fallback : v === "true" || v === "1"));
 
+/** An optional setting: not there, or left empty, is the same. */
+const blankIsUnset = <T extends z.ZodType>(inner: T) => z.preprocess((v) => (typeof v === "string" && v.trim() === "" ? undefined : v), inner.optional());
+
 const schema = z
   .object({
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
@@ -37,6 +40,17 @@ const schema = z
     /** The application secret: the pepper of the codes sent by email and the key of the encrypted columns (bank account numbers). At least 32 characters, random, kept in the secret store of the environment. A change makes the encrypted values unreadable. A development default exists; production refuses it. */
     APP_SECRET: z.string().min(32, "APP_SECRET must have at least 32 characters").default(DEV_APP_SECRET),
 
+    /**
+     * Image storage (Cloudflare R2). All five or none: without them the upload of images answers "not set up" and the pages keep taking an https link. The bucket is public to read at
+     * `R2_PUBLIC_BASE_URL` (the `r2.dev` address of the bucket, or a domain of yours); the key can write to that one bucket only.
+     */
+    // (a variable left empty in the .env file counts as not set)
+    R2_ACCOUNT_ID: blankIsUnset(z.string().trim().regex(/^[a-f0-9]{32}$/i, "must be the 32 hexadecimal characters of the Cloudflare account id")),
+    R2_ACCESS_KEY_ID: blankIsUnset(z.string().trim().min(8, "looks too short for an access key id")),
+    R2_SECRET_ACCESS_KEY: blankIsUnset(z.string().trim().min(16, "looks too short for a secret access key")),
+    R2_BUCKET: blankIsUnset(z.string().trim().regex(/^[A-Za-z0-9][A-Za-z0-9._-]{1,61}[A-Za-z0-9]$/, "must be the name of the bucket only: 3 to 63 letters, digits, dots, hyphens or underscores")),
+    R2_PUBLIC_BASE_URL: blankIsUnset(z.url("must be a web address such as https://pub-xxxx.r2.dev").refine((v) => v.startsWith("https://"), "must start with https://")),
+
     /** Cloudflare Turnstile secret. Empty: the check is skipped (development only). */
     TURNSTILE_SECRET_KEY: z.string().optional(),
 
@@ -50,6 +64,8 @@ const schema = z
       if (v.APP_SECRET === DEV_APP_SECRET) ctx.addIssue({ code: "custom", path: ["APP_SECRET"], message: "APP_SECRET must be set in production" });
       if (!v.APP_URL.startsWith("https://")) ctx.addIssue({ code: "custom", path: ["APP_URL"], message: "APP_URL must be https in production" });
     }
+    const r2 = [v.R2_ACCOUNT_ID, v.R2_ACCESS_KEY_ID, v.R2_SECRET_ACCESS_KEY, v.R2_BUCKET, v.R2_PUBLIC_BASE_URL];
+    if (r2.some(Boolean) && !r2.every(Boolean)) ctx.addIssue({ code: "custom", path: ["R2_ACCOUNT_ID"], message: "R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET and R2_PUBLIC_BASE_URL go together: set all five or none" });
     if (v.EMAIL_PROVIDER === "resend" && !v.RESEND_API_KEY) ctx.addIssue({ code: "custom", path: ["RESEND_API_KEY"], message: "RESEND_API_KEY is required for the resend provider" });
   });
 

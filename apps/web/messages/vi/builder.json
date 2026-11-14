@@ -285,7 +285,8 @@
       "typeMismatch": "Nội dung tệp không khớp với định dạng. Hãy dùng ảnh JPEG, PNG hoặc WebP thật.",
       "decodeFailed": "Không đọc được ảnh này. Hãy thử tệp khác.",
       "storageFull": "Bộ nhớ trình duyệt đã đầy. Hãy xóa ảnh khác, dùng ảnh nhỏ hơn hoặc dán URL ảnh.",
-      "failed": "Tải lên thất bại. Vui lòng thử lại."
+      "failed": "Tải lên thất bại. Vui lòng thử lại.",
+      "notConfigured": "Chưa thiết lập tải ảnh lên. Hãy dán địa chỉ (URL) của ảnh."
     }
   },
   "video": {

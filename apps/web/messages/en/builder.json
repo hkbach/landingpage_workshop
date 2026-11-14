@@ -285,7 +285,8 @@
       "typeMismatch": "The file content does not match its type. Use a real JPEG, PNG or WebP image.",
       "decodeFailed": "This image could not be read. Try another file.",
       "storageFull": "Browser storage is full. Remove other images or use a smaller one, or paste an image URL.",
-      "failed": "Upload failed. Please try again."
+      "failed": "Upload failed. Please try again.",
+      "notConfigured": "Image upload is not set up yet. Paste the address of an image instead."
     }
   },
   "video": {

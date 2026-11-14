@@ -12,6 +12,8 @@ export interface CspOptions {
   apiOrigin?: string;
   /** The host that serves the images of the platform (the CDN of the media bucket), when it is not the app. */
   mediaOrigin?: string;
+  /** Where the browser uploads an image to (the S3 address of the media bucket: `https://{account}.r2.cloudflarestorage.com`). Without it the upload is blocked by the policy. */
+  uploadOrigin?: string;
   /** Production only: ask the browser to load every http link as https. */
   upgradeInsecure?: boolean;
 }
@@ -19,14 +21,14 @@ export interface CspOptions {
 const TURNSTILE = "https://challenges.cloudflare.com";
 const YOUTUBE = "https://www.youtube-nocookie.com";
 
-export function buildCsp({ nonce, dev = false, apiOrigin = "", mediaOrigin = "", upgradeInsecure = false }: CspOptions): string {
+export function buildCsp({ nonce, dev = false, apiOrigin = "", mediaOrigin = "", uploadOrigin = "", upgradeInsecure = false }: CspOptions): string {
   const directives: [string, string[]][] = [
     ["default-src", ["'self'"]],
     ["script-src", ["'self'", `'nonce-${nonce}'`, "'strict-dynamic'", TURNSTILE, ...(dev ? ["'unsafe-eval'"] : [])]],
     ["style-src", ["'self'", "'unsafe-inline'"]],
     ["img-src", ["'self'", "data:", "blob:", "https:", ...(mediaOrigin ? [mediaOrigin] : [])]],
     ["font-src", ["'self'", "data:"]],
-    ["connect-src", ["'self'", TURNSTILE, ...(apiOrigin ? [apiOrigin] : []), ...(dev ? ["ws:", "wss:"] : [])]],
+    ["connect-src", ["'self'", TURNSTILE, ...(apiOrigin ? [apiOrigin] : []), ...(uploadOrigin ? [uploadOrigin] : []), ...(dev ? ["ws:", "wss:"] : [])]],
     ["frame-src", [TURNSTILE, YOUTUBE]],
     ["media-src", ["'self'", "https:"]],
     ["worker-src", ["'self'", "blob:"]],

@@ -34,8 +34,28 @@ Tạo một file biến (ngoài repo, hoặc `infra/.env.production` vì git b�
 | `BACKUP_PASSPHRASE` | Cụm mật khẩu mã hóa backup. Mất nó là không đọc được backup: giữ trong kho bí mật. |
 | `BACKUP_BUCKET` | Bucket R2 **riêng** cho backup. |
 | `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_ENDPOINT` | Khóa R2 chỉ có quyền ghi vào bucket backup; endpoint dạng `https://<account id>.r2.cloudflarestorage.com`. |
+| `MEDIA_R2_ACCOUNT_ID`, `MEDIA_R2_BUCKET` | Ảnh: id tài khoản Cloudflare (32 ký tự hex) và tên bucket **ảnh** (bucket riêng, công khai để đọc). |
+| `MEDIA_R2_ACCESS_KEY_ID`, `MEDIA_R2_SECRET_ACCESS_KEY` | Khóa R2 cho ảnh: `Object Read & Write` **chỉ trên bucket ảnh** (khác khóa của backup). |
+| `MEDIA_PUBLIC_BASE_URL` | Địa chỉ đọc ảnh công khai: địa chỉ `r2.dev` của bucket (tạm thời) hoặc tên miền riêng, dạng `https://pub-xxxx.r2.dev` (không có dấu `/` cuối). |
+| `MEDIA_UPLOAD_ORIGIN` | `https://<account id>.r2.cloudflarestorage.com`: nơi trình duyệt tải ảnh lên (cho phép trong Content-Security-Policy của web). |
 | `BACKUP_HOUR_UTC` | Giờ chạy backup mỗi ngày (0 đến 23, mặc định 19 = 02:00 giờ Việt Nam). |
 | `BACKUP_RETENTION_DAYS` | Số ngày giữ backup (mặc định 30). |
+
+### Ảnh (Cloudflare R2)
+
+Ảnh nằm trong một bucket R2 **công khai để đọc**. Trình duyệt tải ảnh **thẳng lên R2** bằng một URL ký sẵn (API cấp qua `POST /api/v1/media/presign`: một ảnh, một loại, 5 phút, vào thư mục của đúng shop `shops/{id}/...`); API và web không giữ file và khóa R2 không bao giờ ra khỏi API. Để trống các biến `MEDIA_*` thì tải ảnh báo "chưa thiết lập" và các trang vẫn nhận địa chỉ ảnh dán vào.
+
+Thiết lập một lần (bảng điều khiển Cloudflare, R2):
+1. Tạo bucket ảnh (ví dụ `workshop-media`). Trong **Settings** của bucket, bật **Public Development URL** (địa chỉ `r2.dev`; cho sản xuất thật nên gắn tên miền riêng).
+2. Tạo **API token** R2 với quyền **Object Read & Write** áp dụng **chỉ cho bucket này**; lưu Access Key ID và Secret (chỉ hiện một lần).
+3. **CORS policy** của bucket (để trình duyệt PUT được):
+   ```json
+   [{ "AllowedOrigins": ["https://app.<tên miền>", "http://app.localtest.me:3000"], "AllowedMethods": ["PUT"], "AllowedHeaders": ["content-type"], "MaxAgeSeconds": 3600 }]
+   ```
+4. Điền biến (dev: `apps/api/.env` với `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_PUBLIC_BASE_URL`, và `apps/web/.env.local` với `MEDIA_UPLOAD_ORIGIN=https://<account id>.r2.cloudflarestorage.com`; production: các biến `MEDIA_*` ở bảng trên).
+5. Kiểm tra: `pnpm --filter api r2:check` tải một ảnh 1x1 lên bằng URL ký sẵn, đọc lại ở địa chỉ công khai rồi xóa; không in khóa. Nếu báo 403: khóa sai hoặc không có quyền ghi vào bucket; 404: sai tên bucket hoặc id tài khoản; bước 2 lỗi: chưa bật địa chỉ công khai.
+
+Giới hạn đã biết: URL ký sẵn của R2 không ép được dung lượng, nên 5 MB được kiểm ở trình duyệt và ở API (số khai báo), không ở R2; ảnh không còn được dùng **chưa tự bị xóa** khỏi bucket (có thể thêm quy tắc vòng đời hoặc quét định kỳ sau).
 
 Trong compose, API luôn chạy với `NODE_ENV=production`, `REQUIRE_EMAIL_VERIFICATION=true`, `TRUST_PROXY_HOPS=1` (sau Caddy) và `EMAIL_PROVIDER=resend`.
 

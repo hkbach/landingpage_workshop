@@ -27,7 +27,7 @@ export async function createApp(env: Pick<Env, "LOG_LEVEL" | "NODE_ENV"> & Parti
     // How many reverse proxies stand in front (Caddy): request.ip is then the address the nearest one saw, never a header the client wrote. 0 = none: the socket.
     trustProxy: (env.TRUST_PROXY_HOPS ?? 0) > 0 ? (_address: string, hop: number) => hop < (env.TRUST_PROXY_HOPS ?? 0) : false,
   });
-  const app = await NestFactory.create<NestFastifyApplication>(AppModule.forRoot(options), adapter, { bufferLogs: true, ...(env.NODE_ENV === "test" ? { logger: false } : {}) });
+  const app = await NestFactory.create<NestFastifyApplication>(AppModule.forRoot(options), adapter, { bufferLogs: true, ...(env.NODE_ENV === "test" ? { logger: false, abortOnError: false } : {}) });
   const production = env.NODE_ENV === "production";
   app.getHttpAdapter().getInstance().addHook("onSend", async (request, reply) => {
     void reply.header("x-request-id", request.id);

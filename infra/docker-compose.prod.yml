@@ -21,6 +21,12 @@ x-api-env: &api-env
   RESEND_API_KEY: ${RESEND_API_KEY:?set RESEND_API_KEY}
   EMAIL_FROM: ${EMAIL_FROM:?set EMAIL_FROM}
   LOG_LEVEL: ${LOG_LEVEL:-info}
+  # Images (Cloudflare R2, bucket public to read). Left empty: the pages take a link instead of an upload. The key here is NOT the key of the backup (R2_* of the backup service below).
+  R2_ACCOUNT_ID: ${MEDIA_R2_ACCOUNT_ID:-}
+  R2_ACCESS_KEY_ID: ${MEDIA_R2_ACCESS_KEY_ID:-}
+  R2_SECRET_ACCESS_KEY: ${MEDIA_R2_SECRET_ACCESS_KEY:-}
+  R2_BUCKET: ${MEDIA_R2_BUCKET:-}
+  R2_PUBLIC_BASE_URL: ${MEDIA_PUBLIC_BASE_URL:-}
 
 services:
   db:
@@ -74,6 +80,8 @@ services:
     environment:
       PLATFORM_DOMAIN: ${PLATFORM_DOMAIN:?set PLATFORM_DOMAIN}
       API_URL: http://api:4000   # where the web server reaches the API (the pages read their data from it; the browser reaches it through Caddy)
+      MEDIA_ORIGIN: ${MEDIA_PUBLIC_BASE_URL:-}   # the address the images are read at (Content-Security-Policy)
+      MEDIA_UPLOAD_ORIGIN: ${MEDIA_UPLOAD_ORIGIN:-}   # https://<account id>.r2.cloudflarestorage.com: where the browser uploads an image (Content-Security-Policy)
     depends_on:
       api: { condition: service_healthy }
     networks: [internal]

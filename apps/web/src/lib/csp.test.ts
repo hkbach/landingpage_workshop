@@ -35,6 +35,8 @@ describe("buildCsp", () => {
     expect(dev.split("; ")).not.toContain("upgrade-insecure-requests");
     expect(dir(buildCsp({ nonce: "n", apiOrigin: "https://api.example.com" }), "connect-src")).toContain("https://api.example.com");
     expect(dir(buildCsp({ nonce: "n", mediaOrigin: "https://cdn.example.com" }), "img-src")).toContain("https://cdn.example.com");
+    // the browser uploads an image to the storage address: that one origin is let through, no other
+    expect(dir(buildCsp({ nonce: "n", uploadOrigin: "https://acct.r2.cloudflarestorage.com" }), "connect-src")).toEqual(["'self'", "https://challenges.cloudflare.com", "https://acct.r2.cloudflarestorage.com"]);
   });
 
   it("makes a different nonce for every request, of 128 bits", () => {

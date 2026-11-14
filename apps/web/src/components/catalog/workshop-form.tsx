@@ -4,11 +4,8 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { z } from "zod";
-import { ImageOff, MapPin, Plus, Trash2, TriangleAlert } from "lucide-react";
-import {
-  LOCALES, WORKSHOP_ADDRESS_MAX, WORKSHOP_ADDRESS_NOTE_MAX, WORKSHOP_CATEGORIES, WORKSHOP_CATEGORY_MAX, WORKSHOP_CATEGORY_MIN, formatMoney, mapsSearchUrl, minorDigits, missingLocales, toggleCategory, trimDeep,
-  type Locale, type Localized, type WorkshopCategory, type WorkshopStatus,
-} from "@workshop/shared";
+import { MapPin, Plus, Trash2, TriangleAlert } from "lucide-react";
+import { LOCALES, WORKSHOP_ADDRESS_MAX, WORKSHOP_ADDRESS_NOTE_MAX, WORKSHOP_CATEGORIES, WORKSHOP_CATEGORY_MAX, WORKSHOP_CATEGORY_MIN, formatMoney, mapsSearchUrl, minorDigits, missingLocales, toggleCategory, trimDeep, type Locale, type Localized, type WorkshopCategory, type WorkshopStatus } from "@workshop/shared";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -22,6 +19,8 @@ import { LanguageBar } from "@/components/language/LanguageBar";
 import { useEditingLanguage } from "@/lib/use-shop-language";
 import { useDirty } from "@/lib/use-dirty";
 import { ShopLink } from "@/components/dashboard/shell/shop-link";
+import { ImageUploadField } from "@/components/builder/ImageUploadField";
+import { MultiImageUpload } from "@/components/builder/MultiImageUpload";
 
 /** Upper bound for capacity (FR-WS-01: 1-50). */
 export const MAX_CAPACITY = 50;
@@ -322,16 +321,14 @@ export function WorkshopForm({
           <p className="text-sm text-muted-foreground">{t("form.imagesHint", { max: MAX_GALLERY })}</p>
         </CardHeader>
         <CardContent className="grid gap-4">
-          <div className="flex items-center gap-3 rounded-lg border border-dashed p-4 text-sm text-muted-foreground" aria-disabled="true">
-            <ImageOff className="size-5 shrink-0" aria-hidden="true" />
-            <span className="flex-1">{t("form.uploaderStub")}</span>
-            <Button type="button" variant="outline" disabled>{t("form.upload")}</Button>
+          {/* The cover: upload (to the storage of the platform) or paste an address. */}
+          <div className="grid gap-1">
+            <ImageUploadField id="ws-cover" label={t("form.coverUrl")} value={d.coverUrl} onChange={(url) => setField("coverUrl", url)} purpose="workshop" />
+            {err("coverUrl") ? <p role="alert" className="text-xs text-destructive">{err("coverUrl")}</p> : null}
           </div>
-          <Field id="ws-cover" label={t("form.coverUrl")} error={err("coverUrl")}>
-            {(p) => <Input {...p} type="text" inputMode="url" placeholder="https://" value={d.coverUrl} onChange={(e) => setField("coverUrl", e.target.value)} />}
-          </Field>
           <fieldset className="grid gap-2">
             <legend className="mb-1 text-sm font-medium">{t("form.gallery")}</legend>
+            <MultiImageUpload id="ws-gallery" current={d.galleryUrls.filter((u) => u.trim() !== "")} max={MAX_GALLERY} purpose="workshop" onAdd={(urls) => setField("galleryUrls", urls)} />
             {d.galleryUrls.map((g, i) => (
               <div key={i} className="flex items-start gap-2">
                 <Input

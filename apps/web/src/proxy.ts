@@ -49,7 +49,7 @@ export async function proxy(request: NextRequest) {
   const nonce = newNonce();
   const csp = buildCsp({
     nonce, dev: process.env.NODE_ENV !== "production", upgradeInsecure: process.env.NODE_ENV === "production" && process.env.CSP_UPGRADE_INSECURE !== "false", // (off only to try the production image over plain http on this machine)
-    ...(process.env.API_ORIGIN ? { apiOrigin: process.env.API_ORIGIN } : {}), ...(process.env.MEDIA_ORIGIN ? { mediaOrigin: process.env.MEDIA_ORIGIN } : {}),
+    ...(process.env.API_ORIGIN ? { apiOrigin: process.env.API_ORIGIN } : {}), ...(process.env.MEDIA_ORIGIN ? { mediaOrigin: process.env.MEDIA_ORIGIN } : {}), ...(process.env.MEDIA_UPLOAD_ORIGIN ? { uploadOrigin: process.env.MEDIA_UPLOAD_ORIGIN } : {}),
   });
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-nonce", nonce);

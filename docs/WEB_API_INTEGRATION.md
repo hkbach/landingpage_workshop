@@ -75,6 +75,14 @@ Khi đặt `API_URL`, mọi trang của `/shopowner/{slug}` đọc dữ liệu c
 - **Lỗi thật tìm thấy khi chạy trên stack thật:** cửa sổ "đồng ý lại" và bước đồng ý lúc đăng ký gửi cả `terms` và `privacy`, nên **thất bại khi chỉ một văn bản đã công bố** (API từ chối văn bản chưa công bố); nay chỉ gửi các văn bản đã công bố (và, với cửa sổ đồng ý lại, chỉ những văn bản người dùng phải đồng ý). Test `customer.spec.ts` kiểm tra luồng này.
 - **Còn lại (dọn dẹp, không ảnh hưởng chạy):** một số đường mã phía trình duyệt cũ của chế độ mẫu (`viaApi` mặc định `false`, kho `localStorage` của builder, cổng đăng nhập bằng email khách) không còn được gọi trong luồng thật; có thể gỡ dần. Một số chú thích trong mã còn nhắc "mock".
 
+### Tải ảnh lên Cloudflare R2 (14/11/2026)
+
+- API: `POST /api/v1/media/presign` `{purpose, contentType, size}` → URL PUT ký sẵn (AWS SigV4 viết bằng `node:crypto`, **không thêm dependency**; có test với vector chuẩn của tài liệu S3), hiệu lực 5 phút, chỉ một loại (`image/jpeg|png|webp`), vào `shops/{id}/{purpose}/{uuid}.{ext}`; trả `publicUrl`. Cần đủ 5 biến `R2_*`, thiếu thì `503 MEDIA_NOT_CONFIGURED`. Shop bị khóa không tải lên được. Bucket **công khai để đọc** (địa chỉ `r2.dev`, về sau có thể là tên miền riêng).
+- Web: `mediaUploader` (kiểm tra loại thật từ byte đầu, thu nhỏ còn 1600 px, đổi sang WebP) → xin URL → PUT thẳng lên R2 → dùng `publicUrl`. Form workshop có ô tải ảnh bìa và nhiều ảnh gallery thật (trước đó chỉ là khung giữ chỗ); builder, ảnh session và ảnh khuyến mãi dùng cùng đường tải lên. Chưa cấu hình thì báo "chưa thiết lập" và vẫn dán được địa chỉ ảnh.
+- CSP của web có thêm `MEDIA_UPLOAD_ORIGIN` trong `connect-src` (nếu quên, trình duyệt chặn việc PUT).
+- Lệnh `pnpm --filter api r2:check` thử cấu hình thật (tải, đọc lại ở địa chỉ công khai, xóa) mà không in khóa.
+- **Chưa làm:** trang Media của admin vẫn rỗng (chưa có bảng theo dõi ảnh); ảnh không còn dùng chưa bị dọn; R2 không ép dung lượng của URL ký sẵn nên 5 MB chỉ được kiểm ở trình duyệt và ở số khai báo gửi lên API.
+
 ## 1. Đã đo được (13/11/2026)
 
 | Số liệu | Giá trị |

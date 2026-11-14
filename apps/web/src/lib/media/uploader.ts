@@ -1,18 +1,17 @@
 import { validateImageFile, type ImageErrorCode } from "./validate";
 import { newUuid } from "@/lib/uuid";
 
-// Media upload seam (FR-MEDIA-01). Today: a mock that resizes in the browser and returns a data: URL.
-// M2: replace `mediaUploader` with an implementation that calls POST /media/presign-upload, PUTs the file to R2 and
-// calls POST /media/{id}/complete, returning the public https URL. UI code only depends on this interface.
+// Media upload seam (FR-MEDIA-01). `mediaUploader` (r2-uploader.ts) checks and shrinks the image in the browser, asks the API for a presigned URL and PUTs the file to Cloudflare R2; it returns the
+// public https address. The mock below (a data: URL, nothing leaves the browser) is kept for tests. UI code only depends on this interface.
 
-export type UploadPurpose = "site" | "workshop" | "branding";
+export type UploadPurpose = "site" | "workshop" | "branding" | "session" | "promotion";
 export interface UploadedMedia { id: string; url: string; width: number; height: number }
 
 export interface MediaUploader {
   upload(file: File, purpose: UploadPurpose): Promise<UploadedMedia>;
 }
 
-export type UploadErrorCode = ImageErrorCode | "decodeFailed" | "storageFull" | "failed";
+export type UploadErrorCode = ImageErrorCode | "decodeFailed" | "storageFull" | "notConfigured" | "failed";
 export class MediaUploadError extends Error {
   constructor(readonly code: UploadErrorCode) {
     super(code);
@@ -23,7 +22,7 @@ export class MediaUploadError extends Error {
 export const MAX_EDGE = 1600;
 const MAX_DATA_URL_CHARS = 700_000; // keeps several images inside the ~5 MB localStorage budget
 
-async function decode(file: File): Promise<{ source: CanvasImageSource; width: number; height: number; close: () => void }> {
+export async function decode(file: File): Promise<{ source: CanvasImageSource; width: number; height: number; close: () => void }> {
   try {
     const bmp = await createImageBitmap(file);
     return { source: bmp, width: bmp.width, height: bmp.height, close: () => bmp.close() };
@@ -97,5 +96,4 @@ export const mockMediaUploader: MediaUploader = {
   },
 };
 
-/** The uploader used by the app. Swap for the presigned-URL (R2) implementation in M2. */
-export const mediaUploader: MediaUploader = mockMediaUploader;
+export { r2MediaUploader as mediaUploader } from "./r2-uploader";

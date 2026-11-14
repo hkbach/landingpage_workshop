@@ -285,7 +285,8 @@
       "typeMismatch": "文件内容与其类型不符。请使用真实的 JPEG、PNG 或 WebP 图片。",
       "decodeFailed": "无法读取此图片。请尝试其他文件。",
       "storageFull": "浏览器存储空间已满。请删除其他图片或使用更小的图片，或粘贴图片网址。",
-      "failed": "上传失败，请重试。"
+      "failed": "上传失败，请重试。",
+      "notConfigured": "尚未设置图片上传。请改为粘贴图片地址。"
     }
   },
   "video": {
