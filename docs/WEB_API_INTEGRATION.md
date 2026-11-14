@@ -82,7 +82,8 @@ Khi đặt `API_URL`, mọi trang của `/shopowner/{slug}` đọc dữ liệu c
 - CSP của web có thêm `MEDIA_UPLOAD_ORIGIN` trong `connect-src` (nếu quên, trình duyệt chặn việc PUT).
 - Lệnh `pnpm --filter api r2:check` thử cấu hình thật (tải, đọc lại ở địa chỉ công khai, xóa) mà không in khóa.
 - Đã kiểm với R2 thật (14/11/2026): `r2:check` đạt cả 4 bước (tải, đọc công khai, xóa, CORS) và test trình duyệt `e2e/media.spec.ts` đạt (form workshop → chọn ảnh → PUT 200 lên R2 → địa chỉ `r2.dev` trả ảnh, không vi phạm CSP). Test tự bỏ qua khi chưa cấu hình R2 (CI) và để lại một ảnh thử nhỏ trong bucket.
-- **Chưa làm:** trang Media của admin vẫn rỗng (chưa có bảng theo dõi ảnh); ảnh không còn dùng chưa bị dọn; R2 không ép dung lượng của URL ký sẵn nên 5 MB chỉ được kiểm ở trình duyệt và ở số khai báo gửi lên API.
+- **Trang Images của admin (14/11/2026):** `GET /api/v1/admin/media` hỏi thẳng bucket (ListObjectsV2 ký bằng SigV4, không thêm dependency) rồi đối chiếu với các cột có địa chỉ ảnh (workshop, session, khuyến mãi, ảnh đại diện khách, landing page gồm nháp, bản public và các phiên bản đã lưu) để gán `USED` / `UNUSED`; không cần bảng theo dõi ảnh. Web có hai tab (Đang sử dụng / Không còn sử dụng); tab thứ hai có chọn nhiều và **Xóa khỏi Cloudflare** (`POST /api/v1/admin/media/delete`, tối đa 100 ảnh mỗi lần, cần lý do, server tính lại ảnh nào đang dùng và bỏ qua ảnh đã được dùng lại, audit `media.delete`). Test: `media.int.test.ts` (bucket giả trong bộ nhớ), `e2e/media.spec.ts` (R2 thật).
+- **Chưa làm:** xóa ảnh tự động theo thời gian; R2 không ép dung lượng của URL ký sẵn nên 5 MB chỉ được kiểm ở trình duyệt và ở số khai báo gửi lên API. Một khoảng hở nhỏ còn lại: ảnh vừa tải lên mà shop chưa lưu vào đâu thì nằm ở tab *Không còn sử dụng*.
 
 ## 1. Đã đo được (13/11/2026)
 

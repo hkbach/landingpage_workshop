@@ -88,16 +88,18 @@ export interface AdminVoucher {
   heldReason: string; heldAt: string;
 }
 
+/** A file in the image storage (Cloudflare R2), as `GET /api/v1/admin/media` lists it. */
 export interface AdminMedia {
-  /** For an upload the id of the file; for an image shown from a link a made-up id (`link-...`). */
-  id: string;
-  /** UPLOAD: a file kept by the platform (it can be removed). LINK: an image a record points to by an address (it can be looked at; the real storage, R2, replaces both). */
-  source: "UPLOAD" | "LINK";
-  kind: "promotion" | "session" | "workshop";
+  /** The name of the file in the bucket: `shops/{shop id}/{purpose}/{id}.{ext}`. */
+  key: string;
   url: string; shopId: string; shopName: string;
-  /** What shows it: the code of the voucher, the code of the session, the name of the workshop. */
-  usedBy: string;
-  mime: string; size: number; uploadedAt: string;
+  /** The folder of the shop the file is in: what it was uploaded for. */
+  purpose: "site" | "workshop" | "branding" | "session" | "promotion";
+  size: number; uploadedAt: string | null;
+  /** USED: an address of it is written in a workshop, a session, a promotion, an avatar or a landing page. UNUSED: nowhere (it can be deleted). */
+  status: "USED" | "UNUSED";
+  /** What shows it (empty when unused). */
+  usedBy: Array<"workshop" | "session" | "promotion" | "profile" | "landingPage">;
 }
 
 export interface AdminRating {

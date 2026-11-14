@@ -12,6 +12,14 @@ describe("presignUrl", () => {
     expect(url.startsWith("https://examplebucket.s3.amazonaws.com/test.txt?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIOSFODNN7EXAMPLE%2F20130524%2Fus-east-1%2Fs3%2Faws4_request")).toBe(true);
   });
 
+  it("signs the query parameters of the request itself (the listing of a bucket), and another prefix gives another signature", () => {
+    const list = (prefix: string) => presignUrl({ method: "GET", host: "a.r2.cloudflarestorage.com", path: "/bucket", accessKeyId: "ID", secretAccessKey: "SECRET", region: "auto", expiresSeconds: 60, now: new Date("2026-11-14T10:00:00Z"), query: { "list-type": "2", prefix } });
+    const url = list("shops/");
+    expect(url).toContain("list-type=2");
+    expect(url).toContain("prefix=shops%2F");
+    expect(url.split("X-Amz-Signature=")[1]).not.toBe(list("other/").split("X-Amz-Signature=")[1]);
+  });
+
   it("signs the headers it is given (the content type of an upload) and encodes the path", () => {
     const url = presignUrl({
       method: "PUT", host: "a.r2.cloudflarestorage.com", path: "/bucket/shops/x y/é.png", accessKeyId: "ID", secretAccessKey: "SECRET", region: "auto", expiresSeconds: 300,

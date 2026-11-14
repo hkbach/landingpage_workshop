@@ -1023,37 +1023,52 @@
   },
   "media": {
     "title": "Images",
-    "description": "The images of the shops: the files shops uploaded and the images they show from a link. Remove a file that breaks the rules.",
+    "description": "Every image kept in Cloudflare R2, and whether anything in the system still shows it. Delete the images that nothing shows any more.",
+    "tabsLabel": "State of the images",
+    "tab": {
+      "used": "In use",
+      "unused": "Not in use"
+    },
     "search": "Search",
-    "searchPlaceholder": "Shop, promotion code, session code or workshop",
+    "searchPlaceholder": "Shop name or file name",
     "all": "All",
     "open": "Open",
-    "remove": "Remove",
     "opensNewTab": "(opens in a new tab)",
     "col": {
+      "select": "Select",
       "image": "Image",
       "shop": "Shop",
-      "kind": "Used for",
+      "kind": "Folder",
       "usedBy": "Shown by",
-      "source": "Kept",
       "file": "File",
       "uploaded": "Uploaded",
       "actions": "Actions"
     },
     "kind": {
-      "promotion": "Promotion",
+      "site": "Landing page",
+      "workshop": "Workshop",
+      "branding": "Branding",
       "session": "Session",
-      "workshop": "Workshop cover"
+      "promotion": "Promotion"
     },
-    "source": {
-      "UPLOAD": "Uploaded file",
-      "LINK": "From a link"
+    "usedBy": {
+      "workshop": "Workshop",
+      "session": "Session",
+      "promotion": "Promotion",
+      "profile": "Customer avatar",
+      "landingPage": "Landing page"
     },
-    "note": "An uploaded file is kept by the platform (later in Cloudflare R2) and can be removed here. An image shown from a link is not a file of the platform, so it can be looked at but not removed. When a file is removed, the promotion that showed it has no image; a session that shows it keeps showing an empty picture until its shop owner chooses another.",
-    "removeTitle": "Remove this image?",
-    "removeBody": "The file is deleted for good and what showed it has no image. A reason is needed.",
-    "removed": "The image was removed.",
-    "failed": "The image could not be removed."
+    "selected": "{count} selected",
+    "selectAll": "Select all the images listed",
+    "selectRow": "Select this image",
+    "deleteSelected": "Delete from Cloudflare",
+    "deleteTitle": "Delete {count} images from Cloudflare?",
+    "deleteBody": "The files are deleted for good from the storage and cannot be recovered. An image that something shows again by the time of the deletion is kept. A reason is needed; it is written in the audit log.",
+    "done": "{deleted} deleted. {inUse} kept because something shows them again. {failed} could not be deleted.",
+    "notConfigured": "Image storage (Cloudflare R2) is not set up, so there is nothing to list.",
+    "failed": "The list of images could not be loaded.",
+    "truncated": "Only the first {count} files are listed; the storage holds more.",
+    "note": "“In use” means the address of the file is written in a workshop (cover or gallery), a session, a promotion, a customer avatar or a landing page (the draft, the live page or a version kept of it). Deleting is permanent."
   },
   "ratings": {
     "title": "Ratings",

@@ -1023,37 +1023,52 @@
   },
   "media": {
     "title": "Hình ảnh",
-    "description": "Hình ảnh của các shop: file shop đã tải lên và ảnh hiển thị từ liên kết. Xóa file vi phạm.",
+    "description": "Mọi hình ảnh đang lưu trên Cloudflare R2 và tình trạng còn được dùng ở đâu đó trong hệ thống hay không. Xóa các ảnh không còn nơi nào hiển thị.",
+    "tabsLabel": "Tình trạng của ảnh",
+    "tab": {
+      "used": "Đang sử dụng",
+      "unused": "Không còn sử dụng"
+    },
     "search": "Tìm kiếm",
-    "searchPlaceholder": "Shop, mã khuyến mãi, mã session hoặc workshop",
+    "searchPlaceholder": "Tên shop hoặc tên file",
     "all": "Tất cả",
     "open": "Mở",
-    "remove": "Xóa",
     "opensNewTab": "(mở trong tab mới)",
     "col": {
+      "select": "Chọn",
       "image": "Hình",
       "shop": "Shop",
-      "kind": "Dùng cho",
+      "kind": "Thư mục",
       "usedBy": "Hiển thị ở",
-      "source": "Lưu trữ",
       "file": "File",
       "uploaded": "Tải lên",
       "actions": "Thao tác"
     },
     "kind": {
-      "promotion": "Khuyến mãi",
+      "site": "Landing page",
+      "workshop": "Workshop",
+      "branding": "Thương hiệu",
       "session": "Session",
-      "workshop": "Ảnh bìa workshop"
+      "promotion": "Khuyến mãi"
     },
-    "source": {
-      "UPLOAD": "File đã tải lên",
-      "LINK": "Từ liên kết"
+    "usedBy": {
+      "workshop": "Workshop",
+      "session": "Session",
+      "promotion": "Khuyến mãi",
+      "profile": "Ảnh đại diện khách hàng",
+      "landingPage": "Landing page"
     },
-    "note": "File đã tải lên do nền tảng lưu (sau này trên Cloudflare R2) và xóa được tại đây. Ảnh hiển thị từ liên kết không phải file của nền tảng nên chỉ xem được, không xóa được. Khi xóa file, khuyến mãi đang dùng ảnh đó sẽ không còn ảnh; session đang dùng sẽ hiện ảnh trống cho tới khi shop owner chọn ảnh khác.",
-    "removeTitle": "Xóa hình ảnh này?",
-    "removeBody": "File bị xóa hẳn và nơi đang hiển thị sẽ không còn ảnh. Cần nhập lý do.",
-    "removed": "Đã xóa hình ảnh.",
-    "failed": "Không xóa được hình ảnh."
+    "selected": "Đã chọn {count}",
+    "selectAll": "Chọn tất cả ảnh trong danh sách",
+    "selectRow": "Chọn ảnh này",
+    "deleteSelected": "Xóa khỏi Cloudflare",
+    "deleteTitle": "Xóa {count} ảnh khỏi Cloudflare?",
+    "deleteBody": "File bị xóa hẳn khỏi kho lưu trữ và không khôi phục được. Ảnh nào đã được dùng lại vào lúc xóa sẽ được giữ nguyên. Cần nhập lý do; lý do được ghi vào nhật ký kiểm toán.",
+    "done": "Đã xóa {deleted}. Giữ lại {inUse} vì đã được dùng lại. {failed} không xóa được.",
+    "notConfigured": "Chưa thiết lập kho ảnh (Cloudflare R2) nên chưa có gì để liệt kê.",
+    "failed": "Không tải được danh sách hình ảnh.",
+    "truncated": "Chỉ liệt kê {count} file đầu tiên; kho lưu trữ còn nhiều hơn.",
+    "note": "“Đang sử dụng” nghĩa là địa chỉ của file được ghi trong một workshop (ảnh bìa hoặc thư viện ảnh), một session, một khuyến mãi, ảnh đại diện của khách hàng hoặc một landing page (bản nháp, trang đang public hoặc một phiên bản đã lưu). Xóa là vĩnh viễn."
   },
   "ratings": {
     "title": "Đánh giá",

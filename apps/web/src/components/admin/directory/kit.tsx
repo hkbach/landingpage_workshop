@@ -35,7 +35,7 @@ export function useDirectory<T>(name: string, params: Record<string, string>): {
   useEffect(() => {
     let live = true;
     fetch(`/api/v1/admin/${ADMIN_LIST_PATH[name] ?? `directory/${name}`}${qs ? `?${qs}` : ""}`, { cache: "no-store" })
-      .then((r) => (r.ok ? (r.json() as Promise<{ items: T[] }>) : name === "media" && r.status === 404 ? { items: [] as T[] } : Promise.reject(new Error("failed")))) // (the API has no image storage yet: the list of images is empty, not an error)
+      .then((r) => (r.ok ? (r.json() as Promise<{ items: T[] }>) : Promise.reject(new Error("failed"))))
       .then((j) => { if (live) setState({ key, items: adaptRows<T>(name, j.items), error: false }); })
       .catch(() => { if (live) setState({ key, items: [], error: true }); });
     return () => { live = false; };

@@ -16,6 +16,8 @@ export interface PresignInput {
   now: Date;
   /** Headers the request MUST send with exactly these values (they are signed): the content type of an upload. */
   signedHeaders?: Record<string, string>;
+  /** Query parameters of the request itself (the listing of a bucket: `list-type`, `prefix`, ...); they are signed with the others. */
+  query?: Record<string, string>;
 }
 
 const sha256 = (data: string): string => createHash("sha256").update(data).digest("hex");
@@ -37,6 +39,7 @@ export function presignUrl(input: PresignInput): string {
   for (const [k, v] of Object.entries(input.signedHeaders ?? {})) headers[k.toLowerCase()] = v.trim();
   const names = Object.keys(headers).sort();
   const query: Record<string, string> = {
+    ...(input.query ?? {}),
     "X-Amz-Algorithm": "AWS4-HMAC-SHA256",
     "X-Amz-Credential": `${input.accessKeyId}/${scope}`,
     "X-Amz-Date": iso,

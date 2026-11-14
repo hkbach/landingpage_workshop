@@ -15,6 +15,8 @@ import { EmailsService } from "./platform/emails.service";
 import { InboxService } from "./platform/inbox.service";
 import { AdminPlatformController, LegalConsentController, PublicPlatformController, SupportContactController } from "./platform/platform.controller";
 import { MediaController } from "./media/media.controller";
+import { AdminMediaController } from "./media/admin-media.controller";
+import { AdminMediaService } from "./media/admin-media.service";
 import { MediaService } from "./media/media.service";
 import { LegalService } from "./platform/legal.service";
 import { PlatformService } from "./platform/platform.service";
@@ -73,12 +75,12 @@ export class AppModule implements OnApplicationShutdown {
     return {
       module: AppModule,
       imports: [EnvModule, DbModule],
-      controllers: [HealthController, AuthController, OrganizationController, WorkshopsController, SessionsController, ScheduleRulesController, PublicController, MediaController, BookingsController, CustomersController, SitePagesController, AdminController, FinanceController, AdminFinanceController, WalletController, AdminWalletController, CustomerAffiliateController, PublicAffiliateController, AdminAffiliateController, DashboardController, PromotionsController, AdminPromotionsController, CustomerController, ShopRatingsController, AdminRatingsController, PublicPlatformController, LegalConsentController, SupportContactController, AdminPlatformController, ShopSettingsController, AdminShopSettingsController, PublicDomainController, DirectoryController, AdminActionsController],
+      controllers: [HealthController, AuthController, OrganizationController, WorkshopsController, SessionsController, ScheduleRulesController, PublicController, MediaController, AdminMediaController, BookingsController, CustomersController, SitePagesController, AdminController, FinanceController, AdminFinanceController, WalletController, AdminWalletController, CustomerAffiliateController, PublicAffiliateController, AdminAffiliateController, DashboardController, PromotionsController, AdminPromotionsController, CustomerController, ShopRatingsController, AdminRatingsController, PublicPlatformController, LegalConsentController, SupportContactController, AdminPlatformController, ShopSettingsController, AdminShopSettingsController, PublicDomainController, DirectoryController, AdminActionsController],
       providers: [
         { provide: EMAIL_PROVIDER, inject: [ENV], useFactory: (env: Env) => options.emailProvider ?? createEmailProvider(env) },
         { provide: DNS, useFactory: () => options.dns ?? new SystemDns() },
         { provide: JOBS, inject: [ENV], useFactory: (env: Env) => options.jobs ?? createJobs(env) },
-        ...CORE_PROVIDERS, WorkshopsService, SessionsService, ScheduleService, MaintenanceService, SessionCapacityService, PublicBookingsService, MediaService, BookingsService, CustomersService, SitePagesService, AdminService, FinanceService, FeesService, WalletService, AffiliateService, DashboardService, PromotionsService, CustomerService, RatingsService, PlatformService, LegalService, InboxService, EmailsService, ShopSettingsService, DirectoryService, AdminActionsService, AuthService, TurnstileService, AuthGuard, TenantGuard, PlatformAdminGuard,
+        ...CORE_PROVIDERS, WorkshopsService, SessionsService, ScheduleService, MaintenanceService, SessionCapacityService, PublicBookingsService, MediaService, AdminMediaService, BookingsService, CustomersService, SitePagesService, AdminService, FinanceService, FeesService, WalletService, AffiliateService, DashboardService, PromotionsService, CustomerService, RatingsService, PlatformService, LegalService, InboxService, EmailsService, ShopSettingsService, DirectoryService, AdminActionsService, AuthService, TurnstileService, AuthGuard, TenantGuard, PlatformAdminGuard,
         { provide: APP_FILTER, useClass: ErrorFilter },
         { provide: APP_GUARD, useClass: OriginGuard },
       ],
