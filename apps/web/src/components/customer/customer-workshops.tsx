@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { Search } from "lucide-react";
 import { hashText, rankWorkshops, workshopDirectionsUrl, type Locale } from "@workshop/shared";
@@ -31,23 +32,36 @@ import { useCustomer } from "./customer-shell";
  * The Program tab of the Affiliate page (`mode="affiliate"`) lists the active workshops with the affiliate fee of their shop, without the Book and Google Maps buttons; a card has
  * Register Affiliate, which is replaced for good by Copy Affiliate link once the guest is registered for that workshop (the link opens its booking at the shop).
  */
-export function CustomerWorkshops({ shops, mode = "all" }: { shops: ListedShop[]; mode?: "all" | "favorites" | "affiliate" }) {
+export function CustomerWorkshops({ shops, mode = "all", serverFavorites }: {
+  shops: ListedShop[]; mode?: "all" | "favorites" | "affiliate";
+  /** Connected to the API: the ids of the favorites as the server has them (a heart saves or removes on the server). Not given: the favorites are kept in the browser. */
+  serverFavorites?: string[];
+}) {
   const t = useTranslations("customer");
   const locale = useLocale() as Locale;
   const { profile } = useCustomer();
   const [query, setQuery] = useState("");
+  const router = useRouter();
+  const server = useMemo(() => (serverFavorites ? {
+    ids: serverFavorites,
+    toggle: (workshopId: string) => {
+      const on = serverFavorites.includes(workshopId);
+      void fetch(`/api/v1/customer/${encodeURIComponent(profile.id)}/favorites/${encodeURIComponent(workshopId)}`, { method: on ? "DELETE" : "PUT" }).finally(() => router.refresh());
+    },
+  } : undefined), [serverFavorites, profile.id, router]);
 
   // The guest is known here: the hearts of a shop are the hearts of this account, without asking for the login again.
   useEffect(() => {
+    if (serverFavorites) return; // (connected: the account is the session, the browser keeps nothing)
     for (const s of shops) if (readGuestEmail(s.shop.slug) !== normalizeGuestEmail(profile.email)) writeGuestEmail(s.shop.slug, profile.email);
-  }, [shops, profile.email]);
+  }, [shops, profile.email, serverFavorites]);
 
   // The workshops this account added to its favorites, shop by shop (kept in the browser, see lib/favorites.ts); the snapshot is one text so it can be compared.
   const savedSnapshot = useSyncExternalStore(subscribeFavorites, () => JSON.stringify(shops.map((s) => readFavoritesRaw(s.shop.slug, normalizeGuestEmail(profile.email)))), () => "[]");
   const saved = useMemo(() => {
     const raws = JSON.parse(savedSnapshot) as string[];
-    return new Map(shops.map((s, i) => [s.shop.id, new Set(parseFavorites(raws[i]))]));
-  }, [shops, savedSnapshot]);
+    return new Map(shops.map((s, i) => [s.shop.id, serverFavorites ? new Set(s.workshops.filter((w) => serverFavorites.includes(w.id)).map((w) => w.id)) : new Set(parseFavorites(raws[i]))]));
+  }, [shops, savedSnapshot, serverFavorites]);
 
   // The workshops of the page (all of them, or the favorites), shop by shop.
   const pool = useMemo(
@@ -97,7 +111,7 @@ export function CustomerWorkshops({ shops, mode = "all" }: { shops: ListedShop[]
                   workshops={workshops} sessions={sessions} theme={theme} locale={locale} basePath={base} promotions={promotions} preview={!bookable}
                   guest={{ fullName: profile.fullName, email: profile.email, phone: profile.phone, country: profile.account.country }}
                 >
-                  <FavoritesProvider slug={shop.slug} shopName={shop.name} theme={theme}>
+                  <FavoritesProvider slug={shop.slug} shopName={shop.name} theme={theme} {...(server ? { server } : {})}>
                       {/* The theme of the shop (colours, radius, font) as on its landing page; the card sizes itself from this box. */}
                       <li key={w.id} style={themeStyle(theme)} lang={locale} className={cn("@container h-full overflow-hidden rounded-xl", siteFontClass(theme.font))} data-testid={`customer-workshop-${w.id}`}>
                         <WorkshopCard

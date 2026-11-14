@@ -67,7 +67,7 @@ export default async function SitePage({ params }: PageProps<"/sites/[slug]/[[..
       <SiteFrame theme={theme} locale={locale}>
         {/* Header, navigation and language switch are part of the page frame (PageRenderer). */}
         <SiteBody
-          content={content} theme={theme} ctx={ctx} workshops={workshops} sessions={sessions} locale={locale} basePath={base} promotions={promotions}
+          favoritesOff={realApi()} content={content} theme={theme} ctx={ctx} workshops={workshops} sessions={sessions} locale={locale} basePath={base} promotions={promotions}
           shop={{ name: shop.name, slug: shop.slug, timezone: shop.timezone, currency: shop.currency, defaultLocale: shop.defaultLocale, ...(realApi() ? {} : { demoOtp: true }) }}
         />
       </SiteFrame>

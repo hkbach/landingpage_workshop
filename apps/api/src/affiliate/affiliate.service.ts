@@ -11,6 +11,7 @@ import { ENV } from "../config/env.module";
 import { DB, type Database } from "../db/db.module";
 import { affiliateLinks, inviteLinks, organizations, referrals, users, workshops } from "../db/schema";
 import { RatesBook } from "../finance/ledger";
+import { DEFAULT_RATES } from "../finance/rates";
 import { AFFILIATE_CODE_RE, maskEmail, newCode } from "./codes";
 import { affiliateEarnings, referralBonuses } from "./earnings";
 
@@ -143,6 +144,8 @@ export class AffiliateService {
         return { id: r.id, name, email: maskEmail(email), registeredAt: r.createdAt.toISOString(), status: b ? ("EARNED" as const) : ("REGISTERED" as const), bonus: b?.bonus ?? 0, currency: b?.currency ?? null, ...(b ? { bookingCode: b.bookingCode, paidAt: b.paidAt ? b.paidAt.toISOString() : null } : {}) };
       }),
       total: friends.length,
+      /** The bonus for a friend's first paid booking, in basis points of its original price: the rate until a shop has its own. */
+      bonusBps: DEFAULT_RATES.inviteBonusBps,
       earned: [...earned].map(([currency, amount]) => ({ currency, amount })),
     };
   }

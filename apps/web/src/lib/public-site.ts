@@ -31,7 +31,7 @@ export async function loadPublicSite(slug: string): Promise<LoadedSite | null> {
   const now = new Date().toISOString();
   const shop = {
     // The public answer has no id, owner or status of the shop (not for a visitor): the pages only read what a visitor may know.
-    id: "", name: raw.shop.name, slug: raw.shop.slug, status: "ACTIVE" as const, country: raw.shop.country, timezone: raw.shop.timezone, currency: raw.shop.currency,
+    id: raw.shop.slug, name: raw.shop.name, slug: raw.shop.slug, status: "ACTIVE" as const, country: raw.shop.country, timezone: raw.shop.timezone, currency: raw.shop.currency,
     defaultLocale: raw.shop.defaultLocale, enabledLocales: raw.shop.enabledLocales, contactEmail: raw.shop.contactEmail, contactPhone: raw.shop.contactPhone ?? "",
     ...(raw.shop.whatsapp ? { whatsapp: raw.shop.whatsapp } : {}), address: raw.shop.address, mapsUrl: raw.shop.mapsUrl ?? "", ownerName: "", ownerEmail: "", createdAt: now,
   };

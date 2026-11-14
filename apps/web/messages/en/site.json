@@ -219,7 +219,8 @@
     "faq": "FAQ",
     "location": "Location",
     "contact": "Contact",
-    "video": "Video"
+    "video": "Video",
+    "promotions": "Promotions"
   },
   "tabs": {
     "label": "Page sections",

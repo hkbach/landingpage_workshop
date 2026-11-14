@@ -1,6 +1,6 @@
 # Nối `apps/web` với `apps/api`: hiện trạng và kế hoạch
 
-> **Trạng thái (13/11/2026): ĐÃ XONG lát 0, 1, 2 và 3 (nền, xác thực, trang công khai + đặt chỗ, khu chủ shop); lát 4–6 chưa làm.** Đặt `API_URL` thì web nối API thật cho tài khoản; không đặt thì vẫn chạy hoàn toàn trên dữ liệu mẫu (mock). Xem mục 0. Tài liệu này ghi lại **vì sao việc này lớn hơn một lần chuyển đổi cấu hình**, những gì đã đo được và một kế hoạch theo từng lát cắt để làm tiếp. Đây là việc cần quyết định thứ tự ưu tiên của chủ sản phẩm.
+> **Trạng thái (13/11/2026): ĐÃ XONG lát 0–4 (nền, xác thực, trang công khai + đặt chỗ, khu chủ shop, khu customer); lát 5–6 chưa làm.** Đặt `API_URL` thì web nối API thật cho tài khoản; không đặt thì vẫn chạy hoàn toàn trên dữ liệu mẫu (mock). Xem mục 0. Tài liệu này ghi lại **vì sao việc này lớn hơn một lần chuyển đổi cấu hình**, những gì đã đo được và một kế hoạch theo từng lát cắt để làm tiếp. Đây là việc cần quyết định thứ tự ưu tiên của chủ sản phẩm.
 
 ## 0. Đã làm (lát 0 và 1)
 
@@ -44,6 +44,16 @@ Khi đặt `API_URL`, mọi trang của `/shopowner/{slug}` đọc dữ liệu c
 **Giới hạn đã biết:** danh sách được lấy **đủ** qua con trỏ (tối đa 2000 dòng mỗi loại, 100 dòng mỗi lần gọi) rồi lọc/tìm trên trình duyệt như trước. Shop có hơn 2000 booking sẽ thấy 2000 dòng đầu. Việc chuyển lọc và phân trang của Bookings và Customers sang server là cải tiến tiếp theo.
 
 **Phát hiện và sửa khi nối:** trang Ratings của chủ shop hiển thị khóa dịch thô (`ratings.title`) vì dùng sai namespace (đã sửa thành `dashboard.ratings`).
+
+### Lát 4: khu customer (14/11/2026)
+
+- Khu `/customer/{id}` thuộc **nền tảng**, không thuộc một shop: giao diện trung tính, đăng xuất về trang chủ, không có liên kết "mở site của shop". Phiên thật xác thực; cổng "đăng nhập bằng email khách" của dữ liệu mẫu bị tắt.
+- Profile, Today, Bookings, Referrals, Affiliate (liên kết, ví, rút tiền): trình duyệt gọi `/api/v1/customer/{id}/...`. API trả vài hình dạng khác dữ liệu mẫu (ví nhiều loại tiền, liên kết có tiêu đề nhiều ngôn ngữ, danh sách chương trình), nên `lib/customer-api.ts` có **bộ chuyển** về kiểu màn hình đang dùng (nhận cả hai hình dạng).
+- Workshops, Favorites và tab Program của Affiliate: danh sách thẻ workshop từ `GET /customer/{id}/workshops`, mỗi shop lấy trang công khai (chủ đề, workshop, session, khuyến mãi) để mở form đặt chỗ. **Yêu thích lưu ở server** (`PUT/DELETE .../favorites/{workshopId}`).
+- **Trang công khai của shop không còn nút tim khi chạy với API:** việc đăng nhập / tạo tài khoản ngay trên trang shop (D2/D3) chưa thiết kế lại; khách tạo tài khoản ở cửa sổ đăng ký chung, hoàn thiện hồ sơ trong Profile, rồi lưu yêu thích trong khu của mình.
+- Ví hiển thị **một loại tiền** (loại tiền đầu tiên của ví; mặc định VND khi chưa có thu nhập), dù API giữ ví theo từng loại tiền. API `GET .../invites` trả thêm `bonusBps` (tỷ lệ thưởng mặc định).
+- Sửa khi nối: thiếu nhãn `site.nav.promotions` ở 5 ngôn ngữ (trang shop có mục Khuyến mãi bị báo thiếu thông điệp).
+- Kiểm thử: `e2e/real-customer.spec.ts` mở mọi trang của khu customer, lưu một yêu thích và tạo một liên kết affiliate trên server.
 
 ## 1. Đã đo được (13/11/2026)
 

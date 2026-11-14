@@ -64,6 +64,8 @@ export function CustomerShell({ accountId, shop, theme, loginRequired, support, 
   const pathname = usePathname();
   const queryClient = useQueryClient();
   // null until the browser has been asked (the server cannot know who is logged in), "" when nobody is.
+  // Connected to the API the customer area belongs to the platform, not to one shop (no slug): leaving goes to the home page and there is no "open the site" link.
+  const siteHref = shop.slug ? `/sites/${shop.slug}` : "/";
   const stored = useSyncExternalStore<string | null>(subscribeFavorites, () => readGuestEmail(shop.slug), () => null);
   const email = loginRequired ? stored : ""; // with no login there is nothing to ask the browser: the account is opened as it is
   const open = !loginRequired || Boolean(stored);
@@ -71,7 +73,7 @@ export function CustomerShell({ accountId, shop, theme, loginRequired, support, 
     queryKey: ["customer", accountId, loginRequired ? stored : "no-login"], queryFn: () => fetchCustomerProfile(accountId, loginRequired ? stored! : undefined), enabled: open, retry: false,
   });
   const [menuOpen, setMenuOpen] = useState(false);
-  const logout = () => { writeGuestEmail(shop.slug, null); queryClient.removeQueries({ queryKey: ["customer"] }); void endSession().then(() => router.push(`/sites/${shop.slug}`)); };
+  const logout = () => { writeGuestEmail(shop.slug, null); queryClient.removeQueries({ queryKey: ["customer"] }); void endSession().then(() => router.push(siteHref)); };
   // The menu of a phone is a drawer: Escape closes it, and it never stays open on another page.
   useEffect(() => {
     if (!menuOpen) return;
@@ -88,7 +90,7 @@ export function CustomerShell({ accountId, shop, theme, loginRequired, support, 
       <div className={cn(card, siteFontClass(theme.font))} style={modalThemeStyle(theme)} data-testid="customer-login">
         <h1 className="text-lg font-semibold">{t("gate.loginTitle")}</h1>
         <p className="mb-4 mt-1 text-sm text-[var(--site-muted)]">{t("gate.loginIntro", { shop: shop.name })}</p>
-        <GuestLoginForm slug={shop.slug} shopName={shop.name} onLoggedIn={(e) => writeGuestEmail(shop.slug, e)} onCancel={() => router.push(`/sites/${shop.slug}`)} />
+        <GuestLoginForm slug={shop.slug} shopName={shop.name} onLoggedIn={(e) => writeGuestEmail(shop.slug, e)} onCancel={() => router.push(siteHref)} />
       </div>
     );
   }
@@ -101,7 +103,7 @@ export function CustomerShell({ accountId, shop, theme, loginRequired, support, 
         <div className="flex flex-wrap gap-2">
           {missing && loginRequired ? <Button onClick={() => writeGuestEmail(shop.slug, null)}>{t("gate.switchAccount")}</Button> : null}
           {missing ? null : <Button onClick={() => void query.refetch()}>{t("gate.retry")}</Button>}
-          <Link href={`/sites/${shop.slug}`} className="inline-flex h-8 items-center rounded-lg border px-2.5 text-sm hover:bg-muted">{t("shell.openSite", { shop: shop.name })}</Link>
+          {shop.slug ? <Link href={siteHref} className="inline-flex h-8 items-center rounded-lg border px-2.5 text-sm hover:bg-muted">{t("shell.openSite", { shop: shop.name })}</Link> : null}
         </div>
       </div>
     );

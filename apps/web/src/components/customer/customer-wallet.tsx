@@ -120,7 +120,7 @@ function WithdrawDialog({ source, available, currency, limits, onClose, onDone }
     if (amountIssue || nameIssue || numberIssue || holderIssue || amount === null) return;
     setBusy(true);
     try {
-      const made = await requestCustomerWithdrawal(accountId, email, source, amount, { bankName: normalizeBankName(bankName), bankAccountNumber: normalizeAccountNumber(account), bankAccountHolder: normalizeAccountHolder(holder) });
+      const made = await requestCustomerWithdrawal(accountId, email, source, amount, { bankName: normalizeBankName(bankName), bankAccountNumber: normalizeAccountNumber(account), bankAccountHolder: normalizeAccountHolder(holder) }, currency);
       await refresh();
       onDone(made.code);
     } catch (err) {

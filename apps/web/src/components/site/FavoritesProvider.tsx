@@ -26,7 +26,13 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  * Owns the favorites of the guest on the landing page and the login popup. A guest who is not logged in who clicks the heart of a workshop is asked
  * to log in first (email + password); once logged in, that workshop is saved. The builder preview uses it too (slug "preview"), in the browser of the owner.
  */
-export function FavoritesProvider({ slug, shopName, theme, children }: { slug: string; shopName: string; theme: PageTheme; children: ReactNode }) {
+export function FavoritesProvider({ slug, shopName, theme, children, off = false, server }: {
+  slug: string; shopName: string; theme: PageTheme; children: ReactNode;
+  /** No hearts at all (the landing page when connected to the API: favorites are kept in the customer area, with the account). */
+  off?: boolean;
+  /** Connected: the favorites are the server's (the customer is logged in already), and a click saves or removes on the server. */
+  server?: { ids: string[]; toggle: (workshopId: string) => void };
+}) {
   const email = useSyncExternalStore(subscribeFavorites, () => readGuestEmail(slug), () => "");
   const raw = useSyncExternalStore(subscribeFavorites, () => readFavoritesRaw(slug, email), () => "");
   const ids = useMemo(() => parseFavorites(raw), [raw]);
@@ -37,7 +43,7 @@ export function FavoritesProvider({ slug, shopName, theme, children }: { slug: s
 
   // `?invite=CODE`: the code is kept (the registration sends it) and a guest who is not logged in is shown the registration at once. The code is taken off the address.
   useEffect(() => {
-    if (slug === "preview") return;
+    if (slug === "preview" || off || server) return;
     const code = captureInvite(slug, window.location.search);
     if (!new URLSearchParams(window.location.search).has("invite")) return;
     const url = new URL(window.location.href);
@@ -60,7 +66,11 @@ export function FavoritesProvider({ slug, shopName, theme, children }: { slug: s
     setOpen(false);
   };
 
-  const value = useMemo(() => ({ enabled: true, isFavorite: (id: string) => ids.includes(id), toggle }), [ids, toggle]);
+  const value = useMemo(
+    () => (off ? { enabled: false, isFavorite: () => false, toggle: () => {} } : server ? { enabled: true, isFavorite: (id: string) => server.ids.includes(id), toggle: server.toggle } : { enabled: true, isFavorite: (id: string) => ids.includes(id), toggle }),
+    [ids, toggle, off, server],
+  );
+  if (off || server) return <FavoritesContext.Provider value={value}>{children}</FavoritesContext.Provider>;
   return (
     <FavoritesContext.Provider value={value}>
       {children}
