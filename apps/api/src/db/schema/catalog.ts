@@ -49,6 +49,7 @@ export const workshops = pgTable(
     check("workshops_categories", sql`cardinality(${t.categories}) BETWEEN 1 AND 3`),
     check("workshops_gallery", sql`cardinality(${t.galleryUrls}) <= 6`),
     index("workshops_org_idx").on(t.organizationId, t.sortOrder, t.id),
+    index("workshops_created_idx").on(t.createdAt, t.id), // the list of the administrator, newest first
   ],
 );
 

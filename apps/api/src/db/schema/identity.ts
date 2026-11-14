@@ -23,7 +23,7 @@ export const users = pgTable(
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (t) => [check("users_email_lowercase", sql`${t.email} = lower(${t.email})`)],
+  (t) => [check("users_email_lowercase", sql`${t.email} = lower(${t.email})`), index("users_created_idx").on(t.createdAt, t.id)],
 );
 
 export const organizations = pgTable(
@@ -56,6 +56,7 @@ export const organizations = pgTable(
     updatedAt: updatedAt(),
   },
   (t) => [
+    index("organizations_created_idx").on(t.createdAt, t.id), // the lists of the administrator, newest first
     check("organizations_slug_format", sql`${t.slug} ~ '^[a-z0-9](?:[a-z0-9-]{1,30}[a-z0-9])$'`),
     check("organizations_default_locale", sql`${t.defaultLocale} IN ('en','vi','ko','ja','zh')`),
     check("organizations_enabled_locales", sql`${t.enabledLocales} <@ ARRAY['en','vi','ko','ja','zh']::text[] AND ${t.defaultLocale} = ANY(${t.enabledLocales})`),

@@ -7,7 +7,7 @@ import type { OrgContext } from "../auth/auth.guards";
 import { decodeCursor, encodeCursor } from "../common/cursor";
 import { addDays } from "../common/zoned-time";
 import { DB, type Database } from "../db/db.module";
-import { financeMonthClosings, organizations, payments, type MonthClosingTotals } from "../db/schema";
+import { financeMonthClosings, organizations, type MonthClosingTotals } from "../db/schema";
 import { RatesBook, buildLedger, ledgerView, loadEntries, resolveRange, rowsInRange, startOfDay, type PlatformLedgerRow, type ShopInfo } from "./ledger";
 
 export interface IncomeQuery { from?: string | undefined; to?: string | undefined; kind?: "PAYMENT" | "REVERSAL" | undefined; limit: number; cursor?: string | undefined }
@@ -126,17 +126,25 @@ export class FinanceService {
    * closed is skipped, and two runs at the same time cannot close it twice: one waits for the other on the shop's lock). The rates written are the ones the shop has when it is closed.
    */
   async closeMonths(now = new Date()): Promise<{ shops: number; closed: number }> {
-    // Only a shop that has had a payment can have a month to close or earnings to settle: the others are not looked at.
-    const withPayments = new Set((await this.db.selectDistinct({ id: payments.organizationId }).from(payments)).map((r) => r.id));
-    const shops = (await this.db.select({ id: organizations.id, name: organizations.name, slug: organizations.slug, timezone: organizations.timezone, currency: organizations.currency }).from(organizations)).filter((s) => withPayments.has(s.id));
+    // Only a shop that has had a payment can have a month to close or earnings to settle: the others are not looked at (one query with EXISTS, not a read of every payment).
+    const shops = (await this.db.select({ id: organizations.id, name: organizations.name, slug: organizations.slug, timezone: organizations.timezone, currency: organizations.currency }).from(organizations)
+      .where(sql`exists (select 1 from payments p where p.organization_id = ${organizations.id})`));
     let closed = 0;
     for (const shop of shops) {
       closed += await this.db.transaction(async (tx) => {
         await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`finance-close:${shop.id}`}))`);
         const current = monthKey(now.toISOString(), shop.timezone);
-        const entries = await loadEntries(tx, { organizationId: shop.id, fromUtc: FAR_PAST, toUtc: startOfDay(`${current}-01`, shop.timezone) });
-        if (entries.length === 0) { await settleCredits(tx, shop.id); return 0; } // (months closed earlier may still have earnings of the programs to write down)
+        const currentStart = startOfDay(`${current}-01`, shop.timezone);
+        // Which months before this one have a paid payment? Only the ones not closed yet are read in full: the ledger rows are worked out one by one, so the history that is already closed is never read again
+        // (this ran every hour and read every payment of every shop from the first day).
+        const seen = await tx.execute(sql`
+          select distinct to_char(p.recorded_at at time zone ${shop.timezone}, 'YYYY-MM') as month
+          from payments p join bookings b on b.organization_id = p.organization_id and b.id = p.booking_id
+          where p.organization_id = ${shop.id} and b.payment_status = 'PAID' and p.recorded_at < ${currentStart.toISOString()}::timestamptz`);
         const book = await RatesBook.load(tx, [shop.id]);
+        const open = (seen.rows as Array<{ month: string }>).map((r) => r.month).filter((m) => !book.isClosed(shop.id, m)).sort();
+        if (open.length === 0) { await settleCredits(tx, shop.id); return 0; } // (months closed earlier may still have earnings of the programs to write down)
+        const entries = await loadEntries(tx, { organizationId: shop.id, fromUtc: startOfDay(`${open[0]}-01`, shop.timezone), toUtc: currentStart });
         const byMonth = new Map<string, PlatformLedgerRow[]>();
         for (const r of buildLedger(entries, shop, book)) { const k = monthKey(r.occurredAt, shop.timezone); (byMonth.get(k) ?? byMonth.set(k, []).get(k)!).push(r); }
         let n = 0;

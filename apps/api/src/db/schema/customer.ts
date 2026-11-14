@@ -68,6 +68,7 @@ export const workshopRatings = pgTable(
     check("workshop_ratings_stars", sql`${t.stars} BETWEEN 1 AND 5`),
     check("workshop_ratings_comment", sql`${t.comment} IS NULL OR char_length(${t.comment}) <= 500`),
     index("workshop_ratings_workshop_idx").on(t.organizationId, t.workshopId, t.createdAt),
+    index("workshop_ratings_created_idx").on(t.createdAt, t.id), // the list of the administrator, newest first
     index("workshop_ratings_live_idx").on(t.workshopId).where(sql`${t.removedAt} IS NULL`), // the score of the workshops on every public page
   ],
 );

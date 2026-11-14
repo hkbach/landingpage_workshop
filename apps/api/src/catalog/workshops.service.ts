@@ -6,7 +6,7 @@ import { PromotionsService } from "../promotions/promotions.service";
 import type { OrgContext } from "../auth/auth.guards";
 import { decodeCursor, encodeCursor } from "../common/cursor";
 import { DB, type Database, type Executor } from "../db/db.module";
-import { organizations, workshopSessions, workshops } from "../db/schema";
+import { bookings, organizations, workshopSessions, workshops } from "../db/schema";
 import { tenantScope } from "../tenant/tenant-scope";
 import { assertShopWritable } from "../tenant/shop-writable";
 import { autoCloseEnded } from "./session-sweeper";
@@ -20,6 +20,8 @@ export interface WorkshopView {
   durationMinutes: number; priceAmount: number; currency: string; defaultCapacity: number; maxPerBooking: number; coverUrl: string; galleryUrls: string[];
   status: "DRAFT" | "ACTIVE"; sortOrder: number; categories: string[]; address: string; addressNote: string; createdAt: string; updatedAt: string;
   sessions: { open: number; total: number };
+  /** How many bookings the workshop has (every state): the list gives it, so a screen does not read every booking of the shop to count them. */
+  bookingCount: number;
 }
 
 export interface Actor { userId: string; ip: string | null }
@@ -27,10 +29,10 @@ export interface Actor { userId: string; ip: string | null }
 const LOCALIZED = ["title", "shortDescription", "description", "includes", "notes"] as const;
 const escapeLike = (v: string): string => v.replace(/[\\%_]/g, (c) => `\\${c}`);
 
-const toView = (w: WorkshopRow, sessions = { open: 0, total: 0 }): WorkshopView => ({
+const toView = (w: WorkshopRow, sessions = { open: 0, total: 0 }, bookingCount = 0): WorkshopView => ({
   id: w.id, title: w.title, shortDescription: w.shortDescription, description: w.description, includes: w.includes, notes: w.notes, durationMinutes: w.durationMinutes, priceAmount: w.priceAmount,
   currency: w.currency, defaultCapacity: w.defaultCapacity, maxPerBooking: w.maxPerBooking, coverUrl: w.coverUrl, galleryUrls: w.galleryUrls, status: w.status, sortOrder: w.sortOrder,
-  categories: w.categories, address: w.address, addressNote: w.addressNote, createdAt: w.createdAt.toISOString(), updatedAt: w.updatedAt.toISOString(), sessions,
+  categories: w.categories, address: w.address, addressNote: w.addressNote, createdAt: w.createdAt.toISOString(), updatedAt: w.updatedAt.toISOString(), sessions, bookingCount,
 });
 
 /** The fields an audit line keeps when a workshop changes (REQUIREMENTS 8.7: the price and the status are audited; long texts are not copied into the log). */
@@ -80,6 +82,13 @@ export class WorkshopsService {
     return out;
   }
 
+  /** How many bookings each of the workshops has (one grouped query, served by `bookings_org_workshop_idx`). */
+  private async bookingCounts(executor: Executor, org: OrgContext, ids: string[]): Promise<Map<string, number>> {
+    if (ids.length === 0) return new Map();
+    const rows = await executor.select({ workshopId: bookings.workshopId, n: count() }).from(bookings).where(and(tenantScope(bookings, org.id), inArray(bookings.workshopId, ids))).groupBy(bookings.workshopId);
+    return new Map(rows.map((r) => [r.workshopId, r.n]));
+  }
+
   async create(org: OrgContext, input: WorkshopInput, actor: Actor): Promise<WorkshopView> {
     assertShopWritable(org);
     return this.db.transaction(async (tx) => {
@@ -104,8 +113,9 @@ export class WorkshopsService {
     const rows = await this.db.select().from(workshops).where(and(...conditions)).orderBy(asc(workshops.sortOrder), asc(workshops.id)).limit(query.limit + 1);
     const page = rows.slice(0, query.limit);
     const counts = await this.counts(this.db, org, page.map((w) => w.id));
+    const booked = await this.bookingCounts(this.db, org, page.map((w) => w.id));
     const last = rows.length > query.limit ? page[page.length - 1] : undefined;
-    return { items: page.map((w) => toView(w, counts.get(w.id))), nextCursor: last ? encodeCursor({ s: last.sortOrder, id: last.id }) : null };
+    return { items: page.map((w) => toView(w, counts.get(w.id), booked.get(w.id) ?? 0)), nextCursor: last ? encodeCursor({ s: last.sortOrder, id: last.id }) : null };
   }
 
   async get(org: OrgContext, id: string): Promise<WorkshopView> {

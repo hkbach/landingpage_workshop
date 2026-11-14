@@ -1,10 +1,10 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from "@nestjs/common";
-import { and, desc, eq, lt, or, sql, type SQL } from "drizzle-orm";
+import { Inject, Injectable, NotFoundException } from "@nestjs/common";
+import { and, desc, eq, or, sql, type SQL } from "drizzle-orm";
 import type { OrgContext } from "../auth/auth.guards";
-import { decodeCursor, encodeCursor } from "../common/cursor";
 import { DB, type Database } from "../db/db.module";
 import { bookings, customers, workshopSessions } from "../db/schema";
 import { tenantScope } from "../tenant/tenant-scope";
+import { olderThan, readKeyset, tsOf, writeKeyset } from "../common/keyset";
 
 const escapeLike = (v: string): string => v.replace(/[\\%_]/g, (c) => `\\${c}`);
 
@@ -19,15 +19,12 @@ export class CustomersService {
       const like = `%${escapeLike(query.q)}%`;
       conditions.push(or(sql`${customers.fullName} ilike ${like} escape '\\'`, sql`${customers.emailNormalized} ilike ${like} escape '\\'`, sql`${customers.phone} ilike ${like} escape '\\'`));
     }
-    if (query.cursor) {
-      const c = decodeCursor<{ t: string; id: string }>(query.cursor, ["t", "id"]);
-      const at = new Date(String(c.t));
-      if (Number.isNaN(at.getTime())) throw new BadRequestException({ code: "BAD_CURSOR", message: "The cursor is not valid." });
-      conditions.push(or(lt(customers.createdAt, at), and(eq(customers.createdAt, at), lt(customers.id, String(c.id)))));
-    }
+    const after = readKeyset(query.cursor);
+    if (after) conditions.push(olderThan(customers.createdAt, customers.id, after));
     const rows = await this.db
       .select({
         c: customers,
+        ts: tsOf(customers.createdAt),
         // The columns of the outer table are written with their table name: inside the sub-select an unqualified name would mean the column of `bookings`.
         bookingCount: sql<number>`(select count(*)::int from bookings b where b.organization_id = "customers"."organization_id" and b.customer_id = "customers"."id")`,
         lastBookingAt: sql<Date | null>`(select max(b.created_at) from bookings b where b.organization_id = "customers"."organization_id" and b.customer_id = "customers"."id")`,
@@ -40,7 +37,7 @@ export class CustomersService {
         id: r.c.id, fullName: r.c.fullName, email: r.c.emailNormalized, phone: r.c.phone, country: r.c.country, bookingCount: Number(r.bookingCount),
         lastBookingAt: r.lastBookingAt ? new Date(r.lastBookingAt).toISOString() : null, createdAt: r.c.createdAt.toISOString(),
       })),
-      nextCursor: last ? encodeCursor({ t: last.c.createdAt.toISOString(), id: last.c.id }) : null,
+      nextCursor: last ? writeKeyset(last.ts, last.c.id) : null,
     };
   }
 

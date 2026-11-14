@@ -2,11 +2,11 @@ import { ConflictException, Inject, Injectable, NotFoundException, Unprocessable
 import { and, desc, eq, inArray, isNotNull, isNull, lt, sql, type SQL } from "drizzle-orm";
 import { AuditService } from "../audit/audit.service";
 import type { Actor } from "../catalog/workshops.service";
-import { decodeCursor, encodeCursor } from "../common/cursor";
 import { DB, type Database } from "../db/db.module";
 import { contactMessages, organizationMembers, outboxEvents, users } from "../db/schema";
 import { OutboxService } from "../outbox/outbox.service";
 import { readPlatformValues } from "./platform.service";
+import { olderThan, readKeyset, tsOf, writeKeyset } from "../common/keyset";
 
 /** An administrator may write to at most this many people at once (FR-ADM-22). */
 export const MAX_RECIPIENTS = 500;
@@ -32,11 +32,12 @@ export class EmailsService {
       eq(outboxEvents.type, "EMAIL"), isNotNull(outboxEvents.template), q.type ? eq(outboxEvents.template, q.type) : undefined, dbStatus ? eq(outboxEvents.status, dbStatus) : undefined,
       like ? sql`(${outboxEvents.recipient} ilike ${like} escape '\\' or ${outboxEvents.subject} ilike ${like} escape '\\' or ${outboxEvents.template} ilike ${like} escape '\\')` : undefined,
     ];
-    const offset = q.cursor ? Math.max(0, Math.floor(Number(decodeCursor<{ o: number }>(q.cursor, ["o"]).o)) || 0) : 0;
-    const rows = await this.db.select().from(outboxEvents).where(and(...conditions)).orderBy(desc(outboxEvents.createdAt), desc(outboxEvents.id)).limit(q.limit + 1).offset(offset);
+    const after = readKeyset(q.cursor);
+    if (after) conditions.push(olderThan(outboxEvents.createdAt, outboxEvents.id, after));
+    const rows = await this.db.select({ e: outboxEvents, ts: tsOf(outboxEvents.createdAt) }).from(outboxEvents).where(and(...conditions)).orderBy(desc(outboxEvents.createdAt), desc(outboxEvents.id)).limit(q.limit + 1);
     return {
-      items: rows.slice(0, q.limit).map((e) => ({ id: e.id, createdAt: e.createdAt.toISOString(), to: e.recipient, subject: e.subject, type: e.template, status: statusOf(e.status), attempts: e.attempts, lastError: e.lastError })),
-      nextCursor: rows.length > q.limit ? encodeCursor({ o: offset + q.limit }) : null,
+      items: rows.slice(0, q.limit).map(({ e }) => ({ id: e.id, createdAt: e.createdAt.toISOString(), to: e.recipient, subject: e.subject, type: e.template, status: statusOf(e.status), attempts: e.attempts, lastError: e.lastError })),
+      nextCursor: rows.length > q.limit ? writeKeyset(rows[q.limit - 1]!.ts, rows[q.limit - 1]!.e.id) : null,
     };
   }
 

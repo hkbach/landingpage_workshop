@@ -14,7 +14,6 @@ import { formatDate } from "@/lib/format";
 import { ShopLink } from "@/components/dashboard/shell/shop-link";
 import { loadOwnShop } from "@/lib/own-shop";
 import { ownPromotions, ownScheduleRules, ownWorkshops } from "@/lib/own-catalog";
-import { fetchAll } from "@/lib/shop-data";
 import { notFound } from "next/navigation";
 
 export default async function WorkshopsPage() {
@@ -22,7 +21,7 @@ export default async function WorkshopsPage() {
   const locale = (await getLocale()) as Locale;
   // The shop, its workshops (with how many sessions are open), its promotions and its schedule rules come from the server.
   // the shop, the workshops and the bookings at once; then the promotions (they need the timezone) and the rules of every workshop at once
-  const [own, workshopList, bookings] = await Promise.all([loadOwnShop(), ownWorkshops(), fetchAll<{ workshopId: string }>("/bookings")]);
+  const [own, workshopList] = await Promise.all([loadOwnShop(), ownWorkshops()]);
   if (!own) notFound();
   const currentShop = own;
   const displayLocale = resolveShopLocale(locale, currentShop.enabledLocales, currentShop.defaultLocale);
@@ -32,13 +31,10 @@ export default async function WorkshopsPage() {
     Promise.all(rows.map(async (w) => [w.id, await ownScheduleRules(w.id)] as const)),
   ]);
   const ruleList = new Map(rulePairs);
-  // the bookings of each workshop, counted once (not one pass over every booking per workshop)
-  const bookingsPerWorkshop = new Map<string, number>();
-  for (const b of bookings) bookingsPerWorkshop.set(b.workshopId, (bookingsPerWorkshop.get(b.workshopId) ?? 0) + 1);
   const shop = { currency: currentShop.currency, timezone: currentShop.timezone, defaultLocale: currentShop.defaultLocale, enabledLocales: currentShop.enabledLocales, address: currentShop.address, viaApi: true };
   const stateOf = (w: (typeof rows)[number]): { open: number; total: number } => w.sessions;
   /** What the popup of a workshop needs (its details, schedule rules and number of bookings). */
-  const editData = (w: (typeof rows)[number]) => ({ workshop: w, rules: ruleList.get(w.id) ?? [], bookingCount: bookingsPerWorkshop.get(w.id) ?? 0, shop });
+  const editData = (w: (typeof rows)[number]) => ({ workshop: w, rules: ruleList.get(w.id) ?? [], bookingCount: w.bookingCount ?? 0, shop });
   const title = (p: { title: Parameters<typeof pickLocalized>[0] }) => pickLocalized(p.title, displayLocale, currentShop.defaultLocale);
   const percent = new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 1 });
   // Business dates of a promotion: shown as plain calendar days, whatever the timezone.

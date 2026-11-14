@@ -34,7 +34,7 @@ export const contactMessages = pgTable(
   (t) => [
     check("contact_messages_topic", sql`${t.topic} IN ('general', 'demo', 'support', 'partnership')`),
     check("contact_messages_sizes", sql`char_length(${t.name}) <= 120 AND char_length(${t.message}) <= 2000 AND char_length(${t.note}) <= 2000`),
-    index("contact_messages_created_idx").on(t.createdAt),
+    index("contact_messages_created_idx").on(t.createdAt, t.id),
   ],
 );
 

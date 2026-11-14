@@ -1,10 +1,11 @@
-import { ConflictException, Inject, Injectable, NotFoundException, UnprocessableEntityException } from "@nestjs/common";
+import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException, UnprocessableEntityException } from "@nestjs/common";
 import { and, desc, eq, gte, lt, sql, type SQL } from "drizzle-orm";
 import { checkAccountHolder, checkAccountNumber, checkBankName, maskAccountNumber, normalizeAccountHolder, normalizeAccountNumber, normalizeBankName } from "@workshop/shared";
 import { unsettledEarnings } from "../affiliate/earnings";
 import { AuditService } from "../audit/audit.service";
 import type { Actor } from "../catalog/workshops.service";
 import { decodeCursor, encodeCursor } from "../common/cursor";
+import { isKeyset, tsOf } from "../common/keyset";
 import { SECRETS } from "../config/env.module";
 import type { Secrets } from "../common/secrets";
 import { DB, type Database, type Executor } from "../db/db.module";
@@ -120,14 +121,19 @@ export class WalletService {
     }
     if (q.from) conditions.push(gte(withdrawals.requestedAt, new Date(`${q.from}T00:00:00Z`)));
     if (q.to) conditions.push(lt(withdrawals.requestedAt, new Date(new Date(`${q.to}T00:00:00Z`).getTime() + 86_400_000)));
-    const offset = q.cursor ? Math.max(0, Math.floor(num(decodeCursor<{ o: number }>(q.cursor, ["o"]).o))) : 0;
-    const rows = await this.db.select({ w: withdrawals, email: users.email, fullName: users.fullName }).from(withdrawals).innerJoin(users, eq(users.id, withdrawals.userId))
-      .where(and(...conditions)).orderBy(sql`(${withdrawals.status} = 'PENDING') desc`, desc(withdrawals.requestedAt), desc(withdrawals.id)).limit(q.limit + 1).offset(offset);
+    // Paged by a keyset in the order of the list: the waiting ones first, then the newest (the cursor says whether the last row was waiting)
+    const after = q.cursor ? decodeCursor<{ t: string; id: string; p: number }>(q.cursor, ["t", "id", "p"]) : undefined;
+    if (after) {
+      if (!isKeyset(after.t, after.id)) throw new BadRequestException({ code: "BAD_CURSOR", message: "The cursor is not valid." });
+      conditions.push(sql`((${withdrawals.status} = 'PENDING'), ${withdrawals.requestedAt}, ${withdrawals.id}) < (${Number(after.p) === 1}::boolean, ${after.t}::timestamptz, ${after.id}::uuid)`);
+    }
+    const rows = await this.db.select({ w: withdrawals, email: users.email, fullName: users.fullName, ts: tsOf(withdrawals.requestedAt) }).from(withdrawals).innerJoin(users, eq(users.id, withdrawals.userId))
+      .where(and(...conditions)).orderBy(sql`(${withdrawals.status} = 'PENDING') desc`, desc(withdrawals.requestedAt), desc(withdrawals.id)).limit(q.limit + 1);
     const sums = await this.db.select({ status: withdrawals.status, currency: withdrawals.currency, n: sql<string>`sum(${withdrawals.amount})`, count: sql<string>`count(*)` }).from(withdrawals).groupBy(withdrawals.status, withdrawals.currency);
     const money = (s: WithdrawalRow["status"]) => sums.filter((r) => r.status === s).map((r) => ({ currency: r.currency, amount: num(r.n) }));
     return {
       items: rows.slice(0, q.limit).map((r) => ({ ...this.adminView(r.w), customer: { id: r.w.userId, email: r.email, fullName: r.fullName } })),
-      nextCursor: rows.length > q.limit ? encodeCursor({ o: offset + q.limit }) : null,
+      nextCursor: rows.length > q.limit ? encodeCursor({ t: rows[q.limit - 1]!.ts, id: rows[q.limit - 1]!.w.id, p: rows[q.limit - 1]!.w.status === "PENDING" ? 1 : 0 }) : null,
       totals: { pending: money("PENDING"), paid: money("PAID"), rejectedCount: sums.filter((r) => r.status === "REJECTED").reduce((n, r) => n + num(r.count), 0) },
     };
   }

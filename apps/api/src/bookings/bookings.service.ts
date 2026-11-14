@@ -1,13 +1,12 @@
 import { bookingFacts, type BookingFacts } from "../email/booking-facts";
-import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException, UnprocessableEntityException } from "@nestjs/common";
-import { and, asc, desc, eq, inArray, lt, or, sql, type SQL } from "drizzle-orm";
+import { ConflictException, Inject, Injectable, NotFoundException, UnprocessableEntityException } from "@nestjs/common";
+import { and, asc, desc, eq, inArray, or, sql, type SQL } from "drizzle-orm";
 import { canTransition, computePaymentStatus, netPaid, targetStatus, workshopAddress, type BookingAction } from "@workshop/shared";
 import { AuditService } from "../audit/audit.service";
 import type { OrgContext } from "../auth/auth.guards";
 import { isUniqueViolation } from "../auth/auth.service";
 import { autoCloseEnded } from "../catalog/session-sweeper";
 import type { Actor } from "../catalog/workshops.service";
-import { decodeCursor, encodeCursor } from "../common/cursor";
 import { addDays, zonedToUtc } from "../common/zoned-time";
 import { DB, type Database, type Executor } from "../db/db.module";
 import { bookings, customers, organizations, payments, workshopSessions, workshops } from "../db/schema";
@@ -16,6 +15,7 @@ import { OutboxService } from "../outbox/outbox.service";
 import { assertShopWritable } from "../tenant/shop-writable";
 import { tenantScope } from "../tenant/tenant-scope";
 import { SessionCapacityService } from "./session-capacity.service";
+import { olderThan, readKeyset, tsOf, writeKeyset } from "../common/keyset";
 
 type BookingRow = typeof bookings.$inferSelect;
 type PaymentRow = typeof payments.$inferSelect;
@@ -37,7 +37,7 @@ const notFound = () => new NotFoundException({ code: "NOT_FOUND", message: "Book
 const invalid = (fields: Record<string, string>) => new UnprocessableEntityException({ code: "VALIDATION", message: "Please check the highlighted fields.", details: { fields } });
 const escapeLike = (v: string): string => v.replace(/[\\%_]/g, (c) => `\\${c}`);
 
-export interface BookingListQuery { date?: string | undefined; sessionId?: string | undefined; status?: BookingRow["status"] | undefined; paymentStatus?: BookingRow["paymentStatus"] | undefined; q?: string | undefined; limit: number; cursor?: string | undefined }
+export interface BookingListQuery { date?: string | undefined; sessionId?: string | undefined; workshopId?: string | undefined; customerId?: string | undefined; status?: BookingRow["status"] | undefined; paymentStatus?: BookingRow["paymentStatus"] | undefined; q?: string | undefined; limit: number; cursor?: string | undefined }
 export interface ManualBookingInput { sessionId: string; quantity: number; source: "WALK_IN" | "PHONE" | "OTHER"; fullName: string; email?: string | undefined; phone?: string | undefined; country?: string | undefined; specialRequest?: string | undefined }
 
 /**
@@ -83,6 +83,8 @@ export class BookingsService {
     await autoCloseEnded(this.db, this.audit, { organizationId: org.id });
     const conditions: (SQL | undefined)[] = [tenantScope(bookings, org.id)];
     if (query.sessionId) conditions.push(eq(bookings.sessionId, query.sessionId));
+    if (query.workshopId) conditions.push(eq(bookings.workshopId, query.workshopId));
+    if (query.customerId) conditions.push(eq(bookings.customerId, query.customerId));
     if (query.status) conditions.push(eq(bookings.status, query.status));
     if (query.paymentStatus) conditions.push(eq(bookings.paymentStatus, query.paymentStatus));
     if (query.date) {
@@ -95,14 +97,10 @@ export class BookingsService {
       const like = `%${escapeLike(query.q)}%`;
       conditions.push(or(sql`${bookings.bookingCode} ilike ${like} escape '\\'`, sql`${bookings.guestName} ilike ${like} escape '\\'`, sql`${bookings.guestEmail} ilike ${like} escape '\\'`, sql`${bookings.guestPhone} ilike ${like} escape '\\'`));
     }
-    if (query.cursor) {
-      const c = decodeCursor<{ t: string; id: string }>(query.cursor, ["t", "id"]);
-      const at = new Date(String(c.t));
-      if (Number.isNaN(at.getTime())) throw new BadRequestException({ code: "BAD_CURSOR", message: "The cursor is not valid." });
-      conditions.push(or(lt(bookings.createdAt, at), and(eq(bookings.createdAt, at), lt(bookings.id, String(c.id)))));
-    }
+    const after = readKeyset(query.cursor);
+    if (after) conditions.push(olderThan(bookings.createdAt, bookings.id, after));
     const rows = await this.db
-      .select({ booking: bookings, session: workshopSessions, title: workshops.title })
+      .select({ booking: bookings, session: workshopSessions, title: workshops.title, ts: tsOf(bookings.createdAt) })
       .from(bookings)
       .innerJoin(workshopSessions, and(eq(workshopSessions.organizationId, bookings.organizationId), eq(workshopSessions.id, bookings.sessionId)))
       .innerJoin(workshops, and(eq(workshops.organizationId, bookings.organizationId), eq(workshops.id, bookings.workshopId)))
@@ -110,7 +108,7 @@ export class BookingsService {
     const page = rows.slice(0, query.limit);
     const paid = await this.paidOf(this.db, org.id, page.map((r) => r.booking.id));
     const last = rows.length > query.limit ? page[page.length - 1] : undefined;
-    return { items: page.map((r) => this.toView(r.booking, r.session, r.title, paid.get(r.booking.id) ?? 0, now)), nextCursor: last ? encodeCursor({ t: last.booking.createdAt.toISOString(), id: last.booking.id }) : null };
+    return { items: page.map((r) => this.toView(r.booking, r.session, r.title, paid.get(r.booking.id) ?? 0, now)), nextCursor: last ? writeKeyset(last.ts, last.booking.id) : null };
   }
 
   private async load(executor: Executor, org: OrgContext, id: string, lock = false) {

@@ -21,6 +21,7 @@ export type LinkStatus = "ON_GOING" | "DEACTIVE";
 const notFound = (what: string) => new NotFoundException({ code: "NOT_FOUND", message: `${what} not found.` });
 const invalid = (fields: Record<string, string>) => new UnprocessableEntityException({ code: "VALIDATION", message: "Please check the highlighted fields.", details: { fields } });
 const escapeLike = (v: string): string => v.replace(/[\\%_]/g, (c) => `\\${c}`);
+import { olderThan, readKeyset, tsOf, writeKeyset } from "../common/keyset";
 const offsetOf = (cursor?: string): number => (cursor ? Math.max(0, Math.floor(Number(decodeCursor<{ o: number }>(cursor, ["o"]).o)) || 0) : 0);
 
 /** A link counts (and opens a booking) while nobody switched it off and both the workshop and its shop are active; otherwise it is Deactive (FR-CUST-02). */
@@ -180,13 +181,14 @@ export class AffiliateService {
       q.from ? gte(affiliateLinks.createdAt, new Date(`${q.from}T00:00:00Z`)) : undefined,
       q.to ? lt(affiliateLinks.createdAt, new Date(new Date(`${q.to}T00:00:00Z`).getTime() + 86_400_000)) : undefined,
     ];
-    const offset = offsetOf(q.cursor);
+    const after = readKeyset(q.cursor);
+    if (after) conditions.push(olderThan(affiliateLinks.createdAt, affiliateLinks.id, after));
     const rows = await this.db
-      .select({ l: affiliateLinks, w: workshops, o: organizations, email: users.email, name: users.fullName })
+      .select({ l: affiliateLinks, w: workshops, o: organizations, email: users.email, name: users.fullName, ts: tsOf(affiliateLinks.createdAt) })
       .from(affiliateLinks).innerJoin(users, eq(users.id, affiliateLinks.userId))
       .innerJoin(workshops, and(eq(workshops.organizationId, affiliateLinks.organizationId), eq(workshops.id, affiliateLinks.workshopId)))
       .innerJoin(organizations, eq(organizations.id, affiliateLinks.organizationId))
-      .where(and(...conditions)).orderBy(desc(affiliateLinks.createdAt), desc(affiliateLinks.id)).limit(q.limit + 1).offset(offset);
+      .where(and(...conditions)).orderBy(desc(affiliateLinks.createdAt), desc(affiliateLinks.id)).limit(q.limit + 1);
     const earned = new Map((await affiliateEarnings(this.db)).map((e) => [e.linkId, e]));
     return {
       items: rows.slice(0, q.limit).map(({ l, w, o, email, name }) => ({
@@ -194,7 +196,7 @@ export class AffiliateService {
         createdAt: l.createdAt.toISOString(), clicks: l.clicks, bookings: earned.get(l.id)?.bookings ?? 0, referralFee: earned.get(l.id)?.fee ?? 0,
         status: linkStatus(l, w.status, o.status), disabled: l.disabled, disabledReason: l.disabledReason,
       })),
-      nextCursor: rows.length > q.limit ? encodeCursor({ o: offset + q.limit }) : null,
+      nextCursor: rows.length > q.limit ? writeKeyset(rows[q.limit - 1]!.ts, rows[q.limit - 1]!.l.id) : null,
     };
   }
 

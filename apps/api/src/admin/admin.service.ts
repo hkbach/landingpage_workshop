@@ -1,11 +1,12 @@
 import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException, UnprocessableEntityException } from "@nestjs/common";
-import { and, asc, desc, eq, gte, ilike, inArray, lt, lte, or, sql, type SQL } from "drizzle-orm";
-import { AuditService } from "../audit/audit.service";
+import { and, asc, desc, eq, gte, ilike, inArray, lte, or, sql, type SQL } from "drizzle-orm";
+import { AUDIT_TS, AuditService, auditOlderThan, isAuditCursor } from "../audit/audit.service";
 import { AuthService } from "../auth/auth.service";
 import type { Actor } from "../catalog/workshops.service";
 import { decodeCursor, encodeCursor } from "../common/cursor";
 import { DB, type Database } from "../db/db.module";
 import { auditLogs, authSessions, organizationMembers, organizations, users } from "../db/schema";
+import { olderThan, readKeyset, tsOf, writeKeyset } from "../common/keyset";
 
 const escapeLike = (v: string): string => v.replace(/[\\%_]/g, (c) => `\\${c}`);
 const notFound = (what: string) => new NotFoundException({ code: "NOT_FOUND", message: `${what} not found.` });
@@ -30,15 +31,12 @@ export class AdminService {
       const like = `%${escapeLike(query.q)}%`;
       conditions.push(or(sql`${organizations.name} ilike ${like} escape '\\'`, sql`${organizations.slug} ilike ${like} escape '\\'`, sql`${organizations.contactEmail} ilike ${like} escape '\\'`));
     }
-    if (query.cursor) {
-      const c = decodeCursor<{ t: string; id: string }>(query.cursor, ["t", "id"]);
-      const at = new Date(String(c.t));
-      if (Number.isNaN(at.getTime())) throw new BadRequestException({ code: "BAD_CURSOR", message: "The cursor is not valid." });
-      conditions.push(or(lt(organizations.createdAt, at), and(eq(organizations.createdAt, at), lt(organizations.id, String(c.id)))));
-    }
+    const after = readKeyset(query.cursor);
+    if (after) conditions.push(olderThan(organizations.createdAt, organizations.id, after));
     const rows = await this.db
       .select({
         o: organizations,
+        ts: tsOf(organizations.createdAt),
         ownerEmail: sql<string | null>`(select u.email from organization_members m join users u on u.id = m.user_id where m.organization_id = "organizations"."id" and m.role = 'OWNER' order by m.created_at limit 1)`,
         workshopCount: sql<number>`(select count(*)::int from workshops w where w.organization_id = "organizations"."id")`,
         bookings30d: sql<number>`(select count(*)::int from bookings b where b.organization_id = "organizations"."id" and b.created_at > now() - interval '30 days')`,
@@ -57,7 +55,7 @@ export class AdminService {
         ownerName: r.ownerName, contactPhone: r.o.contactPhone, whatsapp: r.o.whatsapp, mapsUrl: r.o.mapsUrl, address: r.o.address, defaultLocale: r.o.defaultLocale, enabledLocales: r.o.enabledLocales,
         customDomain: r.o.customDomain, customDomainVerified: r.o.customDomainVerifiedAt !== null, showOnCustomerPage: r.o.showOnCustomerPage, sessionCount: Number(r.sessionCount), bookingCount: Number(r.bookingCount),
       })),
-      nextCursor: last ? encodeCursor({ t: last.o.createdAt.toISOString(), id: last.o.id }) : null,
+      nextCursor: last ? writeKeyset(last.ts, last.o.id) : null,
     };
   }
 
@@ -116,14 +114,11 @@ export class AdminService {
       const like = `%${escapeLike(query.q)}%`;
       conditions.push(or(sql`${users.email} ilike ${like} escape '\\'`, sql`${users.fullName} ilike ${like} escape '\\'`));
     }
-    if (query.cursor) {
-      const c = decodeCursor<{ t: string; id: string }>(query.cursor, ["t", "id"]);
-      const at = new Date(String(c.t));
-      if (Number.isNaN(at.getTime())) throw new BadRequestException({ code: "BAD_CURSOR", message: "The cursor is not valid." });
-      conditions.push(or(lt(users.createdAt, at), and(eq(users.createdAt, at), lt(users.id, String(c.id)))));
-    }
+    const after = readKeyset(query.cursor);
+    if (after) conditions.push(olderThan(users.createdAt, users.id, after));
     const rows = await this.db
       .select({
+        ts: tsOf(users.createdAt),
         u: { id: users.id, email: users.email, fullName: users.fullName, status: users.status, platformRole: users.platformRole, createdAt: users.createdAt, lastLoginAt: users.lastLoginAt, emailVerifiedAt: users.emailVerifiedAt },
         shopSlug: sql<string | null>`(select o.slug from organization_members m join organizations o on o.id = m.organization_id where m.user_id = "users"."id" order by m.created_at limit 1)`,
         shopName: sql<string | null>`(select o.name from organization_members m join organizations o on o.id = m.organization_id where m.user_id = "users"."id" order by m.created_at limit 1)`,
@@ -138,7 +133,7 @@ export class AdminService {
         id: r.u.id, email: r.u.email, fullName: r.u.fullName, status: r.u.status, type: (r.u.platformRole === "SUPER_ADMIN" ? "SUPER_ADMIN" : r.shopSlug ? "SHOP_OWNER" : "CUSTOMER") as UserType, shopSlug: r.shopSlug, shopName: r.shopName, shopId: r.shopId, bookingCount: Number(r.bookingCount),
         createdAt: r.u.createdAt.toISOString(), lastLoginAt: r.u.lastLoginAt?.toISOString() ?? null, emailVerified: r.u.emailVerifiedAt !== null,
       })),
-      nextCursor: last ? encodeCursor({ t: last.u.createdAt.toISOString(), id: last.u.id }) : null,
+      nextCursor: last ? writeKeyset(last.ts, last.u.id) : null,
     };
   }
 
@@ -183,16 +178,15 @@ export class AdminService {
     if (query.to) conditions.push(lte(auditLogs.createdAt, new Date(query.to)));
     if (query.cursor) {
       const c = decodeCursor<{ t: string; id: string }>(query.cursor, ["t", "id"]);
-      const at = new Date(String(c.t));
-      if (Number.isNaN(at.getTime())) throw new BadRequestException({ code: "BAD_CURSOR", message: "The cursor is not valid." });
-      conditions.push(or(sql`date_trunc('milliseconds', ${auditLogs.createdAt}) < ${at.toISOString()}::timestamptz`, and(sql`date_trunc('milliseconds', ${auditLogs.createdAt}) = ${at.toISOString()}::timestamptz`, lt(auditLogs.id, String(c.id)))));
+      if (!isAuditCursor(c.t, c.id)) throw new BadRequestException({ code: "BAD_CURSOR", message: "The cursor is not valid." });
+      conditions.push(auditOlderThan(String(c.t), String(c.id)));
     }
     const rows = await this.db
-      .select({ a: auditLogs, actorEmail: users.email, orgSlug: organizations.slug })
+      .select({ a: auditLogs, ts: AUDIT_TS, actorEmail: users.email, orgSlug: organizations.slug })
       .from(auditLogs)
       .leftJoin(users, eq(users.id, auditLogs.actorUserId))
       .leftJoin(organizations, eq(organizations.id, auditLogs.organizationId))
-      .where(and(...conditions)).orderBy(desc(sql`date_trunc('milliseconds', ${auditLogs.createdAt})`), desc(auditLogs.id)).limit(query.limit + 1);
+      .where(and(...conditions)).orderBy(desc(auditLogs.createdAt), desc(auditLogs.id)).limit(query.limit + 1);
     const page = rows.slice(0, query.limit);
     const last = rows.length > query.limit ? page[page.length - 1] : undefined;
     return {
@@ -200,7 +194,7 @@ export class AdminService {
         id: r.a.id, action: r.a.action, entityType: r.a.entityType, entityId: r.a.entityId, organizationId: r.a.organizationId, organizationSlug: r.orgSlug, actorUserId: r.a.actorUserId, actorEmail: r.actorEmail ?? null,
         actor: r.a.actorUserId ? "USER" : "SYSTEM", before: r.a.before, after: r.a.after, ip: r.a.ip, createdAt: r.a.createdAt.toISOString(),
       })),
-      nextCursor: last ? encodeCursor({ t: last.a.createdAt.toISOString(), id: last.a.id }) : null,
+      nextCursor: last ? encodeCursor({ t: last.ts, id: last.a.id }) : null,
     };
   }
 }

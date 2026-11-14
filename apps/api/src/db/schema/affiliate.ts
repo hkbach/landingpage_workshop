@@ -30,6 +30,7 @@ export const affiliateLinks = pgTable(
     check("affiliate_links_clicks", sql`${t.clicks} >= 0`),
     index("affiliate_links_user_idx").on(t.userId),
     index("affiliate_links_workshop_idx").on(t.organizationId, t.workshopId),
+    index("affiliate_links_created_idx").on(t.createdAt, t.id), // the list of the administrator, newest first
   ],
 );
 

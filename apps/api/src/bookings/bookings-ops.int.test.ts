@@ -137,6 +137,28 @@ d("bookings and customers of a shop", () => {
     expect(detail.workshop.title.en).toMatch(/^Ops /);
   });
 
+  it("lists the bookings of ONE workshop or ONE customer, and the list of the workshops says how many bookings each has (a screen about one of them does not read every booking)", async () => {
+    const sid = await session(a);
+    const one = await make(a, sid, { fullName: "Only Customer", email: emailFor("only") });
+    await make(a, sid, { fullName: "Somebody Else", email: emailFor("else") });
+    const otherWorkshop = (await t.post("/workshops", { title: { en: `Second ${unique("w")}` }, durationMinutes: 60, priceAmount: 100_000, defaultCapacity: 5, maxPerBooking: 2, categories: ["COOKING"] }, { cookie: a.cookie })).json().id as string;
+    const ids = (url: string, shop = a) => t.get(url, { cookie: shop.cookie }).then((r) => (r.json().items as { id: string; workshop: { id: string }; customerId: string }[]));
+    const ofWorkshop = await ids(`/bookings?workshopId=${a.workshopId}&limit=100`);
+    expect(ofWorkshop.length).toBeGreaterThan(1);
+    expect(ofWorkshop.every((x) => x.workshop.id === a.workshopId)).toBe(true);
+    expect(await ids(`/bookings?workshopId=${otherWorkshop}`)).toEqual([]);
+    const ofCustomer = await ids(`/bookings?customerId=${one.customerId}`);
+    expect(ofCustomer.map((x) => x.id)).toEqual([one.id]);
+    // another shop never sees them, even when it asks with the id
+    expect(await ids(`/bookings?customerId=${one.customerId}`, b)).toEqual([]);
+    expect((await t.get("/bookings?customerId=not-an-id", { cookie: a.cookie })).statusCode).toBe(422);
+
+    const list = (await t.get("/workshops?limit=100", { cookie: a.cookie })).json().items as { id: string; bookingCount: number }[];
+    const count = (await t.pool.query<{ n: number }>("select count(*)::int as n from bookings where workshop_id = $1", [a.workshopId])).rows[0]!.n;
+    expect(list.find((w) => w.id === a.workshopId)!.bookingCount).toBe(count);
+    expect(list.find((w) => w.id === otherWorkshop)!.bookingCount).toBe(0);
+  });
+
   it("checks in and undoes it back to EXACTLY the status before, with the state machine of the shared rules", async () => {
     const sid = await session(a, { days: 10 });
     const confirmed = await make(a, sid);

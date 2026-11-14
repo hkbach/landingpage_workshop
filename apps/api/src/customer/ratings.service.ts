@@ -3,10 +3,10 @@ import { and, desc, eq, inArray, isNull, sql, type SQL } from "drizzle-orm";
 import { AuditService } from "../audit/audit.service";
 import type { OrgContext } from "../auth/auth.guards";
 import type { Actor } from "../catalog/workshops.service";
-import { decodeCursor, encodeCursor } from "../common/cursor";
 import { DB, type Database, type Executor } from "../db/db.module";
 import { bookings, organizations, users, workshopRatings, workshops } from "../db/schema";
 import { tenantScope } from "../tenant/tenant-scope";
+import { olderThan, readKeyset, tsOf, writeKeyset } from "../common/keyset";
 
 const escapeLike = (v: string): string => v.replace(/[\\%_]/g, (c) => `\\${c}`);
 const round1 = (n: number): number => Math.round(n * 10) / 10;
@@ -56,21 +56,22 @@ export class RatingsService {
       q.stars ? eq(workshopRatings.stars, q.stars) : undefined,
       like ? sql`(${workshopRatings.comment} ilike ${like} escape '\\' or ${workshops.title}::text ilike ${like} escape '\\' or ${organizations.name} ilike ${like} escape '\\' or ${bookings.bookingCode} ilike ${like} escape '\\' or ${users.email} ilike ${like} escape '\\' or ${users.fullName} ilike ${like} escape '\\')` : undefined,
     ];
-    const offset = q.cursor ? Math.max(0, Math.floor(Number(decodeCursor<{ o: number }>(q.cursor, ["o"]).o)) || 0) : 0;
+    const after = readKeyset(q.cursor);
+    if (after) conditions.push(olderThan(workshopRatings.createdAt, workshopRatings.id, after));
     const rows = await this.db
-      .select({ r: workshopRatings, title: workshops.title, shop: organizations.name, slug: organizations.slug, code: bookings.bookingCode, name: users.fullName, email: users.email })
+      .select({ r: workshopRatings, ts: tsOf(workshopRatings.createdAt), title: workshops.title, shop: organizations.name, slug: organizations.slug, code: bookings.bookingCode, name: users.fullName, email: users.email })
       .from(workshopRatings)
       .innerJoin(workshops, and(eq(workshops.organizationId, workshopRatings.organizationId), eq(workshops.id, workshopRatings.workshopId)))
       .innerJoin(organizations, eq(organizations.id, workshopRatings.organizationId))
       .innerJoin(bookings, and(eq(bookings.organizationId, workshopRatings.organizationId), eq(bookings.id, workshopRatings.bookingId)))
       .innerJoin(users, eq(users.id, workshopRatings.userId))
-      .where(and(...conditions)).orderBy(desc(workshopRatings.createdAt), desc(workshopRatings.id)).limit(q.limit + 1).offset(offset);
+      .where(and(...conditions)).orderBy(desc(workshopRatings.createdAt), desc(workshopRatings.id)).limit(q.limit + 1);
     return {
       items: rows.slice(0, q.limit).map(({ r, title, shop, slug, code, name, email }) => ({
         id: r.id, workshopId: r.workshopId, workshopTitle: title, shopName: shop, shopSlug: slug, bookingCode: code, customer: { id: r.userId, name, email }, stars: r.stars, comment: r.comment,
         createdAt: r.createdAt.toISOString(), status: r.removedAt ? ("REMOVED" as const) : ("SHOWN" as const), removedReason: r.removedReason,
       })),
-      nextCursor: rows.length > q.limit ? encodeCursor({ o: offset + q.limit }) : null,
+      nextCursor: rows.length > q.limit ? writeKeyset(rows[q.limit - 1]!.ts, rows[q.limit - 1]!.r.id) : null,
     };
   }
 

@@ -17,6 +17,17 @@ const schema = z
     LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
     DATABASE_URL: z.string().min(1, "DATABASE_URL is required").refine((v) => /^postgres(ql)?:\/\//.test(v), "DATABASE_URL must start with postgres://"),
 
+    /**
+     * The connection pool of the database. `DB_POOL_MAX` connections at most (the database must have room for the API, the worker and the tools: each of them has its own pool); a query that runs longer than
+     * `DB_STATEMENT_TIMEOUT_MS` is stopped by the database (a slow query must not hold a connection for ever); a transaction that sits idle for `DB_IDLE_IN_TRANSACTION_TIMEOUT_MS` is closed (a forgotten
+     * transaction holds locks); a request for a lock that waits longer than `DB_LOCK_TIMEOUT_MS` fails; asking the pool for a connection gives up after `DB_ACQUIRE_TIMEOUT_MS`.
+     */
+    DB_POOL_MAX: z.coerce.number().int().min(1).max(100).default(10),
+    DB_STATEMENT_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(600_000).default(30_000),
+    DB_IDLE_IN_TRANSACTION_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(600_000).default(60_000),
+    DB_LOCK_TIMEOUT_MS: z.coerce.number().int().min(500).max(120_000).default(10_000),
+    DB_ACQUIRE_TIMEOUT_MS: z.coerce.number().int().min(500).max(60_000).default(5_000),
+
     // Where the web app lives: the origin the browser sends in `Origin` (CSRF check) and the base of the links in the emails.
     APP_URL: z.url().default("http://app.localtest.me:3000"),
     /** The domain the landing pages live under: a shop is at `{slug}.{PLATFORM_DOMAIN}` (same scheme and port as APP_URL). Used for the links of the emails sent to guests. */

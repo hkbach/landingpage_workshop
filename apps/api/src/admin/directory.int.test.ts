@@ -151,6 +151,30 @@ d("the lists of the administrator", () => {
     expect(body.nextCursor).not.toBeNull();
   });
 
+  it("pages every list by a keyset: one row a page, no row twice or missing, the same order as one big page, and a bad cursor is a 400", async () => {
+    // (the lists keep the rows of earlier runs: the first dozen rows are compared, which is enough to cross many page borders)
+    for (const [path, idOf] of [
+      ["workshops", (r: { id: string }) => r.id], ["sessions", (r: { id: string }) => r.id], ["bookings", (r: { id: string }) => r.id], ["landing-pages", (r: { shop: { id: string } }) => r.shop.id],
+    ] as const) {
+      const big = ((await (await get(`${path}?limit=100`)).json()).items as never[]).slice(0, 12).map(idOf as (r: never) => string);
+      expect(big.length, path).toBeGreaterThan(2);
+      const seen: string[] = [];
+      let cursor: string | null = null;
+      for (let i = 0; i < 12; i++) {
+        const res = await get(`${path}?limit=1${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`);
+        expect(res.statusCode, path).toBe(200);
+        const body = res.json() as { items: never[]; nextCursor: string | null };
+        seen.push(...body.items.map(idOf as (r: never) => string));
+        cursor = body.nextCursor;
+        if (!cursor) break;
+      }
+      expect(seen, path).toEqual(big.slice(0, seen.length));
+      expect(new Set(seen).size, path).toBe(seen.length);
+      expect((await get(`${path}?cursor=not-a-cursor`)).statusCode, path).toBe(400);
+      expect((await get(`${path}?cursor=${Buffer.from(JSON.stringify({ t: "yesterday", id: "x" })).toString("base64url")}`)).statusCode, path).toBe(400);
+    }
+  });
+
   it("lists the shops with their landing pages and the address each is served at", async () => {
     await t.pool.query("insert into site_pages (organization_id, name, template_key) values ($1, 'Home', 'classic'), ($1, 'Autumn', 'modern')", [a.orgId]);
     const find = async (q: string) => (await (await get(`landing-pages?q=${encodeURIComponent(q)}`)).json()).items as { shop: { slug: string }; ownDomain: string | null; ownDomainVerified: boolean; liveUrl: string; pages: { name: string; isLive: boolean; version: number; templateKey: string }[] }[];

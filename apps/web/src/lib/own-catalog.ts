@@ -9,7 +9,7 @@ import type { Workshop } from "@/lib/types";
 // The catalog of the shop of the session, from the API, in the shapes the owner pages already use. (Only called when connected to the API.)
 
 /** A workshop as the API gives it: the same fields as the page model, plus how many of its sessions are open and how many there are. */
-export type OwnWorkshop = Workshop & { sessions: { open: number; total: number } };
+export type OwnWorkshop = Workshop & { sessions: { open: number; total: number }; /** How many bookings the workshop has (every state), counted by the server. */ bookingCount?: number };
 
 export const ownWorkshops = (adminShopId?: string): Promise<OwnWorkshop[]> => fetchAll<OwnWorkshop>(`${shopPrefix(adminShopId)}/workshops`);
 

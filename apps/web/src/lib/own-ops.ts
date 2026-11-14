@@ -58,10 +58,12 @@ export function pricesOf(bookings: readonly Booking[]): Record<string, BookingPr
 }
 
 /** The sessions, bookings, customers and workshops of the shop of the session (the whole lists, see lib/shop-data.ts). */
-export async function loadOpsData(): Promise<OpsData> {
-  // the shop and the four lists at once: the lists do not need the shop to be asked for
+export async function loadOpsData(need: { sessions?: boolean; bookings?: boolean; customers?: boolean } = {}): Promise<OpsData> {
+  // the shop and the lists at once (the lists do not need the shop to be asked for); a screen that does not show one of the lists leaves it out (`{ sessions: false }`) instead of reading up to 2000 rows for nothing
+  const none = <T>(): Promise<T[]> => Promise.resolve([]);
   const [shop, workshops, sessions, bookings, customers] = await Promise.all([
-    loadOwnShop(), ownWorkshops(), fetchAll<ApiSession>("/sessions"), fetchAll<ApiBooking>("/bookings"), fetchAll<ApiCustomer>("/customers"),
+    loadOwnShop(), ownWorkshops(), need.sessions === false ? none<ApiSession>() : fetchAll<ApiSession>("/sessions"), need.bookings === false ? none<ApiBooking>() : fetchAll<ApiBooking>("/bookings"),
+    need.customers === false ? none<ApiCustomer>() : fetchAll<ApiCustomer>("/customers"),
   ]);
   if (!shop) notFound();
   const mapped = bookings.map((b) => toBooking(b, shop));

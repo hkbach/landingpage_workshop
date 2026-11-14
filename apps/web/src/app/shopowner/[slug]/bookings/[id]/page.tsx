@@ -14,7 +14,7 @@ export default async function BookingDetailPage(props: PageProps<"/shopowner/[sl
   const booking = raw.payments ? { ...base, payments: raw.payments.map((p) => ({ id: p.id, type: p.type === "PAYMENT" ? "PAYMENT" as const : "REFUND" as const, amount: p.amount, method: p.method, ...(p.note ? { note: p.note } : {}), recordedAt: p.recordedAt, recordedBy: "" })) } : base;
   const [sessions, others, customer] = await Promise.all([
     fetchAll<Parameters<typeof toSession>[0]>(`/sessions?workshopId=${booking.workshopId}`),
-    fetchAll<Parameters<typeof toBooking>[0]>("/bookings"),
+    fetchAll<Parameters<typeof toBooking>[0]>(`/bookings?workshopId=${encodeURIComponent(booking.workshopId)}`),
     apiGet<Parameters<typeof toCustomer>[0]>(`/customers/${booking.customerId}`),
   ]);
   return (

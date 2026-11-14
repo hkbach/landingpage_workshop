@@ -6,11 +6,11 @@ import { AuditService } from "../audit/audit.service";
 import { TurnstileService } from "../auth/turnstile.service";
 import type { Actor } from "../catalog/workshops.service";
 import { RateLimiter } from "../common/limiter";
-import { decodeCursor, encodeCursor } from "../common/cursor";
 import { DB, type Database } from "../db/db.module";
 import { contactMessages, organizations, siteReports, users } from "../db/schema";
 import { OutboxService } from "../outbox/outbox.service";
 import { readPlatformValues } from "./platform.service";
+import { olderThan, readKeyset, tsOf, writeKeyset } from "../common/keyset";
 
 export const CONTACT_TOPICS = ["general", "demo", "support", "partnership"] as const;
 export const MESSAGE_STATUSES = ["NEW", "IN_PROGRESS", "DONE"] as const;
@@ -64,12 +64,13 @@ export class InboxService {
       q.status ? eq(contactMessages.status, q.status) : undefined, q.topic ? eq(contactMessages.topic, q.topic) : undefined,
       like ? sql`(${contactMessages.name} ilike ${like} escape '\\' or ${contactMessages.email} ilike ${like} escape '\\' or ${contactMessages.topic} ilike ${like} escape '\\' or ${contactMessages.message} ilike ${like} escape '\\')` : undefined,
     ];
-    const offset = q.cursor ? Math.max(0, Math.floor(Number(decodeCursor<{ o: number }>(q.cursor, ["o"]).o)) || 0) : 0;
-    const rows = await this.db.select().from(contactMessages).where(and(...conditions)).orderBy(desc(contactMessages.createdAt), desc(contactMessages.id)).limit(q.limit + 1).offset(offset);
+    const after = readKeyset(q.cursor);
+    if (after) conditions.push(olderThan(contactMessages.createdAt, contactMessages.id, after));
+    const rows = await this.db.select({ m: contactMessages, ts: tsOf(contactMessages.createdAt) }).from(contactMessages).where(and(...conditions)).orderBy(desc(contactMessages.createdAt), desc(contactMessages.id)).limit(q.limit + 1);
     const counts = await this.db.select({ status: contactMessages.status, n: sql<number>`count(*)::int` }).from(contactMessages).groupBy(contactMessages.status);
     return {
-      items: rows.slice(0, q.limit).map((m) => ({ id: m.id, name: m.name, email: m.email, topic: m.topic, message: m.message, status: m.status, note: m.note, createdAt: m.createdAt.toISOString() })),
-      nextCursor: rows.length > q.limit ? encodeCursor({ o: offset + q.limit }) : null,
+      items: rows.slice(0, q.limit).map(({ m }) => ({ id: m.id, name: m.name, email: m.email, topic: m.topic, message: m.message, status: m.status, note: m.note, createdAt: m.createdAt.toISOString() })),
+      nextCursor: rows.length > q.limit ? writeKeyset(rows[q.limit - 1]!.ts, rows[q.limit - 1]!.m.id) : null,
       counts: { NEW: counts.find((c) => c.status === "NEW")?.n ?? 0, IN_PROGRESS: counts.find((c) => c.status === "IN_PROGRESS")?.n ?? 0, DONE: counts.find((c) => c.status === "DONE")?.n ?? 0 },
     };
   }

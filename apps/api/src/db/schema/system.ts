@@ -21,7 +21,13 @@ export const auditLogs = pgTable(
     ip: text("ip"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [index("audit_logs_org_created_idx").on(t.organizationId, desc(t.createdAt)), index("audit_logs_actor_idx").on(t.actorUserId, desc(t.createdAt))],
+  (t) => [
+    index("audit_logs_org_created_idx").on(t.organizationId, desc(t.createdAt), desc(t.id)),
+    index("audit_logs_actor_idx").on(t.actorUserId, desc(t.createdAt)),
+    // the audit log of the whole platform (newest first) and the History tabs of the admin screens (one kind of record, newest first): the order of the query is the order of the index
+    index("audit_logs_created_idx").on(desc(t.createdAt), desc(t.id)),
+    index("audit_logs_entity_created_idx").on(t.entityType, desc(t.createdAt), desc(t.id)),
+  ],
 );
 
 /** Written in the same transaction as the change that needs an email or another effect; a worker dispatches it. */

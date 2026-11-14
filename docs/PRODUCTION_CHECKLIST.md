@@ -21,6 +21,8 @@ Backend đã có: lưu `organizations.custom_domain` (unique), kiểm tra DNS (`
 - [ ] Tách host theo D21: website công khai ở `{PLATFORM_DOMAIN}`, khu quản lý ở `app.{PLATFORM_DOMAIN}`; cookie đăng nhập chỉ đặt cho `app.`.
 - [ ] `APP_URL` dùng **https**; cookie `Secure`, `SameSite` đúng; kiểm tra `OriginGuard` với các host thật.
 - [x] Backup `pg_dump` mã hóa lên R2 và runbook khôi phục (`infra/backup/`, `docs/RUNBOOK.md`): đã viết và thử với database tạm. Còn: thử với bucket R2 thật (cần khóa R2), bật khóa xóa / lifecycle cho bucket backup, diễn tập khôi phục trên máy khác.
+- [ ] Pool database: đặt `DB_POOL_MAX` sao cho (API + worker) x pool không vượt `max_connections` của PostgreSQL; kiểm tra `DB_STATEMENT_TIMEOUT_MS` (30 s), `DB_IDLE_IN_TRANSACTION_TIMEOUT_MS` (60 s) và `DB_LOCK_TIMEOUT_MS` (10 s) phù hợp tải thật (đã có trong code; chỉ cần xác nhận giá trị).
+- [ ] Migration `0030_audit_log_indexes` và `0031_keyset_indexes` tạo/xóa index trên các bảng lớn (`audit_logs`, `users`, `organizations`, `workshops`...): chạy trong giờ ít tải hoặc tạo bằng `CREATE INDEX CONCURRENTLY` trên database lớn (người vận hành quyết định).
 - [ ] Giám sát và cảnh báo cơ bản, Sentry (cần DSN do người phụ trách cung cấp; không đưa vào repo).
 - [ ] Chạy worker (`dev:worker` → process production) cho outbox email, tự đóng session, sinh session, kết sổ tài chính, `maintenance.purge`.
 - [x] CSP đầy đủ cho web (nonce theo request) và che log: đã làm (13/11/2026). Còn: rà CSP bằng trình duyệt thật khi web đã nối API thật (Playwright kiểm tra không có vi phạm CSP), rate limit ở tầng proxy (Caddy), chuyển rate limit trong bộ nhớ vào database khi chạy nhiều instance.

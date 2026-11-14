@@ -7,6 +7,9 @@ const email = z.string().trim().toLowerCase().max(254, "tooLong").pipe(z.email("
 export const bookingListQuery = z.object({
   date: z.string().trim().refine(isRealDate, "dateInvalid").optional(),
   sessionId: z.uuid().optional(),
+  /** The bookings of one workshop, or of one customer of the shop (a screen about one of them does not read every booking). */
+  workshopId: z.uuid().optional(),
+  customerId: z.uuid().optional(),
   status: z.enum(BOOKING_STATUSES).optional(),
   paymentStatus: z.enum(PAYMENT_STATUSES).optional(),
   q: z.string().trim().max(100).optional(),

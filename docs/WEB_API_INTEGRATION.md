@@ -67,7 +67,7 @@ Khi đặt `API_URL`, mọi trang của `/shopowner/{slug}` đọc dữ liệu c
 5. Email báo khách khi đổi lịch / đóng session do **server tự gửi**; số khách trong thông báo trên màn hình là số booking đang giữ chỗ lúc thao tác.
 6. Giảm giá của một booking hiển thị một dòng "discount" (API giữ tổng, chưa trả từng mã).
 
-**Giới hạn đã biết:** danh sách được lấy **đủ** qua con trỏ (tối đa 2000 dòng mỗi loại, 100 dòng mỗi lần gọi) rồi lọc/tìm trên trình duyệt như trước. Shop có hơn 2000 booking sẽ thấy 2000 dòng đầu. Việc chuyển lọc và phân trang của Bookings và Customers sang server là cải tiến tiếp theo.
+**Giới hạn đã biết:** danh sách được lấy **đủ** qua con trỏ (tối đa 2000 dòng mỗi loại, 100 dòng mỗi lần gọi) rồi lọc/tìm trên trình duyệt như trước. Shop có hơn 2000 booking sẽ thấy 2000 dòng đầu. Đã giảm bớt: trang chi tiết booking, chi tiết khách và đặt booking mới chỉ hỏi đúng phần cần (`/bookings?customerId=`, `/bookings?workshopId=`, `/sessions?from=`), trang Workshops lấy số booking từ server (`bookingCount`) thay vì đọc mọi booking, trang Customers không đọc session. **Còn lại:** các màn danh sách Bookings, Customers, Sessions, Today và Overview vẫn đọc tới 2000 dòng mỗi loại và lọc trên trình duyệt; chuyển lọc và phân trang của chúng sang server (API đã có `q`, `status`, `date`, `sessionId`, con trỏ keyset) là việc tiếp theo.
 
 **Phát hiện và sửa khi nối:** trang Ratings của chủ shop hiển thị khóa dịch thô (`ratings.title`) vì dùng sai namespace (đã sửa thành `dashboard.ratings`).
 
