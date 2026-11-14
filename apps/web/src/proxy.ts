@@ -30,6 +30,9 @@ async function route(request: NextRequest, requestHeaders: Headers) {
   if (platformHost && (request.nextUrl.pathname === "/systemadmin" || request.nextUrl.pathname.startsWith("/systemadmin/"))) {
     const headers = new Headers(requestHeaders);
     headers.set("x-ui-area", "systemadmin");
+    // An administrator editing a shop (/systemadmin/shops/{slug}/...): the server side of those pages asks the API for that shop (see lib/api-server.ts). Only here, never from the browser.
+    const editing = request.nextUrl.pathname.match(/^\/systemadmin\/shops\/([a-z0-9-]{2,40})(?:\/|$)/);
+    if (editing) headers.set("x-act-as-shop", editing[1]!);
     return NextResponse.next({ request: { headers } });
   }
   if (platformHost) return NextResponse.next({ request: { headers: requestHeaders } });
@@ -52,6 +55,7 @@ export async function proxy(request: NextRequest) {
     ...(process.env.API_ORIGIN ? { apiOrigin: process.env.API_ORIGIN } : {}), ...(process.env.MEDIA_ORIGIN ? { mediaOrigin: process.env.MEDIA_ORIGIN } : {}), ...(process.env.MEDIA_UPLOAD_ORIGIN ? { uploadOrigin: process.env.MEDIA_UPLOAD_ORIGIN } : {}),
   });
   const requestHeaders = new Headers(request.headers);
+  requestHeaders.delete("x-act-as-shop"); // (what the browser sent is never believed: the proxy sets it below for the pages that are for a shop)
   requestHeaders.set("x-nonce", nonce);
   requestHeaders.set("content-security-policy", csp);
   const response = await route(request, requestHeaders);

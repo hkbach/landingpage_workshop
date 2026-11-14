@@ -370,6 +370,8 @@ Ký hiệu dùng trong bảng: **P0** = luồng tiền, đặt chỗ, bảo mậ
 | E2E-ADM-29 | Kênh hỗ trợ | Admin | Phone 6 chữ số; email sai; để trống Zalo; Save | Lỗi dưới ô; kênh trống bị ẩn; owner và customer thấy ngay; khách vãng lai gọi `GET /support-contact` nhận `401` | P2 | FR-ADM-07 L672-675 | Chưa có |
 | E2E-ADM-30 | Audit logs | Có thao tác của owner, admin, hệ thống | Lọc theo email (người làm hoặc bị tác động), shop, hành động, khoảng ngày | Kết quả đúng; dòng hệ thống `actor: SYSTEM`; không có mật khẩu, token, nội dung tin / ghi chú | P1 | FR-ADM-05, REQ L1089 | Chưa có |
 | E2E-ADM-31 | Kiểm tra landing page `POST /admin/landing-pages/{slug}/audit` | — | — | — | P2 | FR-ADM-14 L716, WAI L73 | Chưa có — tính năng chưa làm (chưa có route) |
+| E2E-ADM-32 | Admin sửa workshop của shop trên trang của chủ shop | Admin; shop `whiskladle` | Mở `/systemadmin/shops/whiskladle/workshops`; New workshop không nhập lý do; nhập lý do ở banner rồi Save | Không lý do: `422 ADMIN_REASON_REQUIRED`, không tạo; có lý do: workshop được tạo trong đúng shop, audit `admin_edit.reason`, email `WORKSHOP_CHANGED` tới chủ shop | P1 | FR-ADM-09 (admin sửa hộ), D15 | Đã có: `admin.spec.ts` › edits the workshops of a shop as the administrator… |
+| E2E-ADM-33 | Hành động thay shop chỉ dành cho SUPER_ADMIN và chỉ workshop, session | Owner A, owner B, customer, admin | Gửi `X-Act-As-Shop` từ từng vai trò; admin ghi `/organization`, ghi không lý do | Owner / customer: header bị bỏ qua (shop của chính họ hoặc `403`); admin: ghi ngoài workshop, session `403 ACT_AS_NOT_ALLOWED`, thiếu lý do `422` | P0 | FR-ADM-09, §4.3 | Đã có: `security.spec.ts` › E2E-SEC-17 |
 
 ### 2.11 Ảnh / Cloudflare R2 (MEDIA)
 
@@ -468,15 +470,15 @@ Ghi chú I18N-12: tiêu đề email theo REQ L626 là 6 tiêu đề nối bằng
 | FIN | 10 | 4 | 1 | 5 | 0 | 0 | 9 | 1 | 0 |
 | SET | 15 | 1 | 8 | 6 | 1 | 0 | 12 | 1 | 1 |
 | CUST | 23 | 7 | 9 | 7 | 1 | 2 | 19 | 0 | 1 |
-| ADM | 31 | 6 | 13 | 12 | 3 | 2 | 23 | 3 | 0 |
+| ADM | 33 | 7 | 14 | 12 | 5 | 2 | 23 | 3 | 0 |
 | MEDIA | 11 | 1 | 8 | 2 | 1 | 1 | 9 | 0 | 0 |
 | SEC | 16 | 12 | 3 | 1 | 10 | 3 | 3 | 0 | 0 |
 | I18N | 13 | 0 | 6 | 7 | 1 | 2 | 10 | 0 | 0 |
 | RESP | 7 | 0 | 3 | 4 | 0 | 0 | 7 | 0 | 0 |
 | A11Y | 8 | 0 | 2 | 6 | 0 | 1 | 7 | 0 | 0 |
-| **Tổng** | **309** | **81** | **126** | **102** | **34** | **28** | **231** | **14** | **2** |
+| **Tổng** | **311** | **82** | **127** | **102** | **36** | **28** | **231** | **14** | **2** |
 
-- Cập nhật 14/11/2026: 31 test (8 file, thêm `security.spec.ts` và `booking-rules.spec.ts`) phủ **62 case** (34 đủ, 28 một phần), khoảng 20% danh mục.
+- Cập nhật 14/11/2026: 31 test (8 file, thêm `security.spec.ts` và `booking-rules.spec.ts`) phủ **64 case** (36 đủ, 28 một phần), khoảng 21% danh mục.
 - P0: 81 case, phủ đủ 17 (AUTH-13, PUB-10, PUB-15, PUB-16, PUB-17, PUB-24, PUB-25, SEC-01, SEC-02, SEC-03, SEC-04, SEC-05, SEC-06, SEC-07, SEC-09, SEC-11, SEC-13) và một phần 13 (AUTH-10, AUTH-12, PUB-07, PUB-21, PUB-22, PUB-31, PUB-32, PUB-35, OPS-07, OPS-14, CAT-13, ADM-07, SEC-14).
 - 14 case thuộc tính năng chưa làm; 2 case không tự động được ổn định (SET-11 cần DNS thật; CUST-04 xếp theo seed ngày).
 - 15 case ghi rõ "cần hook" thời gian / kết sổ / DNS (AUTH-17, PUB-18, PUB-29, PUB-34, PUB-38, OPS-21, CAT-21, CAT-22, PROMO-10, FIN-07, SET-11, CUST-10, CUST-17, ADM-17, ADM-21); thêm CUST-18, CUST-21 cũng cần số dư ví nên phụ thuộc cùng hook.

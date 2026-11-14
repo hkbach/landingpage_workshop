@@ -115,6 +115,20 @@ describe("the emails about an account", () => {
     expect(renderEmail(accountMails("vi")[6]!).text).toContain("buổi học S-0001 của shop bạn: đã được dời");
   });
 
+  it("tell the owner of every kind of change an administrator makes, in each of the five languages, with the reason", () => {
+    const kinds = ["SHOP_SETTINGS", "WORKSHOP_ACTIVATED", "WORKSHOP_DEACTIVATED", "WORKSHOP_CHANGED", "SESSION_CLOSED", "SESSION_REOPENED", "SESSION_MOVED", "SESSION_CHANGED", "LANDING_PAGE_PUBLISHED", "LANDING_PAGE_DRAFT_SAVED", "LANDING_PAGE_CREATED"] as const;
+    for (const locale of ["en", "vi", "ko", "ja", "zh"] as const) {
+      const sentences = new Set<string>();
+      for (const kind of kinds) {
+        const mail = renderEmail({ name: "admin-edit-notice", to: "a@x.example", locale, data: { name: "Ava", shop: "Whisk", what: { kind, detail: "D-1" }, reason: "Fixing the hours" } });
+        expect(mail.text, `${locale} ${kind}`).toContain("Fixing the hours");
+        expect(mail.text, `${locale} ${kind}`).not.toContain("undefined");
+        sentences.add(mail.text);
+      }
+      expect(sentences.size, `${locale}: each kind has its own sentence`).toBe(kinds.length);
+    }
+  });
+
   it("escape a name in the HTML, and still render an old queued email that carries the sentence of what was changed", () => {
     expect(renderEmail({ name: "password-changed", to: "a@x.example", locale: "zh", data: { name: "<img src=x onerror=1>" } }).html).not.toContain("<img");
     const old = renderEmail({ name: "admin-edit-notice", to: "a@x.example", locale: "vi", data: { name: "Ava", shop: "S", what: "the session S-1 of your shop: it was closed", reason: "" } });

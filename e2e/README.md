@@ -34,7 +34,7 @@ E2E_CHANNEL=chrome pnpm test:e2e              # the Chrome installed on the mach
 - The test cases, which of them are automated and in which file, and the order to automate the rest: [docs/E2E_TEST_CASES.md](../docs/E2E_TEST_CASES.md). `security.spec.ts` (access by role and by
   shop, CSRF Origin, session cookie, CSP) and `booking-rules.spec.ts` (price on the server, repeated request, seats, guests per booking, wrong codes, suspended shop) follow its IDs.
 - The API limits what ONE address can do on the public side (10 signups, 30 bookings, 20 requests for a code and 30 look-ups an hour), and every browser test comes from the same address. A whole run
-  uses about 10 signups and 15 bookings, so a second run within the hour fails with `429` (and the failures that follow hide the real cause). Start the API for the tests with the limits multiplied:
+  uses about 11 signups and 15 bookings, so a second run within the hour fails with `429` (and the failures that follow hide the real cause). Start the API for the tests with the limits multiplied:
   `RATE_LIMIT_FACTOR=10 pnpm --filter api dev` (the API refuses any value but 1 in production; the limits of one account or one email never change).
 - A failed test leaves a screenshot, a trace and a snapshot of the page in `test-results/` (git ignores it): `pnpm exec playwright show-trace <trace.zip>`.
 - CI runs the same on the services of the job (`.github/workflows/ci.yml`, job `e2e`).

@@ -94,6 +94,31 @@ test.describe("security and access rules on the real API", () => {
     }
   });
 
+  test("E2E-SEC-17: acting for a shop is for a platform administrator only: the header of a shop owner or of a customer changes nothing, and the administrator is held to the workshops and sessions", async () => {
+    const a = await as(OWNER_A);
+    const b = await as(OWNER_B);
+    const customer = await newCustomer();
+    const admin = await as(ADMIN);
+    try {
+      const idsOf = async (ctx: APIRequestContext, extra: Record<string, string>) => ((await (await ctx.get(`${APP}/api/v1/workshops?limit=100`, { headers: extra })).json()) as { items: Array<{ id: string }> }).items.map((w) => w.id);
+      const shopA = await idsOf(a, {});
+      expect(shopA.length).toBeGreaterThan(0);
+      // the owner of ANOTHER shop names shop A: they still see their own shop
+      const seen = await idsOf(b, { "x-act-as-shop": "whiskladle" });
+      expect(seen.filter((id) => shopA.includes(id))).toEqual([]);
+      // a customer has no shop: the header gives them none
+      expect((await customer.ctx.get(`${APP}/api/v1/workshops`, { headers: { "x-act-as-shop": "whiskladle" } })).status()).toBe(403);
+      // the administrator reads the shop with the header, changes only with a reason, and never outside the workshops and the sessions
+      expect(await idsOf(admin, { "x-act-as-shop": "whiskladle" })).toEqual(expect.arrayContaining(shopA));
+      const body = { title: { en: "x" }, durationMinutes: 60, priceAmount: 100_000, defaultCapacity: 5, maxPerBooking: 2, categories: ["COOKING"] };
+      expect((await admin.post(`${APP}/api/v1/workshops`, { headers: { ...headers, "x-act-as-shop": "whiskladle" }, data: body })).status()).toBe(422);
+      expect((await admin.patch(`${APP}/api/v1/organization`, { headers: { ...headers, "x-act-as-shop": "whiskladle", "x-admin-reason": "x" }, data: { contactPhone: "+84 90 000 0000" } })).status()).toBe(403);
+      expect((await admin.get(`${APP}/api/v1/workshops`)).status()).toBe(403); // no header: an administrator has no shop of their own
+    } finally {
+      for (const c of [a, b, customer.ctx, admin]) await c.dispose();
+    }
+  });
+
   test("E2E-SEC-13: a customer the administrator deactivates is out at once, even with the session they had", async () => {
     const victim = await newCustomer();
     const admin = await as(ADMIN);

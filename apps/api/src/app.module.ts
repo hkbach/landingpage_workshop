@@ -1,5 +1,6 @@
 import { type DynamicModule, Inject, Module, type OnApplicationShutdown } from "@nestjs/common";
-import { APP_FILTER, APP_GUARD } from "@nestjs/core";
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
+import { ActingInterceptor } from "./admin/acting.interceptor";
 import { AdminController } from "./admin/admin.controller";
 import { AdminService } from "./admin/admin.service";
 import { AdminAffiliateController, CustomerAffiliateController, PublicAffiliateController } from "./affiliate/affiliate.controller";
@@ -83,6 +84,7 @@ export class AppModule implements OnApplicationShutdown {
         ...CORE_PROVIDERS, WorkshopsService, SessionsService, ScheduleService, MaintenanceService, SessionCapacityService, PublicBookingsService, MediaService, AdminMediaService, BookingsService, CustomersService, SitePagesService, AdminService, FinanceService, FeesService, WalletService, AffiliateService, DashboardService, PromotionsService, CustomerService, RatingsService, PlatformService, LegalService, InboxService, EmailsService, ShopSettingsService, DirectoryService, AdminActionsService, AuthService, TurnstileService, AuthGuard, TenantGuard, PlatformAdminGuard,
         { provide: APP_FILTER, useClass: ErrorFilter },
         { provide: APP_GUARD, useClass: OriginGuard },
+        { provide: APP_INTERCEPTOR, useClass: ActingInterceptor },
       ],
     };
   }

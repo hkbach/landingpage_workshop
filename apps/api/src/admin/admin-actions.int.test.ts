@@ -269,6 +269,11 @@ d("sessions, guests and the administrator acting for a shop", () => {
     expect((await asAdmin("PUT", `/site/pages/${pageId}/draft`, { content: whole }, "A second reason")).statusCode).toBe(200);
     const again = await t.pool.query<{ reason: string }>("select after->>'reason' as reason from audit_logs where entity_id = $1 and after->>'action' = 'site.draft_save' order by created_at", [pageId]);
     expect(again.rows.map((r) => r.reason)).toEqual([reason, "A second reason"]);
+    // the owners are told once for each stretch of editing (the first save, and the one with a new reason), and when a page is made: not at every autosave
+    await drain(t);
+    const told = mailTo(shop.ownerEmail, /The platform changed your shop/);
+    expect(told.filter((m) => m.text.includes("draft of a landing page")).map((m) => m.text.includes(reason) || m.text.includes("A second reason"))).toEqual([true, true]);
+    expect(told.some((m) => m.text.includes("new landing page was created") && m.text.includes(reason))).toBe(true);
 
     // publishing takes the reason from the header too
     const published = await asAdmin("POST", `/site/pages/${pageId}/publish`, {}, reason);
@@ -279,5 +284,74 @@ d("sessions, guests and the administrator acting for a shop", () => {
     expect((await asAdmin("PUT", `/site/pages/${pageId}/draft`, { content: whole }, reason, shop.cookie)).statusCode).toBe(403);
     expect((await t.app.inject({ method: "GET", url: `/api/v1${base}/site/pages`, remoteAddress: "10.1.1.1" })).statusCode).toBe(401);
     expect((await t.app.inject({ method: "GET", url: `/api/v1/admin/shops/${randomUUID()}/site/pages`, remoteAddress: "10.1.1.1", headers: { cookie: admin } })).statusCode).toBe(404);
+  });
+
+  it("lets the administrator use the owner's routes for workshops and sessions of a shop: only a SUPER_ADMIN, only those routes, a reason for every change, the owners told, the audit written", async () => {
+    const shop = await makeShop("actas");
+    const other = await makeShop("actasother");
+    const reason = "The owner asked us to add the workshop for them";
+    const asAdmin = (method: "GET" | "POST" | "PUT" | "PATCH", path: string, body?: unknown, why?: string, cookie = admin, forShop: string | null = shop.slug) => t.app.inject({
+      method, url: `/api/v1${path}`, remoteAddress: "10.1.1.1", ...(body === undefined ? {} : { payload: body as object }),
+      headers: { origin: "http://app.localtest.me:3000", cookie, ...(forShop ? { "x-act-as-shop": forShop } : {}), ...(why ? { "x-admin-reason": encodeURIComponent(why) } : {}) },
+    });
+    const workshop = (title: string) => ({ title: { en: title }, durationMinutes: 60, priceAmount: 150_000, defaultCapacity: 12, maxPerBooking: 4, categories: ["COOKING"] });
+    const countIn = async (orgId: string) => (await t.pool.query<{ n: number }>("select count(*)::int as n from workshops where organization_id = $1", [orgId])).rows[0]!.n;
+
+    // reads need no reason, and give the data of THAT shop
+    const list = await asAdmin("GET", "/workshops?limit=100");
+    expect([list.statusCode, list.json().items.length]).toEqual([200, 2]);
+    expect((await asAdmin("GET", "/organization")).json()).toMatchObject({ slug: shop.slug });
+
+    // a change needs the reason: without it nothing is made
+    const refused = await asAdmin("POST", "/workshops", workshop("No reason"));
+    expect([refused.statusCode, refused.json().error.code]).toEqual([422, "ADMIN_REASON_REQUIRED"]);
+    expect(await countIn(shop.orgId)).toBe(2);
+
+    // with the reason it is made in that shop, by the administrator, and the owners are told what and why
+    const made = await asAdmin("POST", "/workshops", workshop("Made by admin"), reason);
+    expect(made.statusCode).toBe(201);
+    expect(await countIn(shop.orgId)).toBe(3);
+    expect(await countIn(other.orgId)).toBe(2); // the other shop is untouched
+    const lines = await t.pool.query<{ action: string; reason: string | null; actor: string }>(
+      "select action, after->>'reason' as reason, actor_user_id::text as actor from audit_logs where organization_id = $1 and (action = 'workshop.create' or (action = 'admin_edit.reason' and after->>'action' = 'POST workshops')) order by created_at", [shop.orgId]);
+    // the last two lines are this change: the owner's own audit line of the creation, and the reason; both by the ADMINISTRATOR (the two workshops of the fixture were made by the owner)
+    const [created, note] = lines.rows.slice(-2);
+    const ownerId = (await t.pool.query<{ id: string }>("select id::text from users where email = $1", [shop.ownerEmail])).rows[0]!.id;
+    expect([created!.action, note!.action]).toEqual(["workshop.create", "admin_edit.reason"]);
+    expect(created!.actor).toBe(note!.actor);
+    expect(note!.actor).not.toBe(ownerId);
+    expect(note!.reason).toBe(reason);
+    // a session of that workshop, through the owner's route
+    const workshopId = made.json().id as string;
+    expect((await asAdmin("POST", `/workshops/${workshopId}/status`, { status: "ACTIVE" }, reason)).statusCode).toBe(200);
+    const starts = new Date(Date.now() + (40 + Math.floor(Math.random() * 30)) * DAY);
+    starts.setUTCHours(1 + Math.floor(Math.random() * 10), Math.floor(Math.random() * 60), 0, 0);
+    expect((await asAdmin("POST", "/sessions", { workshopId, startsAt: starts.toISOString() }, reason)).statusCode).toBe(201);
+    await drain(t);
+    const told = mailTo(shop.ownerEmail, /The platform changed your shop/);
+    expect(told.some((m) => m.text.includes("a workshop of your shop") && m.text.includes(reason))).toBe(true);
+    expect(told.some((m) => m.text.includes("a session of your shop") && m.text.includes(reason))).toBe(true);
+
+    // only the routes of act-as: never a booking, the settings of the shop or its money
+    const someBooking = await booking(shop, await session(shop, 3, "RUNNING"), emailFor("actasguest"));
+    for (const [method, path] of [["POST", `/bookings/${someBooking}/cancel`], ["PATCH", "/organization"], ["PUT", "/shop/domain"], ["POST", "/promotions"]] as const) {
+      const res = await asAdmin(method, path, {}, reason);
+      expect([res.statusCode, res.json().error.code], `${method} ${path}`).toEqual([403, "ACT_AS_NOT_ALLOWED"]);
+    }
+    // an unknown shop; a shop that is suspended is read only, for the administrator too
+    expect((await asAdmin("GET", "/workshops", undefined, undefined, admin, "no-such-shop-anywhere")).statusCode).toBe(404);
+    await t.pool.query("update organizations set status = 'SUSPENDED' where id = $1", [shop.orgId]);
+    expect((await asAdmin("GET", "/workshops")).statusCode).toBe(200);
+    expect((await asAdmin("POST", "/workshops", workshop("Suspended"), reason)).statusCode).toBe(403);
+    await t.pool.query("update organizations set status = 'ACTIVE' where id = $1", [shop.orgId]);
+
+    // nobody else: the header of a shop owner is ignored (they stay in their own shop), and a visitor has no session
+    const mine = await asAdmin("GET", "/workshops?limit=100", undefined, undefined, other.cookie); // names the shop of `shop`, but the cookie is the owner of `other`
+    expect(mine.json().items.length).toBe(2);
+    expect(mine.json().items.map((w: { id: string }) => w.id)).not.toContain(workshopId);
+    const own = await asAdmin("POST", "/workshops", workshop("In my own shop"), reason, other.cookie); // an owner naming another shop still makes it in their own
+    expect(own.statusCode).toBe(201);
+    expect([await countIn(shop.orgId), await countIn(other.orgId)]).toEqual([3, 3]);
+    expect((await t.app.inject({ method: "GET", url: "/api/v1/workshops", remoteAddress: "10.1.1.1", headers: { "x-act-as-shop": shop.slug } })).statusCode).toBe(401);
   });
 });

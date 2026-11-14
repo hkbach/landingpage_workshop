@@ -45,7 +45,7 @@ export class AdminActionsService {
   }
 
   /** After the change: the audit line with the reason, and the email to every active owner of the shop (what was changed, why). */
-  private async done(org: OrgContext & { name: string }, actor: Actor, reason: string, entity: { type: string; id: string }, action: string, what: { kind: EditKind; detail: string }): Promise<void> {
+  async done(org: OrgContext & { name: string }, actor: Actor, reason: string, entity: { type: string; id: string }, action: string, what: { kind: EditKind; detail: string }): Promise<void> {
     await this.db.transaction(async (tx) => {
       await this.audit.record({ organizationId: org.id, actorUserId: actor.userId, action: "admin_edit.reason", entityType: entity.type, entityId: entity.id, after: { action, reason }, ip: actor.ip }, tx);
       const owners = await tx.select({ email: users.email, name: users.fullName, locale: users.uiLocale }).from(organizationMembers).innerJoin(users, eq(users.id, organizationMembers.userId)).where(and(eq(organizationMembers.organizationId, org.id), eq(users.status, "ACTIVE")));
@@ -103,13 +103,13 @@ export class AdminActionsService {
     const reason = this.reason(rawReason);
     const org = await this.shop(shopId);
     const page = await this.pages.create(org, input, actor);
-    await this.audit.record({ organizationId: org.id, actorUserId: actor.userId, action: "admin_edit.reason", entityType: "site_page", entityId: page.id, after: { action: "site.page_create", reason }, ip: actor.ip });
+    await this.done(org, actor, reason, { type: "site_page", id: page.id }, "site.page_create", { kind: "LANDING_PAGE_CREATED", detail: input.name });
     return page;
   }
 
   /**
    * Saves the DRAFT of a page for the shop (the live page is untouched; the owners are told when the administrator publishes). The editor saves as the administrator types, so the audit line with
-   * the reason is written once for a stretch of editing (ten minutes) of a page by one administrator with the same reason, not at every save; a NEW reason is always written.
+   * the reason, and the email to the owners, are written once for a stretch of editing (ten minutes) of a page by one administrator with the same reason, not at every save; a NEW reason is always written.
    */
   async saveDraft(shopId: string, pageId: string, input: Parameters<SitePagesService["saveDraft"]>[2], rawReason: string | undefined, actor: Actor) {
     const reason = this.reason(rawReason);
@@ -118,7 +118,8 @@ export class AdminActionsService {
     const since = new Date(Date.now() - 10 * 60_000);
     const [recent] = await this.db.select({ reason: sql<string | null>`${auditLogs.after}->>'reason'` }).from(auditLogs)
       .where(and(eq(auditLogs.organizationId, org.id), eq(auditLogs.actorUserId, actor.userId), eq(auditLogs.entityId, pageId), eq(auditLogs.action, "admin_edit.reason"), sql`${auditLogs.after}->>'action' = 'site.draft_save'`, gt(auditLogs.createdAt, since))).orderBy(desc(auditLogs.createdAt)).limit(1);
-    if (!recent || recent.reason !== reason) await this.audit.record({ organizationId: org.id, actorUserId: actor.userId, action: "admin_edit.reason", entityType: "site_page", entityId: pageId, after: { action: "site.draft_save", reason }, ip: actor.ip });
+    // the owners are told once for a stretch of editing too (an email at every autosave would flood them)
+    if (!recent || recent.reason !== reason) await this.done(org, actor, reason, { type: "site_page", id: pageId }, "site.draft_save", { kind: "LANDING_PAGE_DRAFT_SAVED", detail: "" });
     return saved;
   }
 

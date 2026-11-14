@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { APP, login, open, typeUntilSaved, watchBrowser, seedPassword } from "./helpers";
+import { APP, login, open, typeUntilSaved, waitForMail, watchBrowser, seedPassword } from "./helpers";
 
 // The platform administrator against the REAL API. Needs the stack of e2e/README.md and E2E_PASSWORD (the password of `pnpm db:seed`).
 const ADMIN = "admin@workshopkit.example";
@@ -127,6 +127,56 @@ The text of the test.`;
     // the audit log has the administrator's reason for that page
     const logs = ((await (await api.get(`${APP}/api/v1/admin/audit-logs?org=whiskladle&action=admin_edit.reason&limit=50`)).json()) as { items: Array<{ entityId: string; after?: { reason?: string } | null }> }).items;
     expect(logs.some((l) => l.entityId === target.id && l.after?.reason === reason)).toBe(true);
+    // and the owner of the shop is told (once for the stretch of editing), with the reason
+    const mail = await waitForMail(api, "to:linh@whiskladle.example subject:\"changed your shop\"", reason);
+    expect(mail).toContain("draft of a landing page");
+    expect(problems).toEqual([]);
+  });
+
+  test("edits the workshops of a shop as the administrator, on the owner's page: a reason is needed, the change is made in THAT shop, and the owner is told", async ({ page }) => {
+    const problems = watchBrowser(page);
+    await login(page, ADMIN, seedPassword());
+    const api = page.context().request;
+    const title = `Admin Workshop ${Date.now().toString(36)}`;
+    const forShop = { origin: APP, "x-act-as-shop": "whiskladle" };
+    const titles = async () => ((await (await api.get(`${APP}/api/v1/workshops?limit=100`, { headers: forShop })).json()) as { items: Array<{ title: { en?: string } }> }).items.map((w) => w.title.en);
+
+    await open(page, `${APP}/systemadmin/shops/whiskladle/workshops`);
+    await expect(page.getByTestId("admin-edit-banner")).toBeVisible({ timeout: 90_000 });
+    await expect(page.getByTestId("admin-edit-unavailable")).toHaveCount(0);
+    await expect(page.getByTestId("new-workshop-button")).toBeVisible({ timeout: 60_000 });
+    await expect(page.getByText(/\b(catalog|ops|dashboard)\.[a-zA-Z]+\.[a-zA-Z]+/)).toHaveCount(0); // no raw message keys: the texts of the owner's page are there
+
+    const fill = async () => {
+      const dialog = page.getByRole("dialog");
+      await dialog.getByRole("textbox", { name: "Title" }).first().fill(title);
+      if ((await dialog.getByTestId("workshop-categories").locator("input:checked").count()) === 0) await dialog.getByTestId("workshop-categories").locator("label").first().click();
+      await dialog.getByRole("textbox", { name: /^Price per guest/ }).fill("500000");
+      return dialog;
+    };
+    // without a reason the server refuses: nothing is made
+    await expect(async () => {
+      await page.getByTestId("new-workshop-button").click();
+      await fill();
+      await page.getByRole("dialog").getByRole("button", { name: "Save" }).click();
+      await expect(page.getByTestId("workshop-created")).toHaveCount(0, { timeout: 4_000 });
+    }).toPass({ timeout: 60_000 });
+    expect(await titles()).not.toContain(title);
+
+    // with the reason it is made in that shop
+    const reason = `e2e: adding a workshop ${Date.now().toString(36)}`;
+    await page.getByTestId("admin-edit-reason").fill(reason);
+    await page.getByRole("button", { name: "Save" }).last().click();
+    await expect(page.getByTestId("workshop-created")).toBeVisible({ timeout: 30_000 });
+    expect(await titles()).toContain(title);
+    const mail = await waitForMail(api, "to:linh@whiskladle.example subject:\"changed your shop\"", reason);
+    expect(mail).toContain("a workshop of your shop");
+
+    // the sessions page of the shop opens on the owner's page too
+    await open(page, `${APP}/systemadmin/shops/whiskladle/sessions`);
+    await expect(page.getByTestId("admin-edit-banner")).toBeVisible({ timeout: 90_000 });
+    await expect(page.getByRole("heading", { name: /Sessions/, level: 1 }).first()).toBeVisible({ timeout: 60_000 });
+    await expect(page.getByText("This page couldn’t load")).toHaveCount(0);
     expect(problems).toEqual([]);
   });
 });

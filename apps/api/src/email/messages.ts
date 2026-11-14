@@ -10,7 +10,7 @@ export const asEmailLocale = (v: unknown): EmailLocale => ((EMAIL_LOCALES as rea
 export const INTL_TAG: Record<EmailLocale, string> = { en: "en-GB", vi: "vi-VN", ko: "ko-KR", ja: "ja-JP", zh: "zh-CN" };
 
 /** What changed, told to the owner of a shop after the administrator acted for them. */
-export type EditKind = "SHOP_SETTINGS" | "WORKSHOP_ACTIVATED" | "WORKSHOP_DEACTIVATED" | "SESSION_CLOSED" | "SESSION_REOPENED" | "SESSION_MOVED" | "LANDING_PAGE_PUBLISHED";
+export type EditKind = "SHOP_SETTINGS" | "WORKSHOP_ACTIVATED" | "WORKSHOP_DEACTIVATED" | "WORKSHOP_CHANGED" | "SESSION_CLOSED" | "SESSION_REOPENED" | "SESSION_MOVED" | "SESSION_CHANGED" | "LANDING_PAGE_PUBLISHED" | "LANDING_PAGE_DRAFT_SAVED" | "LANDING_PAGE_CREATED";
 
 export interface Msgs {
   hello(name: string): string;
@@ -39,7 +39,7 @@ const en: Msgs = {
     what: (k, d) => ({
       SHOP_SETTINGS: `the settings of your shop (${d})`, WORKSHOP_ACTIVATED: `a workshop of your shop (${d}): it was activated`, WORKSHOP_DEACTIVATED: `a workshop of your shop (${d}): it was deactivated`,
       SESSION_CLOSED: `the session ${d} of your shop: it was closed`, SESSION_REOPENED: `the session ${d} of your shop: it was opened again`, SESSION_MOVED: `the session ${d} of your shop: it was moved`,
-      LANDING_PAGE_PUBLISHED: "the landing page of your shop: a new version was published",
+      LANDING_PAGE_PUBLISHED: "the landing page of your shop: a new version was published", LANDING_PAGE_DRAFT_SAVED: "the draft of a landing page of your shop (it is not public until it is published)", LANDING_PAGE_CREATED: "your shop: a new landing page was created", WORKSHOP_CHANGED: "a workshop of your shop (its details, its schedule or its status)", SESSION_CHANGED: "a session of your shop (it was created or changed)",
     })[k],
   },
 };
@@ -60,7 +60,7 @@ const vi: Msgs = {
     what: (k, d) => ({
       SHOP_SETTINGS: `cài đặt shop của bạn (${d})`, WORKSHOP_ACTIVATED: `một workshop của shop bạn (${d}): đã được kích hoạt`, WORKSHOP_DEACTIVATED: `một workshop của shop bạn (${d}): đã bị ngừng kích hoạt`,
       SESSION_CLOSED: `buổi học ${d} của shop bạn: đã bị đóng`, SESSION_REOPENED: `buổi học ${d} của shop bạn: đã được mở lại`, SESSION_MOVED: `buổi học ${d} của shop bạn: đã được dời`,
-      LANDING_PAGE_PUBLISHED: "landing page của shop bạn: một phiên bản mới đã được công bố",
+      LANDING_PAGE_PUBLISHED: "landing page của shop bạn: một phiên bản mới đã được công bố", LANDING_PAGE_DRAFT_SAVED: "bản nháp của một landing page của shop bạn (chưa public cho tới khi được công bố)", LANDING_PAGE_CREATED: "shop của bạn: một landing page mới đã được tạo", WORKSHOP_CHANGED: "một workshop của shop bạn (thông tin, lịch hoặc trạng thái)", SESSION_CHANGED: "một buổi học của shop bạn (đã được tạo hoặc thay đổi)",
     })[k],
   },
 };
@@ -81,7 +81,7 @@ const ko: Msgs = {
     what: (k, d) => ({
       SHOP_SETTINGS: `샵 설정(${d})`, WORKSHOP_ACTIVATED: `샵의 워크숍(${d}): 활성화되었습니다`, WORKSHOP_DEACTIVATED: `샵의 워크숍(${d}): 비활성화되었습니다`,
       SESSION_CLOSED: `샵의 세션 ${d}: 종료되었습니다`, SESSION_REOPENED: `샵의 세션 ${d}: 다시 열렸습니다`, SESSION_MOVED: `샵의 세션 ${d}: 일정이 변경되었습니다`,
-      LANDING_PAGE_PUBLISHED: "샵의 랜딩 페이지: 새 버전이 게시되었습니다",
+      LANDING_PAGE_PUBLISHED: "샵의 랜딩 페이지: 새 버전이 게시되었습니다", LANDING_PAGE_DRAFT_SAVED: "샵의 랜딩 페이지 초안(게시되기 전에는 공개되지 않습니다)", LANDING_PAGE_CREATED: "샵: 새 랜딩 페이지가 만들어졌습니다", WORKSHOP_CHANGED: "샵의 워크숍(정보, 일정 또는 상태)", SESSION_CHANGED: "샵의 세션(만들어졌거나 변경되었습니다)",
     })[k],
   },
 };
@@ -102,7 +102,7 @@ const ja: Msgs = {
     what: (k, d) => ({
       SHOP_SETTINGS: `ショップの設定（${d}）`, WORKSHOP_ACTIVATED: `ショップのワークショップ（${d}）: 有効にしました`, WORKSHOP_DEACTIVATED: `ショップのワークショップ（${d}）: 無効にしました`,
       SESSION_CLOSED: `ショップのセッション ${d}: 終了しました`, SESSION_REOPENED: `ショップのセッション ${d}: 再開しました`, SESSION_MOVED: `ショップのセッション ${d}: 日時を変更しました`,
-      LANDING_PAGE_PUBLISHED: "ショップのランディングページ: 新しいバージョンを公開しました",
+      LANDING_PAGE_PUBLISHED: "ショップのランディングページ: 新しいバージョンを公開しました", LANDING_PAGE_DRAFT_SAVED: "ショップのランディングページの下書き（公開するまでは表示されません）", LANDING_PAGE_CREATED: "ショップ: 新しいランディングページを作成しました", WORKSHOP_CHANGED: "ショップのワークショップ（内容、スケジュールまたはステータス）", SESSION_CHANGED: "ショップのセッション（作成または変更しました）",
     })[k],
   },
 };
@@ -123,7 +123,7 @@ const zh: Msgs = {
     what: (k, d) => ({
       SHOP_SETTINGS: `店铺设置（${d}）`, WORKSHOP_ACTIVATED: `店铺的工作坊（${d}）：已启用`, WORKSHOP_DEACTIVATED: `店铺的工作坊（${d}）：已停用`,
       SESSION_CLOSED: `店铺的场次 ${d}：已关闭`, SESSION_REOPENED: `店铺的场次 ${d}：已重新开放`, SESSION_MOVED: `店铺的场次 ${d}：已改期`,
-      LANDING_PAGE_PUBLISHED: "店铺的落地页：已发布新版本",
+      LANDING_PAGE_PUBLISHED: "店铺的落地页：已发布新版本", LANDING_PAGE_DRAFT_SAVED: "店铺落地页的草稿（发布之前不会公开）", LANDING_PAGE_CREATED: "店铺：已创建新的落地页", WORKSHOP_CHANGED: "店铺的工作坊（内容、日程或状态）", SESSION_CHANGED: "店铺的场次（已创建或已修改）",
     })[k],
   },
 };

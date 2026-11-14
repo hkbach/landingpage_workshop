@@ -1,4 +1,4 @@
-import { type CanActivate, type ExecutionContext, ForbiddenException, Inject, Injectable, SetMetadata, UnauthorizedException, createParamDecorator } from "@nestjs/common";
+import { type CanActivate, type ExecutionContext, ForbiddenException, Inject, Injectable, NotFoundException, SetMetadata, UnauthorizedException, UnprocessableEntityException, createParamDecorator } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { and, eq } from "drizzle-orm";
 import type { FastifyRequest } from "fastify";
@@ -6,6 +6,7 @@ import type { Env } from "../config/env";
 import { ENV } from "../config/env.module";
 import { DB, type Database } from "../db/db.module";
 import { organizationMembers, organizations } from "../db/schema";
+import { ACT_AS_HEADER, ADMIN_REASON_HEADER, ADMIN_REASON_MAX, actingAllowed, reasonFromHeader } from "./act-as";
 import { AuthService, type AuthContext, type ClientContext } from "./auth.service";
 import { parseCookies } from "./cookies";
 
@@ -16,6 +17,8 @@ declare module "fastify" {
   interface FastifyRequest {
     auth?: AuthContext;
     org?: OrgContext;
+    /** Set when a platform administrator acts for the shop of `org` (see act-as.ts): the reason of the change. */
+    actingFor?: { reason: string };
   }
 }
 
@@ -86,6 +89,9 @@ export class TenantGuard implements CanActivate {
     await this.authGuard.canActivate(context);
     const request = context.switchToHttp().getRequest<FastifyRequest>();
     const auth = request.auth;
+    const actAs = request.headers[ACT_AS_HEADER];
+    // A platform administrator acting for a shop: ONLY a SUPER_ADMIN (the header of anybody else is ignored, they stay in their own shop), only the routes of act-as.ts, and a reason for every change.
+    if (typeof actAs === "string" && actAs.trim() !== "" && auth?.user.platformRole === "SUPER_ADMIN") return this.actFor(request, actAs.trim());
     if (!auth?.activeOrganizationId) throw new ForbiddenException({ code: "NO_ORGANIZATION", message: "This account has no shop." });
     const [row] = await this.db
       .select({ id: organizations.id, slug: organizations.slug, name: organizations.name, status: organizations.status, role: organizationMembers.role })
@@ -97,7 +103,26 @@ export class TenantGuard implements CanActivate {
     request.org = row;
     return true;
   }
+
+  /** The administrator acts for the shop named in the header (its slug or id): the shop becomes `request.org`, as the owner's would. */
+  private async actFor(request: FastifyRequest, shop: string): Promise<boolean> {
+    if (!actingAllowed(request.method, request.url)) throw new ForbiddenException({ code: "ACT_AS_NOT_ALLOWED", message: "An administrator cannot do this for a shop." });
+    const reason = reasonFromHeader(request.headers[ADMIN_REASON_HEADER]);
+    if (MUTATING.has(request.method)) {
+      if (!reason || reason.length > ADMIN_REASON_MAX) {
+        throw new UnprocessableEntityException({ code: "ADMIN_REASON_REQUIRED", message: "A reason is required for a change made on behalf of a shop.", details: { fields: { reason: reason ? "tooLong" : "required" } } });
+      }
+    }
+    const [row] = await this.db.select({ id: organizations.id, slug: organizations.slug, name: organizations.name, status: organizations.status }).from(organizations)
+      .where(UUID.test(shop) ? eq(organizations.id, shop) : eq(organizations.slug, shop.toLowerCase())).limit(1);
+    if (!row) throw new NotFoundException({ code: "NOT_FOUND", message: "Shop not found." });
+    request.org = { ...row, role: "OWNER" };
+    if (MUTATING.has(request.method)) request.actingFor = { reason };
+    return true;
+  }
 }
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Needs a platform administrator (SUPER_ADMIN). */
 @Injectable()

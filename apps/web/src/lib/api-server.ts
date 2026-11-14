@@ -34,6 +34,9 @@ export async function apiFetch(path: string, init: RequestInit = {}): Promise<Re
   if (cookie) out.set("cookie", cookie);
   const forwarded = incoming.get("x-forwarded-for");
   if (forwarded) out.set("x-forwarded-for", forwarded);
+  // The pages of an administrator editing a shop are the shop owner's pages: the API is told which shop (it honours that for a platform administrator only; see apps/api/src/auth/act-as.ts).
+  const actAs = incoming.get("x-act-as-shop");
+  if (actAs) out.set("x-act-as-shop", actAs);
   if (init.body && !out.has("content-type")) out.set("content-type", "application/json");
   // A request that changes something must say where it comes from (the API refuses another site): the address the person used to reach this app.
   if (init.method && !["GET", "HEAD"].includes(init.method.toUpperCase()) && !out.has("origin")) {

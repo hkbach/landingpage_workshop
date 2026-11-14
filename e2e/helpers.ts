@@ -46,6 +46,21 @@ export async function typeUntilSaved(page: Page, field: Locator, base: string): 
   return value;
 }
 
+const MAILPIT = process.env.E2E_MAILPIT ?? "http://127.0.0.1:8025";
+
+/** The text of the newest email in Mailpit that matches `query` (Mailpit search syntax, e.g. `to:a@x.example subject:changed`) and holds `contains`; waits up to 30 seconds. */
+export async function waitForMail(request: APIRequestContext, query: string, contains: string): Promise<string> {
+  for (let i = 0; i < 30; i++) {
+    const found = (await (await request.get(`${MAILPIT}/api/v1/search?query=${encodeURIComponent(query)}`)).json()) as { messages?: Array<{ ID: string }> };
+    for (const m of found.messages ?? []) {
+      const text = ((await (await request.get(`${MAILPIT}/api/v1/message/${m.ID}`)).json()) as { Text: string }).Text;
+      if (text.includes(contains)) return text;
+    }
+    await new Promise((r) => setTimeout(r, 1000));
+  }
+  throw new Error(`No email for "${query}" holding "${contains}" arrived`);
+}
+
 /** Logs in through the popup of the public site; a shop owner lands in the dashboard of the shop, a customer in the account area. */
 export async function login(page: Page, email: string, password: string): Promise<void> {
   await open(page, `${APP}/?auth=login`);
