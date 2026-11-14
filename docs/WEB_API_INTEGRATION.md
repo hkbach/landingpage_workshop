@@ -1,6 +1,6 @@
 # Nối `apps/web` với `apps/api`: hiện trạng và kế hoạch
 
-> **Trạng thái (13/11/2026): ĐÃ XONG lát 0–5 (nền, xác thực, trang công khai + đặt chỗ, khu chủ shop, khu customer, khu admin); lát 6 (gỡ mock) chưa làm.** Đặt `API_URL` thì web nối API thật cho tài khoản; không đặt thì vẫn chạy hoàn toàn trên dữ liệu mẫu (mock). Xem mục 0. Tài liệu này ghi lại **vì sao việc này lớn hơn một lần chuyển đổi cấu hình**, những gì đã đo được và một kế hoạch theo từng lát cắt để làm tiếp. Đây là việc cần quyết định thứ tự ưu tiên của chủ sản phẩm.
+> **Trạng thái (14/11/2026): ĐÃ XONG cả 7 lát (0–6).** `apps/web` chỉ còn chạy trên API thật (`API_URL` bắt buộc cho mọi trang cần dữ liệu); dữ liệu mẫu trong bộ nhớ và các route mock đã bị gỡ. Mục 0 ghi từng lát đã làm; các mục 1–5 là kế hoạch và số đo ban đầu, giữ lại để tra cứu.
 
 ## 0. Đã làm (lát 0 và 1)
 
@@ -65,6 +65,15 @@ Khi đặt `API_URL`, mọi trang của `/shopowner/{slug}` đọc dữ liệu c
 - Vô hiệu hóa người dùng **bắt buộc có lý do** (D15): màn hình hỏi lý do. Đóng / mở lại session của admin đi qua `/admin/shops/{shopId}/sessions/{id}/...`.
 - **Chưa nối (khi chạy với API):** (1) sửa các trang của một shop thay chủ shop (`/systemadmin/shops/{slug}/...`): hiện báo chưa có, API có 5 hành động `/admin/shops/{id}/...` nhưng các trang của chủ shop đọc shop của phiên; (2) sửa hồ sơ người dùng (`PATCH /admin/users/{id}` chưa có); (3) Media (chờ khóa R2: danh sách rỗng); (4) kiểm tra landing page `POST /admin/landing-pages/{slug}/audit` (chưa có route); (5) lịch sử thay đổi của từng session trong chi tiết shop.
 - Kiểm thử: `e2e/real-admin.spec.ts` (4 test): mở 19 trang admin không lỗi, soạn → công bố Terms → trang công khai hiển thị, vô hiệu hóa người dùng → đăng nhập bị từ chối, chi tiết shop và đổi hiển thị.
+
+### Lát 6: gỡ dữ liệu mẫu (14/11/2026)
+
+- **Đã xóa:** `apps/web/src/app/api/v1/**` (71 route mock và 45 test của chúng; các hành vi đó đã có test tích hợp trên PostgreSQL thật ở `apps/api`, 231 test) và toàn bộ `apps/web/src/lib/mock/**` (kho trong bộ nhớ, test của kho), cùng các helper chỉ phục vụ route mock. Các trang chỉ còn nhánh dùng API.
+- **Giữ lại có chủ ý:** `lib/sample/` (nội dung mẫu **tĩnh**: shop demo, workshop, trang mẫu; chỉ còn dùng làm dữ liệu cho test đơn vị), các kiểu dữ liệu chuyển ra file riêng (`admin-types.ts`, `account-types.ts`, `income-types.ts`, `contact-types.ts`, `listing-types.ts`, `schedule-types.ts`, `rating-types.ts`).
+- **Trang giới thiệu** (Home) lấy workshop nổi bật từ API mới `GET /public/workshops/featured` (ngẫu nhiên trong workshop `ACTIVE` của shop `ACTIVE` mà admin chọn hiển thị), thay cho dữ liệu mẫu.
+- **E2E:** các spec chạy trên dữ liệu mẫu bị xóa; các spec thật đổi tên thành `auth`, `booking`, `owner`, `customer`, `admin` và không còn bị bỏ qua. CI (`e2e`) chạy trên PostgreSQL + Mailpit + API + worker thật; `docker-compose.prod.yml` đặt `API_URL=http://api:4000` cho web.
+- **Lỗi thật tìm thấy khi chạy trên stack thật:** cửa sổ "đồng ý lại" và bước đồng ý lúc đăng ký gửi cả `terms` và `privacy`, nên **thất bại khi chỉ một văn bản đã công bố** (API từ chối văn bản chưa công bố); nay chỉ gửi các văn bản đã công bố (và, với cửa sổ đồng ý lại, chỉ những văn bản người dùng phải đồng ý). Test `customer.spec.ts` kiểm tra luồng này.
+- **Còn lại (dọn dẹp, không ảnh hưởng chạy):** một số đường mã phía trình duyệt cũ của chế độ mẫu (`viaApi` mặc định `false`, kho `localStorage` của builder, cổng đăng nhập bằng email khách) không còn được gọi trong luồng thật; có thể gỡ dần. Một số chú thích trong mã còn nhắc "mock".
 
 ## 1. Đã đo được (13/11/2026)
 

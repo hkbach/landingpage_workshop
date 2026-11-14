@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { EyeOff, Star, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { AdminRating } from "@/lib/mock/admin-directory";
+import type { AdminRating } from "@/lib/admin-types";
 import { ReasonDialog } from "../reason-dialog";
 import { DirectoryTable, FilterBox, Notice, Pill, Toolbar, selectClass, useDebounced, useDirectory, type Column } from "./kit";
 

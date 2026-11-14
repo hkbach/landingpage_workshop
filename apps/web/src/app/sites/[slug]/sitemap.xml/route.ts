@@ -2,6 +2,9 @@ import { hreflangOf } from "@workshop/shared";
 import { loadPublicSite, originOfSite } from "@/lib/public-site";
 import { localePath } from "@/components/site/site-url";
 
+// Read from the API at each request (never at build time).
+export const dynamic = "force-dynamic";
+
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 // Per-host sitemap with hreflang alternates for each enabled locale (FR-SITE-05).

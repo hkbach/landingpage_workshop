@@ -9,7 +9,7 @@ import { PaginationBar } from "@/components/ui/pagination-bar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePagination } from "@/lib/pagination";
-import type { ListedShop } from "@/lib/mock/customer-listing";
+import type { ListedShop } from "@/lib/listing-types";
 import { cn } from "@/lib/utils";
 import { useAffiliates } from "./customer-affiliate";
 import { WalletHistory, WalletOverview } from "./customer-wallet";

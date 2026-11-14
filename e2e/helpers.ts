@@ -1,20 +1,19 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { expect, type Page } from "@playwright/test";
+import { expect, type APIRequestContext, type Page } from "@playwright/test";
 
 export const PORT = Number(process.env.E2E_PORT ?? 3100);
 export const APP = `http://app.localtest.me:${PORT}`;
 export const SHOP = `http://whiskladle.localtest.me:${PORT}`;
 
 /**
- * The password of the sample accounts of the built-in sample data. It is demo data that is written at the top of the mock account store (it protects nothing), so the test reads it from there
- * instead of copying it. Running against the real API, give the password of the seeded accounts in E2E_PASSWORD.
+ * The password of the accounts made by `pnpm db:seed`: E2E_PASSWORD, else the file the seed wrote (apps/api/.seed-credentials, ignored by git). It is read when a test needs it and never printed.
  */
-export function demoPassword(): string {
+export function seedPassword(): string {
   if (process.env.E2E_PASSWORD) return process.env.E2E_PASSWORD;
-  const source = readFileSync(join(__dirname, "..", "apps", "web", "src", "lib", "mock", "accounts-store.ts"), "utf8");
-  const found = /DEMO_PASSWORD = "([^"]+)"/.exec(source);
-  if (!found) throw new Error("The sample password was not found in the mock account store");
+  const file = join(__dirname, "..", "apps", "api", ".seed-credentials");
+  const found = /^password:\s*(\S+)/m.exec(readFileSync(file, "utf8"));
+  if (!found) throw new Error("The password of the seeded accounts was not found: run `pnpm db:seed` or set E2E_PASSWORD");
   return found[1]!;
 }
 
@@ -41,12 +40,17 @@ export async function login(page: Page, email: string, password: string): Promis
   await dialog.getByRole("button", { name: "Log in" }).click();
   // the first visit of an area is compiled in development: allow it time
   await page.waitForURL(/\/(shopowner|customer|systemadmin)/, { timeout: 90_000, waitUntil: "domcontentloaded" });
+  await acceptLegal(page.context().request);
 }
 
-/** The verification code of the booking form in the built-in sample data (nothing is emailed there). Read from the file of the form, not copied. */
-export function demoOtp(): string {
-  const source = readFileSync(join(__dirname, "..", "apps", "web", "src", "components", "booking", "otp.ts"), "utf8");
-  const found = /DEMO_OTP = "(\d{6})"/.exec(source);
-  if (!found) throw new Error("The sample verification code was not found");
-  return found[1]!;
+/**
+ * Agrees to the Terms and the Privacy Policy that are published and that the account has not agreed to yet (D17). While a published text is not agreed to, a window stands in front of the
+ * shop owner area and the customer area: a test that is about something else agrees first (the window itself is what a person sees; the API records the same).
+ */
+export async function acceptLegal(request: APIRequestContext): Promise<void> {
+  const res = await request.get(`${APP}/api/v1/legal/consent?locale=en`);
+  if (!res.ok()) return;
+  const status = (await res.json()) as { items: Array<{ kind: string; mustAccept: boolean }> };
+  const kinds = status.items.filter((i) => i.mustAccept).map((i) => i.kind);
+  if (kinds.length > 0) await request.post(`${APP}/api/v1/legal/consent`, { headers: { origin: APP }, data: { kinds, locale: "en" } });
 }

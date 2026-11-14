@@ -1,22 +1,14 @@
 import { getLocale, getTranslations } from "next-intl/server";
 import { CalendarClock, CalendarDays, CheckCircle2, Circle, ClipboardList, HandCoins, MailQuestion, Sparkles, Users, Wallet } from "lucide-react";
-import { closeIfEnded, isSessionFinished, ledgerFromPayments, type TrendBucket, type TrendPeriod } from "@workshop/shared";
+import { closeIfEnded, isSessionFinished, type TrendBucket, type TrendPeriod } from "@workshop/shared";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookingTrend } from "@/components/dashboard/booking-trend";
 import { LiveSummary } from "@/components/dashboard/live-summary";
 import { SummaryCard } from "@/components/dashboard/summary-card";
 import { buttonVariants } from "@/components/ui/button";
 import { ShopLink } from "@/components/dashboard/shell/shop-link";
-import { liveShop } from "@/lib/mock/shop-admin-store";
 import { dayKey } from "@/lib/format";
-import { liveBookings, liveCustomers, shopSessions } from "@/lib/mock/booking-store";
-import { withWorkshopStatus } from "@/lib/mock/workshop-status-store";
-import { getFeeRates } from "@/lib/mock/fee-rates-store";
-import { paymentSources } from "@/lib/mock/ledger-source";
-import { bookingTrend } from "@/lib/mock/trend";
-import { currentShop, mockLandingPages, sitePage, workshops as seedWorkshops } from "@/lib/mock/data";
 import { bookingSeries, TREND_PERIODS } from "@workshop/shared";
-import { realApi } from "@/lib/api-server";
 import { loadOpsData } from "@/lib/own-ops";
 import { ownPageList } from "@/lib/own-site";
 import { loadIncome } from "@/lib/own-finance";
@@ -84,23 +76,20 @@ const CHECKLIST_LINKS = {
 
 export default async function OverviewPage() {
   const t = await getTranslations("dashboard.overview");
-  // Connected to the API: everything below is counted from the shop's own data on the server. Sample data otherwise.
-  const live = realApi() ? await loadOpsData() : null;
-  const pages = live ? await ownPageList(live.shop) : null;
-  const income = live ? await loadIncome(live.shop.timezone) : null;
-  const shopRef = live ? live.shop : currentShop;
-  const shopStatus = live ? live.shop.status : (liveShop(currentShop.id) ?? currentShop).status;
+  // Everything below is counted from the shop's own data on the server.
+  const live = await loadOpsData();
+  const pages = await ownPageList(live.shop);
+  const income = await loadIncome(live.shop.timezone);
+  const shopRef = live.shop;
+  const shopStatus = live.shop.status;
   const ts = await getTranslations("dashboard.overview.summary");
   const locale = await getLocale();
-  const o = computeOverview(live ? {
+  const o = computeOverview({
     shop: live.shop, bookings: live.bookings, sessions: live.sessions, workshops: live.workshops, customers: live.customers,
-    hasHero: Object.values(pages?.drafts ?? {}).some((d) => d.content.sections.some((x) => x.type === "hero" && x.enabled)),
+    hasHero: Object.values(pages.drafts).some((d) => d.content.sections.some((x) => x.type === "hero" && x.enabled)),
     // (the bookings of the shop: nothing is added to them)
     trend: (list, tz, now) => Object.fromEntries(TREND_PERIODS.map((p) => [p, bookingSeries(list.map((b) => ({ startsAt: b.startsAt, status: b.status, guests: b.quantity })), p, now, tz)])) as Record<TrendPeriod, TrendBucket[]>,
-  } : {
-    shop: currentShop, bookings: liveBookings(), sessions: shopSessions(), workshops: withWorkshopStatus(seedWorkshops), customers: liveCustomers(), hasHero: sitePage.draft.sections.some((x) => x.type === "hero" && x.enabled), trend: bookingTrend,
   });
-  const bookings = live ? live.bookings : liveBookings();
   const pct = (n: number) => new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 0 }).format(n);
   const num = (n: number) => new Intl.NumberFormat(locale).format(n);
   const kpis = [
@@ -158,8 +147,8 @@ export default async function OverviewPage() {
             rows={[{ label: ts("customers.total"), value: num(o.customers.total) }, { label: ts("customers.repeat"), value: num(o.customers.repeat) }]}
           />
           <LiveSummary
-            rows={income ? income.rows : ledgerFromPayments(paymentSources(bookings), getFeeRates(currentShop.id))} currency={shopRef.currency} timezone={shopRef.timezone}
-            mainPage={{ name: shopRef.name, template: sitePage.template, seed: mockLandingPages }} shopStatus={shopStatus} {...(pages ? { server: { pages: pages.pages, liveId: pages.liveId } } : {})}
+            rows={income?.rows ?? []} currency={shopRef.currency} timezone={shopRef.timezone}
+            mainPage={{ name: shopRef.name, template: "classic" }} shopStatus={shopStatus} server={{ pages: pages.pages, liveId: pages.liveId }}
           />
         </ul>
       </section>

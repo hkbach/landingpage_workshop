@@ -8,7 +8,7 @@ const ICONS: Record<SupportChannel, LucideIcon> = { whatsapp: MessageCircle, pho
 
 /**
  * "Need help?" under the menu of the guest area: how a customer reaches the platform team (WhatsApp, Phone, Zalo, Email). The same contact details the shop owners see (set by the
- * platform admin, see lib/mock/platform.ts): the support of the PLATFORM, never the contact details of the shop. Only the channels that were filled in are shown, and each link is built
+ * platform admin, see lib/sample/platform.ts): the support of the PLATFORM, never the contact details of the shop. Only the channels that were filled in are shown, and each link is built
  * (and checked) by `supportLinks`.
  */
 export function CustomerSupport({ contact }: { contact: SupportContact | null | undefined }) {

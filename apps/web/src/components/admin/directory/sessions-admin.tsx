@@ -8,7 +8,7 @@ import { SESSION_STATUSES, canAdminClose, canAdminReopen, closedForGood, type Se
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { formatDateTime } from "@/lib/format";
-import type { AdminSession } from "@/lib/mock/admin-directory";
+import type { AdminSession } from "@/lib/admin-types";
 import { ReasonDialog } from "../reason-dialog";
 import { fmt } from "../utils";
 import { DetailDialog, DirectoryTable, FilterBox, Notice, Pill, Toolbar, selectClass, useCodeLabel, useDebounced, useDirectory, type Column } from "./kit";

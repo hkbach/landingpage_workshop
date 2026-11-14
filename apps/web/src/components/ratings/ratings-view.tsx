@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
 import { Star } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import type { OwnerRating } from "@/lib/mock/rating-store";
+import type { OwnerRating } from "@/lib/rating-types";
 
 interface RatingsResponse { items: OwnerRating[]; average: number; count: number }
 

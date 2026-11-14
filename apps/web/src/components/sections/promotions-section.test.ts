@@ -11,7 +11,7 @@ import { SectionRenderer } from "./SectionRenderer";
 import { PageRenderer } from "./PageRenderer";
 import { splitSections } from "./frames/logic";
 import { TEMPLATES, TEMPLATE_KEYS } from "./templates";
-import { sitePage, workshops } from "@/lib/mock/data";
+import { sitePage, workshops } from "@/lib/sample/data";
 
 vi.mock("next/font/google", () => {
   const font = () => ({ variable: "font-stub", className: "font-stub", style: { fontFamily: "stub" } });

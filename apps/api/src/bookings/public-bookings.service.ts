@@ -79,6 +79,25 @@ export class PublicBookingsService {
     return row;
   }
 
+  /**
+   * `GET /public/workshops/featured?limit=`: for the home page of the platform, a random pick of the ACTIVE workshops of the ACTIVE shops that the platform administrator chose to list,
+   * so every shop has its turn. Public: nothing about a person, nothing the shop did not publish.
+   */
+  async featured(limit: number) {
+    const rows = await this.db
+      .select({ w: workshops, o: organizations })
+      .from(workshops).innerJoin(organizations, eq(organizations.id, workshops.organizationId))
+      .where(and(eq(workshops.status, "ACTIVE"), eq(organizations.status, "ACTIVE"), eq(organizations.showOnCustomerPage, true)))
+      .orderBy(sql`random()`).limit(limit);
+    const ratings = await ratingSummaries(this.db, rows.map((r) => r.w.id));
+    return {
+      items: rows.map(({ w, o }) => ({
+        id: w.id, title: w.title, shopName: o.name, shopSlug: o.slug, defaultLocale: o.defaultLocale, coverUrl: w.coverUrl, priceAmount: w.priceAmount, currency: w.currency, durationMinutes: w.durationMinutes,
+        categories: w.categories, rating: ratings.get(w.id) ?? { average: null, count: 0 },
+      })),
+    };
+  }
+
   async site(slug: string) {
     const o = await this.shop(slug);
     const list = await this.db.select().from(workshops).where(and(eq(workshops.organizationId, o.id), eq(workshops.status, "ACTIVE"))).orderBy(asc(workshops.sortOrder), asc(workshops.id));

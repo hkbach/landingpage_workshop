@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import type { AdminEmail } from "@/lib/mock/admin-directory";
+import type { AdminEmail } from "@/lib/admin-types";
 import { fmt } from "../utils";
 import { DetailDialog, DirectoryTable, FilterBox, Notice, Pill, Toolbar, humanize, selectClass, useDebounced, useDirectory, type Column } from "./kit";
 

@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { pickLocalized, type BookingPriceInfo, type Locale } from "@workshop/shared";
-import { realApi } from "@/lib/api-server";
 import { loadOwnShop, type OwnShop } from "@/lib/own-shop";
 import { ownWorkshops, type OwnWorkshop } from "@/lib/own-catalog";
 import { fetchAll } from "@/lib/shop-data";
@@ -60,7 +59,6 @@ export function pricesOf(bookings: readonly Booking[]): Record<string, BookingPr
 
 /** The sessions, bookings, customers and workshops of the shop of the session (the whole lists, see lib/shop-data.ts). */
 export async function loadOpsData(): Promise<OpsData> {
-  if (!realApi()) throw new Error("loadOpsData needs the API");
   const shop = await loadOwnShop();
   if (!shop) notFound();
   const [workshops, sessions, bookings, customers] = await Promise.all([

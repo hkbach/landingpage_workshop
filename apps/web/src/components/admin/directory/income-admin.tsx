@@ -6,7 +6,7 @@ import { formatMoney } from "@workshop/shared";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DateInput } from "@/components/ui/date-input";
-import type { Income } from "@/lib/mock/admin-income";
+import type { Income } from "@/lib/income-types";
 import { IncomeDetailDialog } from "./income-detail-dialog";
 import { DirectoryTable, FilterBox, type Column } from "./kit";
 

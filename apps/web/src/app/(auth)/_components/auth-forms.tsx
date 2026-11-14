@@ -8,6 +8,7 @@ import { Controller, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { Store, UserRound } from "lucide-react";
 import { generateShopSlug, PASSWORD_MAX, PASSWORD_MIN } from "@workshop/shared";
+import { recordConsent } from "@/lib/consent";
 import { writeGuestEmail } from "@/lib/favorites";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -165,7 +166,7 @@ function SignupKindForm({ kind }: { kind: SignupKind }) {
           if (res.status === 201) {
             const me = (await res.json()) as Me;
             // The proof of the box (the version of the Terms and of the Privacy Policy and the time). A failure here is not the end of the signup: the area asks again before the person goes on.
-            await fetch("/api/v1/legal/consent", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ kinds: ["terms", "privacy"], locale }) }).catch(() => null);
+            await recordConsent(locale, false);
             return goHome(router, me);
           }
           const j = (await res.json().catch(() => null)) as { error?: { code?: string; details?: { fields?: Record<string, string> } } } | null;

@@ -7,7 +7,7 @@ Nền tảng cho các shop workshop (gốm, nến, nấu ăn, bánh...) tự t�
 - **Khu vực khách hàng (customer):** Today, hồ sơ, booking (check-in, đánh giá workshop sau khi session kết thúc, hủy), yêu thích, workshops, Affiliate, Referrals và rút tiền.
 - **Khu admin hệ thống:** quản lý người dùng, shop (sửa, khóa, tên miền riêng), workshop, session, booking, landing page, hình ảnh, khuyến mãi, thu nhập, rút tiền, phí, affiliate, referrals, báo cáo vi phạm, hộp thư hỗ trợ, email hệ thống, Terms & Privacy, cài đặt nền tảng và audit log.
 
-> **Trạng thái hiện tại (phiên bản 2.0-MVP, 11/11/2026):** đây là bản **MVP chỉ có giao diện (frontend)**. Dữ liệu là **dữ liệu mẫu (mock)** nằm trong bộ nhớ, **không cần database, không cần Docker, không cần backend**. Các API chạy ngay trong Next.js (`/api/v1/*`) nhưng **giữ đúng hợp đồng** của backend thật sẽ làm sau. Yêu cầu đầy đủ của dự án nằm ở [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) (tiếng Việt, là nguồn sự thật duy nhất; có bảng tình trạng triển khai và danh sách API mock).
+> **Trạng thái hiện tại (14/11/2026):** web (`apps/web`) chạy trên **backend thật** (`apps/api`, PostgreSQL). Mọi khu vực (website công khai và đặt chỗ, khu chủ shop, khu khách hàng, khu admin) đọc và ghi dữ liệu qua API; **không còn dữ liệu mẫu trong bộ nhớ**. Muốn chạy cần PostgreSQL, API và worker (xem [mục 7](#7-chạy-ứng-dụng-database-api-worker-và-web)). Yêu cầu đầy đủ nằm ở [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) (tiếng Việt, là nguồn sự thật duy nhất); hiện trạng và những việc còn lại của việc nối web với API nằm ở [docs/WEB_API_INTEGRATION.md](docs/WEB_API_INTEGRATION.md).
 
 ---
 
@@ -46,10 +46,10 @@ landingpage_workshop/
 │   ├── api/                  Backend NestJS (Fastify) + Drizzle + PostgreSQL (đang dựng: đăng ký, đăng nhập, email, 7 bảng đầu)
 │   │   ├── src/              Mã nguồn (config, db/schema, common, health)
 │   │   └── drizzle/          Migration SQL (đã merge thì không sửa, muốn đổi thì tạo migration mới)
-│   └── web/                  Ứng dụng Next.js (giao diện + API mock dưới /api/v1)
+│   └── web/                  Ứng dụng Next.js (giao diện; gọi API qua /api/v1)
 │       ├── src/app/          Các trang: (marketing) website công khai, (auth), shopowner, customer,
 │       │                     systemadmin, sites (landing page của shop), api
-│       ├── src/lib/mock/     Kho dữ liệu mẫu trong bộ nhớ (mỗi kho có test)
+│       ├── src/lib/sample/   Nội dung mẫu tĩnh (cho test và trang giới thiệu), không phải backend
 │       └── messages/         Chữ giao diện 5 ngôn ngữ: en, vi, ko, ja, zh
 ├── packages/
 │   ├── shared/               Luật nghiệp vụ dùng chung (session, booking, phí, khuyến mãi, tên miền...), có test riêng
@@ -215,7 +215,7 @@ Hai nhóm test được chạy:
 | Nhóm | Ở đâu | Kiểm tra gì |
 | --- | --- | --- |
 | `@workshop/shared` | `packages/shared` | Luật nghiệp vụ: session, booking, phí, khuyến mãi, tên miền riêng... |
-| `web` | `apps/web` | Giao diện, API mock, dữ liệu mẫu, audit log, bản dịch 5 ngôn ngữ... |
+| `web` | `apps/web` | Giao diện, bản dịch 5 ngôn ngữ, gọi API thật |
 
 ### 6.2. Chạy kiểm tra code (lint) và kiểm tra kiểu (typecheck)
 
@@ -252,8 +252,8 @@ pnpm exec vitest run src/lib/date-input.test.ts
 | `pnpm test` | Chạy toàn bộ test |
 | `pnpm lint` | Kiểm tra cách viết code |
 | `pnpm typecheck` | Kiểm tra kiểu TypeScript |
-| `pnpm dev` | Chạy ứng dụng để xem giao diện (chỉ `apps/web`, không cần database) |
-| `pnpm dev:api` | Chạy backend `apps/api` (cần PostgreSQL và `apps/api/.env`, xem [mục 7.1](#71-backend-và-database-postgresql-bằng-docker)); gửi email cần thêm `pnpm --filter api dev:worker` |
+| `pnpm dev` | Chạy web (`apps/web`); cần API đang chạy và biến `API_URL` (xem mục 7) |
+| `pnpm dev:api` | Chạy backend `apps/api` (cần PostgreSQL và `apps/api/.env`, xem [mục 7](#7-chạy-ứng-dụng-database-api-worker-và-web)); gửi email cần thêm `pnpm --filter api dev:worker` |
 | `pnpm db:seed` | Nạp dữ liệu demo (cần `SEED_PASSWORD` do bạn đặt) |
 | `pnpm db:generate` | Sinh migration SQL từ schema Drizzle (`apps/api/src/db/schema`) |
 | `pnpm db:migrate` | Áp migration lên database trong `DATABASE_URL` |
@@ -263,47 +263,9 @@ pnpm exec vitest run src/lib/date-input.test.ts
 
 ---
 
-## 7. Chạy ứng dụng để xem giao diện
+## 7. Chạy ứng dụng (database, API, worker và web)
 
-```bash
-pnpm dev
-```
-
-Đợi đến khi thấy dòng `Ready` / `Local: http://localhost:3000`. **Giữ nguyên cửa sổ terminal đó** (đóng là ứng dụng tắt). Muốn tắt: bấm **Ctrl + C** trong terminal.
-
-Mở trình duyệt (khuyên dùng Chrome) và vào các địa chỉ sau. Địa chỉ `*.localtest.me` luôn trỏ về máy của bạn nên **không cần cấu hình gì thêm** (nhưng cần có Internet để tên miền này được "dịch" ra địa chỉ máy).
-
-| Khu vực | Địa chỉ | Ai dùng |
-| --- | --- | --- |
-| **Website công khai** (Home, About Us, Contact) | http://app.localtest.me:3000 | Mọi người |
-| Đăng nhập / đăng ký | Nút **Log in** và **Sign up** trên thanh trên của website (mở popup) | Mọi người |
-| **Quản lý của shop** (shop mẫu `whiskladle`) | http://app.localtest.me:3000/shopowner/whiskladle | Chủ shop |
-| **Khu vực khách hàng** (khách mẫu `cu-1`) | http://app.localtest.me:3000/customer/cu-1/today | Khách có tài khoản |
-| **Landing page công khai** của shop mẫu | http://whiskladle.localtest.me:3000 | Khách đặt chỗ |
-| **Admin hệ thống** (chỉ en + vi) | http://app.localtest.me:3000/systemadmin | Quản trị nền tảng |
-
-**Đăng nhập thử:** mọi tài khoản mẫu (chủ shop và khách) dùng chung **một mật khẩu mẫu** được ghi ở đầu file `apps/web/src/lib/mock/accounts-store.ts` (đây là dữ liệu mẫu, không phải mật khẩu thật). Email mẫu: chủ shop `linh@whiskladle.example`; khách có thể tìm ở trang Users của admin. Bạn cũng có thể **đăng ký tài khoản mới** bằng popup Sign up: khách cá nhân (email + mật khẩu) hoặc chủ shop (thêm tên shop, địa chỉ shop được sinh từ tên); sau khi đăng ký, chủ shop đi qua wizard thiết lập (khu vực, ngôn ngữ, liên hệ). Shop mới chỉ có trang chào mừng vì dữ liệu mẫu đầy đủ chỉ có cho shop `whiskladle`.
-
-**Sau khi đăng nhập:** chủ shop vào trang **Overview** của shop, khách hàng vào trang **Today**.
-
-Mẹo: bạn có thể dùng `http://localhost:3000/shopowner/whiskladle` thay cho địa chỉ `app.localtest.me` khi máy không có Internet (riêng landing page công khai thì bắt buộc dùng `whiskladle.localtest.me`).
-
-### Đổi ngôn ngữ
-
-Dùng nút ngôn ngữ ở góc trên bên phải (English, Tiếng Việt, 한국어, 日本語, 中文). Ngày tháng và ô nhập ngày sẽ đổi định dạng theo ngôn ngữ đã chọn.
-
-### Về dữ liệu mẫu (rất quan trọng)
-
-- Toàn bộ dữ liệu (workshop, session, booking, khuyến mãi, thu nhập...) là **dữ liệu mẫu** tạo sẵn.
-- Bộ dữ liệu mẫu có **5 shop**: Whisk & Ladle Kitchen `whiskladle` (shop mẫu đầy đủ), Sugar & Sift Bakery `sugarsift` (bản nháp), Golden Noodle House `goldennoodle` (bị khóa), Brew & Bean Coffee Lab và Green Table Vegan Kitchen (có workshop riêng để xem trang Workshops của khách), kèm workshop, session, khách, booking ở đủ các trạng thái, khuyến mãi, thanh toán, affiliate / referral và yêu cầu rút tiền. Dữ liệu nằm trong `apps/web/src/lib/mock/`.
-- Những thay đổi bạn làm (ví dụ hủy booking, đổi tỷ lệ phí hay cài đặt của admin, tạo khuyến mãi, đăng ký tài khoản, gửi tin ở trang Contact) được giữ **trong bộ nhớ của máy chủ đang chạy** nên sẽ **mất khi tắt `pnpm dev` và chạy lại**. Một số thay đổi khác lưu trong trình duyệt (xóa dữ liệu trình duyệt là mất).
-- Vì vậy muốn "làm lại từ đầu" chỉ cần tắt (Ctrl + C) rồi chạy lại `pnpm dev`.
-
----
-
-### 7.1. Backend và database (PostgreSQL bằng Docker)
-
-Bản giao diện ở trên **không cần** phần này. Chỉ làm khi bạn muốn chạy `apps/api` (backend thật đang được dựng từng bước theo [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) mục 13).
+Web cần API thật; API cần PostgreSQL. Làm lần lượt:
 
 1. Cài **Docker Desktop** và bật nó lên.
 2. Tạo `infra/.env` với một dòng `DB_PASSWORD=<mật-khẩu-bạn-tự-đặt>` (file này không được commit).
@@ -315,16 +277,41 @@ Bản giao diện ở trên **không cần** phần này. Chỉ làm khi bạn m
    API_PORT=4000
    LOG_LEVEL=info
    ```
-   Các biến tùy chọn (đã có giá trị mặc định cho môi trường dev): `APP_URL` (mặc định `http://app.localtest.me:3000`), `REQUIRE_EMAIL_VERIFICATION` (dev mặc định `false`: đăng ký xong vào luôn; đặt `true` để bắt xác minh email như production), `EMAIL_PROVIDER` (`mailpit` hoặc `resend`), `APP_SECRET` (>= 32 ký tự; pepper của OTP và khóa mã hóa số tài khoản; dev có mặc định, **production bắt buộc đặt riêng**), `TURNSTILE_SECRET_KEY` (trống thì bỏ qua kiểm tra bot, chỉ khi dev). Danh sách đầy đủ ở [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) mục 11.1.
-5. Tạo bảng: `pnpm db:migrate`.
-6. Chạy backend: `pnpm dev:api`, rồi mở http://127.0.0.1:4000/health (còn sống) và http://127.0.0.1:4000/ready (kết nối được database).
-7. Gửi email (đăng ký có xác minh, quên mật khẩu): chạy thêm worker ở một terminal khác bằng `pnpm --filter api dev:worker`. Email được **giữ lại ở Mailpit**, xem tại http://127.0.0.1:8025 (không gửi ra ngoài). Worker cũng **tự đóng session hết giờ** (mỗi phút) và **sinh session từ lịch lặp của workshop** (mỗi giờ), nên nên để nó chạy khi thử phần workshop và session.
-8. Dữ liệu demo (tùy chọn): chạy `pnpm db:seed`. Sẽ có 1 admin, 3 shop (Whisk & Ladle `ACTIVE` có đủ lịch sử, Sugar & Sift `DRAFT`, Golden Noodle `SUSPENDED`), 4 workshop kèm lịch lặp, khoảng 120 session (đã qua, đang chạy, sắp tới, tạm dừng), khoảng 250 booking ở đủ trạng thái và khoảng 100 khoản thanh toán, cùng các khách hàng. Dữ liệu tính theo ngày hôm nay nên luôn có vẻ mới. Mọi tài khoản demo dùng **chung một mật khẩu**: nếu bạn không đặt `SEED_PASSWORD` (ít nhất 10 ký tự) trong `apps/api/.env` thì seed tự sinh một mật khẩu ngẫu nhiên và ghi vào file `apps/api/.seed-credentials` (git bỏ qua file này, mật khẩu **không** được in ra màn hình), kèm danh sách email: `admin@workshopkit.example`, `linh@whiskladle.example` (chủ shop chính), `ava@sugarsift.example`, `minh@goldennoodle.example`, `emma@example.com` (khách). Chạy lại không ghi đè tài khoản đã có. Seed cũng cho shop Whisk & Ladle tỷ lệ phí riêng (8% duy trì, 12% dịch vụ), một số booking dùng mã giảm giá 10% (phí tính trên giá gốc) và kết sổ các tháng đã qua, như worker làm mỗi giờ; chạy lại `pnpm db:seed` cũng kết sổ thêm nếu có tháng mới qua. Khách thanh toán bằng tiền mặt tại shop nên shop không có rút tiền; **customer** có ví Affiliate / Referrals và lập lệnh rút tiền, admin xử lý (chuyển tiền thật làm ngoài hệ thống, D22). Tài khoản `emma@example.com` có sẵn số dư và 3 invoice (Paid, Rejected, Pending) để xem thử. Tài khoản `emma@example.com` cũng có link mời bạn (hai người bạn đã đăng ký, một người đã có bonus) và, với dữ liệu seed mới, một link affiliate có booking đã thanh toán. Tiền affiliate / referral chỉ rút được sau khi tháng của shop được kết sổ (worker kết sổ mỗi giờ; chạy lại `pnpm db:seed` cũng kết sổ và ghi khoản cộng vào ví), và đổi tỷ lệ phí chỉ áp dụng cho các khoản thanh toán sau đó. Khi rút tiền, customer nhập **tên ngân hàng, số tài khoản và tên chủ tài khoản** để admin chuyển khoản ngoài hệ thống (số tài khoản chỉ hiện đầy đủ cho admin, customer chỉ thấy 4 ký tự cuối).
-9. Test: có `TEST_DATABASE_URL` thì `pnpm test` chạy thêm các test trên PostgreSQL thật (đăng ký, đăng nhập, cách ly dữ liệu giữa các shop, email, outbox). Thiếu nó thì các test đó được bỏ qua. Các test này **tạo dữ liệu có tên ngẫu nhiên** trong `workshop_test` (audit log không xóa được nên dữ liệu tích lũy; muốn dọn thì tạo lại database test).
+   Các biến tùy chọn (đã có giá trị mặc định cho môi trường dev): `APP_URL` (mặc định `http://app.localtest.me:3000`; **phải trùng địa chỉ trình duyệt dùng**, API so sánh để chặn yêu cầu giả mạo), `REQUIRE_EMAIL_VERIFICATION` (dev mặc định `false`: đăng ký xong vào luôn; đặt `true` để bắt xác minh email), `APP_SECRET` (có giá trị dev; production bắt buộc đặt), `TURNSTILE_SECRET_KEY` (bỏ trống ở dev thì bỏ qua kiểm tra bot).
+5. Tạo bảng và dữ liệu demo: `pnpm db:migrate` rồi `pnpm db:seed`. Seed tạo 1 admin, 3 shop (Whisk & Ladle `ACTIVE` có đủ lịch sử, Sugar & Sift `DRAFT`, Golden Noodle `SUSPENDED`), workshop kèm lịch lặp, khoảng 120 session, booking, khuyến mãi, ví và khách, và ghi **mật khẩu chung của các tài khoản demo** vào `apps/api/.seed-credentials` (git bỏ qua file này). Chạy lại seed an toàn.
+6. Chạy API (`pnpm dev:api`, kiểm tra http://127.0.0.1:4000/health và http://127.0.0.1:4000/ready) và **worker** ở terminal khác (`pnpm --filter api dev:worker`): worker gửi email (xác minh, quên mật khẩu, mã đặt chỗ, thông báo). Email được **giữ ở Mailpit**, xem tại http://127.0.0.1:8025 (không gửi ra ngoài).
+7. Tạo `apps/web/.env.local` (git bỏ qua) với một dòng `API_URL=http://127.0.0.1:4000`, rồi chạy web: `pnpm dev`. Đợi dòng `Ready` / `Local: http://localhost:3000`. **Giữ nguyên cửa sổ terminal đó**; muốn tắt bấm **Ctrl + C**.
+
+Mở trình duyệt (khuyên dùng Chrome). Địa chỉ `*.localtest.me` luôn trỏ về máy của bạn nên **không cần cấu hình gì thêm** (nhưng cần có Internet để tên miền này được "dịch" ra địa chỉ máy bạn):
+
+| Khu vực | Địa chỉ | Ai dùng |
+| --- | --- | --- |
+| **Website công khai** (Home, About Us, Contact, Terms, Privacy) | http://app.localtest.me:3000 | Mọi người |
+| Đăng nhập / đăng ký | Nút **Log in** và **Sign up** trên thanh trên của website (mở popup) | Mọi người |
+| **Quản lý của shop** (shop demo `whiskladle`) | http://app.localtest.me:3000/shopowner/whiskladle | Chủ shop |
+| **Khu vực khách hàng** | Sau khi đăng nhập: `/customer/{id}/today` | Khách có tài khoản |
+| **Landing page công khai** của shop demo | http://whiskladle.localtest.me:3000 | Khách đặt chỗ |
+| **Admin hệ thống** (chỉ en + vi) | http://app.localtest.me:3000/systemadmin | Quản trị nền tảng |
+
+**Đăng nhập thử:** mọi tài khoản demo dùng chung mật khẩu ghi trong `apps/api/.seed-credentials`. Email: chủ shop `linh@whiskladle.example`, admin `admin@workshopkit.example`; khách thì **đăng ký** bằng popup Sign up (tab Customer; phải tick đồng ý Terms và Privacy). Đăng nhập xong: chủ shop vào **Overview** của shop, khách vào **Today**, admin vào danh sách shop.
+
+Mẹo: dùng `http://localhost:3000/shopowner/whiskladle` thay cho `app.localtest.me` khi máy không có Internet (riêng landing page công khai thì bắt buộc dùng `whiskladle.localtest.me`; khi đó đặt `APP_URL` của API cho khớp).
+
+### Đổi ngôn ngữ
+
+Dùng nút ngôn ngữ ở góc trên bên phải (English, Tiếng Việt, 한국어, 日本語, 中文). Ngày tháng và ô nhập ngày sẽ đổi định dạng theo ngôn ngữ đã chọn.
+
+### Về dữ liệu
+
+- Dữ liệu nằm trong **PostgreSQL** và còn nguyên khi tắt web. Muốn làm lại từ đầu, tạo lại database rồi chạy `pnpm db:migrate` và `pnpm db:seed` (xóa volume của database là hành động mất dữ liệu: chỉ làm trên máy dev của bạn).
+- Trang giới thiệu của nền tảng hiển thị workshop của các shop mà admin chọn "List" (API `GET /public/workshops/featured`).
+- Test: có `TEST_DATABASE_URL` thì `pnpm test` chạy thêm các test trên PostgreSQL thật (đăng ký, đăng nhập, cách ly dữ liệu giữa các shop, email, outbox...). Thiếu nó thì các test đó được bỏ qua. Các test này **tạo dữ liệu trong database test**, không dùng database dev. Test trình duyệt (`pnpm test:e2e`) cần cả stack ở trên: xem [e2e/README.md](e2e/README.md).
+
+---
 
 **Lưu ý:** đây là bản POC. Phần đăng nhập, session và phân quyền chưa được người review bảo mật, nên **không đưa lên production** khi chưa review. Những việc còn phải làm và cần người duyệt trước khi chạy thật (chuyển hướng 301 và chứng chỉ TLS cho tên miền riêng, Dockerfile, Caddy, backup, Sentry, CSP, mã hóa số tài khoản, rà soát bảo mật, pháp lý...) nằm ở [docs/PRODUCTION_CHECKLIST.md](docs/PRODUCTION_CHECKLIST.md).
 
-**Triển khai thật (chưa bật):** Dockerfile, `infra/docker-compose.prod.yml`, `infra/Caddyfile`, backup mã hóa lên R2 và cách khôi phục nằm ở [docs/RUNBOOK.md](docs/RUNBOOK.md). **Nối `apps/web` với API thật: xong lát 0–5 (đặt `API_URL` thì mọi khu vực chạy trên API thật; còn lại: sửa trang shop thay chủ shop, sửa hồ sơ người dùng, media, và gỡ dữ liệu mẫu)**; hiện trạng, số liệu và kế hoạch theo từng lát cắt ở [docs/WEB_API_INTEGRATION.md](docs/WEB_API_INTEGRATION.md).
+**Triển khai thật (chưa bật):** Dockerfile, `infra/docker-compose.prod.yml`, `infra/Caddyfile`, backup mã hóa lên R2 và cách khôi phục nằm ở [docs/RUNBOOK.md](docs/RUNBOOK.md). **Web đã nối API thật cho mọi khu vực** (biến `API_URL`); những việc còn lại (sửa trang shop thay chủ shop, sửa hồ sơ người dùng, media, phân trang phía server cho Bookings và Customers) và các quyết định đã áp dụng nằm ở [docs/WEB_API_INTEGRATION.md](docs/WEB_API_INTEGRATION.md).
 
 **Điều khoản và Privacy (D17):** admin soạn bản **nháp**, rồi **công bố** từng ngôn ngữ; mọi phiên bản đã công bố được giữ lại (không sửa, không xóa) và có thể đưa về thành nháp mới. Công bố kiểu **major** buộc mọi người dùng đồng ý lại; mỗi lần đồng ý được ghi (phiên bản, ngôn ngữ, thời điểm). **Số tháng lưu tin Contact** và **số ngày lưu email đã gửi** chỉnh ở Settings. Khi session bị đóng hoặc dời (kể cả do admin), khách có booking còn hiệu lực nhận email báo.
 
@@ -346,7 +333,9 @@ Dừng database: `docker compose -f infra/docker-compose.yml stop`. **Không** t
 | `pnpm test` có 1–2 test đỏ **không liên quan** thay đổi của bạn | Có vài test thỉnh thoảng chạy chậm trên máy yếu. Chạy lại `pnpm test` lần nữa. Nếu vẫn đỏ ở cùng một test thì báo cho nhóm kèm ảnh chụp màn hình. |
 | Thấy nhiều dòng `IntlError` khi chạy test | Bình thường, bỏ qua. Chỉ nhìn dòng tổng kết `Tests ... passed`. |
 | Sửa code nhưng trang không đổi | Tắt `pnpm dev` (Ctrl + C), chạy lại. |
-| Lỗi kiểu `X is not a function` ở API sau khi `git pull` | Máy chủ dev đang giữ dữ liệu mẫu cũ trong bộ nhớ. Tắt `pnpm dev` rồi chạy lại. |
+| Trang báo lỗi hoặc trắng sau khi `git pull` | Tắt API, worker và web, chạy `pnpm install`, `pnpm db:migrate` (có thể có bảng mới), rồi chạy lại cả ba. |
+| Web báo `API_URL is not set` | Tạo `apps/web/.env.local` với `API_URL=http://127.0.0.1:4000` (xem mục 7) rồi chạy lại `pnpm dev`. |
+| Đăng nhập báo lỗi nguồn gốc (`FORBIDDEN_ORIGIN`) | `APP_URL` của API không trùng địa chỉ bạn đang mở trong trình duyệt: sửa `apps/api/.env` rồi chạy lại API. |
 | Lỗi lạ sau khi kéo code mới (`git pull`) | Chạy lại `pnpm install`, rồi `pnpm test`. |
 
 Vẫn chưa được? Chụp ảnh màn hình **toàn bộ** thông báo lỗi trong terminal và gửi cho nhóm.

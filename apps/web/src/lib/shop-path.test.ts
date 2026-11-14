@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { currentShop } from "@/lib/mock/data";
+import { currentShop } from "@/lib/sample/data";
 import { DEMO_SHOP_SLUG, withShopSlug } from "./shop-path";
 
 describe("withShopSlug", () => {

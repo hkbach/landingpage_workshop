@@ -18,7 +18,7 @@ const read = (p: string) => readFileSync(p, "utf8");
 
 /** Everything that renders or serves the landing page or another page seen by travellers. */
 const PUBLIC_AREAS = ["components/sections", "components/site", "components/booking", "app/sites"];
-const SUPPORT_IDENTIFIERS = /support-contact|mock\/platform|SupportContactBox|platformSupport|SupportContact\b/;
+const SUPPORT_IDENTIFIERS = /support-contact|sample\/platform|SupportContactBox|platformSupport|SupportContact\b/;
 
 describe("platform support contact stays out of the public landing page", () => {
   const all = files(SRC);
@@ -29,11 +29,8 @@ describe("platform support contact stays out of the public landing page", () => 
   });
 
   it("only the admin page that edits it, the shop owner builder, its page, the shop owner menu (sidebar) and the menu of the customer area use it", () => {
-    const users = all.filter((f) => SUPPORT_IDENTIFIERS.test(read(f))).map(rel).filter((f) => f !== "lib/support-contact.ts" && f !== "lib/mock/platform.ts");
+    const users = all.filter((f) => SUPPORT_IDENTIFIERS.test(read(f))).map(rel).filter((f) => f !== "lib/support-contact.ts" && f !== "lib/sample/platform.ts");
     expect(users.sort()).toEqual([
-      "app/api/v1/admin/support-contact/route.ts",
-      "app/customer/[accountId]/layout.tsx",
-      "app/shopowner/[slug]/site/[pageId]/page.tsx",
       "app/systemadmin/support-contact/page.tsx",
       "components/admin/admin-nav.tsx",
       "components/admin/directory/support-contact-admin.tsx",
@@ -53,7 +50,7 @@ describe("platform support contact stays out of the public landing page", () => 
   });
 
   it("the shop's own contact data does not come from the platform settings", () => {
-    const platform = read(join(SRC, "lib/mock/platform.ts"));
+    const platform = read(join(SRC, "lib/sample/platform.ts"));
     expect(platform).not.toMatch(/currentShop|shops\b|contactEmail|contactPhone/);
   });
 

@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDisplayLocale } from "@/lib/use-shop-language";
 import type { Workshop } from "@/lib/types";
-import type { ScheduleRule } from "@/lib/mock/ops";
+import type { ScheduleRule } from "@/lib/schedule-types";
 import { ScheduleRulesEditor } from "./schedule-rules-editor";
 import { WorkshopForm, type ShopForCatalog } from "./workshop-form";
 import { WorkshopStatusBadge } from "./workshop-status-badge";

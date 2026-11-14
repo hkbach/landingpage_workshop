@@ -12,7 +12,7 @@ import { DateInput } from "@/components/ui/date-input";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ops/field";
 import { NativeSelect } from "@/components/ops/native-select";
-import type { ScheduleRule } from "@/lib/mock/ops";
+import type { ScheduleRule } from "@/lib/schedule-types";
 import { cn } from "@/lib/utils";
 import { MAX_CAPACITY } from "./workshop-form";
 import { useDirty } from "@/lib/use-dirty";

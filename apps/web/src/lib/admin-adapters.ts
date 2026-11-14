@@ -1,5 +1,5 @@
-import type { AdminAffiliate, AdminBooking, AdminCustomer, AdminLandingPage, AdminReferralLink, AdminSession, AdminShop, AdminUser, AdminVoucher, AdminWithdrawal, AdminWorkshop } from "@/lib/mock/admin-directory";
-import type { AdminAuditRow } from "@/lib/mock/admin-directory";
+import type { AdminAffiliate, AdminBooking, AdminCustomer, AdminLandingPage, AdminReferralLink, AdminSession, AdminShop, AdminUser, AdminVoucher, AdminWithdrawal, AdminWorkshop } from "@/lib/admin-types";
+import type { AdminAuditRow } from "@/lib/admin-types";
 
 // The platform administrator's lists as the API (apps/api) gives them, in the shapes the admin screens use. Each function takes one row of the API. A text that exists in several languages
 // ({ en, vi, ... }) becomes the one of the language of the page, else English.

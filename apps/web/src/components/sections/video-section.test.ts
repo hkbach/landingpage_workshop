@@ -2,7 +2,7 @@ import { createElement, type ComponentType, type ReactElement, type ReactNode } 
 import { renderToStaticMarkup } from "react-dom/server";
 import { NextIntlClientProvider } from "next-intl";
 import { describe, expect, it } from "vitest";
-import { currentShop, sitePage, workshops } from "@/lib/mock/data";
+import { currentShop, sitePage, workshops } from "@/lib/sample/data";
 import type { SectionInstance } from "@/lib/types";
 import type { RenderContext } from "./context";
 import { createSection } from "./registry";

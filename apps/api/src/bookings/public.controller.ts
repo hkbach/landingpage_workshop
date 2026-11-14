@@ -13,6 +13,11 @@ import { PublicBookingsService } from "./public-bookings.service";
 export class PublicController {
   constructor(@Inject(PublicBookingsService) private readonly service: PublicBookingsService) {}
 
+  @Get("workshops/featured")
+  featured(@Query("limit") limit?: string) {
+    return this.service.featured(Math.min(Math.max(Number.parseInt(limit ?? "10", 10) || 10, 1), 30));
+  }
+
   @Get("sites/:slug")
   site(@Param("slug") slug: string) {
     return this.service.site(slug);

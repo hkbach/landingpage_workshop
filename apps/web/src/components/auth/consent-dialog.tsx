@@ -7,6 +7,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { recordConsent } from "@/lib/consent";
 import { endSession } from "@/lib/logout";
 
 /**
@@ -24,8 +25,7 @@ export function ConsentDialog() {
   async function accept() {
     setBusy(true);
     setFailed(false);
-    const res = await fetch("/api/v1/legal/consent", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ kinds: ["terms", "privacy"], locale }) }).catch(() => null);
-    if (res?.ok) router.refresh();
+    if (await recordConsent(locale, true)) router.refresh();
     else setFailed(true);
     setBusy(false);
   }

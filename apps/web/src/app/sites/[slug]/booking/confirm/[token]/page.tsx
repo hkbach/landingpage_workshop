@@ -4,8 +4,6 @@ import { SiteFrame } from "@/components/site/SiteFrame";
 import { SiteIntlProvider } from "@/components/site/SiteIntlProvider";
 import { requireSite } from "@/components/site/resolve";
 import { getSiteBase } from "@/components/site/site-base";
-import { realApi } from "@/lib/api-server";
-import { confirmBookingByToken } from "@/lib/mock/booking-store";
 import { confirmGuestBooking } from "@/lib/public-booking";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
@@ -17,17 +15,9 @@ export default async function ConfirmBookingPage({ params }: PageProps<"/sites/[
   const site = await requireSite(slug);
   const { shop, theme } = site;
   const base = await getSiteBase(slug, site.customDomain);
-  let kind: "already" | "confirmed" | "cancelled" | "invalid";
-  let code: string | undefined;
-  if (realApi()) {
-    const res = await confirmGuestBooking(token);
-    kind = res.kind;
-    code = "code" in res ? res.code : undefined;
-  } else {
-    const res = confirmBookingByToken(token);
-    kind = res.ok ? (res.already ? "already" : "confirmed") : res.code === "CANCELLED" ? "cancelled" : "invalid";
-    code = res.ok ? res.booking.bookingCode : undefined;
-  }
+  const res = await confirmGuestBooking(token);
+  const kind = res.kind;
+  const code = "code" in res ? res.code : undefined;
   return (
     <SiteIntlProvider locale={shop.defaultLocale}>
       <SiteFrame theme={theme} locale={shop.defaultLocale}>

@@ -6,7 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Eye, EyeOff, Pencil, Power } from "lucide-react";
 import { ORG_STATUSES, type OrgStatus } from "@workshop/shared";
 import { Button, buttonVariants } from "@/components/ui/button";
-import type { AdminShop } from "@/lib/mock/admin-directory";
+import type { AdminShop } from "@/lib/admin-types";
 import { ReasonDialog } from "../reason-dialog";
 import { ShopEditDialog } from "./shop-edit-dialog";
 import { StatusBadge } from "../status-badge";

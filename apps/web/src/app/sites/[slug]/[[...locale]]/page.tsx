@@ -6,13 +6,10 @@ import { SiteIntlProvider } from "@/components/site/SiteIntlProvider";
 import { getSiteBase } from "@/components/site/site-base";
 import { localePath } from "@/components/site/site-url";
 import { originOfSite } from "@/lib/public-site";
-import { realApi } from "@/lib/api-server";
 import { requireSite, resolveLocale } from "@/components/site/resolve";
 import { safeImage } from "@/components/sections/safe-url";
 import type { PageContent } from "@/lib/types";
 import type { RenderContext } from "@/components/sections/context";
-import { currentShop } from "@/lib/mock/data";
-import { publicPromotions } from "@/lib/mock/promotion-store";
 
 function heroImage(content: PageContent): string | undefined {
   const hero = content.sections.find((s) => s.type === "hero" && s.enabled);
@@ -47,8 +44,8 @@ export default async function SitePage({ params }: PageProps<"/sites/[slug]/[[..
   const site = await requireSite(slug);
   const locale = resolveLocale(site, segs);
   const base = await getSiteBase(slug, site.customDomain);
-  // The promotions running today: from the API; the sample data only holds the demo shop's.
-  const promotions = realApi() ? site.promotions : slug === currentShop.slug ? publicPromotions() : [];
+  // The promotions running today, from the API.
+  const promotions = site.promotions;
   const { shop, content, theme, workshops, sessions } = site;
 
   const languages = shop.enabledLocales.map((l) => ({ locale: l, href: localePath(base, l, shop.defaultLocale) }));
@@ -67,8 +64,8 @@ export default async function SitePage({ params }: PageProps<"/sites/[slug]/[[..
       <SiteFrame theme={theme} locale={locale}>
         {/* Header, navigation and language switch are part of the page frame (PageRenderer). */}
         <SiteBody
-          favoritesOff={realApi()} content={content} theme={theme} ctx={ctx} workshops={workshops} sessions={sessions} locale={locale} basePath={base} promotions={promotions}
-          shop={{ name: shop.name, slug: shop.slug, timezone: shop.timezone, currency: shop.currency, defaultLocale: shop.defaultLocale, ...(realApi() ? {} : { demoOtp: true }) }}
+          favoritesOff content={content} theme={theme} ctx={ctx} workshops={workshops} sessions={sessions} locale={locale} basePath={base} promotions={promotions}
+          shop={{ name: shop.name, slug: shop.slug, timezone: shop.timezone, currency: shop.currency, defaultLocale: shop.defaultLocale }}
         />
       </SiteFrame>
     </SiteIntlProvider>

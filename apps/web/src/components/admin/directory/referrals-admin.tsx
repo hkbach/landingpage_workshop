@@ -6,7 +6,7 @@ import { formatMoney } from "@workshop/shared";
 import { Ban, CircleCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DateInput } from "@/components/ui/date-input";
-import type { AdminReferralLink } from "@/lib/mock/admin-directory";
+import type { AdminReferralLink } from "@/lib/admin-types";
 import { ReasonDialog } from "../reason-dialog";
 import { fmt } from "../utils";
 import { DetailDialog, DirectoryTable, FilterBox, Notice, Pill, Toolbar, useDebounced, useDirectory, type Column } from "./kit";

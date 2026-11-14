@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { SectionType } from "@workshop/shared";
 import type { SectionInstance } from "@/lib/types";
-import { sitePage } from "@/lib/mock/data";
+import { sitePage } from "@/lib/sample/data";
 import { createSection } from "../registry";
 import { templateSections, TEMPLATE_KEYS } from "../templates";
 import {

@@ -1,6 +1,5 @@
 import type { Locale } from "@workshop/shared";
-import { apiGet, getSession, realApi } from "@/lib/api-server";
-import { getPlatformSupport } from "@/lib/mock/platform";
+import { apiGet, getSession } from "@/lib/api-server";
 import type { SupportContact } from "@/lib/support-contact";
 import type { Shop } from "@/lib/types";
 
@@ -17,7 +16,6 @@ type ApiOrganization = {
 export type OwnShop = Shop & { customDomain: string; customDomainVerified: boolean };
 
 export async function loadOwnShop(): Promise<OwnShop | null> {
-  if (!realApi()) return null;
   const [me, o] = await Promise.all([getSession(), apiGet<ApiOrganization>("/organization")]);
   if (!me || !o) return null;
   return {
@@ -30,6 +28,5 @@ export async function loadOwnShop(): Promise<OwnShop | null> {
 
 /** How to reach the platform team (only for somebody logged in). */
 export async function loadSupport(): Promise<SupportContact> {
-  if (!realApi()) return getPlatformSupport();
   return (await apiGet<SupportContact>("/support-contact")) ?? {};
 }

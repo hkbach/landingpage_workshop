@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/dashboard/shell/field";
 import { useDirty } from "@/lib/use-dirty";
-import type { AdminUser } from "@/lib/mock/admin-directory";
+import type { AdminUser } from "@/lib/admin-types";
 import { ReasonDialog } from "../reason-dialog";
 import { fmt } from "../utils";
 import { DetailDialog, DirectoryTable, FilterBox, Notice, Pill, Toolbar, humanize, selectClass, useDebounced, useDirectory, type Column } from "./kit";

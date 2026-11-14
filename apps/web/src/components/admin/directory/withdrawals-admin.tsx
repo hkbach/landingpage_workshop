@@ -7,7 +7,7 @@ import { formatMoney } from "@workshop/shared";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DateInput } from "@/components/ui/date-input";
-import type { AdminWithdrawal } from "@/lib/mock/admin-directory";
+import type { AdminWithdrawal } from "@/lib/admin-types";
 import { ReasonDialog } from "../reason-dialog";
 import { fmt } from "../utils";
 import { DirectoryTable, FilterBox, Notice, Pill, Toolbar, selectClass, useDebounced, useDirectory, type Column } from "./kit";

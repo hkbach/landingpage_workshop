@@ -9,7 +9,7 @@ import { ReportActionsContext } from "@/components/sections/report-context";
 import type { RenderContext } from "@/components/sections/context";
 import { createSection } from "@/components/sections/registry";
 import { SectionRenderer } from "@/components/sections/SectionRenderer";
-import { sitePage } from "@/lib/mock/data";
+import { sitePage } from "@/lib/sample/data";
 import { buildReportsQuery } from "@/lib/reports-api";
 import { ReportForm } from "./ReportForm";
 import { ReportProvider } from "./ReportProvider";

@@ -1,8 +1,8 @@
 import { type PromotionRecord } from "@workshop/shared";
-import { apiGet, realApi } from "@/lib/api-server";
+import { apiGet } from "@/lib/api-server";
 import { dayKey } from "@/lib/format";
 import { fetchAll } from "@/lib/shop-data";
-import type { ScheduleRule } from "@/lib/mock/ops";
+import type { ScheduleRule } from "@/lib/schedule-types";
 import type { Workshop } from "@/lib/types";
 
 // The catalog of the shop of the session, from the API, in the shapes the owner pages already use. (Only called when connected to the API.)
@@ -29,4 +29,3 @@ export async function ownPromotions(timezone: string): Promise<{ promotions: Pro
   return { promotions: res?.items ?? [], today: res?.today ?? dayKey(new Date().toISOString(), timezone) };
 }
 
-export const connected = realApi;

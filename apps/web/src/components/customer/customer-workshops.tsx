@@ -15,7 +15,7 @@ import { FavoritesProvider } from "@/components/site/FavoritesProvider";
 import { Input } from "@/components/ui/input";
 import { workshopMatches } from "@/lib/customer-workshop-search";
 import { normalizeGuestEmail, parseFavorites, readFavoritesRaw, readGuestEmail, subscribeFavorites, writeGuestEmail } from "@/lib/favorites";
-import type { ListedShop } from "@/lib/mock/customer-listing";
+import type { ListedShop } from "@/lib/listing-types";
 import { cn } from "@/lib/utils";
 import { GoogleMapsButton } from "./google-maps-button";
 import { AffiliateAction, AffiliateFeeLine } from "./customer-affiliate";

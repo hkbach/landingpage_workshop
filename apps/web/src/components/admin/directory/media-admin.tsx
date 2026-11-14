@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { ExternalLink, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { safeImage } from "@/components/sections/safe-url";
-import type { AdminMedia } from "@/lib/mock/admin-directory";
+import type { AdminMedia } from "@/lib/admin-types";
 import { ReasonDialog } from "../reason-dialog";
 import { fmt } from "../utils";
 import { DirectoryTable, FilterBox, Notice, Pill, Toolbar, selectClass, useDebounced, useDirectory, type Column } from "./kit";

@@ -1,6 +1,4 @@
 import { headers } from "next/headers";
-import { realApi } from "@/lib/api-server";
-import { getCustomDomain } from "@/lib/mock/shop-domain-store";
 import { PLATFORM_DOMAIN } from "./site-url";
 
 /**
@@ -9,6 +7,6 @@ import { PLATFORM_DOMAIN } from "./site-url";
  */
 export async function getSiteBase(slug: string, customDomain?: string | null): Promise<string> {
   const host = ((await headers()).get("host") ?? "").split(":")[0]!.toLowerCase();
-  const own = realApi() ? (customDomain ?? "") : getCustomDomain(slug);
+  const own = customDomain ?? "";
   return host === `${slug.toLowerCase()}.${PLATFORM_DOMAIN}` || (own !== "" && host === own) ? "" : `/sites/${slug}`;
 }

@@ -73,6 +73,7 @@ services:
     restart: unless-stopped
     environment:
       PLATFORM_DOMAIN: ${PLATFORM_DOMAIN:?set PLATFORM_DOMAIN}
+      API_URL: http://api:4000   # where the web server reaches the API (the pages read their data from it; the browser reaches it through Caddy)
     depends_on:
       api: { condition: service_healthy }
     networks: [internal]

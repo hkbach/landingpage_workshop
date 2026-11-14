@@ -1,7 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
-// End-to-end tests of the main flows (REQUIREMENTS M7). They drive a real browser against the web app. `*.localtest.me` is mapped to this machine by the browser itself, so no DNS and no
-// network are needed. By default the web app runs on its built-in sample data (no database); see e2e/README.md for the run against the real API.
+// End-to-end tests of the main flows (REQUIREMENTS M7). They drive a real browser against the web app, which talks to the real API (PostgreSQL, the API, the worker and Mailpit must run: see
+// e2e/README.md). `*.localtest.me` is mapped to this machine by the browser itself, so no DNS and no network are needed.
 const PORT = Number(process.env.E2E_PORT ?? 3100);
 
 export default defineConfig({
@@ -21,6 +21,7 @@ export default defineConfig({
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
     command: `pnpm --filter web exec next dev -p ${PORT}`,
+    env: { API_URL: process.env.API_URL ?? "http://127.0.0.1:4000" },
     url: `http://app.localtest.me:${PORT}/about`,
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,

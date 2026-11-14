@@ -6,7 +6,7 @@ import { formatMoney } from "@workshop/shared";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PaginationBar } from "@/components/ui/pagination-bar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import type { ShopIncomeDetail } from "@/lib/mock/admin-income";
+import type { ShopIncomeDetail } from "@/lib/income-types";
 import { usePagination } from "@/lib/pagination";
 import { fmt } from "../utils";
 import { Pill } from "./kit";

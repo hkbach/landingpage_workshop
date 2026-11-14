@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { NextIntlClientProvider } from "next-intl";
 import { describe, expect, it } from "vitest";
 import { SECTION_TYPES, type SectionType } from "@workshop/shared";
-import { currentShop, sitePage, workshops } from "@/lib/mock/data";
+import { currentShop, sitePage, workshops } from "@/lib/sample/data";
 import { parseDraft } from "@/components/builder/draft-store";
 import type { SectionInstance } from "@/lib/types";
 import type { RenderContext } from "./context";

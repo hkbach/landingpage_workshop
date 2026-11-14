@@ -10,7 +10,7 @@ import builder from "../../../messages/en/builder.json";
 import catalog from "../../../messages/en/catalog.json";
 import common from "../../../messages/en/common.json";
 import ops from "../../../messages/en/ops.json";
-import { workshops } from "@/lib/mock/data";
+import { workshops } from "@/lib/sample/data";
 import { WorkshopForm } from "@/components/catalog/workshop-form";
 import { LanguageBar } from "./LanguageBar";
 

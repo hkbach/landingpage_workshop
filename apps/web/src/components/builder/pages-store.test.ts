@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MAX_LANDING_PAGES_PER_SHOP } from "@workshop/shared";
-import { sitePage } from "@/lib/mock/data";
+import { sitePage } from "@/lib/sample/data";
 import { DRAFT_KEY, draftKeyFor, MAIN_PAGE_ID, PUBLISHED_KEY, publishedKeyFor } from "./draft-store";
 import { addPage, clearPageContent, DEFAULT_TEMPLATE, LIVE_KEY, loadLivePageId, loadPages, parsePages, removePage, setLivePage, starterFor, touchPage, type PageMeta } from "./pages-store";
 

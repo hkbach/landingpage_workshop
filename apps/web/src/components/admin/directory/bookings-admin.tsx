@@ -6,7 +6,7 @@ import { formatMoney } from "@workshop/shared";
 import { Button } from "@/components/ui/button";
 import { DateInput } from "@/components/ui/date-input";
 import { formatDateTime } from "@/lib/format";
-import type { AdminBooking } from "@/lib/mock/admin-directory";
+import type { AdminBooking } from "@/lib/admin-types";
 import { fmt } from "../utils";
 import { DetailDialog, DirectoryTable, FilterBox, Pill, Toolbar, useCodeLabel, useDebounced, useDirectory, type Column } from "./kit";
 

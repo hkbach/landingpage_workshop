@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { COUNTRIES, CURRENCIES, TIMEZONES } from "@/components/dashboard/shell/options";
-import type { AdminShop } from "@/lib/mock/admin-directory";
+import type { AdminShop } from "@/lib/admin-types";
 import { selectClass } from "./kit";
 
 const PLATFORM_DOMAIN = process.env.NEXT_PUBLIC_PLATFORM_DOMAIN || "localtest.me";

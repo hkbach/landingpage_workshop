@@ -1,5 +1,5 @@
 import { apiGet } from "@/lib/api-server";
-import type { ListedShop } from "@/lib/mock/customer-listing";
+import type { ListedShop } from "@/lib/listing-types";
 import { loadPublicSite } from "@/lib/public-site";
 
 // What the customer area needs from the API (the account of the session). Only called when connected.

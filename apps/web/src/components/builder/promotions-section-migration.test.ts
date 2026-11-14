@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { sitePage } from "@/lib/mock/data";
+import { sitePage } from "@/lib/sample/data";
 import { addPromotionsSection, DRAFT_KEY, draftKeyFor, loadDraft, loadPublished, MAIN_PAGE_ID, publishedKeyFor, saveDraft, type Draft } from "./draft-store";
 
 // Content saved before the Promotions section existed gets the section once, so the shop owner finds it in the builder.

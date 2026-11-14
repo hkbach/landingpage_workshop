@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Pause, Play } from "lucide-react";
 import { formatMoney } from "@workshop/shared";
 import { Button } from "@/components/ui/button";
-import type { AdminVoucher } from "@/lib/mock/admin-directory";
+import type { AdminVoucher } from "@/lib/admin-types";
 import { ReasonDialog } from "../reason-dialog";
 import { DirectoryTable, FilterBox, Notice, Pill, Toolbar, selectClass, useDebounced, useDirectory, type Column } from "./kit";
 

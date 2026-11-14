@@ -1,14 +1,10 @@
 import { getTranslations } from "next-intl/server";
 import { ReportManagement } from "@/components/admin/report-management";
-import { shops } from "@/lib/mock/data";
-import { realApi } from "@/lib/api-server";
 import { fetchAll } from "@/lib/shop-data";
 
 export default async function ReportsPage() {
   const t = await getTranslations("admin.reports");
-  const shopIds = realApi()
-    ? Object.fromEntries((await fetchAll<{ slug: string; id: string }>("/admin/organizations")).map((s) => [s.slug, s.id]))
-    : Object.fromEntries(shops.map((s) => [s.slug, s.id]));
+  const shopIds = Object.fromEntries((await fetchAll<{ slug: string; id: string }>("/admin/organizations")).map((s) => [s.slug, s.id]));
   return (
     <div className="grid gap-4">
       <header>

@@ -4,7 +4,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { describe, expect, it } from "vitest";
 import builder from "../../messages/en/builder.json";
 import { SupportContactBox } from "@/components/builder/SupportContactBox";
-import { platformSupport } from "@/lib/mock/platform";
+import { platformSupport } from "@/lib/sample/platform";
 import { supportLinks, type SupportContact } from "./support-contact";
 
 const by = (c: SupportContact) => Object.fromEntries(supportLinks(c).map((l) => [l.channel, l]));

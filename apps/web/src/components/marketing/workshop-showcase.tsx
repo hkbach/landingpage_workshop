@@ -3,7 +3,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { Clock, Sparkles, Star } from "lucide-react";
 import { formatMoney, type Locale } from "@workshop/shared";
 import { safeImage } from "@/components/sections/safe-url";
-import { featuredWorkshops } from "@/lib/mock/showcase";
+import { featuredWorkshops } from "@/lib/featured";
 import { SectionHeading } from "./marketing-ui";
 
 /**
@@ -13,7 +13,7 @@ import { SectionHeading } from "./marketing-ui";
 export async function WorkshopShowcase() {
   const t = await getTranslations("marketing.workshops");
   const locale = (await getLocale()) as Locale;
-  const items = featuredWorkshops(locale, 10);
+  const items = await featuredWorkshops(locale, 10);
   return (
     <section id="workshops" aria-labelledby="workshops-title" className="scroll-mt-20 px-4 py-16 sm:px-6 sm:py-24" data-testid="home-workshops">
       <div className="mx-auto max-w-7xl">

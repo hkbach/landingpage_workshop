@@ -2,17 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { ArrowLeft } from "lucide-react";
-import { OrganizationDetail } from "@/components/admin/organization-detail";
-import { orgStats } from "@/lib/mock/admin";
-import { liveAuditLogs } from "@/lib/mock/admin-audit-store";
-import { AdminSessions } from "@/components/admin/admin-sessions";
-import { PlatformFeesForm } from "@/components/admin/platform-fees-form";
-import { currentShop } from "@/lib/mock/data";
-import { liveShop } from "@/lib/mock/shop-admin-store";
-import { getFeeRates } from "@/lib/mock/fee-rates-store";
-import { apiGet, realApi } from "@/lib/api-server";
-import type { AuditEntry, Shop } from "@/lib/types";
 import type { FeeRates } from "@workshop/shared";
+import { OrganizationDetail } from "@/components/admin/organization-detail";
+import { PlatformFeesForm } from "@/components/admin/platform-fees-form";
+import { apiGet } from "@/lib/api-server";
+import type { AuditEntry, Shop } from "@/lib/types";
 
 export const dynamic = "force-dynamic"; // the status of a shop is changed at run time
 
@@ -23,7 +17,7 @@ type ApiOrg = {
 type ApiAudit = { id: string; action: string; entityType: string; entityId: string; organizationId: string | null; actorEmail: string | null; actor: string; ip: string | null; createdAt: string };
 
 /** The shop, its last audit lines, its fee rates and its counts from the API (the platform administrator reads any shop). */
-async function loadFromApi(id: string) {
+async function load(id: string) {
   const o = await apiGet<ApiOrg>(`/admin/organizations/${encodeURIComponent(id)}`);
   if (!o) return null;
   const [log, rates, listed] = await Promise.all([
@@ -45,22 +39,9 @@ async function loadFromApi(id: string) {
 export default async function OrganizationDetailPage({ params }: PageProps<"/systemadmin/organizations/[id]">) {
   const { id } = await params;
   const t = await getTranslations("admin.orgDetail");
-  let shop: Shop, audit: AuditEntry[], rates: FeeRates, stats: { workshops: number; bookings30d: number };
-  let withSessions = false;
-  if (realApi()) {
-    const data = await loadFromApi(id);
-    if (!data) notFound();
-    ({ shop, audit, rates, stats } = data);
-  } else {
-    const found = liveShop(id);
-    if (!found) notFound();
-    shop = found;
-    audit = liveAuditLogs().filter((a) => a.organizationId === shop.id).slice(0, 8);
-    rates = getFeeRates(shop.id);
-    stats = orgStats[shop.id] ?? { workshops: 0, bookings30d: 0 };
-    withSessions = shop.id === currentShop.id;
-  }
-
+  const data = await load(id);
+  if (!data) notFound();
+  const { shop, audit, rates, stats } = data;
   return (
     <div className="grid gap-4">
       <header className="grid gap-2">
@@ -72,8 +53,6 @@ export default async function OrganizationDetailPage({ params }: PageProps<"/sys
       <OrganizationDetail shop={shop} stats={stats} audit={audit} />
       {/* The fee rates of this shop (every shop has its own). */}
       <PlatformFeesForm organizationId={shop.id} initial={rates} />
-      {/* Sample data: only the demo shop has sessions. */}
-      {withSessions ? <AdminSessions /> : null}
     </div>
   );
 }

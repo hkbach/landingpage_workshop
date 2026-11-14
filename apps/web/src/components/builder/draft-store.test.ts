@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { sitePage } from "@/lib/mock/data";
+import { sitePage } from "@/lib/sample/data";
 import { DRAFT_KEY, parseDraft, sanitizeDraft } from "./draft-store";
 import { TEMPLATES } from "@/components/sections/templates";
 import { sectionInstanceSchema, needsAttention } from "@/components/sections/instance";

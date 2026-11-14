@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { DateInput } from "@/components/ui/date-input";
 import { Input } from "@/components/ui/input";
 import { AUDIT_ROLES, type AuditRole } from "@/lib/types";
-import type { AdminAuditRow } from "@/lib/mock/admin-directory";
+import type { AdminAuditRow } from "@/lib/admin-types";
 import { fmt } from "../utils";
 import { DetailDialog, DirectoryTable, FilterBox, Pill, selectClass, useCodeLabel, useDebounced, useDirectory, type Column } from "./kit";
 

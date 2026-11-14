@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { AdminLandingPage } from "@/lib/mock/admin-directory";
+import type { AdminLandingPage } from "@/lib/admin-types";
 import { StatusBadge } from "../status-badge";
 import { landingUrl } from "../utils";
 import { DirectoryTable, Notice, Toolbar, useDebounced, useDirectory, type Column } from "./kit";

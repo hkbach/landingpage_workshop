@@ -8,8 +8,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import type { AdminMessage } from "@/lib/mock/admin-directory";
-import { CONTACT_TOPICS, MESSAGE_STATUSES, type MessageStatus } from "@/lib/mock/contact-types";
+import type { AdminMessage } from "@/lib/admin-types";
+import { CONTACT_TOPICS, MESSAGE_STATUSES, type MessageStatus } from "@/lib/contact-types";
 import { ReasonDialog } from "../reason-dialog";
 import { fmt } from "../utils";
 import { DirectoryTable, FilterBox, Notice, Pill, Toolbar, selectClass, useDebounced, useDirectory, type Column } from "./kit";

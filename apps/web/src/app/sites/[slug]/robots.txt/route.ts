@@ -1,5 +1,8 @@
 import { loadPublicSite, originOfSite } from "@/lib/public-site";
 
+// Read from the API at each request (never at build time).
+export const dynamic = "force-dynamic";
+
 export async function GET(_req: Request, ctx: RouteContext<"/sites/[slug]/robots.txt">) {
   const { slug } = await ctx.params;
   const site = await loadPublicSite(slug);

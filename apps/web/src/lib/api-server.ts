@@ -53,7 +53,6 @@ export async function apiGet<T>(path: string): Promise<T | null> {
 
 /** Who is logged in: `null` for nobody (or when the web app is not connected to the API). */
 export async function getSession(): Promise<Session | null> {
-  if (!realApi()) return null;
   return apiGet<Session>("/auth/me");
 }
 
@@ -68,8 +67,7 @@ export function homeOf(me: Pick<Session, "type" | "id" | "organization">): strin
  * The gate of a private area. Connected to the API: nobody logged in goes to /login, and somebody of another kind goes to their own area. Not connected (sample data): lets everybody in,
  * as before. Returns the session (or `null` when not connected).
  */
-export async function requireArea(kind: Session["type"], also?: (me: Session) => boolean): Promise<Session | null> {
-  if (!realApi()) return null;
+export async function requireArea(kind: Session["type"], also?: (me: Session) => boolean): Promise<Session> {
   const me = await getSession();
   if (!me) redirect("/login");
   if (me.type !== kind || (also && !also(me))) redirect(homeOf(me));

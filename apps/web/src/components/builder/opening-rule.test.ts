@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { sitePage } from "@/lib/mock/data";
+import { sitePage } from "@/lib/sample/data";
 import {
   chooseInitialDraft, DRAFT_KEY, loadDraft, loadPublished, PUBLISHED_KEY, saveDraft, savePublished, type Draft,
 } from "./draft-store";

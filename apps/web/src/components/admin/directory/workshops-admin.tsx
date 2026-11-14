@@ -6,7 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Pencil } from "lucide-react";
 import { formatMoney } from "@workshop/shared";
 import { Button, buttonVariants } from "@/components/ui/button";
-import type { AdminWorkshop } from "@/lib/mock/admin-directory";
+import type { AdminWorkshop } from "@/lib/admin-types";
 import { fmt } from "../utils";
 import { DetailDialog, DirectoryTable, Pill, Toolbar, humanize, useDebounced, useDirectory, type Column } from "./kit";
 

@@ -40,10 +40,35 @@ jobs:
       - run: pnpm test
       - run: pnpm --filter api build
 
-  # The main flows in a real browser (REQUIREMENTS M7). The web app runs on its built-in sample data: no database is needed.
+  # The main flows in a real browser (REQUIREMENTS M7) on the REAL stack: PostgreSQL and Mailpit as services of this run, the API and the worker started from the source, the web app started by
+  # Playwright. The accounts and the demo data are the ones of `pnpm db:seed` (the password of the run is written to a file that git ignores).
   e2e:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: workshop
+          POSTGRES_PASSWORD: ci-only-password
+          POSTGRES_DB: workshop
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U workshop -d workshop"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+      mailpit:
+        image: axllent/mailpit:v1.27
+        ports:
+          - 1025:1025
+          - 8025:8025
+    env:
+      DATABASE_URL: postgres://workshop:ci-only-password@localhost:5432/workshop
+      APP_URL: http://app.localtest.me:3100
+      E2E_PORT: "3100"
+      LOG_LEVEL: warn
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -54,12 +79,21 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm typecheck:e2e
+      - run: pnpm db:migrate
+      - run: pnpm db:seed
+      - name: Start the API and the worker
+        run: |
+          pnpm --filter api dev > api.log 2>&1 &
+          pnpm --filter api dev:worker > worker.log 2>&1 &
+          for i in $(seq 1 60); do curl -fsS http://127.0.0.1:4000/health && break; sleep 2; done
       - run: pnpm test:e2e
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: playwright-report
+          name: e2e-report
           path: |
             playwright-report/
             test-results/
+            api.log
+            worker.log
           retention-days: 7

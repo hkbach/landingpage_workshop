@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import type { AdminCustomer } from "@/lib/mock/admin-directory";
+import type { AdminCustomer } from "@/lib/admin-types";
 import { fmt } from "../utils";
 import { DirectoryTable, Pill, Toolbar, useDebounced, useDirectory, type Column } from "./kit";
 

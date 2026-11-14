@@ -4,7 +4,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { describe, expect, it } from "vitest";
 import { bookingSeries, TREND_PERIODS, type TrendBucket, type TrendPeriod } from "@workshop/shared";
 import dashboard from "../../../messages/en/dashboard.json";
-import { bookingHistory, bookings } from "@/lib/mock/data";
+import { bookingHistory, bookings } from "@/lib/sample/data";
 import { BookingTrend } from "./booking-trend";
 
 const Provider = NextIntlClientProvider as unknown as ComponentType<{ locale: string; timeZone: string; messages: { dashboard: typeof dashboard }; children?: ReactNode }>;
