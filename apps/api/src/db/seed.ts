@@ -10,21 +10,19 @@ import { AuditService } from "../audit/audit.service";
 import { loadDotEnv } from "../config/env";
 import { FinanceService } from "../finance/finance.service";
 import type { Database, Executor } from "./db.module";
+import { buildPage } from "./seed-pages";
+import { DEMO_ACCOUNTS, GUESTS, P, SHOPS, SPECIAL_USERS, WALK_INS, photo, type Guest, type ShopSeed, type WorkshopSeed } from "./seed-data";
 import * as schema from "./schema";
 
-// Demo data for development (REQUIREMENTS 11.2). `pnpm db:seed` makes: one platform administrator, three shops (ACTIVE with a full history, DRAFT, SUSPENDED), their owners, customers,
-// workshops, weekly schedules, about two months of sessions (past and coming) and the bookings and payments of them, in every state. Everything is relative to today, so the data always
-// looks current, and it is made by a small deterministic generator, so two runs on empty databases give the same shape.
+// Demo data for development and testing (REQUIREMENTS 11.2). `pnpm db:seed` makes: one platform administrator, nine shops in every state and of every kind (an active shop with a long history, a shop in
+// DRAFT, a SUSPENDED one, shops in Vietnam, Korea, Japan, Thailand and the USA with their own currency, time zone and language, a shop made of edge cases, a shop whose page was never published),
+// their owners, sixteen customers with accounts, workshops with real photographs from the internet, weekly schedules, sessions in every state and the bookings and payments of them, landing pages (live,
+// with kept versions, draft), promotions, ratings, favorites, an affiliate and an invite program, a wallet, support messages, reports and the Terms. Everything is relative to today, so the data
+// always looks current, and it is made by a small deterministic generator, so two runs on empty databases give the same shape.
 //
 // The password of every demo account is NOT in the code. Set SEED_PASSWORD to choose it, or leave it unset: the seed then makes a random one and writes it to apps/api/.seed-credentials
-// (a file that git ignores), without printing it. The seed can be run again: a shop that exists is left as it is.
-export const DEMO_ACCOUNTS = {
-  admin: "admin@workshopkit.example",
-  activeOwner: "linh@whiskladle.example",
-  draftOwner: "ava@sugarsift.example",
-  suspendedOwner: "minh@goldennoodle.example",
-  customer: "emma@example.com",
-} as const;
+// (a file that git ignores), without printing it. The seed can be run again: a shop that exists is left as it is. `pnpm db:reseed` wipes the database first.
+export { DEMO_ACCOUNTS };
 
 export interface SeedResult { created: string[]; existing: string[]; sessions: number; bookings: number; payments: number }
 
@@ -34,208 +32,464 @@ function rng(seed: number): () => number {
   return () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 0x1_0000_0000; };
 }
 
-const GUESTS = [
-  { name: "Emma Wilson", email: "emma@example.com", country: "GB", phone: "+44 7700 900101" },
-  { name: "Minh Tran", email: "minh.tran@example.com", country: "VN", phone: "+84 90 100 2001" },
-  { name: "Yuki Tanaka", email: "yuki.tanaka@example.com", country: "JP", phone: "+81 90 1234 5678" },
-  { name: "Jisoo Kim", email: "jisoo.kim@example.com", country: "KR", phone: "+82 10 2345 6789" },
-  { name: "Li Wei", email: "li.wei@example.com", country: "CN", phone: "+86 138 0013 8000" },
-  { name: "Sophie Martin", email: "sophie.martin@example.com", country: "FR", phone: "+33 6 12 34 56 78" },
-  { name: "Noah Brown", email: "noah.brown@example.com", country: "US", phone: "+1 415 555 0132" },
-  { name: "Linh Pham", email: "linh.pham@example.com", country: "VN", phone: "+84 91 300 4002" },
-  { name: "Anna Schmidt", email: "anna.schmidt@example.com", country: "DE", phone: "+49 151 2345 6789" },
-  { name: "Carlos Diaz", email: "carlos.diaz@example.com", country: "ES", phone: "+34 612 345 678" },
-  { name: "Hana Park", email: "hana.park@example.com", country: "KR", phone: "+82 10 3456 7890" },
-  { name: "Tuan Nguyen", email: "tuan.nguyen@example.com", country: "VN", phone: "+84 93 400 5003" },
-  { name: "Olivia Jones", email: "olivia.jones@example.com", country: "AU", phone: "+61 412 345 678" },
-  { name: "Kenji Sato", email: "kenji.sato@example.com", country: "JP", phone: "+81 80 9876 5432" },
-] as const;
+const DAY = 86_400_000;
+const addMs = (d: Date, ms: number): Date => new Date(d.getTime() + ms);
+const METHODS = ["CASH", "CARD", "BANK_TRANSFER", "E_WALLET"] as const;
+const localeOf = (country: string): string => (country === "VN" ? "vi" : country === "KR" ? "ko" : country === "JP" ? "ja" : country === "CN" ? "zh" : "en");
 
-interface WorkshopSeed {
-  key: string; title: { en: string; vi: string }; short: { en: string; vi: string }; description: { en: string; vi: string }; includes: { en: string[]; vi: string[] };
-  durationMinutes: number; price: number; capacity: number; maxPerBooking: number; categories: string[]; status: "ACTIVE" | "DRAFT";
-  rule?: { weekdays: number[]; times: string[] };
+/** Everything one shop needs while it is being made. */
+interface Ctx {
+  db: Executor; now: Date; rand: () => number; result: SeedResult;
+  cfg: ShopSeed; orgId: string; ownerId: string;
+  customers: Map<string, string>; walkIns: string[];
+  userIds: Map<string, string>;
+  sessionNumber: number;
+  /** Bookings of guests who came: the people who can rate the workshop afterwards. */
+  attended: { bookingId: string; email: string; workshopId: string; endsAt: Date }[];
+  affiliateUserId?: string;
 }
 
-const WHISK_WORKSHOPS: WorkshopSeed[] = [
-  {
-    key: "street-food", title: { en: "Vietnamese Street Food Cooking Class", vi: "Lớp nấu món đường phố Việt Nam" }, short: { en: "Cook three iconic street dishes with a local chef.", vi: "Nấu ba món đường phố nổi tiếng cùng đầu bếp bản địa." },
-    description: { en: "Start at the market, then cook banh xeo, fresh spring rolls and a rich beef noodle soup in a small group.", vi: "Bắt đầu từ chợ, rồi nấu bánh xèo, gỏi cuốn và một tô phở bò đậm vị trong nhóm nhỏ." },
-    includes: { en: ["Market tour", "All ingredients", "Recipe booklet", "Lunch"], vi: ["Đi chợ cùng đầu bếp", "Toàn bộ nguyên liệu", "Sổ công thức", "Bữa trưa"] },
-    durationMinutes: 180, price: 850_000, capacity: 10, maxPerBooking: 4, categories: ["COOKING"], status: "ACTIVE", rule: { weekdays: [6, 0], times: ["09:00", "14:00"] },
-  },
-  {
-    key: "pho", title: { en: "Pho From Scratch", vi: "Phở nấu từ đầu" }, short: { en: "Simmer a clear, fragrant broth and slice the perfect bowl.", vi: "Ninh nước dùng trong và thơm, thái và bày một tô phở hoàn hảo." },
-    description: { en: "Learn the spices, the charring of aromatics and the patience behind a great pho.", vi: "Học về gia vị, cách nướng hành gừng và sự kiên nhẫn làm nên tô phở ngon." },
-    includes: { en: ["Ingredients", "Apron", "Take-home broth"], vi: ["Nguyên liệu", "Tạp dề", "Nước dùng mang về"] },
-    durationMinutes: 150, price: 700_000, capacity: 8, maxPerBooking: 4, categories: ["COOKING"], status: "ACTIVE", rule: { weekdays: [2, 4], times: ["18:30"] },
-  },
-  {
-    key: "sourdough", title: { en: "Sourdough Bread Basics", vi: "Làm bánh mì sourdough cơ bản" }, short: { en: "Shape, proof and bake your own loaf.", vi: "Tạo hình, ủ và nướng ổ bánh của riêng bạn." },
-    description: { en: "A hands-on introduction to wild yeast, folding and scoring. You take home a loaf and a starter.", vi: "Buổi học thực hành về men tự nhiên, gấp bột và rạch bánh. Bạn mang về một ổ bánh và men mẹ." },
-    includes: { en: ["Starter to take home", "One loaf", "Tea and snacks"], vi: ["Men mẹ mang về", "Một ổ bánh", "Trà và đồ ăn nhẹ"] },
-    durationMinutes: 210, price: 950_000, capacity: 8, maxPerBooking: 3, categories: ["BAKING"], status: "ACTIVE", rule: { weekdays: [5], times: ["10:00"] },
-  },
-  {
-    key: "coffee", title: { en: "Coffee Cupping Lab", vi: "Phòng thí nghiệm cà phê" }, short: { en: "Taste, compare and learn to describe coffee.", vi: "Nếm, so sánh và học cách mô tả cà phê." },
-    description: { en: "A relaxed cupping of five Vietnamese single origins. Coming soon.", vi: "Buổi cupping năm loại cà phê đơn nguồn Việt Nam. Sắp ra mắt." },
-    includes: { en: ["Five coffees", "Tasting notes"], vi: ["Năm loại cà phê", "Phiếu nếm thử"] },
-    durationMinutes: 90, price: 450_000, capacity: 12, maxPerBooking: 4, categories: ["COFFEE_TEA"], status: "DRAFT",
-  },
-];
+interface WorkshopRow { id: string; seed: WorkshopSeed }
+interface SessionRow { id: string; code: string; startsAt: Date; endsAt: Date; capacity: number }
 
-const SUGAR_WORKSHOPS: WorkshopSeed[] = [
-  {
-    key: "macarons", title: { en: "French Macarons Workshop", vi: "Workshop macaron kiểu Pháp" }, short: { en: "Pipe, bake and fill your own macarons.", vi: "Tự bóp, nướng và kẹp nhân macaron." },
-    description: { en: "Opening soon.", vi: "Sắp khai trương." }, includes: { en: ["Ingredients"], vi: ["Nguyên liệu"] },
-    durationMinutes: 150, price: 800_000, capacity: 8, maxPerBooking: 4, categories: ["BAKING"], status: "DRAFT",
-  },
-];
+interface BookingPlan {
+  guest: Guest | "walk-in" | number; quantity: number; status: "NOT_CONFIRMED" | "CONFIRMED" | "CHECKED_IN" | "CANCELLED"; paid?: boolean;
+  source?: "ONLINE" | "WALK_IN" | "PHONE" | "OTHER"; discountPct?: number; discountCode?: string; promotionIds?: string[]; linkId?: string | null;
+  cancelledBy?: "GUEST" | "SHOP"; cancelReason?: string; reversed?: boolean; request?: string; method?: (typeof METHODS)[number];
+}
 
-const NOODLE_WORKSHOPS: WorkshopSeed[] = [
-  {
-    key: "noodles", title: { en: "Hand-Pulled Noodles", vi: "Mì kéo tay" }, short: { en: "Knead, rest and pull noodles by hand.", vi: "Nhào, ủ và kéo mì bằng tay." },
-    description: { en: "A noodle class from a family kitchen.", vi: "Lớp làm mì từ một căn bếp gia đình." }, includes: { en: ["Ingredients", "Lunch"], vi: ["Nguyên liệu", "Bữa trưa"] },
-    durationMinutes: 120, price: 600_000, capacity: 10, maxPerBooking: 4, categories: ["COOKING"], status: "ACTIVE", rule: { weekdays: [3], times: ["17:00"] },
-  },
-];
-
-const img = (key: string, n = 0): string => `https://picsum.photos/seed/${key}-${n}/960/640`;
-
-/** The demo data. `now` is a parameter so the data can be made for any day. */
 export async function seed(db: Executor, password: string, now: Date = new Date()): Promise<SeedResult> {
   const passwordHash = await hashPassword(password);
   const result: SeedResult = { created: [], existing: [], sessions: 0, bookings: 0, payments: 0 };
   const rand = rng(20260101);
+  const userIds = new Map<string, string>();
 
-  async function user(email: string, fullName: string, platformRole: "SUPER_ADMIN" | null = null): Promise<{ id: string; isNew: boolean }> {
+  async function user(email: string, fullName: string, opts: { role?: "SUPER_ADMIN" | null; status?: "ACTIVE" | "UNVERIFIED" | "DISABLED" } = {}): Promise<{ id: string; isNew: boolean }> {
     const [found] = await db.select({ id: schema.users.id }).from(schema.users).where(eq(schema.users.email, email)).limit(1);
-    if (found) { result.existing.push(email); return { id: found.id, isNew: false }; }
-    const [row] = await db.insert(schema.users).values({ email, passwordHash, fullName, status: "ACTIVE", platformRole, emailVerifiedAt: now }).returning({ id: schema.users.id });
+    if (found) { result.existing.push(email); userIds.set(email, found.id); return { id: found.id, isNew: false }; }
+    const status = opts.status ?? "ACTIVE";
+    const [row] = await db.insert(schema.users).values({
+      email, passwordHash, fullName, status, platformRole: opts.role ?? null, ...(status === "UNVERIFIED" ? {} : { emailVerifiedAt: addMs(now, -80 * DAY) }), createdAt: addMs(now, -80 * DAY), uiLocale: localeOf(email.endsWith(".vn") ? "VN" : "US"),
+    }).returning({ id: schema.users.id });
     result.created.push(email);
+    userIds.set(email, row!.id);
     return { id: row!.id, isNew: true };
   }
 
-  async function shop(owner: { id: string; isNew: boolean }, input: { name: string; slug: string; status: "ACTIVE" | "DRAFT" | "SUSPENDED"; statusReason?: string; contactEmail: string; address: string }, workshops: WorkshopSeed[], opts: { history: boolean; affiliateUserId?: string }): Promise<void> {
-    if (!owner.isNew) return;
-    const [org] = await db.insert(schema.organizations).values({
-      name: input.name, slug: input.slug, status: input.status, ...(input.statusReason ? { statusReason: input.statusReason } : {}), country: "VN", timezone: "Asia/Ho_Chi_Minh", currency: "VND", defaultLocale: "en", enabledLocales: ["en", "vi"],
-      contactEmail: input.contactEmail, contactPhone: "+84 28 3822 0000", whatsapp: "+84 90 123 4567", address: input.address, mapsUrl: `https://maps.google.com/?q=${encodeURIComponent(input.address)}`,
-    }).returning();
-    await db.insert(schema.organizationMembers).values({ organizationId: org!.id, userId: owner.id, role: "OWNER" });
-    await db.insert(schema.auditLogs).values({ organizationId: org!.id, actorUserId: owner.id, action: "organization.create", entityType: "organization", entityId: org!.id, after: { slug: input.slug, status: input.status } });
-    if (workshops.length === 0) return;
+  // The platform administrator, the guests (each one has an account, so the customer area shows their bookings), and two accounts whose STATE is what is tested.
+  await user(DEMO_ACCOUNTS.admin, "Platform Admin", { role: "SUPER_ADMIN" });
+  for (const g of GUESTS) await user(g.email, g.name); // (Emma first: her affiliate link goes on some bookings of the shops)
+  await user(SPECIAL_USERS.unverified.email, SPECIAL_USERS.unverified.name, { status: "UNVERIFIED" });
+  await user(SPECIAL_USERS.disabled.email, SPECIAL_USERS.disabled.name, { status: "DISABLED" });
 
-    // customers of the shop (the guests who booked there)
-    const customerIds = new Map<string, string>();
-    if (opts.history) {
-      for (const g of GUESTS) {
-        const [c] = await db.insert(schema.customers).values({ organizationId: org!.id, emailNormalized: g.email, fullName: g.name, country: g.country, phone: g.phone, createdAt: addMs(now, -45 * 86_400_000) }).returning({ id: schema.customers.id });
-        customerIds.set(g.email, c!.id);
-      }
-    }
-
-    let sessionNumber = 0;
-    let affiliateDone = false;
-    for (const [index, w] of workshops.entries()) {
-      const [row] = await db.insert(schema.workshops).values({
-        organizationId: org!.id, title: w.title, shortDescription: w.short, description: w.description, includes: w.includes, notes: { en: "Wear closed shoes.", vi: "Hãy mang giày kín mũi." },
-        durationMinutes: w.durationMinutes, priceAmount: w.price, currency: "VND", defaultCapacity: w.capacity, maxPerBooking: w.maxPerBooking, coverUrl: img(w.key), galleryUrls: [img(w.key, 1), img(w.key, 2)],
-        categories: w.categories, address: "", addressNote: "", status: w.status, sortOrder: index,
-      }).returning();
-      await db.insert(schema.auditLogs).values({ organizationId: org!.id, actorUserId: owner.id, action: "workshop.create", entityType: "workshop", entityId: row!.id, after: { priceAmount: w.price, status: "DRAFT" } });
-      if (!w.rule || w.status !== "ACTIVE") continue;
-      // an affiliate link of the demo customer to this workshop (the first one that runs); some of its paid bookings came through it
-      let linkId: string | null = null;
-      if (opts.history && opts.affiliateUserId && !affiliateDone) {
-        const [link] = await db.insert(schema.affiliateLinks).values({ userId: opts.affiliateUserId, organizationId: org!.id, workshopId: row!.id, code: newCode("A"), clicks: 37 }).returning({ id: schema.affiliateLinks.id });
-        linkId = link!.id;
-        affiliateDone = true;
-      }
-
-      const [rule] = await db.insert(schema.scheduleRules).values({ organizationId: org!.id, workshopId: row!.id, weekdays: w.rule.weekdays, startTimes: w.rule.times, effectiveFrom: addDays(dateIn(now, "Asia/Ho_Chi_Minh"), -60), capacityOverride: null }).returning();
-      // the sessions of the rule from six weeks ago to the next 60 days: ruleStarts only looks forward, so the past is made by moving `now` back
-      const starts: Date[] = [];
-      for (let back = 42; back >= 0; back -= 7) for (const s of ruleStarts({ weekdays: w.rule.weekdays, startTimes: w.rule.times, effectiveFrom: rule!.effectiveFrom, effectiveTo: null }, "Asia/Ho_Chi_Minh", addMs(now, -back * 86_400_000), 7)) starts.push(s);
-      for (const s of ruleStarts({ weekdays: w.rule.weekdays, startTimes: w.rule.times, effectiveFrom: rule!.effectiveFrom, effectiveTo: null }, "Asia/Ho_Chi_Minh", now, 60)) starts.push(s);
-      const unique = [...new Map(starts.map((s) => [s.getTime(), s])).values()].sort((x, y) => x.getTime() - y.getTime());
-
-      for (const starts_at of unique) {
-        sessionNumber++;
-        const ends = new Date(starts_at.getTime() + w.durationMinutes * 60_000);
-        const past = ends.getTime() <= now.getTime();
-        const daysAhead = (starts_at.getTime() - now.getTime()) / 86_400_000;
-        const ageDays = (now.getTime() - ends.getTime()) / 86_400_000;
-        // past sessions: closed by the system (the older ones completed by the owner); coming ones: running for the next 4 weeks, open after; one paused and one closed by the owner for the demo
-        let status: "OPEN" | "PAUSED" | "RUNNING" | "CLOSED" | "COMPLETED" = past ? (ageDays > 14 ? "COMPLETED" : "CLOSED") : daysAhead <= 28 ? "RUNNING" : "OPEN";
-        const notes: schema.SessionNoteRow[] = past ? [{ type: "AUTO_CLOSED", at: ends.toISOString() }] : [];
-        if (!past && sessionNumber % 17 === 0) status = "PAUSED";
-        const [session] = await db.insert(schema.workshopSessions).values({
-          organizationId: org!.id, workshopId: row!.id, scheduleRuleId: rule!.id, startsAt: starts_at, originStartsAt: starts_at, endsAt: ends, capacity: w.capacity, status, autoClosed: past,
-          code: `SES-${String(sessionNumber).padStart(4, "0")}`, sessionNotes: notes, bookingCutoffMinutes: 120,
-        }).returning();
-        result.sessions++;
-        if (!opts.history || status === "OPEN" || daysAhead > 30) continue;
-
-        // bookings of the session: a few guests each, never more seats than the capacity
-        let left = w.capacity - (past ? 0 : Math.floor(rand() * 3));
-        let reserved = 0;
-        let seq = 0;
-        const guests = [...GUESTS].sort(() => rand() - 0.5).slice(0, 2 + Math.floor(rand() * 5));
-        for (const g of guests) {
-          const quantity = Math.min(1 + Math.floor(rand() * Math.min(w.maxPerBooking, 3)), left);
-          if (quantity < 1) break;
-          seq++;
-          const roll = rand();
-          const status2 = past
-            ? roll < 0.7 ? "CHECKED_IN" : roll < 0.85 ? "CONFIRMED" : "CANCELLED"
-            : roll < 0.3 ? "NOT_CONFIRMED" : roll < 0.9 ? "CONFIRMED" : "CANCELLED";
-          const paid = status2 === "CHECKED_IN" && rand() < 0.9;
-          // every fourth booking used the demo code WELCOME10 (10% off): the fees are taken on the price before it (FR-PAY-02)
-          const subtotal = w.price * quantity;
-          const discount = seq % 4 === 0 ? Math.round(subtotal / 10) : 0;
-          const total = subtotal - discount;
-          const booking = await db.insert(schema.bookings).values({
-            organizationId: org!.id, bookingCode: `${session!.code}-${String(seq).padStart(3, "0")}`, sessionId: session!.id, workshopId: row!.id, customerId: customerIds.get(g.email)!,
-            source: rand() < 0.15 ? "WALK_IN" : "ONLINE", quantity, status: status2, paymentStatus: paid ? "PAID" : "UNPAID", statusBeforeCheckIn: status2 === "CHECKED_IN" ? "CONFIRMED" : null,
-            unitPriceAmount: w.price, totalAmount: total, discountAmount: discount, currency: "VND", guestName: g.name, guestEmail: g.email, guestPhone: g.phone, guestCountry: g.country,
-            snapshot: { workshopTitle: w.title, sessionCode: session!.code, startsAt: starts_at.toISOString(), endsAt: ends.toISOString(), timezone: "Asia/Ho_Chi_Minh", address: input.address, subtotalAmount: subtotal, ...(discount > 0 ? { discounts: [{ code: "WELCOME10", amount: discount }] } : {}) },
-            ...(linkId && g.email !== DEMO_ACCOUNTS.customer && seq % 3 === 0 ? { affiliateLinkId: linkId } : {}), locale: g.country === "VN" ? "vi" : "en", ...(status2 === "CHECKED_IN" ? { checkedInAt: addMs(starts_at, 5 * 60_000) } : {}),
-            ...(status2 === "CANCELLED" ? { cancelledBy: rand() < 0.6 ? ("GUEST" as const) : ("SHOP" as const), cancelReason: "Change of plans" } : {}),
-            createdAt: addMs(starts_at, -Math.floor(rand() * 10 + 2) * 86_400_000),
-          }).returning({ id: schema.bookings.id });
-          result.bookings++;
-          if (status2 !== "CANCELLED") { left -= quantity; reserved += quantity; }
-          if (paid) {
-            await db.insert(schema.payments).values({ organizationId: org!.id, bookingId: booking[0]!.id, type: "PAYMENT", amount: total, currency: "VND", method: rand() < 0.5 ? "CASH" : "BANK_TRANSFER", note: "Paid at the studio", recordedBy: owner.id, recordedAt: addMs(starts_at, 30 * 60_000) });
-            result.payments++;
-          }
-        }
-        await db.update(schema.workshopSessions).set({ reservedCount: reserved, bookingSeq: seq }).where(eq(schema.workshopSessions.id, session!.id));
-      }
-    }
-    await db.update(schema.organizations).set({ sessionSeq: sessionNumber }).where(eq(schema.organizations.id, org!.id));
+  for (const cfg of SHOPS) {
+    const owner = await user(cfg.owner.email, cfg.owner.name);
+    if (!owner.isNew) continue; // a shop that exists is left as it is
+    await makeShop({ db, now, rand, result, cfg, orgId: "", ownerId: owner.id, customers: new Map(), walkIns: [], userIds, sessionNumber: 0, attended: [], ...(userIds.get(DEMO_ACCOUNTS.customer) ? { affiliateUserId: userIds.get(DEMO_ACCOUNTS.customer)! } : {}) });
   }
-
-  const addMs = (d: Date, ms: number): Date => new Date(d.getTime() + ms);
-
-  await user(DEMO_ACCOUNTS.admin, "Platform Admin", "SUPER_ADMIN");
-  const emma = await user(DEMO_ACCOUNTS.customer, "Emma Wilson"); // before the shops: her affiliate link goes on some of their bookings
-  await shop(await user(DEMO_ACCOUNTS.activeOwner, "Linh Tran"), { name: "Whisk & Ladle Kitchen", slug: "whiskladle", status: "ACTIVE", contactEmail: DEMO_ACCOUNTS.activeOwner, address: "12 Nguyen Hue, District 1, Ho Chi Minh City" }, WHISK_WORKSHOPS, { history: true, affiliateUserId: emma.id });
-  await shop(await user(DEMO_ACCOUNTS.draftOwner, "Ava Nguyen"), { name: "Sugar & Sift Bakery", slug: "sugarsift", status: "DRAFT", contactEmail: DEMO_ACCOUNTS.draftOwner, address: "8 Le Loi, District 1, Ho Chi Minh City" }, SUGAR_WORKSHOPS, { history: false });
-  await shop(await user(DEMO_ACCOUNTS.suspendedOwner, "Minh Le"), { name: "Golden Noodle House", slug: "goldennoodle", status: "SUSPENDED", statusReason: "Reported for misleading prices (demo)", contactEmail: DEMO_ACCOUNTS.suspendedOwner, address: "45 Tran Hung Dao, District 5, Ho Chi Minh City" }, NOODLE_WORKSHOPS, { history: false });
-  for (const g of GUESTS.slice(1, 6)) await user(g.email, g.name);
   return result;
 }
 
+// ---- one shop --------------------------------------------------------------------------------------------------------------------------------------------
+
+async function makeShop(ctx: Ctx): Promise<void> {
+  const { db, now, cfg } = ctx;
+  const history = cfg.weeksBack > 0;
+  const [org] = await db.insert(schema.organizations).values({
+    name: cfg.name, slug: cfg.slug, status: cfg.status, ...(cfg.statusReason ? { statusReason: cfg.statusReason } : {}), country: cfg.country, timezone: cfg.timezone, currency: cfg.currency,
+    defaultLocale: cfg.defaultLocale, enabledLocales: cfg.enabledLocales, contactEmail: cfg.owner.email, contactPhone: cfg.phone, whatsapp: cfg.whatsapp || null, address: cfg.address, mapsUrl: cfg.mapsUrl,
+    showOnCustomerPage: cfg.listed && cfg.status === "ACTIVE", createdAt: addMs(now, -(history ? 75 : 5) * DAY),
+    ...(cfg.customDomain ? { customDomain: cfg.customDomain.domain, ...(cfg.customDomain.verified ? { customDomainVerifiedAt: addMs(now, -30 * DAY) } : {}) } : {}),
+  }).returning();
+  ctx.orgId = org!.id;
+  await db.insert(schema.organizationMembers).values({ organizationId: org!.id, userId: ctx.ownerId, role: "OWNER" });
+  await db.insert(schema.auditLogs).values({ organizationId: org!.id, actorUserId: ctx.ownerId, action: "organization.create", entityType: "organization", entityId: org!.id, after: { slug: cfg.slug, status: cfg.status } });
+  if (cfg.status === "SUSPENDED") {
+    const [admin] = await db.select({ id: schema.users.id }).from(schema.users).where(eq(schema.users.email, DEMO_ACCOUNTS.admin)).limit(1);
+    await db.insert(schema.auditLogs).values({ organizationId: org!.id, actorUserId: admin?.id ?? null, action: "organization.suspend", entityType: "organization", entityId: org!.id, before: { status: "ACTIVE" }, after: { status: "SUSPENDED", reason: cfg.statusReason } });
+  }
+  if (cfg.workshops.length === 0) return;
+
+  // the customers of the shop: the guests who booked there, and people at the studio who gave no email
+  if (history) {
+    for (const g of GUESTS) {
+      const [c] = await db.insert(schema.customers).values({ organizationId: org!.id, emailNormalized: g.email, fullName: g.name, country: g.country, phone: g.phone, preferredLocale: localeOf(g.country), createdAt: addMs(now, -45 * DAY) }).returning({ id: schema.customers.id });
+      ctx.customers.set(g.email, c!.id);
+    }
+    for (const w of WALK_INS) {
+      const [c] = await db.insert(schema.customers).values({ organizationId: org!.id, fullName: w.name, country: w.country, phone: w.phone, createdAt: addMs(now, -40 * DAY) }).returning({ id: schema.customers.id });
+      ctx.walkIns.push(c!.id);
+    }
+  }
+
+  const rows: WorkshopRow[] = [];
+  for (const [index, w] of cfg.workshops.entries()) {
+    const [row] = await db.insert(schema.workshops).values({
+      organizationId: org!.id, title: w.title, shortDescription: w.short, description: w.description, includes: w.includes, notes: { en: "Wear closed shoes.", vi: "Hãy mang giày kín mũi." },
+      durationMinutes: w.durationMinutes, priceAmount: w.price, currency: cfg.currency, defaultCapacity: w.capacity, maxPerBooking: w.maxPerBooking, coverUrl: w.cover, galleryUrls: w.gallery,
+      categories: w.categories, address: "", addressNote: index === 0 ? "Ring the bell at the green door." : "", status: w.status, sortOrder: index, createdAt: addMs(now, -(history ? 70 : 4) * DAY),
+    }).returning({ id: schema.workshops.id });
+    await db.insert(schema.auditLogs).values({ organizationId: org!.id, actorUserId: ctx.ownerId, action: "workshop.create", entityType: "workshop", entityId: row!.id, after: { priceAmount: w.price, status: "DRAFT" } });
+    rows.push({ id: row!.id, seed: w });
+  }
+
+  const promos = await makePromotions(ctx); // after the workshops: a promotion for chosen workshops needs their ids
+  if (cfg.key === "edge") await edgeSessions(ctx, rows, promos);
+  else await ruleSessions(ctx, rows);
+  await db.update(schema.organizations).set({ sessionSeq: ctx.sessionNumber }).where(eq(schema.organizations.id, org!.id));
+
+  await makeRatings(ctx);
+  if (cfg.page) await makePages(ctx, rows, promos.length > 0);
+}
+
+// ---- sessions ---------------------------------------------------------------------------------------------------------------------------------------------
+
+async function insertSession(ctx: Ctx, w: WorkshopRow, startsAt: Date, over: { status?: "OPEN" | "PAUSED" | "RUNNING" | "CLOSED" | "COMPLETED"; capacity?: number; notes?: schema.SessionNoteRow[]; autoClosed?: boolean; ruleId?: string; origin?: Date; cutoff?: number } = {}): Promise<SessionRow> {
+  ctx.sessionNumber++;
+  const ends = addMs(startsAt, w.seed.durationMinutes * 60_000);
+  const past = ends.getTime() <= ctx.now.getTime();
+  const ageDays = (ctx.now.getTime() - ends.getTime()) / DAY;
+  const daysAhead = (startsAt.getTime() - ctx.now.getTime()) / DAY;
+  const status = over.status ?? (past ? (ageDays > 14 ? "COMPLETED" : "CLOSED") : daysAhead <= 28 ? "RUNNING" : "OPEN");
+  const autoClosed = over.autoClosed ?? (past && over.status === undefined);
+  const [s] = await ctx.db.insert(schema.workshopSessions).values({
+    organizationId: ctx.orgId, workshopId: w.id, ...(over.ruleId ? { scheduleRuleId: over.ruleId } : {}), startsAt, originStartsAt: over.origin ?? startsAt, endsAt: ends, capacity: over.capacity ?? w.seed.capacity, status, autoClosed,
+    code: `SES-${String(ctx.sessionNumber).padStart(4, "0")}`, sessionNotes: over.notes ?? (autoClosed ? [{ type: "AUTO_CLOSED", at: ends.toISOString() }] : []), bookingCutoffMinutes: over.cutoff ?? 120,
+  }).returning({ id: schema.workshopSessions.id, code: schema.workshopSessions.code });
+  ctx.result.sessions++;
+  return { id: s!.id, code: s!.code, startsAt, endsAt: ends, capacity: over.capacity ?? w.seed.capacity };
+}
+
+/** The sessions of the weekly schedules from `weeksBack` weeks ago to `daysForward` days ahead, with the bookings of the ones that are over or close. */
+async function ruleSessions(ctx: Ctx, rows: WorkshopRow[]): Promise<void> {
+  const { cfg, now } = ctx;
+  let affiliateDone = false;
+  for (const w of rows) {
+    if (!w.seed.rule || w.seed.status !== "ACTIVE") continue;
+    const effectiveFrom = addDays(dateIn(now, cfg.timezone), -(cfg.weeksBack * 7 + 1));
+    const [rule] = await ctx.db.insert(schema.scheduleRules).values({ organizationId: ctx.orgId, workshopId: w.id, weekdays: w.seed.rule.weekdays, startTimes: w.seed.rule.times, effectiveFrom, capacityOverride: null }).returning({ id: schema.scheduleRules.id });
+    const like = { weekdays: w.seed.rule.weekdays, startTimes: w.seed.rule.times, effectiveFrom, effectiveTo: null };
+    const starts: Date[] = [];
+    // ruleStarts only looks forward, so the past is made by moving `now` back one week at a time
+    for (let back = cfg.weeksBack * 7; back >= 7; back -= 7) starts.push(...ruleStarts(like, cfg.timezone, addMs(now, -back * DAY), 7));
+    starts.push(...ruleStarts(like, cfg.timezone, now, cfg.daysForward));
+    const unique = [...new Map(starts.map((s) => [s.getTime(), s])).values()].sort((x, y) => x.getTime() - y.getTime());
+
+    // an affiliate link of the demo customer to the first workshop that runs in the first two shops that have history; some of the paid bookings came through it
+    let linkId: string | null = null;
+    if (ctx.affiliateUserId && !affiliateDone && cfg.weeksBack >= 4 && (cfg.key === "whisk" || cfg.key === "tokyo")) {
+      const [link] = await ctx.db.insert(schema.affiliateLinks).values({ userId: ctx.affiliateUserId, organizationId: ctx.orgId, workshopId: w.id, code: newCode("A"), clicks: 37 }).returning({ id: schema.affiliateLinks.id });
+      linkId = link!.id;
+      affiliateDone = true;
+    }
+
+    let count = 0;
+    for (const startsAt of unique) {
+      count++;
+      const past = addMs(startsAt, w.seed.durationMinutes * 60_000).getTime() <= now.getTime();
+      const daysAhead = (startsAt.getTime() - now.getTime()) / DAY;
+      let status: "OPEN" | "PAUSED" | "RUNNING" | "CLOSED" | "COMPLETED" | undefined;
+      const notes: schema.SessionNoteRow[] = [];
+      if (!past && count % 17 === 0) status = "PAUSED";
+      else if (!past && count % 23 === 0) { // a session the owner closed before it started: its bookings are cancelled by the shop
+        status = "CLOSED";
+        notes.push({ type: "CLOSED", at: addMs(now, -DAY).toISOString(), reason: { code: "VENUE_ISSUE" } });
+      }
+      const s = await insertSession(ctx, w, startsAt, { ruleId: rule!.id, ...(status ? { status, notes } : {}) });
+      const finalStatus = status ?? (past ? ((now.getTime() - s.endsAt.getTime()) / DAY > 14 ? "COMPLETED" : "CLOSED") : daysAhead <= 28 ? "RUNNING" : "OPEN");
+      if (cfg.weeksBack === 0 || finalStatus === "OPEN" || daysAhead > 30) continue;
+      await bookSession(ctx, w, s, { past, closedByOwner: status === "CLOSED" && !past, linkId, discount: cfg.key === "whisk" });
+    }
+  }
+}
+
+/** A few guests book a session: never more seats than the capacity, in every state a booking can be in. */
+async function bookSession(ctx: Ctx, w: WorkshopRow, s: SessionRow, o: { past: boolean; closedByOwner: boolean; linkId: string | null; discount: boolean }): Promise<void> {
+  const { rand } = ctx;
+  let left = w.seed.capacity - (o.past ? 0 : Math.floor(rand() * 3));
+  const guests = [...GUESTS].sort(() => rand() - 0.5).slice(0, 2 + Math.floor(rand() * 4));
+  const plans: BookingPlan[] = [];
+  for (const [i, g] of guests.entries()) {
+    const quantity = Math.min(1 + Math.floor(rand() * Math.min(w.seed.maxPerBooking, 3)), left);
+    if (quantity < 1) break;
+    const roll = rand();
+    const status = o.closedByOwner ? "CANCELLED" : o.past ? (roll < 0.7 ? "CHECKED_IN" : roll < 0.85 ? "CONFIRMED" : "CANCELLED") : roll < 0.3 ? "NOT_CONFIRMED" : roll < 0.9 ? "CONFIRMED" : "CANCELLED";
+    const walkIn = !o.closedByOwner && rand() < 0.12;
+    plans.push({
+      guest: walkIn ? "walk-in" : g, quantity, status, paid: status === "CHECKED_IN" && rand() < 0.9, source: walkIn ? (rand() < 0.5 ? "WALK_IN" : "PHONE") : rand() < 0.05 ? "OTHER" : "ONLINE",
+      ...(o.discount && (i + 1) % 4 === 0 ? { discountPct: 10, discountCode: "WELCOME10" } : {}), ...(o.linkId && !walkIn && g.email !== DEMO_ACCOUNTS.customer && (i + 1) % 3 === 0 ? { linkId: o.linkId } : {}),
+      ...(status === "CANCELLED" ? o.closedByOwner ? { cancelledBy: "SHOP" as const, cancelReason: "The session was closed by the studio (venue issue)" } : { cancelledBy: rand() < 0.6 ? ("GUEST" as const) : ("SHOP" as const), cancelReason: "Change of plans" } : {}),
+    });
+    if (status !== "CANCELLED") left -= quantity;
+  }
+  await placeBookings(ctx, w, s, plans);
+}
+
+/** Inserts the bookings of a session and sets its seats from them. */
+async function placeBookings(ctx: Ctx, w: WorkshopRow, s: SessionRow, plans: BookingPlan[]): Promise<void> {
+  let reserved = 0;
+  for (const [i, plan] of plans.entries()) {
+    await insertBooking(ctx, w, s, i + 1, plan);
+    if (plan.status !== "CANCELLED") reserved += plan.quantity;
+  }
+  await ctx.db.update(schema.workshopSessions).set({ reservedCount: reserved, bookingSeq: plans.length }).where(eq(schema.workshopSessions.id, s.id));
+}
+
+async function insertBooking(ctx: Ctx, w: WorkshopRow, s: SessionRow, seq: number, p: BookingPlan): Promise<void> {
+  const { db, cfg, now, rand } = ctx;
+  const guest = typeof p.guest === "number" ? GUESTS[p.guest]! : p.guest === "walk-in" ? null : p.guest;
+  const walk = WALK_INS[seq % WALK_INS.length]!;
+  const customerId = guest ? ctx.customers.get(guest.email)! : ctx.walkIns[seq % ctx.walkIns.length]!;
+  const subtotal = w.seed.price * p.quantity;
+  const discount = p.discountPct ? Math.round((subtotal * p.discountPct) / 100) : 0;
+  const total = subtotal - discount;
+  const paid = Boolean(p.paid) && total > 0;
+  const created = new Date(Math.min(ctx.now.getTime() - 3_600_000, s.startsAt.getTime() - (Math.floor(rand() * 10) + 2) * DAY));
+  const checkedIn = p.status === "CHECKED_IN";
+  const [b] = await db.insert(schema.bookings).values({
+    organizationId: ctx.orgId, bookingCode: `${s.code}-${String(seq).padStart(3, "0")}`, sessionId: s.id, workshopId: w.id, customerId, source: p.source ?? "ONLINE", quantity: p.quantity, status: p.status,
+    paymentStatus: paid && !p.reversed ? "PAID" : "UNPAID", statusBeforeCheckIn: checkedIn ? "CONFIRMED" : null, unitPriceAmount: w.seed.price, totalAmount: total, discountAmount: discount, ...(p.promotionIds ? { promotionIds: p.promotionIds } : {}),
+    currency: cfg.currency, guestName: guest?.name ?? walk.name, guestEmail: guest?.email ?? null, guestPhone: guest?.phone ?? walk.phone, guestCountry: guest?.country ?? walk.country,
+    snapshot: { workshopTitle: w.seed.title, sessionCode: s.code, startsAt: s.startsAt.toISOString(), endsAt: s.endsAt.toISOString(), timezone: cfg.timezone, address: cfg.address, subtotalAmount: subtotal, ...(discount > 0 ? { discounts: [{ code: p.discountCode ?? "PROMO", amount: discount }] } : {}) },
+    ...(p.linkId ? { affiliateLinkId: p.linkId } : {}), locale: guest ? localeOf(guest.country) : "en", ...(p.request ? { specialRequest: p.request } : {}),
+    ...(checkedIn ? { checkedInAt: addMs(s.startsAt, 5 * 60_000), checkedInBy: ctx.ownerId } : {}),
+    ...(p.status === "CANCELLED" ? { cancelledBy: p.cancelledBy ?? "GUEST", cancelReason: p.cancelReason ?? "Change of plans" } : {}), createdAt: created, ...(p.source === "WALK_IN" || p.source === "PHONE" ? { createdBy: ctx.ownerId } : {}),
+  }).returning({ id: schema.bookings.id });
+  ctx.result.bookings++;
+  if (paid) {
+    const recordedAt = addMs(s.startsAt, 60 * 60_000 > now.getTime() - s.startsAt.getTime() ? 0 : 60 * 60_000);
+    await db.insert(schema.payments).values({ organizationId: ctx.orgId, bookingId: b!.id, type: "PAYMENT", amount: total, currency: cfg.currency, method: p.method ?? METHODS[Math.floor(rand() * METHODS.length)]!, note: "Paid at the studio", recordedBy: ctx.ownerId, recordedAt });
+    ctx.result.payments++;
+    if (p.reversed) { // a payment entered by mistake and put right with a REVERSAL (never edited or deleted)
+      await db.insert(schema.payments).values({ organizationId: ctx.orgId, bookingId: b!.id, type: "REVERSAL", amount: total, currency: cfg.currency, method: p.method ?? "CASH", note: "Entered by mistake", recordedBy: ctx.ownerId, recordedAt: addMs(recordedAt, 10 * 60_000) });
+      ctx.result.payments++;
+    }
+  }
+  if (checkedIn && guest) ctx.attended.push({ bookingId: b!.id, email: guest.email, workshopId: w.id, endsAt: s.endsAt });
+}
+
+// ---- the shop of edge cases ----------------------------------------------------------------------------------------------------------------------------
+
 /**
- * The demo shop gets rates of its own (different from the defaults, so the screens show that each shop has its own) and the months that are over are closed, as the worker does every hour.
- * Safe to run again: rates that exist are kept, a closed month is skipped.
+ * Sessions made by hand, each one a case to test: sold out, one seat left, inside the booking cut-off, running now, paused, closed by the owner (its bookings cancelled), moved to another time,
+ * completed, closed by the system, far in the future, a free workshop, the longest workshop, a payment put right with a reversal, a booking with promotions and one with a special request.
+ */
+async function edgeSessions(ctx: Ctx, rows: WorkshopRow[], promos: { id: string; code: string }[]): Promise<void> {
+  const { now } = ctx;
+  const by = (key: string): WorkshopRow => rows.find((r) => r.seed.key === key)!;
+  const at = (days: number, minutes = 0): Date => new Date(now.getTime() + days * DAY + minutes * 60_000);
+  const [pizza, burger, free, intensive] = [by("pizza-night"), by("burger-lab"), by("free-intro"), by("intensive")];
+  const stack = promos.find((p) => p.code === "STACK30");
+
+  // (1) sold out: four seats, all taken
+  await placeBookings(ctx, pizza, await insertSession(ctx, pizza, at(2, 60)), [
+    { guest: 0, quantity: 2, status: "CONFIRMED" }, { guest: 1, quantity: 2, status: "CONFIRMED" },
+  ]);
+  // (2) one seat left, and a guest who wrote a special request
+  await placeBookings(ctx, pizza, await insertSession(ctx, pizza, at(3, 120)), [
+    { guest: 2, quantity: 3, status: "NOT_CONFIRMED", request: "One of us is allergic to nuts: please keep the pesto separate." },
+  ]);
+  // (3) inside the booking cut-off: it starts in 60 minutes and online booking closes 120 minutes before
+  await placeBookings(ctx, pizza, await insertSession(ctx, pizza, at(0, 60), { status: "RUNNING" }), [{ guest: 3, quantity: 1, status: "CONFIRMED" }]);
+  // (4) running right now: it started 30 minutes ago, one guest already checked in and paid
+  await placeBookings(ctx, pizza, await insertSession(ctx, pizza, at(0, -30), { status: "RUNNING" }), [{ guest: 4, quantity: 2, status: "CHECKED_IN", paid: true, method: "CARD" }, { guest: "walk-in", quantity: 1, status: "CHECKED_IN", source: "WALK_IN", paid: true }]);
+  // (5) paused (not bookable) with a booking already in it
+  await placeBookings(ctx, pizza, await insertSession(ctx, pizza, at(5, 180), { status: "PAUSED" }), [{ guest: 5, quantity: 1, status: "CONFIRMED" }]);
+  // (6) closed by the owner before it started: its bookings were cancelled by the shop
+  await placeBookings(ctx, pizza, await insertSession(ctx, pizza, at(4, 300), { status: "CLOSED", autoClosed: false, notes: [{ type: "CLOSED", at: addMs(now, -DAY).toISOString(), reason: { code: "VENUE_ISSUE" } }] }), [
+    { guest: 6, quantity: 2, status: "CANCELLED", cancelledBy: "SHOP", cancelReason: "The session was closed by the studio (venue issue)" },
+  ]);
+  // (7) moved to another time (the original start is kept)
+  const moved = at(6, 240);
+  await placeBookings(ctx, pizza, await insertSession(ctx, pizza, moved, { origin: at(5, 240), notes: [{ type: "RESCHEDULED", at: addMs(now, -2 * DAY).toISOString(), reason: { code: "OTHER", note: "The chef is travelling" } }] }), [{ guest: 7, quantity: 2, status: "CONFIRMED" }]);
+  // (8) completed last week, and one closed by the system two days ago
+  await placeBookings(ctx, pizza, await insertSession(ctx, pizza, at(-8, 0), { status: "COMPLETED" }), [
+    { guest: 8, quantity: 2, status: "CHECKED_IN", paid: true, method: "CASH" }, { guest: 9, quantity: 1, status: "CHECKED_IN", paid: true, method: "E_WALLET" }, { guest: 10, quantity: 1, status: "CANCELLED", cancelledBy: "GUEST", cancelReason: "I am ill" },
+  ]);
+  await placeBookings(ctx, pizza, await insertSession(ctx, pizza, at(-2, 0)), [{ guest: 11, quantity: 2, status: "CHECKED_IN", paid: false }, { guest: 12, quantity: 1, status: "CONFIRMED" }]); // CLOSED with bookings still unpaid: the owner has to confirm them
+  // (9) far in the future, empty
+  await insertSession(ctx, pizza, at(25, 0), { status: "OPEN" });
+
+  // the burger lab: bookings with promotions, a payment put right, every payment method
+  const burgerOpen = await insertSession(ctx, burger, at(1, 120));
+  await placeBookings(ctx, burger, burgerOpen, [
+    { guest: 0, quantity: 2, status: "CONFIRMED", discountPct: 30, discountCode: "STACK30", ...(stack ? { promotionIds: [stack.id] } : {}) },
+    { guest: 1, quantity: 1, status: "NOT_CONFIRMED" },
+  ]);
+  await placeBookings(ctx, burger, await insertSession(ctx, burger, at(-5, 0)), [
+    { guest: 2, quantity: 2, status: "CHECKED_IN", paid: true, method: "CASH" }, { guest: 3, quantity: 1, status: "CHECKED_IN", paid: true, method: "CARD" },
+    { guest: 4, quantity: 1, status: "CHECKED_IN", paid: true, method: "BANK_TRANSFER" }, { guest: 5, quantity: 2, status: "CHECKED_IN", paid: true, reversed: true, method: "CASH" },
+  ]);
+  await insertSession(ctx, burger, at(8, 0));
+  await insertSession(ctx, burger, at(26, 0), { status: "OPEN" });
+
+  // the free workshop: the total is zero, nothing to pay
+  await placeBookings(ctx, free, await insertSession(ctx, free, at(2, 0)), [{ guest: 13, quantity: 3, status: "CONFIRMED" }, { guest: 14, quantity: 2, status: "NOT_CONFIRMED" }]);
+  await insertSession(ctx, free, at(9, 0));
+  // the longest workshop, two seats a booking
+  await placeBookings(ctx, intensive, await insertSession(ctx, intensive, at(10, 0)), [{ guest: 15, quantity: 2, status: "CONFIRMED" }]);
+}
+
+// ---- promotions ------------------------------------------------------------------------------------------------------------------------------------------
+
+/** The promotions of a shop in every state (running, scheduled, paused, over), one to use alone and some that combine; never more than 5 running at once, never a free workshop. */
+async function makePromotions(ctx: Ctx): Promise<{ id: string; code: string }[]> {
+  const { db, cfg } = ctx;
+  const day = (n: number): string => addDays(dateIn(ctx.now, cfg.timezone), n);
+  const base = { organizationId: ctx.orgId, discountType: "PERCENT" as const, description: {} };
+  const fixed = (vnd: number): number => (cfg.currency === "VND" ? vnd : cfg.currency === "KRW" ? vnd / 20 : cfg.currency === "JPY" ? Math.round(vnd / 170) : cfg.currency === "THB" ? vnd / 700 : 500);
+  let list: Array<Record<string, unknown>> = [];
+  if (cfg.key === "whisk") {
+    const first = (await db.select({ id: schema.workshops.id }).from(schema.workshops).where(eq(schema.workshops.organizationId, ctx.orgId)).orderBy(schema.workshops.sortOrder).limit(1))[0];
+    list = [
+      { ...base, title: { en: "Early bird: 20% off", vi: "Đặt sớm: giảm 20%" }, code: "EARLY20", discountValue: 20, stacking: "SINGLE", startDate: day(-10), endDate: day(20), description: { en: "Book any workshop early and pay 20% less.", vi: "Đặt sớm bất kỳ workshop nào để được giảm 20%." }, imageUrl: photo(P.cookTogether, 800) },
+      { ...base, title: { en: "Groups save 10%", vi: "Đi nhóm giảm 10%" }, code: "GROUP10", discountValue: 10, stacking: "MULTIPLE", startDate: day(-2), endDate: day(25) },
+      { ...base, title: { en: "Welcome gift: 50,000 off" }, code: "WELCOME50", discountType: "FIXED_AMOUNT", discountValue: 50_000, stacking: "MULTIPLE", appliesTo: "SELECTED", workshopIds: first ? [first.id] : [], startDate: day(-5), endDate: day(15) },
+      { ...base, title: { en: "Autumn festival" }, code: "AUTUMN15", discountValue: 15, stacking: "SINGLE", startDate: day(14), endDate: day(30) }, // scheduled
+      { ...base, title: { en: "Student discount" }, code: "STUDENT10", discountValue: 10, stacking: "MULTIPLE", enabled: false, startDate: day(-10), endDate: day(40) }, // paused
+      { ...base, title: { en: "Summer sale" }, code: "SUMMER25", discountValue: 25, stacking: "SINGLE", startDate: day(-70), endDate: day(-40) }, // over
+    ];
+  } else if (cfg.key === "tokyo") {
+    list = [{ ...base, title: { ja: "秋の早割 10%オフ", en: "Autumn early bird: 10% off" }, code: "AKI10", discountValue: 10, stacking: "MULTIPLE", startDate: day(-3), endDate: day(30) }, { ...base, title: { en: "First time: 1,000 yen off" }, code: "FIRST1000", discountType: "FIXED_AMOUNT", discountValue: fixed(170_000), stacking: "MULTIPLE", startDate: day(-3), endDate: day(30) }];
+  } else if (cfg.key === "seoul") {
+    list = [{ ...base, title: { ko: "얼리버드 15% 할인", en: "Early bird 15%" }, code: "EARLYKR", discountValue: 15, stacking: "SINGLE", startDate: day(-5), endDate: day(25) }];
+  } else if (cfg.key === "edge") {
+    list = [
+      { ...base, title: { en: "Stack 30%" }, code: "STACK30", discountValue: 30, stacking: "MULTIPLE", startDate: day(-5), endDate: day(40) },
+      { ...base, title: { en: "Five dollars off" }, code: "FIVEOFF", discountType: "FIXED_AMOUNT", discountValue: 500, stacking: "MULTIPLE", startDate: day(-5), endDate: day(40) },
+      { ...base, title: { en: "Weekend flash: 40% (alone)" }, code: "FLASH40", discountValue: 40, stacking: "SINGLE", startDate: day(-1), endDate: day(3) },
+      { ...base, title: { en: "Starts in a month" }, code: "LATER20", discountValue: 20, stacking: "SINGLE", startDate: day(30), endDate: day(60) },
+    ];
+  }
+  if (list.length === 0) return [];
+  const rows = await db.insert(schema.promotions).values(list as (typeof schema.promotions.$inferInsert)[]).returning({ id: schema.promotions.id, code: schema.promotions.code });
+  return rows.map((r) => ({ id: r.id, code: r.code }));
+}
+
+// ---- ratings and pages ------------------------------------------------------------------------------------------------------------------------------------
+
+const COMMENTS: Record<string, string[]> = {
+  en: ["A wonderful afternoon: the chef was patient and funny.", "Great value, small group and plenty of tasting.", "Loved it. I cooked the same dish at home the next day.", "Good class, but the room was a little warm.", "Perfect for a rainy day with friends."],
+  vi: ["Một buổi chiều tuyệt vời, đầu bếp rất kiên nhẫn.", "Đáng tiền, nhóm nhỏ và được nếm thử nhiều món.", "Rất thích! Hôm sau mình đã nấu lại ở nhà."],
+  ko: ["선생님이 친절하고 재미있었어요. 또 오고 싶어요.", "소규모라서 집중해서 배울 수 있었습니다."],
+  ja: ["先生がとても丁寧で、楽しい時間でした。", "少人数で、じっくり学べました。"],
+};
+
+/** Ratings of the guests who came (a part of them, one for each booking): some low, one removed by the platform administrator (a reason is kept). */
+async function makeRatings(ctx: Ctx): Promise<void> {
+  const { db, rand, cfg } = ctx;
+  const [admin] = await db.select({ id: schema.users.id }).from(schema.users).where(eq(schema.users.email, DEMO_ACCOUNTS.admin)).limit(1);
+  let removed = 0;
+  for (const a of ctx.attended) {
+    if (rand() > 0.5) continue;
+    const userId = ctx.userIds.get(a.email);
+    if (!userId) continue;
+    const roll = rand();
+    const stars = roll < 0.55 ? 5 : roll < 0.8 ? 4 : roll < 0.92 ? 3 : roll < 0.97 ? 2 : 1;
+    const pool = COMMENTS[cfg.defaultLocale] ?? COMMENTS.en!;
+    const comment = rand() < 0.75 ? pool[Math.floor(rand() * pool.length)]! : null;
+    const drop = removed === 0 && stars <= 2 && comment !== null; // one poor, commented rating is removed by the administrator
+    if (drop) removed++;
+    await db.insert(schema.workshopRatings).values({
+      organizationId: ctx.orgId, workshopId: a.workshopId, bookingId: a.bookingId, userId, stars, comment, createdAt: addMs(a.endsAt, Math.floor(rand() * 3 + 1) * DAY),
+      ...(drop ? { removedAt: addMs(ctx.now, -2 * DAY), removedReason: "Contains the phone number of a person (demo)", removedBy: admin?.id ?? null } : {}),
+    }).onConflictDoNothing();
+  }
+}
+
+/** The landing pages: a live one with the versions it was published as (and a newer draft), and for the first shop a second page that was never published. */
+async function makePages(ctx: Ctx, rows: WorkshopRow[], hasPromotions: boolean): Promise<void> {
+  const { db, cfg, now } = ctx;
+  const page = cfg.page!;
+  const built = buildPage(cfg, rows.map((r) => r.seed), hasPromotions);
+  const publishedAt = addMs(now, -20 * DAY);
+  const [main] = await db.insert(schema.sitePages).values({
+    organizationId: ctx.orgId, name: "Main", templateKey: page.template, theme: built.theme, draftContent: built.content, publishedContent: built.content, publishedTheme: built.theme, publishedTemplateKey: page.template,
+    version: page.versions, isLive: page.live, publishedAt, publishedBy: ctx.ownerId, createdAt: addMs(now, -60 * DAY),
+  }).returning({ id: schema.sitePages.id });
+  for (let v = 1; v <= page.versions; v++) {
+    // the older versions had a shorter title, to tell them apart when one is put back
+    const older = v === page.versions ? built.content : { ...built.content, seo: { ...built.content.seo, title: { ...built.content.seo.title, en: `${cfg.name} (version ${v})` } } };
+    await db.insert(schema.sitePageVersions).values({ organizationId: ctx.orgId, pageId: main!.id, version: v, templateKey: page.template, content: older, theme: built.theme, publishedBy: ctx.ownerId, publishedAt: addMs(publishedAt, -(page.versions - v) * 7 * DAY) });
+  }
+  if (page.extraDraft) { // a second page that was never published
+    const other = buildPage(cfg, rows.map((r) => r.seed), hasPromotions, { palette: "plum", title: "Autumn campaign" });
+    await db.insert(schema.sitePages).values({ organizationId: ctx.orgId, name: "Autumn campaign", templateKey: "magazine", theme: other.theme, draftContent: other.content, version: 0, isLive: false, createdAt: addMs(now, -3 * DAY) });
+  }
+}
+
+// ---- what is around the shops ----------------------------------------------------------------------------------------------------------------------------
+
+/**
+ * What the platform administrator handles: the support channels, the messages of the Contact form and the reports of a site in every state, and the Terms and the Privacy Policy (published once, every
+ * demo account agreed to it, so nobody is stopped by the window of agreement; a draft of a newer Terms waits to be published to see it). Written once.
+ */
+export async function seedPlatform(db: Executor): Promise<void> {
+  const [has] = await db.select({ key: schema.platformSettings.key }).from(schema.platformSettings).where(eq(schema.platformSettings.key, "support_contact")).limit(1);
+  if (has) return;
+  const [admin] = await db.select({ id: schema.users.id }).from(schema.users).where(eq(schema.users.email, DEMO_ACCOUNTS.admin)).limit(1);
+  if (!admin) return;
+  const now = Date.now();
+  await db.insert(schema.platformSettings).values({ key: "support_contact", value: { whatsapp: "+84 90 000 1234", phone: "+84 28 3822 9999", zalo: "+84 90 000 5678", email: "support@workshopkit.example" }, updatedBy: admin.id });
+
+  const messages: Array<{ name: string; email: string; topic: string; message: string; status: "NEW" | "IN_PROGRESS" | "DONE"; note?: string; ago: number }> = [
+    { name: "Grace Lee", email: "grace.lee@example.com", topic: "demo", message: "We run a pottery studio in Hoi An and would like a demo of the booking page.", status: "NEW", ago: 0.2 },
+    { name: "Ben Carter", email: "ben.carter@example.com", topic: "support", message: "My guests do not receive the confirmation email. Can you check?", status: "IN_PROGRESS", note: "Asked Resend for the delivery log.", ago: 2 },
+    { name: "Thu Ha", email: "thu.ha@example.com", topic: "general", message: "Cho mình hỏi nền tảng có hỗ trợ thanh toán online không?", status: "DONE", note: "Answered: payments are recorded by the shop for now.", ago: 9 },
+    { name: "Takeshi Mori", email: "takeshi.mori@example.com", topic: "partnership", message: "We are a tour operator and would like to list our cooking classes.", status: "NEW", ago: 1 },
+    { name: "Park Min", email: "park.min@example.com", topic: "support", message: "저희 샵의 한국어 페이지가 영어로 보입니다.", status: "NEW", ago: 0.5 },
+    { name: "Ana Souza", email: "ana.souza@example.com", topic: "general", message: "Is there a mobile app for shop owners?", status: "DONE", note: "No: the dashboard works in a phone browser.", ago: 20 },
+  ];
+  await db.insert(schema.contactMessages).values(messages.map((m) => ({ name: m.name, email: m.email, topic: m.topic, message: m.message, status: m.status, note: m.note ?? "", createdAt: new Date(now - m.ago * DAY), updatedAt: new Date(now - (m.ago / 2) * DAY) })));
+
+  const shops = new Map((await db.select({ id: schema.organizations.id, slug: schema.organizations.slug }).from(schema.organizations)).map((o) => [o.slug, o.id]));
+  const reports: Array<{ slug: string; reason: string; description: string; email: string | null; status: "OPEN" | "RESOLVED" | "DISMISSED"; note?: string; ago: number }> = [
+    { slug: "goldennoodle", reason: "SCAM", description: "The price on the page is half of what they asked at the door.", email: "angry.guest@example.com", status: "OPEN", ago: 3 },
+    { slug: "lotusceramics", reason: "INAPPROPRIATE", description: "A photo on the page is not theirs.", email: null, status: "DISMISSED", note: "Checked: the photo is licensed.", ago: 12 },
+    { slug: "tokyotea", reason: "OTHER", description: "The opening hours on the page are wrong.", email: "visitor@example.com", status: "RESOLVED", note: "The owner corrected the hours.", ago: 8 },
+    { slug: "whiskladle", reason: "PHISHING", description: "I received an email asking me to pay to another account.", email: "worried@example.com", status: "OPEN", ago: 1 },
+  ];
+  for (const r of reports) {
+    const orgId = shops.get(r.slug);
+    if (!orgId) continue;
+    await db.insert(schema.siteReports).values({
+      organizationId: orgId, reason: r.reason, description: r.description, reporterEmail: r.email, status: r.status, ...(r.note ? { note: r.note } : {}), createdAt: new Date(now - r.ago * DAY),
+      ...(r.status === "OPEN" ? {} : { handledBy: admin.id, handledAt: new Date(now - (r.ago - 1) * DAY) }),
+    });
+  }
+
+  // the Terms and the Privacy Policy: version 1 published (a major one: epoch 1) in English and Vietnamese; a draft of version 2 of the Terms waits
+  const texts = {
+    terms: { en: "# Terms of Service\n\nThese are demo terms for development. A shop owner agrees to run honest workshops, to keep prices true and to answer guests. A guest agrees to arrive on time.", vi: "# Điều khoản dịch vụ\n\nĐây là điều khoản mẫu cho môi trường phát triển. Chủ shop cam kết tổ chức workshop trung thực, giữ giá đúng và phản hồi khách. Khách cam kết đến đúng giờ." },
+    privacy: { en: "# Privacy Policy\n\nDemo policy for development. We keep the data needed to run a booking and delete it on request.", vi: "# Chính sách quyền riêng tư\n\nChính sách mẫu cho môi trường phát triển. Chúng tôi giữ dữ liệu cần thiết cho việc đặt chỗ và xóa khi được yêu cầu." },
+  } as const;
+  for (const kind of ["terms", "privacy"] as const) {
+    for (const locale of ["en", "vi"] as const) {
+      const content = texts[kind][locale];
+      await db.insert(schema.legalDocuments).values({ kind, locale, content, version: 1, updatedBy: admin.id });
+      await db.insert(schema.legalVersions).values({ kind, locale, version: 1, content, status: "PUBLISHED", major: true, epoch: 1, createdBy: admin.id, publishedBy: admin.id, publishedAt: new Date(now - 60 * DAY), createdAt: new Date(now - 61 * DAY) });
+    }
+  }
+  await db.insert(schema.legalVersions).values({ kind: "terms", locale: "en", version: 2, content: `${texts.terms.en}\n\n## New in version 2\n\nGuests may cancel free of charge up to 24 hours before a session (a draft: publish it as a major change to see every account asked to agree again).`, status: "DRAFT", createdBy: admin.id });
+  for (const u of await db.select({ id: schema.users.id, status: schema.users.status }).from(schema.users)) {
+    if (u.status !== "ACTIVE") continue;
+    for (const kind of ["terms", "privacy"] as const) await db.insert(schema.legalConsents).values({ userId: u.id, kind, epoch: 1, version: 1, locale: "en", acceptedAt: new Date(now - 59 * DAY) }).onConflictDoNothing();
+  }
+}
+
+/**
+ * Rates of their own for some shops (different from the defaults, so the screens show that each shop has its own) and the months that are over are closed, as the worker does every hour. Then the
+ * customer area (profiles, favorites, who is listed), the wallet, the invites. Safe to run again: what exists is kept.
  */
 export async function seedFinance(db: Database): Promise<{ closed: number }> {
-  const [shop] = await db.select({ id: schema.organizations.id }).from(schema.organizations).where(eq(schema.organizations.slug, "whiskladle")).limit(1);
-  if (shop) {
-    const rates = { maintenanceBps: 800, serviceBps: 1200, affiliateBps: 500, inviteBonusBps: 300 };
+  const custom: Record<string, { maintenanceBps: number; serviceBps: number; affiliateBps: number; inviteBonusBps: number }> = {
+    whiskladle: { maintenanceBps: 800, serviceBps: 1200, affiliateBps: 500, inviteBonusBps: 300 },
+    tokyotea: { maintenanceBps: 1000, serviceBps: 1000, affiliateBps: 800, inviteBonusBps: 200 },
+    seoulkitchen: { maintenanceBps: 500, serviceBps: 1500, affiliateBps: 300, inviteBonusBps: 100 },
+  };
+  for (const [slug, rates] of Object.entries(custom)) {
+    const [shop] = await db.select({ id: schema.organizations.id }).from(schema.organizations).where(eq(schema.organizations.slug, slug)).limit(1);
+    if (!shop) continue;
     await db.insert(schema.organizationFeeSettings).values({ organizationId: shop.id, ...rates }).onConflictDoNothing();
     // the demo history is long: these rates apply to the whole demo past (a change made later only reaches what is paid after it, D24)
     await db.insert(schema.organizationFeeRates).values({ organizationId: shop.id, effectiveFrom: new Date(0), ...rates }).onConflictDoNothing();
@@ -243,50 +497,40 @@ export async function seedFinance(db: Database): Promise<{ closed: number }> {
   const { closed } = await new FinanceService(db, new AuditService(db)).closeMonths();
   await seedWallet(db);
   await seedInvites(db);
-  await seedPromotions(db);
   await seedCustomerArea(db);
+  await seedPlatform(db);
   return { closed };
 }
 
-/**
- * The demo shop is listed on the Workshops page of the customers, and the demo customer has a profile (what a customer fills in when registering). Written once: a profile that exists is kept.
- */
-async function seedCustomerArea(db: Database): Promise<void> {
-  await db.update(schema.organizations).set({ showOnCustomerPage: true }).where(eq(schema.organizations.slug, "whiskladle"));
-  const [emma] = await db.select({ id: schema.users.id }).from(schema.users).where(eq(schema.users.email, DEMO_ACCOUNTS.customer)).limit(1);
-  if (!emma) return;
-  await db.insert(schema.customerProfiles).values({
-    userId: emma.id, phone: "+44 20 7946 0000", country: "GB", birthDate: "1990-04-12", favoriteCategories: ["COOKING", "BAKING", "COFFEE_TEA"], gender: "FEMALE", socials: { INSTAGRAM: "emma.wilson" }, consentAt: new Date(),
-  }).onConflictDoNothing();
+/** Profiles for most of the customers (what a customer fills in when registering) and favorites in the shops that are listed. Written once: a profile that exists is kept. */
+async function seedCustomerArea(db: Executor): Promise<void> {
+  const users = new Map((await db.select({ id: schema.users.id, email: schema.users.email }).from(schema.users)).map((u) => [u.email, u.id]));
+  const categories = ["COOKING", "BAKING", "COFFEE_TEA", "POTTERY", "CRAFTS", "ART", "WELLNESS", "DRINKS"];
+  const genders = ["FEMALE", "MALE", "OTHER", null] as const;
+  for (const [i, g] of GUESTS.entries()) {
+    const id = users.get(g.email);
+    if (!id || i >= 12) continue; // the last guests have no profile yet
+    const cats = [categories[i % 8]!, categories[(i + 2) % 8]!, categories[(i + 5) % 8]!];
+    await db.insert(schema.customerProfiles).values({
+      userId: id, phone: g.phone, country: g.country, birthDate: `${1980 + i}-0${(i % 9) + 1}-1${i % 9}`, favoriteCategories: cats, gender: genders[i % 4] ?? null, socials: i % 3 === 0 ? { INSTAGRAM: g.name.toLowerCase().replace(/\s+/g, ".") } : {}, consentAt: new Date(),
+    }).onConflictDoNothing();
+  }
+  // favorites: each of the first ten customers saved two or three workshops of the shops that are listed
+  const listed = await db.select({ id: schema.workshops.id, organizationId: schema.workshops.organizationId }).from(schema.workshops)
+    .innerJoin(schema.organizations, eq(schema.organizations.id, schema.workshops.organizationId))
+    .where(sql`${schema.organizations.showOnCustomerPage} AND ${schema.workshops.status} = 'ACTIVE'`);
+  for (const [i, g] of GUESTS.slice(0, 10).entries()) {
+    const id = users.get(g.email);
+    if (!id) continue;
+    for (let k = 0; k < 2 + (i % 2); k++) {
+      const w = listed[(i * 3 + k * 5) % listed.length];
+      if (w) await db.insert(schema.favoriteWorkshops).values({ userId: id, organizationId: w.organizationId, workshopId: w.id, createdAt: new Date(Date.now() - (i + k) * DAY) }).onConflictDoNothing();
+    }
+  }
 }
 
-/**
- * The demo shop gets promotions in every state (running, scheduled, paused), one to use alone and two that can be combined (never more than 5 running at once, never a free workshop).
- * Written once: when the shop already has promotions nothing is added.
- */
-async function seedPromotions(db: Database): Promise<void> {
-  const [shop] = await db.select({ id: schema.organizations.id, timezone: schema.organizations.timezone }).from(schema.organizations).where(eq(schema.organizations.slug, "whiskladle")).limit(1);
-  if (!shop) return;
-  const [has] = await db.select({ id: schema.promotions.id }).from(schema.promotions).where(eq(schema.promotions.organizationId, shop.id)).limit(1);
-  if (has) return;
-  const first = (await db.select({ id: schema.workshops.id }).from(schema.workshops).where(eq(schema.workshops.organizationId, shop.id)).orderBy(schema.workshops.sortOrder).limit(1))[0];
-  const today = dateIn(new Date(), shop.timezone);
-  const day = (n: number): string => addDays(today, n);
-  const base = { organizationId: shop.id, discountType: "PERCENT" as const, description: {} };
-  await db.insert(schema.promotions).values([
-    { ...base, title: { en: "Early bird: 20% off", vi: "Đặt sớm: giảm 20%" }, code: "EARLY20", discountValue: 20, stacking: "SINGLE", startDate: day(-10), endDate: day(20), description: { en: "Book any workshop and pay 20% less." } },
-    { ...base, title: { en: "Groups save 10%", vi: "Đi nhóm giảm 10%" }, code: "GROUP10", discountValue: 10, stacking: "MULTIPLE", startDate: day(-2), endDate: day(25) },
-    { ...base, title: { en: "Welcome gift: 50,000 off" }, code: "WELCOME50", discountType: "FIXED_AMOUNT", discountValue: 50_000, stacking: "MULTIPLE", appliesTo: "SELECTED", workshopIds: first ? [first.id] : [], startDate: day(-5), endDate: day(12) },
-    { ...base, title: { en: "Autumn festival" }, code: "AUTUMN15", discountValue: 15, stacking: "SINGLE", startDate: day(14), endDate: day(30) },
-    { ...base, title: { en: "Student discount" }, code: "STUDENT10", discountValue: 10, stacking: "MULTIPLE", enabled: false, startDate: day(-10), endDate: day(40) },
-  ]);
-}
-
-/**
- * The demo customer gets an invite link and two friends who registered with it: one registered long ago (the bookings they made since are counted, so the bonus shows) and one just now (waiting
- * for a first paid booking). Written once.
- */
-async function seedInvites(db: Database): Promise<void> {
+/** The demo customer gets an invite link and two friends who registered with it: one long ago (the bookings they made since are counted) and one just now. Written once. */
+async function seedInvites(db: Executor): Promise<void> {
   const [emma] = await db.select({ id: schema.users.id }).from(schema.users).where(eq(schema.users.email, DEMO_ACCOUNTS.customer)).limit(1);
   if (!emma) return;
   const [has] = await db.select({ userId: schema.inviteLinks.userId }).from(schema.inviteLinks).where(eq(schema.inviteLinks.userId, emma.id)).limit(1);
@@ -296,29 +540,25 @@ async function seedInvites(db: Database): Promise<void> {
   const ages = [50, 0]; // days ago
   for (const [i, g] of friends.entries()) {
     const [friend] = await db.select({ id: schema.users.id }).from(schema.users).where(eq(schema.users.email, g!.email)).limit(1);
-    if (friend) await db.insert(schema.referrals).values({ inviterUserId: emma.id, friendUserId: friend.id, createdAt: new Date(Date.now() - ages[i]! * 86_400_000) }).onConflictDoNothing();
+    if (friend) await db.insert(schema.referrals).values({ inviterUserId: emma.id, friendUserId: friend.id, createdAt: new Date(Date.now() - ages[i]! * DAY) }).onConflictDoNothing();
   }
 }
 
-/**
- * The demo customer gets a wallet: some credits written by hand (what the two programs earn is worked out from the bookings and added to them) and one invoice of each state.
- * Written once: when the customer already has credits nothing is added.
- */
-async function seedWallet(db: Database): Promise<void> {
+/** The demo customer gets a wallet: some credits written by hand and one withdrawal of each state. Written once. */
+async function seedWallet(db: Executor): Promise<void> {
   const [emma] = await db.select({ id: schema.users.id }).from(schema.users).where(eq(schema.users.email, DEMO_ACCOUNTS.customer)).limit(1);
   const [root] = await db.select({ id: schema.users.id }).from(schema.users).where(eq(schema.users.email, DEMO_ACCOUNTS.admin)).limit(1);
   if (!emma) return;
   const [existing] = await db.select({ id: schema.walletCredits.id }).from(schema.walletCredits).where(eq(schema.walletCredits.userId, emma.id)).limit(1);
   if (existing) return;
-  const credits: [("AFFILIATE" | "REFERRAL"), number, string][] = [["AFFILIATE", 160_000, "Demo credit (an adjustment made by hand)"], ["AFFILIATE", 90_000, "Demo credit (an adjustment made by hand)"], ["REFERRAL", 100_000, "Demo credit (an adjustment made by hand)"], ["REFERRAL", 100_000, "Demo credit (an adjustment made by hand)"]];
+  const credits: [("AFFILIATE" | "REFERRAL"), number, string][] = [["AFFILIATE", 160_000, "Demo credit (an adjustment made by hand)"], ["AFFILIATE", 90_000, "Demo credit (an adjustment made by hand)"], ["REFERRAL", 100_000, "Demo credit (an adjustment made by hand)"]];
   for (const [source, amount, note] of credits) await db.insert(schema.walletCredits).values({ userId: emma.id, source, currency: "VND", amount, note });
   const number = sql`'WD-' || lpad(nextval('withdrawal_number_seq')::text, 4, '0')`;
-  const day = 86_400_000;
   const bank = { bankName: "Demo Bank", bankAccountNumber: "000011112222", bankAccountHolder: "Emma Wilson" }; // made up: not a real account
   await db.insert(schema.withdrawals).values([
-    { number, userId: emma.id, source: "AFFILIATE", currency: "VND", amount: 100_000, ...bank, status: "PAID", requestedAt: new Date(Date.now() - 20 * day), processedAt: new Date(Date.now() - 18 * day), processedBy: root?.id ?? null },
-    { number, userId: emma.id, source: "AFFILIATE", currency: "VND", amount: 50_000, ...bank, status: "REJECTED", reason: "Bank details are missing (demo)", requestedAt: new Date(Date.now() - 9 * day), processedAt: new Date(Date.now() - 8 * day), processedBy: root?.id ?? null },
-    { number, userId: emma.id, source: "REFERRAL", currency: "VND", amount: 60_000, ...bank, status: "PENDING", requestedAt: new Date(Date.now() - 1 * day) },
+    { number, userId: emma.id, source: "AFFILIATE", currency: "VND", amount: 100_000, ...bank, status: "PAID", requestedAt: new Date(Date.now() - 20 * DAY), processedAt: new Date(Date.now() - 18 * DAY), processedBy: root?.id ?? null },
+    { number, userId: emma.id, source: "AFFILIATE", currency: "VND", amount: 50_000, ...bank, status: "REJECTED", reason: "Bank details are missing (demo)", requestedAt: new Date(Date.now() - 9 * DAY), processedAt: new Date(Date.now() - 8 * DAY), processedBy: root?.id ?? null },
+    { number, userId: emma.id, source: "REFERRAL", currency: "VND", amount: 60_000, ...bank, status: "PENDING", requestedAt: new Date(Date.now() - 1 * DAY) },
   ]);
 }
 

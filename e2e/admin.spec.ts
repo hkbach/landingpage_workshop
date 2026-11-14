@@ -97,7 +97,8 @@ The text of the test.`;
     // the Landing pages screen opens the editor of the shop (inside the admin area), with the banner that asks for the reason
     await open(page, `${APP}/systemadmin/landing-pages`);
     await page.getByRole("searchbox").fill("whiskladle");
-    await page.getByRole("button", { name: /^Edit/ }).first().click();
+    // (the list is filtered by the server: click the Edit of the row of THAT shop, not of whichever row is first while the old list is still shown)
+    await page.getByRole("row", { name: /whiskladle/i }).getByRole("button", { name: /^Edit/ }).first().click();
     await page.waitForURL(/\/systemadmin\/shops\/whiskladle\/site/, { timeout: 90_000, waitUntil: "domcontentloaded" });
     await expect(page.getByTestId("admin-edit-banner")).toBeVisible({ timeout: 60_000 });
     await expect(page.getByTestId("admin-edit-unavailable")).toHaveCount(0);

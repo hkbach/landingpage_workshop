@@ -254,7 +254,9 @@ pnpm exec vitest run src/lib/date-input.test.ts
 | `pnpm typecheck` | Kiểm tra kiểu TypeScript |
 | `pnpm dev` | Chạy web (`apps/web`); cần API đang chạy và biến `API_URL` (xem mục 7) |
 | `pnpm dev:api` | Chạy backend `apps/api` (cần PostgreSQL và `apps/api/.env`, xem [mục 7](#7-chạy-ứng-dụng-database-api-worker-và-web)); gửi email cần thêm `pnpm --filter api dev:worker` |
-| `pnpm db:seed` | Nạp dữ liệu demo (cần `SEED_PASSWORD` do bạn đặt) |
+| `pnpm db:seed` | Nạp dữ liệu demo (đặt mật khẩu bằng `SEED_PASSWORD`, hoặc để trống để seed tự tạo mật khẩu ngẫu nhiên ghi vào `apps/api/.seed-credentials`) |
+| `pnpm --filter api db:wipe -- --yes` | **Xóa mọi dòng của mọi bảng** trong database dev (giữ nguyên cấu trúc và migration). Từ chối chạy khi thiếu `--yes`, khi `NODE_ENV=production`, hoặc khi database không nằm trên máy này. Thêm `--test` để xóa database test |
+| `pnpm --filter api db:reseed` | Xóa sạch rồi nạp lại bộ dữ liệu demo |
 | `pnpm db:generate` | Sinh migration SQL từ schema Drizzle (`apps/api/src/db/schema`) |
 | `pnpm db:migrate` | Áp migration lên database trong `DATABASE_URL` |
 | `pnpm build` | Đóng gói bản chạy thật (kiểm tra build) |
@@ -278,7 +280,7 @@ Web cần API thật; API cần PostgreSQL. Làm lần lượt:
    LOG_LEVEL=info
    ```
    Các biến tùy chọn (đã có giá trị mặc định cho môi trường dev): `APP_URL` (mặc định `http://app.localtest.me:3000`; **phải trùng địa chỉ trình duyệt dùng**, API so sánh để chặn yêu cầu giả mạo), `REQUIRE_EMAIL_VERIFICATION` (dev mặc định `false`: đăng ký xong vào luôn; đặt `true` để bắt xác minh email), `APP_SECRET` (có giá trị dev; production bắt buộc đặt), `TURNSTILE_SECRET_KEY` (bỏ trống ở dev thì bỏ qua kiểm tra bot), `R2_ACCOUNT_ID` + `R2_ACCESS_KEY_ID` + `R2_SECRET_ACCESS_KEY` + `R2_BUCKET` + `R2_PUBLIC_BASE_URL` (tải ảnh lên Cloudflare R2: đặt đủ cả năm hoặc không đặt; cách tạo bucket, token và CORS ở [docs/RUNBOOK.md](docs/RUNBOOK.md) mục "Ảnh"; kiểm tra bằng `pnpm --filter api r2:check`). Trang **Images** của admin (`/systemadmin/media`) liệt kê ảnh trong bucket thành hai tab (đang sử dụng / không còn sử dụng) và cho xóa hàng loạt ảnh không còn dùng khỏi R2. Khi dùng R2, thêm vào `apps/web/.env.local` dòng `MEDIA_UPLOAD_ORIGIN=https://<account id>.r2.cloudflarestorage.com` (cho phép tải ảnh lên trong chính sách bảo mật của web).
-5. Tạo bảng và dữ liệu demo: `pnpm db:migrate` rồi `pnpm db:seed`. Seed tạo 1 admin, 3 shop (Whisk & Ladle `ACTIVE` có đủ lịch sử, Sugar & Sift `DRAFT`, Golden Noodle `SUSPENDED`), workshop kèm lịch lặp, khoảng 120 session, booking, khuyến mãi, ví và khách, và ghi **mật khẩu chung của các tài khoản demo** vào `apps/api/.seed-credentials` (git bỏ qua file này). Chạy lại seed an toàn.
+5. Tạo bảng và dữ liệu demo: `pnpm db:migrate` rồi `pnpm db:seed`. Seed tạo 1 admin, **9 shop** ở đủ trạng thái và nhiều loại tiền / múi giờ / ngôn ngữ (xem [bảng test bên dưới](#link-và-tài-khoản-test)), 16 khách có tài khoản, workshop dùng **ảnh thật từ Unsplash** (cần Internet để ảnh hiện), lịch lặp, session ở mọi trạng thái, booking và thanh toán, landing page, khuyến mãi, đánh giá, yêu thích, affiliate, ví, tin nhắn liên hệ, báo cáo site và Terms; và ghi **mật khẩu chung của các tài khoản demo** vào `apps/api/.seed-credentials` (git bỏ qua file này). Chạy lại seed an toàn.
 6. Chạy API (`pnpm dev:api`, kiểm tra http://127.0.0.1:4000/health và http://127.0.0.1:4000/ready) và **worker** ở terminal khác (`pnpm --filter api dev:worker`): worker gửi email (xác minh, quên mật khẩu, mã đặt chỗ, thông báo). Email được **giữ ở Mailpit**, xem tại http://127.0.0.1:8025 (không gửi ra ngoài).
 7. Tạo `apps/web/.env.local` (git bỏ qua) với một dòng `API_URL=http://127.0.0.1:4000`, rồi chạy web: `pnpm dev`. Đợi dòng `Ready` / `Local: http://localhost:3000`. **Giữ nguyên cửa sổ terminal đó**; muốn tắt bấm **Ctrl + C**.
 
@@ -297,13 +299,55 @@ Mở trình duyệt (khuyên dùng Chrome). Địa chỉ `*.localtest.me` luôn 
 
 Mẹo: dùng `http://localhost:3000/shopowner/whiskladle` thay cho `app.localtest.me` khi máy không có Internet (riêng landing page công khai thì bắt buộc dùng `whiskladle.localtest.me`; khi đó đặt `APP_URL` của API cho khớp).
 
+### Link và tài khoản test
+
+Dữ liệu demo do `pnpm db:seed` tạo (chạy lại an toàn: shop đã có thì giữ nguyên; muốn làm lại từ đầu dùng `pnpm --filter api db:reseed`). Mọi thời điểm tính theo ngày chạy seed nên dữ liệu luôn "mới". **Mật khẩu: một mật khẩu chung cho tất cả tài khoản**, nằm ở `apps/api/.seed-credentials` (git bỏ qua; không ghi vào README hay commit), hoặc tự chọn bằng `SEED_PASSWORD` (từ 10 ký tự) khi chạy seed trên database trống.
+
+**Link test** (web chạy ở cổng 3000, API ở 4000, Mailpit ở 8025):
+
+| Việc | Link |
+| --- | --- |
+| Website nền tảng, Workshops của khách | http://app.localtest.me:3000 |
+| Admin hệ thống | http://app.localtest.me:3000/systemadmin (Images: `/systemadmin/media`) |
+| Quản lý shop `{slug}` | http://app.localtest.me:3000/shopowner/{slug} |
+| Landing page công khai của shop | http://{slug}.localtest.me:3000 |
+| Landing page qua tên miền riêng (đã xác minh) | `tea.tokyotea.example` chỉ là dữ liệu mẫu, không trỏ về máy bạn: dùng link `{slug}.localtest.me` |
+| Email gửi ra (xác minh, mã đặt chỗ, thông báo) | http://127.0.0.1:8025 |
+| API sức khỏe | http://127.0.0.1:4000/health, http://127.0.0.1:4000/ready |
+
+**Tài khoản admin và khách**
+
+| Email | Vai trò / tình huống để test |
+| --- | --- |
+| `admin@workshopkit.example` | Admin hệ thống (`SUPER_ADMIN`): duyệt shop, tạm khóa, Images, báo cáo, tin nhắn liên hệ, Terms (có bản nháp v2), sửa hộ shop kèm lý do |
+| `emma@example.com` | Khách "đầy đủ": booking ở nhiều shop, link affiliate (Whisk & Ladle, Tokyo Tea), mã mời và 2 bạn đã đăng ký, ví có tiền và 3 yêu cầu rút (PAID / REJECTED / PENDING), hồ sơ, yêu thích |
+| `minh.tran@example.com`, `yuki.tanaka@example.com`, `jisoo.kim@example.com`, `li.wei@example.com`, `sophie.martin@example.com`, `noah.brown@example.com`, `linh.pham@example.com`, `anna.schmidt@example.com` và 7 khách nữa | Khách thường (mỗi người có tài khoản và booking ở các shop; 12 người đầu có hồ sơ, 4 người cuối chưa có) |
+| `unverified.user@example.com` | Tài khoản **chưa xác minh email** (`UNVERIFIED`): thử đăng nhập bị chặn |
+| `disabled.user@example.com` | Tài khoản **bị vô hiệu** (`DISABLED`): thử đăng nhập bị từ chối |
+
+**Chủ shop và 9 shop mẫu**
+
+| Shop (slug) | Chủ shop | Tình huống để test |
+| --- | --- | --- |
+| Whisk & Ladle Kitchen (`whiskladle`) | `linh@whiskladle.example` | `ACTIVE`, VND, giờ Việt Nam, en + vi. Shop đầy đủ nhất: 6 workshop (có workshop không có lịch lặp, workshop `DRAFT`), 6 tuần lịch sử + 60 ngày tới, session `OPEN/RUNNING/PAUSED/CLOSED/COMPLETED`, booking đủ trạng thái, thanh toán, khuyến mãi ở 5 trạng thái (đang chạy, sắp tới, tạm dừng, hết hạn, theo workshop), landing page `classic` đã công bố 3 phiên bản + 1 trang nháp thứ hai, phí riêng |
+| Sugar & Sift Bakery (`sugarsift`) | `ava@sugarsift.example` | `DRAFT`: chờ duyệt, landing page công khai trả 404, chưa có session |
+| Golden Noodle House (`goldennoodle`) | `minh@goldennoodle.example` | `SUSPENDED` (có lý do): chủ shop thấy thông báo, landing page công khai 404 |
+| Lotus Ceramics Studio (`lotusceramics`) | `hoa@lotusceramics.example` | `ACTIVE`, gốm ở Hội An, landing page `magazine` (2 phiên bản), **tên miền riêng chưa xác minh** |
+| Seoul Kitchen Class (`seoulkitchen`) | `jin@seoulkitchen.example` | KRW, giờ Seoul, ngôn ngữ mặc định `ko`, landing `journey`, 1 khuyến mãi, phí riêng |
+| Tokyo Tea & Sweets (`tokyotea`) | `sakura@tokyotea.example` | JPY, giờ Tokyo, `ja`, landing `cinematic` (theme tối), **tên miền riêng đã xác minh**, 2 khuyến mãi, affiliate của Emma |
+| Bangkok Bites Cooking School (`bangkokbites`) | `nok@bangkokbites.example` | THB (2 chữ số thập phân), giờ Bangkok, landing `appstyle` |
+| Edge Case Lab (`edgecases`) | `sam@edgecaselab.example` | USD, giờ New York, landing `bento`. Session dựng tay để thử biên: **hết chỗ**, **còn 1 chỗ**, **sát giờ đóng đặt** (trong 120 phút), **đang diễn ra**, **tạm dừng**, **bị chủ shop đóng** (booking bị hủy bởi shop), **đổi giờ**, đã hoàn thành, tự đóng, rất xa, workshop **miễn phí** (tổng 0), workshop 600 phút, booking có yêu cầu đặc biệt, booking có khuyến mãi cộng dồn, thanh toán nhập nhầm rồi **REVERSAL**, khách vãng lai không email; khuyến mãi cộng dồn / dùng riêng / chưa bắt đầu |
+| Quiet Corner Studio (`quietcorner`) | `an@quietcorner.example` | `ACTIVE` nhưng **chưa có landing page công bố**: link công khai trả 404 (thử luồng công bố đầu tiên) |
+
+Ghi chú: ảnh lấy từ `images.unsplash.com` (không lưu trên R2 của bạn; trang Images của admin chỉ liệt kê ảnh trong bucket R2). Terms/Privacy bản 1 đã được mọi tài khoản đồng ý nên không hiện popup; bản nháp Terms v2 chờ bạn công bố để thử luồng đồng ý lại. Mailpit được dọn sạch khi nạp lại dữ liệu. Khi chạy e2e, API cần `RATE_LIMIT_FACTOR=10` (xem [e2e/README.md](e2e/README.md)).
+
 ### Đổi ngôn ngữ
 
 Dùng nút ngôn ngữ ở góc trên bên phải (English, Tiếng Việt, 한국어, 日本語, 中文). Ngày tháng và ô nhập ngày sẽ đổi định dạng theo ngôn ngữ đã chọn.
 
 ### Về dữ liệu
 
-- Dữ liệu nằm trong **PostgreSQL** và còn nguyên khi tắt web. Muốn làm lại từ đầu, tạo lại database rồi chạy `pnpm db:migrate` và `pnpm db:seed` (xóa volume của database là hành động mất dữ liệu: chỉ làm trên máy dev của bạn).
+- Dữ liệu nằm trong **PostgreSQL** và còn nguyên khi tắt web. Muốn làm lại dữ liệu từ đầu mà giữ cấu trúc: `pnpm --filter api db:reseed` (xóa **toàn bộ** dòng của mọi bảng rồi nạp lại demo; chỉ chạy trên máy dev của bạn, công cụ từ chối khi `NODE_ENV=production` hoặc database ở máy khác). Ảnh đã tải lên Cloudflare R2 **không bị xóa**: dọn bằng trang Images của admin.
 - Trang giới thiệu của nền tảng hiển thị workshop của các shop mà admin chọn "List" (API `GET /public/workshops/featured`).
 - Trang landing page của shop có nút **Log in** và **Register** ở header (trong menu ba gạch trên điện thoại) cho **khách hàng**: chúng dẫn sang `app.localtest.me:3000` và mở hộp đăng nhập / đăng ký chỉ dành cho khách hàng (chủ shop đăng ký từ trang chủ của nền tảng).
 - Test: có `TEST_DATABASE_URL` thì `pnpm test` chạy thêm các test trên PostgreSQL thật (đăng ký, đăng nhập, cách ly dữ liệu giữa các shop, email, outbox...). Thiếu nó thì các test đó được bỏ qua. Các test này **tạo dữ liệu trong database test**, không dùng database dev. Test trình duyệt (`pnpm test:e2e`) cần cả stack ở trên: xem [e2e/README.md](e2e/README.md).

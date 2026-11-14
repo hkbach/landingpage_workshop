@@ -105,6 +105,6 @@ export interface AdminMedia {
 export interface AdminRating {
   id: string; bookingCode: string; workshopId: string; workshopTitle: string; shopId: string; shopName: string; customerName: string; customerEmail: string;
   stars: number; comment: string; createdAt: string;
-  /** VISIBLE counts in the rating of the workshop and is shown to the shop; REMOVED (by an administrator, with a reason) does neither. */
-  status: "VISIBLE" | "REMOVED"; removedReason: string; removedAt: string;
+  /** SHOWN (what the API calls it) counts in the rating of the workshop and is shown to the shop; REMOVED (by an administrator, with a reason) does neither. */
+  status: "SHOWN" | "REMOVED"; removedReason: string; removedAt: string;
 }

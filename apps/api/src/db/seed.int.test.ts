@@ -40,6 +40,12 @@ d("the demo seed", () => {
 
       const orgs = await tx.select({ slug: schema.organizations.slug, status: schema.organizations.status }).from(schema.organizations).where(inArray(schema.organizations.slug, ["whiskladle", "sugarsift", "goldennoodle"]));
       expect(orgs.map((o) => [o.slug, o.status]).sort()).toEqual([["goldennoodle", "SUSPENDED"], ["sugarsift", "DRAFT"], ["whiskladle", "ACTIVE"]]);
+      // nine shops in all, with a landing page in every one that is meant to have one
+      const all = await tx.select({ slug: schema.organizations.slug }).from(schema.organizations);
+      expect(all.length).toBeGreaterThanOrEqual(9);
+      const pages = await tx.select({ slug: schema.organizations.slug }).from(schema.sitePages).innerJoin(schema.organizations, eq(schema.organizations.id, schema.sitePages.organizationId)).where(eq(schema.sitePages.isLive, true));
+      expect(pages.map((p) => p.slug)).not.toContain("quietcorner");
+      expect(pages.map((p) => p.slug)).toContain("whiskladle");
 
       if (first.created.includes(DEMO_ACCOUNTS.activeOwner)) {
         expect(first.sessions).toBeGreaterThan(30);

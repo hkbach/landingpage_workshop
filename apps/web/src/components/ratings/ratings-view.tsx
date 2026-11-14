@@ -8,6 +8,12 @@ import type { OwnerRating } from "@/lib/rating-types";
 
 interface RatingsResponse { items: OwnerRating[]; average: number; count: number }
 
+/** The API sends the title of a workshop in every language it has: show the one of the page, else English, else any. */
+function titleOf(title: string | Record<string, string>, locale: string): string {
+  if (typeof title === "string") return title;
+  return title[locale] ?? title.en ?? Object.values(title)[0] ?? "";
+}
+
 /** The ratings and comments guests left for the workshops of the shop (read only). An administrator can remove a rating that breaks the rules; it then disappears from here. */
 export function RatingsView() {
   const t = useTranslations("dashboard.ratings");
@@ -38,7 +44,7 @@ export function RatingsView() {
                 <Card>
                   <CardContent className="grid gap-1 py-3" data-testid="rating-item">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span className="font-medium">{r.workshopTitle}</span>
+                      <span className="font-medium">{titleOf(r.workshopTitle, locale)}</span>
                       <span className="inline-flex items-center gap-1 text-sm font-medium text-amber-700" aria-label={t("starsOf", { n: r.stars })}>
                         <span className="inline-flex" aria-hidden>{[1, 2, 3, 4, 5].map((i) => <Star key={i} className={i <= r.stars ? "size-4 fill-amber-500 text-amber-500" : "size-4 text-black/20"} />)}</span>
                         {r.stars}/5

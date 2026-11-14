@@ -1,5 +1,5 @@
 import type { AdminAffiliate, AdminBooking, AdminCustomer, AdminLandingPage, AdminReferralLink, AdminSession, AdminShop, AdminUser, AdminVoucher, AdminWithdrawal, AdminWorkshop } from "@/lib/admin-types";
-import type { AdminAuditRow } from "@/lib/admin-types";
+import type { AdminAuditRow, AdminRating } from "@/lib/admin-types";
 
 // The platform administrator's lists as the API (apps/api) gives them, in the shapes the admin screens use. Each function takes one row of the API. A text that exists in several languages
 // ({ en, vi, ... }) becomes the one of the language of the page, else English.
@@ -112,6 +112,15 @@ export const workshopFrom = (w: ApiWorkshop): AdminWorkshop => ({
   description: pick(w.description), ...(w.rating.average !== null ? { rating: { average: w.rating.average, count: w.rating.count } } : {}), sessions: w.sessions, bookings: w.bookings,
 });
 
+type ApiRating = {
+  id: string; workshopId: string; workshopTitle: Localized | string; shopName: string; shopSlug?: string; shopId?: string; bookingCode: string; customer: { id: string; name: string; email: string };
+  stars: number; comment: string | null; createdAt: string; status: AdminRating["status"]; removedReason: string | null; removedAt?: string | null;
+};
+export const ratingFrom = (r: ApiRating): AdminRating => ({
+  id: r.id, bookingCode: r.bookingCode, workshopId: r.workshopId, workshopTitle: pick(r.workshopTitle), shopId: r.shopId ?? "", shopName: r.shopName, customerName: r.customer.name, customerEmail: r.customer.email,
+  stars: r.stars, comment: r.comment ?? "", createdAt: r.createdAt, status: r.status, removedReason: r.removedReason ?? "", removedAt: r.removedAt ?? "",
+});
+
 const MAP: Record<string, { fromApi: (row: Record<string, unknown>) => boolean; map: (row: never) => unknown }> = {
   shops: { fromApi: (r) => "workshopCount" in r, map: shopFrom as (row: never) => unknown },
   users: { fromApi: (r) => "emailVerified" in r, map: userFrom as (row: never) => unknown },
@@ -125,6 +134,7 @@ const MAP: Record<string, { fromApi: (row: Record<string, unknown>) => boolean; 
   customers: { fromApi: (r) => "hasAccount" in r, map: customerFrom as (row: never) => unknown },
   workshops: { fromApi: (r) => typeof r.title === "object" && "shop" in r, map: workshopFrom as (row: never) => unknown },
   withdrawals: { fromApi: (r) => "number" in r && "customer" in r, map: withdrawalFrom as (row: never) => unknown },
+  ratings: { fromApi: (r) => "stars" in r && typeof r.customer === "object", map: ratingFrom as (row: never) => unknown },
 };
 
 /** The rows of a list in the shape of its screen. A row that already has that shape (the sample data) passes through, so the same screens work with both. */

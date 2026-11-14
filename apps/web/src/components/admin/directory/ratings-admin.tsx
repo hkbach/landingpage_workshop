@@ -37,7 +37,7 @@ export function RatingsAdmin() {
     { key: "stars", header: t("col.stars"), className: "whitespace-nowrap", cell: (r) => <span className="inline-flex items-center gap-1 tabular-nums" data-testid="rating-stars"><Star className="size-3.5 fill-amber-500 text-amber-500" aria-hidden />{r.stars}/5</span> },
     { key: "comment", header: t("col.comment"), className: "max-w-sm", cell: (r) => (r.comment ? <p className="whitespace-pre-wrap break-words text-sm" data-testid="rating-comment">{r.comment}</p> : <span className="text-muted-foreground">{t("noComment")}</span>) },
     { key: "date", header: t("col.date"), className: "whitespace-nowrap text-sm", cell: (r) => r.createdAt.slice(0, 10) },
-    { key: "status", header: t("col.status"), cell: (r) => <span title={r.removedReason}><Pill tone={r.status === "VISIBLE" ? "green" : "slate"}>{t(`status.${r.status}`)}</Pill>{r.removedReason ? <span className="block text-xs text-muted-foreground">{r.removedReason}</span> : null}</span> },
+    { key: "status", header: t("col.status"), cell: (r) => <span title={r.removedReason}><Pill tone={r.status === "SHOWN" ? "green" : "slate"}>{t(`status.${r.status === "SHOWN" ? "VISIBLE" : r.status}`)}</Pill>{r.removedReason ? <span className="block text-xs text-muted-foreground">{r.removedReason}</span> : null}</span> },
     {
       key: "actions", header: <span className="sr-only">{t("col.actions")}</span>, className: "text-right",
       cell: (r) => r.status === "REMOVED"
@@ -57,7 +57,7 @@ export function RatingsAdmin() {
         <FilterBox id="ra-status" label={t("col.status")}>
           <select id="ra-status" className={selectClass} value={status} onChange={(e) => setStatus(e.target.value)}>
             <option value="">{t("all")}</option>
-            <option value="VISIBLE">{t("status.VISIBLE")}</option>
+            <option value="SHOWN">{t("status.VISIBLE")}</option>
             <option value="REMOVED">{t("status.REMOVED")}</option>
           </select>
         </FilterBox>

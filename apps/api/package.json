@@ -16,6 +16,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "node --import tsx src/db/seed.ts",
+    "db:wipe": "node --import tsx src/db/wipe.ts",
+    "db:reseed": "node --import tsx src/db/wipe.ts --yes && node --import tsx src/db/seed.ts",
     "r2:check": "node --import tsx src/media/r2-check.ts",
     "db:encrypt-bank": "node --import tsx src/db/encrypt-bank-accounts.ts"
   },
