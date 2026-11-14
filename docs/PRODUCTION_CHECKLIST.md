@@ -34,6 +34,17 @@ Backend đã có: lưu `organizations.custom_domain` (unique), kiểm tra DNS (`
 - [ ] Không có bí mật thật trong repo, log hay tài liệu; quản lý bí mật bằng kho bí mật của môi trường.
 - [x] Ảnh tải lên R2 bằng URL ký sẵn: đã làm và thử với R2 thật ở dev (14/11/2026). Việc triển khai xem mục 3a.
 
+### Phát hiện của đợt rà soát 14/11/2026 cần người quyết định
+
+Đợt rà soát toàn bộ mã nguồn (bảo mật, lỗi, hiệu năng) đã sửa những gì có câu trả lời rõ ràng (commit `8272f3b`, `8414fa2`). Những mục dưới đây là đánh đổi sản phẩm hoặc bảo mật, chưa sửa:
+
+- [ ] **Turnstile (chặn trước khi chạy thật):** web chưa hiển thị widget và chưa gửi `turnstileToken`. Ở production API bắt buộc có khóa Turnstile, nên **mọi** lần lấy mã đặt chỗ, đặt chỗ, đăng ký, quên mật khẩu, Contact và báo cáo vi phạm sẽ bị từ chối (`BOT_CHECK_FAILED`). Cần khóa site/secret do người phụ trách cấp, rồi tích hợp widget.
+- [ ] **Mã booking đoán được:** mã có dạng tuần tự `SES-0007-001`; khách hủy chỉ cần mã + email (FR-BOOK-03). Đã thêm giới hạn 20 lần / 15 phút cho mỗi email ở mỗi shop. Có muốn thêm phần ngẫu nhiên vào mã, hoặc bắt buộc link xác nhận / OTP khi hủy không?
+- [ ] **Đoán mật khẩu từ nhiều IP:** giới hạn hiện theo cặp (IP, email), có chủ ý để không ai khóa được tài khoản người khác (test `auth.int.test.ts`). Muốn thêm giới hạn theo tài khoản (đánh đổi: kẻ xấu có thể khóa tạm tài khoản người khác) hay thêm Turnstile cho đăng nhập?
+- [ ] **Chiếm tên miền riêng:** `custom_domain` là unique ngay cả khi chưa xác minh, nên shop B có thể nhập trước tên miền của shop A và chặn A. Đề xuất: chỉ unique khi đã xác minh DNS (ai xác minh trước thì được), cần migration và quy tắc nghiệp vụ.
+- [ ] **Hiệu năng còn lại (cần thiết kế, chưa làm):** kết sổ tài chính mỗi giờ đọc lại toàn bộ lịch sử thanh toán; outbox giữ transaction mở trong lúc gọi nhà cung cấp email và chỉ gửi 20 email mỗi lượt; sinh session theo lịch chạy 2 truy vấn cho mỗi buổi; nhật ký audit của admin sắp xếp bằng `date_trunc` nên không dùng được index; các danh sách của admin dùng OFFSET; khu chủ shop vẫn tải tối đa 2000 booking rồi lọc ở trình duyệt; pool PostgreSQL chưa đặt `statement_timeout`.
+- [ ] **Tài liệu yêu cầu tự mâu thuẫn:** 26 điểm ở [E2E_TEST_CASES.md](E2E_TEST_CASES.md) mục 5 (thời hạn phiên 7 hay 14 ngày, email 5 hay 6 ngôn ngữ, đặt lại mật khẩu bằng mật khẩu tạm hay link...). Cần chủ sản phẩm chốt trước khi viết test cho các case đó.
+
 ## 3a. Cloudflare R2 cho ảnh (cần người có quyền tài khoản Cloudflare)
 
 Đã làm: API cấp URL ký sẵn (`POST /api/v1/media/presign`), trình duyệt PUT thẳng lên R2, `pnpm --filter api r2:check` và `e2e/media.spec.ts` đạt trên bucket dev. Cần làm khi lên production (chi tiết từng bước ở [RUNBOOK.md](RUNBOOK.md) mục "Ảnh (Cloudflare R2)"):

@@ -21,6 +21,7 @@ pnpm exec playwright install chromium         # once
 pnpm test:e2e                                 # every file
 pnpm exec playwright test e2e/owner.spec.ts   # one file
 E2E_PORT=3200 pnpm test:e2e                   # another port (the API must then have APP_URL with 3200)
+E2E_CHANNEL=chrome pnpm test:e2e              # the Chrome installed on the machine (or msedge), when security software blocks the browser Playwright downloads
 ```
 
 - `*.localtest.me` is mapped to this machine by the browser (a launch option), so no DNS is needed.
@@ -30,5 +31,9 @@ E2E_PORT=3200 pnpm test:e2e                   # another port (the API must then 
   (`acceptLegal`), and `customer.spec.ts` checks the window itself.
 - `media.spec.ts` uploads a real image to the Cloudflare R2 bucket from the browser, and checks that the administrator finds an unused image in the Images page and deletes it from the bucket (the five `R2_*` in `apps/api/.env`, `MEDIA_UPLOAD_ORIGIN` for web, the CORS policy of the bucket for the origin of the app: run it with `E2E_PORT=3000`, the origin
   in the CORS policy). It is skipped when the storage is not set up, so CI (no R2) skips it. It leaves one small test image in the bucket.
+- The test cases, which of them are automated and in which file, and the order to automate the rest: [docs/E2E_TEST_CASES.md](../docs/E2E_TEST_CASES.md). `security.spec.ts` (access by role and by
+  shop, CSRF Origin, session cookie, CSP) and `booking-rules.spec.ts` (price on the server, repeated request, seats, guests per booking, wrong codes, suspended shop) follow its IDs.
+- The API allows 10 signups an hour from one address and keeps that count in memory: the whole suite makes about 6, so a second full run within the hour can fail at a signup with `429`.
+  Restart the API (`pnpm --filter api dev`) to reset the count.
 - A failed test leaves a screenshot, a trace and a snapshot of the page in `test-results/` (git ignores it): `pnpm exec playwright show-trace <trace.zip>`.
 - CI runs the same on the services of the job (`.github/workflows/ci.yml`, job `e2e`).
