@@ -73,7 +73,9 @@ export class FinanceService {
 
   /** `GET /admin/income`: one line per shop that had payments in the range (each day is a day of ITS shop) and the totals per currency (currencies are never added together). */
   async adminIncome(q: { from?: string | undefined; to?: string | undefined }, now = new Date()) {
-    const range = resolveRange(q.from, q.to, "UTC", now);
+    // The default range ends on "today" of the shop that is furthest ahead (UTC+14): every shop's own today is inside it, and each shop is cut to its own days below. (With UTC the first hours of
+    // the day of a shop in Asia were left out.)
+    const range = resolveRange(q.from, q.to, "Pacific/Kiritimati", now);
     const shops = await this.db.select({ id: organizations.id, name: organizations.name, slug: organizations.slug, timezone: organizations.timezone, currency: organizations.currency }).from(organizations).orderBy(asc(organizations.name), asc(organizations.id));
     // One wide window for every shop (their days differ by up to a day either way); each shop is then cut to its own days.
     const entries = await loadEntries(this.db, { fromUtc: new Date(`${addDays(range.from, -1)}T00:00:00Z`), toUtc: new Date(`${addDays(range.to, 2)}T00:00:00Z`) });

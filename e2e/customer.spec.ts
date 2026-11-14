@@ -3,6 +3,8 @@ import { acceptLegal, APP, open, seedPassword, watchBrowser } from "./helpers";
 
 // The customer area against the REAL API (an account made through the API, the session in the browser). Needs the stack of e2e/README.md.
 const PASSWORD = "Real-Stack-Pass-123";
+// 1x1 PNG
+const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
 
 test.describe("a customer on the real API", () => {
   test("opens every page of their area, and a favorite is kept by the server", async ({ page }) => {
@@ -39,6 +41,31 @@ test.describe("a customer on the real API", () => {
     await open(page, `${APP}/customer/${id}/affiliate`);
     await page.getByTestId("affiliate-tab-links").click();
     await expect(page.getByTestId("affiliate-link-earned").first()).toBeVisible({ timeout: 60_000 });
+    expect(problems).toEqual([]);
+  });
+
+  test("uploads a photo from the profile to Cloudflare R2: the address is in the avatars folder of the account, the bucket serves it, and Remove clears it", async ({ page }) => {
+    test.setTimeout(180_000);
+    const problems = watchBrowser(page);
+    const api = page.context().request;
+    const email = `avatar-${Date.now()}-${Math.floor(Math.random() * 1e6)}@example.com`;
+    const signup = await api.post(`${APP}/api/v1/auth/signup`, { headers: { origin: APP }, data: { type: "CUSTOMER", email, password: PASSWORD, confirmPassword: PASSWORD } });
+    expect(signup.status()).toBe(201);
+    const { id } = (await signup.json()) as { id: string };
+    await acceptLegal(api);
+    await open(page, `${APP}/customer/${id}/profile`);
+    await expect(page.getByTestId("avatar-upload")).toBeVisible({ timeout: 90_000 });
+    await expect(page.getByTestId("avatar-upload").locator("[data-kind='initials']")).toBeVisible();
+    // (the page is hydrated after it is shown: choose the file again until the picture appears)
+    await expect(async () => {
+      await page.getByTestId("avatar-file").setInputFiles({ name: "me.png", mimeType: "image/png", buffer: PNG });
+      await expect(page.getByTestId("avatar-upload").locator("[data-kind='image'] img")).toBeVisible({ timeout: 15_000 });
+    }).toPass({ timeout: 90_000 });
+    const src = (await page.getByTestId("avatar-upload").locator("img").first().getAttribute("src")) ?? "";
+    expect(src).toMatch(new RegExp(`/avatars/${id}/[0-9a-f-]{36}[.](webp|jpg)$`));
+    expect((await api.get(src)).ok()).toBe(true);
+    await page.getByRole("button", { name: /Remove photo/ }).click();
+    await expect(page.getByTestId("avatar-upload").locator("[data-kind='initials']")).toBeVisible();
     expect(problems).toEqual([]);
   });
 

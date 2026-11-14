@@ -1049,7 +1049,8 @@
       "workshop": "Workshop",
       "branding": "Thương hiệu",
       "session": "Session",
-      "promotion": "Khuyến mãi"
+      "promotion": "Khuyến mãi",
+      "avatar": "Ảnh khách hàng"
     },
     "usedBy": {
       "workshop": "Workshop",
@@ -1149,5 +1150,28 @@
       "platform_settings": "Cài đặt nền tảng",
       "legal": "Điều khoản và quyền riêng tư"
     }
+  },
+  "history": {
+    "tabsLabel": "Chế độ xem",
+    "tabMain": "Quản lý",
+    "tabHistory": "Lịch sử",
+    "description": "Mọi lần tạo và chỉnh sửa trên màn hình này, mới nhất trước: ai làm, khi nào, và từng trường đã đổi từ gì sang gì.",
+    "searchWho": "Tìm theo email người dùng",
+    "searchShop": "Tìm theo shop (tên, slug hoặc id)",
+    "col": {
+      "when": "Thời gian",
+      "who": "Người thực hiện",
+      "action": "Hành động",
+      "record": "Bản ghi",
+      "changes": "Thay đổi"
+    },
+    "system": "Hệ thống",
+    "noDetails": "Không lưu chi tiết.",
+    "empty": "trống",
+    "moreFields": "{count, plural, other {Thêm # trường}}",
+    "less": "Thu gọn",
+    "more": "Tải thêm",
+    "loading": "Đang tải…",
+    "utcNote": "Thời gian hiển thị theo múi giờ của bạn."
   }
 }

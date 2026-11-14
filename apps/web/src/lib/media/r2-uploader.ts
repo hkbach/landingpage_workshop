@@ -49,7 +49,10 @@ export function createR2Uploader(deps: { prepare?: (file: File) => Promise<Prepa
 
       let signed: Response;
       try {
-        signed = await send("/api/v1/media/presign", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ purpose, contentType: blob.type, size: blob.size }) });
+        // the photo of a customer has an address of its own (it belongs to an account, not to a shop)
+        signed = purpose === "avatar"
+          ? await send("/api/v1/media/avatar/presign", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ contentType: blob.type, size: blob.size }) })
+          : await send("/api/v1/media/presign", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ purpose, contentType: blob.type, size: blob.size }) });
       } catch {
         throw new MediaUploadError("failed");
       }

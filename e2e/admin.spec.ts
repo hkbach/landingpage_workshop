@@ -30,6 +30,30 @@ test.describe("the platform administrator on the real API", () => {
     expect(failures, failures.join("\n")).toEqual([]);
   });
 
+  test("every screen that creates or edits has a History tab with the changes: who, what was done, and what each field was and became", async ({ page }) => {
+    test.setTimeout(240_000);
+    const problems = watchBrowser(page);
+    await login(page, ADMIN, seedPassword());
+    const screens: Array<[string, RegExp]> = [["organizations", /organization\.|shop\./], ["workshops", /workshop\./], ["sessions", /session\.|schedule_rule\./], ["users", /user\./]];
+    for (const [path, action] of screens) {
+      await open(page, `${APP}/systemadmin/${path}`);
+      await expect(page.getByTestId("tab-history"), path).toBeVisible({ timeout: 90_000 });
+      await expect(async () => {
+        await page.getByTestId("tab-history").click();
+        await expect(page.getByTestId("history-tab")).toBeVisible({ timeout: 5_000 });
+      }).toPass({ timeout: 60_000 });
+      await expect(page.getByTestId("history-table").getByText(action).first(), path).toBeVisible({ timeout: 60_000 });
+      await page.getByTestId("tab-main").click(); // the screen is still there
+      await expect(page.getByTestId("history-tab")).toHaveCount(0);
+    }
+    // a screen with nothing to track yet says so instead of failing, and the lines of a shop can be searched
+    await open(page, `${APP}/systemadmin/organizations`);
+    await page.getByTestId("tab-history").click();
+    await page.getByLabel("Search by shop (name, slug or id)").fill("whiskladle");
+    await expect(page.getByTestId("history-table").getByText("whiskladle").first()).toBeVisible({ timeout: 60_000 });
+    expect(problems).toEqual([]);
+  });
+
   test("writes the Terms as a draft, publishes it, and the public page shows it", async ({ page }) => {
     await login(page, ADMIN, seedPassword());
     const text = `# Terms of E2E ${Date.now().toString(36)}

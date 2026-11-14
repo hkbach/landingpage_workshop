@@ -48,8 +48,8 @@
     },
     "socials": "Social information",
     "socialsHint": "Optional. Your handle or number on each app.",
-    "avatar": "Photo link",
-    "avatarHint": "A link that starts with https://. Optional.",
+    "avatar": "Profile photo",
+    "avatarHint": "JPEG, PNG or WebP, up to 5 MB. Optional.",
     "save": "Save",
     "saving": "Saving…",
     "saved": "Your profile was saved.",
@@ -64,7 +64,20 @@
     "categories": "Favorite categories",
     "categoriesHint": "Choose exactly 3 categories of workshops you like.",
     "categoriesCount": "{count} of {max} chosen",
-    "completeBanner": "Your profile is not complete yet. Add your country and date of birth so the studios you book with know who is coming."
+    "completeBanner": "Your profile is not complete yet. Add your country and date of birth so the studios you book with know who is coming.",
+    "avatarUpload": "Upload photo",
+    "avatarReplace": "Replace photo",
+    "avatarRemove": "Remove photo",
+    "avatarUploading": "Uploading…",
+    "avatarErrors": {
+      "empty": "This file is empty.",
+      "tooLarge": "The image is larger than 5 MB.",
+      "unsupportedType": "Only JPEG, PNG and WebP images are allowed.",
+      "typeMismatch": "The file content does not match its type. Use a real JPEG, PNG or WebP image.",
+      "decodeFailed": "This image could not be read. Try another file.",
+      "failed": "Upload failed. Please try again.",
+      "notConfigured": "Photo upload is not set up yet."
+    }
   },
   "workshops": {
     "shopLine": "Shop: {shop}",

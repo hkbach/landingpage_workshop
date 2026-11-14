@@ -6,10 +6,20 @@ import { DB, type Database } from "../db/db.module";
 import { organizations } from "../db/schema";
 import { MediaService, type StoredObject } from "./media.service";
 
-/** The name of a file of the platform: `shops/{shop id}/{purpose}/{id}.{ext}` (what `presign` makes). Nothing else is ever removed. */
-export const MEDIA_KEY = /^shops\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\/(site|workshop|branding|session|promotion)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(?:jpg|png|webp)$/;
+/**
+ * The name of a file of the platform: `shops/{shop id}/{purpose}/{id}.{ext}` (what `presign` makes) or `avatars/{account id}/{id}.{ext}` (the photo of a customer). Nothing else is ever removed.
+ * Group 1 is the shop (or the account), group 2 the purpose (`avatar` for a customer).
+ */
+const UUID = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
+export const MEDIA_KEY = new RegExp(`^(?:shops/(${UUID})/(site|workshop|branding|session|promotion)|avatars/(${UUID})/(avatar))/${UUID}[.](?:jpg|png|webp)$`);
+/** The owner of a file by its name: the shop it belongs to, or the account of the customer whose photo it is. */
+export function parseMediaKey(key: string): { shopId: string | null; accountId: string | null; purpose: string } | null {
+  const m = MEDIA_KEY.exec(key);
+  if (!m) return null;
+  return m[1] ? { shopId: m[1], accountId: null, purpose: m[2]! } : { shopId: null, accountId: m[3]!, purpose: m[4]! };
+}
 /** The same name as a pattern that finds it inside a text (a column, a page of the builder), for PostgreSQL. */
-const KEY_IN_TEXT = "(shops/[0-9a-f-]{36}/(?:site|workshop|branding|session|promotion)/[0-9a-f-]{36}[.](?:jpg|png|webp))";
+const KEY_IN_TEXT = "((?:shops/[0-9a-f-]{36}/(?:site|workshop|branding|session|promotion)|avatars/[0-9a-f-]{36}/avatar)/[0-9a-f-]{36}[.](?:jpg|png|webp))";
 export const MAX_DELETE = 100;
 /** A file younger than this is never "unused": a shop owner may have uploaded it and not saved the form yet. */
 export const RECENT_MS = 24 * 60 * 60_000;
@@ -62,8 +72,8 @@ export class AdminMediaService {
   /** All the files of the bucket, newest first, each with its state. */
   async list(now = new Date()): Promise<{ items: MediaItem[]; total: number; truncated: boolean }> {
     const [{ objects, truncated }, used] = await Promise.all([this.media.listObjects(), this.usage()]);
-    const files = objects.flatMap((o) => { const m = MEDIA_KEY.exec(o.key); return m ? [{ o, shopId: m[1]!, purpose: m[2]! }] : []; }); // (a file that is not named like ours is not ours to show or remove)
-    const shopIds = [...new Set(files.map((f) => f.shopId))];
+    const files = objects.flatMap((o) => { const k = parseMediaKey(o.key); return k ? [{ o, shopId: k.shopId ?? "", purpose: k.purpose }] : []; }); // (a file that is not named like ours is not ours to show or remove)
+    const shopIds = [...new Set(files.map((f) => f.shopId).filter(Boolean))];
     const shops = shopIds.length === 0 ? [] : await this.db.select({ id: organizations.id, name: organizations.name }).from(organizations).where(inArray(organizations.id, shopIds));
     const names = new Map(shops.map((s) => [s.id, s.name]));
     const items = files.map(({ o, shopId, purpose }): MediaItem => this.item(o, shopId, purpose, names.get(shopId) ?? "", used.get(o.key) ?? (isRecent(o, now) ? new Set<UsedBy>(["recentUpload"]) : undefined)));
@@ -98,10 +108,11 @@ export class AdminMediaService {
       }));
     }
     if (result.deleted.length > 0) {
-      const shops = await this.db.select({ id: organizations.id }).from(organizations).where(inArray(organizations.id, [...new Set(result.deleted.map((k) => MEDIA_KEY.exec(k)![1]!))]));
+      const owners = result.deleted.map((k) => parseMediaKey(k)?.shopId).filter((id): id is string => Boolean(id));
+      const shops = owners.length === 0 ? [] : await this.db.select({ id: organizations.id }).from(organizations).where(inArray(organizations.id, [...new Set(owners)]));
       const known = new Set(shops.map((s) => s.id));
       for (const key of result.deleted) {
-        const shopId = MEDIA_KEY.exec(key)![1]!;
+        const shopId = parseMediaKey(key)?.shopId ?? "";
         await this.audit.record({ organizationId: known.has(shopId) ? shopId : null, actorUserId: actor.userId, action: "media.delete", entityType: "media", entityId: key, before: { key }, after: reason ? { reason } : {}, ip: actor.ip });
       }
     }

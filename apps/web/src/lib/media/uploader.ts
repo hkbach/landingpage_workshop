@@ -4,7 +4,7 @@ import { newUuid } from "@/lib/uuid";
 // Media upload seam (FR-MEDIA-01). `mediaUploader` (r2-uploader.ts) checks and shrinks the image in the browser, asks the API for a presigned URL and PUTs the file to Cloudflare R2; it returns the
 // public https address. The mock below (a data: URL, nothing leaves the browser) is kept for tests. UI code only depends on this interface.
 
-export type UploadPurpose = "site" | "workshop" | "branding" | "session" | "promotion";
+export type UploadPurpose = "site" | "workshop" | "branding" | "session" | "promotion" | "avatar";
 export interface UploadedMedia { id: string; url: string; width: number; height: number }
 
 export interface MediaUploader {

@@ -48,8 +48,8 @@
     },
     "socials": "Thông tin mạng xã hội",
     "socialsHint": "Không bắt buộc. Tên tài khoản hoặc số của bạn trên từng ứng dụng.",
-    "avatar": "Liên kết ảnh",
-    "avatarHint": "Liên kết bắt đầu bằng https://. Không bắt buộc.",
+    "avatar": "Ảnh đại diện",
+    "avatarHint": "JPEG, PNG hoặc WebP, tối đa 5 MB. Không bắt buộc.",
     "save": "Lưu",
     "saving": "Đang lưu…",
     "saved": "Đã lưu hồ sơ của bạn.",
@@ -64,7 +64,20 @@
     "categories": "Ngành nghề yêu thích",
     "categoriesHint": "Chọn đúng 3 ngành nghề workshop bạn thích.",
     "categoriesCount": "Đã chọn {count}/{max}",
-    "completeBanner": "Hồ sơ của bạn chưa đầy đủ. Hãy thêm quốc gia và ngày sinh để các studio bạn đặt chỗ biết ai sẽ đến."
+    "completeBanner": "Hồ sơ của bạn chưa đầy đủ. Hãy thêm quốc gia và ngày sinh để các studio bạn đặt chỗ biết ai sẽ đến.",
+    "avatarUpload": "Tải ảnh lên",
+    "avatarReplace": "Đổi ảnh",
+    "avatarRemove": "Xóa ảnh",
+    "avatarUploading": "Đang tải lên…",
+    "avatarErrors": {
+      "empty": "Tệp này trống.",
+      "tooLarge": "Ảnh lớn hơn 5 MB.",
+      "unsupportedType": "Chỉ chấp nhận ảnh JPEG, PNG và WebP.",
+      "typeMismatch": "Nội dung tệp không khớp với loại tệp. Hãy dùng ảnh JPEG, PNG hoặc WebP thật.",
+      "decodeFailed": "Không đọc được ảnh này. Hãy thử tệp khác.",
+      "failed": "Tải lên thất bại. Vui lòng thử lại.",
+      "notConfigured": "Chức năng tải ảnh lên chưa được thiết lập."
+    }
   },
   "workshops": {
     "shopLine": "Shop: {shop}",

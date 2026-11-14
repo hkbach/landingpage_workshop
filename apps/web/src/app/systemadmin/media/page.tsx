@@ -1,5 +1,6 @@
 import { MediaAdmin } from "@/components/admin/directory/media-admin";
+import { WithHistory } from "@/components/admin/history-tab";
 
 export default function MediaPage() {
-  return <MediaAdmin />;
+  return <WithHistory scope="media"><MediaAdmin /></WithHistory>;
 }

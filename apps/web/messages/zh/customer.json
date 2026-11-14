@@ -48,8 +48,8 @@
     },
     "socials": "社交信息",
     "socialsHint": "选填。您在各应用中的账号或号码。",
-    "avatar": "照片链接",
-    "avatarHint": "以 https:// 开头的链接，选填。",
+    "avatar": "头像",
+    "avatarHint": "JPEG、PNG 或 WebP，最大 5 MB。可选。",
     "save": "保存",
     "saving": "保存中…",
     "saved": "您的资料已保存。",
@@ -64,7 +64,20 @@
     "categories": "喜欢的类别",
     "categoriesHint": "请恰好选择 3 个您喜欢的工作坊类别。",
     "categoriesCount": "已选 {count}/{max}",
-    "completeBanner": "您的资料尚未完善。请补充国家和出生日期，让您预订的工作室知道来的是谁。"
+    "completeBanner": "您的资料尚未完善。请补充国家和出生日期，让您预订的工作室知道来的是谁。",
+    "avatarUpload": "上传头像",
+    "avatarReplace": "更换头像",
+    "avatarRemove": "删除头像",
+    "avatarUploading": "上传中…",
+    "avatarErrors": {
+      "empty": "此文件为空。",
+      "tooLarge": "图片超过 5 MB。",
+      "unsupportedType": "仅支持 JPEG、PNG 和 WebP 图片。",
+      "typeMismatch": "文件内容与其类型不符。请使用真实的 JPEG、PNG 或 WebP 图片。",
+      "decodeFailed": "无法读取此图片。请换一个文件。",
+      "failed": "上传失败，请重试。",
+      "notConfigured": "头像上传尚未设置。"
+    }
   },
   "workshops": {
     "shopLine": "商店：{shop}",

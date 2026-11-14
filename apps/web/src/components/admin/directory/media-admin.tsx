@@ -13,7 +13,7 @@ import { DirectoryTable, FilterBox, Notice, Toolbar, selectClass, useDebounced, 
 
 type Message = { text: string; tone: "ok" | "error" } | null;
 type Tab = "USED" | "UNUSED";
-const PURPOSES = ["site", "workshop", "branding", "session", "promotion"] as const;
+const PURPOSES = ["site", "workshop", "branding", "session", "promotion", "avatar"] as const;
 /** The API removes at most this many files in one request. */
 const BATCH = 100;
 const size = (n: number) => (n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1000))} KB`);

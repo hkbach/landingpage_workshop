@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException, UnprocessableEntityException } from "@nestjs/common";
-import { and, asc, desc, eq, gte, ilike, lt, lte, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, gte, ilike, inArray, lt, lte, or, sql, type SQL } from "drizzle-orm";
 import { AuditService } from "../audit/audit.service";
 import { AuthService } from "../auth/auth.service";
 import type { Actor } from "../catalog/workshops.service";
@@ -167,7 +167,7 @@ export class AdminService {
 
   // ---- the audit log of the whole platform ---------------------------------------------------------------------------------------------------------------
 
-  async auditLogs(query: { email?: string | undefined; org?: string | undefined; action?: string | undefined; entityType?: string | undefined; from?: string | undefined; to?: string | undefined; limit: number; cursor?: string | undefined }) {
+  async auditLogs(query: { email?: string | undefined; org?: string | undefined; action?: string | undefined; entityType?: string | undefined; exclude?: string | undefined; entityId?: string | undefined; from?: string | undefined; to?: string | undefined; limit: number; cursor?: string | undefined }) {
     const conditions: (SQL | undefined)[] = [];
     if (query.email) conditions.push(ilike(users.email, `%${escapeLike(query.email)}%`));
     if (query.org) {
@@ -175,7 +175,10 @@ export class AdminService {
       conditions.push(sql`${auditLogs.organizationId} in (select id from organizations where name ilike ${like} escape '\\' or slug ilike ${like} escape '\\' or id::text = ${query.org})`);
     }
     if (query.action) conditions.push(eq(auditLogs.action, query.action));
-    if (query.entityType) conditions.push(eq(auditLogs.entityType, query.entityType));
+    // `entityType` may be several kinds (a comma between them); `exclude` is some starts of actions to leave out (the History tabs of the admin screens use both)
+    if (query.entityType) conditions.push(inArray(auditLogs.entityType, query.entityType.split(",").map((e) => e.trim()).filter(Boolean)));
+    if (query.entityId) conditions.push(eq(auditLogs.entityId, query.entityId));
+    for (const prefix of (query.exclude ?? "").split(",").map((e) => e.trim()).filter(Boolean)) conditions.push(sql`${auditLogs.action} not like ${`${escapeLike(prefix)}%`} escape '\'`);
     if (query.from) conditions.push(gte(auditLogs.createdAt, new Date(query.from)));
     if (query.to) conditions.push(lte(auditLogs.createdAt, new Date(query.to)));
     if (query.cursor) {

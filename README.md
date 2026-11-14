@@ -256,7 +256,8 @@ pnpm exec vitest run src/lib/date-input.test.ts
 | `pnpm dev:api` | Chạy backend `apps/api` (cần PostgreSQL và `apps/api/.env`, xem [mục 7](#7-chạy-ứng-dụng-database-api-worker-và-web)); gửi email cần thêm `pnpm --filter api dev:worker` |
 | `pnpm db:seed` | Nạp dữ liệu demo (đặt mật khẩu bằng `SEED_PASSWORD`, hoặc để trống để seed tự tạo mật khẩu ngẫu nhiên ghi vào `apps/api/.seed-credentials`) |
 | `pnpm --filter api db:wipe -- --yes` | **Xóa mọi dòng của mọi bảng** trong database dev (giữ nguyên cấu trúc và migration). Từ chối chạy khi thiếu `--yes`, khi `NODE_ENV=production`, hoặc khi database không nằm trên máy này. Thêm `--test` để xóa database test |
-| `pnpm --filter api db:reseed` | Xóa sạch rồi nạp lại bộ dữ liệu demo |
+| `pnpm --filter api db:reseed` | Xóa sạch, nạp lại bộ dữ liệu demo, rồi chép ảnh demo lên R2 (bước cuối bỏ qua nếu chưa cấu hình R2) |
+| `pnpm --filter api media:mirror` | Tải mọi ảnh đang trỏ tới website khác (dữ liệu demo dùng Unsplash) về và tải lên bucket Cloudflare R2 của bạn, rồi thay địa chỉ mới vào workshop, session, khuyến mãi, ảnh khách và landing page (cả bản nháp và các phiên bản). Mỗi shop một thư mục `shops/{id}/...`, ảnh khách ở `avatars/{id}/...`. Chạy lại an toàn; thêm `--dry-run` để chỉ xem số lượng |
 | `pnpm db:generate` | Sinh migration SQL từ schema Drizzle (`apps/api/src/db/schema`) |
 | `pnpm db:migrate` | Áp migration lên database trong `DATABASE_URL` |
 | `pnpm build` | Đóng gói bản chạy thật (kiểm tra build) |
@@ -348,6 +349,8 @@ Dùng nút ngôn ngữ ở góc trên bên phải (English, Tiếng Việt, 한�
 ### Về dữ liệu
 
 - Dữ liệu nằm trong **PostgreSQL** và còn nguyên khi tắt web. Muốn làm lại dữ liệu từ đầu mà giữ cấu trúc: `pnpm --filter api db:reseed` (xóa **toàn bộ** dòng của mọi bảng rồi nạp lại demo; chỉ chạy trên máy dev của bạn, công cụ từ chối khi `NODE_ENV=production` hoặc database ở máy khác). Ảnh đã tải lên Cloudflare R2 **không bị xóa**: dọn bằng trang Images của admin.
+- **Ảnh đại diện của khách:** trang **My Profile** có nút tải ảnh lên (JPEG, PNG hoặc WebP, tối đa 5 MB; ảnh được kiểm tra và thu nhỏ ngay trên trình duyệt rồi gửi thẳng lên Cloudflare R2, vào thư mục `avatars/{id tài khoản}/`). Trang **Images** của admin liệt kê cả ảnh này (loại "Customer photo").
+- **Tab History của admin:** mọi màn hình admin có tạo mới / chỉnh sửa (Shops, Users, Workshops, Sessions, Promotions, Landing pages, Ratings, Affiliate, Referrals, Withdrawals, Config fees, Legal, Support contact, Settings, Messages, Reports, Images, Emails) có hai tab **Manage** và **History**. History liệt kê các thay đổi mới nhất trước: ai làm, khi nào, hành động nào, bản ghi nào và từng trường đã đổi từ gì sang gì (trường nhạy cảm như mật khẩu, token luôn bị che); có ô tìm theo email người làm và theo shop, và nút **Load more**. Dữ liệu lấy từ audit log (`GET /admin/audit-logs?entityType=a,b&exclude=auth.login`).
 - Trang giới thiệu của nền tảng hiển thị workshop của các shop mà admin chọn "List" (API `GET /public/workshops/featured`).
 - Trang landing page của shop có nút **Log in** và **Register** ở header (trong menu ba gạch trên điện thoại) cho **khách hàng**: chúng dẫn sang `app.localtest.me:3000` và mở hộp đăng nhập / đăng ký chỉ dành cho khách hàng (chủ shop đăng ký từ trang chủ của nền tảng).
 - Test: có `TEST_DATABASE_URL` thì `pnpm test` chạy thêm các test trên PostgreSQL thật (đăng ký, đăng nhập, cách ly dữ liệu giữa các shop, email, outbox...). Thiếu nó thì các test đó được bỏ qua. Các test này **tạo dữ liệu trong database test**, không dùng database dev. Test trình duyệt (`pnpm test:e2e`) cần cả stack ở trên: xem [e2e/README.md](e2e/README.md).

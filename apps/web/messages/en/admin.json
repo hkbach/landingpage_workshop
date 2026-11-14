@@ -1049,7 +1049,8 @@
       "workshop": "Workshop",
       "branding": "Branding",
       "session": "Session",
-      "promotion": "Promotion"
+      "promotion": "Promotion",
+      "avatar": "Customer photo"
     },
     "usedBy": {
       "workshop": "Workshop",
@@ -1149,5 +1150,28 @@
       "platform_settings": "Platform settings",
       "legal": "Terms & Privacy"
     }
+  },
+  "history": {
+    "tabsLabel": "View",
+    "tabMain": "Manage",
+    "tabHistory": "History",
+    "description": "Every create and edit on this screen, newest first: who did it, when, and what each field was and became.",
+    "searchWho": "Search by user email",
+    "searchShop": "Search by shop (name, slug or id)",
+    "col": {
+      "when": "When",
+      "who": "Who",
+      "action": "Action",
+      "record": "Record",
+      "changes": "What changed"
+    },
+    "system": "System",
+    "noDetails": "No details were kept.",
+    "empty": "empty",
+    "moreFields": "{count, plural, one {# more field} other {# more fields}}",
+    "less": "Show fewer",
+    "more": "Load more",
+    "loading": "Loading…",
+    "utcNote": "Times are shown in your time zone."
   }
 }

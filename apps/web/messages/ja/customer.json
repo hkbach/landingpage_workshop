@@ -48,8 +48,8 @@
     },
     "socials": "SNS情報",
     "socialsHint": "任意です。各アプリのアカウント名または番号を入力してください。",
-    "avatar": "写真のリンク",
-    "avatarHint": "https://で始まるリンクです。任意です。",
+    "avatar": "プロフィール写真",
+    "avatarHint": "JPEG、PNG、WebP、5MBまで。任意です。",
     "save": "保存",
     "saving": "保存中…",
     "saved": "プロフィールを保存しました。",
@@ -64,7 +64,20 @@
     "categories": "お気に入りの分野",
     "categoriesHint": "好きなワークショップの分野をちょうど3つ選んでください。",
     "categoriesCount": "{max}個中{count}個を選択",
-    "completeBanner": "プロフィールがまだ完成していません。国と生年月日を追加すると、予約したスタジオが来場者を把握できます。"
+    "completeBanner": "プロフィールがまだ完成していません。国と生年月日を追加すると、予約したスタジオが来場者を把握できます。",
+    "avatarUpload": "写真をアップロード",
+    "avatarReplace": "写真を変更",
+    "avatarRemove": "写真を削除",
+    "avatarUploading": "アップロード中…",
+    "avatarErrors": {
+      "empty": "このファイルは空です。",
+      "tooLarge": "画像が5MBを超えています。",
+      "unsupportedType": "JPEG、PNG、WebPの画像のみ使用できます。",
+      "typeMismatch": "ファイルの内容が形式と一致しません。本物のJPEG、PNG、WebP画像を使用してください。",
+      "decodeFailed": "この画像を読み込めませんでした。別のファイルをお試しください。",
+      "failed": "アップロードに失敗しました。もう一度お試しください。",
+      "notConfigured": "写真のアップロードはまだ設定されていません。"
+    }
   },
   "workshops": {
     "shopLine": "ショップ：{shop}",

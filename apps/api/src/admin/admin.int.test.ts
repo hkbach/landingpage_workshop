@@ -157,6 +157,13 @@ d("the platform administrator", () => {
     expect((await getA(`/audit-logs?org=${owner.orgId}`)).json().items.length).toBeGreaterThanOrEqual(3); // by id too
     expect((await getA("/audit-logs?action=organization.suspend&limit=100")).json().items.every((l: { action: string }) => l.action === "organization.suspend")).toBe(true);
     expect((await getA("/audit-logs?entityType=user&limit=100")).json().items.every((l: { entityType: string }) => l.entityType === "user")).toBe(true);
+    // the History tabs: several kinds of record at once, the starts of actions to leave out, and one record
+    const both = (await getA(`/audit-logs?org=${owner.slug}&entityType=organization,user&limit=100`)).json().items as { entityType: string }[];
+    expect(new Set(both.map((l) => l.entityType))).toEqual(new Set(["organization", "user"]));
+    const kept = (await getA(`/audit-logs?org=${owner.slug}&entityType=organization&exclude=organization.suspend,nothing.here&limit=100`)).json().items as { action: string }[];
+    expect(kept.length).toBeGreaterThan(0);
+    expect(kept.some((l) => l.action === "organization.suspend")).toBe(false);
+    expect((await getA(`/audit-logs?entityId=${owner.orgId}&limit=100`)).json().items.every((l: { entityId: string }) => l.entityId === owner.orgId)).toBe(true);
     expect((await getA("/audit-logs?from=2999-01-01T00:00:00Z")).json().items).toHaveLength(0);
     expect((await getA("/audit-logs?from=yesterday")).statusCode).toBe(422);
     expect((await getA(`/audit-logs?org=${owner.slug}&email=nobody-at-all`)).json().items).toHaveLength(0);

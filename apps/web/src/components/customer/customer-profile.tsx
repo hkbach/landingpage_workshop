@@ -8,12 +8,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DateInput } from "@/components/ui/date-input";
 import { Input } from "@/components/ui/input";
 import { CustomerAvatar } from "@/components/ops/customer-avatar";
+import { AvatarUpload } from "./avatar-upload";
 import { Field } from "@/components/dashboard/shell/field";
 import { NativeSelect } from "@/components/dashboard/shell/native-select";
 import { COUNTRY_CODES, countryName } from "@/components/booking/countries";
 import { LOCALE_NAMES } from "@/components/site/locale-names";
 import { CustomerApiError, saveCustomerProfile } from "@/lib/customer-api";
-import { AVATAR_MAX, NAME_MAX, PHONE_MAX, SOCIAL_MAX, toDraft, toInput, trimDraft, validateDraft, type ProfileDraft } from "@/lib/customer-profile-form";
+import { NAME_MAX, PHONE_MAX, SOCIAL_MAX, toDraft, toInput, trimDraft, validateDraft, type ProfileDraft } from "@/lib/customer-profile-form";
 import { useDirty } from "@/lib/use-dirty";
 import { cn } from "@/lib/utils";
 import { LogOut } from "lucide-react";
@@ -117,8 +118,8 @@ export function CustomerProfileView() {
               {GENDERS.map((g) => <option key={g} value={g}>{t(`genders.${g}`)}</option>)}
             </NativeSelect>
           </Field>
-          <Field htmlFor="cp-avatar" label={t("avatar")} hint={t("avatarHint")} error={err("avatarUrl")}>
-            <Input id="cp-avatar" type="text" inputMode="url" value={draft.avatarUrl} maxLength={AVATAR_MAX + 20} aria-invalid={Boolean(errors.avatarUrl)} autoComplete="off" onChange={(e) => set("avatarUrl", e.target.value)} />
+          <Field htmlFor="cp-avatar" label={t("avatar")} error={err("avatarUrl")}>
+            <AvatarUpload id="cp-avatar" name={draft.fullName} value={draft.avatarUrl} onChange={(url) => set("avatarUrl", url)} />
           </Field>
         </CardContent>
       </Card>

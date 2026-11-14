@@ -15,6 +15,8 @@ export type MediaPurpose = (typeof MEDIA_PURPOSES)[number];
 export interface StoredObject { key: string; size: number; lastModified: string }
 /** The most files one listing reads (the administrator sees that there are more). */
 export const MAX_LISTED = 10_000;
+/** The folders of the bucket the platform writes to: the images of the shops and the avatars of the customers. */
+export const MEDIA_FOLDERS = ["shops/", "avatars/"] as const;
 
 const unescapeXml = (s: string): string => s.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, "&");
 const tag = (xml: string, name: string): string | null => { const m = new RegExp(`<${name}>([\\s\\S]*?)</${name}>`).exec(xml); return m ? unescapeXml(m[1]!) : null; };
@@ -77,10 +79,23 @@ export class MediaService {
    */
   async listObjects(): Promise<{ objects: StoredObject[]; truncated: boolean }> {
     if (!this.configured()) throw new ServiceUnavailableException({ code: "MEDIA_NOT_CONFIGURED", message: "Image storage is not set up yet." });
+    const all: StoredObject[] = [];
+    let truncated = false;
+    for (const prefix of MEDIA_FOLDERS) {
+      const part = await this.listFolder(prefix, MAX_LISTED - all.length);
+      all.push(...part.objects);
+      truncated ||= part.truncated;
+      if (all.length >= MAX_LISTED) return { objects: all.slice(0, MAX_LISTED), truncated: truncated || all.length > MAX_LISTED };
+    }
+    return { objects: [...new Map(all.map((o) => [o.key, o])).values()], truncated };
+  }
+
+  /** The files under one folder (`shops/` or `avatars/`), at most `limit`. */
+  private async listFolder(prefix: string, limit: number): Promise<{ objects: StoredObject[]; truncated: boolean }> {
     const objects: StoredObject[] = [];
     let token: string | undefined;
     for (;;) {
-      const { res, failure } = await this.send("GET", `/${this.env.R2_BUCKET}`, { "list-type": "2", prefix: "shops/", "max-keys": "1000", ...(token ? { "continuation-token": token } : {}) });
+      const { res, failure } = await this.send("GET", `/${this.env.R2_BUCKET}`, { "list-type": "2", prefix, "max-keys": "1000", ...(token ? { "continuation-token": token } : {}) });
       if (!res || !res.ok) {
         // what is logged is the status or the kind of error, never the URL (it carries a signature)
         this.log.warn(`Listing the image bucket failed: ${res ? `HTTP ${res.status} ${(await res.text().catch(() => "")).slice(0, 200)}` : failure}`);
@@ -88,7 +103,7 @@ export class MediaService {
       }
       const page = parseListing(await res.text());
       objects.push(...page.objects);
-      if (objects.length >= MAX_LISTED) return { objects: objects.slice(0, MAX_LISTED), truncated: objects.length > MAX_LISTED || page.next !== null };
+      if (objects.length >= limit) return { objects: objects.slice(0, limit), truncated: objects.length > limit || page.next !== null };
       if (page.next === null) return { objects, truncated: false };
       token = page.next;
     }
@@ -100,11 +115,20 @@ export class MediaService {
     return res !== null && (res.ok || res.status === 404);
   }
 
+  /** The URL one image of a shop is uploaded to: `shops/{shop id}/{purpose}/{id}.{ext}`. */
   presign(organizationId: string, input: { purpose: MediaPurpose; contentType: keyof typeof IMAGE_TYPES; size: number }, now = new Date()) {
+    return this.presignKey(`shops/${organizationId}/${input.purpose}/${randomUUID()}.${IMAGE_TYPES[input.contentType]}`, input, now);
+  }
+
+  /** The URL the avatar of a customer is uploaded to: `avatars/{account id}/{id}.{ext}`. */
+  presignAvatar(userId: string, input: { contentType: keyof typeof IMAGE_TYPES; size: number }, now = new Date()) {
+    return this.presignKey(`avatars/${userId}/${randomUUID()}.${IMAGE_TYPES[input.contentType]}`, input, now);
+  }
+
+  private presignKey(key: string, input: { contentType: keyof typeof IMAGE_TYPES; size: number }, now: Date) {
     if (!this.configured()) throw new ServiceUnavailableException({ code: "MEDIA_NOT_CONFIGURED", message: "Image storage is not set up yet." });
     if (!Number.isInteger(input.size) || input.size <= 0 || input.size > MAX_IMAGE_BYTES) throw invalid({ size: input.size > MAX_IMAGE_BYTES ? "tooLarge" : "invalid" });
     const e = this.env;
-    const key = `shops/${organizationId}/${input.purpose}/${randomUUID()}.${IMAGE_TYPES[input.contentType]}`;
     const host = `${e.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`;
     const uploadUrl = presignUrl({
       method: "PUT", host, path: `/${e.R2_BUCKET}/${key}`, accessKeyId: e.R2_ACCESS_KEY_ID!, secretAccessKey: e.R2_SECRET_ACCESS_KEY!, region: "auto", expiresSeconds: UPLOAD_SECONDS, now,

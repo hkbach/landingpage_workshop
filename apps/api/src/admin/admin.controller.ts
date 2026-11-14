@@ -11,7 +11,7 @@ const page = { limit: z.coerce.number().int().min(1).max(100).default(50), curso
 const text = (max: number) => z.string().trim().max(max).optional();
 const orgListQuery = z.object({ q: text(100), status: z.enum(["DRAFT", "ACTIVE", "SUSPENDED"]).optional(), ...page });
 const userListQuery = z.object({ q: text(100), type: z.enum(["SUPER_ADMIN", "SHOP_OWNER", "CUSTOMER"]).optional(), status: z.enum(["UNVERIFIED", "ACTIVE", "DISABLED"]).optional(), ...page });
-const auditQuery = z.object({ email: text(200), org: text(200), action: text(80), entityType: text(60), from: z.string().datetime({ offset: true }).optional(), to: z.string().datetime({ offset: true }).optional(), ...page });
+const auditQuery = z.object({ email: text(200), org: text(200), action: text(80), entityType: text(300), exclude: text(300), entityId: text(80), from: z.string().datetime({ offset: true }).optional(), to: z.string().datetime({ offset: true }).optional(), ...page });
 // `show` is the older name of the field that the admin screens send: both are accepted.
 const visibilityBody = z.object({ showOnCustomerPage: z.boolean({ error: "required" }).optional(), show: z.boolean({ error: "required" }).optional() })
   .refine((v) => v.showOnCustomerPage !== undefined || v.show !== undefined, { message: "required", path: ["showOnCustomerPage"] })
@@ -71,7 +71,7 @@ export class AdminController {
   }
 
   @Get("audit-logs")
-  auditLogs(@Query(new ZodPipe(auditQuery)) q: { email?: string | undefined; org?: string | undefined; action?: string | undefined; entityType?: string | undefined; from?: string | undefined; to?: string | undefined; limit: number; cursor?: string | undefined }) {
+  auditLogs(@Query(new ZodPipe(auditQuery)) q: { email?: string | undefined; org?: string | undefined; action?: string | undefined; entityType?: string | undefined; exclude?: string | undefined; entityId?: string | undefined; from?: string | undefined; to?: string | undefined; limit: number; cursor?: string | undefined }) {
     return this.admin.auditLogs(q);
   }
 }

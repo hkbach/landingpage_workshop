@@ -48,6 +48,20 @@ d("upload of images (presigned URL)", () => {
     expect((await t.post("/media/presign", { purpose: "workshop", contentType: "image/png", size: 10 }, {})).statusCode).toBe(401);
   });
 
+  it("gives a customer a URL for their own photo in avatars/{account id}/, needs the session, and takes the same sizes and types", async () => {
+    const res = await t.post("/auth/signup", signupBody("CUSTOMER", emailFor("avatar")));
+    const cookie = cookieOf(res);
+    const id = res.json().id as string;
+    const ok = await t.post("/media/avatar/presign", { contentType: "image/webp", size: 50_000 }, { cookie });
+    expect(ok.statusCode).toBe(200);
+    expect(ok.json().key).toMatch(new RegExp(`^avatars/${id}/[0-9a-f-]{36}[.]webp$`));
+    expect(ok.json().publicUrl).toBe(`https://pub-test.r2.dev/${ok.json().key}`);
+    expect(new URL(ok.json().uploadUrl).pathname).toBe(`/${R2.R2_BUCKET}/${ok.json().key}`);
+    expect((await t.post("/media/avatar/presign", { contentType: "image/gif", size: 10 }, { cookie })).json().error.details.fields).toHaveProperty("contentType", "unsupportedType");
+    expect((await t.post("/media/avatar/presign", { contentType: "image/png", size: 5 * 1024 * 1024 + 1 }, { cookie })).json().error.details.fields).toHaveProperty("size", "tooLarge");
+    expect((await t.post("/media/avatar/presign", { contentType: "image/png", size: 10 }, {})).statusCode).toBe(401);
+  });
+
   it("a suspended shop cannot upload", async () => {
     await t.pool.query("update organizations set status = 'SUSPENDED', status_reason = 'test' where id = $1", [owner.orgId]);
     const res = await t.post("/media/presign", { purpose: "workshop", contentType: "image/png", size: 10 }, { cookie: owner.cookie });

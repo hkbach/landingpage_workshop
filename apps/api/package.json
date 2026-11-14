@@ -17,9 +17,10 @@
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "node --import tsx src/db/seed.ts",
     "db:wipe": "node --import tsx src/db/wipe.ts",
-    "db:reseed": "node --import tsx src/db/wipe.ts --yes && node --import tsx src/db/seed.ts",
+    "db:reseed": "node --import tsx src/db/wipe.ts --yes && node --import tsx src/db/seed.ts && node --import tsx src/media/mirror-images.ts",
     "r2:check": "node --import tsx src/media/r2-check.ts",
-    "db:encrypt-bank": "node --import tsx src/db/encrypt-bank-accounts.ts"
+    "db:encrypt-bank": "node --import tsx src/db/encrypt-bank-accounts.ts",
+    "media:mirror": "node --import tsx src/media/mirror-images.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.0",
