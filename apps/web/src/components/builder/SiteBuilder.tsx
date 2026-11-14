@@ -28,6 +28,7 @@ import type { SupportContact } from "@/lib/support-contact";
 import { LanguageBar } from "@/components/language/LanguageBar";
 import { useEditingLanguage } from "@/lib/use-shop-language";
 import { publishAction } from "./publish-state";
+import { siteFetch } from "@/lib/site-api";
 import type { SaveState } from "./save-state";
 import { SectionColorsGroup } from "./SectionColorsGroup";
 import { SectionList } from "./SectionList";
@@ -54,6 +55,8 @@ interface Props {
   applyTemplate?: TemplateKey;
   /** Connected to the API: the page, its draft and the live page are the server's, the autosave and Publish go to the server. */
   server?: { page: PageMeta; liveId: string | null; source: BuilderSource };
+  /** An administrator editing the shop `adminShopId`: the editor talks to the routes of the administrator, and every change carries the reason (see lib/site-api.ts). */
+  adminShopId?: string;
 }
 
 const noop = () => () => {};
@@ -84,7 +87,7 @@ function PageGate(props: Props) {
 
 const SEO_ID = "__seo__";
 
-function BuilderInner({ shop, initial, initialSource = "starter", initialStatus, upcomingWorkshopCount, applyTemplate, support, page, mainPage, server }: Props & { page: PageMeta }) {
+function BuilderInner({ shop, initial, initialSource = "starter", initialStatus, upcomingWorkshopCount, applyTemplate, support, page, mainPage, server, adminShopId }: Props & { page: PageMeta }) {
   const toShop = useShopHref();
   const router = useRouter();
   const pageId = page.id;
@@ -116,11 +119,11 @@ function BuilderInner({ shop, initial, initialSource = "starter", initialStatus,
   const queue = useRef<Promise<void>>(Promise.resolve());
   const putDraft = useCallback((d: Draft, at: number, leaving = false) => {
     const body = JSON.stringify({ content: d.content, theme: d.theme, templateKey: d.template });
-    const run = () => fetch(`/api/v1/site/pages/${encodeURIComponent(pageId)}/draft`, { method: "PUT", headers: { "content-type": "application/json" }, body, keepalive: leaving && body.length < 60_000 })
+    const run = () => siteFetch(adminShopId, `/pages/${encodeURIComponent(pageId)}/draft`, { method: "PUT", headers: { "content-type": "application/json" }, body, keepalive: leaving && body.length < 60_000 })
       .then((res) => { if (res.ok) savedRev.current = Math.max(savedRev.current, at); if (!leaving && at === latestRev.current) setSaveState(res.ok ? "saved" : "unavailable"); })
       .catch(() => { if (!leaving && at === latestRev.current) setSaveState("unavailable"); });
     queue.current = queue.current.then(run, run);
-  }, [pageId]);
+  }, [pageId, adminShopId]);
   // Leaving the builder (another page of the app, or the tab closed) with an edit not saved yet: it is sent at once.
   useEffect(() => {
     if (!server) return;
@@ -234,9 +237,9 @@ function BuilderInner({ shop, initial, initialSource = "starter", initialStatus,
   async function publishOnServer() {
     const clean = trimmed();
     try {
-      const saved = await fetch(`/api/v1/site/pages/${encodeURIComponent(pageId)}/draft`, { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ content: clean.content, theme: clean.theme, templateKey: clean.template }) });
+      const saved = await siteFetch(adminShopId, `/pages/${encodeURIComponent(pageId)}/draft`, { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ content: clean.content, theme: clean.theme, templateKey: clean.template }) });
       if (!saved.ok) throw new Error("draft");
-      const res = await fetch(`/api/v1/site/pages/${encodeURIComponent(pageId)}/publish`, { method: "POST" });
+      const res = await siteFetch(adminShopId, `/pages/${encodeURIComponent(pageId)}/publish`, { method: "POST", ...(adminShopId ? { headers: { "content-type": "application/json" }, body: "{}" } : {}) });
       if (!res.ok) throw new Error("publish");
       const done = (await res.json()) as { shopStatus?: OrgStatus };
       setSaveState("saved");

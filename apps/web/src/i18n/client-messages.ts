@@ -11,6 +11,8 @@ export const AREA_MESSAGES = {
   auth: ["common", "auth"],
   shopowner: ["common", "dashboard", "ops", "catalog", "builder"],
   admin: ["common", "admin"],
+  // An administrator editing a shop with the editor of the shop owner (the landing pages): the texts of the editor, and the admin banner above it.
+  adminEdit: ["common", "admin", "dashboard", "ops", "catalog", "builder"],
   // The guest area: its own texts, and the login of the site (the guest logs in with the same popup form as on the landing page).
   customer: ["common", "customer", "site"],
 } as const;

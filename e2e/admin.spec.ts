@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { APP, login, open, watchBrowser, seedPassword } from "./helpers";
+import { APP, login, open, typeUntilSaved, watchBrowser, seedPassword } from "./helpers";
 
 // The platform administrator against the REAL API. Needs the stack of e2e/README.md and E2E_PASSWORD (the password of `pnpm db:seed`).
 const ADMIN = "admin@workshopkit.example";
@@ -83,5 +83,50 @@ The text of the test.`;
     await expect.poll(async () => (((await (await api.get(`${APP}/api/v1/admin/organizations?q=whiskladle`)).json()) as { items: Array<{ showOnCustomerPage: boolean }> }).items[0]!.showOnCustomerPage), { timeout: 30_000 }).toBe(!shop.showOnCustomerPage);
     await row.getByRole("button", { name: shop.showOnCustomerPage ? "List" : "Hide" }).click();
     await expect.poll(async () => (((await (await api.get(`${APP}/api/v1/admin/organizations?q=whiskladle`)).json()) as { items: Array<{ showOnCustomerPage: boolean }> }).items[0]!.showOnCustomerPage), { timeout: 30_000 }).toBe(shop.showOnCustomerPage);
+  });
+
+  test("edits a landing page of a shop in the builder as the administrator: the reason is needed, the draft is kept for the shop, the live page is not touched, and the audit has the reason", async ({ page }) => {
+    const problems = watchBrowser(page);
+    await login(page, ADMIN, seedPassword());
+    const api = page.context().request;
+    const shop = ((await (await api.get(`${APP}/api/v1/admin/organizations?q=whiskladle`)).json()) as { items: Array<{ id: string; slug: string }> }).items.find((o) => o.slug === "whiskladle")!;
+    const pages = ((await (await api.get(`${APP}/api/v1/admin/shops/${shop.id}/site/pages`)).json()) as { items: Array<{ id: string; version: number; isLive: boolean }> }).items;
+    expect(pages.length, "the shop has a landing page").toBeGreaterThan(0);
+    const target = pages[pages.length - 1]!;
+
+    // the Landing pages screen opens the editor of the shop (inside the admin area), with the banner that asks for the reason
+    await open(page, `${APP}/systemadmin/landing-pages`);
+    await page.getByRole("searchbox").fill("whiskladle");
+    await page.getByRole("button", { name: /^Edit/ }).first().click();
+    await page.waitForURL(/\/systemadmin\/shops\/whiskladle\/site/, { timeout: 90_000, waitUntil: "domcontentloaded" });
+    await expect(page.getByTestId("admin-edit-banner")).toBeVisible({ timeout: 60_000 });
+    await expect(page.getByTestId("admin-edit-unavailable")).toHaveCount(0);
+
+    await open(page, `${APP}/systemadmin/shops/whiskladle/site/${target.id}`);
+    const title = page.getByRole("textbox", { name: "Title" }).first();
+    await expect(title).toBeVisible({ timeout: 90_000 });
+
+    // without the reason the server refuses the change: nothing is saved
+    const first = `Admin edit ${Date.now().toString(36)}`;
+    await expect(async () => {
+      await title.fill(first);
+      await expect(title).toHaveValue(first, { timeout: 1_000 });
+    }).toPass({ timeout: 30_000 });
+    await expect(page.getByText("Draft saved")).toHaveCount(0, { timeout: 6_000 });
+    const read = async () => ((await (await api.get(`${APP}/api/v1/admin/shops/${shop.id}/site/pages/${target.id}`)).json()) as { content?: { sections: Array<{ type: string; props: { title?: { en?: string } } }> } | null }).content?.sections.find((s) => s.type === "hero")?.props.title?.en;
+    expect(await read()).not.toBe(first);
+
+    // with the reason it is saved for the shop
+    const reason = `e2e: fixing the title ${Date.now().toString(36)}`;
+    await page.getByTestId("admin-edit-reason").fill(reason);
+    const second = await typeUntilSaved(page, title, `${first} saved`);
+    await expect.poll(read, { timeout: 15_000 }).toBe(second);
+    const after = ((await (await api.get(`${APP}/api/v1/admin/shops/${shop.id}/site/pages`)).json()) as { items: Array<{ id: string; version: number }> }).items.find((p) => p.id === target.id)!;
+    expect(after.version, "nothing was published: the live page is the same").toBe(target.version);
+
+    // the audit log has the administrator's reason for that page
+    const logs = ((await (await api.get(`${APP}/api/v1/admin/audit-logs?org=whiskladle&action=admin_edit.reason&limit=50`)).json()) as { items: Array<{ entityId: string; after?: { reason?: string } | null }> }).items;
+    expect(logs.some((l) => l.entityId === target.id && l.after?.reason === reason)).toBe(true);
+    expect(problems).toEqual([]);
   });
 });

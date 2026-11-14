@@ -24,9 +24,10 @@ describe("pickAreas", () => {
 describe("message areas per part of the app", () => {
   const setsWith = (area: string) => Object.entries(AREA_MESSAGES).filter(([, areas]) => (areas as readonly string[]).includes(area)).map(([k]) => k);
 
-  it("the admin texts go only to the admin area", () => expect(setsWith("admin")).toEqual(["admin"]));
-  it("the shop owner tool texts go only to the shop owner area", () => {
-    for (const a of ["dashboard", "ops", "catalog", "builder"]) expect(setsWith(a), a).toEqual(["shopowner"]);
+  // (adminEdit is the area of an administrator editing a shop with the owner's editor: only an administrator opens it, so it may carry both the admin texts and the editor texts)
+  it("the admin texts go only to the admin area and to the area of an administrator editing a shop", () => expect(setsWith("admin")).toEqual(["admin", "adminEdit"]));
+  it("the shop owner tool texts go only to the shop owner area and to the area of an administrator editing a shop", () => {
+    for (const a of ["dashboard", "ops", "catalog", "builder"]) expect(setsWith(a), a).toEqual(["shopowner", "adminEdit"]);
   });
   it("marketing texts go only to the public site; the auth texts go to the auth pages and to the public site (Log in and Sign up are popups of it)", () => {
     expect(setsWith("marketing")).toEqual(["marketing"]);

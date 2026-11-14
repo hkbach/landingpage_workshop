@@ -1,5 +1,5 @@
 import { expect, test, type APIRequestContext } from "@playwright/test";
-import { APP, login, open, watchBrowser, seedPassword } from "./helpers";
+import { APP, login, open, typeUntilSaved, watchBrowser, seedPassword } from "./helpers";
 
 // The shop owner area against the REAL API: what the owner does is kept by the server. Needs the stack of e2e/README.md and E2E_PASSWORD (the password of `pnpm db:seed`).
 const OWNER = "linh@whiskladle.example";
@@ -40,10 +40,18 @@ test.describe("the shop owner on the real API", () => {
     await dialog.getByRole("button", { name: "Save" }).click();
     await expect(page.getByTestId("workshop-created")).toBeVisible({ timeout: 30_000 });
     await page.reload({ waitUntil: "domcontentloaded" });
+    // (the list shows ten workshops a page and every run adds one: find it with the search box of the list)
     const row = page.getByRole("row").filter({ hasText: title });
-    await expect(row).toBeVisible({ timeout: 60_000 });
-    await row.getByTestId("activate-button").click();
-    await expect(row.getByText("Active", { exact: true })).toBeVisible({ timeout: 30_000 });
+    // (a field filled before the page is hydrated holds the text but filters nothing: fill again until the row shows)
+    await expect(async () => {
+      await page.getByRole("searchbox").first().fill(title);
+      await expect(row).toBeVisible({ timeout: 4_000 });
+    }).toPass({ timeout: 60_000 });
+    // (a button clicked before the page is hydrated does nothing: click again until the workshop is Active; once it is, the button is gone)
+    await expect(async () => {
+      if ((await row.getByTestId("activate-button").count()) > 0) await row.getByTestId("activate-button").click();
+      await expect(row.getByText("Active", { exact: true })).toBeVisible({ timeout: 5_000 });
+    }).toPass({ timeout: 60_000 });
     expect(problems).toEqual([]);
   });
 
@@ -91,14 +99,9 @@ test.describe("the shop owner on the real API", () => {
     const pages = (await (await request.get(`${APP}/api/v1/site/pages`)).json()) as { items: Array<{ id: string }> };
     const pageId = pages.items.length >= 2 ? pages.items[pages.items.length - 1]!.id : ((await (await request.post(`${APP}/api/v1/site/pages`, { headers, data: { name: `E2E ${Date.now().toString(36)}` } })).json()) as { id: string }).id;
     await open(page, `${APP}/shopowner/${SLUG}/site/${pageId}`);
-    const title = `Cooking with E2E ${Date.now().toString(36)}`;
     const field = page.getByRole("textbox", { name: "Title" }).first();
     await expect(field).toBeVisible({ timeout: 90_000 });
-    await expect(async () => {
-      await field.fill(title);
-      await expect(field).toHaveValue(title, { timeout: 1_000 });
-    }).toPass({ timeout: 30_000 });
-    await expect(page.getByText("Draft saved")).toBeVisible({ timeout: 30_000 }); // (the autosave waits two seconds)
+    const title = await typeUntilSaved(page, field, `Cooking with E2E ${Date.now().toString(36)}`);
     await open(page, `${APP}/shopowner/${SLUG}/site/${pageId}`);
     await expect(page.getByRole("textbox", { name: "Title" }).first()).toHaveValue(title, { timeout: 60_000 });
     // the page made from the starter has nothing that needs attention: Publish is on, and the live page of the shop shows the new title
@@ -135,12 +138,7 @@ test.describe("the shop owner on the real API", () => {
     await expect(title).toBeVisible({ timeout: 90_000 });
     await expect(page.getByText(/marked as needing attention/)).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Publish" }).first()).toBeEnabled({ timeout: 30_000 });
-    const edited = `Edited whole page ${Date.now().toString(36)}`;
-    await expect(async () => {
-      await title.fill(edited);
-      await expect(title).toHaveValue(edited, { timeout: 1_000 });
-    }).toPass({ timeout: 30_000 });
-    await expect(page.getByText("Draft saved")).toBeVisible({ timeout: 30_000 });
+    await typeUntilSaved(page, title, `Edited whole page ${Date.now().toString(36)}`);
     expect(problems).toEqual([]);
   });
 
@@ -168,10 +166,17 @@ async function prepareSession(request: APIRequestContext): Promise<{ code: strin
   const workshops = (await (await request.get(`${APP}/api/v1/workshops?status=ACTIVE`)).json()) as { items: Array<{ id: string }> };
   const workshopId = workshops.items[0]?.id;
   expect(workshopId, "the shop has an active workshop").toBeTruthy();
-  const startsAt = new Date(Date.now() + (3 + Math.floor(Math.random() * 20)) * 86_400_000);
-  startsAt.setUTCHours(3, Math.floor(Math.random() * 59), 0, 0);
-  const made = await request.post(`${APP}/api/v1/sessions`, { headers, data: { workshopId, startsAt: startsAt.toISOString() } });
-  expect(made.status()).toBe(201);
+  // (another session of the shop may already start at that minute, 409: take another day and minute)
+  let startsAt = new Date();
+  let made: Awaited<ReturnType<APIRequestContext["post"]>> | undefined;
+  for (let tries = 0; tries < 8; tries++) {
+    startsAt = new Date(Date.now() + (3 + Math.floor(Math.random() * 20)) * 86_400_000);
+    startsAt.setUTCHours(3, Math.floor(Math.random() * 59), 0, 0);
+    made = await request.post(`${APP}/api/v1/sessions`, { headers, data: { workshopId, startsAt: startsAt.toISOString() } });
+    if (made.status() !== 409) break;
+  }
+  expect(made?.status()).toBe(201);
+  if (!made) throw new Error("no session was made");
   const session = (await made.json()) as { id: string; code: string };
   const day = `${String(startsAt.getUTCMonth() + 1).padStart(2, "0")}/${String(startsAt.getUTCDate()).padStart(2, "0")}/${startsAt.getUTCFullYear()}`; // (what the date field shows: the shop is at UTC+7, the session starts in the morning there)
   return { code: session.code, sessionId: session.id, day };

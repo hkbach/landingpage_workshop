@@ -23,8 +23,11 @@ const schema = z
     PLATFORM_DOMAIN: z.string().regex(/^[a-z0-9.-]+$/i, "invalid").default("localtest.me"),
     SESSION_COOKIE_NAME: z.string().regex(/^[A-Za-z0-9_-]{1,40}$/).default("wsp_sid"),
     SESSION_TTL_DAYS: z.coerce.number().int().min(1).max(90).default(14),
-    /** How many accounts one address may sign up in an hour. Keep the default in production; a machine that runs the browser tests over and over may raise it (e.g. 100). */
-    SIGNUPS_PER_HOUR: z.coerce.number().int().min(1).max(10_000).default(10),
+    /**
+     * Multiplies the limits that count the requests of ONE ADDRESS on the public side (signups, codes by email, bookings, look-ups). 1 = the real limits. A machine that runs the browser tests over and
+     * over (they all come from one address) may raise it (e.g. 10); production refuses anything but 1. The limits that guard one account or one email (logins, the codes of one email) never change.
+     */
+    RATE_LIMIT_FACTOR: z.coerce.number().int().min(1).max(100).default(1),
     /** How many reverse proxies stand in front of the API (0 = none: the client is the socket). Never trust a header the client can write. */
     TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(5).default(0),
 
@@ -65,6 +68,7 @@ const schema = z
       if (!v.REQUIRE_EMAIL_VERIFICATION) ctx.addIssue({ code: "custom", path: ["REQUIRE_EMAIL_VERIFICATION"], message: "REQUIRE_EMAIL_VERIFICATION must be true in production" });
       if (v.APP_SECRET === DEV_APP_SECRET) ctx.addIssue({ code: "custom", path: ["APP_SECRET"], message: "APP_SECRET must be set in production" });
       if (!v.APP_URL.startsWith("https://")) ctx.addIssue({ code: "custom", path: ["APP_URL"], message: "APP_URL must be https in production" });
+      if (v.RATE_LIMIT_FACTOR !== 1) ctx.addIssue({ code: "custom", path: ["RATE_LIMIT_FACTOR"], message: "RATE_LIMIT_FACTOR must be 1 in production" });
     }
     const r2 = [v.R2_ACCOUNT_ID, v.R2_ACCESS_KEY_ID, v.R2_SECRET_ACCESS_KEY, v.R2_BUCKET, v.R2_PUBLIC_BASE_URL];
     if (r2.some(Boolean) && !r2.every(Boolean)) ctx.addIssue({ code: "custom", path: ["R2_ACCOUNT_ID"], message: "R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET and R2_PUBLIC_BASE_URL go together: set all five or none" });

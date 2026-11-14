@@ -1,13 +1,14 @@
 import { ConflictException, Inject, Injectable, NotFoundException, UnprocessableEntityException } from "@nestjs/common";
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq, gt, sql } from "drizzle-orm";
 import { AuditService } from "../audit/audit.service";
 import type { OrgContext } from "../auth/auth.guards";
 import { SessionsService } from "../catalog/sessions.service";
 import { WorkshopsService, type Actor } from "../catalog/workshops.service";
 import { DB, type Database } from "../db/db.module";
-import { organizationMembers, organizations, users } from "../db/schema";
+import { auditLogs, organizationMembers, organizations, users } from "../db/schema";
 import type { EditKind } from "../email/messages";
 import { OutboxService } from "../outbox/outbox.service";
+import { PromotionsService } from "../promotions/promotions.service";
 import { SitePagesService } from "../site/site-pages.service";
 
 /** What an administrator writes to explain a change made on behalf of a shop (D15): 1 to 300 characters. */
@@ -26,6 +27,7 @@ export class AdminActionsService {
   constructor(
     @Inject(DB) private readonly db: Database, @Inject(AuditService) private readonly audit: AuditService, @Inject(OutboxService) private readonly outbox: OutboxService,
     @Inject(WorkshopsService) private readonly workshops: WorkshopsService, @Inject(SessionsService) private readonly sessions: SessionsService, @Inject(SitePagesService) private readonly pages: SitePagesService,
+    @Inject(PromotionsService) private readonly promotions: PromotionsService,
   ) {}
 
   /** The reason, trimmed, or the refusal: checked before anything is looked up or changed. */
@@ -85,6 +87,39 @@ export class AdminActionsService {
     const view = await this.sessions.reschedule(org, sessionId, { newStartsAt, reason: { code: "OTHER", note: reason } }, actor, new Date(), { admin: true });
     await this.done(org, actor, reason, { type: "session", id: sessionId }, "session.reschedule", { kind: "SESSION_MOVED", detail: view.code });
     return view;
+  }
+
+  // ---- the landing pages of a shop, for the editor of the administrator ----------------------------------------------------------------------------------------------
+  // The editor is the one of the shop owner: it reads the same lists (pages, workshops, sessions, promotions) and saves the same drafts. These are the same services, called for the shop in the path.
+
+  async listPages(shopId: string) { return this.pages.list(await this.shop(shopId)); }
+  async getPage(shopId: string, id: string) { return this.pages.get(await this.shop(shopId), id); }
+  async listWorkshops(shopId: string, query: Parameters<WorkshopsService["list"]>[1]) { return this.workshops.list(await this.shop(shopId), query); }
+  async listSessions(shopId: string, query: Parameters<SessionsService["list"]>[1]) { return this.sessions.list(await this.shop(shopId), query); }
+  async listPromotions(shopId: string) { return this.promotions.list(await this.shop(shopId)); }
+
+  /** A new landing page for the shop, with the reason on the audit line. */
+  async createPage(shopId: string, input: { name: string; templateKey?: string | undefined }, rawReason: string | undefined, actor: Actor) {
+    const reason = this.reason(rawReason);
+    const org = await this.shop(shopId);
+    const page = await this.pages.create(org, input, actor);
+    await this.audit.record({ organizationId: org.id, actorUserId: actor.userId, action: "admin_edit.reason", entityType: "site_page", entityId: page.id, after: { action: "site.page_create", reason }, ip: actor.ip });
+    return page;
+  }
+
+  /**
+   * Saves the DRAFT of a page for the shop (the live page is untouched; the owners are told when the administrator publishes). The editor saves as the administrator types, so the audit line with
+   * the reason is written once for a stretch of editing (ten minutes) of a page by one administrator with the same reason, not at every save; a NEW reason is always written.
+   */
+  async saveDraft(shopId: string, pageId: string, input: Parameters<SitePagesService["saveDraft"]>[2], rawReason: string | undefined, actor: Actor) {
+    const reason = this.reason(rawReason);
+    const org = await this.shop(shopId);
+    const saved = await this.pages.saveDraft(org, pageId, input);
+    const since = new Date(Date.now() - 10 * 60_000);
+    const [recent] = await this.db.select({ reason: sql<string | null>`${auditLogs.after}->>'reason'` }).from(auditLogs)
+      .where(and(eq(auditLogs.organizationId, org.id), eq(auditLogs.actorUserId, actor.userId), eq(auditLogs.entityId, pageId), eq(auditLogs.action, "admin_edit.reason"), sql`${auditLogs.after}->>'action' = 'site.draft_save'`, gt(auditLogs.createdAt, since))).orderBy(desc(auditLogs.createdAt)).limit(1);
+    if (!recent || recent.reason !== reason) await this.audit.record({ organizationId: org.id, actorUserId: actor.userId, action: "admin_edit.reason", entityType: "site_page", entityId: pageId, after: { action: "site.draft_save", reason }, ip: actor.ip });
+    return saved;
   }
 
   /** Publish a draft of a landing page of an ACTIVE shop. A shop that is still a DRAFT is made ACTIVE by its owner when they publish, never by the administrator. */

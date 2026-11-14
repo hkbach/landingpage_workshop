@@ -1,5 +1,6 @@
 "use client";
 
+import { siteFetch } from "@/lib/site-api";
 import { useMemo, useState, useSyncExternalStore, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
@@ -34,6 +35,8 @@ interface Props {
   sample: { content: PageContent; theme: PageTheme };
   /** Connected to the API: the pages, the live page and the drafts are the server's (nothing is read from the browser's storage). */
   server?: ServerPageList;
+  /** An administrator editing the shop `adminShopId`: the calls carry the reason and go to the routes of the administrator (see lib/site-api.ts). */
+  adminShopId?: string;
 }
 
 const noop = () => () => {};
@@ -48,7 +51,7 @@ export function LandingPageList(props: Props) {
 
 type Message = { text: string; tone: "ok" | "error" };
 
-function ListInner({ mainPage, shopHost, shop, shopStatus, upcomingWorkshopCount, sample, server }: Props) {
+function ListInner({ mainPage, shopHost, shop, shopStatus, upcomingWorkshopCount, sample, server, adminShopId }: Props) {
   const t = useTranslations("builder.pages");
   const tn = useTranslations("builder");
   const locale = useLocale();
@@ -101,9 +104,9 @@ function ListInner({ mainPage, shopHost, shop, shopStatus, upcomingWorkshopCount
     setPublishing(null);
     try {
       const d = trimDeep(server!.drafts[page.id]!);
-      const saved = await fetch(`/api/v1/site/pages/${encodeURIComponent(page.id)}/draft`, { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ content: d.content, theme: d.theme, templateKey: d.template }) });
+      const saved = await siteFetch(adminShopId, `/pages/${encodeURIComponent(page.id)}/draft`, { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ content: d.content, theme: d.theme, templateKey: d.template }) });
       if (!saved.ok) throw new Error("draft");
-      const res = await fetch(`/api/v1/site/pages/${encodeURIComponent(page.id)}/publish`, { method: "POST" });
+      const res = await siteFetch(adminShopId, `/pages/${encodeURIComponent(page.id)}/publish`, { method: "POST", ...(adminShopId ? { headers: { "content-type": "application/json" }, body: "{}" } : {}) });
       if (!res.ok) throw new Error("publish");
       setMessage({ text: t("publishedDone", { name: page.name }), tone: "ok" });
     } catch {
@@ -211,7 +214,7 @@ function ListInner({ mainPage, shopHost, shop, shopStatus, upcomingWorkshopCount
         open={creating} onOpenChange={setCreating} pageCount={pages.length}
         onCreate={(name) => {
           if (server) { // the server makes the page (and its id) and keeps the limit
-            void fetch("/api/v1/site/pages", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: name.trim() }) })
+            void siteFetch(adminShopId, "/pages", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: name.trim() }) })
               .then(async (r) => { if (!r.ok) throw new Error("create"); router.push(toShop(`/shopowner/site/${((await r.json()) as { id: string }).id}`)); })
               .catch(() => setMessage({ text: t("saveFailed"), tone: "error" }));
             setCreating(false);

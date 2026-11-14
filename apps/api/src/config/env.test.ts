@@ -50,4 +50,12 @@ describe("parseEnv", () => {
     expect(parseEnv({ ...prod, APP_SECRET: "x".repeat(40) })).toMatchObject({ NODE_ENV: "production" });
     expect(parseEnv({ DATABASE_URL: URL }).APP_SECRET.length).toBeGreaterThanOrEqual(32); // development has a default
   });
+
+  it("the limits of one address can be multiplied for the browser tests, but never in production", () => {
+    expect(parseEnv({ DATABASE_URL: URL }).RATE_LIMIT_FACTOR).toBe(1);
+    expect(parseEnv({ DATABASE_URL: URL, RATE_LIMIT_FACTOR: "10" }).RATE_LIMIT_FACTOR).toBe(10);
+    const prod = { DATABASE_URL: URL, NODE_ENV: "production", TURNSTILE_SECRET_KEY: "k", REQUIRE_EMAIL_VERIFICATION: "true", APP_URL: "https://app.example.com", APP_SECRET: "x".repeat(40) };
+    expect(() => parseEnv({ ...prod, RATE_LIMIT_FACTOR: "10" })).toThrow(/RATE_LIMIT_FACTOR must be 1 in production/);
+    expect(parseEnv(prod).RATE_LIMIT_FACTOR).toBe(1);
+  });
 });

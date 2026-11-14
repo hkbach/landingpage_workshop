@@ -27,6 +27,14 @@
 - Test: `site-url.test.ts` (địa chỉ theo host), `header-menu.test.ts` (nút, mọi layout), `e2e/auth.spec.ts` thêm 2 test (đăng ký khách thật từ trang shop, không có tab chủ shop, `/auth/me` trả CUSTOMER; nút Log in mở hộp đăng nhập).
 - **Chưa làm:** sau khi đăng nhập/đăng ký từ trang shop, khách vào khu khách hàng chứ chưa quay lại trang shop (cần tham số `next` an toàn, chỉ chấp nhận host của nền tảng hoặc tên miền đã xác minh).
 
+### Admin sửa landing page hộ shop (14/11/2026)
+
+- **Lỗi gặp:** bấm Edit ở `/systemadmin/landing-pages` báo "The editor could not be opened." vì web gọi một route chưa từng có trong API (`POST /admin/landing-pages/{slug}/audit`), và các trang `/systemadmin/shops/{slug}/...` chỉ hiện thông báo "chưa hỗ trợ" (trình sửa của chủ shop đọc shop của *phiên đăng nhập*, admin không có).
+- **API:** `AdminActionsController` thêm `GET site/pages`, `GET site/pages/:id`, `POST site/pages`, `PUT site/pages/:id/draft`, `GET workshops|sessions|promotions` dưới `admin/shops/:shopId/`; ghi và publish nhận lý do ở body hoặc header `X-Admin-Reason`. Dùng lại đúng các service của chủ shop nên cùng quy tắc.
+- **Web:** `lib/site-api.ts` (`siteFetch`: đường API theo chế độ chủ shop hoặc admin, kèm lý do từ cookie của banner), `lib/admin-shop.ts` (`loadAdminShop` tìm shop theo slug; `shopPrefix`), `components/builder/site-views.tsx` (ba màn hình dùng chung `LandingPagesView`, `BuilderView`, `PreviewView`: trang của chủ shop và của admin đều dùng), prop `adminShopId` cho `SiteBuilder` và `LandingPageList`, layout `systemadmin/shops/[slug]` có banner và bộ chữ `adminEdit` (chữ của builder: khu admin trước đó chỉ nạp bộ `admin` nên chữ hiện ra là khóa thô).
+- **Test:** `admin-actions.int.test.ts` (đọc, bắt buộc lý do, lưu nháp không đổi trang live, một dòng audit cho một đợt sửa, lý do mới được ghi, chỉ SUPER_ADMIN), `admin.spec.ts` (e2e: Edit → banner → sửa không lý do thì không lưu → có lý do thì lưu cho shop, version không đổi, audit có lý do).
+- **Chưa làm:** sửa workshop và session của shop trong khu admin (trang có thông báo); email báo chủ shop khi admin lưu nháp (chỉ publish mới báo).
+
 ### Sửa lỗi: trang landing page lưu thiếu trường báo "Fix N sections marked as needing attention first" (14/11/2026)
 
 - **Nguyên nhân:** API chấp nhận section chỉ có một vài trường (trang do script hoặc builder cũ ghi: hero không có `imageUrl`, footer là `{}`), còn builder yêu cầu đủ trường nên đánh dấu "cần sửa" và khóa Publish, dù chủ shop chưa làm gì sai. Trường hợp thực tế: trang "Main" bị hàm hỗ trợ của test e2e đặt chỗ ghi nội dung thiếu trường vào database dev.

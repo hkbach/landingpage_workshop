@@ -187,7 +187,7 @@ d("income, fees and closing of the months", () => {
       await t.pool.query("delete from organization_fee_settings");
       for (const r of before) await t.pool.query("insert into organization_fee_settings (organization_id, maintenance_bps, service_bps, affiliate_bps, invite_bonus_bps, updated_at) values ($1, $2, $3, $4, $5, $6)", [r.organization_id, r.maintenance_bps, r.service_bps, r.affiliate_bps, r.invite_bonus_bps, r.updated_at]);
     }
-  });
+  }, 300_000); // (the action touches EVERY shop, and the test database keeps the shops of every earlier run: thousands of them make it take longer than the default 20 seconds)
 
   it("shows the income of the platform: a line for each shop with payments, totals for each currency, and the months of one shop", async () => {
     await adminPut(`/fees/${b.orgId}`, { maintenanceBps: 1000, serviceBps: 1000, referralBps: 1000, inviteBonusBps: 1000 });

@@ -55,7 +55,7 @@ export class AdminService {
         contactEmail: r.o.contactEmail, ownerEmail: r.ownerEmail, workshopCount: Number(r.workshopCount), bookings30d: Number(r.bookings30d), createdAt: r.o.createdAt.toISOString(),
         // what the admin screens show and edit without asking for each shop again
         ownerName: r.ownerName, contactPhone: r.o.contactPhone, whatsapp: r.o.whatsapp, mapsUrl: r.o.mapsUrl, address: r.o.address, defaultLocale: r.o.defaultLocale, enabledLocales: r.o.enabledLocales,
-        customDomain: r.o.customDomain, showOnCustomerPage: r.o.showOnCustomerPage, sessionCount: Number(r.sessionCount), bookingCount: Number(r.bookingCount),
+        customDomain: r.o.customDomain, customDomainVerified: r.o.customDomainVerifiedAt !== null, showOnCustomerPage: r.o.showOnCustomerPage, sessionCount: Number(r.sessionCount), bookingCount: Number(r.bookingCount),
       })),
       nextCursor: last ? encodeCursor({ t: last.o.createdAt.toISOString(), id: last.o.id }) : null,
     };

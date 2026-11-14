@@ -226,4 +226,58 @@ d("sessions, guests and the administrator acting for a shop", () => {
     expect([res.statusCode, res.json().error.code]).toEqual([403, "SHOP_SUSPENDED"]);
     await t.pool.query("update organizations set status = 'ACTIVE' where id = $1", [a.orgId]);
   });
+
+  it("lets the administrator read the landing pages of a shop and save a draft for it: a reason is needed, one audit line for a stretch of editing, the live page untouched, nobody else may", async () => {
+    const shop = await makeShop("actedit");
+    const base = `/admin/shops/${shop.orgId}`;
+    const reason = "The owner asked us to fix the opening hours";
+    const asAdmin = (method: "GET" | "POST" | "PUT", path: string, body?: unknown, why?: string, cookie = admin) => t.app.inject({
+      method, url: `/api/v1${base}${path}`, remoteAddress: "10.1.1.1", ...(body === undefined ? {} : { payload: body as object }),
+      headers: { origin: "http://app.localtest.me:3000", cookie, ...(why ? { "x-admin-reason": encodeURIComponent(why) } : {}) },
+    });
+    const whole = { schemaVersion: 1, sections: [{ id: "h", type: "hero", enabled: true, props: completeProps("hero", { title: { en: "Hi" } }) }, { id: "f", type: "footer", enabled: true, props: completeProps("footer") }], seo: { title: {}, description: {} } };
+
+    // a page is made only with a reason; nothing is made without one
+    const refused = await asAdmin("POST", "/site/pages", { name: "Fixed by admin" });
+    expect([refused.statusCode, refused.json().error.code]).toEqual([422, "ADMIN_REASON_REQUIRED"]);
+    expect((await asAdmin("GET", "/site/pages")).json().items).toHaveLength(0);
+    const made = await asAdmin("POST", "/site/pages", { name: "Fixed by admin" }, reason);
+    expect(made.statusCode).toBe(201);
+    const pageId = made.json().id as string;
+    expect((await asAdmin("GET", "/site/pages")).json().items.map((p: { id: string }) => p.id)).toEqual([pageId]);
+
+    // what the editor reads: the workshops, the sessions and the promotions of THAT shop
+    expect((await asAdmin("GET", "/workshops?limit=100")).json().items).toHaveLength(2);
+    expect(Array.isArray((await asAdmin("GET", "/sessions?limit=100")).json().items)).toBe(true);
+    expect(Array.isArray((await asAdmin("GET", "/promotions")).json().items)).toBe(true);
+    expect((await asAdmin("GET", `/site/pages/${pageId}`)).json()).toMatchObject({ id: pageId, source: "NONE" });
+
+    // the draft: no reason, nothing saved; with the reason (in the header, as the editor sends it) it is saved; the same rules as the owner's
+    expect((await asAdmin("PUT", `/site/pages/${pageId}/draft`, { content: whole })).statusCode).toBe(422);
+    expect((await asAdmin("GET", `/site/pages/${pageId}`)).json().source).toBe("NONE");
+    expect((await asAdmin("PUT", `/site/pages/${pageId}/draft`, { content: { ...whole, sections: [{ id: "h", type: "hero", enabled: true, props: {} }] } }, reason)).statusCode).toBe(422); // a page the rule refuses
+    expect((await asAdmin("PUT", `/site/pages/${pageId}/draft`, { content: whole }, reason)).statusCode).toBe(200);
+    expect((await asAdmin("PUT", `/site/pages/${pageId}/draft`, { content: { ...whole, seo: { title: { en: "T" }, description: {} } } }, reason)).statusCode).toBe(200);
+    const detail = (await asAdmin("GET", `/site/pages/${pageId}`)).json();
+    expect(detail).toMatchObject({ source: "DRAFT", isLive: false, version: 0 }); // the live page is untouched: nothing was published
+    expect(detail.content.seo.title.en).toBe("T");
+    // the shop owner sees the same draft; the audit has the reason once for the stretch of editing (and once for the page made)
+    expect((await t.get(`/site/pages/${pageId}`, { cookie: shop.cookie })).json().source).toBe("DRAFT");
+    const lines = await t.pool.query<{ action: string; reason: string }>("select after->>'action' as action, after->>'reason' as reason from audit_logs where entity_id = $1 and action = 'admin_edit.reason' order by created_at", [pageId]);
+    expect(lines.rows).toEqual([{ action: "site.page_create", reason }, { action: "site.draft_save", reason }]);
+    // a different reason in the middle of the editing is written too (the audit never keeps the old reason for a change made for a new one)
+    expect((await asAdmin("PUT", `/site/pages/${pageId}/draft`, { content: whole }, "A second reason")).statusCode).toBe(200);
+    const again = await t.pool.query<{ reason: string }>("select after->>'reason' as reason from audit_logs where entity_id = $1 and after->>'action' = 'site.draft_save' order by created_at", [pageId]);
+    expect(again.rows.map((r) => r.reason)).toEqual([reason, "A second reason"]);
+
+    // publishing takes the reason from the header too
+    const published = await asAdmin("POST", `/site/pages/${pageId}/publish`, {}, reason);
+    expect([published.statusCode, published.json().isLive]).toEqual([200, true]);
+
+    // nobody but the platform administrator: the owner and a visitor are refused, and so is another shop's id
+    expect((await asAdmin("GET", "/site/pages", undefined, undefined, shop.cookie)).statusCode).toBe(403);
+    expect((await asAdmin("PUT", `/site/pages/${pageId}/draft`, { content: whole }, reason, shop.cookie)).statusCode).toBe(403);
+    expect((await t.app.inject({ method: "GET", url: `/api/v1${base}/site/pages`, remoteAddress: "10.1.1.1" })).statusCode).toBe(401);
+    expect((await t.app.inject({ method: "GET", url: `/api/v1/admin/shops/${randomUUID()}/site/pages`, remoteAddress: "10.1.1.1", headers: { cookie: admin } })).statusCode).toBe(404);
+  });
 });

@@ -59,12 +59,13 @@ function sameRequester(b: BookingRow, email: string): BookingRow {
 
 @Injectable()
 export class PublicBookingsService {
-  private readonly otpByIp = new RateLimiter(20, 60 * 60_000);
+  // The limits of one ADDRESS are multiplied by RATE_LIMIT_FACTOR (1 in production); the ones of one email never are.
+  private readonly otpByIp: RateLimiter;
   private readonly otpByEmail = new RateLimiter(5, 60 * 60_000);
-  private readonly lookups = new RateLimiter(30, 15 * 60_000);
+  private readonly lookups: RateLimiter;
   /** Look-ups and cancels of one email at one shop from any address: guessing the booking codes of a known email from many addresses is stopped too. */
   private readonly lookupsByEmail = new RateLimiter(20, 15 * 60_000);
-  private readonly creates = new RateLimiter(30, 60 * 60_000);
+  private readonly creates: RateLimiter;
 
   constructor(
     @Inject(DB) private readonly db: Database,
@@ -76,7 +77,11 @@ export class PublicBookingsService {
     @Inject(SessionCapacityService) private readonly capacity: SessionCapacityService,
     @Inject(SitePagesService) private readonly pages: SitePagesService,
     @Inject(PromotionsService) private readonly promotions: PromotionsService,
-  ) {}
+  ) {
+    this.otpByIp = new RateLimiter(20 * env.RATE_LIMIT_FACTOR, 60 * 60_000);
+    this.lookups = new RateLimiter(30 * env.RATE_LIMIT_FACTOR, 15 * 60_000);
+    this.creates = new RateLimiter(30 * env.RATE_LIMIT_FACTOR, 60 * 60_000);
+  }
 
   // ---- the shop and what it offers ------------------------------------------------------------------------------------------------------------------------
 

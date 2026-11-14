@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { expect, type APIRequestContext, type Page } from "@playwright/test";
+import { expect, type APIRequestContext, type Locator, type Page } from "@playwright/test";
 
 export const PORT = Number(process.env.E2E_PORT ?? 3100);
 export const APP = `http://app.localtest.me:${PORT}`;
@@ -30,6 +30,21 @@ export function watchBrowser(page: Page): string[] {
 
 /** The pages are slow to compile the first time in development: open without waiting for every image of the sample data (they come from other sites). */
 export const open = (page: Page, url: string) => page.goto(url, { waitUntil: "domcontentloaded" });
+
+/**
+ * Types into a field of the landing page builder until the autosave says it kept the draft, and returns the text that was saved. A field filled before the page is hydrated holds the text
+ * but raises no change, so nothing would be saved: the whole step (fill, then wait for "Draft saved") is tried again with a new text.
+ */
+export async function typeUntilSaved(page: Page, field: Locator, base: string): Promise<string> {
+  let value = base;
+  await expect(async () => {
+    value = `${base} ${Math.random().toString(36).slice(2, 6)}`;
+    await field.fill(value);
+    await expect(field).toHaveValue(value, { timeout: 1_000 });
+    await expect(page.getByText("Draft saved")).toBeVisible({ timeout: 8_000 }); // (the autosave waits two seconds)
+  }).toPass({ timeout: 60_000 });
+  return value;
+}
 
 /** Logs in through the popup of the public site; a shop owner lands in the dashboard of the shop, a customer in the account area. */
 export async function login(page: Page, email: string, password: string): Promise<void> {

@@ -1,5 +1,6 @@
 import { type PromotionRecord } from "@workshop/shared";
 import { apiGet } from "@/lib/api-server";
+import { shopPrefix } from "@/lib/admin-shop";
 import { dayKey } from "@/lib/format";
 import { fetchAll } from "@/lib/shop-data";
 import type { ScheduleRule } from "@/lib/schedule-types";
@@ -10,7 +11,7 @@ import type { Workshop } from "@/lib/types";
 /** A workshop as the API gives it: the same fields as the page model, plus how many of its sessions are open and how many there are. */
 export type OwnWorkshop = Workshop & { sessions: { open: number; total: number } };
 
-export const ownWorkshops = (): Promise<OwnWorkshop[]> => fetchAll<OwnWorkshop>("/workshops");
+export const ownWorkshops = (adminShopId?: string): Promise<OwnWorkshop[]> => fetchAll<OwnWorkshop>(`${shopPrefix(adminShopId)}/workshops`);
 
 type ApiRule = { id: string; workshopId: string; weekdays: number[]; startTimes: string[]; effectiveFrom: string; effectiveTo: string | null; capacityOverride: number | null; status: "ACTIVE" | "INACTIVE" };
 
@@ -24,8 +25,8 @@ export async function ownScheduleRules(workshopId: string): Promise<ScheduleRule
 }
 
 /** All the promotions of the shop and "today" in the time zone of the shop. */
-export async function ownPromotions(timezone: string): Promise<{ promotions: PromotionRecord[]; today: string }> {
-  const res = await apiGet<{ items: PromotionRecord[]; today?: string }>("/promotions");
+export async function ownPromotions(timezone: string, adminShopId?: string): Promise<{ promotions: PromotionRecord[]; today: string }> {
+  const res = await apiGet<{ items: PromotionRecord[]; today?: string }>(`${shopPrefix(adminShopId)}/promotions`);
   return { promotions: res?.items ?? [], today: res?.today ?? dayKey(new Date().toISOString(), timezone) };
 }
 

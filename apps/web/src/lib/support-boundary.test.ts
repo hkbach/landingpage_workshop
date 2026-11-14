@@ -36,6 +36,7 @@ describe("platform support contact stays out of the public landing page", () => 
       "components/admin/directory/support-contact-admin.tsx",
       "components/builder/SiteBuilder.tsx",
       "components/builder/SupportContactBox.tsx",
+      "components/builder/site-views.tsx", // (the private screens of the editor, for the shop owner and for an administrator: they hand the contact to the builder)
       "components/customer/customer-shell.tsx",
       "components/customer/customer-support.tsx",
       "components/dashboard/shell/dashboard-shell.tsx",

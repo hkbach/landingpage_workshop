@@ -55,7 +55,7 @@ const nameOf = (email: string): string => email.split("@")[0] ?? email;
 @Injectable()
 export class AuthService {
   private readonly loginFailures = new RateLimiter(MAX_LOGIN_FAILURES, LOGIN_LOCK_MS);
-  /** Signups from one address per hour (`SIGNUPS_PER_HOUR`, 10 by default; the browser tests of a whole suite make about ten). */
+  /** Signups from one address per hour: 10 times `RATE_LIMIT_FACTOR` (1 in production; the browser tests of a whole suite make about ten). */
   private readonly signups: RateLimiter;
   private readonly mailsByIp = new RateLimiter(10, 60 * 60_000);
   private readonly mailsByEmail = new RateLimiter(3, 60 * 60_000);
@@ -68,7 +68,7 @@ export class AuthService {
     @Inject(AuditService) private readonly audit: AuditService,
     @Inject(TurnstileService) private readonly turnstile: TurnstileService,
   ) {
-    this.signups = new RateLimiter(env.SIGNUPS_PER_HOUR, 60 * 60_000);
+    this.signups = new RateLimiter(10 * env.RATE_LIMIT_FACTOR, 60 * 60_000);
   }
 
   // ---- helpers --------------------------------------------------------------------------------------------------------------------------------------------

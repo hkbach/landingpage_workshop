@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import type { AdminLandingPage } from "@/lib/admin-types";
 import { StatusBadge } from "../status-badge";
 import { landingUrl } from "../utils";
-import { DirectoryTable, Notice, Toolbar, useDebounced, useDirectory, type Column } from "./kit";
+import { DirectoryTable, Toolbar, useDebounced, useDirectory, type Column } from "./kit";
 
 /**
  * The landing pages of the shops: search by the name of the shop. Edit opens the landing pages of the shop and their builder (the same as the shop owner's) inside the admin area,
@@ -20,13 +20,9 @@ export function LandingPagesAdmin() {
   const [q, setQ] = useState("");
   const typed = useDebounced(q);
   const { items, error } = useDirectory<AdminLandingPage>("landing-pages", { q: typed });
-  const [message, setMessage] = useState<{ text: string; tone: "ok" | "error" } | null>(null);
 
-  async function edit(p: AdminLandingPage) {
-    const res = await fetch(`/api/v1/admin/landing-pages/${encodeURIComponent(p.slug)}/audit`, { method: "POST" }).catch(() => null);
-    if (!res?.ok) { setMessage({ text: t("failed"), tone: "error" }); return; }
-    router.push(`/systemadmin/shops/${p.slug}/site`);
-  }
+  // The editor asks for the reason (in its banner) and the server writes it on the audit line of the changes: nothing to record when the page opens.
+  const edit = (p: AdminLandingPage) => router.push(`/systemadmin/shops/${p.slug}/site`);
 
   const columns: Column<AdminLandingPage>[] = [
     { key: "shop", header: t("col.shop"), cell: (p) => <><div className="font-medium">{p.shopName}</div><div className="font-mono text-xs text-muted-foreground">{p.slug}</div></> },
@@ -37,7 +33,7 @@ export function LandingPagesAdmin() {
     {
       key: "actions", header: <span className="sr-only">{t("col.actions")}</span>, className: "text-right",
       cell: (p) => p.editable
-        ? <Button size="sm" variant="outline" onClick={() => void edit(p)}><Pencil aria-hidden /> {t("edit")}<span className="sr-only"> {p.shopName}</span></Button>
+        ? <Button size="sm" variant="outline" onClick={() => edit(p)}><Pencil aria-hidden /> {t("edit")}<span className="sr-only"> {p.shopName}</span></Button>
         : <span className="text-xs text-muted-foreground">{t("notEditable")}</span>,
     },
   ];
@@ -48,7 +44,6 @@ export function LandingPagesAdmin() {
         <h1 className="text-2xl font-semibold">{t("title")}</h1>
         <p className="text-sm text-muted-foreground">{t("description")}</p>
       </header>
-      <Notice message={message} />
       <Toolbar label={t("search")} placeholder={t("searchPlaceholder")} value={q} onChange={setQ} />
       <DirectoryTable rows={items} error={error} columns={columns} rowKey={(p) => p.shopId} resetKey={typed} testId="landing-table" />
     </div>

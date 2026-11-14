@@ -29,11 +29,12 @@ E2E_CHANNEL=chrome pnpm test:e2e              # the Chrome installed on the mach
 - The tests add data to the database (accounts, a workshop, a session, bookings, a published page, a published Terms). Run them on a database made for it, never on one with real data.
 - While a published Terms or Privacy Policy is not agreed to, a window stands in front of the shop owner area and the customer area (D17): the helpers agree for the tests that are about something else
   (`acceptLegal`), and `customer.spec.ts` checks the window itself.
-- `media.spec.ts` uploads a real image to the Cloudflare R2 bucket from the browser, and checks that the administrator finds an unused image in the Images page and deletes it from the bucket (the five `R2_*` in `apps/api/.env`, `MEDIA_UPLOAD_ORIGIN` for web, the CORS policy of the bucket for the origin of the app: run it with `E2E_PORT=3000`, the origin
+- `media.spec.ts` uploads a real image to the Cloudflare R2 bucket from the browser, and checks that the bucket refuses a body larger than the signed size and that the Images page keeps an image uploaded in the last 24 hours out of the deletable ones (the five `R2_*` in `apps/api/.env`, `MEDIA_UPLOAD_ORIGIN` for web, the CORS policy of the bucket for the origin of the app: run it with `E2E_PORT=3000`, the origin
   in the CORS policy). It is skipped when the storage is not set up, so CI (no R2) skips it. It leaves one small test image in the bucket.
 - The test cases, which of them are automated and in which file, and the order to automate the rest: [docs/E2E_TEST_CASES.md](../docs/E2E_TEST_CASES.md). `security.spec.ts` (access by role and by
   shop, CSRF Origin, session cookie, CSP) and `booking-rules.spec.ts` (price on the server, repeated request, seats, guests per booking, wrong codes, suspended shop) follow its IDs.
-- The API allows 10 signups an hour from one address (`SIGNUPS_PER_HOUR`) and keeps that count in memory. The whole suite makes about 9, so a second full run within the hour fails at a signup with
-  `429` (and the failures that follow hide the real cause). Start the API for the tests with a higher limit: `SIGNUPS_PER_HOUR=100 pnpm --filter api dev` (production keeps the default).
+- The API limits what ONE address can do on the public side (10 signups, 30 bookings, 20 requests for a code and 30 look-ups an hour), and every browser test comes from the same address. A whole run
+  uses about 10 signups and 15 bookings, so a second run within the hour fails with `429` (and the failures that follow hide the real cause). Start the API for the tests with the limits multiplied:
+  `RATE_LIMIT_FACTOR=10 pnpm --filter api dev` (the API refuses any value but 1 in production; the limits of one account or one email never change).
 - A failed test leaves a screenshot, a trace and a snapshot of the page in `test-results/` (git ignores it): `pnpm exec playwright show-trace <trace.zip>`.
 - CI runs the same on the services of the job (`.github/workflows/ci.yml`, job `e2e`).
